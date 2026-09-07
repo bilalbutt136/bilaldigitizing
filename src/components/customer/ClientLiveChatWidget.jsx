@@ -390,8 +390,20 @@ export const ClientLiveChatWidget = () => {
           timestamp: record.timestamp || record.created_at || recordTime
         };
 
-        if (newMsg.sender === 'admin' || newMsg.sender === 'support') {
+        const isStaffMsg = newMsg.sender === 'admin' || newMsg.sender === 'support';
+        if (isStaffMsg) {
           playNotificationSound('receive');
+          if (isOpen) {
+            newMsg.is_read = true;
+            const now = Date.now();
+            setLastReadTimestamp(now);
+            if (typeof window !== 'undefined') {
+              localStorage.setItem('bdigi_read_client_' + targetConvId, String(now));
+            }
+            if (isSupabaseConfigured) {
+              markConversationAsRead(targetConvId, 'client', clientEmail).catch(console.warn);
+            }
+          }
         }
 
         setMessages(prev => {
@@ -513,23 +525,57 @@ export const ClientLiveChatWidget = () => {
 
   useEffect(() => {
     const handleReadUpdate = (e) => {
-      if (!e?.detail || e.detail.conversation_id === targetConvId) {
-        if (typeof window !== 'undefined') {
-          const lr = parseInt(localStorage.getItem('bdigi_read_client_' + targetConvId) || '0', 10);
-          setLastReadTimestamp(lr);
+      if (typeof window !== 'undefined') {
+        const lr = parseInt(localStorage.getItem('bdigi_read_client_' + targetConvId) || '0', 10);
+        setLastReadTimestamp(lr);
+      }
+      const { conversation_id, role, clientEmail: updatedEmail, is_read } = e?.detail || {};
+      if (!conversation_id && !updatedEmail) return;
+
+      const targetChatIdLower = String(targetConvId || '').toLowerCase().trim();
+      const updatedConvLower = String(conversation_id || '').toLowerCase().trim();
+      const cleanCustomerEmail = String(clientEmail || '').toLowerCase().trim();
+      const updatedEmailLower = String(updatedEmail || '').toLowerCase().trim();
+
+      const matchesConv = updatedConvLower && (
+        updatedConvLower === targetChatIdLower ||
+        (cleanCustomerEmail && updatedConvLower.includes(cleanCustomerEmail))
+      );
+      const matchesEmail = cleanCustomerEmail && updatedEmailLower && updatedEmailLower === cleanCustomerEmail;
+
+      if (matchesConv || matchesEmail) {
+        if (role === 'admin' || (!role && is_read)) {
+          setMessages(prev => (prev || []).map(m => {
+            const isClientMsg = m.sender === 'client' || m.sender === 'customer' || m.sender !== 'admin';
+            return isClientMsg ? { ...m, is_read: true } : m;
+          }));
         }
       }
     };
+
     window.addEventListener('bdigi_read_update', handleReadUpdate);
-    return () => window.removeEventListener('bdigi_read_update', handleReadUpdate);
-  }, [targetConvId]);
+    let bc = null;
+    try {
+      bc = new BroadcastChannel('bdigi_chat_sync');
+      bc.onmessage = (msgEvent) => {
+        if (msgEvent?.data?.type === 'read_update') {
+          handleReadUpdate({ detail: msgEvent.data });
+        }
+      };
+    } catch {}
+
+    return () => {
+      window.removeEventListener('bdigi_read_update', handleReadUpdate);
+      if (bc) bc.close();
+    };
+  }, [targetConvId, clientEmail]);
 
   const handleExplicitMarkAsRead = async () => {
     const now = Date.now();
     setLastReadTimestamp(now);
     if (typeof window !== 'undefined') {
       localStorage.setItem('bdigi_read_client_' + targetConvId, String(now));
-      window.dispatchEvent(new CustomEvent('bdigi_read_update', { detail: { conversation_id: targetConvId } }));
+      window.dispatchEvent(new CustomEvent('bdigi_read_update', { detail: { conversation_id: targetConvId, role: 'client', clientEmail } }));
     }
     try {
       await markConversationAsRead(targetConvId, 'client', clientEmail);
@@ -582,11 +628,21 @@ export const ClientLiveChatWidget = () => {
     });
   };
 
-  // Open Chat effect: scroll to bottom and fetch once without loop (strict manual read status preserved)
+  // Open Chat effect: auto-mark as read, scroll to bottom and fetch once
   useEffect(() => {
     if (!isOpen) {
       hasFetchedRef.current = false;
       return;
+    }
+
+    const now = Date.now();
+    setLastReadTimestamp(now);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('bdigi_read_client_' + targetConvId, String(now));
+      window.dispatchEvent(new CustomEvent('bdigi_read_update', { detail: { conversation_id: targetConvId, role: 'client', clientEmail } }));
+    }
+    if (isSupabaseConfigured) {
+      markConversationAsRead(targetConvId, 'client', clientEmail).catch(console.warn);
     }
 
     scrollToBottom('smooth');
@@ -597,7 +653,13 @@ export const ClientLiveChatWidget = () => {
         if (Array.isArray(directMsgs)) {
           setHasMoreMessages(directMsgs.length >= 100);
           setMessages(prev => {
-            const merged = mergeChatMessages(prev, directMsgs);
+            const mapped = directMsgs.map(m => {
+              if (m.sender === 'admin' || m.sender === 'support') {
+                return { ...m, is_read: true };
+              }
+              return m;
+            });
+            const merged = mergeChatMessages(prev, mapped);
             if (typeof window !== 'undefined') {
               try {
                 localStorage.setItem(cacheKey, JSON.stringify(merged));

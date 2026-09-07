@@ -763,6 +763,15 @@ export const AdminChatInbox = () => {
               ? targetConv.clientName 
               : (newMsg.senderName || targetConv.clientName);
 
+            // If the conversation is currently active and open in front of admin, auto-mark as read and keep unread count at 0
+            const incomingUnreadAdd = (isCustomerMsg && !isCurrentlyOpen) ? 1 : 0;
+            if (isCurrentlyOpen && isCustomerMsg) {
+              newMsg.is_read = true;
+              if (isSupabaseConfigured) {
+                markConversationAsRead(targetConv.id || newMsg.conversation_id, 'admin', targetConv.clientEmail || newMsg.client_email).catch(console.warn);
+              }
+            }
+
             const trueSnippet = trueLastMsg ? computeMessageSnippet(trueLastMsg) : (computeMessageSnippet(newMsg) || 'New Message');
             const trueLastTime = trueLastMsg ? parseMessageTime(trueLastMsg) : (parseMessageTime(newMsg) || Date.now());
 
@@ -770,10 +779,10 @@ export const AdminChatInbox = () => {
               ...targetConv,
               clientName: resolvedClientName,
               clientEmail: targetConv.clientEmail || newMsg.client_email || '',
-              unreadCount: (targetConv.unreadCount || 0) + (isCustomerMsg ? 1 : 0),
-              adminUnreadCount: (targetConv.adminUnreadCount || 0) + (isCustomerMsg ? 1 : 0),
-              admin_unread_count: (targetConv.admin_unread_count || 0) + (isCustomerMsg ? 1 : 0),
-              messages: nextMsgs,
+              unreadCount: isCurrentlyOpen ? 0 : (targetConv.unreadCount || 0) + incomingUnreadAdd,
+              adminUnreadCount: isCurrentlyOpen ? 0 : (targetConv.adminUnreadCount || 0) + incomingUnreadAdd,
+              admin_unread_count: isCurrentlyOpen ? 0 : (targetConv.admin_unread_count || 0) + incomingUnreadAdd,
+              messages: isCurrentlyOpen ? nextMsgs.map(m => (m.sender === 'client' || m.sender === 'customer' || m.sender !== 'admin') ? { ...m, is_read: true } : m) : nextMsgs,
               lastMessage: trueSnippet,
               last_message: trueSnippet,
               lastMessageTime: trueLastTime,
@@ -803,8 +812,17 @@ export const AdminChatInbox = () => {
               canonicalNewId = newClientEmail ? `inbox-${newClientEmail}` : (newConvId.startsWith('inbox-') ? newConvId : `inbox-${newConvId}`);
             }
 
+            const newIsCurrentlyOpen = (activeChatIdRef.current === canonicalNewId || activeChatIdRef.current === newMsg.conversation_id);
+            if (newIsCurrentlyOpen && (newMsg.sender === 'client' || newMsg.sender !== 'admin')) {
+              newMsg.is_read = true;
+              if (isSupabaseConfigured) {
+                markConversationAsRead(canonicalNewId, 'admin', newClientEmail).catch(console.warn);
+              }
+            }
+
             const snippet = computeMessageSnippet(newMsg) || 'New Message';
             const msgTime = parseMessageTime(newMsg) || Date.now();
+            const initialUnread = (newMsg.sender === 'client' || newMsg.sender !== 'admin') && !newIsCurrentlyOpen ? 1 : 0;
             const newThread = {
               id: canonicalNewId,
               clientName: newClientName,
@@ -815,10 +833,10 @@ export const AdminChatInbox = () => {
               isSupport: isNewSupport,
               avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(newClientName)}&background=0f172a&color=fff&bold=true`,
               status: 'online',
-              unreadCount: newMsg.sender === 'client' || newMsg.sender !== 'admin' ? 1 : 0,
-              adminUnreadCount: newMsg.sender === 'client' || newMsg.sender !== 'admin' ? 1 : 0,
-              admin_unread_count: newMsg.sender === 'client' || newMsg.sender !== 'admin' ? 1 : 0,
-              messages: [newMsg],
+              unreadCount: initialUnread,
+              adminUnreadCount: initialUnread,
+              admin_unread_count: initialUnread,
+              messages: [newIsCurrentlyOpen ? { ...newMsg, is_read: true } : newMsg],
               lastMessage: snippet,
               last_message: snippet,
               lastMessageTime: msgTime,
@@ -936,6 +954,86 @@ export const AdminChatInbox = () => {
     window.addEventListener('bdigi_offer_status_change', handleOfferStatusEvent);
     return () => window.removeEventListener('bdigi_offer_status_change', handleOfferStatusEvent);
   }, []);
+
+  // Real-time synchronization of read receipts across clients and admins
+  useEffect(() => {
+    const handleReadUpdate = (e) => {
+      const { conversation_id, role, clientEmail, is_read } = e?.detail || {};
+      if (!conversation_id && !clientEmail) return;
+
+      setConversations(prev => {
+        const safePrev = Array.isArray(prev) ? prev : [];
+        return safePrev.map(c => {
+          const matchId = conversation_id && (c.id === conversation_id || matchesConversation(c, conversation_id));
+          const matchEmail = clientEmail && c.clientEmail && c.clientEmail.toLowerCase() === String(clientEmail).toLowerCase();
+          if (matchId || matchEmail) {
+            return {
+              ...c,
+              // When client views admin's messages, mark all admin messages as read in real-time
+              messages: (c.messages || []).map(m => {
+                if (role === 'client' || (!role && is_read)) {
+                  if (m.sender === 'admin' || m.sender === 'support' || m.sender === 'staff') {
+                    return { ...m, is_read: true };
+                  }
+                }
+                return m;
+              })
+            };
+          }
+          return c;
+        });
+      });
+    };
+
+    window.addEventListener('bdigi_read_update', handleReadUpdate);
+    let bc = null;
+    try {
+      bc = new BroadcastChannel('bdigi_chat_sync');
+      bc.onmessage = (msgEvent) => {
+        if (msgEvent?.data?.type === 'read_update') {
+          handleReadUpdate({ detail: msgEvent.data });
+        }
+      };
+    } catch {}
+
+    return () => {
+      window.removeEventListener('bdigi_read_update', handleReadUpdate);
+      if (bc) bc.close();
+    };
+  }, []);
+
+  // Auto-mark conversation as read when active thread is viewed by admin
+  useEffect(() => {
+    if (!currentActiveChatId || !isSupabaseConfigured) return;
+    const targetConv = conversations.find(c => c.id === currentActiveChatId);
+    if (!targetConv) return;
+    const unread = getAdminThreadUnreadCount(targetConv);
+    const hasUnreadClientMsgs = (targetConv.messages || []).some(m => (m.sender === 'client' || m.sender === 'customer' || m.sender !== 'admin') && !m.is_read);
+
+    if (unread > 0 || hasUnreadClientMsgs) {
+      const email = targetConv.clientEmail || '';
+      markConversationAsRead(currentActiveChatId, 'admin', email).catch(console.warn);
+
+      setConversations(prev => {
+        const safePrev = Array.isArray(prev) ? prev : [];
+        const updated = safePrev.map(c => 
+          (c.id === currentActiveChatId || (email && c.clientEmail === email))
+            ? {
+                ...c,
+                unreadCount: 0,
+                adminUnreadCount: 0,
+                admin_unread_count: 0,
+                messages: (c.messages || []).map(m => (m.sender === 'client' || m.sender === 'customer' || m.sender !== 'admin') ? { ...m, is_read: true } : m)
+              }
+            : c
+        );
+        if (typeof window !== 'undefined') {
+          try { localStorage.setItem(cacheKey, JSON.stringify(updated)); } catch {}
+        }
+        return updated;
+      });
+    }
+  }, [currentActiveChatId, conversations.length, isSupabaseConfigured]);
 
   const inboxConversationsCount = useMemo(() => {
     return conversations.filter(c => !isSupportThread(c)).length;
@@ -1119,8 +1217,28 @@ export const AdminChatInbox = () => {
     const email = targetConv?.clientEmail || '';
     const isTargetSupport = isSupportThread(targetConv);
 
-    // Fetch latest message stream for this specific thread without auto-marking as read
+    // Optimistically mark this conversation as read immediately
+    setConversations(prev => {
+      const safePrev = Array.isArray(prev) ? prev : [];
+      const updated = safePrev.map(c => 
+        (c.id === chatId || (email && c.clientEmail === email))
+          ? {
+              ...c,
+              unreadCount: 0,
+              adminUnreadCount: 0,
+              admin_unread_count: 0,
+              messages: (c.messages || []).map(m => (m.sender === 'client' || m.sender === 'customer' || m.sender !== 'admin') ? { ...m, is_read: true } : m)
+            }
+          : c
+      );
+      if (typeof window !== 'undefined') {
+        try { localStorage.setItem(cacheKey, JSON.stringify(updated)); } catch {}
+      }
+      return updated;
+    });
+
     if (isSupabaseConfigured) {
+      markConversationAsRead(chatId, 'admin', email).catch(console.warn);
       try {
         const freshMsgs = await fetchChatMessages(chatId, email, null, 100, null, isTargetSupport ? 'support' : 'inbox');
         if (Array.isArray(freshMsgs) && freshMsgs.length > 0) {
@@ -1130,9 +1248,14 @@ export const AdminChatInbox = () => {
               if (c.id === chatId || (isSupportThread(c) === isTargetSupport && email && c.clientEmail === email)) {
                 const msgMap = new Map();
                 (c.messages || []).forEach(m => { if (m && m.id) msgMap.set(m.id, m); });
-                freshMsgs.forEach(m => { if (m && m.id) msgMap.set(m.id, m); });
+                freshMsgs.forEach(m => {
+                  if (m && m.id) {
+                    const isClientMsg = m.sender === 'client' || m.sender === 'customer' || m.sender !== 'admin';
+                    msgMap.set(m.id, isClientMsg ? { ...m, is_read: true } : m);
+                  }
+                });
                 const merged = sortMessagesChronologically(Array.from(msgMap.values()));
-                return { ...c, messages: merged };
+                return { ...c, unreadCount: 0, adminUnreadCount: 0, admin_unread_count: 0, messages: merged };
               }
               return c;
             });

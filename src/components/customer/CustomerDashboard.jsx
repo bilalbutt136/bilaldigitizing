@@ -184,14 +184,28 @@ export const CustomerDashboard = () => {
   // Listen for direct tab switch events (e.g. from HeaderNav Inbox, Notifications, or Live Support buttons)
   React.useEffect(() => {
     const handleTabSwitch = (e) => {
-      if (e.detail?.tab) {
-        setActiveTab(e.detail.tab);
+      const targetTab = e.detail?.tab;
+      if (targetTab) {
+        setActiveTab(targetTab === 'support' ? 'inbox' : targetTab);
       }
+
+      // When navigating to chat/inbox/support, close any open Order Details Drawer
+      if (targetTab === 'inbox' || targetTab === 'support' || targetTab === 'help-support' || targetTab === 'chat') {
+        if (setSelectedOrderForDrawer) {
+          setSelectedOrderForDrawer(null);
+        }
+      }
+
       if (e.detail?.orderId) {
-        if (e.detail?.tab === 'inbox' || e.detail?.tab === 'support') {
-          setSelectedOrderChatId(e.detail.conversationId || `order-${e.detail.orderId}`);
+        const rawOrderId = String(e.detail.orderId).trim();
+        if (targetTab === 'inbox' || targetTab === 'support') {
+          if (rawOrderId === 'inbox' || rawOrderId === 'support' || rawOrderId === 'general-support') {
+            setSelectedOrderChatId(null);
+          } else {
+            setSelectedOrderChatId(e.detail.conversationId || `order-${rawOrderId.replace(/^order-/, '')}`);
+          }
         } else {
-          const cleanId = String(e.detail.orderId).trim().replace(/^#+/, '');
+          const cleanId = rawOrderId.replace(/^#+/, '');
           const found = (orders || []).find(o => {
             const oClean = String(o?.id || '').trim().replace(/^#+/, '');
             return oClean === cleanId || o?.id === e.detail.orderId || formatOrderId(o?.id) === String(e.detail.orderId);
@@ -202,6 +216,8 @@ export const CustomerDashboard = () => {
         }
       } else if (e.detail?.conversationId) {
         setSelectedOrderChatId(e.detail.conversationId);
+      } else if (targetTab === 'inbox' || targetTab === 'help-support') {
+        setSelectedOrderChatId(null);
       }
     };
     window.addEventListener('bdigi_switch_tab', handleTabSwitch);
@@ -211,9 +227,9 @@ export const CustomerDashboard = () => {
       initialTabSyncedRef.current = true;
       const urlParams = new URLSearchParams(window.location.search);
       const tabParam = urlParams.get('tab');
-      const trackId = urlParams.get('trackOrder') || urlParams.get('orderId');
+      const trackId = urlParams.get('trackOrder') || ((tabParam !== 'inbox' && tabParam !== 'support' && tabParam !== 'help-support') ? urlParams.get('orderId') : null);
       if (tabParam) {
-        setActiveTab(tabParam);
+        setActiveTab(tabParam === 'support' ? 'inbox' : tabParam);
       }
       if (trackId && setSelectedOrderForDrawer) {
         const cleanTrackId = String(trackId).trim().replace(/^#+/, '');

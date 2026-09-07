@@ -150,8 +150,8 @@ export const HeaderNav = () => {
     if (safeIsAuthenticated && (authUser?.role === 'admin' || isCurrentlyOnAdmin)) {
       if (setActiveAdminTab) setActiveAdminTab('chat');
       if (typeof window !== 'undefined') {
-        window.dispatchEvent(new CustomEvent('bdigi_switch_admin_tab', { detail: { tab: 'chat', orderId: 'inbox' } }));
-        window.dispatchEvent(new CustomEvent('bdigi_switch_tab', { detail: { tab: 'chat', orderId: 'inbox' } }));
+        window.dispatchEvent(new CustomEvent('bdigi_switch_admin_tab', { detail: { tab: 'chat' } }));
+        window.dispatchEvent(new CustomEvent('bdigi_switch_tab', { detail: { tab: 'chat' } }));
       }
       if (!isCurrentlyOnAdmin) {
         protectedNavigate('admin');
@@ -160,17 +160,18 @@ export const HeaderNav = () => {
       return;
     }
 
-    // 2. If inside Client Portal
-    if (isCurrentlyOnClientPortal && safeIsAuthenticated) {
+    // 2. If authenticated Client (inside Client Portal or on Public Site)
+    if (safeIsAuthenticated) {
       if (setActiveCustomerTab) setActiveCustomerTab('inbox');
       if (typeof window !== 'undefined') {
-        window.dispatchEvent(new CustomEvent('bdigi_switch_tab', { detail: { tab: 'inbox', orderId: 'inbox' } }));
+        window.dispatchEvent(new CustomEvent('bdigi_switch_tab', { detail: { tab: 'inbox' } }));
       }
+      protectedNavigate('customer', false);
       navigate('/client-portal?tab=inbox');
       return;
     }
 
-    // 3. On Public Website (Homepage, Pricing, Services, etc.)
+    // 3. On Public Website for Unauthenticated Visitors
     // Toggle the Live Support & Order Inquiry chat drawer directly on the screen
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new CustomEvent('bdigi_toggle_chat'));
@@ -199,7 +200,7 @@ export const HeaderNav = () => {
     if (safeIsAuthenticated) {
       if (setActiveCustomerTab) setActiveCustomerTab('help-support');
       if (typeof window !== 'undefined') {
-        window.dispatchEvent(new CustomEvent('bdigi_switch_tab', { detail: { tab: 'help-support', orderId: 'general-support' } }));
+        window.dispatchEvent(new CustomEvent('bdigi_switch_tab', { detail: { tab: 'help-support' } }));
       }
       protectedNavigate('customer', false);
       navigate('/client-portal?tab=help-support');

@@ -162,6 +162,10 @@ export const ClientChatInbox = ({ initialOrderId = null, onBack = null }) => {
         const sorted = sortMessagesChronologically([...directMsgs]);
         setMessages(sorted);
       }
+      // Auto-mark conversation as read on client side when history is loaded
+      if (canonicalChatId) {
+        markConversationAsRead(canonicalChatId, 'client', clientEmail).catch(console.warn);
+      }
     } catch (err) {
       console.warn('Load chat history notice:', err);
     } finally {
@@ -212,7 +216,7 @@ export const ClientChatInbox = ({ initialOrderId = null, onBack = null }) => {
     if (!canonicalChatId) return;
     if (typeof window !== 'undefined') {
       localStorage.setItem('bdigi_read_client_' + canonicalChatId, String(Date.now()));
-      window.dispatchEvent(new CustomEvent('bdigi_read_update', { detail: { conversation_id: canonicalChatId } }));
+      window.dispatchEvent(new CustomEvent('bdigi_read_update', { detail: { conversation_id: canonicalChatId, role: 'client', clientEmail } }));
     }
     try {
       await markConversationAsRead(canonicalChatId, 'client', clientEmail);
@@ -228,12 +232,56 @@ export const ClientChatInbox = ({ initialOrderId = null, onBack = null }) => {
       document.body.classList.add('chat-inbox-open');
     }
     loadChatHistory();
-    // Preserved strict manual read status: opening the chat does not auto-mark as read
     return () => {
       if (typeof document !== 'undefined') {
         document.body.classList.remove('chat-inbox-open');
         document.body.classList.remove('chat-keyboard-active');
       }
+    };
+  }, [canonicalChatId, clientEmail]);
+
+  // Real-time synchronization of read receipts (turns sent messages into blue double checkmarks ✓✓)
+  useEffect(() => {
+    const handleReadUpdate = (e) => {
+      const { conversation_id, role, clientEmail: updatedEmail, is_read } = e?.detail || {};
+      if (!conversation_id && !updatedEmail) return;
+
+      const targetChatIdLower = String(canonicalChatId || '').toLowerCase().trim();
+      const updatedConvLower = String(conversation_id || '').toLowerCase().trim();
+      const cleanCustomerEmail = String(clientEmail || '').toLowerCase().trim();
+      const updatedEmailLower = String(updatedEmail || '').toLowerCase().trim();
+
+      const matchesConv = updatedConvLower && (
+        updatedConvLower === targetChatIdLower ||
+        (cleanCustomerEmail && updatedConvLower.includes(cleanCustomerEmail))
+      );
+      const matchesEmail = cleanCustomerEmail && updatedEmailLower && updatedEmailLower === cleanCustomerEmail;
+
+      if (matchesConv || matchesEmail) {
+        // When admin/support marks or reads this thread, mark all client sent messages as read
+        if (role === 'admin' || (!role && is_read)) {
+          setMessages(prev => (prev || []).map(m => {
+            const isClientMsg = m.sender === 'client' || m.sender === 'customer' || m.sender !== 'admin';
+            return isClientMsg ? { ...m, is_read: true } : m;
+          }));
+        }
+      }
+    };
+
+    window.addEventListener('bdigi_read_update', handleReadUpdate);
+    let bc = null;
+    try {
+      bc = new BroadcastChannel('bdigi_chat_sync');
+      bc.onmessage = (msgEvent) => {
+        if (msgEvent?.data?.type === 'read_update') {
+          handleReadUpdate({ detail: msgEvent.data });
+        }
+      };
+    } catch {}
+
+    return () => {
+      window.removeEventListener('bdigi_read_update', handleReadUpdate);
+      if (bc) bc.close();
     };
   }, [canonicalChatId, clientEmail]);
 
@@ -385,6 +433,14 @@ export const ClientChatInbox = ({ initialOrderId = null, onBack = null }) => {
           timestamp: record.timestamp || record.created_at || new Date().toISOString()
         };
 
+        const isStaffMsg = record.sender === 'admin' || record.sender === 'worker' || record.sender === 'support';
+        if (isStaffMsg) {
+          formattedRecord.is_read = true;
+          if (canonicalChatId) {
+            markConversationAsRead(canonicalChatId, 'client', clientEmail).catch(console.warn);
+          }
+        }
+
         setMessages(prev => {
           const map = new Map();
           (prev || []).forEach(m => { if (m && m.id) map.set(m.id, m); });
@@ -414,7 +470,7 @@ export const ClientChatInbox = ({ initialOrderId = null, onBack = null }) => {
           return sortMessagesChronologically(Array.from(map.values()));
         });
 
-        if (record.sender === 'admin' || record.sender === 'worker' || record.sender === 'support') {
+        if (isStaffMsg) {
           playNotificationSound('chat');
         }
         scrollToBottom('smooth');
