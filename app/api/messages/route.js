@@ -254,7 +254,7 @@ export async function GET(request) {
       const { data: allMessages } = await supabase
         .from('messages')
         .select('id, conversation_id, client_email, sender, sender_name, text, attachment, attachment_url, attachment_name, attachment_size, attachment_type, file_id, offer_id, offer_data, reply_to, is_read, is_autopilot, auto_pilot, metadata, deleted_at, created_at, timestamp')
-        .order('created_at', { ascending: true })
+        .order('created_at', { ascending: false })
         .limit(2000);
       const rawMessages = allMessages || [];
 
@@ -638,6 +638,17 @@ export async function GET(request) {
 
       const limitParam = Math.min(parseInt(searchParams.get('limit'), 10) || 100, 200);
       const beforeParam = searchParams.get('before') || null;
+      let isoBefore = beforeParam;
+      if (beforeParam) {
+        if (/^\d+$/.test(beforeParam)) {
+          isoBefore = new Date(parseInt(beforeParam, 10)).toISOString();
+        } else {
+          try {
+            const d = new Date(beforeParam);
+            if (!isNaN(d.getTime())) isoBefore = d.toISOString();
+          } catch {}
+        }
+      }
 
       let rawMessages = [];
       try {
@@ -649,8 +660,8 @@ export async function GET(request) {
             .order('created_at', { ascending: false })
             .limit(limitParam);
 
-          if (beforeParam) {
-            convQuery = convQuery.lt('created_at', beforeParam);
+          if (isoBefore) {
+            convQuery = convQuery.lt('created_at', isoBefore);
           }
 
           const { data: convMsgs } = await convQuery;
@@ -664,8 +675,8 @@ export async function GET(request) {
               .order('created_at', { ascending: false })
               .limit(limitParam);
 
-            if (beforeParam) {
-              emailQuery = emailQuery.lt('created_at', beforeParam);
+            if (isoBefore) {
+              emailQuery = emailQuery.lt('created_at', isoBefore);
             }
 
             const { data: em } = await emailQuery;
@@ -689,8 +700,8 @@ export async function GET(request) {
                 .order('created_at', { ascending: false })
                 .limit(limitParam);
 
-              if (beforeParam) {
-                offMsgQuery = offMsgQuery.lt('created_at', beforeParam);
+              if (isoBefore) {
+                offMsgQuery = offMsgQuery.lt('created_at', isoBefore);
               }
 
               const { data: offMsgs } = await offMsgQuery;
@@ -712,8 +723,8 @@ export async function GET(request) {
             .order('created_at', { ascending: false })
             .limit(limitParam);
 
-          if (beforeParam) {
-            genericQuery = genericQuery.lt('created_at', beforeParam);
+          if (isoBefore) {
+            genericQuery = genericQuery.lt('created_at', isoBefore);
           }
 
           const { data } = await genericQuery;

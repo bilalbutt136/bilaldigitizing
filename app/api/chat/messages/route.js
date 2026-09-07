@@ -49,19 +49,40 @@ export async function GET(req) {
       return NextResponse.json({ success: false, error: 'Unauthorized to view this thread.' }, { status: 403 });
     }
 
+    const isSupport = isSupportConversation(convId);
     const targetConvIds = new Set();
     if (convId) {
       targetConvIds.add(convId);
       targetConvIds.add(convId.toLowerCase());
-    } else if (guestIdParam) {
-      targetConvIds.add(`support-${guestIdParam}`);
-      targetConvIds.add(`inbox-${guestIdParam}`);
+      const lower = convId.toLowerCase().trim();
+      if (lower.startsWith('order-')) {
+        targetConvIds.add(lower.replace(/^order-/, ''));
+      } else if (!lower.startsWith('inbox-') && !lower.startsWith('support-') && !lower.startsWith('direct-')) {
+        targetConvIds.add(`order-${lower}`);
+      }
+    }
+
+    if (cleanEmail) {
+      if (isSupport) {
+        targetConvIds.add(`support-${cleanEmail}`);
+        targetConvIds.add('general-support');
+        targetConvIds.add('help-support');
+      } else {
+        targetConvIds.add(`inbox-${cleanEmail}`);
+        targetConvIds.add(`direct-${cleanEmail}`);
+        targetConvIds.add(`chat-${cleanEmail}`);
+      }
+    }
+
+    if (guestIdParam) {
+      if (isSupport) {
+        targetConvIds.add(`support-${guestIdParam}`);
+        targetConvIds.add('general-support');
+        targetConvIds.add('help-support');
+      } else {
+        targetConvIds.add(`inbox-${guestIdParam}`);
+      }
       targetConvIds.add(guestIdParam);
-    } else if (cleanEmail) {
-      targetConvIds.add(`support-${cleanEmail}`);
-      targetConvIds.add(`inbox-${cleanEmail}`);
-      targetConvIds.add(`direct-${cleanEmail}`);
-      targetConvIds.add(`chat-${cleanEmail}`);
     }
 
     const limitParam = Math.min(parseInt(searchParams.get('limit'), 10) || 100, 200);
@@ -75,18 +96,29 @@ export async function GET(req) {
       .limit(limitParam);
 
     if (beforeParam) {
-      query = query.lt('created_at', beforeParam);
+      let isoBefore = beforeParam;
+      if (/^\d+$/.test(beforeParam)) {
+        isoBefore = new Date(parseInt(beforeParam, 10)).toISOString();
+      } else {
+        try {
+          const d = new Date(beforeParam);
+          if (!isNaN(d.getTime())) isoBefore = d.toISOString();
+        } catch {}
+      }
+      query = query.lt('created_at', isoBefore);
     }
 
     const orConditions = [];
     if (targetConvIds.size > 0) {
-      const idList = Array.from(targetConvIds).map(id => `conversation_id.eq.${id}`).join(',');
-      orConditions.push(idList);
+      Array.from(targetConvIds).forEach(id => {
+        orConditions.push(`conversation_id.eq.${id}`);
+        orConditions.push(`thread_id.eq.${id}`);
+      });
     }
-    if (!convId && guestIdParam) {
+    if (guestIdParam) {
       orConditions.push(`guest_id.eq.${guestIdParam}`);
     }
-    if (!convId && cleanEmail) {
+    if (cleanEmail) {
       orConditions.push(`client_email.ilike.${cleanEmail}`);
     }
 
@@ -111,8 +143,18 @@ export async function GET(req) {
       }
     } catch {}
 
-    const formattedMessages = (rawMessages || [])
-      .filter(m => !m.deleted_at)
+    // Deduplicate and filter by channel context
+    const uniqueMap = new Map();
+    (rawMessages || []).forEach(m => {
+      if (!m || !m.id || m.deleted_at) return;
+      const mConv = m.conversation_id || m.thread_id || '';
+      const msgIsSupport = isSupportConversation(mConv);
+      if (isSupport && !msgIsSupport) return;
+      if (!isSupport && msgIsSupport) return;
+      uniqueMap.set(m.id, m);
+    });
+
+    const formattedMessages = Array.from(uniqueMap.values())
       .map(m => {
         let offerData = m.offer_data || m.offerData || null;
         if (typeof offerData === 'string') {

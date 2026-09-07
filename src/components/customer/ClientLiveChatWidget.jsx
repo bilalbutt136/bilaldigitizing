@@ -25,7 +25,8 @@ import {
   Maximize2,
   Loader2,
   Reply,
-  CheckCheck
+  CheckCheck,
+  ArrowUp
 } from 'lucide-react';
 
 // Format timestamp safely to human-readable string
@@ -129,6 +130,8 @@ export const ClientLiveChatWidget = () => {
   const [replyingTo, setReplyingTo] = useState(null);
   const [isSupportTyping, setIsSupportTyping] = useState(false);
   const [messages, setMessages] = useState([]);
+  const [hasMoreMessages, setHasMoreMessages] = useState(false);
+  const [isLoadingEarlier, setIsLoadingEarlier] = useState(false);
   const typingTimeoutRef = useRef(null);
   const hasFetchedRef = useRef(false);
 
@@ -234,8 +237,9 @@ export const ClientLiveChatWidget = () => {
       if (!isMounted) return;
       if (isSupabaseConfigured) {
         try {
-          const directMsgs = await fetchChatMessages(targetConvId, clientEmail);
+          const directMsgs = await fetchChatMessages(targetConvId, clientEmail, guestSessionId, 100);
           if (Array.isArray(directMsgs) && isMounted) {
+            setHasMoreMessages(directMsgs.length >= 100);
             setMessages(prev => {
               const merged = mergeChatMessages(prev, directMsgs);
               if (typeof window !== 'undefined') {
@@ -547,8 +551,9 @@ export const ClientLiveChatWidget = () => {
 
     if (isSupabaseConfigured && !hasFetchedRef.current) {
       hasFetchedRef.current = true;
-      fetchChatMessages(targetConvId, clientEmail).then(directMsgs => {
+      fetchChatMessages(targetConvId, clientEmail, guestSessionId, 100).then(directMsgs => {
         if (Array.isArray(directMsgs)) {
+          setHasMoreMessages(directMsgs.length >= 100);
           setMessages(prev => {
             const merged = mergeChatMessages(prev, directMsgs);
             if (typeof window !== 'undefined') {
@@ -565,6 +570,46 @@ export const ClientLiveChatWidget = () => {
       });
     }
   }, [isOpen, targetConvId, clientEmail, cacheKey]);
+
+  // Load earlier historical messages (pagination)
+  const handleLoadEarlierMessages = async () => {
+    if (isLoadingEarlier || messages.length === 0 || !targetConvId) return;
+    const oldestMsg = messages[0];
+    const oldestTimestamp = oldestMsg.created_at || oldestMsg.timestamp;
+    if (!oldestTimestamp) return;
+
+    setIsLoadingEarlier(true);
+    try {
+      const container = chatFeedRef.current;
+      const prevScrollHeight = container ? container.scrollHeight : 0;
+
+      const earlierMsgs = await fetchChatMessages(targetConvId, clientEmail, guestSessionId, 50, oldestTimestamp);
+      if (Array.isArray(earlierMsgs) && earlierMsgs.length > 0) {
+        setHasMoreMessages(earlierMsgs.length >= 50);
+        setMessages(prev => {
+          const merged = mergeChatMessages(earlierMsgs, prev);
+          if (typeof window !== 'undefined') {
+            try {
+              localStorage.setItem(cacheKey, JSON.stringify(merged));
+            } catch {}
+          }
+          return merged;
+        });
+
+        setTimeout(() => {
+          if (container) {
+            container.scrollTop = container.scrollHeight - prevScrollHeight;
+          }
+        }, 30);
+      } else {
+        setHasMoreMessages(false);
+      }
+    } catch (err) {
+      console.warn('[LiveChatWidget] Error loading earlier messages:', err);
+    } finally {
+      setIsLoadingEarlier(false);
+    }
+  };
 
   // Mount Guard: Don't render until mounted or if on excluded screen
   if (!mounted || isExcluded) {
@@ -961,6 +1006,43 @@ export const ClientLiveChatWidget = () => {
                     🔒 Dedicated Direct Support Channel
                   </span>
                 </div>
+
+                {hasMoreMessages && (
+                  <div style={{ display: 'flex', justifyContent: 'center', margin: '0.15rem 0 0.5rem 0' }}>
+                    <button
+                      type="button"
+                      onClick={handleLoadEarlierMessages}
+                      disabled={isLoadingEarlier}
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.35rem',
+                        background: 'var(--color-surface, #ffffff)',
+                        color: 'var(--color-primary, #ea580c)',
+                        border: '1.5px solid var(--border-color, #cbd5e1)',
+                        borderRadius: '20px',
+                        padding: '0.3rem 0.85rem',
+                        fontSize: '0.72rem',
+                        fontWeight: 800,
+                        cursor: isLoadingEarlier ? 'not-allowed' : 'pointer',
+                        boxShadow: '0 2px 5px rgba(0,0,0,0.05)',
+                        transition: 'all 0.15s ease'
+                      }}
+                    >
+                      {isLoadingEarlier ? (
+                        <>
+                          <Loader2 size={12} className="animate-spin text-orange-500" />
+                          <span>Loading earlier messages...</span>
+                        </>
+                      ) : (
+                        <>
+                          <ArrowUp size={12} />
+                          <span>Load Earlier Messages</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                )}
 
                 {(clientThread.messages || []).length === 0 && (
                   <div style={{ textAlign: 'center', padding: '1.5rem 0.5rem', color: 'var(--text-muted)' }}>

@@ -37,7 +37,8 @@ import {
   User,
   ShieldCheck,
   Zap,
-  ArrowLeft
+  ArrowLeft,
+  ArrowUp
 } from 'lucide-react';
 
 const parseMessageTime = (msg) => {
@@ -98,6 +99,8 @@ export const ClientChatInbox = ({ initialOrderId = null, onBack = null }) => {
   const [mounted, setMounted] = useState(false);
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [hasMoreMessages, setHasMoreMessages] = useState(false);
+  const [isLoadingEarlier, setIsLoadingEarlier] = useState(false);
   const [messageInput, setMessageInput] = useState('');
   const [attachedFile, setAttachedFile] = useState(null);
   const [isUploadingAttachment, setIsUploadingAttachment] = useState(false);
@@ -140,8 +143,9 @@ export const ClientChatInbox = ({ initialOrderId = null, onBack = null }) => {
   const loadChatHistory = async () => {
     setLoading(true);
     try {
-      const directMsgs = await fetchChatMessages(canonicalChatId, clientEmail);
+      const directMsgs = await fetchChatMessages(canonicalChatId, clientEmail, guestSessionId, 100);
       if (Array.isArray(directMsgs)) {
+        setHasMoreMessages(directMsgs.length >= 100);
         const sorted = [...directMsgs].sort((a, b) => parseMessageTime(a) - parseMessageTime(b));
         setMessages(sorted);
       }
@@ -150,6 +154,44 @@ export const ClientChatInbox = ({ initialOrderId = null, onBack = null }) => {
     } finally {
       setLoading(false);
       scrollToBottom('auto');
+    }
+  };
+
+  // 2. Load earlier historical messages (pagination)
+  const handleLoadEarlierMessages = async () => {
+    if (isLoadingEarlier || messages.length === 0 || !canonicalChatId) return;
+    const oldestMsg = messages[0];
+    const oldestTimestamp = oldestMsg.created_at || oldestMsg.timestamp;
+    if (!oldestTimestamp) return;
+
+    setIsLoadingEarlier(true);
+    try {
+      const container = chatFeedRef.current;
+      const prevScrollHeight = container ? container.scrollHeight : 0;
+
+      const earlierMsgs = await fetchChatMessages(canonicalChatId, clientEmail, guestSessionId, 50, oldestTimestamp);
+      if (Array.isArray(earlierMsgs) && earlierMsgs.length > 0) {
+        setHasMoreMessages(earlierMsgs.length >= 50);
+        setMessages(prev => {
+          const map = new Map();
+          earlierMsgs.forEach(m => { if (m && m.id) map.set(m.id, m); });
+          (prev || []).forEach(m => { if (m && m.id) map.set(m.id, m); });
+          return Array.from(map.values()).sort((a, b) => parseMessageTime(a) - parseMessageTime(b));
+        });
+
+        // Maintain scroll position cleanly
+        setTimeout(() => {
+          if (container) {
+            container.scrollTop = container.scrollHeight - prevScrollHeight;
+          }
+        }, 30);
+      } else {
+        setHasMoreMessages(false);
+      }
+    } catch (err) {
+      console.warn('Error loading earlier messages:', err);
+    } finally {
+      setIsLoadingEarlier(false);
     }
   };
 
@@ -827,28 +869,66 @@ export const ClientChatInbox = ({ initialOrderId = null, onBack = null }) => {
             </p>
           </div>
         ) : (
-          messages.map((msg, index) => {
-            const isClient = msg.sender === 'client';
-            return (
-              <WhatsAppChatMessage
-                key={msg.id || index}
-                message={msg}
-                isMe={isClient}
-                isClient={isClient}
-                senderDisplayName={isClient ? 'You' : (activeChannel === 'support' ? '24/7 Live Support' : 'Studio Digitizer')}
-                clientName={clientName}
-                onReply={(m) => setReplyingTo(m)}
-                formatTime={formatChatTime}
-                themePreset="client"
-                onOrderClick={(ordId) => {
-                  if (orders && orders.length > 0) {
-                    const found = orders.find(o => String(o.id) === String(ordId));
-                    if (found) setSelectedOrderForDrawer(found);
-                  }
-                }}
-              />
-            );
-          })
+          <>
+            {hasMoreMessages && (
+              <div style={{ display: 'flex', justifyContent: 'center', margin: '0.25rem 0 0.65rem 0', width: '100%' }}>
+                <button
+                  type="button"
+                  onClick={handleLoadEarlierMessages}
+                  disabled={isLoadingEarlier}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.4rem',
+                    background: 'var(--color-surface, #ffffff)',
+                    color: '#047857',
+                    border: '1.5px solid #a7f3d0',
+                    borderRadius: '20px',
+                    padding: '0.35rem 0.95rem',
+                    fontSize: '0.75rem',
+                    fontWeight: 800,
+                    cursor: isLoadingEarlier ? 'not-allowed' : 'pointer',
+                    boxShadow: '0 2px 6px rgba(0,0,0,0.05)',
+                    transition: 'all 0.15s ease'
+                  }}
+                >
+                  {isLoadingEarlier ? (
+                    <>
+                      <Loader2 size={13} className="animate-spin text-emerald-600" />
+                      <span>Loading earlier messages...</span>
+                    </>
+                  ) : (
+                    <>
+                      <ArrowUp size={13} />
+                      <span>Load Earlier Messages</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            )}
+            {messages.map((msg, index) => {
+              const isClient = msg.sender === 'client';
+              return (
+                <WhatsAppChatMessage
+                  key={msg.id || index}
+                  message={msg}
+                  isMe={isClient}
+                  isClient={isClient}
+                  senderDisplayName={isClient ? 'You' : (activeChannel === 'support' ? '24/7 Live Support' : 'Studio Digitizer')}
+                  clientName={clientName}
+                  onReply={(m) => setReplyingTo(m)}
+                  formatTime={formatChatTime}
+                  themePreset="client"
+                  onOrderClick={(ordId) => {
+                    if (orders && orders.length > 0) {
+                      const found = orders.find(o => String(o.id) === String(ordId));
+                      if (found) setSelectedOrderForDrawer(found);
+                    }
+                  }}
+                />
+              );
+            })}
+          </>
         )}
 
         {isSupportTyping && (

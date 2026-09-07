@@ -445,16 +445,18 @@ export const AdminChatInbox = () => {
                 if (!existing) return freshConv;
 
                 const msgMap = new Map();
-                (freshConv.messages || []).forEach(m => { if (m?.id) msgMap.set(m.id, m); });
-
+                // Retain all existing messages already loaded (including paged earlier messages)
                 (existing.messages || []).forEach(m => {
+                  if (m?.id) msgMap.set(m.id, m);
+                });
+
+                // Merge fresh messages from server poll (updates unread/sent status, new messages, offers)
+                (freshConv.messages || []).forEach(m => {
                   if (!m?.id) return;
-                  if (!msgMap.has(m.id)) {
-                    const mTime = parseMessageTime(m);
-                    // Keep recent messages from the last 60 seconds that might still be syncing
-                    if (Date.now() - mTime < 60000) {
-                      msgMap.set(m.id, m);
-                    }
+                  if (msgMap.has(m.id)) {
+                    msgMap.set(m.id, { ...msgMap.get(m.id), ...m });
+                  } else {
+                    msgMap.set(m.id, m);
                   }
                 });
 
@@ -470,14 +472,11 @@ export const AdminChatInbox = () => {
                 };
               });
 
-              // Also include any local-only threads that aren't in fresh yet
+              // Also include any local-only or existing threads that aren't in fresh yet
               currentList.forEach(existing => {
                 const inFresh = mergedList.some(f => matchesConversation(f, existing.id));
                 if (!inFresh && (existing.messages || []).length > 0) {
-                  const lastMsg = existing.messages[existing.messages.length - 1];
-                  if (Date.now() - parseMessageTime(lastMsg) < 60000) {
-                    mergedList.push(existing);
-                  }
+                  mergedList.push(existing);
                 }
               });
 
