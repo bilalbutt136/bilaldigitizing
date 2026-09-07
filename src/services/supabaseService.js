@@ -1611,7 +1611,8 @@ export async function addChatMessage(chatIdOrObj, messageObj = null) {
     thread_id: targetChatId,
     type: payload.type || (payload.offer_id || payload.offer_data ? 'custom_offer' : 'text'),
     metadata: payload.metadata || {},
-    timestamp: payload.timestamp || new Date().toISOString()
+    timestamp: payload.timestamp || payload.created_at || new Date().toISOString(),
+    created_at: payload.created_at || payload.timestamp || new Date().toISOString()
   };
 
   // Instant broadcast across all active browser windows

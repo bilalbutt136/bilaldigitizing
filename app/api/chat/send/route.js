@@ -94,7 +94,7 @@ export async function POST(req) {
         id: convId,
         guest_id: guestId,
         client_name: finalClientName,
-        client_email: targetEmail,
+        client_email: targetEmail || (guestId ? `${guestId}@guest.local` : null),
         client_company: payload.company || (isSupport ? 'Customer Support' : 'Studio Client'),
         status: 'online',
         admin_unread_count: isAdmin ? 0 : 1,
@@ -104,6 +104,32 @@ export async function POST(req) {
     } catch (convErr) {
       console.warn('[Chat Send] Conversation upsert notice:', convErr.message);
     }
+
+    // Monotonic causal ordering: Query the latest message timestamp in this conversation
+    let authoritativeTimeMs = Date.now();
+    try {
+      const { data: latestExisting } = await supabase
+        .from('messages')
+        .select('created_at, timestamp')
+        .or(`conversation_id.eq.${convId},thread_id.eq.${convId}`)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (latestExisting) {
+        const prevMs = Math.max(
+          new Date(latestExisting.created_at || 0).getTime(),
+          new Date(latestExisting.timestamp || 0).getTime()
+        );
+        if (!isNaN(prevMs) && authoritativeTimeMs <= prevMs) {
+          authoritativeTimeMs = prevMs + 10;
+        }
+      }
+    } catch (err) {
+      console.warn('[Chat Send] Monotonic sequence notice:', err?.message);
+    }
+
+    const authoritativeIso = new Date(authoritativeTimeMs).toISOString();
 
     // 3. Prepare Message Row
     const dbPayload = {
@@ -128,8 +154,8 @@ export async function POST(req) {
       offer_data: payload.offer_data || payload.offerData || null,
       status: 'sent',
       is_read: false,
-      timestamp: nowIso,
-      created_at: nowIso
+      timestamp: authoritativeIso,
+      created_at: authoritativeIso
     };
 
     let insertedMsg = dbPayload;
@@ -236,7 +262,7 @@ export async function POST(req) {
           });
 
           if (replyText && replyText.trim()) {
-            const autoNowIso = new Date().toISOString();
+            const autoNowIso = new Date(Math.max(Date.now(), authoritativeTimeMs + 10)).toISOString();
             const autoMsgPayload = {
               id: `msg-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
               conversation_id: convId,

@@ -242,4 +242,93 @@ describe('Chat Inbox Overhaul: Sorting, Snippets & Read Management', () => {
     assert.equal(previewText, 'Awesome, please proceed with DST and PES formats!', 'Preview text reflects customer message');
   });
 
+  test('Monotonic Causal Ordering: Resolves same-minute messaging and prevents client clock skew inversion', () => {
+    // Exact scenario from bug report:
+    // Support sent "yes" (3:52 PM) -> Support sent "How may we assist you today?" (3:52 PM) -> Customer sent "i need a embroidery digitiing" (3:52 PM)
+    const baseTime = new Date('2026-09-07T10:52:00.000Z').getTime();
+
+    const supportMsg1 = {
+      id: 'msg-sup-1',
+      sender: 'admin',
+      text: 'yes',
+      created_at: new Date(baseTime).toISOString(),
+      timestamp: new Date(baseTime).toISOString()
+    };
+
+    // Support msg 2 sent 2 seconds later
+    const supportMsg2 = {
+      id: 'msg-sup-2',
+      sender: 'admin',
+      text: 'How may we assist you today?',
+      created_at: new Date(baseTime + 2000).toISOString(),
+      timestamp: new Date(baseTime + 2000).toISOString()
+    };
+
+    // If client had a clock running 5 seconds slow, raw Date.now() would be baseTime - 3000ms.
+    // Our monotonic sequencing ensures optimistic/server timestamp is Math.max(Date.now(), lastMsgMs + 10)
+    const clientRawClockSkewMs = baseTime - 3000;
+    const lastMsgMs = new Date(supportMsg2.created_at).getTime();
+    const monotonicClientTimeMs = Math.max(clientRawClockSkewMs, lastMsgMs + 10);
+
+    const customerMsg = {
+      id: 'msg-cust-1',
+      sender: 'client',
+      text: 'i need a embroidery digitiing',
+      created_at: new Date(monotonicClientTimeMs).toISOString(),
+      timestamp: new Date(monotonicClientTimeMs).toISOString()
+    };
+
+    const sortChronologically = (msgs) => {
+      return [...msgs].sort((a, b) => {
+        const timeA = new Date(a.created_at || a.timestamp || 0).getTime();
+        const timeB = new Date(b.created_at || b.timestamp || 0).getTime();
+        const diff = timeA - timeB;
+        if (diff !== 0) return diff;
+        return String(a.id || '').localeCompare(String(b.id || ''));
+      });
+    };
+
+    // Even if messages arrive in arbitrary order
+    const feed = [customerMsg, supportMsg2, supportMsg1];
+    const sortedFeed = sortChronologically(feed);
+
+    assert.equal(sortedFeed[0].id, 'msg-sup-1', 'First message must be Support "yes"');
+    assert.equal(sortedFeed[1].id, 'msg-sup-2', 'Second message must be Support "How may we assist you today?"');
+    assert.equal(sortedFeed[2].id, 'msg-cust-1', 'Third message must be Customer "i need a embroidery digitiing"');
+  });
+
+  test('Realtime Ingestion: Message with missing created_at or timestamp gracefully maintains order', () => {
+    const t1 = '2026-09-07T14:00:00.000Z';
+    const t2 = '2026-09-07T14:00:10.000Z';
+
+    const msgWithOnlyTimestamp = {
+      id: 'm-ts-only',
+      sender: 'admin',
+      text: 'Message with only timestamp',
+      timestamp: t1
+    };
+
+    const msgWithOnlyCreatedAt = {
+      id: 'm-created-only',
+      sender: 'client',
+      text: 'Message with only created_at',
+      created_at: t2
+    };
+
+    const parseMessageTime = (msg) => {
+      if (!msg) return 0;
+      const raw = msg.created_at || msg.timestamp || msg.createdAt || msg.time;
+      if (!raw) return 0;
+      if (typeof raw === 'number') return raw;
+      const parsed = new Date(raw).getTime();
+      return isNaN(parsed) ? 0 : parsed;
+    };
+
+    const msgs = [msgWithOnlyCreatedAt, msgWithOnlyTimestamp];
+    const sorted = [...msgs].sort((a, b) => parseMessageTime(a) - parseMessageTime(b));
+
+    assert.equal(sorted[0].id, 'm-ts-only');
+    assert.equal(sorted[1].id, 'm-created-only');
+  });
+
 });

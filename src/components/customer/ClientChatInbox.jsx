@@ -52,7 +52,7 @@ const parseMessageTime = (msg) => {
 
 const sortMessagesChronologically = (msgs) => {
   if (!Array.isArray(msgs)) return [];
-  return msgs.sort((a, b) => {
+  return [...msgs].sort((a, b) => {
     const diff = parseMessageTime(a) - parseMessageTime(b);
     if (diff !== 0) return diff;
     const strA = String(a.created_at || a.timestamp || '');
@@ -350,6 +350,7 @@ export const ClientChatInbox = ({ initialOrderId = null, onBack = null }) => {
           offer_data: extractedOffer,
           offer: extractedOffer,
           is_read: record.is_read || false,
+          created_at: record.created_at || record.timestamp || new Date().toISOString(),
           timestamp: record.timestamp || record.created_at || new Date().toISOString()
         };
 
@@ -508,7 +509,10 @@ export const ClientChatInbox = ({ initialOrderId = null, onBack = null }) => {
       textareaRef.current.style.height = '40px';
     }
 
-    const nowIso = new Date().toISOString();
+    const lastExistingMsg = messages[messages.length - 1];
+    const lastMsgMs = lastExistingMsg ? parseMessageTime(lastExistingMsg) : 0;
+    const optimisticTimeMs = Math.max(Date.now(), lastMsgMs + 10);
+    const nowIso = new Date(optimisticTimeMs).toISOString();
     const tempMsgId = `msg-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
     const msgText = messageInput.trim();
 

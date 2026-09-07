@@ -150,7 +150,7 @@ const parseMessageTime = (msg) => {
 
 const sortMessagesChronologically = (msgs) => {
   if (!Array.isArray(msgs)) return [];
-  return msgs.sort((a, b) => {
+  return [...msgs].sort((a, b) => {
     const diff = parseMessageTime(a) - parseMessageTime(b);
     if (diff !== 0) return diff;
     const strA = String(a.created_at || a.timestamp || '');
@@ -627,6 +627,7 @@ export const AdminChatInbox = () => {
           is_read: record.is_read || false,
           is_autopilot: record.is_autopilot || record.auto_pilot || false,
           auto_pilot: record.is_autopilot || record.auto_pilot || false,
+          created_at: record.created_at || record.timestamp || new Date().toISOString(),
           timestamp: record.timestamp || record.created_at || new Date().toISOString()
         };
 
@@ -1246,7 +1247,11 @@ export const AdminChatInbox = () => {
 
     const targetCustomerEmail = (activeInfo?.customerEmail || activeChat?.clientEmail || (currentActiveChatId ? currentActiveChatId.replace('support-', '').replace('inbox-', '').replace('direct-', '').replace('chat-', '') : '')).toLowerCase().trim();
 
-    const nowIso = new Date().toISOString();
+    const existingMsgs = (activeChat?.messages || []).filter(Boolean);
+    const lastExistingMsg = existingMsgs[existingMsgs.length - 1];
+    const lastMsgMs = lastExistingMsg ? parseMessageTime(lastExistingMsg) : 0;
+    const optimisticTimeMs = Math.max(Date.now(), lastMsgMs + 10);
+    const nowIso = new Date(optimisticTimeMs).toISOString();
     const serializedAttachment = attachedFile ? (attachedFile.url ? JSON.stringify({
       file_id: attachedFile.file_id || null,
       file_url: attachedFile.url,

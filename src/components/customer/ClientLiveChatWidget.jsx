@@ -41,7 +41,7 @@ const parseMessageTime = (msg) => {
 
 const sortMessagesChronologically = (msgs) => {
   if (!Array.isArray(msgs)) return [];
-  return msgs.sort((a, b) => {
+  return [...msgs].sort((a, b) => {
     const diff = parseMessageTime(a) - parseMessageTime(b);
     if (diff !== 0) return diff;
     const strA = String(a.created_at || a.timestamp || '');
@@ -337,6 +337,7 @@ export const ClientLiveChatWidget = () => {
         const attachSize = record.attachment_size || attachObj?.file_size || attachObj?.size || null;
         const attachType = extractedOffer ? 'custom_offer' : (record.attachment_type || attachObj?.mime_type || attachObj?.type || attachObj?.format || null);
 
+        const recordTime = record.created_at || record.timestamp || new Date().toISOString();
         const newMsg = {
           id: record.id,
           conversation_id: record.conversation_id,
@@ -357,7 +358,8 @@ export const ClientLiveChatWidget = () => {
           offer: extractedOffer,
           is_read: record.is_read || false,
           status: 'sent',
-          timestamp: record.timestamp || record.created_at || new Date().toISOString()
+          created_at: record.created_at || record.timestamp || recordTime,
+          timestamp: record.timestamp || record.created_at || recordTime
         };
 
         if (newMsg.sender === 'admin' || newMsg.sender === 'support') {
@@ -640,7 +642,10 @@ export const ClientLiveChatWidget = () => {
     if (!messageInput.trim() && !attachedFile) return;
 
     const convId = targetConvId;
-    const nowIso = new Date().toISOString();
+    const lastExistingMsg = messages[messages.length - 1];
+    const lastMsgMs = lastExistingMsg ? parseMessageTime(lastExistingMsg) : 0;
+    const optimisticTimeMs = Math.max(Date.now(), lastMsgMs + 10);
+    const nowIso = new Date(optimisticTimeMs).toISOString();
 
     // Track Meta Pixel Contact Event with Customer Identity
     import('../common/MetaPixelTracker').then(({ trackMetaEvent }) => {
@@ -694,7 +699,7 @@ export const ClientLiveChatWidget = () => {
 
     // 1. Optimistic append
     setMessages(prev => {
-      const next = [...prev, newMsg];
+      const next = sortMessagesChronologically([...prev, newMsg]);
       if (typeof window !== 'undefined') {
         try {
           localStorage.setItem(cacheKey, JSON.stringify(next));
