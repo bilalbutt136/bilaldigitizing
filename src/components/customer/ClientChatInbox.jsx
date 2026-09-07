@@ -579,6 +579,7 @@ export const ClientChatInbox = ({ initialOrderId = null, onBack = null }) => {
         text: replyingTo.text,
         attachment: replyingTo.attachment_name || replyingTo.attachment
       } : null,
+      channel: activeChannel,
       isSupport: activeChannel === 'support',
       is_support: activeChannel === 'support',
       timestamp: nowIso,

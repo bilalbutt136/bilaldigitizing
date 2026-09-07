@@ -414,7 +414,7 @@ export const AdminChatInbox = () => {
   const [conversations, setConversations] = useState([]);
   const [isLoadingConversations, setIsLoadingConversations] = useState(true);
   const [isSending, setIsSending] = useState(false);
-  const cacheKey = 'bdigi_admin_inbox_cache';
+  const cacheKey = 'bdigi_admin_inbox_cache_v3';
 
   const [activeChatId, setActiveChatId] = useState(null);
   const [activeSection, setActiveSection] = useState('inbox'); // 'inbox' (Customer Inbox) | 'support' (Support)
@@ -937,14 +937,90 @@ export const AdminChatInbox = () => {
     return () => window.removeEventListener('bdigi_offer_status_change', handleOfferStatusEvent);
   }, []);
 
-  // Derive currently active conversation object with safety fallbacks
-  const currentActiveChatId = activeChatId || (conversations.length > 0 ? conversations[0].id : null);
+  const inboxConversationsCount = useMemo(() => {
+    return conversations.filter(c => !isSupportThread(c)).length;
+  }, [conversations]);
+
+  const supportConversationsCount = useMemo(() => {
+    return conversations.filter(c => isSupportThread(c)).length;
+  }, [conversations]);
+
+  const inboxUnreadTotal = useMemo(() => {
+    return conversations
+      .filter(c => !isSupportThread(c))
+      .reduce((sum, c) => sum + getAdminThreadUnreadCount(c), 0);
+  }, [conversations]);
+
+  const supportUnreadTotal = useMemo(() => {
+    return conversations
+      .filter(c => isSupportThread(c))
+      .reduce((sum, c) => sum + getAdminThreadUnreadCount(c), 0);
+  }, [conversations]);
+
+  const unreadTotal = useMemo(() => {
+    return activeSection === 'inbox' ? inboxUnreadTotal : supportUnreadTotal;
+  }, [activeSection, inboxUnreadTotal, supportUnreadTotal]);
+
+  const unreadThreadsCount = useMemo(() => {
+    return conversations
+      .filter(c => (activeSection === 'inbox' ? !isSupportThread(c) : isSupportThread(c)))
+      .filter(c => getAdminThreadUnreadCount(c) > 0).length;
+  }, [conversations, activeSection]);
+
+  // Filter and sort conversations list strictly partitioned by activeSection
+  const filteredConversations = useMemo(() => {
+    const list = conversations.filter(conv => {
+      const isSupport = isSupportThread(conv);
+
+      // Strict Channel Separation
+      if (activeSection === 'inbox' && isSupport) return false;
+      if (activeSection === 'support' && !isSupport) return false;
+
+      if (subFilter === 'unread') {
+        if (getAdminThreadUnreadCount(conv) === 0) return false;
+      }
+
+      if (!searchTerm.trim()) return true;
+      const term = searchTerm.toLowerCase().trim();
+      const info = resolveThreadInfo(conv, orders);
+      return (
+        (conv.clientName || '').toLowerCase().includes(term) ||
+        (conv.clientEmail || '').toLowerCase().includes(term) ||
+        (info.customerName || '').toLowerCase().includes(term) ||
+        (info.customerEmail || '').toLowerCase().includes(term) ||
+        (conv.messages || []).some(m => (m.text || '').toLowerCase().includes(term))
+      );
+    });
+
+    return list.sort((a, b) => {
+      const timeA = a.lastMessageTime || (a.updatedAt ? new Date(a.updatedAt).getTime() : 0);
+      const timeB = b.lastMessageTime || (b.updatedAt ? new Date(b.updatedAt).getTime() : 0);
+      return timeB - timeA;
+    });
+  }, [conversations, activeSection, subFilter, searchTerm, orders]);
+
+  // Derive currently active conversation object strictly from the active section's conversations
+  const currentActiveChatId = useMemo(() => {
+    if (activeChatId) {
+      const match = filteredConversations.find(c => c.id === activeChatId);
+      if (match) return match.id;
+    }
+    return filteredConversations.length > 0 ? filteredConversations[0].id : null;
+  }, [activeChatId, filteredConversations]);
   
-  const activeChat = conversations.find(c => c.id === currentActiveChatId) || (conversations.length > 0 ? conversations[0] : {
-    id: 'placeholder',
-    clientName: 'Live Customer Support',
-    messages: []
-  });
+  const activeChat = useMemo(() => {
+    if (currentActiveChatId) {
+      const found = conversations.find(c => c.id === currentActiveChatId);
+      if (found && (activeSection === 'support' ? isSupportThread(found) : !isSupportThread(found))) {
+        return found;
+      }
+    }
+    return filteredConversations.length > 0 ? filteredConversations[0] : {
+      id: 'placeholder',
+      clientName: activeSection === 'support' ? '24/7 Live Support' : 'Customer Inbox',
+      messages: []
+    };
+  }, [conversations, filteredConversations, currentActiveChatId, activeSection]);
 
   const activeInfo = resolveThreadInfo(activeChat, orders);
 
@@ -1185,83 +1261,18 @@ export const AdminChatInbox = () => {
     }
   };
 
-  const inboxConversationsCount = useMemo(() => {
-    return conversations.filter(c => !isSupportThread(c)).length;
-  }, [conversations]);
-
-  const supportConversationsCount = useMemo(() => {
-    return conversations.filter(c => isSupportThread(c)).length;
-  }, [conversations]);
-
-  const inboxUnreadTotal = useMemo(() => {
-    return conversations
-      .filter(c => !isSupportThread(c))
-      .reduce((sum, c) => sum + getAdminThreadUnreadCount(c), 0);
-  }, [conversations]);
-
-  const supportUnreadTotal = useMemo(() => {
-    return conversations
-      .filter(c => isSupportThread(c))
-      .reduce((sum, c) => sum + getAdminThreadUnreadCount(c), 0);
-  }, [conversations]);
-
-  const unreadTotal = useMemo(() => {
-    return activeSection === 'inbox' ? inboxUnreadTotal : supportUnreadTotal;
-  }, [activeSection, inboxUnreadTotal, supportUnreadTotal]);
-
-  const unreadThreadsCount = useMemo(() => {
-    return conversations
-      .filter(c => (activeSection === 'inbox' ? !isSupportThread(c) : isSupportThread(c)))
-      .filter(c => getAdminThreadUnreadCount(c) > 0).length;
-  }, [conversations, activeSection]);
-
-  // Switch active conversation when switching section if current is not in section
+  // Switch active conversation when switching section
   const handleSectionSwitch = (section) => {
     setActiveSection(section);
     setSearchTerm('');
     setSubFilter('all');
     const candidates = conversations.filter(c => section === 'inbox' ? !isSupportThread(c) : isSupportThread(c));
     if (candidates.length > 0) {
-      const currentIsCandidate = candidates.some(c => c.id === activeChatId);
-      if (!currentIsCandidate) {
-        handleSelectChat(candidates[0].id);
-      }
+      setActiveChatId(candidates[0].id);
     } else {
       setActiveChatId(null);
     }
   };
-
-  // Filter and sort conversations list (always newest at the very top)
-  const filteredConversations = useMemo(() => {
-    const list = conversations.filter(conv => {
-      const isSupport = isSupportThread(conv);
-
-      // Strict Channel Separation
-      if (activeSection === 'inbox' && isSupport) return false;
-      if (activeSection === 'support' && !isSupport) return false;
-
-      if (subFilter === 'unread') {
-        if (getAdminThreadUnreadCount(conv) === 0) return false;
-      }
-
-      if (!searchTerm.trim()) return true;
-      const term = searchTerm.toLowerCase().trim();
-      const info = resolveThreadInfo(conv, orders);
-      return (
-        (conv.clientName || '').toLowerCase().includes(term) ||
-        (conv.clientEmail || '').toLowerCase().includes(term) ||
-        (info.customerName || '').toLowerCase().includes(term) ||
-        (info.customerEmail || '').toLowerCase().includes(term) ||
-        (conv.messages || []).some(m => (m.text || '').toLowerCase().includes(term))
-      );
-    });
-
-    return list.sort((a, b) => {
-      const timeA = a.lastMessageTime || (a.updatedAt ? new Date(a.updatedAt).getTime() : 0);
-      const timeB = b.lastMessageTime || (b.updatedAt ? new Date(b.updatedAt).getTime() : 0);
-      return timeB - timeA;
-    });
-  }, [conversations, activeSection, subFilter, searchTerm, orders]);
 
   // Current active channel ('helpdesk' vs 'digitizer')
   const currentChannelType = (activeChat?.isSupport || isSupportThread(activeChat) || activeSection === 'support') ? 'helpdesk' : 'digitizer';

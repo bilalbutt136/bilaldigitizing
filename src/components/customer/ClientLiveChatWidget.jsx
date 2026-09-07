@@ -706,6 +706,7 @@ export const ClientLiveChatWidget = () => {
       senderName: cleanName,
       sender_name: cleanName,
       client_email: clientEmail,
+      channel: 'support',
       isSupport: true,
       is_support: true,
       is_support_ticket: true,
