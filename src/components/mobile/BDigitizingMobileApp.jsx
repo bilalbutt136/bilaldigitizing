@@ -547,14 +547,14 @@ export const BDigitizingMobileApp = () => {
 
     loadData();
 
-    const unsubscribe = subscribeToLiveMessages({
-      onMessage: () => {
+    const unsubscribe = subscribeToLiveMessages(
+      () => {
         if (isMounted) loadData();
       },
-      onNotification: () => {
+      () => {
         if (isMounted) loadData();
       }
-    });
+    );
 
     return () => {
       isMounted = false;

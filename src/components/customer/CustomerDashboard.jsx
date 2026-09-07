@@ -50,7 +50,7 @@ import { VectorArtPage } from '../public/VectorArtPage';
 import { CustomPatchesSection } from '../public/CustomPatchesSection';
 import ThemePreviewCard from '../common/ThemePreviewCard';
 import { THEME_PRESETS } from '../../utils/themePresets';
-import { fetchConversations, fetchNotificationsFromSupabase, subscribeToLiveMessages } from '../../services/supabaseService';
+import { fetchConversations, fetchNotificationsFromSupabase, subscribeToLiveMessages, subscribeToNotificationListeners } from '../../services/supabaseService';
 import { isSupabaseConfigured } from '../../lib/supabase/client';
 
 export const CustomerDashboard = () => {
@@ -348,10 +348,8 @@ export const CustomerDashboard = () => {
 
     loadNotificationsCount();
 
-    const unsubscribe = subscribeToLiveMessages({
-      onNotification: () => {
-        if (isMounted) loadNotificationsCount();
-      }
+    const unsubscribe = subscribeToNotificationListeners(() => {
+      if (isMounted) loadNotificationsCount();
     });
 
     return () => {
@@ -2480,7 +2478,13 @@ export const CustomerDashboard = () => {
                   background: isDark ? 'var(--color-surface, #111827)' : '#ffffff'
                 }}
               >
-                <ClientChatInbox initialOrderId="inbox" onBack={() => setActiveTab('dashboard')} />
+                <ClientChatInbox 
+                  initialOrderId={selectedOrderChatId || "inbox"} 
+                  onBack={() => {
+                    setSelectedOrderChatId(null);
+                    setActiveTab('dashboard');
+                  }} 
+                />
               </div>
             )}
 

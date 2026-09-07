@@ -1122,8 +1122,8 @@ export async function addOrderMessageInSupabase(orderId, text, senderName, sende
         payload: { order_id: orderId, message: text, is_staff: senderRole === 'admin', sender_name: senderName }
       })
     });
-    return { success: true };
-  } catch { return { success: false }; }
+    return { success: true, message: msgPayload };
+  } catch { return { success: false, message: msgPayload }; }
 }
 
 // ============================================================
@@ -2008,14 +2008,27 @@ export function subscribeToTypingStatus(onTypingChange) {
 }
 
 export function subscribeToLiveMessages(onMessageChange, onConversationChange) {
-  if (onMessageChange) messageListeners.add(onMessageChange);
-  if (onConversationChange) conversationListeners.add(onConversationChange);
+  let msgFn = typeof onMessageChange === 'function' ? onMessageChange : null;
+  let convFn = typeof onConversationChange === 'function' ? onConversationChange : null;
+  let notifFn = null;
+
+  // Defensive support for object signature: { onMessage, onConversation, onNotification }
+  if (typeof onMessageChange === 'object' && onMessageChange !== null) {
+    if (typeof onMessageChange.onMessage === 'function') msgFn = onMessageChange.onMessage;
+    if (typeof onMessageChange.onConversation === 'function') convFn = onMessageChange.onConversation;
+    if (typeof onMessageChange.onNotification === 'function') notifFn = onMessageChange.onNotification;
+  }
+
+  if (msgFn) messageListeners.add(msgFn);
+  if (convFn) conversationListeners.add(convFn);
+  if (notifFn) notificationListeners.add(notifFn);
 
   getSharedChatChannel();
 
   return () => {
-    if (onMessageChange) messageListeners.delete(onMessageChange);
-    if (onConversationChange) conversationListeners.delete(onConversationChange);
+    if (msgFn) messageListeners.delete(msgFn);
+    if (convFn) conversationListeners.delete(convFn);
+    if (notifFn) notificationListeners.delete(notifFn);
   };
 }
 

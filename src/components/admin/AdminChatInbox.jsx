@@ -401,170 +401,10 @@ export const AdminChatInbox = () => {
   }, [channelAutoPilot]);
 
   // Autonomous AI Responder for incoming customer inquiries
-  const triggerAutoPilotReply = async (newMsg) => {
-    if (!newMsg || !newMsg.conversation_id) return;
-    // Strict safety & loop prevention: only respond to customer/client, never admin or self
-    if (newMsg.sender !== 'client' && newMsg.sender !== 'customer') return;
-    if (newMsg.is_autopilot || newMsg.auto_pilot) return;
-    if (!newMsg.text || !String(newMsg.text).trim()) return;
-
-    const targetConv = (conversationsRef.current || []).find(c => c.id === newMsg.conversation_id);
-    const convIdStr = String(newMsg.conversation_id || '').toLowerCase().trim();
-    const isHelpDeskThread = convIdStr === 'general-support' || 
-                             convIdStr === 'support-guest' ||
-                             convIdStr.startsWith('support-') || 
-                             targetConv?.isSupport === true ||
-                             targetConv?.channel === 'helpdesk' ||
-                             targetConv?.channel === 'support';
-
-    // STRICT GUARD RULE: NEVER auto-reply in regular direct customer inbox / studio digitizer
-    if (!isHelpDeskThread) {
-      console.log('Direct Studio Inbox: Auto-Pilot disabled. Manual handling only.');
-      return; // Stop here. Do not call AI generate-reply under any circumstances.
-    }
-
-    // Check independent 24/7 Help Desk Auto-Pilot switch state (default ON)
-    if (!channelAutoPilotRef.current.helpdesk) {
-      console.log('24/7 Help Desk: Auto-Pilot disabled by admin.');
-      return;
-    }
-
-    const msgKey = newMsg.id || `${newMsg.conversation_id}-${newMsg.text}-${newMsg.timestamp}`;
-    if (processedAutoRepliesRef.current.has(msgKey)) return;
-    processedAutoRepliesRef.current.add(msgKey);
-
-    // Check if server already replied with auto-pilot to avoid duplicate replies
-    const hasRecentAutoReply = (targetConv?.messages || []).some(m =>
-      (m.is_autopilot || m.auto_pilot || m.sender === 'admin') &&
-      Math.abs(parseMessageTime(m) - parseMessageTime(newMsg)) < 15000 &&
-      parseMessageTime(m) >= parseMessageTime(newMsg)
-    );
-    if (hasRecentAutoReply) return;
-
-    const customerName = newMsg.senderName || targetConv?.clientName || 'Customer';
-    const channelName = '24/7 Help Desk';
-    const attachImg = newMsg.attachment_url || (typeof newMsg.attachment === 'string' && newMsg.attachment.startsWith('http') ? newMsg.attachment : null);
-
-    try {
-      // 1. Broadcast typing indicator to simulate natural response
-      broadcastTypingStatus(newMsg.conversation_id, `${channelName} (Auto-Pilot)`, 'admin', true);
-
-      // 2. Natural human typing delay (2.2 seconds)
-      await new Promise(r => setTimeout(r, 2200));
-
-      const threadMessages = targetConv?.messages || [newMsg];
-      // 3. Call AI endpoint with 24/7 Help Desk system prompt & vision support
-      const response = await fetch('/api/ai/generate-reply', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          conversationHistory: threadMessages.map(m => ({
-            sender: m.sender,
-            text: m.text,
-            attachment_url: m.attachment_url,
-            attachment_name: m.attachment_name
-          })),
-          customerName: customerName,
-          latestMessage: newMsg.text,
-          imageUrl: attachImg,
-          channelType: 'helpdesk',
-          isSupport: true
-        })
-      });
-
-      const data = await response.json();
-      const replyText = data?.replyText || data?.smartReply;
-
-      // Turn off typing indicator
-      broadcastTypingStatus(newMsg.conversation_id, '24/7 Live Support', 'admin', false);
-
-      if (response.ok && replyText) {
-        const nowIso = new Date().toISOString();
-        const autoMsg = {
-          id: 'msg-' + Date.now() + '-' + Math.random().toString(36).substring(2, 7),
-          conversation_id: newMsg.conversation_id,
-          thread_id: newMsg.conversation_id,
-          client_email: targetConv?.clientEmail || newMsg.client_email || '',
-          sender: 'admin',
-          senderName: isHelpDeskThread ? '24/7 Live Support' : 'Studio Digitizer',
-          sender_name: isHelpDeskThread ? '24/7 Live Support' : 'Studio Digitizer',
-          text: replyText,
-          is_autopilot: true,
-          auto_pilot: true,
-          is_read: false,
-          timestamp: nowIso,
-          created_at: nowIso
-        };
-
-        // Optimistically insert auto-reply into state
-        setConversations(prev => {
-          const safePrev = Array.isArray(prev) ? prev : [];
-          const updated = safePrev.map(conv => {
-            if (conv.id === newMsg.conversation_id) {
-              const currentMsgs = conv.messages || [];
-              const nextMsgs = [...currentMsgs, autoMsg].sort((a, b) => parseMessageTime(a) - parseMessageTime(b));
-              return {
-                ...conv,
-                messages: nextMsgs,
-                lastMessageTime: Date.now(),
-                updatedAt: nowIso
-              };
-            }
-            return conv;
-          });
-          const deduplicated = deduplicateThreads(updated);
-          if (typeof window !== 'undefined') {
-            try {
-              localStorage.setItem(cacheKey, JSON.stringify(deduplicated));
-            } catch {}
-          }
-          return deduplicated;
-        });
-
-        // Persist message to Supabase & broadcast live to customer
-        if (isSupabaseConfigured) {
-          addChatMessage(newMsg.conversation_id, autoMsg)
-            .catch(err => console.warn('[Auto-Pilot DB] Failed to save chat message:', err));
-        }
-
-        // Auto-Create Custom Offer if AI determined requirements are complete
-        if (data.shouldCreateOffer && data.offerDetails?.title && data.offerDetails?.price && !targetConv?.isSupport) {
-          try {
-            const offerPayload = {
-              conversation_id: newMsg.conversation_id,
-              thread_id: newMsg.conversation_id,
-              client_name: customerName,
-              client_email: targetConv?.clientEmail || newMsg.client_email || '',
-              title: String(data.offerDetails.title).trim(),
-              description: String(data.offerDetails.description || 'Production-ready embroidery or vector files crafted to exact technical specifications.').trim(),
-              service_type: data.offerDetails.service_type || 'Embroidery Digitizing',
-              price: parseFloat(data.offerDetails.price) || 25,
-              discount_amount: 0,
-              final_price: parseFloat(data.offerDetails.price) || 25,
-              delivery_time_text: `${data.offerDetails.deliveryDays || 1} Day${(data.offerDetails.deliveryDays || 1) > 1 ? 's' : ''}`,
-              delivery_days: parseInt(data.offerDetails.deliveryDays, 10) || 1,
-              revisions_allowed: '99',
-              expires_in_hours: 24,
-              requires_requirements: true
-            };
-            const offerRes = await createCustomOffer(offerPayload);
-            if (offerRes && !offerRes.error) {
-              playNotificationSound();
-              showToast(`🤖 Auto-Pilot created & sent Custom Offer ($${data.offerDetails.price}) to ${customerName}!`, 'success');
-            }
-            playNotificationSound('send');
-          } catch (offerErr) {
-            console.warn('[Auto-Pilot] Could not auto-create custom offer:', offerErr);
-          }
-        } else {
-          playNotificationSound('send');
-        }
-        showToast(`🤖 Auto-Pilot replied to ${customerName}!`, 'success');
-      }
-    } catch (err) {
-      console.error('Auto-Pilot execution error:', err);
-      broadcastTypingStatus(newMsg.conversation_id, 'Studio Support', 'admin', false);
-    }
+  // Note: 24/7 Live Support AI auto-replies are generated server-side in /api/chat/send.
+  // Client-side auto-generation is intentionally disabled to eliminate race conditions and duplicate replies across admin tabs.
+  const triggerAutoPilotReply = async (_newMsg) => {
+    return;
   };
 
   // Instant local cache hydration on mount for zero-latency load on refresh
@@ -778,17 +618,8 @@ export const AdminChatInbox = () => {
             if (isCurrentlyOpen) {
               // Conversation is open in view — soft chime & smooth scroll
               playNotificationSound('receive');
-            } else {
-              // Background conversation — notification sound & toast
-              playNotificationSound('notification');
-              showToast(
-                `New message from ${newMsg.senderName || 'Customer'}`,
-                'info'
-              );
             }
-
-            // Trigger auto-pilot if enabled for this channel
-            triggerAutoPilotReply(newMsg);
+            // Background notifications and audio dings are handled globally by StateContext.jsx
           }
         }
 
@@ -2375,8 +2206,15 @@ export const AdminChatInbox = () => {
                         formatTime={formatChatTime}
                         themePreset="admin"
                         onOrderClick={(ordId) => {
-                          if (activeInfo.matchOrd) {
+                          if (!ordId) return;
+                          const cleanId = String(ordId).replace('#', '').trim();
+                          const found = Array.isArray(orders) ? orders.find(o => String(o.id) === cleanId || String(o.id).endsWith(cleanId)) : null;
+                          if (found) {
+                            setSelectedOrderForDrawer(found);
+                          } else if (activeInfo.matchOrd) {
                             setSelectedOrderForDrawer(activeInfo.matchOrd);
+                          } else {
+                            setSelectedOrderForDrawer({ id: cleanId });
                           }
                         }}
                       />

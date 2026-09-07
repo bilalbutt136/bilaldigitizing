@@ -44,6 +44,7 @@ export const WorkerDashboard = ({ worker, logoutRoute = '/portal/login' }) => {
   const [activeTab, setActiveTab] = useState('all'); // 'all' | 'pending_acceptance' | 'in_progress' | 'review_pending' | 'revisions' | 'completed' | 'earnings'
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedOrder, setSelectedOrder] = useState(null);
+  const [workspaceInitialTab, setWorkspaceInitialTab] = useState('specs');
 
   const fetchWorkerOrders = async () => {
     try {
@@ -939,7 +940,10 @@ export const WorkerDashboard = ({ worker, logoutRoute = '/portal/login' }) => {
 
                     <button
                       type="button"
-                      onClick={() => setSelectedOrder(ord)}
+                      onClick={() => {
+                        setWorkspaceInitialTab('discussion');
+                        setSelectedOrder(ord);
+                      }}
                       style={{
                         background: 'rgba(59, 130, 246, 0.15)',
                         color: '#60a5fa',
@@ -960,7 +964,10 @@ export const WorkerDashboard = ({ worker, logoutRoute = '/portal/login' }) => {
 
                     <button
                       type="button"
-                      onClick={() => setSelectedOrder(ord)}
+                      onClick={() => {
+                        setWorkspaceInitialTab('specs');
+                        setSelectedOrder(ord);
+                      }}
                       style={{
                         background: isPendingAcceptance 
                           ? 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)' 
@@ -1003,7 +1010,11 @@ export const WorkerDashboard = ({ worker, logoutRoute = '/portal/login' }) => {
         <WorkerOrderWorkspaceModal
           order={selectedOrder}
           isOpen={Boolean(selectedOrder)}
-          onClose={() => setSelectedOrder(null)}
+          initialTab={workspaceInitialTab}
+          onClose={() => {
+            setSelectedOrder(null);
+            setWorkspaceInitialTab('specs');
+          }}
           onOrderUpdated={handleOrderUpdated}
           showToast={showToast}
         />

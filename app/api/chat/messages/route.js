@@ -53,15 +53,11 @@ export async function GET(req) {
     if (convId) {
       targetConvIds.add(convId);
       targetConvIds.add(convId.toLowerCase());
-    }
-
-    if (guestIdParam) {
+    } else if (guestIdParam) {
       targetConvIds.add(`support-${guestIdParam}`);
       targetConvIds.add(`inbox-${guestIdParam}`);
       targetConvIds.add(guestIdParam);
-    }
-
-    if (cleanEmail) {
+    } else if (cleanEmail) {
       targetConvIds.add(`support-${cleanEmail}`);
       targetConvIds.add(`inbox-${cleanEmail}`);
       targetConvIds.add(`direct-${cleanEmail}`);
@@ -87,10 +83,10 @@ export async function GET(req) {
       const idList = Array.from(targetConvIds).map(id => `conversation_id.eq.${id}`).join(',');
       orConditions.push(idList);
     }
-    if (guestIdParam) {
+    if (!convId && guestIdParam) {
       orConditions.push(`guest_id.eq.${guestIdParam}`);
     }
-    if (cleanEmail) {
+    if (!convId && cleanEmail) {
       orConditions.push(`client_email.ilike.${cleanEmail}`);
     }
 

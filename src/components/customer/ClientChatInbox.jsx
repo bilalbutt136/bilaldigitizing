@@ -88,8 +88,12 @@ export const ClientChatInbox = ({ initialOrderId = null, onBack = null }) => {
 
   const guestSessionId = typeof window !== 'undefined' ? getGuestSessionId() : 'guest_init';
   const canonicalChatId = useMemo(() => {
+    if (initialOrderId && initialOrderId !== 'inbox' && initialOrderId !== 'help-support' && initialOrderId !== 'support') {
+      const cleanOrd = String(initialOrderId).replace('order-', '');
+      return `order-${cleanOrd}`;
+    }
     return getCanonicalThreadId(activeChannel, clientEmail, guestSessionId);
-  }, [clientEmail, activeChannel, guestSessionId]);
+  }, [clientEmail, activeChannel, guestSessionId, initialOrderId]);
 
   const [mounted, setMounted] = useState(false);
   const [messages, setMessages] = useState([]);
@@ -99,7 +103,6 @@ export const ClientChatInbox = ({ initialOrderId = null, onBack = null }) => {
   const [isUploadingAttachment, setIsUploadingAttachment] = useState(false);
   const [replyingTo, setReplyingTo] = useState(null);
   const [isSupportTyping, setIsSupportTyping] = useState(false);
-  const [isOrdersMenuOpen, setIsOrdersMenuOpen] = useState(false);
   const [isInputFocused, setIsInputFocused] = useState(false);
   const { keyboardOffset, isKeyboardOpen } = useVisualViewport();
 
@@ -248,9 +251,8 @@ export const ClientChatInbox = ({ initialOrderId = null, onBack = null }) => {
         (cleanCustomerEmail && matchesClientOrder) ||
         (recordConvId === targetChatIdLower || recordThreadId === targetChatIdLower) ||
         (!cleanCustomerEmail && (
-          recordConvId === 'general-support' || recordConvId === 'support-guest' || recordConvId === 'inbox-client' ||
-          recordConvId.startsWith('support-guest_') || recordThreadId.startsWith('support-guest_') ||
-          recordConvId === targetChatIdLower || recordThreadId === targetChatIdLower
+          (targetChatIdLower && (recordConvId === targetChatIdLower || recordThreadId === targetChatIdLower)) ||
+          (guestSessionId && (record.guest_id === guestSessionId || recordConvId.includes(guestSessionId) || recordThreadId.includes(guestSessionId)))
         ));
 
       if (isForThisCustomer) {
@@ -833,7 +835,7 @@ export const ClientChatInbox = ({ initialOrderId = null, onBack = null }) => {
                 message={msg}
                 isMe={isClient}
                 isClient={isClient}
-                senderDisplayName={isClient ? 'You' : 'Studio Digitizer'}
+                senderDisplayName={isClient ? 'You' : (activeChannel === 'support' ? '24/7 Live Support' : 'Studio Digitizer')}
                 clientName={clientName}
                 onReply={(m) => setReplyingTo(m)}
                 formatTime={formatChatTime}
@@ -863,7 +865,7 @@ export const ClientChatInbox = ({ initialOrderId = null, onBack = null }) => {
             margin: '0.25rem 0'
           }}>
             <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#059669' }}>
-              Studio Digitizer is typing
+              {activeChannel === 'support' ? '24/7 Live Support is typing' : 'Studio Digitizer is typing'}
             </span>
             <span style={{ display: 'inline-flex', gap: '3px' }}>
               <span style={{ width: '4px', height: '4px', borderRadius: '50%', background: '#059669' }} />

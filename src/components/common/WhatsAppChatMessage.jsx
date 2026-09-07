@@ -578,7 +578,7 @@ export default function WhatsAppChatMessage({
                 <div style={{
                   fontWeight: 800,
                   fontSize: '0.82rem',
-                  color: isMe ? '#ffffff' : 'var(--color-text-primary, #0f172a)',
+                  color: resolvedIsMe ? '#ffffff' : 'var(--color-text-primary, #0f172a)',
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
                   whiteSpace: 'nowrap'
@@ -587,7 +587,7 @@ export default function WhatsAppChatMessage({
                 </div>
                 <div style={{
                   fontSize: '0.7rem',
-                  color: isMe ? 'rgba(255,255,255,0.75)' : 'var(--color-text-muted, #64748b)',
+                  color: resolvedIsMe ? 'rgba(255,255,255,0.75)' : 'var(--color-text-muted, #64748b)',
                   marginTop: '0.1rem'
                 }}>
                   {message.attachment_size || 'Production Asset'}
@@ -602,9 +602,9 @@ export default function WhatsAppChatMessage({
                   onClick={(e) => handleOpenPdf(e)}
                   title="View PDF"
                   style={{
-                    background: isMe ? 'rgba(255,255,255,0.2)' : 'var(--color-subtle, #f1f5f9)',
-                    color: isMe ? '#ffffff' : 'var(--color-text-primary, #0f172a)',
-                    border: isMe ? '1px solid rgba(255,255,255,0.4)' : '1px solid var(--color-border, #cbd5e1)',
+                    background: resolvedIsMe ? 'rgba(255,255,255,0.2)' : 'var(--color-subtle, #f1f5f9)',
+                    color: resolvedIsMe ? '#ffffff' : 'var(--color-text-primary, #0f172a)',
+                    border: resolvedIsMe ? '1px solid rgba(255,255,255,0.4)' : '1px solid var(--color-border, #cbd5e1)',
                     borderRadius: '6px',
                     padding: '0.35rem 0.55rem',
                     fontSize: '0.72rem',
@@ -624,8 +624,8 @@ export default function WhatsAppChatMessage({
                 onClick={(e) => handleDownload(e)}
                 title="Download file"
                 style={{
-                  background: isMe ? '#ffffff' : 'var(--color-primary, #ff7a00)',
-                  color: isMe ? 'var(--color-primary, #ea580c)' : '#ffffff',
+                  background: resolvedIsMe ? '#ffffff' : 'var(--color-primary, #ff7a00)',
+                  color: resolvedIsMe ? 'var(--color-primary, #ea580c)' : '#ffffff',
                   border: 'none',
                   borderRadius: '6px',
                   padding: '0.35rem 0.55rem',

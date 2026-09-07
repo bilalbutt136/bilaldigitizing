@@ -157,6 +157,30 @@ export async function POST(req) {
       insertedMsg = insData[0];
     }
 
+    // 3.5. Mirror to order_messages if this is an order conversation
+    const targetOrderId = payload.order_id || payload.orderId || (convId.startsWith('order-') ? convId.replace('order-', '') : null);
+    if (targetOrderId) {
+      try {
+        await supabase.from('order_messages').insert([{
+          order_id: targetOrderId,
+          sender_name: actualSenderName,
+          sender_role: actualSender === 'admin' ? 'admin' : (actualSender === 'worker' ? 'worker' : 'client'),
+          is_staff: actualSender === 'admin' || actualSender === 'worker',
+          message: payload.text || payload.message || '',
+          text: payload.text || payload.message || '',
+          attachment: payload.attachment || payload.attachment_name || null,
+          attachment_url: payload.attachment_url || payload.attachmentUrl || null,
+          attachment_name: payload.attachment_name || payload.attachmentName || null,
+          attachment_size: payload.attachment_size || payload.attachmentSize || null,
+          reply_to: payload.reply_to || null,
+          is_read: false,
+          created_at: nowIso
+        }]);
+      } catch (mirrorErr) {
+        console.warn('[Chat Send] Mirror to order_messages notice:', mirrorErr.message);
+      }
+    }
+
     // 4. Update Conversation Unread Counters
     try {
       const { data: convData } = await supabase

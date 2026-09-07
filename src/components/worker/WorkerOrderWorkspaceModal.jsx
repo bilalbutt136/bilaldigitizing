@@ -162,8 +162,15 @@ export function getRelativeTimeString(dt) {
   }
 }
 
-export const WorkerOrderWorkspaceModal = ({ order, isOpen, onClose, onOrderUpdated, showToast }) => {
-  const [activeTab, setActiveTab] = useState('specs'); // 'specs' | 'discussion'
+export const WorkerOrderWorkspaceModal = ({ order, isOpen, onClose, onOrderUpdated, showToast, initialTab = 'specs' }) => {
+  const [activeTab, setActiveTab] = useState(initialTab || 'specs');
+
+  useEffect(() => {
+    if (initialTab && isOpen) {
+      setActiveTab(initialTab);
+    }
+  }, [initialTab, isOpen]);
+
   const [selectedFiles, setSelectedFiles] = useState([]); // multi-file array
   const [workerNotes, setWorkerNotes] = useState(order?.worker_notes || '');
   const [isUploading, setIsUploading] = useState(false);
@@ -235,6 +242,29 @@ export const WorkerOrderWorkspaceModal = ({ order, isOpen, onClose, onOrderUpdat
               setMessages(prev => {
                 if (prev.some(m => m.id === payload.new.id)) return prev;
                 return [...prev, payload.new];
+              });
+              setTimeout(() => {
+                messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+              }, 80);
+            }
+          })
+          .on('broadcast', { event: 'new_message' }, (event) => {
+            const p = event?.payload;
+            if (p && (String(p.order_id) === String(orderId) || String(p.conversation_id) === `order-${orderId}`)) {
+              setMessages(prev => {
+                if (prev.some(m => m.id === p.id)) return prev;
+                return [...prev, {
+                  id: p.id,
+                  order_id: orderId,
+                  message: p.text || p.message || '',
+                  sender_name: p.sender_name || p.senderName || 'Customer',
+                  sender_role: p.sender || 'client',
+                  is_staff: p.sender === 'admin' || p.sender === 'worker',
+                  attachment: p.attachment,
+                  attachment_url: p.attachment_url,
+                  attachment_name: p.attachment_name,
+                  created_at: p.created_at || p.timestamp || new Date().toISOString()
+                }];
               });
               setTimeout(() => {
                 messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });

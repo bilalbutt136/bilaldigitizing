@@ -1976,7 +1976,8 @@ export const StateProvider = ({ children }) => {
       }
     }
 
-    const msgObj = persisted || {
+    const returnedMsg = persisted?.message || (persisted?.id && persisted?.text ? persisted : null);
+    const msgObj = returnedMsg || {
       id: `msg-${Date.now()}`,
       sender: senderName || (senderRole === 'admin' ? 'Master Admin' : 'Client'),
       senderRole,

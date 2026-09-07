@@ -296,9 +296,8 @@ export const ClientLiveChatWidget = () => {
         const isForThisUser = (cleanCustomerEmail && recordEmail && recordEmail === cleanCustomerEmail) ||
           (cleanCustomerEmail && offerEmail && offerEmail === cleanCustomerEmail) ||
           (cleanCustomerEmail && (recordConvId.includes(cleanCustomerEmail) || recordThreadId.includes(cleanCustomerEmail))) ||
-          (recordConvId === targetConvIdLower || recordThreadId === targetConvIdLower) ||
-          isSupportId(recordConvId) ||
-          isSupportId(recordThreadId);
+          (targetConvIdLower && (recordConvId === targetConvIdLower || recordThreadId === targetConvIdLower)) ||
+          (guestSessionId && (record.guest_id === guestSessionId || recordConvId.includes(guestSessionId) || recordThreadId.includes(guestSessionId)));
 
         if (!isForThisUser) {
           return;
