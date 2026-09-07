@@ -1319,7 +1319,7 @@ export async function fetchConversations(email, channel = '') {
     headers['Expires'] = '0';
     const cleanEmail = email ? String(email).toLowerCase().trim() : '';
     let query = cleanEmail ? `&clientEmail=${encodeURIComponent(cleanEmail)}` : '';
-    if (channel) query += `&channel=${encodeURIComponent(channel)}`;
+    if (channel) query += `&channel=${encodeURIComponent(channel)}&type=${encodeURIComponent(channel)}`;
     const res = await fetch(`/api/messages?action=fetchConversations${query}&_t=${Date.now()}`, {
       headers,
       cache: 'no-store',
@@ -1330,7 +1330,7 @@ export async function fetchConversations(email, channel = '') {
   } catch { return []; }
 }
 
-export async function fetchChatMessages(chatId, email, guestId = null, limit = 100, before = null) {
+export async function fetchChatMessages(chatId, email, guestId = null, limit = 100, before = null, channel = '') {
   try {
     if (!chatId && !email && !guestId) return [];
     const headers = await getAuthHeaders();
@@ -1344,6 +1344,7 @@ export async function fetchChatMessages(chatId, email, guestId = null, limit = 1
     if (guestId) queryParts.push(`guest_id=${encodeURIComponent(guestId)}`);
     if (limit) queryParts.push(`limit=${encodeURIComponent(limit)}`);
     if (before) queryParts.push(`before=${encodeURIComponent(before)}`);
+    if (channel) queryParts.push(`channel=${encodeURIComponent(channel)}&type=${encodeURIComponent(channel)}`);
     queryParts.push(`_t=${Date.now()}`);
     
     // Primary: dedicated chat messages endpoint
@@ -1363,7 +1364,8 @@ export async function fetchChatMessages(chatId, email, guestId = null, limit = 1
     const query = cleanEmail ? `&clientEmail=${encodeURIComponent(cleanEmail)}` : '';
     const limitQuery = limit ? `&limit=${encodeURIComponent(limit)}` : '';
     const beforeQuery = before ? `&before=${encodeURIComponent(before)}` : '';
-    const fallbackRes = await fetch(`/api/messages?action=fetchMessages&chatId=${encodeURIComponent(chatId || '')}${query}${limitQuery}${beforeQuery}&_t=${Date.now()}`, {
+    const channelQuery = channel ? `&channel=${encodeURIComponent(channel)}&type=${encodeURIComponent(channel)}` : '';
+    const fallbackRes = await fetch(`/api/messages?action=fetchMessages&chatId=${encodeURIComponent(chatId || '')}${query}${limitQuery}${beforeQuery}${channelQuery}&_t=${Date.now()}`, {
       headers,
       cache: 'no-store',
       next: { revalidate: 0 }
@@ -1605,10 +1607,17 @@ export async function addChatMessage(chatIdOrObj, messageObj = null) {
     payload = { ...(messageObj || {}) };
   }
 
+  const isSupp = payload.chat_type === 'support' || payload.chatType === 'support' || payload.is_support === true || payload.isSupport === true || targetChatId.startsWith('support-');
+  const resolvedChatType = isSupp ? 'support' : (payload.chat_type || payload.chatType || 'inbox');
+
   const fullMsg = {
     ...payload,
     conversation_id: targetChatId,
     thread_id: targetChatId,
+    chat_type: resolvedChatType,
+    chatType: resolvedChatType,
+    is_support: isSupp,
+    isSupport: isSupp,
     type: payload.type || (payload.offer_id || payload.offer_data ? 'custom_offer' : 'text'),
     metadata: payload.metadata || {},
     timestamp: payload.timestamp || payload.created_at || new Date().toISOString(),

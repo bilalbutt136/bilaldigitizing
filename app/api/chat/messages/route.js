@@ -49,7 +49,8 @@ export async function GET(req) {
       return NextResponse.json({ success: false, error: 'Unauthorized to view this thread.' }, { status: 403 });
     }
 
-    const isSupport = isSupportConversation(convId);
+    const channelParam = (searchParams.get('channel') || searchParams.get('type') || '').toLowerCase();
+    const isSupport = channelParam === 'support' ? true : (channelParam === 'inbox' ? false : isSupportConversation(convId));
     const targetConvIds = new Set();
     if (convId) {
       targetConvIds.add(convId);
@@ -145,7 +146,7 @@ export async function GET(req) {
     (rawMessages || []).forEach(m => {
       if (!m || !m.id || m.deleted_at) return;
       const mConv = m.conversation_id || m.thread_id || '';
-      const msgIsSupport = isSupportConversation(mConv) || m.metadata?.isSupport === true || m.is_support === true;
+      const msgIsSupport = isSupportConversation(mConv) || m.chat_type === 'support' || m.metadata?.isSupport === true || m.metadata?.channel === 'support' || m.is_support === true;
       if (isSupport && !msgIsSupport) return;
       if (!isSupport && msgIsSupport) return;
       uniqueMap.set(m.id, m);

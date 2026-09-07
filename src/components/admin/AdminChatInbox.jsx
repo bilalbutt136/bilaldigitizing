@@ -185,11 +185,27 @@ const isSupportConversation = (id) => {
   return lower === 'general-support' || lower === 'support-guest' || lower === 'help-support' || lower.startsWith('support-');
 };
 
+export const isSupportThread = (conv) => {
+  if (!conv) return false;
+  if (conv.chat_type === 'support') return true;
+  if (conv.isSupport === true || conv.is_support === true) return true;
+  const idStr = String(conv.id || '').toLowerCase().trim();
+  return idStr === 'general-support' || idStr === 'support-guest' || idStr === 'help-support' || idStr.startsWith('support-');
+};
+
+export const isInboxThread = (conv) => {
+  if (!conv) return false;
+  if (conv.chat_type === 'inbox') return true;
+  if (isSupportThread(conv)) return false;
+  const idStr = String(conv.id || '').toLowerCase().trim();
+  return idStr.startsWith('inbox-') || idStr.startsWith('order-') || idStr.startsWith('direct-') || idStr.startsWith('chat-') || Boolean(conv.order_id || (conv.orderId && conv.orderId !== 'Support' && conv.orderId !== 'Customer Support' && conv.orderId !== 'General Inquiries' && conv.orderId !== 'Direct Chat'));
+};
+
 // Robust matcher to link messages or thread IDs strictly to their parent conversation and channel
 export const matchesConversation = (conv, targetIdOrMsg) => {
   if (!conv || !targetIdOrMsg) return false;
   const cId = String(conv.id || '').toLowerCase().trim();
-  const isConvSupport = isSupportConversation(cId) || conv.isSupport === true;
+  const isConvSupport = isSupportThread(conv);
 
   if (typeof targetIdOrMsg === 'string') {
     const tId = targetIdOrMsg.toLowerCase().trim();
@@ -231,11 +247,11 @@ export const matchesConversation = (conv, targetIdOrMsg) => {
 
   const msg = targetIdOrMsg;
   const mConvId = String(msg.conversation_id || msg.thread_id || '').toLowerCase().trim();
-  if (cId === mConvId) return true;
-
-  const isMsgSupport = isSupportConversation(mConvId) || msg.isSupport === true || msg.is_support === true;
+  const isMsgSupport = msg.chat_type === 'support' || isSupportConversation(mConvId) || msg.isSupport === true || msg.is_support === true;
   // Strict Channel Isolation: Support message must NEVER match an Inbox conversation, and vice versa!
   if (isConvSupport !== isMsgSupport) return false;
+
+  if (cId === mConvId) return true;
 
   // Order threads match
   if (cId.startsWith('order-') || mConvId.startsWith('order-')) {
@@ -272,8 +288,9 @@ const deduplicateThreads = (rawList) => {
     if (!conv) return;
     const cleanMessages = sortMessagesChronologically((conv.messages || []).filter(m => m && (m.id || m.text)));
 
-    const isDirectInbox = conv.id?.startsWith('inbox-') || conv.id?.startsWith('direct-');
-    const isOrder = conv.id?.startsWith('order-') || Boolean(conv.orderId && conv.orderId !== 'Support' && conv.orderId !== 'Customer Support' && conv.orderId !== 'General Inquiries' && conv.orderId !== 'Direct Chat');
+    const isSupp = isSupportThread(conv);
+    const isDirectInbox = !isSupp && (conv.id?.startsWith('inbox-') || conv.id?.startsWith('direct-'));
+    const isOrder = !isSupp && (conv.id?.startsWith('order-') || Boolean(conv.orderId && conv.orderId !== 'Support' && conv.orderId !== 'Customer Support' && conv.orderId !== 'General Inquiries' && conv.orderId !== 'Direct Chat'));
     const rawOrdId = isOrder ? (conv.orderId || conv.id || '').replace('order-', '').replace('#', '').trim() : null;
 
     let key = '';
@@ -293,7 +310,7 @@ const deduplicateThreads = (rawList) => {
       }
       key = `inbox_${clientEmail || 'client'}`;
       unifiedId = `inbox-${clientEmail || 'client'}`;
-    } else {
+    } else if (isSupp) {
       // Support thread
       let clientEmail = normalizeEmail(conv.clientEmail || conv.client_email);
       if (!clientEmail) {
@@ -315,6 +332,10 @@ const deduplicateThreads = (rawList) => {
         key = 'support_general';
         unifiedId = 'general-support';
       }
+    } else {
+      let clientEmail = normalizeEmail(conv.clientEmail || conv.client_email);
+      key = `inbox_${clientEmail || conv.id || 'general'}`;
+      unifiedId = conv.id || `inbox-${clientEmail || 'general'}`;
     }
 
     const lastMsg = cleanMessages[cleanMessages.length - 1];
@@ -326,6 +347,9 @@ const deduplicateThreads = (rawList) => {
       map.set(key, { 
         ...conv, 
         id: unifiedId,
+        chat_type: isSupp ? 'support' : 'inbox',
+        is_support: isSupp,
+        isSupport: isSupp,
         lastMessage: initialSnippet,
         last_message: initialSnippet,
         unreadCount: convUnread, 
@@ -364,6 +388,9 @@ const deduplicateThreads = (rawList) => {
       map.set(key, {
         ...existing,
         id: unifiedId,
+        chat_type: isSupp ? 'support' : 'inbox',
+        is_support: isSupp,
+        isSupport: isSupp,
         clientName: resolvedName,
         clientEmail: resolvedEmail,
         lastMessage: updatedSnippet,
@@ -500,7 +527,11 @@ export const AdminChatInbox = () => {
 
               // Non-destructive merge: preserve any recent in-flight or live messages
               const mergedList = fresh.map(freshConv => {
-                const existing = currentList.find(c => matchesConversation(c, freshConv.id) || (freshConv.clientEmail && c.clientEmail === freshConv.clientEmail));
+                const freshIsSupport = isSupportThread(freshConv);
+                const existing = currentList.find(c => 
+                  isSupportThread(c) === freshIsSupport &&
+                  (matchesConversation(c, freshConv.id) || (freshConv.clientEmail && c.clientEmail === freshConv.clientEmail))
+                );
                 if (!existing) return freshConv;
 
                 const msgMap = new Map();
@@ -1010,16 +1041,17 @@ export const AdminChatInbox = () => {
     setMobileView('chat');
     const targetConv = conversations.find(c => c.id === chatId);
     const email = targetConv?.clientEmail || '';
+    const isTargetSupport = isSupportThread(targetConv);
 
     // Fetch latest message stream for this specific thread without auto-marking as read
     if (isSupabaseConfigured) {
       try {
-        const freshMsgs = await fetchChatMessages(chatId, email, null, 100);
+        const freshMsgs = await fetchChatMessages(chatId, email, null, 100, null, isTargetSupport ? 'support' : 'inbox');
         if (Array.isArray(freshMsgs) && freshMsgs.length > 0) {
           setHasMoreMessages(freshMsgs.length >= 100);
           setConversations(prev => {
             const updated = prev.map(c => {
-              if (c.id === chatId || (email && c.clientEmail === email)) {
+              if (c.id === chatId || (isSupportThread(c) === isTargetSupport && email && c.clientEmail === email)) {
                 const msgMap = new Map();
                 (c.messages || []).forEach(m => { if (m && m.id) msgMap.set(m.id, m); });
                 freshMsgs.forEach(m => { if (m && m.id) msgMap.set(m.id, m); });
@@ -1041,11 +1073,12 @@ export const AdminChatInbox = () => {
     if (!chatId) return;
     const targetConv = conversations.find(c => c.id === chatId);
     const email = targetConv?.clientEmail || '';
+    const isTargetSupport = isSupportThread(targetConv);
 
     // Optimistic UI update
     setConversations(prev => {
       const updated = prev.map(c => 
-        (c.id === chatId || (email && c.clientEmail === email))
+        (c.id === chatId || (isSupportThread(c) === isTargetSupport && email && c.clientEmail === email))
           ? {
               ...c,
               unreadCount: 0,
@@ -1071,11 +1104,12 @@ export const AdminChatInbox = () => {
     if (!chatId) return;
     const targetConv = conversations.find(c => c.id === chatId);
     const email = targetConv?.clientEmail || '';
+    const isTargetSupport = isSupportThread(targetConv);
 
     // Optimistic UI update
     setConversations(prev => {
       const updated = prev.map(c => 
-        (c.id === chatId || (email && c.clientEmail === email))
+        (c.id === chatId || (isSupportThread(c) === isTargetSupport && email && c.clientEmail === email))
           ? {
               ...c,
               unreadCount: 1,
@@ -1110,17 +1144,18 @@ export const AdminChatInbox = () => {
     try {
       setIsLoadingEarlier(true);
       const email = targetConv?.clientEmail || '';
+      const isTargetSupport = isSupportThread(targetConv);
       
       const container = chatFeedRef.current;
       const prevScrollHeight = container ? container.scrollHeight : 0;
 
-      const earlierMsgs = await fetchChatMessages(currentActiveChatId, email, null, 50, oldestTimestamp);
+      const earlierMsgs = await fetchChatMessages(currentActiveChatId, email, null, 50, oldestTimestamp, isTargetSupport ? 'support' : 'inbox');
 
       if (Array.isArray(earlierMsgs) && earlierMsgs.length > 0) {
         setHasMoreMessages(earlierMsgs.length >= 50);
         setConversations(prev => {
           const updated = prev.map(c => {
-            if (c.id === currentActiveChatId || (email && c.clientEmail === email)) {
+            if (c.id === currentActiveChatId || (isSupportThread(c) === isTargetSupport && email && c.clientEmail === email)) {
               const msgMap = new Map();
               earlierMsgs.forEach(m => { if (m && m.id) msgMap.set(m.id, m); });
               (c.messages || []).forEach(m => { if (m && m.id) msgMap.set(m.id, m); });
@@ -1148,13 +1183,6 @@ export const AdminChatInbox = () => {
     } finally {
       setIsLoadingEarlier(false);
     }
-  };
-
-  const isSupportThread = (c) => {
-    if (!c) return false;
-    if (c.isSupport === true) return true;
-    const idStr = String(c.id || '').toLowerCase();
-    return idStr === 'general-support' || idStr === 'support-guest' || idStr.startsWith('support-');
   };
 
   const inboxConversationsCount = useMemo(() => {
@@ -1190,6 +1218,8 @@ export const AdminChatInbox = () => {
   // Switch active conversation when switching section if current is not in section
   const handleSectionSwitch = (section) => {
     setActiveSection(section);
+    setSearchTerm('');
+    setSubFilter('all');
     const candidates = conversations.filter(c => section === 'inbox' ? !isSupportThread(c) : isSupportThread(c));
     if (candidates.length > 0) {
       const currentIsCandidate = candidates.some(c => c.id === activeChatId);
@@ -1327,6 +1357,8 @@ export const AdminChatInbox = () => {
         attachment: replyingTo.attachment_name || replyingTo.attachment,
         attachment_url: replyingTo.attachment_url
       } : null,
+      chat_type: (activeSection === 'support' || isSupportThread(activeChat)) ? 'support' : 'inbox',
+      chatType: (activeSection === 'support' || isSupportThread(activeChat)) ? 'support' : 'inbox',
       isSupport: activeSection === 'support' || isSupportThread(activeChat),
       is_support: activeSection === 'support' || isSupportThread(activeChat),
       timestamp: nowIso,

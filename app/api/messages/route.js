@@ -393,7 +393,7 @@ export async function GET(request) {
       // Seed threads from existing conversations table
       rawConvs.forEach(conv => {
         const convEmail = normalizeEmail(conv.client_email);
-        const isSupport = isSupportConversation(conv.id);
+        const isSupport = conv.chat_type === 'support' || conv.is_support === true || isSupportConversation(conv.id);
         const convClientName = (!conv.client_name || ['Support', 'Admin', 'Studio Support'].includes(conv.client_name)) ? null : conv.client_name;
         getOrCreateThread(conv.id, convEmail, isSupport, convClientName);
       });
@@ -401,7 +401,7 @@ export async function GET(request) {
       // Distribute messages strictly to unified conversation threads
       rawMessages.forEach(m => {
         const cId = String(m.conversation_id || m.thread_id || '').toLowerCase().trim();
-        const isSupport = isSupportConversation(cId);
+        const isSupport = m.chat_type === 'support' || m.is_support === true || isSupportConversation(cId) || m.metadata?.isSupport === true || m.metadata?.channel === 'support';
 
         let matchedEmail = '';
         if (cId.startsWith('inbox-') && !cId.startsWith('inbox-guest_')) {
@@ -492,52 +492,63 @@ export async function GET(request) {
       });
 
       // Finalize and sort lists (always newest at the very top)
-      const finalizeThreads = (threadsMap) => {
-        return Array.from(threadsMap.values()).map(thread => {
-          thread.messages.sort((a, b) => {
-            const diff = parseMessageTime(a) - parseMessageTime(b);
-            if (diff !== 0) return diff;
-            const strA = String(a.created_at || a.timestamp || '');
-            const strB = String(b.created_at || b.timestamp || '');
-            const strDiff = strA.localeCompare(strB);
-            if (strDiff !== 0) return strDiff;
-            return String(a.id || '').localeCompare(String(b.id || ''));
-          });
-          const lastMsg = thread.messages[thread.messages.length - 1];
-          const lastTime = lastMsg ? parseMessageTime(lastMsg) : (thread.updatedAt ? new Date(thread.updatedAt).getTime() : 0);
-          
-          const unreadForAdmin = thread.messages.filter(m => (m.sender === 'client' || m.sender === 'customer' || m.sender !== 'admin') && !m.is_read).length;
-          const unreadForClient = thread.messages.filter(m => (m.sender === 'admin' || m.sender === 'support') && !m.is_read).length;
+      const finalizeThreads = (threadsMap, isSupportChannel = false) => {
+        return Array.from(threadsMap.values())
+          .filter(thread => {
+            if (thread.messages && thread.messages.length > 0) return true;
+            if (!isSupportChannel && thread.orders && thread.orders.length > 0) return true;
+            return false;
+          })
+          .map(thread => {
+            thread.messages.sort((a, b) => {
+              const diff = parseMessageTime(a) - parseMessageTime(b);
+              if (diff !== 0) return diff;
+              const strA = String(a.created_at || a.timestamp || '');
+              const strB = String(b.created_at || b.timestamp || '');
+              const strDiff = strA.localeCompare(strB);
+              if (strDiff !== 0) return strDiff;
+              return String(a.id || '').localeCompare(String(b.id || ''));
+            });
+            const lastMsg = thread.messages[thread.messages.length - 1];
+            const lastTime = lastMsg ? parseMessageTime(lastMsg) : (thread.updatedAt ? new Date(thread.updatedAt).getTime() : 0);
+            
+            const unreadForAdmin = thread.messages.filter(m => (m.sender === 'client' || m.sender === 'customer' || m.sender !== 'admin') && !m.is_read).length;
+            const unreadForClient = thread.messages.filter(m => (m.sender === 'admin' || m.sender === 'support') && !m.is_read).length;
 
-          let lastMessageSnippet = '';
-          if (lastMsg) {
-            if (lastMsg.text) {
-              lastMessageSnippet = lastMsg.text.includes('[OFFER_DATA:') ? '📋 Custom Design Offer' : lastMsg.text;
-            } else if (lastMsg.attachment_name || lastMsg.attachment) {
-              lastMessageSnippet = `📎 ${lastMsg.attachment_name || lastMsg.attachment}`;
-            } else if (lastMsg.offer_data || lastMsg.offer_id) {
-              lastMessageSnippet = '📋 Custom Design Offer';
-            } else {
-              lastMessageSnippet = 'New Message';
+            let lastMessageSnippet = '';
+            if (lastMsg) {
+              if (lastMsg.text) {
+                lastMessageSnippet = lastMsg.text.includes('[OFFER_DATA:') ? '📋 Custom Design Offer' : lastMsg.text;
+              } else if (lastMsg.attachment_name || lastMsg.attachment) {
+                lastMessageSnippet = `📎 ${lastMsg.attachment_name || lastMsg.attachment}`;
+              } else if (lastMsg.offer_data || lastMsg.offer_id) {
+                lastMessageSnippet = '📋 Custom Design Offer';
+              } else {
+                lastMessageSnippet = 'New Message';
+              }
             }
-          }
 
-          return {
-            ...thread,
-            lastMessage: lastMessageSnippet,
-            last_message: lastMessageSnippet,
-            unreadCount: isAdmin ? unreadForAdmin : unreadForClient,
-            adminUnreadCount: unreadForAdmin,
-            clientUnreadCount: unreadForClient,
-            lastMessageTime: lastTime,
-            last_message_time: lastTime,
-            updatedAt: lastMsg?.created_at || lastMsg?.timestamp || thread.updatedAt
-          };
-        }).sort((a, b) => (b.lastMessageTime || 0) - (a.lastMessageTime || 0));
+            return {
+              ...thread,
+              chat_type: isSupportChannel ? 'support' : 'inbox',
+              is_support: isSupportChannel,
+              isSupport: isSupportChannel,
+              lastMessage: lastMessageSnippet,
+              last_message: lastMessageSnippet,
+              unreadCount: isAdmin ? unreadForAdmin : unreadForClient,
+              adminUnreadCount: unreadForAdmin,
+              clientUnreadCount: unreadForClient,
+              lastMessageTime: lastTime,
+              last_message_time: lastTime,
+              updatedAt: lastMsg?.created_at || lastMsg?.timestamp || thread.updatedAt
+            };
+          }).sort((a, b) => (b.lastMessageTime || 0) - (a.lastMessageTime || 0));
       };
 
-      const inboxConversations = finalizeThreads(inboxThreadsMap);
-      const supportConversations = finalizeThreads(supportThreadsMap);
+      const inboxConversations = finalizeThreads(inboxThreadsMap, false);
+      const supportConversations = finalizeThreads(supportThreadsMap, true);
+
+      const effectiveChannel = (channelParam || searchParams.get('type') || '').toLowerCase().trim();
 
       // Return per-user or admin data
       if (!isAdmin) {
@@ -545,9 +556,9 @@ export async function GET(request) {
           const userInbox = inboxConversations.find(c => c.clientEmail === cleanUserEmail) || getOrCreateThread('', cleanUserEmail, false);
           const userSupport = supportConversations.find(c => c.clientEmail === cleanUserEmail) || getOrCreateThread('', cleanUserEmail, true);
           
-          if (channelParam === 'support') {
+          if (effectiveChannel === 'support') {
             return NextResponse.json({ conversations: [userSupport], inboxConversations: [userInbox], supportConversations: [userSupport] }, { headers: NO_CACHE_HEADERS });
-          } else if (channelParam === 'inbox') {
+          } else if (effectiveChannel === 'inbox') {
             return NextResponse.json({ conversations: [userInbox], inboxConversations: [userInbox], supportConversations: [userSupport] }, { headers: NO_CACHE_HEADERS });
           }
           return NextResponse.json({ conversations: [userInbox, userSupport], inboxConversations: [userInbox], supportConversations: [userSupport] }, { headers: NO_CACHE_HEADERS });
@@ -566,13 +577,16 @@ export async function GET(request) {
 
       // For Admin
       let combinedList = [...inboxConversations, ...supportConversations];
-      if (channelParam === 'inbox') combinedList = inboxConversations;
-      else if (channelParam === 'support') combinedList = supportConversations;
+      if (effectiveChannel === 'inbox') combinedList = inboxConversations;
+      else if (effectiveChannel === 'support') combinedList = supportConversations;
 
       return NextResponse.json({
+        success: true,
+        type: effectiveChannel || 'all',
         conversations: combinedList,
         inboxConversations,
         supportConversations
+      }, { headers: NO_CACHE_HEADERS });
       }, { headers: NO_CACHE_HEADERS });
     }
 
@@ -963,6 +977,8 @@ export async function POST(request) {
         order_id: null,
         order_title: isSupport ? 'Live Customer Support' : 'Customer Inbox',
         avatar: payload.avatar || null,
+        chat_type: isSupport ? 'support' : 'inbox',
+        is_support: isSupport,
         status: payload.status || 'online',
         unread_count: payload.unreadCount || payload.unread_count || 0,
         admin_unread_count: payload.adminUnreadCount ?? (isAdmin ? 0 : 1),
@@ -983,10 +999,12 @@ export async function POST(request) {
         company: dbPayload.client_company,
         avatar: dbPayload.avatar,
         status: dbPayload.status,
+        chat_type: isSupport ? 'support' : 'inbox',
+        is_support: isSupport,
+        isSupport,
         unreadCount: isAdmin ? dbPayload.admin_unread_count : dbPayload.client_unread_count,
         adminUnreadCount: dbPayload.admin_unread_count,
         clientUnreadCount: dbPayload.client_unread_count,
-        isSupport,
         createdAt: new Date().toISOString(),
         updatedAt: dbPayload.updated_at,
         messages: payload.messages || []
@@ -1050,6 +1068,8 @@ export async function POST(request) {
           client_name: finalClientName,
           client_email: targetEmail || (canonicalConvId.includes('guest_') ? `${canonicalConvId.replace(/^support-/, '').replace(/^inbox-/, '')}@guest.local` : null),
           client_company: payload.company || (isSupport ? 'Customer Support' : 'Studio Client'),
+          chat_type: isSupport ? 'support' : 'inbox',
+          is_support: isSupport,
           status: 'online',
           admin_unread_count: isAdmin ? 0 : 1,
           client_unread_count: isAdmin ? 1 : 0,
@@ -1125,9 +1145,11 @@ export async function POST(request) {
         conversation_id: canonicalConvId,
         thread_id: canonicalConvId,
         guest_id: payload.guest_id || (canonicalConvId.includes('guest_') ? canonicalConvId.replace(/^support-/, '').replace(/^inbox-/, '') : null),
+        chat_type: isSupport ? 'support' : 'inbox',
+        is_support: isSupport,
         status: 'sent',
         type: payload.type || (payload.offer_id || payload.offer_data ? 'custom_offer' : 'text'),
-        metadata: payload.metadata || {},
+        metadata: { ...(payload.metadata || {}), isSupport, is_support: isSupport, chat_type: isSupport ? 'support' : 'inbox', channel: isSupport ? 'support' : 'inbox' },
         client_email: targetEmail || null,
         sender: actualSender,
         sender_name: actualSenderName,
