@@ -92,6 +92,42 @@ export const AdminDashboard = () => {
   };
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
+  // Dynamic Dashboard Zoom: Defaults to 85% (0.85) for optimal full-dashboard visibility
+  const [adminZoom, setAdminZoom] = useState(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const saved = localStorage.getItem('bdigi_admin_zoom');
+        if (saved) {
+          const parsed = parseFloat(saved);
+          if (!isNaN(parsed) && parsed >= 0.7 && parsed <= 1.25) {
+            return parsed;
+          }
+        }
+      } catch {}
+    }
+    return 0.85;
+  });
+
+  const handleSetZoom = (val) => {
+    setAdminZoom(val);
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('bdigi_admin_zoom', String(val));
+        window.dispatchEvent(new CustomEvent('bdigi_admin_zoom_change', { detail: { zoom: val } }));
+      } catch {}
+    }
+  };
+
+  React.useEffect(() => {
+    const handleZoomEvent = (e) => {
+      if (e.detail?.zoom && typeof e.detail.zoom === 'number') {
+        setAdminZoom(e.detail.zoom);
+      }
+    };
+    window.addEventListener('bdigi_admin_zoom_change', handleZoomEvent);
+    return () => window.removeEventListener('bdigi_admin_zoom_change', handleZoomEvent);
+  }, []);
+
   const [mounted, setMounted] = React.useState(false);
   const initialTrackSyncedRef = React.useRef(false);
 
@@ -314,14 +350,31 @@ export const AdminDashboard = () => {
   ];
 
   return (
-    <div className="admin-portal-wrapper" style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 114px)', maxHeight: 'calc(100vh - 114px)', minHeight: 'calc(100vh - 114px)', background: 'var(--bg-main)', position: 'relative', width: '100%', overflow: 'hidden' }}>
+    <div 
+      className="admin-portal-wrapper" 
+      style={{ 
+        display: 'flex', 
+        flexDirection: 'column', 
+        height: `calc((100vh - 114px) / ${adminZoom})`, 
+        maxHeight: `calc((100vh - 114px) / ${adminZoom})`, 
+        minHeight: `calc((100vh - 114px) / ${adminZoom})`, 
+        width: '100%', 
+        zoom: adminZoom, 
+        background: 'var(--bg-main)', 
+        position: 'relative', 
+        overflow: 'hidden' 
+      }}
+    >
       
-      {/* Desktop Independent Layout Styles */}
+      {/* Desktop Independent Layout Styles with Dynamic Zooming */}
       <style dangerouslySetInnerHTML={{__html: `
         @media (min-width: 1025px) {
           .admin-portal-wrapper {
-            height: calc(100vh - 114px) !important;
-            max-height: calc(100vh - 114px) !important;
+            zoom: ${adminZoom} !important;
+            height: calc((100vh - 114px) / ${adminZoom}) !important;
+            max-height: calc((100vh - 114px) / ${adminZoom}) !important;
+            min-height: calc((100vh - 114px) / ${adminZoom}) !important;
+            width: 100% !important;
             overflow: hidden !important;
           }
           .admin-portal-body {
@@ -726,7 +779,7 @@ export const AdminDashboard = () => {
         </div>
 
         <div style={{
-          marginTop: '2rem',
+          marginTop: 'auto',
           padding: '0.85rem',
           background: 'var(--navy-50)',
           borderRadius: 'var(--radius-md)',
@@ -734,6 +787,44 @@ export const AdminDashboard = () => {
           fontSize: '0.75rem',
           color: 'var(--navy-900)'
         }}>
+          {/* Display Zoom Controller */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.65rem' }}>
+            <span style={{ fontSize: '0.72rem', fontWeight: 800, color: 'var(--text-muted)' }}>
+              Display Zoom
+            </span>
+            <div style={{ display: 'flex', gap: '2px', background: 'var(--bg-main)', padding: '2px', borderRadius: '6px', border: '1px solid var(--border-color)' }}>
+              {[
+                { label: '80%', val: 0.8 },
+                { label: '85%', val: 0.85 },
+                { label: '90%', val: 0.9 },
+                { label: '100%', val: 1.0 }
+              ].map(opt => {
+                const isActive = Math.abs(adminZoom - opt.val) < 0.01;
+                return (
+                  <button
+                    key={opt.val}
+                    type="button"
+                    onClick={() => handleSetZoom(opt.val)}
+                    title={`Set display zoom to ${opt.label}`}
+                    style={{
+                      border: 'none',
+                      background: isActive ? 'var(--color-primary, #ea580c)' : 'transparent',
+                      color: isActive ? '#ffffff' : 'var(--text-muted)',
+                      fontWeight: isActive ? 800 : 600,
+                      fontSize: '0.66rem',
+                      padding: '0.15rem 0.35rem',
+                      borderRadius: '4px',
+                      cursor: 'pointer',
+                      transition: 'all 0.15s ease'
+                    }}
+                  >
+                    {opt.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontWeight: 700 }}>
             <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#22c55e', display: 'inline-block' }} />
             System Live
@@ -784,7 +875,49 @@ export const AdminDashboard = () => {
               </p>
             </div>
 
-            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '3px',
+                background: 'var(--bg-surface)',
+                border: '1px solid var(--border-color)',
+                borderRadius: '8px',
+                padding: '2px 4px'
+              }}>
+                <span style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--text-muted)', padding: '0 4px' }}>
+                  Zoom:
+                </span>
+                {[
+                  { label: '80%', val: 0.8 },
+                  { label: '85%', val: 0.85 },
+                  { label: '90%', val: 0.9 },
+                  { label: '100%', val: 1.0 }
+                ].map(opt => {
+                  const isActive = Math.abs(adminZoom - opt.val) < 0.01;
+                  return (
+                    <button
+                      key={opt.val}
+                      type="button"
+                      onClick={() => handleSetZoom(opt.val)}
+                      style={{
+                        border: 'none',
+                        background: isActive ? 'var(--color-primary, #ea580c)' : 'transparent',
+                        color: isActive ? '#ffffff' : 'var(--text-main)',
+                        fontWeight: isActive ? 800 : 600,
+                        fontSize: '0.72rem',
+                        padding: '0.2rem 0.45rem',
+                        borderRadius: '5px',
+                        cursor: 'pointer',
+                        transition: 'all 0.15s ease'
+                      }}
+                    >
+                      {opt.label}
+                    </button>
+                  );
+                })}
+              </div>
+
               <button 
                 type="button"
                 className="btn btn-outline btn-sm"
@@ -817,6 +950,8 @@ export const AdminDashboard = () => {
             setIsPricingSettingsOpen={setIsPricingSettingsOpen}
             resetAllData={resetAllData}
             showToast={showToast}
+            adminZoom={adminZoom}
+            onSetZoom={handleSetZoom}
           />
         )}
 

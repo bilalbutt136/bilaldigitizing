@@ -39,7 +39,9 @@ export const AdminExecutiveDashboard = ({
   setSelectedOrderForDrawer,
   setIsPricingSettingsOpen,
   resetAllData,
-  showToast
+  showToast,
+  adminZoom = 0.85,
+  onSetZoom
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all'); // 'all' | 'embroidery' | 'vector' | 'patches'
@@ -328,6 +330,52 @@ export const AdminExecutiveDashboard = ({
           >
             <RefreshCw size={13} /> Sync DB
           </button>
+
+          {/* View Zoom Controller */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '3px',
+            background: 'var(--bg-surface, #ffffff)',
+            border: '1.5px solid var(--border-color, #cbd5e1)',
+            borderRadius: '10px',
+            padding: '0.2rem 0.45rem',
+            height: '35px',
+            boxSizing: 'border-box'
+          }}>
+            <span style={{ fontSize: '0.72rem', fontWeight: 800, color: 'var(--text-muted, #64748b)', paddingRight: '2px' }}>
+              Zoom:
+            </span>
+            {[
+              { label: '80%', val: 0.8 },
+              { label: '85%', val: 0.85 },
+              { label: '90%', val: 0.9 },
+              { label: '100%', val: 1.0 }
+            ].map(opt => {
+              const isActive = Math.abs((adminZoom || 0.85) - opt.val) < 0.01;
+              return (
+                <button
+                  key={opt.val}
+                  type="button"
+                  onClick={() => onSetZoom && onSetZoom(opt.val)}
+                  title={`Set view scale to ${opt.label}`}
+                  style={{
+                    border: 'none',
+                    background: isActive ? 'var(--orange-500, #ea580c)' : 'transparent',
+                    color: isActive ? '#ffffff' : 'var(--text-muted, #64748b)',
+                    fontWeight: isActive ? 800 : 600,
+                    fontSize: '0.72rem',
+                    padding: '0.15rem 0.4rem',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    transition: 'all 0.15s ease'
+                  }}
+                >
+                  {opt.label}
+                </button>
+              );
+            })}
+          </div>
         </div>
       </div>
 
