@@ -1,5 +1,6 @@
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
+import { getCanonicalThreadId, isSupportConversationId } from '../utils/sessionHelper.js';
 
 // Helper mirror for timestamp parsing
 const parseMessageTime = (msg) => {
@@ -329,6 +330,143 @@ describe('Chat Inbox Overhaul: Sorting, Snippets & Read Management', () => {
 
     assert.equal(sorted[0].id, 'm-ts-only');
     assert.equal(sorted[1].id, 'm-created-only');
+  });
+
+  test('Channel Isolation: Guest inquiries strictly route to 24/7 Help Desk (support-*)', () => {
+    // Guest without email
+    const guestThread1 = getCanonicalThreadId('support', null, 'guest_abc123');
+    assert.equal(guestThread1, 'support-guest_abc123', 'Guest should always get support-* ID');
+
+    // Guest attempting to query inbox channel should still be forced to support-*
+    const guestThread2 = getCanonicalThreadId('inbox', null, 'guest_abc123');
+    assert.equal(guestThread2, 'support-guest_abc123', 'Guest must never get inbox-* ID');
+
+    // Guest with fallback email
+    const guestThread3 = getCanonicalThreadId('inbox', 'guest@bdigitizing.pro', 'guest_xyz789');
+    assert.equal(guestThread3, 'support-guest_xyz789', 'Guest email must route to support-*');
+  });
+
+  test('Channel Isolation: Signed-in users route exclusively to distinct Studio Digitizer vs Help Desk threads', () => {
+    const userEmail = 'customer@embroiderybiz.com';
+
+    const studioDigitizerThread = getCanonicalThreadId('inbox', userEmail);
+    const helpDeskThread = getCanonicalThreadId('support', userEmail);
+
+    assert.equal(studioDigitizerThread, 'inbox-customer@embroiderybiz.com', 'Studio Digitizer routes to inbox-*');
+    assert.equal(helpDeskThread, 'support-customer@embroiderybiz.com', 'Help Desk routes to support-*');
+    assert.notEqual(studioDigitizerThread, helpDeskThread, 'Studio Digitizer and Help Desk threads must be distinct');
+  });
+
+  test('Thread Isolation: Admin inbox strictly prevents cross-posting between Help Desk and Studio Digitizer threads', () => {
+    const isSupportConv = (id) => {
+      if (!id) return false;
+      const lower = String(id).toLowerCase().trim();
+      return lower === 'general-support' || lower === 'support-guest' || lower === 'help-support' || lower.startsWith('support-');
+    };
+
+    const normalizeEmail = (email) => {
+      if (!email) return '';
+      const clean = String(email).toLowerCase().trim();
+      return clean === 'client@studio.com' ? '' : clean;
+    };
+
+    const matchesConversation = (conv, msg) => {
+      if (!conv || !msg) return false;
+      const cId = String(conv.id || '').toLowerCase().trim();
+      const isConvSupport = isSupportConv(cId) || conv.isSupport === true;
+      const mConvId = String(msg.conversation_id || msg.thread_id || '').toLowerCase().trim();
+
+      if (cId === mConvId) return true;
+
+      const isMsgSupport = isSupportConv(mConvId) || msg.isSupport === true || msg.is_support === true;
+      if (isConvSupport !== isMsgSupport) return false;
+
+      const cEmail = normalizeEmail(conv.clientEmail || conv.client_email);
+      const mEmail = normalizeEmail(msg.client_email || (mConvId.includes('@') ? mConvId.replace(/^(inbox-|support-|direct-|chat-|user_)/, '') : ''));
+
+      if (cEmail && mEmail && cEmail === mEmail) {
+        return true;
+      }
+      return false;
+    };
+
+    const clientEmail = 'john@example.com';
+    const helpDeskConv = { id: `support-${clientEmail}`, clientEmail, isSupport: true };
+    const digitizerConv = { id: `inbox-${clientEmail}`, clientEmail, isSupport: false };
+
+    const incomingSupportMsg = {
+      id: 'msg-sup-1',
+      conversation_id: `support-${clientEmail}`,
+      client_email: clientEmail,
+      isSupport: true,
+      text: 'I have a question about my invoice'
+    };
+
+    const incomingDigitizerMsg = {
+      id: 'msg-inbox-1',
+      conversation_id: `inbox-${clientEmail}`,
+      client_email: clientEmail,
+      isSupport: false,
+      text: 'Please digitize this cap logo'
+    };
+
+    // Support message should match Help Desk thread, NEVER Studio Digitizer thread
+    assert.equal(matchesConversation(helpDeskConv, incomingSupportMsg), true, 'Support msg matches Help Desk conv');
+    assert.equal(matchesConversation(digitizerConv, incomingSupportMsg), false, 'Support msg must NOT match Digitizer conv');
+
+    // Digitizer message should match Studio Digitizer thread, NEVER Help Desk thread
+    assert.equal(matchesConversation(digitizerConv, incomingDigitizerMsg), true, 'Digitizer msg matches Digitizer conv');
+    assert.equal(matchesConversation(helpDeskConv, incomingDigitizerMsg), false, 'Digitizer msg must NOT match Help Desk conv');
+  });
+
+  test('Realtime Channel Guard: ClientLiveChatWidget and ClientChatInbox ignore cross-channel WebSocket events', () => {
+    const isSupportId = (id) => {
+      if (!id) return false;
+      const lower = String(id).toLowerCase().trim();
+      return lower === 'general-support' || lower === 'support-guest' || lower === 'help-support' || lower.startsWith('support-');
+    };
+
+    const clientEmail = 'sarah@studio.com';
+
+    // Simulated event for Studio Digitizer
+    const digitizerEvent = {
+      conversation_id: `inbox-${clientEmail}`,
+      client_email: clientEmail,
+      is_support: false,
+      text: 'Digitizer update ready'
+    };
+
+    // Simulated event for Help Desk
+    const supportEvent = {
+      conversation_id: `support-${clientEmail}`,
+      client_email: clientEmail,
+      is_support: true,
+      text: 'Support agent is reviewing your ticket'
+    };
+
+    // Filter logic in ClientLiveChatWidget (Help Desk):
+    const liveChatAccepts = (record) => {
+      const recordConvId = String(record.conversation_id || '').toLowerCase();
+      const isMsgSupport = isSupportId(recordConvId) || record.is_support === true;
+      const isMsgInbox = recordConvId.startsWith('inbox-');
+      if (isMsgInbox && !isMsgSupport) return false;
+      return Boolean(isMsgSupport);
+    };
+
+    assert.equal(liveChatAccepts(supportEvent), true, 'LiveChatWidget accepts support messages');
+    assert.equal(liveChatAccepts(digitizerEvent), false, 'LiveChatWidget rejects Studio Digitizer messages');
+
+    // Filter logic in ClientChatInbox for activeChannel === 'inbox' (Studio Digitizer):
+    const inboxTabAccepts = (record) => {
+      const recordConvId = String(record.conversation_id || '').toLowerCase();
+      const isMsgSupport = isSupportId(recordConvId) || record.is_support === true;
+      const isCurrentSupport = false; // activeChannel === 'inbox'
+      if (isCurrentSupport !== isMsgSupport) return false;
+      return true;
+    };
+
+    assert.equal(inboxTabAccepts(digitizerEvent), true, 'ClientChatInbox accepts digitizer messages when on inbox tab');
+    assert.equal(inboxTabAccepts(supportEvent), false, 'ClientChatInbox rejects support messages when on inbox tab');
   });
 
 });

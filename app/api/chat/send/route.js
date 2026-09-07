@@ -36,11 +36,8 @@ export async function POST(req) {
     const body = await req.json().catch(() => ({}));
     const payload = body.payload || body;
 
-    let convId = String(payload.conversation_id || payload.thread_id || payload.chatId || '').trim();
-    const isSupport = isSupportConversation(convId) || payload.isSupport === true || payload.channel === 'support';
-    
     // Resolve guest identifier
-    let guestId = payload.guest_id || extractGuestId(convId) || extractGuestId(payload.client_email) || null;
+    let guestId = payload.guest_id || extractGuestId(payload.conversation_id) || extractGuestId(payload.thread_id) || extractGuestId(payload.client_email) || null;
     
     // Resolve email safely (never treat guest tokens as emails)
     let targetEmail = null;
@@ -52,11 +49,28 @@ export async function POST(req) {
       targetEmail = String(user.email).toLowerCase().trim();
     }
 
-    if (!convId) {
-      if (isSupport) {
-        convId = targetEmail ? `support-${targetEmail}` : (guestId ? `support-${guestId}` : 'general-support');
+    const isGuest = !targetEmail || (!user && !isAdmin);
+
+    let isSupport = false;
+    let convId = String(payload.conversation_id || payload.thread_id || payload.chatId || '').trim();
+
+    if (isGuest) {
+      // Guest Users (Not Logged In): Route inquiries EXCLUSIVELY to 24/7 Help Desk
+      isSupport = true;
+      convId = guestId ? `support-${guestId}` : 'general-support';
+    } else {
+      // Signed-In Users: Strictly isolate Studio Digitizer (inbox) from 24/7 Help Desk (support)
+      if (payload.channel === 'support' || payload.isSupport === true || isSupportConversation(convId)) {
+        isSupport = true;
+        convId = `support-${targetEmail}`;
       } else {
-        convId = targetEmail ? `inbox-${targetEmail}` : (guestId ? `inbox-${guestId}` : 'inbox-guest');
+        isSupport = false;
+        if (convId.startsWith('order-') || payload.orderId) {
+          const ord = String(payload.orderId || convId.replace('order-', '')).trim();
+          convId = `order-${ord}`;
+        } else {
+          convId = `inbox-${targetEmail}`;
+        }
       }
     }
 
@@ -139,7 +153,7 @@ export async function POST(req) {
       thread_id: convId,
       guest_id: guestId,
       type: payload.type || (payload.offer_id || payload.offer_data ? 'custom_offer' : 'text'),
-      metadata: payload.metadata || {},
+      metadata: { ...(payload.metadata || {}), isSupport, channel: isSupport ? 'support' : 'inbox' },
       client_email: targetEmail,
       sender: actualSender,
       sender_name: actualSenderName,
@@ -335,6 +349,8 @@ export async function POST(req) {
         offer_data: insertedMsg.offer_data || null,
         status: 'sent',
         is_read: false,
+        isSupport,
+        is_support: isSupport,
         created_at: insertedMsg.created_at || insertedMsg.timestamp,
         timestamp: insertedMsg.created_at || insertedMsg.timestamp
       },

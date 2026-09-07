@@ -631,18 +631,29 @@ export async function GET(request) {
         } catch {}
       }
 
+      const isTargetSupport = isSupportConversation(chatId) || isSupportConversation(cId) || (typeof channelParam !== 'undefined' && channelParam === 'support');
+      
       let targetIds = [chatId];
-      if (targetEmail) {
+      if (isTargetSupport) {
+        // 24/7 Help Desk: strictly support threads ONLY
         targetIds = Array.from(new Set([
           chatId,
-          `support-${targetEmail}`,
-          `inbox-${targetEmail}`,
-          `direct-${targetEmail}`,
-          `chat-${targetEmail}`,
-          ...orderIds
-        ]));
-      } else if (cId === 'general-support' || cId === 'support-guest') {
-        targetIds = ['general-support', 'support-guest'];
+          targetEmail ? `support-${targetEmail}` : '',
+          'general-support',
+          'support-guest'
+        ].filter(Boolean)));
+      } else {
+        // Studio Digitizer / Inbox / Orders: strictly non-support threads ONLY
+        if (chatId.startsWith('order-') || orderIds.length > 0) {
+          targetIds = Array.from(new Set([chatId, ...orderIds].filter(Boolean)));
+        } else {
+          targetIds = Array.from(new Set([
+            chatId,
+            targetEmail ? `inbox-${targetEmail}` : '',
+            targetEmail ? `direct-${targetEmail}` : '',
+            targetEmail ? `chat-${targetEmail}` : ''
+          ].filter(Boolean)));
+        }
       }
 
       const limitParam = Math.min(parseInt(searchParams.get('limit'), 10) || 100, 200);
@@ -689,7 +700,12 @@ export async function GET(request) {
             }
 
             const { data: em } = await emailQuery;
-            emailMsgs = em || [];
+            // STRICT CHANNEL ISOLATION: filter emailMsgs so support messages never leak into digitizer inbox and vice versa
+            emailMsgs = (em || []).filter(m => {
+              const msgConv = String(m.conversation_id || '').toLowerCase();
+              const msgIsSupport = isSupportConversation(msgConv) || m.is_support === true;
+              return isTargetSupport ? msgIsSupport : !msgIsSupport;
+            });
           } catch {}
 
           // Also check custom offers belonging to this client to ensure offer messages are always retained
@@ -714,7 +730,11 @@ export async function GET(request) {
               }
 
               const { data: offMsgs } = await offMsgQuery;
-              offerMsgList = offMsgs || [];
+              offerMsgList = (offMsgs || []).filter(m => {
+                const msgConv = String(m.conversation_id || '').toLowerCase();
+                const msgIsSupport = isSupportConversation(msgConv) || m.is_support === true;
+                return isTargetSupport ? msgIsSupport : !msgIsSupport;
+              });
             }
           } catch {}
 
@@ -977,14 +997,13 @@ export async function POST(request) {
     
     if (action === 'insertMessage') {
       let passedId = payload.conversation_id || payload.thread_id || '';
-      const isSupport = isSupportConversation(passedId) || payload.isSupport === true || payload.channel === 'support';
       
       let targetEmail = normalizeEmail(payload.client_email || payload.clientEmail || (!isAdmin ? cleanUserEmail : ''));
       
       if (!targetEmail) {
         const idLower = String(passedId).toLowerCase();
-        if (idLower.startsWith('support-')) targetEmail = normalizeEmail(idLower.replace('support-', ''));
-        else if (idLower.startsWith('inbox-')) targetEmail = normalizeEmail(idLower.replace('inbox-', ''));
+        if (idLower.startsWith('support-') && !idLower.startsWith('support-guest_')) targetEmail = normalizeEmail(idLower.replace('support-', ''));
+        else if (idLower.startsWith('inbox-') && !idLower.startsWith('inbox-guest_')) targetEmail = normalizeEmail(idLower.replace('inbox-', ''));
         else if (idLower.startsWith('direct-')) targetEmail = normalizeEmail(idLower.replace('direct-', ''));
         else if (idLower.startsWith('chat-')) targetEmail = normalizeEmail(idLower.replace('chat-', ''));
         else if (idLower.startsWith('order-') || idLower.startsWith('ord-')) {
@@ -996,9 +1015,29 @@ export async function POST(request) {
         }
       }
 
+      const isGuest = !targetEmail || (!user && !isAdmin);
+      let isSupport = false;
       let canonicalConvId = passedId;
-      if (!canonicalConvId || canonicalConvId === 'inbox' || canonicalConvId === 'help-support' || canonicalConvId === 'support') {
-        canonicalConvId = isSupport ? getCanonicalSupportId(targetEmail) : getCanonicalInboxId(targetEmail);
+
+      if (isGuest) {
+        // Guest Users (Not Logged In): Route inquiries EXCLUSIVELY to 24/7 Help Desk
+        isSupport = true;
+        const guestId = payload.guest_id || (passedId.includes('guest_') ? passedId.replace(/^support-/, '').replace(/^inbox-/, '') : null);
+        canonicalConvId = guestId ? `support-${guestId}` : (passedId.startsWith('support-') ? passedId : 'general-support');
+      } else {
+        // Signed-In Users: Strictly isolate Studio Digitizer (inbox) from 24/7 Help Desk (support)
+        if (payload.channel === 'support' || payload.isSupport === true || isSupportConversation(passedId)) {
+          isSupport = true;
+          canonicalConvId = `support-${targetEmail}`;
+        } else {
+          isSupport = false;
+          if (passedId.startsWith('order-') || payload.orderId) {
+            const cleanOrd = String(payload.orderId || passedId.replace('order-', '')).trim();
+            canonicalConvId = `order-${cleanOrd}`;
+          } else {
+            canonicalConvId = `inbox-${targetEmail}`;
+          }
+        }
       }
 
       const fallbackName = user?.user_metadata?.full_name || (targetEmail ? targetEmail.split('@')[0] : 'Client');

@@ -185,19 +185,47 @@ const isSupportConversation = (id) => {
   return lower === 'general-support' || lower === 'support-guest' || lower === 'help-support' || lower.startsWith('support-');
 };
 
-// Robust matcher to link messages or thread IDs to their parent conversation
+// Robust matcher to link messages or thread IDs strictly to their parent conversation and channel
 export const matchesConversation = (conv, targetIdOrMsg) => {
   if (!conv || !targetIdOrMsg) return false;
   const cId = String(conv.id || '').toLowerCase().trim();
+  const isConvSupport = isSupportConversation(cId) || conv.isSupport === true;
 
   if (typeof targetIdOrMsg === 'string') {
     const tId = targetIdOrMsg.toLowerCase().trim();
     if (cId === tId) return true;
-    const cClean = cId.replace(/^(inbox-|support-|order-|direct-|chat-)/, '');
-    const tClean = tId.replace(/^(inbox-|support-|order-|direct-|chat-)/, '');
-    if (cClean && tClean && cClean === tClean) return true;
-    const cEmail = normalizeEmail(conv.clientEmail);
-    if (cEmail && (tId.includes(cEmail) || tClean === cEmail)) return true;
+
+    const isTargetSupport = isSupportConversation(tId);
+    // Channel mismatch must NEVER match across Support and Inbox/Digitizer
+    if (isConvSupport !== isTargetSupport) return false;
+
+    // Order thread match
+    if (cId.startsWith('order-') || tId.startsWith('order-')) {
+      const cOrd = cId.replace('order-', '').replace('#', '');
+      const tOrd = tId.replace('order-', '').replace('#', '');
+      return Boolean(cOrd && tOrd && cOrd === tOrd);
+    }
+
+    // Support thread match:
+    if (isConvSupport && isTargetSupport) {
+      const cClean = cId.replace(/^support-/, '');
+      const tClean = tId.replace(/^support-/, '');
+      if (cClean && tClean && cClean === tClean) return true;
+      const cEmail = normalizeEmail(conv.clientEmail || conv.client_email);
+      if (cEmail && (tClean === cEmail || tId === `support-${cEmail}`)) return true;
+      return false;
+    }
+
+    // Direct inbox / Studio Digitizer thread match:
+    if (!isConvSupport && !isTargetSupport) {
+      const cClean = cId.replace(/^(inbox-|direct-|chat-)/, '');
+      const tClean = tId.replace(/^(inbox-|direct-|chat-)/, '');
+      if (cClean && tClean && cClean === tClean) return true;
+      const cEmail = normalizeEmail(conv.clientEmail || conv.client_email);
+      if (cEmail && (tClean === cEmail || tId === `inbox-${cEmail}` || tId === `direct-${cEmail}` || tId === `chat-${cEmail}`)) return true;
+      return false;
+    }
+
     return false;
   }
 
@@ -205,26 +233,31 @@ export const matchesConversation = (conv, targetIdOrMsg) => {
   const mConvId = String(msg.conversation_id || msg.thread_id || '').toLowerCase().trim();
   if (cId === mConvId) return true;
 
+  const isMsgSupport = isSupportConversation(mConvId) || msg.isSupport === true || msg.is_support === true;
+  // Strict Channel Isolation: Support message must NEVER match an Inbox conversation, and vice versa!
+  if (isConvSupport !== isMsgSupport) return false;
+
+  // Order threads match
+  if (cId.startsWith('order-') || mConvId.startsWith('order-')) {
+    const cOrd = cId.replace('order-', '').replace('#', '');
+    const mOrd = mConvId.replace('order-', '').replace('#', '');
+    if (cOrd && mOrd && cOrd === mOrd) return true;
+    return false;
+  }
+
+  // Same channel (both support or both inbox) and same client email
   const cEmail = normalizeEmail(conv.clientEmail || conv.client_email);
   const mEmail = normalizeEmail(msg.client_email || (mConvId.includes('@') ? mConvId.replace(/^(inbox-|support-|direct-|chat-|user_)/, '') : ''));
 
-  const isMsgSupport = isSupportConversation(mConvId) || msg.isSupport === true;
-  const isConvSupport = isSupportConversation(cId) || conv.isSupport === true;
-
-  if (cEmail && mEmail && cEmail === mEmail && isMsgSupport === isConvSupport) {
+  if (cEmail && mEmail && cEmail === mEmail) {
     return true;
   }
 
-  // Order threads match
-  const cOrd = cId.replace('order-', '').replace('#', '');
-  const mOrd = mConvId.replace('order-', '').replace('#', '');
-  if (cOrd && mOrd && cOrd === mOrd) return true;
-
-  // Guest thread match
-  if (cId.includes('guest_') && mConvId.includes('guest_')) {
-    const cG = cId.replace(/^(support-|inbox-)/, '');
-    const mG = mConvId.replace(/^(support-|inbox-)/, '');
-    if (cG === mG) return true;
+  // Guest thread match (only when both are support)
+  if (isConvSupport && isMsgSupport && (cId.includes('guest_') || mConvId.includes('guest_') || msg.guest_id)) {
+    const cG = cId.replace(/^support-/, '');
+    const mG = (msg.guest_id ? String(msg.guest_id).toLowerCase() : mConvId.replace(/^support-/, ''));
+    if (cG && mG && cG === mG) return true;
   }
 
   return false;
@@ -604,11 +637,20 @@ export const AdminChatInbox = () => {
         const attachSize = record.attachment_size || attachObj?.file_size || attachObj?.size || null;
         const attachType = extractedOffer ? 'custom_offer' : (record.attachment_type || attachObj?.mime_type || attachObj?.type || attachObj?.format || null);
 
+        const isMsgSupport = isSupportConversation(record.conversation_id) ||
+          isSupportConversation(record.thread_id) ||
+          record.isSupport === true ||
+          record.is_support === true ||
+          record.metadata?.is_support === true ||
+          record.metadata?.isSupport === true;
+
         const newMsg = {
           id: record.id || `msg-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
           conversation_id: record.conversation_id,
           thread_id: record.conversation_id,
           client_email: normalizeEmail(record.client_email),
+          isSupport: isMsgSupport,
+          is_support: isMsgSupport,
           type: extractedOffer ? 'custom_offer' : (record.type || 'text'),
           sender: record.sender,
           senderName: record.sender_name,
@@ -1286,6 +1328,7 @@ export const AdminChatInbox = () => {
         attachment_url: replyingTo.attachment_url
       } : null,
       isSupport: activeSection === 'support' || isSupportThread(activeChat),
+      is_support: activeSection === 'support' || isSupportThread(activeChat),
       timestamp: nowIso,
       created_at: nowIso
     };

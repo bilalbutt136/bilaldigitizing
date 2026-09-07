@@ -13,7 +13,7 @@ import {
   broadcastTypingStatus,
   subscribeToTypingStatus
 } from '../../services/supabaseService';
-import { getGuestSessionId, getCanonicalThreadId } from '../../utils/sessionHelper';
+import { getGuestSessionId, getCanonicalThreadId, isSupportConversationId } from '../../utils/sessionHelper';
 import { playNotificationSound } from '../../utils/audioNotification';
 import { useVisualViewport } from '../../hooks/useVisualViewport';
 import WhatsAppChatMessage from '../common/WhatsAppChatMessage';
@@ -292,9 +292,38 @@ export const ClientChatInbox = ({ initialOrderId = null, onBack = null }) => {
         } catch {}
       }
 
+      // Check whether incoming record is support vs studio digitizer / order
+      const isMsgSupport = isSupportConversationId(recordConvId) ||
+        isSupportConversationId(recordThreadId) ||
+        record.is_support === true ||
+        record.isSupport === true ||
+        record.metadata?.is_support === true ||
+        record.metadata?.isSupport === true ||
+        recordConvId.startsWith('support-') ||
+        recordThreadId.startsWith('support-');
+
+      const isCurrentSupport = activeChannel === 'support' || String(canonicalChatId || '').startsWith('support-');
+
+      // Thread isolation: never cross-post between support and studio digitizer / order threads
+      if (isCurrentSupport !== isMsgSupport) {
+        return;
+      }
+
+      const isOrderThread = String(canonicalChatId || '').startsWith('order-');
+      const isMsgOrder = recordConvId.startsWith('order-') || recordThreadId.startsWith('order-');
+
+      if (isOrderThread) {
+        if (recordConvId !== targetChatIdLower && recordThreadId !== targetChatIdLower) {
+          return;
+        }
+      } else if (!isCurrentSupport && isMsgOrder) {
+        // If viewing Studio Digitizer inbox, ignore order-specific chat messages
+        return;
+      }
+
       // Check offer_data or metadata for client_email
       const offerEmail = String(extractedOffer?.client_email || record.client_email || record.metadata?.client_email || '').toLowerCase().trim();
-      const matchesClientOrder = Array.isArray(orders) && orders.some(o => {
+      const matchesClientOrder = isOrderThread && Array.isArray(orders) && orders.some(o => {
         const oId = String(o.id || '').toLowerCase().trim();
         return recordConvId === oId || recordConvId === `order-${oId}` || recordThreadId === oId || recordThreadId === `order-${oId}`;
       });
@@ -334,6 +363,8 @@ export const ClientChatInbox = ({ initialOrderId = null, onBack = null }) => {
         const formattedRecord = {
           id: record.id,
           conversation_id: canonicalChatId,
+          isSupport: isCurrentSupport,
+          is_support: isCurrentSupport,
           type: extractedOffer ? 'custom_offer' : (record.type || 'text'),
           sender: record.sender,
           senderName: record.sender_name || (record.sender === 'admin' ? 'Support' : (record.sender === 'worker' ? 'Assigned Digitizer' : clientName)),
@@ -549,6 +580,7 @@ export const ClientChatInbox = ({ initialOrderId = null, onBack = null }) => {
         attachment: replyingTo.attachment_name || replyingTo.attachment
       } : null,
       isSupport: activeChannel === 'support',
+      is_support: activeChannel === 'support',
       timestamp: nowIso,
       created_at: nowIso,
       is_read: false

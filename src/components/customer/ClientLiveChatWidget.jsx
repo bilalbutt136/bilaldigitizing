@@ -14,7 +14,7 @@ import {
   broadcastTypingStatus,
   subscribeToTypingStatus
 } from '../../services/supabaseService';
-import { getGuestSessionId, getCanonicalThreadId } from '../../utils/sessionHelper';
+import { getGuestSessionId, getCanonicalThreadId, isSupportConversationId } from '../../utils/sessionHelper';
 import WhatsAppChatMessage from '../common/WhatsAppChatMessage';
 import {
   MessageSquare,
@@ -204,7 +204,7 @@ export const ClientLiveChatWidget = () => {
     let supportTypingTimer = null;
     const unsubTyping = subscribeToTypingStatus((payload) => {
       if (!payload) return;
-      const isTargetThread = payload.conversationId === targetConvId || isSupportId(payload.conversationId);
+      const isTargetThread = payload.conversationId === targetConvId || isSupportConversationId(payload.conversationId);
       if (isTargetThread && payload.senderRole === 'admin') {
         if (payload.isTyping) {
           setIsSupportTyping(true);
@@ -309,6 +309,32 @@ export const ClientLiveChatWidget = () => {
         const resolvedOfferId = record.offer_id || record.offerId || extractedOffer?.id || (record.text && record.text.includes('off-') ? record.text.match(/off-[0-9a-z_-]+/i)?.[0] : null);
 
         const offerEmail = String(extractedOffer?.client_email || record.client_email || record.metadata?.client_email || '').toLowerCase().trim();
+
+        // 24/7 Live Support Help Desk channel isolation:
+        // Studio Digitizer (inbox-*) and Order (order-*) messages must NEVER route here!
+        const isMsgSupport = isSupportConversationId(recordConvId) ||
+          isSupportConversationId(recordThreadId) ||
+          record.isSupport === true ||
+          record.is_support === true ||
+          record.metadata?.is_support === true ||
+          record.metadata?.isSupport === true ||
+          recordConvId.startsWith('support-') ||
+          recordThreadId.startsWith('support-');
+
+        const isMsgInboxOrOrder = recordConvId.startsWith('inbox-') ||
+          recordThreadId.startsWith('inbox-') ||
+          recordConvId.startsWith('order-') ||
+          recordThreadId.startsWith('order-') ||
+          recordConvId.startsWith('direct-') ||
+          recordThreadId.startsWith('direct-');
+
+        if (isMsgInboxOrOrder && !isMsgSupport) {
+          return;
+        }
+        if (!isMsgSupport && (recordConvId || recordThreadId)) {
+          return;
+        }
+
         const isForThisUser = (cleanCustomerEmail && recordEmail && recordEmail === cleanCustomerEmail) ||
           (cleanCustomerEmail && offerEmail && offerEmail === cleanCustomerEmail) ||
           (cleanCustomerEmail && (recordConvId.includes(cleanCustomerEmail) || recordThreadId.includes(cleanCustomerEmail))) ||
@@ -341,6 +367,8 @@ export const ClientLiveChatWidget = () => {
         const newMsg = {
           id: record.id,
           conversation_id: record.conversation_id,
+          isSupport: true,
+          is_support: true,
           type: extractedOffer ? 'custom_offer' : (record.type || 'text'),
           sender: record.sender,
           senderName: record.sender === 'admin' ? 'Support' : (record.sender_name || cleanName),
@@ -678,6 +706,9 @@ export const ClientLiveChatWidget = () => {
       senderName: cleanName,
       sender_name: cleanName,
       client_email: clientEmail,
+      isSupport: true,
+      is_support: true,
+      is_support_ticket: true,
       text: messageInput.trim(),
       attachment: serializedAttachment,
       attachment_url: attachedFile ? attachedFile.url : null,

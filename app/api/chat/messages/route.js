@@ -115,11 +115,8 @@ export async function GET(req) {
         orConditions.push(`thread_id.eq.${id}`);
       });
     }
-    if (guestIdParam) {
+    if (guestIdParam && isSupport) {
       orConditions.push(`guest_id.eq.${guestIdParam}`);
-    }
-    if (cleanEmail) {
-      orConditions.push(`client_email.ilike.${cleanEmail}`);
     }
 
     if (orConditions.length > 0) {
@@ -143,12 +140,12 @@ export async function GET(req) {
       }
     } catch {}
 
-    // Deduplicate and filter by channel context
+    // Deduplicate and filter strictly by channel context
     const uniqueMap = new Map();
     (rawMessages || []).forEach(m => {
       if (!m || !m.id || m.deleted_at) return;
       const mConv = m.conversation_id || m.thread_id || '';
-      const msgIsSupport = isSupportConversation(mConv);
+      const msgIsSupport = isSupportConversation(mConv) || m.metadata?.isSupport === true || m.is_support === true;
       if (isSupport && !msgIsSupport) return;
       if (!isSupport && msgIsSupport) return;
       uniqueMap.set(m.id, m);

@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Session and Thread Identification Helpers
  * Ensures persistent identity for guest visitors and unified conversation thread IDs.
  */
@@ -52,14 +52,19 @@ export function getGuestSessionId() {
 
 export function getCanonicalThreadId(channel = 'support', email = null, customGuestId = null) {
   const cleanEmail = email ? String(email).toLowerCase().trim() : '';
-  const isGuest = !cleanEmail || cleanEmail === 'client@studio.com' || cleanEmail.includes('guest@bdigitizing.pro');
+  const isGuest = !cleanEmail || cleanEmail === 'client@studio.com' || cleanEmail.includes('guest@bdigitizing.pro') || cleanEmail.startsWith('guest_');
 
   if (isGuest) {
     const guestId = customGuestId || getOrCreateGuestSession();
-    return channel === 'inbox' ? `inbox-${guestId}` : `support-${guestId}`;
+    // Guest inquiries route exclusively to 24/7 Help Desk
+    return `support-${guestId}`;
   }
 
-  return channel === 'inbox' ? `inbox-${cleanEmail}` : `support-${cleanEmail}`;
+  // Signed-in users: Studio Digitizer (inbox) vs 24/7 Help Desk (support)
+  if (channel === 'inbox' || channel === 'digitizer') {
+    return `inbox-${cleanEmail}`;
+  }
+  return `support-${cleanEmail}`;
 }
 
 export function isSupportConversationId(convId) {
