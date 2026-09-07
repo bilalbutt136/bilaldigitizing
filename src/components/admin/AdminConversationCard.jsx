@@ -1,7 +1,7 @@
 'use client';
 
-import React from 'react';
-import { ShoppingBag } from 'lucide-react';
+import React, { useState } from 'react';
+import { ShoppingBag, Check, Mail } from 'lucide-react';
 
 export const AdminConversationCard = ({
   conversation,
@@ -9,11 +9,14 @@ export const AdminConversationCard = ({
   unreadCount = 0,
   threadInfo,
   onSelect,
+  onMarkAsRead,
+  onMarkAsUnread,
   formatTime
 }) => {
+  const [isHovered, setIsHovered] = useState(false);
   if (!conversation) return null;
 
-  const isUnread = unreadCount > 0 && !isActive;
+  const isUnread = unreadCount > 0;
   const lastMsg = (conversation.messages || [])[(conversation.messages || []).length - 1] || {};
   const lastTimeFormatted = formatTime ? formatTime(lastMsg.timestamp || lastMsg.created_at) : 'Just now';
 
@@ -89,6 +92,7 @@ export const AdminConversationCard = ({
               : '0 1px 3px rgba(0, 0, 0, 0.02)')
       }}
       onMouseEnter={(e) => {
+        setIsHovered(true);
         if (!isActive) {
           e.currentTarget.style.background = isUnread 
             ? 'linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%)' 
@@ -97,6 +101,7 @@ export const AdminConversationCard = ({
         }
       }}
       onMouseLeave={(e) => {
+        setIsHovered(false);
         if (!isActive) {
           e.currentTarget.style.background = isUnread 
             ? 'linear-gradient(135deg, rgba(239, 246, 255, 0.98) 0%, rgba(219, 234, 254, 0.65) 100%)' 
@@ -185,15 +190,68 @@ export const AdminConversationCard = ({
               )}
             </div>
 
-            <span style={{
-              fontSize: '0.7rem',
-              color: isUnread ? '#2563eb' : 'var(--text-muted, #64748b)',
-              fontWeight: isUnread ? 800 : 500,
-              flexShrink: 0,
-              marginLeft: '0.4rem'
-            }}>
-              {lastTimeFormatted}
-            </span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', flexShrink: 0, marginLeft: '0.4rem' }}>
+              <span style={{
+                fontSize: '0.7rem',
+                color: isUnread ? '#2563eb' : 'var(--text-muted, #64748b)',
+                fontWeight: isUnread ? 800 : 500
+              }}>
+                {lastTimeFormatted}
+              </span>
+
+              {/* Quick action buttons on hover / active */}
+              {(isHovered || isUnread) && (
+                <div style={{ display: 'flex', gap: '2px' }}>
+                  {isUnread && onMarkAsRead ? (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onMarkAsRead(conversation.id);
+                      }}
+                      title="Mark as Read"
+                      style={{
+                        background: '#2563eb',
+                        color: '#ffffff',
+                        border: 'none',
+                        borderRadius: '4px',
+                        padding: '2px 4px',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '0.65rem'
+                      }}
+                    >
+                      <Check size={11} strokeWidth={3} />
+                    </button>
+                  ) : onMarkAsUnread ? (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onMarkAsUnread(conversation.id);
+                      }}
+                      title="Mark as Unread"
+                      style={{
+                        background: '#f1f5f9',
+                        color: '#64748b',
+                        border: '1px solid #cbd5e1',
+                        borderRadius: '4px',
+                        padding: '2px 4px',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '0.65rem'
+                      }}
+                    >
+                      <Mail size={11} />
+                    </button>
+                  ) : null}
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Subtitle row: Customer Email & Orders Badge */}

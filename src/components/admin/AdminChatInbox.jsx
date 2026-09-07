@@ -8,6 +8,7 @@ import {
   fetchChatMessages,
   addChatMessage, 
   markConversationAsRead, 
+  markConversationAsUnread,
   subscribeToLiveMessages,
   uploadFileToCloudinaryFull,
   broadcastTypingStatus,
@@ -38,7 +39,12 @@ import {
   ShoppingBag,
   ExternalLink,
   RotateCcw,
-  Bot
+  Bot,
+  Check,
+  CheckCheck,
+  Mail,
+  MailCheck,
+  ArrowUp
 } from 'lucide-react';
 
 const formatChatTime = (timestamp) => {
@@ -329,6 +335,8 @@ export const AdminChatInbox = () => {
   const [replyingTo, setReplyingTo] = useState(null);
   const [isClientTyping, setIsClientTyping] = useState(false);
   const [mobileView, setMobileView] = useState('list');
+  const [hasMoreMessages, setHasMoreMessages] = useState(false);
+  const [isLoadingEarlier, setIsLoadingEarlier] = useState(false);
   const chatFeedRef = useRef(null);
   const messagesEndRef = useRef(null);
   const fileInputRef = useRef(null);
@@ -800,10 +808,6 @@ export const AdminChatInbox = () => {
               nextMsgs = [...currentMsgs, newMsg];
             }
             
-            if (isCurrentlyOpen && (newMsg.sender === 'client' || newMsg.sender === 'customer' || newMsg.sender !== 'admin')) {
-              markConversationAsRead(targetConv.id, 'admin', targetConv.clientEmail);
-              nextMsgs = nextMsgs.map(m => (m.id === newMsg.id ? { ...m, is_read: true } : m));
-            }
             nextMsgs.sort((a, b) => parseMessageTime(a) - parseMessageTime(b));
 
             const isCustomerMsg = newMsg.sender === 'client' || newMsg.sender === 'customer' || newMsg.sender !== 'admin';
@@ -815,9 +819,9 @@ export const AdminChatInbox = () => {
               ...targetConv,
               clientName: resolvedClientName,
               clientEmail: targetConv.clientEmail || newMsg.client_email || '',
-              unreadCount: isCurrentlyOpen ? 0 : (targetConv.unreadCount || 0) + (isCustomerMsg ? 1 : 0),
-              adminUnreadCount: isCurrentlyOpen ? 0 : (targetConv.adminUnreadCount || 0) + (isCustomerMsg ? 1 : 0),
-              admin_unread_count: isCurrentlyOpen ? 0 : (targetConv.admin_unread_count || 0) + (isCustomerMsg ? 1 : 0),
+              unreadCount: (targetConv.unreadCount || 0) + (isCustomerMsg ? 1 : 0),
+              adminUnreadCount: (targetConv.adminUnreadCount || 0) + (isCustomerMsg ? 1 : 0),
+              admin_unread_count: (targetConv.admin_unread_count || 0) + (isCustomerMsg ? 1 : 0),
               messages: nextMsgs,
               lastMessageTime: Math.max(targetConv.lastMessageTime || 0, parseMessageTime(newMsg) || Date.now()),
               updatedAt: newMsg.timestamp || new Date().toISOString()
@@ -883,11 +887,11 @@ export const AdminChatInbox = () => {
           const safePrev = Array.isArray(prev) ? prev : [];
           const updated = safePrev.map(c => {
             if (matchesConversation(c, fresh.id)) {
-              const isCurrentlyOpen = activeChatIdRef.current && matchesConversation(c, activeChatIdRef.current);
               return {
                 ...c,
-                unreadCount: isCurrentlyOpen ? 0 : (fresh.admin_unread_count ?? fresh.unread_count ?? c.unreadCount),
-                adminUnreadCount: isCurrentlyOpen ? 0 : (fresh.admin_unread_count ?? fresh.unread_count ?? c.adminUnreadCount),
+                unreadCount: fresh.admin_unread_count ?? fresh.unread_count ?? c.unreadCount,
+                adminUnreadCount: fresh.admin_unread_count ?? fresh.unread_count ?? c.adminUnreadCount,
+                admin_unread_count: fresh.admin_unread_count ?? fresh.unread_count ?? c.admin_unread_count,
                 clientName: fresh.client_name || c.clientName,
                 clientEmail: fresh.client_email || c.clientEmail,
                 status: fresh.status || c.status,
@@ -1066,38 +1070,9 @@ export const AdminChatInbox = () => {
     scrollToBottom();
   }, [currentActiveChatId, activeChat?.messages?.length, isClientTyping, replyingTo]);
 
-  // Mark active conversation read when opening
-  useEffect(() => {
-    if (currentActiveChatId && isSupabaseConfigured) {
-      const targetConv = conversations.find(c => c.id === currentActiveChatId);
-      const email = targetConv?.clientEmail || '';
-
-      markConversationAsRead(currentActiveChatId, 'admin', email);
-
-      setConversations(prev => {
-        const updated = prev.map(c => 
-          (c.id === currentActiveChatId || (email && c.clientEmail === email))
-            ? {
-                ...c,
-                unreadCount: 0,
-                adminUnreadCount: 0,
-                messages: (c.messages || []).map(m => (m.sender === 'client' || m.sender === 'customer' || m.sender !== 'admin') ? { ...m, is_read: true } : m)
-              } 
-            : c
-        );
-        if (typeof window !== 'undefined') {
-          try {
-            localStorage.setItem(cacheKey, JSON.stringify(updated));
-          } catch {}
-        }
-        return updated;
-      });
-    }
-  }, [currentActiveChatId]);
-
   // Helper to compute admin unread count strictly for client messages
   const getThreadUnreadCount = (conv) => {
-    return getAdminThreadUnreadCount(conv, activeChatId);
+    return getAdminThreadUnreadCount(conv);
   };
 
   const handleSelectChat = async (chatId) => {
@@ -1107,7 +1082,39 @@ export const AdminChatInbox = () => {
     const targetConv = conversations.find(c => c.id === chatId);
     const email = targetConv?.clientEmail || '';
 
-    // 1. Instant optimistic local UI update: mark all messages in active thread as read
+    // Fetch latest message stream for this specific thread without auto-marking as read
+    if (isSupabaseConfigured) {
+      try {
+        const freshMsgs = await fetchChatMessages(chatId, email, null, 100);
+        if (Array.isArray(freshMsgs) && freshMsgs.length > 0) {
+          setHasMoreMessages(freshMsgs.length >= 100);
+          setConversations(prev => {
+            const updated = prev.map(c => {
+              if (c.id === chatId || (email && c.clientEmail === email)) {
+                const msgMap = new Map();
+                (c.messages || []).forEach(m => { if (m && m.id) msgMap.set(m.id, m); });
+                freshMsgs.forEach(m => { if (m && m.id) msgMap.set(m.id, m); });
+                const merged = Array.from(msgMap.values())
+                  .sort((a, b) => parseMessageTime(a) - parseMessageTime(b));
+                return { ...c, messages: merged };
+              }
+              return c;
+            });
+            return deduplicateThreads(updated);
+          });
+        }
+      } catch (err) {
+        console.warn('Fetch chat messages on select notice:', err);
+      }
+    }
+  };
+
+  const handleExplicitMarkAsRead = async (chatId = currentActiveChatId) => {
+    if (!chatId) return;
+    const targetConv = conversations.find(c => c.id === chatId);
+    const email = targetConv?.clientEmail || '';
+
+    // Optimistic UI update
     setConversations(prev => {
       const updated = prev.map(c => 
         (c.id === chatId || (email && c.clientEmail === email))
@@ -1121,40 +1128,97 @@ export const AdminChatInbox = () => {
           : c
       );
       if (typeof window !== 'undefined') {
-        try {
-          localStorage.setItem(cacheKey, JSON.stringify(updated));
-        } catch {}
+        try { localStorage.setItem(cacheKey, JSON.stringify(updated)); } catch {}
       }
       return updated;
     });
 
-    // 2. Trigger background DB update & global broadcast
-    markConversationAsRead(chatId, 'admin', email);
-
-    // 3. Fetch latest full message stream for this specific thread
     if (isSupabaseConfigured) {
-      try {
-        const freshMsgs = await fetchChatMessages(chatId, email);
-        if (Array.isArray(freshMsgs) && freshMsgs.length > 0) {
-          setConversations(prev => {
-            const updated = prev.map(c => {
-              if (c.id === chatId || (email && c.clientEmail === email)) {
-                const msgMap = new Map();
-                (c.messages || []).forEach(m => { if (m && m.id) msgMap.set(m.id, m); });
-                freshMsgs.forEach(m => { if (m && m.id) msgMap.set(m.id, m); });
-                const merged = Array.from(msgMap.values())
-                  .map(m => (m.sender !== 'admin' ? { ...m, is_read: true } : m))
-                  .sort((a, b) => parseMessageTime(a) - parseMessageTime(b));
-                return { ...c, messages: merged, unreadCount: 0, adminUnreadCount: 0, admin_unread_count: 0 };
-              }
-              return c;
-            });
-            return deduplicateThreads(updated);
-          });
-        }
-      } catch (err) {
-        console.warn('Fetch chat messages on select notice:', err);
+      await markConversationAsRead(chatId, 'admin', email);
+    }
+    showToast('✓ Thread marked as read', 'success');
+  };
+
+  const handleExplicitMarkAsUnread = async (chatId = currentActiveChatId) => {
+    if (!chatId) return;
+    const targetConv = conversations.find(c => c.id === chatId);
+    const email = targetConv?.clientEmail || '';
+
+    // Optimistic UI update
+    setConversations(prev => {
+      const updated = prev.map(c => 
+        (c.id === chatId || (email && c.clientEmail === email))
+          ? {
+              ...c,
+              unreadCount: 1,
+              adminUnreadCount: 1,
+              admin_unread_count: 1,
+              messages: (c.messages || []).map((m, idx, arr) => (idx === arr.length - 1 && m.sender !== 'admin') ? { ...m, is_read: false } : m)
+            } 
+          : c
+      );
+      if (typeof window !== 'undefined') {
+        try { localStorage.setItem(cacheKey, JSON.stringify(updated)); } catch {}
       }
+      return updated;
+    });
+
+    if (isSupabaseConfigured) {
+      await markConversationAsUnread(chatId, 'admin', email);
+    }
+    showToast('✉ Thread marked as unread', 'info');
+  };
+
+  const handleLoadEarlierMessages = async () => {
+    if (isLoadingEarlier || !currentActiveChatId) return;
+    const targetConv = conversations.find(c => c.id === currentActiveChatId);
+    const msgs = targetConv?.messages || [];
+    if (msgs.length === 0) return;
+
+    const oldestMsg = msgs[0];
+    const oldestTimestamp = oldestMsg.created_at || oldestMsg.timestamp;
+    if (!oldestTimestamp) return;
+
+    try {
+      setIsLoadingEarlier(true);
+      const email = targetConv?.clientEmail || '';
+      
+      const container = chatFeedRef.current;
+      const prevScrollHeight = container ? container.scrollHeight : 0;
+
+      const earlierMsgs = await fetchChatMessages(currentActiveChatId, email, null, 50, oldestTimestamp);
+
+      if (Array.isArray(earlierMsgs) && earlierMsgs.length > 0) {
+        setHasMoreMessages(earlierMsgs.length >= 50);
+        setConversations(prev => {
+          const updated = prev.map(c => {
+            if (c.id === currentActiveChatId || (email && c.clientEmail === email)) {
+              const msgMap = new Map();
+              earlierMsgs.forEach(m => { if (m && m.id) msgMap.set(m.id, m); });
+              (c.messages || []).forEach(m => { if (m && m.id) msgMap.set(m.id, m); });
+              const merged = Array.from(msgMap.values()).sort((a, b) => parseMessageTime(a) - parseMessageTime(b));
+              return { ...c, messages: merged };
+            }
+            return c;
+          });
+          return deduplicateThreads(updated);
+        });
+
+        // Restore scroll position so content doesn't jump
+        setTimeout(() => {
+          if (container) {
+            const newScrollHeight = container.scrollHeight;
+            container.scrollTop = newScrollHeight - prevScrollHeight;
+          }
+        }, 30);
+      } else {
+        setHasMoreMessages(false);
+        showToast('Reached beginning of message history', 'info');
+      }
+    } catch (err) {
+      console.warn('Error loading earlier messages:', err);
+    } finally {
+      setIsLoadingEarlier(false);
     }
   };
 
@@ -1176,14 +1240,14 @@ export const AdminChatInbox = () => {
   const inboxUnreadTotal = useMemo(() => {
     return conversations
       .filter(c => !isSupportThread(c))
-      .reduce((sum, c) => sum + getAdminThreadUnreadCount(c, activeChatId), 0);
-  }, [conversations, activeChatId]);
+      .reduce((sum, c) => sum + getAdminThreadUnreadCount(c), 0);
+  }, [conversations]);
 
   const supportUnreadTotal = useMemo(() => {
     return conversations
       .filter(c => isSupportThread(c))
-      .reduce((sum, c) => sum + getAdminThreadUnreadCount(c, activeChatId), 0);
-  }, [conversations, activeChatId]);
+      .reduce((sum, c) => sum + getAdminThreadUnreadCount(c), 0);
+  }, [conversations]);
 
   const unreadTotal = useMemo(() => {
     return activeSection === 'inbox' ? inboxUnreadTotal : supportUnreadTotal;
@@ -1192,8 +1256,8 @@ export const AdminChatInbox = () => {
   const unreadThreadsCount = useMemo(() => {
     return conversations
       .filter(c => (activeSection === 'inbox' ? !isSupportThread(c) : isSupportThread(c)))
-      .filter(c => getAdminThreadUnreadCount(c, activeChatId) > 0).length;
-  }, [conversations, activeSection, activeChatId]);
+      .filter(c => getAdminThreadUnreadCount(c) > 0).length;
+  }, [conversations, activeSection]);
 
   // Switch active conversation when switching section if current is not in section
   const handleSectionSwitch = (section) => {
@@ -1219,7 +1283,7 @@ export const AdminChatInbox = () => {
       if (activeSection === 'support' && !isSupport) return false;
 
       if (subFilter === 'unread') {
-        if (getAdminThreadUnreadCount(conv, activeChatId) === 0) return false;
+        if (getAdminThreadUnreadCount(conv) === 0) return false;
       }
 
       if (!searchTerm.trim()) return true;
@@ -1233,7 +1297,7 @@ export const AdminChatInbox = () => {
         (conv.messages || []).some(m => (m.text || '').toLowerCase().includes(term))
       );
     });
-  }, [conversations, activeSection, subFilter, searchTerm, orders, activeChatId]);
+  }, [conversations, activeSection, subFilter, searchTerm, orders]);
 
   // Current active channel ('helpdesk' vs 'digitizer')
   const currentChannelType = (activeChat?.isSupport || isSupportThread(activeChat) || activeSection === 'support') ? 'helpdesk' : 'digitizer';
@@ -1869,6 +1933,8 @@ export const AdminChatInbox = () => {
                     unreadCount={threadUnread}
                     threadInfo={info}
                     onSelect={handleSelectChat}
+                    onMarkAsRead={handleExplicitMarkAsRead}
+                    onMarkAsUnread={handleExplicitMarkAsUnread}
                     formatTime={formatChatTime}
                   />
                 );
@@ -1985,6 +2051,61 @@ export const AdminChatInbox = () => {
               </div>
 
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', flexShrink: 0 }}>
+                {/* Explicit Manual Read Status Controls */}
+                {(() => {
+                  const activeUnreadCount = getAdminThreadUnreadCount(activeChat);
+                  return activeUnreadCount > 0 ? (
+                    <button
+                      type="button"
+                      onClick={() => handleExplicitMarkAsRead(currentActiveChatId)}
+                      title="Mark this conversation as read"
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.35rem',
+                        background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
+                        color: '#ffffff',
+                        border: 'none',
+                        borderRadius: '20px',
+                        padding: '0.25rem 0.65rem',
+                        fontSize: '0.72rem',
+                        fontWeight: 800,
+                        cursor: 'pointer',
+                        boxShadow: '0 2px 6px rgba(37, 99, 235, 0.35)',
+                        whiteSpace: 'nowrap',
+                        transition: 'all 0.15s ease'
+                      }}
+                    >
+                      <Check size={12} strokeWidth={3} />
+                      <span>Mark as Read ({activeUnreadCount})</span>
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => handleExplicitMarkAsUnread(currentActiveChatId)}
+                      title="Mark this conversation as unread to follow up later"
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.35rem',
+                        background: 'var(--color-surface, #ffffff)',
+                        color: 'var(--color-text-secondary, #64748b)',
+                        border: '1px solid var(--color-border, #cbd5e1)',
+                        borderRadius: '20px',
+                        padding: '0.25rem 0.65rem',
+                        fontSize: '0.72rem',
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                        whiteSpace: 'nowrap',
+                        transition: 'all 0.15s ease'
+                      }}
+                    >
+                      <Mail size={12} />
+                      <span>Mark Unread</span>
+                    </button>
+                  );
+                })()}
+
                 {/* 🤖 24/7 Help Desk Auto-Pilot AI Toggle Switch */}
                 {isHelpDeskActive ? (
                   <button
@@ -2086,6 +2207,44 @@ export const AdminChatInbox = () => {
                 background: 'var(--color-subtle, #f8fafc)'
               }}
             >
+              {/* Pagination: Load Earlier Messages Button */}
+              {hasMoreMessages && (
+                <div style={{ display: 'flex', justifyContent: 'center', margin: '0.25rem 0 0.75rem 0' }}>
+                  <button
+                    type="button"
+                    onClick={handleLoadEarlierMessages}
+                    disabled={isLoadingEarlier}
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '0.4rem',
+                      background: 'var(--color-surface, #ffffff)',
+                      color: 'var(--color-primary, #ea580c)',
+                      border: '1.5px solid var(--color-border, #cbd5e1)',
+                      borderRadius: '20px',
+                      padding: '0.35rem 0.95rem',
+                      fontSize: '0.75rem',
+                      fontWeight: 800,
+                      cursor: isLoadingEarlier ? 'not-allowed' : 'pointer',
+                      boxShadow: '0 2px 6px rgba(0,0,0,0.06)',
+                      transition: 'all 0.15s ease'
+                    }}
+                  >
+                    {isLoadingEarlier ? (
+                      <>
+                        <Loader2 size={13} className="animate-spin text-orange-500" />
+                        <span>Loading message history...</span>
+                      </>
+                    ) : (
+                      <>
+                        <ArrowUp size={13} />
+                        <span>Load Earlier Messages</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              )}
+
               {activeChat.messages.length === 0 ? (
                 <div style={{ textAlign: 'center', margin: 'auto', color: 'var(--text-muted)' }}>
                   <MessageSquare size={32} style={{ margin: '0 auto 0.5rem', opacity: 0.3 }} />

@@ -620,22 +620,39 @@ export async function GET(request) {
         targetIds = ['general-support', 'support-guest'];
       }
 
+      const limitParam = Math.min(parseInt(searchParams.get('limit'), 10) || 100, 200);
+      const beforeParam = searchParams.get('before') || null;
+
       let rawMessages = [];
       try {
         if (targetEmail) {
-          const { data: convMsgs } = await supabase
+          let convQuery = supabase
             .from('messages')
             .select('id, conversation_id, client_email, sender, sender_name, text, attachment, attachment_url, attachment_name, attachment_size, attachment_type, file_id, offer_id, offer_data, reply_to, is_read, is_autopilot, auto_pilot, metadata, deleted_at, created_at, timestamp')
             .in('conversation_id', targetIds)
-            .order('created_at', { ascending: true });
+            .order('created_at', { ascending: false })
+            .limit(limitParam);
+
+          if (beforeParam) {
+            convQuery = convQuery.lt('created_at', beforeParam);
+          }
+
+          const { data: convMsgs } = await convQuery;
 
           let emailMsgs = [];
           try {
-            const { data: em } = await supabase
+            let emailQuery = supabase
               .from('messages')
               .select('id, conversation_id, client_email, sender, sender_name, text, attachment, attachment_url, attachment_name, attachment_size, attachment_type, file_id, offer_id, offer_data, reply_to, is_read, is_autopilot, auto_pilot, metadata, deleted_at, created_at, timestamp')
               .ilike('client_email', targetEmail)
-              .order('created_at', { ascending: true });
+              .order('created_at', { ascending: false })
+              .limit(limitParam);
+
+            if (beforeParam) {
+              emailQuery = emailQuery.lt('created_at', beforeParam);
+            }
+
+            const { data: em } = await emailQuery;
             emailMsgs = em || [];
           } catch {}
 
@@ -649,10 +666,18 @@ export async function GET(request) {
             
             if (Array.isArray(clientOffers) && clientOffers.length > 0) {
               const offerIds = clientOffers.map(o => o.id);
-              const { data: offMsgs } = await supabase
+              let offMsgQuery = supabase
                 .from('messages')
                 .select('id, conversation_id, client_email, sender, sender_name, text, attachment, attachment_url, attachment_name, attachment_size, attachment_type, file_id, offer_id, offer_data, reply_to, is_read, is_autopilot, auto_pilot, metadata, deleted_at, created_at, timestamp')
-                .in('offer_id', offerIds);
+                .in('offer_id', offerIds)
+                .order('created_at', { ascending: false })
+                .limit(limitParam);
+
+              if (beforeParam) {
+                offMsgQuery = offMsgQuery.lt('created_at', beforeParam);
+              }
+
+              const { data: offMsgs } = await offMsgQuery;
               offerMsgList = offMsgs || [];
             }
           } catch {}
@@ -664,11 +689,18 @@ export async function GET(request) {
           }
           rawMessages = Array.from(msgMap.values());
         } else {
-          const { data } = await supabase
+          let genericQuery = supabase
             .from('messages')
             .select('id, conversation_id, client_email, sender, sender_name, text, attachment, attachment_url, attachment_name, attachment_size, attachment_type, file_id, offer_id, offer_data, reply_to, is_read, is_autopilot, auto_pilot, metadata, deleted_at, created_at, timestamp')
             .in('conversation_id', targetIds)
-            .order('created_at', { ascending: true });
+            .order('created_at', { ascending: false })
+            .limit(limitParam);
+
+          if (beforeParam) {
+            genericQuery = genericQuery.lt('created_at', beforeParam);
+          }
+
+          const { data } = await genericQuery;
           rawMessages = (data || []).filter(m => !m.deleted_at);
         }
       } catch (err) {
@@ -1267,59 +1299,122 @@ export async function POST(request) {
         );
 
         if (isUserAdmin) {
-          // Admin read client's messages
+          // Explicit Admin action: Mark all customer messages in this thread as read
           await supabase.from('conversations')
-            .update({ admin_unread_count: 0, unread_count: 0, updated_at: nowIso })
+            .update({ 
+              admin_unread_count: 0, 
+              unread_count: 0, 
+              last_marked_read_at: nowIso,
+              updated_at: nowIso 
+            })
             .in('id', targetIds);
           
           if (targetEmail) {
             await supabase.from('conversations')
-              .update({ admin_unread_count: 0, unread_count: 0, updated_at: nowIso })
+              .update({ 
+                admin_unread_count: 0, 
+                unread_count: 0, 
+                last_marked_read_at: nowIso,
+                updated_at: nowIso 
+              })
               .ilike('client_email', targetEmail);
           }
           
           await supabase.from('messages')
-            .update({ is_read: true })
+            .update({ is_read: true, read_at: nowIso })
             .in('conversation_id', targetIds)
             .neq('sender', 'admin');
 
           if (targetEmail) {
             try {
               await supabase.from('messages')
-                .update({ is_read: true })
+                .update({ is_read: true, read_at: nowIso })
                 .ilike('client_email', targetEmail)
                 .neq('sender', 'admin');
             } catch {}
           }
         } else {
-          // Client read admin/support's messages
+          // Explicit Client action: Mark support/admin messages as read
           await supabase.from('conversations')
-            .update({ client_unread_count: 0, updated_at: nowIso })
+            .update({ 
+              client_unread_count: 0, 
+              last_marked_read_at: nowIso,
+              updated_at: nowIso 
+            })
             .in('id', targetIds);
 
           if (targetEmail) {
             await supabase.from('conversations')
-              .update({ client_unread_count: 0, updated_at: nowIso })
+              .update({ 
+                client_unread_count: 0, 
+                last_marked_read_at: nowIso,
+                updated_at: nowIso 
+              })
               .ilike('client_email', targetEmail);
           }
           
           await supabase.from('messages')
-            .update({ is_read: true })
+            .update({ is_read: true, read_at: nowIso })
             .in('conversation_id', targetIds)
             .eq('sender', 'admin');
 
           if (targetEmail) {
             try {
               await supabase.from('messages')
-                .update({ is_read: true })
+                .update({ is_read: true, read_at: nowIso })
                 .ilike('client_email', targetEmail)
                 .eq('sender', 'admin');
             } catch {}
           }
         }
+
+        return NextResponse.json({ success: true, conversation_id, read_at: nowIso });
       }
-      
-      return NextResponse.json({ success: true });
+    }
+
+    if (action === 'markAsUnread') {
+      const { conversation_id, role, clientEmail, client_email } = payload;
+      if (conversation_id) {
+        const nowIso = new Date().toISOString();
+        let targetEmail = normalizeEmail(clientEmail || client_email || '');
+        if (!targetEmail) {
+          targetEmail = normalizeEmail(conversation_id.replace('support-', '').replace('inbox-', '').replace('direct-', '').replace('chat-', ''));
+        }
+
+        const isUserAdmin = Boolean(
+          isAdmin || 
+          role === 'admin' || 
+          payload.senderRole === 'admin' ||
+          (user?.email && ['bilalbutt136@gmail.com', 'bilaldigitizing@gmail.com'].includes(user.email.toLowerCase()))
+        );
+
+        if (isUserAdmin) {
+          // Set conversation unread count to 1
+          await supabase.from('conversations')
+            .update({ admin_unread_count: 1, unread_count: 1, updated_at: nowIso })
+            .eq('id', conversation_id);
+
+          // Find the latest message from client and mark is_read = false
+          const { data: latestClientMsg } = await supabase
+            .from('messages')
+            .select('id')
+            .eq('conversation_id', conversation_id)
+            .neq('sender', 'admin')
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .maybeSingle();
+
+          if (latestClientMsg?.id) {
+            await supabase.from('messages')
+              .update({ is_read: false, read_at: null })
+              .eq('id', latestClientMsg.id);
+          }
+        }
+
+        return NextResponse.json({ success: true, conversation_id, is_read: false });
+      }
+
+      return NextResponse.json({ success: true, conversation_id: null });
     }
 
     if (action === 'createNotification') {

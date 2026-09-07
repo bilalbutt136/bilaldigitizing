@@ -1330,7 +1330,7 @@ export async function fetchConversations(email, channel = '') {
   } catch { return []; }
 }
 
-export async function fetchChatMessages(chatId, email, guestId = null) {
+export async function fetchChatMessages(chatId, email, guestId = null, limit = 100, before = null) {
   try {
     if (!chatId && !email && !guestId) return [];
     const headers = await getAuthHeaders();
@@ -1342,6 +1342,8 @@ export async function fetchChatMessages(chatId, email, guestId = null) {
     if (chatId) queryParts.push(`conversation_id=${encodeURIComponent(chatId)}`);
     if (cleanEmail) queryParts.push(`clientEmail=${encodeURIComponent(cleanEmail)}`);
     if (guestId) queryParts.push(`guest_id=${encodeURIComponent(guestId)}`);
+    if (limit) queryParts.push(`limit=${encodeURIComponent(limit)}`);
+    if (before) queryParts.push(`before=${encodeURIComponent(before)}`);
     queryParts.push(`_t=${Date.now()}`);
     
     // Primary: dedicated chat messages endpoint
@@ -1359,7 +1361,9 @@ export async function fetchChatMessages(chatId, email, guestId = null) {
 
     // Fallback: legacy endpoint
     const query = cleanEmail ? `&clientEmail=${encodeURIComponent(cleanEmail)}` : '';
-    const fallbackRes = await fetch(`/api/messages?action=fetchMessages&chatId=${encodeURIComponent(chatId || '')}${query}&_t=${Date.now()}`, {
+    const limitQuery = limit ? `&limit=${encodeURIComponent(limit)}` : '';
+    const beforeQuery = before ? `&before=${encodeURIComponent(before)}` : '';
+    const fallbackRes = await fetch(`/api/messages?action=fetchMessages&chatId=${encodeURIComponent(chatId || '')}${query}${limitQuery}${beforeQuery}&_t=${Date.now()}`, {
       headers,
       cache: 'no-store',
       next: { revalidate: 0 }
@@ -1649,9 +1653,8 @@ export async function addChatMessage(chatIdOrObj, messageObj = null) {
   } catch { return false; }
 }
 
-export function getAdminThreadUnreadCount(conv, activeChatId = null) {
+export function getAdminThreadUnreadCount(conv) {
   if (!conv) return 0;
-  if (activeChatId && (conv.id === activeChatId || (conv.clientEmail && activeChatId.includes(conv.clientEmail)))) return 0;
 
   const msgs = Array.isArray(conv.messages) ? conv.messages : [];
   if (msgs.length > 0) {
@@ -1677,10 +1680,10 @@ export async function markConversationAsRead(chatId, role = 'admin', clientEmail
         localStorage.setItem('bdigi_read_admin_' + chatId, nowTs);
         if (cleanEmail) localStorage.setItem('bdigi_read_admin_chat-' + cleanEmail, nowTs);
       }
-      window.dispatchEvent(new CustomEvent('bdigi_read_update', { detail: { conversation_id: chatId, role, clientEmail: cleanEmail } }));
+      window.dispatchEvent(new CustomEvent('bdigi_read_update', { detail: { conversation_id: chatId, role, clientEmail: cleanEmail, is_read: true } }));
       try {
         const bc = new BroadcastChannel('bdigi_chat_sync');
-        bc.postMessage({ type: 'read_update', conversation_id: chatId, role, clientEmail: cleanEmail });
+        bc.postMessage({ type: 'read_update', conversation_id: chatId, role, clientEmail: cleanEmail, is_read: true });
         bc.close();
       } catch {}
     }
@@ -1705,6 +1708,56 @@ export async function markConversationAsRead(chatId, role = 'admin', clientEmail
       headers,
       body: JSON.stringify({ 
         action: 'markAsRead', 
+        payload: { 
+          conversation_id: chatId,
+          role,
+          clientEmail: cleanEmail
+        } 
+      })
+    });
+
+    return true;
+  } catch { return false; }
+}
+
+export async function markConversationAsUnread(chatId, role = 'admin', clientEmail = '') {
+  try {
+    if (!chatId) return false;
+    const cleanEmail = clientEmail ? String(clientEmail).toLowerCase().trim() : '';
+
+    if (typeof window !== 'undefined') {
+      if (role === 'admin') {
+        localStorage.removeItem('bdigi_read_admin_' + chatId);
+        if (cleanEmail) localStorage.removeItem('bdigi_read_admin_chat-' + cleanEmail);
+      }
+      window.dispatchEvent(new CustomEvent('bdigi_read_update', { detail: { conversation_id: chatId, role, clientEmail: cleanEmail, is_read: false } }));
+      try {
+        const bc = new BroadcastChannel('bdigi_chat_sync');
+        bc.postMessage({ type: 'read_update', conversation_id: chatId, role, clientEmail: cleanEmail, is_read: false });
+        bc.close();
+      } catch {}
+    }
+
+    const channel = getSharedChatChannel();
+    if (channel) {
+      channel.send({
+        type: 'broadcast',
+        event: 'conversation_update',
+        payload: { 
+          id: chatId, 
+          unread_count: 1,
+          admin_unread_count: role === 'admin' ? 1 : undefined,
+          client_unread_count: role === 'client' ? 1 : undefined
+        }
+      });
+    }
+
+    const headers = await getAuthHeaders();
+    await fetch('/api/messages', {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ 
+        action: 'markAsUnread', 
         payload: { 
           conversation_id: chatId,
           role,

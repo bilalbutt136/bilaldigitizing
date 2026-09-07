@@ -68,8 +68,19 @@ export async function GET(req) {
       targetConvIds.add(`chat-${cleanEmail}`);
     }
 
-    // Build database query
-    let query = supabase.from('messages').select('*').order('created_at', { ascending: true });
+    const limitParam = Math.min(parseInt(searchParams.get('limit'), 10) || 100, 200);
+    const beforeParam = searchParams.get('before') || null;
+
+    // Build database query with specific columns and pagination
+    let query = supabase
+      .from('messages')
+      .select('id, conversation_id, thread_id, guest_id, client_email, sender, sender_name, text, attachment, attachment_url, attachment_name, attachment_size, attachment_type, file_id, offer_id, offer_data, reply_to, is_read, is_autopilot, auto_pilot, metadata, deleted_at, created_at, timestamp, status, read_at')
+      .order('created_at', { ascending: false })
+      .limit(limitParam);
+
+    if (beforeParam) {
+      query = query.lt('created_at', beforeParam);
+    }
 
     const orConditions = [];
     if (targetConvIds.size > 0) {
@@ -96,7 +107,9 @@ export async function GET(req) {
     // Fetch custom offers for authoritative hydration
     let customOffersMap = new Map();
     try {
-      const { data: offers } = await supabase.from('custom_offers').select('*');
+      const { data: offers } = await supabase
+        .from('custom_offers')
+        .select('id, conversation_id, client_email, client_name, title, description, price, final_price, status, payment_status, order_id, expires_at, delivery_days, created_at, updated_at');
       if (Array.isArray(offers)) {
         offers.forEach(o => { if (o?.id) customOffersMap.set(o.id, o); });
       }
@@ -162,6 +175,13 @@ export async function GET(req) {
           timestamp: m.timestamp || m.created_at
         };
       });
+
+    // Sort chronologically ascending for the chat view
+    formattedMessages.sort((a, b) => {
+      const timeA = new Date(a.timestamp || a.created_at || 0).getTime();
+      const timeB = new Date(b.timestamp || b.created_at || 0).getTime();
+      return timeA - timeB;
+    });
 
     return NextResponse.json({ success: true, messages: formattedMessages }, { headers: NO_CACHE_HEADERS });
   } catch (err) {
