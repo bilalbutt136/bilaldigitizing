@@ -17,8 +17,8 @@ export const AdminConversationCard = ({
   if (!conversation) return null;
 
   const isUnread = unreadCount > 0;
-  const lastMsg = (conversation.messages || [])[(conversation.messages || []).length - 1] || {};
-  const rawTimestamp = conversation.lastMessageTime || conversation.last_message_time || lastMsg.timestamp || lastMsg.created_at || conversation.updatedAt || conversation.updated_at;
+  const lastMsg = (conversation.messages || [])[(conversation.messages || []).length - 1] || null;
+  const rawTimestamp = lastMsg ? (lastMsg.created_at || lastMsg.timestamp) : (conversation.lastMessageTime || conversation.last_message_time || conversation.updatedAt || conversation.updated_at);
   const lastTimeFormatted = formatTime ? formatTime(rawTimestamp) : 'Just now';
 
   // Customer display details
@@ -39,25 +39,29 @@ export const AdminConversationCard = ({
   const orderNum = threadInfo?.orderNum || '';
   const orderCount = conversation.orders?.length || (isOrder ? 1 : 0);
 
-  // Message preview logic (instant snippet from conversation object or latest message)
-  let previewText = conversation.lastMessage || conversation.last_message || '';
-  if (!previewText) {
+  // Message preview logic (derived directly from the latest message in thread if available)
+  let previewText = '';
+  if (lastMsg) {
     if (lastMsg.text) {
       previewText = lastMsg.text;
-    } else if (lastMsg.attachment || lastMsg.attachment_name || lastMsg.attachment_url) {
+    } else if (lastMsg.attachment_name || lastMsg.attachment || lastMsg.attachment_url) {
       previewText = `📎 ${lastMsg.attachment_name || lastMsg.attachment || 'Attachment'}`;
     } else if (lastMsg.offer_data || lastMsg.offer_id) {
       previewText = '📋 Custom Design Offer';
     } else {
-      previewText = 'No messages yet';
+      previewText = 'New Message';
     }
+  } else {
+    previewText = conversation.lastMessage || conversation.last_message || 'No messages yet';
   }
 
   if (typeof previewText === 'string' && previewText.includes('[OFFER_DATA:')) {
     previewText = '📋 Custom Design Offer';
   }
 
-  const isLastMsgFromAdmin = lastMsg.sender === 'admin';
+  const isLastMsgFromAdmin = lastMsg 
+    ? (lastMsg.sender === 'admin' || lastMsg.sender === 'support' || lastMsg.sender === 'staff')
+    : false;
 
   return (
     <div

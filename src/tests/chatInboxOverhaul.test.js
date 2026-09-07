@@ -174,4 +174,72 @@ describe('Chat Inbox Overhaul: Sorting, Snippets & Read Management', () => {
     assert.equal(inboxOnly.length, 2, 'Two inbox/order threads filtered correctly');
   });
 
+  test('Chronological Ordering: Received messages after sender messages appear strictly in chronological order', () => {
+    const t0 = new Date('2026-09-07T12:00:00.000Z').toISOString();
+    const t1 = new Date('2026-09-07T12:05:00.000Z').toISOString();
+    const t2 = new Date('2026-09-07T12:10:00.000Z').toISOString();
+
+    const adminMsg1 = {
+      id: 'msg-admin-1',
+      sender: 'admin',
+      text: 'Hello, how can we help with your embroidery design?',
+      created_at: t0,
+      timestamp: t0
+    };
+
+    const clientMsg1 = {
+      id: 'msg-client-1',
+      sender: 'client',
+      text: 'I sent my logo file earlier, did you receive it?',
+      created_at: t1,
+      timestamp: t1
+    };
+
+    const adminMsg2 = {
+      id: 'msg-admin-2',
+      sender: 'admin',
+      text: 'Yes! We received it and can deliver within 4 hours.',
+      created_at: t2,
+      timestamp: t2
+    };
+
+    // Customer sends another message AFTER admin's last message
+    const t3 = new Date('2026-09-07T12:15:00.000Z').toISOString();
+    const clientMsg2 = {
+      id: 'msg-client-2',
+      sender: 'client',
+      text: 'Awesome, please proceed with DST and PES formats!',
+      created_at: t3,
+      timestamp: t3
+    };
+
+    const messages = [clientMsg2, adminMsg1, adminMsg2, clientMsg1];
+
+    const sortChronologically = (msgs) => {
+      return [...msgs].sort((a, b) => {
+        const timeA = new Date(a.created_at || a.timestamp || 0).getTime();
+        const timeB = new Date(b.created_at || b.timestamp || 0).getTime();
+        const diff = timeA - timeB;
+        if (diff !== 0) return diff;
+        return String(a.id || '').localeCompare(String(b.id || ''));
+      });
+    };
+
+    const sorted = sortChronologically(messages);
+
+    // Assert exact chronological sequence: Admin1 -> Client1 -> Admin2 -> Client2
+    assert.equal(sorted[0].id, 'msg-admin-1', 'First message should be Admin1');
+    assert.equal(sorted[1].id, 'msg-client-1', 'Second message should be Client1');
+    assert.equal(sorted[2].id, 'msg-admin-2', 'Third message should be Admin2');
+    assert.equal(sorted[3].id, 'msg-client-2', 'Latest message should be Client2');
+
+    // Test conversation card preview derivation:
+    const lastMsg = sorted[sorted.length - 1];
+    const isLastMsgFromAdmin = (lastMsg.sender === 'admin' || lastMsg.sender === 'support' || lastMsg.sender === 'staff');
+    const previewText = extractSnippet(lastMsg);
+
+    assert.equal(isLastMsgFromAdmin, false, 'Latest message is from customer, not admin');
+    assert.equal(previewText, 'Awesome, please proceed with DST and PES formats!', 'Preview text reflects customer message');
+  });
+
 });

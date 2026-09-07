@@ -43,11 +43,24 @@ import {
 
 const parseMessageTime = (msg) => {
   if (!msg) return 0;
-  const raw = msg.timestamp || msg.created_at || msg.createdAt || msg.time;
+  const raw = msg.created_at || msg.timestamp || msg.createdAt || msg.time;
   if (!raw) return 0;
   if (typeof raw === 'number') return raw;
   const parsed = new Date(raw).getTime();
   return isNaN(parsed) ? 0 : parsed;
+};
+
+const sortMessagesChronologically = (msgs) => {
+  if (!Array.isArray(msgs)) return [];
+  return msgs.sort((a, b) => {
+    const diff = parseMessageTime(a) - parseMessageTime(b);
+    if (diff !== 0) return diff;
+    const strA = String(a.created_at || a.timestamp || '');
+    const strB = String(b.created_at || b.timestamp || '');
+    const strDiff = strA.localeCompare(strB);
+    if (strDiff !== 0) return strDiff;
+    return String(a.id || '').localeCompare(String(b.id || ''));
+  });
 };
 
 const formatChatTime = (timestamp) => {
@@ -146,7 +159,7 @@ export const ClientChatInbox = ({ initialOrderId = null, onBack = null }) => {
       const directMsgs = await fetchChatMessages(canonicalChatId, clientEmail, guestSessionId, 100);
       if (Array.isArray(directMsgs)) {
         setHasMoreMessages(directMsgs.length >= 100);
-        const sorted = [...directMsgs].sort((a, b) => parseMessageTime(a) - parseMessageTime(b));
+        const sorted = sortMessagesChronologically([...directMsgs]);
         setMessages(sorted);
       }
     } catch (err) {
@@ -176,7 +189,7 @@ export const ClientChatInbox = ({ initialOrderId = null, onBack = null }) => {
           const map = new Map();
           earlierMsgs.forEach(m => { if (m && m.id) map.set(m.id, m); });
           (prev || []).forEach(m => { if (m && m.id) map.set(m.id, m); });
-          return Array.from(map.values()).sort((a, b) => parseMessageTime(a) - parseMessageTime(b));
+          return sortMessagesChronologically(Array.from(map.values()));
         });
 
         // Maintain scroll position cleanly
@@ -366,7 +379,7 @@ export const ClientChatInbox = ({ initialOrderId = null, onBack = null }) => {
             }
           }
           map.set(formattedRecord.id, formattedRecord);
-          return Array.from(map.values()).sort((a, b) => parseMessageTime(a) - parseMessageTime(b));
+          return sortMessagesChronologically(Array.from(map.values()));
         });
 
         if (record.sender === 'admin' || record.sender === 'worker' || record.sender === 'support') {
@@ -541,7 +554,7 @@ export const ClientChatInbox = ({ initialOrderId = null, onBack = null }) => {
       const map = new Map();
       (prev || []).forEach(m => { if (m && m.id) map.set(m.id, m); });
       map.set(newMsg.id, newMsg);
-      return Array.from(map.values()).sort((a, b) => parseMessageTime(a) - parseMessageTime(b));
+      return sortMessagesChronologically(Array.from(map.values()));
     });
     setMessageInput('');
     setAttachedFile(null);
@@ -554,6 +567,21 @@ export const ClientChatInbox = ({ initialOrderId = null, onBack = null }) => {
         setIsSupportTyping(true);
       }
       const sendRes = await addChatMessage(canonicalChatId, newMsg);
+      if (sendRes?.message) {
+        const confirmed = sendRes.message;
+        setMessages(prev => {
+          const map = new Map();
+          (prev || []).forEach(m => {
+            if (!m) return;
+            if (m.id === newMsg.id) {
+              map.set(confirmed.id || m.id, { ...m, ...confirmed, id: confirmed.id || m.id });
+            } else if (m.id) {
+              map.set(m.id, m);
+            }
+          });
+          return sortMessagesChronologically(Array.from(map.values()));
+        });
+      }
       if (sendRes?.auto_reply) {
         const auto = sendRes.auto_reply;
         setTimeout(() => {
@@ -562,7 +590,7 @@ export const ClientChatInbox = ({ initialOrderId = null, onBack = null }) => {
             const map = new Map();
             (prev || []).forEach(m => { if (m && m.id) map.set(m.id, m); });
             map.set(auto.id, auto);
-            return Array.from(map.values()).sort((a, b) => parseMessageTime(a) - parseMessageTime(b));
+            return sortMessagesChronologically(Array.from(map.values()));
           });
           scrollToBottom('smooth');
         }, 700);
@@ -907,14 +935,14 @@ export const ClientChatInbox = ({ initialOrderId = null, onBack = null }) => {
               </div>
             )}
             {messages.map((msg, index) => {
-              const isClient = msg.sender === 'client';
+              const isMe = msg.sender === 'client' || msg.sender === 'customer' || (msg.sender && msg.sender !== 'admin' && msg.sender !== 'support' && msg.sender !== 'staff');
               return (
                 <WhatsAppChatMessage
                   key={msg.id || index}
                   message={msg}
-                  isMe={isClient}
-                  isClient={isClient}
-                  senderDisplayName={isClient ? 'You' : (activeChannel === 'support' ? '24/7 Live Support' : 'Studio Digitizer')}
+                  isMe={isMe}
+                  isClient={isMe}
+                  senderDisplayName={isMe ? 'You' : (activeChannel === 'support' ? '24/7 Live Support' : 'Studio Digitizer')}
                   clientName={clientName}
                   onReply={(m) => setReplyingTo(m)}
                   formatTime={formatChatTime}

@@ -128,7 +128,7 @@ export async function POST(req) {
       offer_data: payload.offer_data || payload.offerData || null,
       status: 'sent',
       is_read: false,
-      timestamp: payload.timestamp || nowIso,
+      timestamp: nowIso,
       created_at: nowIso
     };
 
@@ -309,7 +309,8 @@ export async function POST(req) {
         offer_data: insertedMsg.offer_data || null,
         status: 'sent',
         is_read: false,
-        timestamp: insertedMsg.timestamp || insertedMsg.created_at
+        created_at: insertedMsg.created_at || insertedMsg.timestamp,
+        timestamp: insertedMsg.created_at || insertedMsg.timestamp
       },
       auto_reply: autoReplyMsg
     }, { headers: NO_CACHE_HEADERS });

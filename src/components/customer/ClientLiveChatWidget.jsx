@@ -32,11 +32,24 @@ import {
 // Format timestamp safely to human-readable string
 const parseMessageTime = (msg) => {
   if (!msg) return 0;
-  const raw = msg.timestamp || msg.created_at || msg.createdAt || msg.time;
+  const raw = msg.created_at || msg.timestamp || msg.createdAt || msg.time;
   if (!raw) return 0;
   if (typeof raw === 'number') return raw;
   const parsed = new Date(raw).getTime();
   return isNaN(parsed) ? 0 : parsed;
+};
+
+const sortMessagesChronologically = (msgs) => {
+  if (!Array.isArray(msgs)) return [];
+  return msgs.sort((a, b) => {
+    const diff = parseMessageTime(a) - parseMessageTime(b);
+    if (diff !== 0) return diff;
+    const strA = String(a.created_at || a.timestamp || '');
+    const strB = String(b.created_at || b.timestamp || '');
+    const strDiff = strA.localeCompare(strB);
+    if (strDiff !== 0) return strDiff;
+    return String(a.id || '').localeCompare(String(b.id || ''));
+  });
 };
 
 const formatChatTime = (timestamp) => {
@@ -109,8 +122,7 @@ export const mergeChatMessages = (prevMsgs, newMsgs) => {
   });
 
   const list = Array.from(mergedMap.values());
-  list.sort((a, b) => parseMessageTime(a) - parseMessageTime(b));
-  return list;
+  return sortMessagesChronologically(list);
 };
 
 export const ClientLiveChatWidget = () => {
@@ -701,16 +713,17 @@ export const ClientLiveChatWidget = () => {
     if (isSupabaseConfigured) {
       try {
         const sendRes = await addChatMessage(convId, newMsg);
+        const confirmed = sendRes?.message || sendRes;
 
         setMessages(prev => {
-          const next = prev.map(m => {
+          let next = prev.map(m => {
             if (m.id === msgId || m.temp_id === msgId) {
               return {
                 ...m,
-                id: sendRes?.id || m.id,
+                id: confirmed?.id || m.id,
                 status: 'sent',
-                created_at: sendRes?.created_at || m.created_at,
-                timestamp: sendRes?.created_at || m.timestamp
+                created_at: confirmed?.created_at || m.created_at,
+                timestamp: confirmed?.created_at || confirmed?.timestamp || m.timestamp
               };
             }
             return m;
@@ -724,10 +737,11 @@ export const ClientLiveChatWidget = () => {
             const alreadyHas = next.some(m => m.id === auto.id);
             if (!alreadyHas) {
               next.push(auto);
-              next.sort((a, b) => parseMessageTime(a) - parseMessageTime(b));
               playNotificationSound('receive');
             }
           }
+
+          next = sortMessagesChronologically(next);
 
           if (typeof window !== 'undefined') {
             try {
@@ -1100,12 +1114,13 @@ export const ClientLiveChatWidget = () => {
                 )}
 
                 {(clientThread.messages || []).map((msg, index) => {
-                  const isClient = msg.sender === 'client';
+                  const isClient = msg.sender === 'client' || msg.sender === 'customer' || (msg.sender && msg.sender !== 'admin' && msg.sender !== 'support' && msg.sender !== 'staff');
                   return (
                     <WhatsAppChatMessage
                       key={msg.id || index}
                       message={msg}
                       isMe={isClient}
+                      isClient={isClient}
                       senderDisplayName={isClient ? 'You' : 'Support'}
                       onReply={(m) => setReplyingTo(m)}
                       formatTime={formatChatTime}

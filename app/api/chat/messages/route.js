@@ -210,15 +210,22 @@ export async function GET(req) {
           offer_data: offerData,
           status: m.status || 'sent',
           is_read: m.is_read === true || m.is_read === 'true',
-          timestamp: m.timestamp || m.created_at
+          created_at: m.created_at || m.timestamp,
+          timestamp: m.created_at || m.timestamp
         };
       });
 
-    // Sort chronologically ascending for the chat view
+    // Sort chronologically ascending for the chat view with deterministic tie-breaking
     formattedMessages.sort((a, b) => {
-      const timeA = new Date(a.timestamp || a.created_at || 0).getTime();
-      const timeB = new Date(b.timestamp || b.created_at || 0).getTime();
-      return timeA - timeB;
+      const timeA = new Date(a.created_at || a.timestamp || 0).getTime();
+      const timeB = new Date(b.created_at || b.timestamp || 0).getTime();
+      const diff = timeA - timeB;
+      if (diff !== 0) return diff;
+      const strA = String(a.created_at || a.timestamp || '');
+      const strB = String(b.created_at || b.timestamp || '');
+      const strDiff = strA.localeCompare(strB);
+      if (strDiff !== 0) return strDiff;
+      return String(a.id || '').localeCompare(String(b.id || ''));
     });
 
     return NextResponse.json({ success: true, messages: formattedMessages }, { headers: NO_CACHE_HEADERS });

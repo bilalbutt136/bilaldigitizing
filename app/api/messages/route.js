@@ -162,7 +162,7 @@ const getCanonicalSupportId = (email) => {
 
 const parseMessageTime = (msg) => {
   if (!msg) return 0;
-  const raw = msg.timestamp || msg.created_at || msg.createdAt || msg.time;
+  const raw = msg.created_at || msg.timestamp || msg.createdAt || msg.time;
   if (!raw) return 0;
   if (typeof raw === 'number') return raw;
   const parsed = new Date(raw).getTime();
@@ -474,7 +474,8 @@ export async function GET(request) {
           offer_id: resolvedOfferId,
           offer_data: resolvedOfferData,
           is_read: m.is_read === true || m.is_read === 'true',
-          timestamp: m.timestamp || m.created_at
+          created_at: m.created_at || m.timestamp,
+          timestamp: m.created_at || m.timestamp
         };
 
         // Deduplicate messages within thread using Map by ID
@@ -493,7 +494,15 @@ export async function GET(request) {
       // Finalize and sort lists (always newest at the very top)
       const finalizeThreads = (threadsMap) => {
         return Array.from(threadsMap.values()).map(thread => {
-          thread.messages.sort((a, b) => parseMessageTime(a) - parseMessageTime(b));
+          thread.messages.sort((a, b) => {
+            const diff = parseMessageTime(a) - parseMessageTime(b);
+            if (diff !== 0) return diff;
+            const strA = String(a.created_at || a.timestamp || '');
+            const strB = String(b.created_at || b.timestamp || '');
+            const strDiff = strA.localeCompare(strB);
+            if (strDiff !== 0) return strDiff;
+            return String(a.id || '').localeCompare(String(b.id || ''));
+          });
           const lastMsg = thread.messages[thread.messages.length - 1];
           const lastTime = lastMsg ? parseMessageTime(lastMsg) : (thread.updatedAt ? new Date(thread.updatedAt).getTime() : 0);
           
@@ -797,7 +806,8 @@ export async function GET(request) {
           offer_id: resolvedOfferId,
           offer_data: resolvedOfferData,
           is_read: m.is_read === true || m.is_read === 'true',
-          timestamp: m.timestamp || m.created_at
+          created_at: m.created_at || m.timestamp,
+          timestamp: m.created_at || m.timestamp
         };
       });
 
@@ -835,6 +845,7 @@ export async function GET(request) {
               offer_id: offId,
               offer_data: authOffer,
               is_read: true,
+              created_at: authOffer.created_at || new Date().toISOString(),
               timestamp: authOffer.created_at || new Date().toISOString()
             });
             existingOfferIds.add(offId);
@@ -842,7 +853,15 @@ export async function GET(request) {
         }
       }
 
-      mappedMessages.sort((a, b) => parseMessageTime(a) - parseMessageTime(b));
+      mappedMessages.sort((a, b) => {
+        const diff = parseMessageTime(a) - parseMessageTime(b);
+        if (diff !== 0) return diff;
+        const strA = String(a.created_at || a.timestamp || '');
+        const strB = String(b.created_at || b.timestamp || '');
+        const strDiff = strA.localeCompare(strB);
+        if (strDiff !== 0) return strDiff;
+        return String(a.id || '').localeCompare(String(b.id || ''));
+      });
       
       return NextResponse.json({ messages: mappedMessages });
     }

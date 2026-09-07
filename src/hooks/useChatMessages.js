@@ -13,7 +13,7 @@ import { playNotificationSound } from '../utils/audioNotification';
 
 export const parseMessageTimestamp = (msg) => {
   if (!msg) return 0;
-  const raw = msg.timestamp || msg.created_at || msg.createdAt || msg.time;
+  const raw = msg.created_at || msg.timestamp || msg.createdAt || msg.time;
   if (!raw) return 0;
   if (typeof raw === 'number') return raw;
   const parsed = new Date(raw).getTime();
@@ -76,7 +76,15 @@ export function useChatMessages({
     });
 
     const sorted = Array.from(map.values());
-    sorted.sort((a, b) => parseMessageTimestamp(a) - parseMessageTimestamp(b));
+    sorted.sort((a, b) => {
+      const diff = parseMessageTimestamp(a) - parseMessageTimestamp(b);
+      if (diff !== 0) return diff;
+      const strA = String(a.created_at || a.timestamp || '');
+      const strB = String(b.created_at || b.timestamp || '');
+      const strDiff = strA.localeCompare(strB);
+      if (strDiff !== 0) return strDiff;
+      return String(a.id || '').localeCompare(String(b.id || ''));
+    });
     return sorted;
   }, []);
 
