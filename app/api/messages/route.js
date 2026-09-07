@@ -587,7 +587,6 @@ export async function GET(request) {
         inboxConversations,
         supportConversations
       }, { headers: NO_CACHE_HEADERS });
-      }, { headers: NO_CACHE_HEADERS });
     }
 
     if (action === 'fetchMessages') {
