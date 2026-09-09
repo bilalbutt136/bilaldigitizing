@@ -1427,6 +1427,35 @@ export const StateProvider = ({ children }) => {
     return { success: true, role, user: uData };
   };
 
+  const logout = async () => {
+    setIsAuthenticated(false);
+    setAuthUser(null);
+    setIsAuthModalOpen(false);
+    setCurrentView('public');
+    setWalletBalance(0);
+
+    try {
+      sessionStorage.clear();
+      localStorage.removeItem('bdigi_auth_user');
+      localStorage.removeItem('bdigi_current_view');
+      if (typeof document !== 'undefined') {
+        document.cookie = 'bdigi_auth=; path=/; max-age=0; SameSite=Lax';
+        document.cookie = 'bdigi_user_email=; path=/; max-age=0; SameSite=Lax';
+        document.cookie = 'bdigi_user_role=; path=/; max-age=0; SameSite=Lax';
+      }
+    } catch (e) {
+      console.warn('Storage clearance notice:', e);
+    }
+
+    try {
+      await supabase.auth.signOut();
+    } catch (err) {
+      console.warn('Supabase signOut error:', err);
+    }
+
+    showToast('You have been logged out safely.', 'info');
+  };
+
   const login = async (email, password, requiredRole = null) => {
     const cleanEmail = (email || '').toLowerCase().trim();
     const cleanPass = (password || '').trim();
@@ -1526,35 +1555,6 @@ export const StateProvider = ({ children }) => {
     } catch (err) {
       return { success: false, error: err?.message || 'Registration exception.' };
     }
-  };
-
-  const logout = async () => {
-    setIsAuthenticated(false);
-    setAuthUser(null);
-    setIsAuthModalOpen(false);
-    setCurrentView('public');
-    setWalletBalance(0);
-
-    try {
-      sessionStorage.clear();
-      localStorage.removeItem('bdigi_auth_user');
-      localStorage.removeItem('bdigi_current_view');
-      if (typeof document !== 'undefined') {
-        document.cookie = 'bdigi_auth=; path=/; max-age=0; SameSite=Lax';
-        document.cookie = 'bdigi_user_email=; path=/; max-age=0; SameSite=Lax';
-        document.cookie = 'bdigi_user_role=; path=/; max-age=0; SameSite=Lax';
-      }
-    } catch (e) {
-      console.warn('Storage clearance notice:', e);
-    }
-
-    try {
-      await supabase.auth.signOut();
-    } catch (err) {
-      console.warn('Supabase signOut error:', err);
-    }
-
-    showToast('You have been logged out safely.', 'info');
   };
 
   const requestPasswordReset = async (email) => {
