@@ -1444,11 +1444,16 @@ export async function POST(request) {
           ].filter(Boolean)));
         }
 
+        const configuredAdmins = [
+          process.env.MASTER_ADMIN_EMAIL,
+          process.env.ADMIN_EMAIL,
+          process.env.NEXT_PUBLIC_ADMIN_EMAIL
+        ].filter(Boolean).map(e => e.toLowerCase().trim());
+
         const isUserAdmin = Boolean(
           isAdmin || 
           role === 'admin' || 
-          payload.senderRole === 'admin' ||
-          (user?.email && ['bilalbutt136@gmail.com', 'bilaldigitizing@gmail.com'].includes(user.email.toLowerCase()))
+          (user?.email && configuredAdmins.includes(user.email.toLowerCase().trim()))
         );
 
         if (isUserAdmin) {
@@ -1534,11 +1539,16 @@ export async function POST(request) {
           targetEmail = normalizeEmail(conversation_id.replace('support-', '').replace('inbox-', '').replace('direct-', '').replace('chat-', ''));
         }
 
+        const configuredAdmins = [
+          process.env.MASTER_ADMIN_EMAIL,
+          process.env.ADMIN_EMAIL,
+          process.env.NEXT_PUBLIC_ADMIN_EMAIL
+        ].filter(Boolean).map(e => e.toLowerCase().trim());
+
         const isUserAdmin = Boolean(
           isAdmin || 
           role === 'admin' || 
-          payload.senderRole === 'admin' ||
-          (user?.email && ['bilalbutt136@gmail.com', 'bilaldigitizing@gmail.com'].includes(user.email.toLowerCase()))
+          (user?.email && configuredAdmins.includes(user.email.toLowerCase().trim()))
         );
 
         if (isUserAdmin) {

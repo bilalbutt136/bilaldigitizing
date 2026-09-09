@@ -143,7 +143,7 @@ export async function POST(req) {
         } catch {}
 
         if (!recipientEmail) {
-          recipientEmail = process.env.MASTER_ADMIN_EMAIL || 'shahidbutt59191@gmail.com';
+          recipientEmail = process.env.MASTER_ADMIN_EMAIL || process.env.ADMIN_EMAIL || process.env.NEXT_PUBLIC_ADMIN_EMAIL || 'orders@bdigitizing-pro.com';
         }
         recipientName = 'Studio Admin';
       }

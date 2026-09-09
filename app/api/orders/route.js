@@ -115,16 +115,48 @@ export async function GET(request) {
         }
       }
 
-      const [
-        { data: orderFiles },
-        { data: revisions },
-        { data: messages }
-      ] = await Promise.all([
-        supabase.from('order_files').select('id, file_name, file_format, file_type, public_url, file_url, file_path, uploaded_by, created_at').eq('order_id', orderId),
-        supabase.from('revisions').select('id, order_id, instructions, requested_by, status, created_at').eq('order_id', orderId),
-        supabase.from('order_messages').select('id, order_id, message, text, sender_name, sender_role, is_staff, attachment_url, attachments, created_at').eq('order_id', orderId)
-      ]);
-      return NextResponse.json({ orderFiles, revisions, messages });
+      // Defensive queries with column fallback to guarantee zero 500 crashes
+      let orderFilesList = [];
+      try {
+        const { data: filesData } = await supabase
+          .from('order_files')
+          .select('id, file_name, file_format, file_type, public_url, file_url, file_path, uploaded_by, created_at')
+          .eq('order_id', orderId);
+        if (Array.isArray(filesData)) orderFilesList = filesData;
+      } catch (fErr) {
+        console.warn('order_files query notice:', fErr?.message);
+      }
+
+      let revisionsList = [];
+      try {
+        const { data: revData, error: revErr } = await supabase
+          .from('revisions')
+          .select('*')
+          .eq('order_id', orderId)
+          .order('created_at', { ascending: false });
+        if (!revErr && Array.isArray(revData)) {
+          revisionsList = revData.map(r => ({
+            ...r,
+            instructions: r.instructions || r.details || r.note || r.notes || '',
+            note: r.note || r.notes || r.instructions || r.details || ''
+          }));
+        }
+      } catch (rErr) {
+        console.warn('revisions query notice:', rErr?.message);
+      }
+
+      let messagesList = [];
+      try {
+        const { data: msgsData } = await supabase
+          .from('order_messages')
+          .select('id, order_id, message, text, sender_name, sender_role, is_staff, attachment_url, attachments, created_at')
+          .eq('order_id', orderId);
+        if (Array.isArray(msgsData)) messagesList = msgsData;
+      } catch (mErr) {
+        console.warn('order_messages query notice:', mErr?.message);
+      }
+
+      return NextResponse.json({ orderFiles: orderFilesList, revisions: revisionsList, messages: messagesList });
     }
 
     return NextResponse.json({ error: 'Unknown action' }, { status: 400 });
@@ -728,12 +760,31 @@ export async function POST(request) {
       const ordTitle = orderData?.title || `Order #${orderId}`;
 
       // Use 'revision' as canonical status (not 'revision_requested') for UI consistency
-      await supabase.from('revisions').insert([{ 
+      const revPayload = { 
         order_id: orderId, 
-        details: instructions, 
+        note: instructions || '',
+        notes: instructions || '',
+        details: instructions || '', 
+        instructions: instructions || '',
         status: 'pending',
         created_at: nowIso
-      }]);
+      };
+
+      try {
+        await supabase.from('revisions').insert([revPayload]);
+      } catch (insertRevErr) {
+        try {
+          await supabase.from('revisions').insert([{
+            order_id: orderId,
+            note: instructions || '',
+            notes: instructions || '',
+            status: 'pending',
+            created_at: nowIso
+          }]);
+        } catch (subErr) {
+          console.warn('Fallback revision insert notice:', subErr?.message);
+        }
+      }
       await supabase.from('orders').update({ 
         status: 'revision', 
         updated_at: nowIso 

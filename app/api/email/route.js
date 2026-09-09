@@ -1,4 +1,4 @@
-﻿import { NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { Resend } from 'resend';
 import { getServerAuthUser } from '../../../src/lib/supabase/serverAuth';
 import { createAdminClient } from '../../../src/lib/supabase/admin';
@@ -114,8 +114,8 @@ export async function POST(req) {
       console.warn('[Email Route] Dynamic site_config lookup notice:', dbErr.message);
     }
 
-    // Resolution priority: explicit request adminEmail -> dynamic DB setting -> env MASTER_ADMIN_EMAIL -> hard fallback
-    const fallbackAdmin = process.env.MASTER_ADMIN_EMAIL || process.env.ADMIN_EMAIL || 'shahidbutt59191@gmail.com';
+    // Resolution priority: explicit request adminEmail -> dynamic DB setting -> env MASTER_ADMIN_EMAIL -> fallback
+    const fallbackAdmin = process.env.MASTER_ADMIN_EMAIL || process.env.ADMIN_EMAIL || process.env.NEXT_PUBLIC_ADMIN_EMAIL || 'orders@bdigitizing-pro.com';
     const targetAdminEmail = (explicitAdminEmail || dynamicAdminEmail || fallbackAdmin).toLowerCase().trim();
     const targetClientEmail = (clientEmail || user?.email || recipientEmail || '').toLowerCase().trim();
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://bilaldigitizing.vercel.app';

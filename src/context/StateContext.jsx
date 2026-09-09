@@ -1018,41 +1018,23 @@ export const StateProvider = ({ children }) => {
 
           upsertClientInSupabase({ ...uData, role }).catch(() => {});
         } else {
-          // If Supabase has no active session, verify if a freshly authenticated user exists locally
+          // If Supabase has no active session, strictly clear session and log out (Rule 3: Auth Enforcement)
           if (!cancelled) {
-            let hasValidLocalUser = false;
+            setIsAuthenticated(false);
+            setAuthUser(null);
+            setCurrentView('public');
+            setWalletBalance(0);
             try {
               if (typeof window !== 'undefined') {
-                const saved = localStorage.getItem('bdigi_auth_user');
-                if (saved) {
-                  const parsed = JSON.parse(saved);
-                  if (parsed && parsed.email) {
-                    hasValidLocalUser = true;
-                    if (typeof document !== 'undefined') {
-                      document.cookie = 'bdigi_auth=true; path=/; max-age=31536000; SameSite=Lax';
-                    }
-                  }
+                localStorage.removeItem('bdigi_auth_user');
+                localStorage.removeItem('bdigi_current_view');
+                if (typeof document !== 'undefined') {
+                  document.cookie = 'bdigi_auth=; path=/; max-age=0; SameSite=Lax';
+                  document.cookie = 'bdigi_user_email=; path=/; max-age=0; SameSite=Lax';
+                  document.cookie = 'bdigi_user_role=; path=/; max-age=0; SameSite=Lax';
                 }
               }
             } catch {}
-
-            if (!hasValidLocalUser) {
-              setIsAuthenticated(false);
-              setAuthUser(null);
-              setCurrentView('public');
-              setWalletBalance(0);
-              try {
-                if (typeof window !== 'undefined') {
-                  localStorage.removeItem('bdigi_auth_user');
-                  localStorage.removeItem('bdigi_current_view');
-                  if (typeof document !== 'undefined') {
-                    document.cookie = 'bdigi_auth=; path=/; max-age=0; SameSite=Lax';
-                    document.cookie = 'bdigi_user_email=; path=/; max-age=0; SameSite=Lax';
-                    document.cookie = 'bdigi_user_role=; path=/; max-age=0; SameSite=Lax';
-                  }
-                }
-              } catch {}
-            }
           }
         }
       } catch (sessErr) {
@@ -1445,7 +1427,7 @@ export const StateProvider = ({ children }) => {
     return { success: true, role, user: uData };
   };
 
-  const login = async (email, password) => {
+  const login = async (email, password, requiredRole = null) => {
     const cleanEmail = (email || '').toLowerCase().trim();
     const cleanPass = (password || '').trim();
 
@@ -1457,6 +1439,16 @@ export const StateProvider = ({ children }) => {
       const sbRes = await signInWithSupabaseAuth(cleanEmail, cleanPass);
       if (sbRes && sbRes.success && sbRes.user) {
         const result = await finishAuth(sbRes.user);
+
+        if (requiredRole && result.role !== requiredRole) {
+          // If a specific role is required (e.g. 'admin' for /secure-admin-login)
+          await logout();
+          return {
+            success: false,
+            error: `Access denied: This account does not possess authorized ${requiredRole} credentials.`
+          };
+        }
+
         showToast(`Welcome back ${result.user.name}!`, 'success');
         return result;
       } else {

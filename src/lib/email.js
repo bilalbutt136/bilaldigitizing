@@ -370,7 +370,7 @@ export async function sendOrderNotification({
   const siteUrl = getSiteUrl();
   const formattedPrice = typeof amount === 'number' ? `$${amount.toFixed(2)}` : (String(amount).startsWith('$') ? amount : `$${amount}`);
 
-  let adminRecipient = explicitAdmin || process.env.MASTER_ADMIN_EMAIL || 'shahidbutt59191@gmail.com';
+  let adminRecipient = explicitAdmin || process.env.MASTER_ADMIN_EMAIL || process.env.ADMIN_EMAIL || process.env.NEXT_PUBLIC_ADMIN_EMAIL || 'orders@bdigitizing-pro.com';
   let orderAlertsEnabled = true;
 
   try {

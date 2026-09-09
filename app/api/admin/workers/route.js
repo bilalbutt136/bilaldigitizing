@@ -357,7 +357,7 @@ export async function POST(request) {
       const origin = request.headers.get('origin') || process.env.NEXT_PUBLIC_SITE_URL || 'https://bilaldigitizing.vercel.app';
       const redirectUrl = `${origin}/worker/reset-password`;
 
-      const { data, error: resetErr } = await adminClient.auth.resetPasswordForEmail(cleanEmail, {
+      const { error: resetErr } = await adminClient.auth.resetPasswordForEmail(cleanEmail, {
         redirectTo: redirectUrl
       });
 

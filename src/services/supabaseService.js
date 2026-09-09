@@ -1148,7 +1148,7 @@ export async function verifyAdminSession(email) {
   }
 }
 
-export async function fetchAdminUsers(email) {
+export async function fetchAdminUsers(_email = null) {
   try {
     const headers = await getAuthHeaders();
     const res = await fetch('/api/admin/users', {
@@ -1199,7 +1199,7 @@ export async function resetAdminPasswordInSupabase(email, newPassword, callerEma
   }
 }
 
-export async function removeAdminUserInSupabase(email, callerEmail) {
+export async function removeAdminUserInSupabase(email, _callerEmail = null) {
   try {
     const headers = await getAuthHeaders();
     const res = await fetch(`/api/admin/users?email=${encodeURIComponent(email)}`, {
