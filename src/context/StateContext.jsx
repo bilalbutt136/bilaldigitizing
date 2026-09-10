@@ -625,6 +625,7 @@ export const StateProvider = ({ children }) => {
 
   // Global Chat Unread Counter (Synced across customer and admin for Inbox badge)
   const [unreadChatCount, setUnreadChatCount] = useState(0);
+  const refreshUnreadChatCountTimerRef = useRef(null);
 
   const refreshUnreadChatCount = React.useCallback(async () => {
     try {
@@ -649,6 +650,13 @@ export const StateProvider = ({ children }) => {
       console.warn('Refresh unread count notice:', err);
     }
   }, [authUser]);
+
+  const debounceRefreshChatCount = React.useCallback(() => {
+    if (refreshUnreadChatCountTimerRef.current) clearTimeout(refreshUnreadChatCountTimerRef.current);
+    refreshUnreadChatCountTimerRef.current = setTimeout(() => {
+      refreshUnreadChatCount();
+    }, 400);
+  }, [refreshUnreadChatCount]);
 
   // Global Realtime Listeners for Notifications & Messages
   useEffect(() => {
@@ -744,14 +752,43 @@ export const StateProvider = ({ children }) => {
 
     // 3. Live Chat Messages & Unread Counter Listener
     const handleReadUpdate = () => {
-      refreshUnreadChatCount();
+      debounceRefreshChatCount();
     };
 
     window.addEventListener('bdigi_read_update', handleReadUpdate);
+    const recentNotifiedMsgIds = new Map();
+
     const unsubMessages = subscribeToLiveMessages((msgPayload) => {
-      refreshUnreadChatCount();
+      debounceRefreshChatCount();
+
+      // STRICT GUARD: Only process INSERT events for toasts and sound alerts.
+      // Postgres UPDATE events (e.g. markAsRead changing is_read) must NEVER trigger toasts or sounds!
+      const isInsert = msgPayload?.eventType === 'INSERT' || (!msgPayload?.eventType && !msgPayload?.old && Boolean(msgPayload?.new));
+      if (!isInsert) return;
+
       if (msgPayload && (msgPayload.new || msgPayload.record)) {
         const msg = msgPayload.new || msgPayload.record;
+        if (!msg || !msg.id) return;
+
+        // Skip messages already marked read
+        if (msg.is_read === true || msg.is_read === 'true') return;
+
+        const now = Date.now();
+        // Guard against duplicate alerts for same message (WebSocket broadcast + Postgres replication)
+        if (recentNotifiedMsgIds.has(msg.id)) return;
+        recentNotifiedMsgIds.set(msg.id, now);
+
+        // Prune recent cache
+        if (recentNotifiedMsgIds.size > 200) {
+          for (const [mId, t] of recentNotifiedMsgIds.entries()) {
+            if (now - t > 120000) recentNotifiedMsgIds.delete(mId);
+          }
+        }
+
+        // Only notify if message is recent (within 90 seconds)
+        const msgTime = new Date(msg.created_at || msg.timestamp || 0).getTime();
+        if (!isNaN(msgTime) && msgTime > 0 && (now - msgTime) > 90000) return;
+
         let currentRole = isAdminUser ? 'admin' : 'customer';
         let myEmail = (userEmail || '').toLowerCase().trim();
         try {
@@ -785,19 +822,20 @@ export const StateProvider = ({ children }) => {
         }
       }
     }, () => {
-      refreshUnreadChatCount();
+      debounceRefreshChatCount();
     });
 
     return () => {
       window.removeEventListener('bdigi_notif_read_update', handleNotifReadUpdate);
       window.removeEventListener('bdigi_read_update', handleReadUpdate);
+      if (refreshUnreadChatCountTimerRef.current) clearTimeout(refreshUnreadChatCountTimerRef.current);
       if (notifBc) {
         try { notifBc.close(); } catch {}
       }
       if (typeof unsubNotifs === 'function') unsubNotifs();
       if (typeof unsubMessages === 'function') unsubMessages();
     };
-  }, [isAuthenticated, authUser, refreshUnreadChatCount, refreshNotifications]);
+  }, [isAuthenticated, authUser, refreshUnreadChatCount, debounceRefreshChatCount, refreshNotifications]);
 
   // 4. Real-time synchronization for orders across tabs & events (e.g., custom offer acceptances)
   useEffect(() => {

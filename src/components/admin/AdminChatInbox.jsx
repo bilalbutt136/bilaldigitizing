@@ -706,9 +706,9 @@ export const AdminChatInbox = () => {
 
         // ─────────────────────────────────────────────────────────────
         // STRICT NOTIFICATION GUARDS — all 3 must pass before any toast/sound fires
-        const isInsertEvent = (msgPayload.eventType === 'INSERT') || (!msgPayload.eventType && !!msgPayload.new);
+        const isInsertEvent = (msgPayload.eventType === 'INSERT') || (!msgPayload.eventType && !msgPayload.old && !!msgPayload.new);
         
-        if (isInsertEvent) {
+        if (isInsertEvent && !record.is_read) {
           const msgTs = new Date(record.created_at || record.timestamp || 0).getTime();
           const nowMs = Date.now();
           const isRecentEnough = !isNaN(msgTs) && (nowMs - msgTs) < 30_000;
@@ -764,8 +764,8 @@ export const AdminChatInbox = () => {
               : (newMsg.senderName || targetConv.clientName);
 
             // If the conversation is currently active and open in front of admin, auto-mark as read and keep unread count at 0
-            const incomingUnreadAdd = (isCustomerMsg && !isCurrentlyOpen) ? 1 : 0;
-            if (isCurrentlyOpen && isCustomerMsg) {
+            const incomingUnreadAdd = (isCustomerMsg && !isCurrentlyOpen && isInsertEvent) ? 1 : 0;
+            if (isCurrentlyOpen && isCustomerMsg && isInsertEvent && !record.is_read) {
               newMsg.is_read = true;
               if (isSupabaseConfigured) {
                 markConversationAsRead(targetConv.id || newMsg.conversation_id, 'admin', targetConv.clientEmail || newMsg.client_email).catch(console.warn);
@@ -813,7 +813,7 @@ export const AdminChatInbox = () => {
             }
 
             const newIsCurrentlyOpen = (activeChatIdRef.current === canonicalNewId || activeChatIdRef.current === newMsg.conversation_id);
-            if (newIsCurrentlyOpen && (newMsg.sender === 'client' || newMsg.sender !== 'admin')) {
+            if (newIsCurrentlyOpen && (newMsg.sender === 'client' || newMsg.sender !== 'admin') && isInsertEvent && !record.is_read) {
               newMsg.is_read = true;
               if (isSupabaseConfigured) {
                 markConversationAsRead(canonicalNewId, 'admin', newClientEmail).catch(console.warn);
@@ -822,7 +822,7 @@ export const AdminChatInbox = () => {
 
             const snippet = computeMessageSnippet(newMsg) || 'New Message';
             const msgTime = parseMessageTime(newMsg) || Date.now();
-            const initialUnread = (newMsg.sender === 'client' || newMsg.sender !== 'admin') && !newIsCurrentlyOpen ? 1 : 0;
+            const initialUnread = (newMsg.sender === 'client' || newMsg.sender !== 'admin') && !newIsCurrentlyOpen && isInsertEvent ? 1 : 0;
             const newThread = {
               id: canonicalNewId,
               clientName: newClientName,

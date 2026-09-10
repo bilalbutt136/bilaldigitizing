@@ -1679,10 +1679,30 @@ export function getAdminThreadUnreadCount(conv) {
   return Number(conv.adminUnreadCount ?? conv.admin_unread_count ?? conv.unreadCount ?? conv.unread_count ?? 0);
 }
 
+const recentMarkReadCalls = new Map();
+
 export async function markConversationAsRead(chatId, role = 'admin', clientEmail = '') {
   try {
     if (!chatId) return false;
     const cleanEmail = clientEmail ? String(clientEmail).toLowerCase().trim() : '';
+    const throttleKey = `${chatId}_${role}_${cleanEmail}`;
+    const now = Date.now();
+
+    // Circuit breaker: prevent identical markAsRead calls within 3 seconds
+    if (recentMarkReadCalls.has(throttleKey)) {
+      const lastCalled = recentMarkReadCalls.get(throttleKey);
+      if (now - lastCalled < 3000) {
+        return true;
+      }
+    }
+    recentMarkReadCalls.set(throttleKey, now);
+
+    // Keep map small
+    if (recentMarkReadCalls.size > 200) {
+      for (const [k, t] of recentMarkReadCalls.entries()) {
+        if (now - t > 10000) recentMarkReadCalls.delete(k);
+      }
+    }
 
     if (typeof window !== 'undefined') {
       const nowTs = String(Date.now());
@@ -1838,8 +1858,9 @@ export function getSharedChatChannel() {
       'postgres_changes',
       { event: 'INSERT', schema: 'public', table: 'messages' },
       (payload) => {
+        const enriched = { ...payload, eventType: 'INSERT', record: payload.new || payload.record };
         messageListeners.forEach(listener => {
-          try { listener(payload); } catch (err) {}
+          try { listener(enriched); } catch (err) {}
         });
       }
     );
@@ -1848,8 +1869,9 @@ export function getSharedChatChannel() {
       'postgres_changes',
       { event: 'UPDATE', schema: 'public', table: 'messages' },
       (payload) => {
+        const enriched = { ...payload, eventType: 'UPDATE', record: payload.new || payload.record };
         messageListeners.forEach(listener => {
-          try { listener(payload); } catch (err) {}
+          try { listener(enriched); } catch (err) {}
         });
       }
     );

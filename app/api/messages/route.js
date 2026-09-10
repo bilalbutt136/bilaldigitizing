@@ -1035,7 +1035,12 @@ export async function POST(request) {
       let isSupport = false;
       let canonicalConvId = passedId;
 
-      if (isGuest) {
+      const isOrder = passedId.startsWith('order-') || Boolean(payload.orderId);
+      if (isOrder) {
+        const cleanOrd = String(payload.orderId || passedId.replace('order-', '')).trim();
+        canonicalConvId = `order-${cleanOrd}`;
+        isSupport = false;
+      } else if (isGuest) {
         // Guest Users (Not Logged In): Route inquiries EXCLUSIVELY to 24/7 Help Desk
         isSupport = true;
         const guestId = payload.guest_id || (passedId.includes('guest_') ? passedId.replace(/^support-/, '').replace(/^inbox-/, '') : null);
@@ -1047,12 +1052,7 @@ export async function POST(request) {
           canonicalConvId = `support-${targetEmail}`;
         } else {
           isSupport = false;
-          if (passedId.startsWith('order-') || payload.orderId) {
-            const cleanOrd = String(payload.orderId || passedId.replace('order-', '')).trim();
-            canonicalConvId = `order-${cleanOrd}`;
-          } else {
-            canonicalConvId = `inbox-${targetEmail}`;
-          }
+          canonicalConvId = `inbox-${targetEmail}`;
         }
       }
 

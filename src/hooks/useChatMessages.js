@@ -159,10 +159,11 @@ export function useChatMessages({
 
       setMessages(prev => deduplicateAndSort([...prev, newMsg]));
 
+      const isInsert = payload?.eventType === 'INSERT' || (!payload?.eventType && !payload?.old && Boolean(payload?.new));
       const isIncoming = (userRole === 'admin' && record.sender !== 'admin') ||
                          (userRole === 'client' && record.sender === 'admin');
 
-      if (isIncoming) {
+      if (isIncoming && isInsert && !record.is_read) {
         playNotificationSound('receive');
         if (typeof onNewIncomingMessage === 'function') {
           onNewIncomingMessage(newMsg);

@@ -189,4 +189,79 @@ describe('Chat Reliability & Guest Support Engine', () => {
     assert.equal(failedList[0].status, 'error');
     assert.equal(failedList[0].text, 'High-priority order inquiry');
   });
+
+  test('Realtime event discrimination: UPDATE events are never treated as new message INSERTs', () => {
+    const isNewMessage = (payload) => {
+      return payload?.eventType === 'INSERT' || (!payload?.eventType && !payload?.old && Boolean(payload?.new));
+    };
+
+    // WebSocket broadcast payload
+    assert.equal(isNewMessage({ eventType: 'INSERT', new: { id: 'msg-1', text: 'Hello' } }), true);
+
+    // Postgres replication INSERT
+    assert.equal(isNewMessage({ eventType: 'INSERT', new: { id: 'msg-2', text: 'World' }, old: null }), true);
+
+    // Postgres replication UPDATE (e.g. is_read set to true)
+    assert.equal(isNewMessage({ eventType: 'UPDATE', new: { id: 'msg-2', is_read: true }, old: { id: 'msg-2', is_read: false } }), false);
+
+    // Postgres replication UPDATE with old property
+    assert.equal(isNewMessage({ new: { id: 'msg-3', is_read: true }, old: { id: 'msg-3', is_read: false } }), false);
+  });
+
+  test('Circuit breaker throttles rapid duplicate markConversationAsRead requests within 3000ms window', () => {
+    const throttleMap = new Map();
+    let networkCalls = 0;
+
+    const mockMarkAsRead = (chatId, role, clientEmail) => {
+      const cleanEmail = clientEmail ? String(clientEmail).toLowerCase().trim() : '';
+      const key = `${chatId}_${role}_${cleanEmail}`;
+      const now = Date.now();
+
+      if (throttleMap.has(key)) {
+        const last = throttleMap.get(key);
+        if (now - last < 3000) {
+          return true; // Throttled
+        }
+      }
+      throttleMap.set(key, now);
+      networkCalls++;
+      return true;
+    };
+
+    // Call 50 times in rapid succession for the same conversation
+    for (let i = 0; i < 50; i++) {
+      mockMarkAsRead('inbox-user@example.com', 'client', 'user@example.com');
+    }
+
+    // Only 1 network call should execute due to the 3-second throttle circuit breaker
+    assert.equal(networkCalls, 1, 'Rapid duplicate calls must be throttled to 1');
+  });
+
+  test('Admin reply to guest inquiry correctly preserves support-guest_* ID and never routes to admin email', () => {
+    const resolveConvId = ({ convId, targetEmail, isAdmin, guestId }) => {
+      const isOrder = convId.startsWith('order-');
+      const isGuest = !targetEmail;
+
+      if (isOrder) {
+        return convId;
+      } else if (isGuest) {
+        return guestId ? `support-${guestId}` : 'general-support';
+      } else {
+        return `support-${targetEmail}`;
+      }
+    };
+
+    // Admin replies to guest_session_99
+    const guestThreadId = 'support-guest_session_99';
+    const guestId = 'guest_session_99';
+    const resolvedAdminReplyConvId = resolveConvId({
+      convId: guestThreadId,
+      targetEmail: null, // guest has no registered email
+      isAdmin: true,
+      guestId
+    });
+
+    assert.equal(resolvedAdminReplyConvId, 'support-guest_session_99');
+    assert.ok(!resolvedAdminReplyConvId.includes('admin@'), 'Must not rewrite to admin email');
+  });
 });

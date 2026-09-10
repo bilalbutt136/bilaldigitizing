@@ -390,8 +390,9 @@ export const ClientLiveChatWidget = () => {
           timestamp: record.timestamp || record.created_at || recordTime
         };
 
+        const isInsert = msgPayload?.eventType === 'INSERT' || (!msgPayload?.eventType && !msgPayload?.old && Boolean(msgPayload?.new));
         const isStaffMsg = newMsg.sender === 'admin' || newMsg.sender === 'support';
-        if (isStaffMsg) {
+        if (isStaffMsg && isInsert && !record.is_read) {
           playNotificationSound('receive');
           if (isOpen) {
             newMsg.is_read = true;

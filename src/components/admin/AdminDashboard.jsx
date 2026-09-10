@@ -181,8 +181,10 @@ export const AdminDashboard = () => {
     const unsubscribe = subscribeToLiveMessages(
       (msgPayload) => {
         if (!isMounted) return;
+        const isInsert = msgPayload?.eventType === 'INSERT' || (!msgPayload?.eventType && !msgPayload?.old && Boolean(msgPayload?.new));
+        if (!isInsert) return;
         const record = msgPayload.new || msgPayload.record;
-        if (record && (record.sender === 'client' || record.sender === 'customer' || record.sender !== 'admin')) {
+        if (record && !record.is_read && (record.sender === 'client' || record.sender === 'customer' || record.sender !== 'admin')) {
           loadAdminUnreadCount();
         }
       },

@@ -433,8 +433,9 @@ export const ClientChatInbox = ({ initialOrderId = null, onBack = null }) => {
           timestamp: record.timestamp || record.created_at || new Date().toISOString()
         };
 
+        const isInsert = payload?.eventType === 'INSERT' || (!payload?.eventType && !payload?.old && Boolean(payload?.new));
         const isStaffMsg = record.sender === 'admin' || record.sender === 'worker' || record.sender === 'support';
-        if (isStaffMsg) {
+        if (isStaffMsg && isInsert && !record.is_read) {
           formattedRecord.is_read = true;
           if (canonicalChatId) {
             markConversationAsRead(canonicalChatId, 'client', clientEmail).catch(console.warn);
@@ -470,7 +471,7 @@ export const ClientChatInbox = ({ initialOrderId = null, onBack = null }) => {
           return sortMessagesChronologically(Array.from(map.values()));
         });
 
-        if (isStaffMsg) {
+        if (isStaffMsg && isInsert && !record.is_read) {
           playNotificationSound('chat');
         }
         scrollToBottom('smooth');
@@ -618,7 +619,8 @@ export const ClientChatInbox = ({ initialOrderId = null, onBack = null }) => {
     const newMsg = {
       id: tempMsgId,
       conversation_id: canonicalChatId,
-      client_email: clientEmail || 'guest@bdigitizing.pro',
+      guest_id: (!clientEmail || clientEmail === 'guest@bdigitizing.pro') ? guestSessionId : null,
+      client_email: clientEmail || (guestSessionId ? `${guestSessionId}@guest.local` : 'guest@bdigitizing.pro'),
       sender: 'client',
       senderName: clientName,
       sender_name: clientName,

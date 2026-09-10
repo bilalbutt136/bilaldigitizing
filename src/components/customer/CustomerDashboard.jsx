@@ -306,8 +306,10 @@ export const CustomerDashboard = () => {
     const unsubscribe = subscribeToLiveMessages(
       (msgPayload) => {
         if (!isMounted) return;
+        const isInsert = msgPayload?.eventType === 'INSERT' || (!msgPayload?.eventType && !msgPayload?.old && Boolean(msgPayload?.new));
+        if (!isInsert) return;
         const record = msgPayload.new || msgPayload.record;
-        if (record && (record.sender === 'admin' || record.sender === 'support') && activeTab !== 'support' && activeTab !== 'inbox' && activeTab !== 'help-support') {
+        if (record && !record.is_read && (record.sender === 'admin' || record.sender === 'support') && activeTab !== 'support' && activeTab !== 'inbox' && activeTab !== 'help-support') {
           if (typeof setUnreadChatCount === 'function') {
             setUnreadChatCount(prev => prev + 1);
           }

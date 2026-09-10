@@ -45,19 +45,26 @@ export async function POST(req) {
       targetEmail = String(payload.client_email).toLowerCase().trim();
     } else if (isValidEmail(payload.clientEmail)) {
       targetEmail = String(payload.clientEmail).toLowerCase().trim();
-    } else if (user?.email && isValidEmail(user.email)) {
+    } else if (!isAdmin && user?.email && isValidEmail(user.email)) {
       targetEmail = String(user.email).toLowerCase().trim();
     }
 
-    const isGuest = !targetEmail || (!user && !isAdmin);
+    const isGuest = !targetEmail;
 
     let isSupport = false;
     let convId = String(payload.conversation_id || payload.thread_id || payload.chatId || '').trim();
 
-    if (isGuest) {
+    const isOrder = convId.startsWith('order-') || Boolean(payload.orderId);
+    if (isOrder) {
+      const ord = String(payload.orderId || convId.replace('order-', '')).trim();
+      convId = `order-${ord}`;
+      isSupport = false;
+    } else if (isGuest) {
       // Guest Users (Not Logged In): Route inquiries EXCLUSIVELY to 24/7 Help Desk
       isSupport = true;
-      convId = guestId ? `support-${guestId}` : 'general-support';
+      if (!convId || convId === 'general-support' || convId === 'support-guest' || convId === 'help-support') {
+        convId = guestId ? `support-${guestId}` : 'general-support';
+      }
     } else {
       // Signed-In Users: Strictly isolate Studio Digitizer (inbox) from 24/7 Help Desk (support)
       if (payload.channel === 'support' || payload.isSupport === true || isSupportConversation(convId)) {
@@ -65,12 +72,7 @@ export async function POST(req) {
         convId = `support-${targetEmail}`;
       } else {
         isSupport = false;
-        if (convId.startsWith('order-') || payload.orderId) {
-          const ord = String(payload.orderId || convId.replace('order-', '')).trim();
-          convId = `order-${ord}`;
-        } else {
-          convId = `inbox-${targetEmail}`;
-        }
+        convId = `inbox-${targetEmail}`;
       }
     }
 
