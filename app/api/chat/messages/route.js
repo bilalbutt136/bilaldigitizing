@@ -92,7 +92,7 @@ export async function GET(req) {
     // Build database query with specific columns and pagination
     let query = supabase
       .from('messages')
-      .select('id, conversation_id, thread_id, guest_id, client_email, sender, sender_name, text, attachment, attachment_url, attachment_name, attachment_size, attachment_type, file_id, offer_id, offer_data, reply_to, is_read, is_autopilot, auto_pilot, metadata, deleted_at, created_at, timestamp, status, read_at')
+      .select('id, conversation_id, thread_id, guest_id, client_email, sender, sender_name, text, type, chat_type, is_support, attachment, attachment_url, attachment_name, attachment_size, attachment_type, file_id, offer_id, offer_data, reply_to, is_read, is_autopilot, auto_pilot, metadata, deleted_at, created_at, timestamp, status, read_at')
       .order('created_at', { ascending: false })
       .limit(limitParam);
 
