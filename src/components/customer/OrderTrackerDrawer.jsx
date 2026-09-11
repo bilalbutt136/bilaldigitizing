@@ -35,11 +35,13 @@ import {
   Scissors,
   UserCheck,
   AlertCircle,
-  AlertTriangle
+  AlertTriangle,
+  Receipt
 } from 'lucide-react';
 import { uploadFileToCloudinaryFull } from '../../services/supabaseService';
 import { AssignWorkerModal } from '../admin/AssignWorkerModal';
 import { ReviewWorkerUploadModal } from '../admin/ReviewWorkerUploadModal';
+import { CustomerInvoiceModal } from '../common/CustomerInvoiceModal';
 
 // Supported machine formats mapping
 const MACHINE_FORMAT_EXTENSIONS = {
@@ -100,6 +102,7 @@ export const OrderTrackerDrawer = () => {
   const [lightboxArtwork, setLightboxArtwork] = useState(null);
   const [showWorksheetModal, setShowWorksheetModal] = useState(false);
   const [activePdfPreview, setActivePdfPreview] = useState(null);
+  const [showInvoiceModal, setShowInvoiceModal] = useState(false);
 
   // Admin Multiple File Upload Array State
   const [adminFilesList, setAdminFilesList] = useState([]);
@@ -689,6 +692,24 @@ export const OrderTrackerDrawer = () => {
               <RotateCcw size={14} /> Revision History ({ord.revisions.length})
             </button>
           )}
+
+          <button
+            type="button"
+            onClick={() => setShowInvoiceModal(true)}
+            className="btn btn-sm btn-outline"
+            style={{ 
+              fontWeight: 800, 
+              fontSize: '0.8rem', 
+              gap: '0.35rem', 
+              marginLeft: 'auto', 
+              whiteSpace: 'nowrap',
+              background: 'var(--color-surface, #ffffff)',
+              borderColor: 'var(--border-color, #e2e8f0)'
+            }}
+            title="View & Download Official International Tax Invoice"
+          >
+            <Receipt size={14} style={{ color: 'var(--orange-500, #ea580c)' }} /> Tax Invoice (PDF)
+          </button>
         </div>
 
         {/* ==================================================================
@@ -1846,6 +1867,15 @@ export const OrderTrackerDrawer = () => {
             setIsReviewModalOpen(false);
           }}
           showToast={showToast}
+        />
+      )}
+
+      {/* VIP International Commercial Tax Invoice Modal */}
+      {showInvoiceModal && (
+        <CustomerInvoiceModal
+          order={ord}
+          client={{ name: ord.clientName, email: ord.clientEmail }}
+          onClose={() => setShowInvoiceModal(false)}
         />
       )}
     </>

@@ -19,8 +19,10 @@ import {
   RefreshCw,
   Scissors,
   FileCheck,
-  UserCheck
+  UserCheck,
+  Receipt
 } from 'lucide-react';
+import { CustomerInvoiceModal } from '../common/CustomerInvoiceModal';
 
 const getNextStatuses = (currentStatus) => {
   const transitions = {
@@ -66,6 +68,7 @@ export const OrderManagementTable = () => {
   const [filterPayment, setFilterPayment] = useState('all'); // 'all' | 'paid' | 'pending'
   const [searchTerm, setSearchTerm] = useState('');
   const [lightboxOrder, setLightboxOrder] = useState(null);
+  const [invoiceModalOrder, setInvoiceModalOrder] = useState(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [assigningOrder, setAssigningOrder] = useState(null);
   const [reviewOrder, setReviewOrder] = useState(null);
@@ -794,6 +797,15 @@ export const OrderManagementTable = () => {
                         )}
 
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                          <button
+                            type="button"
+                            className="btn btn-outline btn-sm"
+                            onClick={() => setInvoiceModalOrder(ord)}
+                            style={{ fontWeight: 800, fontSize: '0.74rem', whiteSpace: 'nowrap', gap: '0.25rem', padding: '0.28rem 0.6rem', borderRadius: '6px' }}
+                            title="View & Download Official International Tax Invoice"
+                          >
+                            <Receipt size={12} /> Invoice
+                          </button>
                           <button 
                             className="btn btn-primary-orange btn-sm"
                             onClick={() => setSelectedOrderForDrawer(ord)}
@@ -933,6 +945,15 @@ export const OrderManagementTable = () => {
             setReviewOrder(null);
           }}
           showToast={showToast}
+        />
+      )}
+
+      {/* VIP International Commercial Tax Invoice Modal */}
+      {invoiceModalOrder && (
+        <CustomerInvoiceModal
+          order={invoiceModalOrder}
+          client={{ name: invoiceModalOrder.client_name || invoiceModalOrder.clientName, email: invoiceModalOrder.client_email || invoiceModalOrder.clientEmail }}
+          onClose={() => setInvoiceModalOrder(null)}
         />
       )}
 

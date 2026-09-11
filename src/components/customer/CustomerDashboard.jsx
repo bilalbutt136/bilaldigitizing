@@ -38,11 +38,13 @@ import {
   Smartphone,
   Sparkles,
   Check,
-  ArrowRight
+  ArrowRight,
+  Receipt
 } from 'lucide-react';
 import { ClientSidebar } from './ClientSidebar';
 import { MobileSimpleOrderModal } from './MobileSimpleOrderModal';
 import { ClientNotificationsView } from './ClientNotificationsView';
+import { CustomerInvoiceModal } from '../common/CustomerInvoiceModal';
 import { EmbroideryDigitizingPage } from '../public/EmbroideryDigitizingPage';
 import { VectorArtPage } from '../public/VectorArtPage';
 import { CustomPatchesSection } from '../public/CustomPatchesSection';
@@ -103,6 +105,7 @@ export const CustomerDashboard = () => {
   const [isServiceSelectorOpen, setIsServiceSelectorOpen] = useState(false);
   const [isMobileOrderOpen, setIsMobileOrderOpen] = useState(false);
   const [mobileOrderDefaultService, setMobileOrderDefaultService] = useState('embroidery');
+  const [invoiceModalOrder, setInvoiceModalOrder] = useState(null);
 
   // Client-side mounting guard for hydration safety
   const [mounted, setMounted] = React.useState(false);
@@ -1673,6 +1676,25 @@ export const CustomerDashboard = () => {
                                       <button 
                                         type="button"
                                         className="btn btn-outline btn-sm"
+                                        onClick={() => setInvoiceModalOrder(ord)}
+                                        style={{ 
+                                          padding: '0.32rem 0.65rem', 
+                                          fontSize: '0.74rem', 
+                                          fontWeight: 700, 
+                                          borderRadius: '6px',
+                                          whiteSpace: 'nowrap',
+                                          display: 'inline-flex',
+                                          alignItems: 'center',
+                                          gap: '0.25rem'
+                                        }}
+                                        title="View & Download Official International Tax Invoice"
+                                      >
+                                        <Receipt size={12} /> Invoice
+                                      </button>
+
+                                      <button 
+                                        type="button"
+                                        className="btn btn-outline btn-sm"
                                         onClick={() => setSelectedOrderForDrawer(ord)}
                                         style={{ 
                                           padding: '0.32rem 0.65rem', 
@@ -1891,6 +1913,26 @@ export const CustomerDashboard = () => {
                                       <Zap size={12} /> Pay Now
                                     </button>
                                   )}
+                                  <button
+                                    type="button"
+                                    onClick={() => setInvoiceModalOrder(ord)}
+                                    style={{
+                                      background: '#f8fafc',
+                                      border: '1px solid #cbd5e1',
+                                      color: 'var(--navy-800)',
+                                      padding: '0.35rem 0.65rem',
+                                      borderRadius: '6px',
+                                      fontWeight: 700,
+                                      fontSize: '0.75rem',
+                                      cursor: 'pointer',
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      gap: '0.25rem'
+                                    }}
+                                    title="View & Download Official International Tax Invoice"
+                                  >
+                                    <Receipt size={12} /> Invoice
+                                  </button>
                                   <button
                                     type="button"
                                     onClick={() => setSelectedOrderForDrawer(ord)}
@@ -2482,6 +2524,15 @@ export const CustomerDashboard = () => {
         <ArtworkLightboxModal 
           order={lightboxOrder} 
           onClose={() => setLightboxOrder(null)} 
+        />
+      )}
+
+      {/* VIP International Commercial Tax Invoice Modal */}
+      {invoiceModalOrder && (
+        <CustomerInvoiceModal
+          order={invoiceModalOrder}
+          client={activeUser}
+          onClose={() => setInvoiceModalOrder(null)}
         />
       )}
 
