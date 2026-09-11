@@ -7,6 +7,7 @@ import { ClientDirectory } from './ClientDirectory';
 import { StudioServicesManager } from './StudioServicesManager';
 import { SystemSettingsManager } from './SystemSettingsManager';
 import { WorkerManagementDesk } from './WorkerManagementDesk';
+import AdminChatInbox from './AdminChatInbox';
 
 import { AdminExecutiveDashboard } from './AdminExecutiveDashboard';
 import { PromotionsManager } from './PromotionsManager';
@@ -36,7 +37,8 @@ import {
   ShieldCheck,
   Building2,
   Mail,
-  Scissors
+  Scissors,
+  MessageSquare
 } from 'lucide-react';
 
 export const AdminDashboard = () => {
@@ -62,6 +64,25 @@ export const AdminDashboard = () => {
 
   const [activeTabState, setActiveTabState] = useState(activeAdminTab || 'dashboard');
   const [pendingWorkersCount, setPendingWorkersCount] = useState(0);
+  const [unreadChatCount, setUnreadChatCount] = useState(0);
+
+  // Sync unread chat messages for admin badge
+  React.useEffect(() => {
+    const fetchUnreadChats = async () => {
+      try {
+        const res = await fetch('/api/chat/conversations?filter=unread');
+        const data = await res.json();
+        if (data?.conversations) {
+          const totalUnread = data.conversations.reduce((sum, c) => sum + (c.unread_admin_count || 0), 0);
+          setUnreadChatCount(totalUnread);
+        }
+      } catch {}
+    };
+
+    fetchUnreadChats();
+    const interval = setInterval(fetchUnreadChats, 12000);
+    return () => clearInterval(interval);
+  }, []);
 
   React.useEffect(() => {
     fetch('/api/admin/workers')
@@ -98,7 +119,7 @@ export const AdminDashboard = () => {
       const tabParam = urlParams.get('tab');
       const trackId = urlParams.get('trackOrder') || urlParams.get('orderId');
       if (tabParam) {
-        setActiveTab(tabParam === 'inbox' || tabParam === 'chat' ? 'dashboard' : tabParam);
+        setActiveTab(tabParam);
       }
       if (trackId) {
         if (openOrderTrackerDrawer) {
@@ -119,7 +140,7 @@ export const AdminDashboard = () => {
     if (!mounted) return;
 
     const handleAdminTabSwitch = (e) => {
-      if (e.detail?.tab && e.detail.tab !== 'chat' && e.detail.tab !== 'inbox') {
+      if (e.detail?.tab) {
         setActiveTab(e.detail.tab);
       }
       if (e.detail?.orderId) {
@@ -219,6 +240,13 @@ export const AdminDashboard = () => {
       items: [
         { id: 'dashboard', label: 'Executive Dashboard', icon: LayoutDashboard },
         { id: 'orders', label: 'Orders & Production', icon: ClipboardList, badge: activeJobsCount },
+        { 
+          id: 'inbox', 
+          label: 'Client Messages', 
+          icon: MessageSquare, 
+          badge: unreadChatCount > 0 ? unreadChatCount : null,
+          isUnread: unreadChatCount > 0
+        },
         { id: 'clients', label: 'Accounts & Wallets', icon: Users, badge: safeClients.length },
         { 
           id: 'workers', 
@@ -380,6 +408,7 @@ export const AdminDashboard = () => {
             <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: 'var(--text-main)', margin: 0, lineHeight: 1.1 }}>
               {activeTab === 'dashboard' && 'Executive Overview'}
               {activeTab === 'orders' && 'Orders & Production Management'}
+              {activeTab === 'inbox' && 'Client Messages & Studio Inbox'}
               {activeTab === 'services' && 'Service Rates & Tiers'}
               {activeTab === 'portfolio' && 'Portfolio & Work Gallery'}
               {activeTab === 'clients' && 'Client Directory'}
@@ -735,6 +764,11 @@ export const AdminDashboard = () => {
         {/* DEDICATED SEPARATE ORDERS & PRODUCTION MANAGEMENT PAGE */}
         {activeTab === 'orders' && (
           <OrderManagementTable />
+        )}
+
+        {/* FIVERR-STYLE MASTER CLIENT MESSAGING INBOX */}
+        {activeTab === 'inbox' && (
+          <AdminChatInbox />
         )}
 
         {activeTab === 'workers' && (

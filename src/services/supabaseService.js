@@ -1931,3 +1931,56 @@ export async function saveCmsContent(key, content) {
   }
 }
 
+// Custom Offers Service Helpers
+
+export async function fetchCustomOffers(conversationId = null) {
+  try {
+    let url = '/api/offers?action=fetchOffers';
+    if (conversationId) url += `&conversationId=${encodeURIComponent(conversationId)}`;
+    const res = await fetch(url);
+    const data = await res.json();
+    return data?.offers || [];
+  } catch {
+    return [];
+  }
+}
+
+// Chat Service Helpers
+export async function fetchChatConversations(filter = 'all', query = '') {
+  try {
+    let url = `/api/chat/conversations?filter=${filter}`;
+    if (query) url += `&q=${encodeURIComponent(query)}`;
+    const res = await fetch(url);
+    const data = await res.json();
+    return data?.conversations || [];
+  } catch {
+    return [];
+  }
+}
+
+export async function fetchChatMessages(conversationId, clientEmail = null) {
+  try {
+    let url = `/api/chat/messages?conversationId=${encodeURIComponent(conversationId)}`;
+    if (clientEmail) url += `&clientEmail=${encodeURIComponent(clientEmail)}`;
+    const res = await fetch(url);
+    const data = await res.json();
+    return data?.messages || [];
+  } catch {
+    return [];
+  }
+}
+
+export async function sendChatMessage(payload) {
+  try {
+    const res = await fetch('/api/chat/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    return await res.json();
+  } catch (err) {
+    return { error: err.message };
+  }
+}
+
+

@@ -52,6 +52,7 @@ import ThemePreviewCard from '../common/ThemePreviewCard';
 import { THEME_PRESETS } from '../../utils/themePresets';
 import { fetchNotificationsFromSupabase, subscribeToNotificationListeners } from '../../services/supabaseService';
 import { isSupabaseConfigured } from '../../lib/supabase/client';
+import CustomerSupportChat from './CustomerSupportChat';
 
 export const CustomerDashboard = () => {
   const navigate = useNavigate();
@@ -93,7 +94,7 @@ export const CustomerDashboard = () => {
       const urlParams = new URLSearchParams(window.location.search);
       const tabParam = urlParams.get('tab');
       if (tabParam) {
-        return tabParam === 'support' || tabParam === 'inbox' ? 'dashboard' : tabParam;
+        return tabParam;
       }
     }
     return activeCustomerTab || 'dashboard';
@@ -113,7 +114,7 @@ export const CustomerDashboard = () => {
 
   const setActiveTab = React.useCallback((tab) => {
     if (!tab) return;
-    const normalizedTab = (tab === 'support' || tab === 'inbox') ? 'dashboard' : tab;
+    const normalizedTab = tab;
     setActiveTabLocal(normalizedTab);
     if (setActiveCustomerTab) {
       setActiveCustomerTab(normalizedTab);
@@ -135,10 +136,9 @@ export const CustomerDashboard = () => {
       if (typeof window !== 'undefined') {
         const urlParams = new URLSearchParams(window.location.search);
         const tabParam = urlParams.get('tab') || 'dashboard';
-        const normalized = (tabParam === 'support' || tabParam === 'inbox') ? 'dashboard' : tabParam;
-        setActiveTabLocal(normalized);
+        setActiveTabLocal(tabParam);
         if (setActiveCustomerTab) {
-          setActiveCustomerTab(normalized);
+          setActiveCustomerTab(tabParam);
         }
       }
     };
@@ -157,7 +157,7 @@ export const CustomerDashboard = () => {
   React.useEffect(() => {
     const handleTabSwitch = (e) => {
       const targetTab = e.detail?.tab;
-      if (targetTab && targetTab !== 'inbox' && targetTab !== 'support') {
+      if (targetTab) {
         setActiveTab(targetTab);
       }
 
@@ -2371,24 +2371,57 @@ export const CustomerDashboard = () => {
                   </div>
                 </div>
 
-                <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+                <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', marginBottom: '2rem' }}>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('chat')}
+                    className="btn btn-primary"
+                    style={{ borderRadius: '10px', padding: '0.65rem 1.4rem', fontWeight: 800, fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '0.45rem' }}
+                  >
+                    <Sparkles size={16} /> Open Studio Live Chat
+                  </button>
                   <button
                     type="button"
                     onClick={() => navigate('/contact')}
-                    className="btn btn-primary"
-                    style={{ borderRadius: '10px', padding: '0.65rem 1.4rem', fontWeight: 800, fontSize: '0.9rem' }}
-                  >
-                    Open Contact Desk
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setActiveTab('orders')}
                     className="btn btn-outline"
                     style={{ borderRadius: '10px', padding: '0.65rem 1.4rem', fontWeight: 800, fontSize: '0.9rem' }}
                   >
-                    View My Orders
+                    Contact Desk Form
                   </button>
                 </div>
+
+                {/* Embedded Live Support Chat */}
+                <div style={{ marginTop: '1.5rem', borderTop: '1px solid var(--border-color, #e2e8f0)', paddingTop: '1.5rem' }}>
+                  <h3 style={{ fontSize: '1.1rem', fontWeight: 800, marginBottom: '0.75rem', color: isDark ? '#ffffff' : '#0f172a' }}>
+                    Instant Production Desk Chat
+                  </h3>
+                  <CustomerSupportChat />
+                </div>
+              </div>
+            )}
+
+            {/* TAB: DEDICATED STUDIO LIVE CHAT */}
+            {activeTab === 'chat' && (
+              <div style={{ maxWidth: '840px', margin: '0 auto', width: '100%' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
+                  <div>
+                    <h2 style={{ fontSize: '1.35rem', fontWeight: 800, margin: '0 0 0.2rem 0', color: isDark ? '#ffffff' : '#0f172a' }}>
+                      Studio Live Messaging
+                    </h2>
+                    <p style={{ fontSize: '0.82rem', color: 'var(--text-muted, #64748b)', margin: 0 }}>
+                      Direct communication with our master digitizers. Review custom offers and upload design files.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('dashboard')}
+                    className="btn btn-sm btn-outline"
+                    style={{ borderRadius: '8px', padding: '0.4rem 0.8rem', fontSize: '0.8rem', fontWeight: 700 }}
+                  >
+                    Back to Dashboard
+                  </button>
+                </div>
+                <CustomerSupportChat />
               </div>
             )}
 

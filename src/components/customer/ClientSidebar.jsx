@@ -13,7 +13,8 @@ import {
   PlusCircle,
   Bell,
   ClipboardList,
-  Headphones
+  Headphones,
+  MessageSquare
 } from 'lucide-react';
 
 export const ClientSidebar = ({
@@ -56,6 +57,12 @@ export const ClientSidebar = ({
           label: 'My Orders',
           icon: ClipboardList,
           badge: unreadOrdersCount > 0 ? unreadOrdersCount : null
+        },
+        { 
+          id: 'chat', 
+          label: 'Studio Live Chat', 
+          icon: MessageSquare, 
+          badge: null
         },
         { 
           id: 'help-support', 
