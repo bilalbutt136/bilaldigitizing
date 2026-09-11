@@ -616,26 +616,40 @@ export const CustomerDashboard = () => {
             min-height: calc(100vh - 65px) !important;
             width: 100% !important;
             overflow: hidden !important;
-            padding: 0.75rem 0 0 !important;
+            padding: 0 !important;
           }
-          .client-portal-fluid-container {
+          .client-portal-body {
             height: 100% !important;
             max-height: 100% !important;
+            min-height: 0 !important;
             display: flex !important;
-            flex-direction: column !important;
+            flex-direction: row !important;
             overflow: hidden !important;
             flex: 1 !important;
+            width: 100% !important;
+          }
+          .client-sidebar-fixed {
+            width: 260px !important;
+            min-width: 260px !important;
+            max-width: 260px !important;
+            height: 100% !important;
+            max-height: 100% !important;
             min-height: 0 !important;
+            overflow-y: auto !important;
+            overflow-x: hidden !important;
           }
           .client-main-content {
+            flex: 1 !important;
+            min-width: 0 !important;
+            width: 100% !important;
             height: 100% !important;
             max-height: 100% !important;
             overflow-y: auto !important;
             overflow-x: hidden !important;
             overscroll-behavior: contain !important;
             scroll-behavior: smooth !important;
-            padding-bottom: 3.5rem !important;
-            padding-right: 0.35rem !important;
+            padding: 0.85rem 1.5rem 3.5rem !important;
+            box-sizing: border-box !important;
           }
         }
 
@@ -671,115 +685,102 @@ export const CustomerDashboard = () => {
       `}} />
 
       <div 
-        className="client-portal-fluid-container" 
+        className="client-portal-body" 
         style={{ 
-          maxWidth: '1680px', 
+          display: 'flex', 
+          flexDirection: 'row',
+          flex: 1, 
           width: '100%', 
-          padding: '0 1.25rem', 
-          margin: '0 auto', 
-          boxSizing: 'border-box',
-          height: '100%',
-          display: 'flex',
-          flexDirection: 'column'
+          minHeight: 0, 
+          height: '100%', 
+          position: 'relative', 
+          overflow: 'hidden' 
         }}
       >
 
-        {/* Optional App Mode Launch Banner for Mobile Screens */}
-        <div 
-          className="mobile-only"
-          style={{
-            background: 'linear-gradient(135deg, rgba(249, 115, 22, 0.08) 0%, rgba(249, 115, 22, 0.02) 100%)',
-            borderBottom: '1px solid var(--border-color)',
-            padding: '0.45rem 0.85rem',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: '0.5rem',
-            marginBottom: '0.65rem',
-            borderRadius: '8px'
+        {/* ==================================================================
+            LEFT VERTICAL SIDEBAR NAVIGATION MENU (STATIONARY SAAS PANEL)
+           ================================================================== */}
+        <ClientSidebar 
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          activeUser={activeUser}
+          walletBalance={walletBalance}
+          digitizingCount={digitizingOrders.length}
+          vectorCount={vectorOrders.length}
+          patchCount={patchOrders.length}
+          storeCount={storeOrders.length}
+          unreadOrdersCount={unreadOrdersCount}
+          unreadNotifCount={unreadNotificationsCount}
+          unpaidCount={unpaidOrders.length}
+          onOpenDepositModal={() => setIsDepositModalOpen(true)}
+          onOpenLiveSupport={handleOpenLiveSupport}
+          onLogout={() => {
+            if (logout) logout();
+            navigate('/login');
           }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
-            <Sparkles size={14} style={{ color: 'var(--orange-500)', flexShrink: 0 }} />
-            <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-main)' }}>
-              Prefer the full-screen 5-Tab App?
-            </span>
-          </div>
-          <button
-            type="button"
-            onClick={() => {
-              if (setMobileMode) setMobileMode('app');
-              showToast('Switched to App Mode 📱', 'info');
-            }}
-            style={{
-              background: 'var(--orange-500)',
-              color: '#ffffff',
-              border: 'none',
-              borderRadius: '6px',
-              padding: '0.25rem 0.6rem',
-              fontSize: '0.72rem',
-              fontWeight: 800,
-              cursor: 'pointer',
-              whiteSpace: 'nowrap'
-            }}
-          >
-            Launch App
-          </button>
-        </div>
+        />
 
-        {/* Main Grid Layout: Left Vertical Sidebar + Right Content Workspace */}
-        <div 
-          className="dashboard-layout-grid"
-          style={{
-            display: 'grid',
-            gridTemplateColumns: '250px 1fr',
-            gap: '1rem',
-            alignItems: 'stretch',
+        {/* ==================================================================
+            RIGHT CONTENT WORKSPACE PANE (INDEPENDENTLY SCROLLABLE)
+           ================================================================== */}
+        <main 
+          className="client-main-content"
+          style={{ 
             flex: 1,
+            minWidth: 0,
+            width: '100%',
             height: '100%',
             maxHeight: '100%',
-            minHeight: 0,
-            overflow: 'hidden'
+            display: 'block',
+            overflowY: 'auto',
+            overflowX: 'hidden',
+            padding: '0.85rem 1.5rem 3.5rem',
+            boxSizing: 'border-box'
           }}
         >
-
-          {/* ==================================================================
-              LEFT VERTICAL SIDEBAR NAVIGATION MENU (STATIONARY SAAS PANEL)
-             ================================================================== */}
-          <ClientSidebar 
-            activeTab={activeTab}
-            setActiveTab={setActiveTab}
-            activeUser={activeUser}
-            walletBalance={walletBalance}
-            digitizingCount={digitizingOrders.length}
-            vectorCount={vectorOrders.length}
-            patchCount={patchOrders.length}
-            storeCount={storeOrders.length}
-            unreadOrdersCount={unreadOrdersCount}
-            unreadNotifCount={unreadNotificationsCount}
-            unpaidCount={unpaidOrders.length}
-            onOpenDepositModal={() => setIsDepositModalOpen(true)}
-            onOpenLiveSupport={handleOpenLiveSupport}
-            onLogout={() => {
-              if (logout) logout();
-              navigate('/login');
-            }}
-          />
-
-          {/* ==================================================================
-              RIGHT CONTENT WORKSPACE PANE (INDEPENDENTLY SCROLLABLE)
-             ================================================================== */}
-          <main 
-            className="client-main-content"
-            style={{ 
-              minWidth: 0,
-              height: '100%',
-              maxHeight: '100%',
-              display: 'block',
-              overflowY: 'auto',
-              overflowX: 'hidden'
+          {/* Optional App Mode Launch Banner for Mobile Screens */}
+          <div 
+            className="mobile-only"
+            style={{
+              background: 'linear-gradient(135deg, rgba(249, 115, 22, 0.08) 0%, rgba(249, 115, 22, 0.02) 100%)',
+              borderBottom: '1px solid var(--border-color)',
+              padding: '0.45rem 0.85rem',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '0.5rem',
+              marginBottom: '0.65rem',
+              borderRadius: '8px'
             }}
           >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+              <Sparkles size={14} style={{ color: 'var(--orange-500)', flexShrink: 0 }} />
+              <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-main)' }}>
+                Prefer the full-screen 5-Tab App?
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                if (setMobileMode) setMobileMode('app');
+                showToast('Switched to App Mode 📱', 'info');
+              }}
+              style={{
+                background: 'var(--orange-500)',
+                color: '#ffffff',
+                border: 'none',
+                borderRadius: '6px',
+                padding: '0.25rem 0.6rem',
+                fontSize: '0.72rem',
+                fontWeight: 800,
+                cursor: 'pointer',
+                whiteSpace: 'nowrap'
+              }}
+            >
+              Launch App
+            </button>
+          </div>
             
             {/* TAB 0: MAIN CLIENT DASHBOARD */}
             {activeTab === 'dashboard' && (
@@ -853,88 +854,170 @@ export const CustomerDashboard = () => {
                 {/* Summary Stat Cards - Compact & High Information Density */}
                 <div style={{
                   display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
-                  gap: '0.65rem',
-                  marginBottom: '0.75rem'
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))',
+                  gap: '0.75rem',
+                  marginBottom: '1rem'
                 }}>
                   {/* Card 1: Wallet Balance */}
-                  <div className="card" style={{ padding: '0.65rem 0.85rem', borderLeft: '3.5px solid var(--color-primary)', background: 'var(--bg-card)' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600 }}>Studio Wallet Credit</span>
-                      <div style={{ background: 'var(--color-primary-light)', color: 'var(--color-primary)', padding: '0.25rem', borderRadius: 'var(--radius-sm)' }}>
-                        <Wallet size={14} />
+                  <div 
+                    className="card" 
+                    style={{ 
+                      padding: '0.85rem 1rem', 
+                      borderLeft: '4px solid var(--color-primary)', 
+                      background: 'var(--bg-card)',
+                      borderRadius: 'var(--radius-lg, 12px)',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'space-between',
+                      minHeight: '88px',
+                      boxSizing: 'border-box'
+                    }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem' }}>
+                      <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.03em', whiteSpace: 'nowrap' }}>
+                        Studio Wallet Credit
+                      </span>
+                      <div style={{ background: 'var(--color-primary-light)', color: 'var(--color-primary)', padding: '0.25rem 0.35rem', borderRadius: 'var(--radius-sm)', flexShrink: 0 }}>
+                        <Wallet size={15} />
                       </div>
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginTop: '0.2rem' }}>
-                      <div style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-main)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem', marginTop: '0.35rem' }}>
+                      <div style={{ fontSize: '1.35rem', fontWeight: 800, color: 'var(--text-main)', whiteSpace: 'nowrap', lineHeight: 1.1 }}>
                         ${walletBalance.toFixed(2)}
                       </div>
                       <button
                         type="button"
                         onClick={() => setIsDepositModalOpen(true)}
                         style={{
-                          background: 'none',
-                          border: 'none',
-                          color: 'var(--orange-600)',
-                          fontSize: '0.72rem',
+                          background: 'var(--color-primary-light, rgba(249, 115, 22, 0.12))',
+                          border: '1px solid rgba(249, 115, 22, 0.25)',
+                          color: 'var(--color-primary, #ea580c)',
+                          fontSize: '0.74rem',
                           fontWeight: 800,
                           cursor: 'pointer',
-                          padding: 0
+                          padding: '0.25rem 0.6rem',
+                          borderRadius: '6px',
+                          whiteSpace: 'nowrap',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '0.25rem',
+                          flexShrink: 0,
+                          transition: 'all 0.15s ease'
                         }}
                       >
-                        + Deposit
+                        + Deposit Funds
                       </button>
                     </div>
                   </div>
 
                   {/* Card 2: Active Jobs */}
-                  <div className="card" style={{ padding: '0.65rem 0.85rem', borderLeft: '3.5px solid #3b82f6', background: 'var(--bg-card)' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600 }}>Active Digitizing Jobs</span>
-                      <div style={{ background: 'rgba(59, 130, 246, 0.12)', color: '#3b82f6', padding: '0.25rem', borderRadius: 'var(--radius-sm)' }}>
-                        <Clock size={14} />
+                  <div 
+                    className="card" 
+                    style={{ 
+                      padding: '0.85rem 1rem', 
+                      borderLeft: '4px solid #3b82f6', 
+                      background: 'var(--bg-card)',
+                      borderRadius: 'var(--radius-lg, 12px)',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'space-between',
+                      minHeight: '88px',
+                      boxSizing: 'border-box'
+                    }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem' }}>
+                      <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.03em', whiteSpace: 'nowrap' }}>
+                        Active Digitizing Jobs
+                      </span>
+                      <div style={{ background: 'rgba(59, 130, 246, 0.12)', color: '#3b82f6', padding: '0.25rem 0.35rem', borderRadius: 'var(--radius-sm)', flexShrink: 0 }}>
+                        <Clock size={15} />
                       </div>
                     </div>
-                    <div style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-main)', margin: '0.2rem 0 0' }}>
+                    <div style={{ fontSize: '1.35rem', fontWeight: 800, color: 'var(--text-main)', marginTop: '0.35rem', lineHeight: 1.1 }}>
                       {activeOrders.length}
                     </div>
                   </div>
 
                   {/* Card 3: Completed Downloads */}
-                  <div className="card" style={{ padding: '0.65rem 0.85rem', borderLeft: '3.5px solid #10b981', background: 'var(--bg-card)' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600 }}>Completed Downloads</span>
-                      <div style={{ background: 'rgba(16, 185, 129, 0.12)', color: '#10b981', padding: '0.25rem', borderRadius: 'var(--radius-sm)' }}>
-                        <CheckCircle2 size={14} />
+                  <div 
+                    className="card" 
+                    style={{ 
+                      padding: '0.85rem 1rem', 
+                      borderLeft: '4px solid #10b981', 
+                      background: 'var(--bg-card)',
+                      borderRadius: 'var(--radius-lg, 12px)',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'space-between',
+                      minHeight: '88px',
+                      boxSizing: 'border-box'
+                    }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem' }}>
+                      <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.03em', whiteSpace: 'nowrap' }}>
+                        Completed Downloads
+                      </span>
+                      <div style={{ background: 'rgba(16, 185, 129, 0.12)', color: '#10b981', padding: '0.25rem 0.35rem', borderRadius: 'var(--radius-sm)', flexShrink: 0 }}>
+                        <CheckCircle2 size={15} />
                       </div>
                     </div>
-                    <div style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-main)', margin: '0.2rem 0 0' }}>
+                    <div style={{ fontSize: '1.35rem', fontWeight: 800, color: 'var(--text-main)', marginTop: '0.35rem', lineHeight: 1.1 }}>
                       {completedOrders.length}
                     </div>
                   </div>
 
                   {/* Card 4: Revisions Requested */}
-                  <div className="card" style={{ padding: '0.65rem 0.85rem', borderLeft: '3.5px solid #8b5cf6', background: 'var(--bg-card)' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600 }}>Revisions Requested</span>
-                      <div style={{ background: 'rgba(139, 92, 246, 0.12)', color: '#8b5cf6', padding: '0.25rem', borderRadius: 'var(--radius-sm)' }}>
-                        <RotateCcw size={14} />
+                  <div 
+                    className="card" 
+                    style={{ 
+                      padding: '0.85rem 1rem', 
+                      borderLeft: '4px solid #8b5cf6', 
+                      background: 'var(--bg-card)',
+                      borderRadius: 'var(--radius-lg, 12px)',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'space-between',
+                      minHeight: '88px',
+                      boxSizing: 'border-box'
+                    }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem' }}>
+                      <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.03em', whiteSpace: 'nowrap' }}>
+                        Revisions Requested
+                      </span>
+                      <div style={{ background: 'rgba(139, 92, 246, 0.12)', color: '#8b5cf6', padding: '0.25rem 0.35rem', borderRadius: 'var(--radius-sm)', flexShrink: 0 }}>
+                        <RotateCcw size={15} />
                       </div>
                     </div>
-                    <div style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-main)', margin: '0.2rem 0 0' }}>
+                    <div style={{ fontSize: '1.35rem', fontWeight: 800, color: 'var(--text-main)', marginTop: '0.35rem', lineHeight: 1.1 }}>
                       {revisionOrders.length}
                     </div>
                   </div>
 
                   {/* Card 5: Total Spend */}
-                  <div className="card" style={{ padding: '0.65rem 0.85rem', borderLeft: '3.5px solid #ec4899', background: 'var(--bg-card)' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600 }}>Total Invoiced Spend</span>
-                      <div style={{ background: 'rgba(236, 72, 153, 0.12)', color: '#ec4899', padding: '0.25rem', borderRadius: 'var(--radius-sm)' }}>
-                        <DollarSign size={14} />
+                  <div 
+                    className="card" 
+                    style={{ 
+                      padding: '0.85rem 1rem', 
+                      borderLeft: '4px solid #ec4899', 
+                      background: 'var(--bg-card)',
+                      borderRadius: 'var(--radius-lg, 12px)',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'space-between',
+                      minHeight: '88px',
+                      boxSizing: 'border-box'
+                    }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem' }}>
+                      <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.03em', whiteSpace: 'nowrap' }}>
+                        Total Invoiced Spend
+                      </span>
+                      <div style={{ background: 'rgba(236, 72, 153, 0.12)', color: '#ec4899', padding: '0.25rem 0.35rem', borderRadius: 'var(--radius-sm)', flexShrink: 0 }}>
+                        <DollarSign size={15} />
                       </div>
                     </div>
-                    <div style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-main)', margin: '0.2rem 0 0' }}>
+                    <div style={{ fontSize: '1.35rem', fontWeight: 800, color: 'var(--text-main)', marginTop: '0.35rem', lineHeight: 1.1 }}>
                       ${totalSpent.toFixed(2)}
                     </div>
                   </div>
@@ -1268,7 +1351,8 @@ export const CustomerDashboard = () => {
                           borderRadius: '6px',
                           cursor: 'pointer',
                           boxShadow: filterStatus === 'all' ? '0 2px 8px var(--color-primary-glow)' : 'none',
-                          transition: 'all 0.18s ease'
+                          transition: 'all 0.18s ease',
+                          whiteSpace: 'nowrap'
                         }}
                       >
                         All Orders ({currentTabOrders.length})
@@ -1291,7 +1375,8 @@ export const CustomerDashboard = () => {
                             transition: 'all 0.18s ease',
                             display: 'inline-flex',
                             alignItems: 'center',
-                            gap: '0.25rem'
+                            gap: '0.25rem',
+                            whiteSpace: 'nowrap'
                           }}
                         >
                           ⏳ Waiting for Payment ({unpaidCount})
@@ -1312,7 +1397,8 @@ export const CustomerDashboard = () => {
                           borderRadius: '6px',
                           cursor: 'pointer',
                           boxShadow: filterStatus === 'active' ? '0 2px 8px var(--color-primary-glow)' : 'none',
-                          transition: 'all 0.18s ease'
+                          transition: 'all 0.18s ease',
+                          whiteSpace: 'nowrap'
                         }}
                       >
                         Active ({activeOrders.length})
@@ -1332,7 +1418,8 @@ export const CustomerDashboard = () => {
                           borderRadius: '6px',
                           cursor: 'pointer',
                           boxShadow: filterStatus === 'delivered' ? '0 2px 8px rgba(16, 185, 129, 0.35)' : 'none',
-                          transition: 'all 0.18s ease'
+                          transition: 'all 0.18s ease',
+                          whiteSpace: 'nowrap'
                         }}
                       >
                         📦 Delivered ({deliveredOrders.length})
@@ -1352,7 +1439,8 @@ export const CustomerDashboard = () => {
                           borderRadius: '6px',
                           cursor: 'pointer',
                           boxShadow: filterStatus === 'revision' ? '0 2px 8px var(--color-primary-glow)' : 'none',
-                          transition: 'all 0.18s ease'
+                          transition: 'all 0.18s ease',
+                          whiteSpace: 'nowrap'
                         }}
                       >
                         🔄 In Revision ({revisionOrders.length})
@@ -1372,7 +1460,8 @@ export const CustomerDashboard = () => {
                           borderRadius: '6px',
                           cursor: 'pointer',
                           boxShadow: filterStatus === 'completed' ? '0 2px 8px var(--color-primary-glow)' : 'none',
-                          transition: 'all 0.18s ease'
+                          transition: 'all 0.18s ease',
+                          whiteSpace: 'nowrap'
                         }}
                       >
                         ✅ Completed ({completedOrders.length})
@@ -2387,8 +2476,6 @@ export const CustomerDashboard = () => {
           </main>
 
         </div>
-
-      </div>
 
       {/* Lightbox Inspection Modal */}
       {lightboxOrder && (

@@ -106,17 +106,15 @@ export const ClientSidebar = ({
 
   return (
     <aside
-      className="client-sidebar-saas desktop-only"
+      className="client-sidebar-saas client-sidebar-fixed desktop-only"
       style={{
         background: 'var(--bg-card)',
-        border: '1px solid var(--border-color)',
-        borderRadius: '16px',
-        boxShadow: 'var(--shadow-sm)',
+        borderRight: '1px solid var(--border-color)',
         position: 'relative',
         top: 0,
-        width: '280px',
-        minWidth: '280px',
-        maxWidth: '280px',
+        width: '260px',
+        minWidth: '260px',
+        maxWidth: '260px',
         height: '100%',
         maxHeight: '100%',
         display: 'flex',
@@ -172,7 +170,7 @@ export const ClientSidebar = ({
               {userInitial}
             </div>
 
-            <div style={{ overflow: 'hidden' }}>
+            <div style={{ overflow: 'hidden', minWidth: 0, flex: 1 }}>
               <div style={{ fontWeight: 800, fontSize: '0.88rem', color: '#f8fafc', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', letterSpacing: '-0.01em' }}>
                 {userName}
               </div>
