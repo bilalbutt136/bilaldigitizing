@@ -104,31 +104,6 @@ export const CustomerDashboard = () => {
   const [isMobileOrderOpen, setIsMobileOrderOpen] = useState(false);
   const [mobileOrderDefaultService, setMobileOrderDefaultService] = useState('embroidery');
 
-  // Dynamic Client Dashboard Zoom: Defaults to 85% (0.85) on desktop for full visibility
-  const [clientZoom, setClientZoom] = useState(() => {
-    if (typeof window !== 'undefined') {
-      try {
-        const saved = localStorage.getItem('bdigi_client_zoom');
-        if (saved) {
-          const parsed = parseFloat(saved);
-          if (!isNaN(parsed) && parsed >= 0.7 && parsed <= 1.25) {
-            return parsed;
-          }
-        }
-      } catch {}
-    }
-    return 0.85;
-  });
-
-  const handleSetClientZoom = (val) => {
-    setClientZoom(val);
-    if (typeof window !== 'undefined') {
-      try {
-        localStorage.setItem('bdigi_client_zoom', String(val));
-      } catch {}
-    }
-  };
-
   // Client-side mounting guard for hydration safety
   const [mounted, setMounted] = React.useState(false);
   const initialTabSyncedRef = React.useRef(false);
@@ -623,20 +598,22 @@ export const CustomerDashboard = () => {
         background: 'var(--bg-main)', 
         position: 'relative', 
         width: '100%',
-        minHeight: `calc((100vh - 65px) / ${clientZoom})`,
+        minHeight: 'calc(100vh - 65px)',
+        height: 'calc(100vh - 65px)',
+        maxHeight: 'calc(100vh - 65px)',
         display: 'flex',
         flexDirection: 'column',
-        boxSizing: 'border-box'
+        boxSizing: 'border-box',
+        overflow: 'hidden'
       }}
     >
-      {/* Desktop Independent Layout Styles matching Admin Portal with Dynamic Zooming */}
+      {/* Desktop Independent Layout Styles matching Admin Portal */}
       <style dangerouslySetInnerHTML={{__html: `
         @media (min-width: 1025px) {
           .client-portal-wrapper {
-            zoom: ${clientZoom} !important;
-            height: calc((100vh - 65px) / ${clientZoom}) !important;
-            max-height: calc((100vh - 65px) / ${clientZoom}) !important;
-            min-height: calc((100vh - 65px) / ${clientZoom}) !important;
+            height: calc(100vh - 65px) !important;
+            max-height: calc(100vh - 65px) !important;
+            min-height: calc(100vh - 65px) !important;
             width: 100% !important;
             overflow: hidden !important;
             padding: 0.75rem 0 0 !important;
@@ -834,50 +811,6 @@ export const CustomerDashboard = () => {
                   </div>
 
                   <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
-                    {/* View Zoom Controller */}
-                    <div style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '3px',
-                      background: 'var(--bg-main, #f8fafc)',
-                      border: '1px solid var(--border-color, #e2e8f0)',
-                      borderRadius: '8px',
-                      padding: '2px 4px'
-                    }}>
-                      <span style={{ fontSize: '0.68rem', fontWeight: 800, color: 'var(--text-muted)', padding: '0 4px' }}>
-                        Zoom:
-                      </span>
-                      {[
-                        { label: '80%', val: 0.8 },
-                        { label: '85%', val: 0.85 },
-                        { label: '90%', val: 0.9 },
-                        { label: '100%', val: 1.0 }
-                      ].map((opt) => {
-                        const isActive = Math.abs(clientZoom - opt.val) < 0.01;
-                        return (
-                          <button
-                            key={opt.val}
-                            type="button"
-                            onClick={() => handleSetClientZoom(opt.val)}
-                            title={`Set client display zoom to ${opt.label}`}
-                            style={{
-                              border: 'none',
-                              background: isActive ? 'var(--color-primary, #ea580c)' : 'transparent',
-                              color: isActive ? '#ffffff' : 'var(--text-main)',
-                              fontWeight: isActive ? 800 : 600,
-                              fontSize: '0.7rem',
-                              padding: '0.18rem 0.4rem',
-                              borderRadius: '5px',
-                              cursor: 'pointer',
-                              transition: 'all 0.15s ease'
-                            }}
-                          >
-                            {opt.label}
-                          </button>
-                        );
-                      })}
-                    </div>
-
                     <button 
                       type="button"
                       className="btn btn-outline btn-sm"

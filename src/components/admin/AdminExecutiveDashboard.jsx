@@ -37,9 +37,7 @@ export const AdminExecutiveDashboard = ({
   setSelectedOrderForDrawer,
   setIsPricingSettingsOpen,
   resetAllData,
-  showToast,
-  adminZoom = 0.85,
-  onSetZoom
+  showToast
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all'); // 'all' | 'embroidery' | 'vector' | 'patches'
@@ -202,19 +200,19 @@ export const AdminExecutiveDashboard = ({
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', width: '100%' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem', width: '100%' }}>
       
       {/* 1. COMMAND HEADER & REALTIME STATUS BAR */}
       <div style={{
         background: 'linear-gradient(135deg, var(--bg-card) 0%, var(--bg-subtle, #f8fafc) 100%)',
         border: '1.5px solid var(--border-color)',
         borderRadius: '16px',
-        padding: '1rem 1.25rem',
+        padding: '0.75rem 1.15rem',
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
         flexWrap: 'wrap',
-        gap: '1rem',
+        gap: '0.75rem',
         boxShadow: '0 2px 8px rgba(0,0,0,0.04)'
       }}>
         <div>
@@ -321,67 +319,21 @@ export const AdminExecutiveDashboard = ({
           >
             <RefreshCw size={13} /> Sync DB
           </button>
-
-          {/* View Zoom Controller */}
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '3px',
-            background: 'var(--bg-surface, #ffffff)',
-            border: '1.5px solid var(--border-color, #cbd5e1)',
-            borderRadius: '10px',
-            padding: '0.2rem 0.45rem',
-            height: '35px',
-            boxSizing: 'border-box'
-          }}>
-            <span style={{ fontSize: '0.72rem', fontWeight: 800, color: 'var(--text-muted, #64748b)', paddingRight: '2px' }}>
-              Zoom:
-            </span>
-            {[
-              { label: '80%', val: 0.8 },
-              { label: '85%', val: 0.85 },
-              { label: '90%', val: 0.9 },
-              { label: '100%', val: 1.0 }
-            ].map(opt => {
-              const isActive = Math.abs((adminZoom || 0.85) - opt.val) < 0.01;
-              return (
-                <button
-                  key={opt.val}
-                  type="button"
-                  onClick={() => onSetZoom && onSetZoom(opt.val)}
-                  title={`Set view scale to ${opt.label}`}
-                  style={{
-                    border: 'none',
-                    background: isActive ? 'var(--orange-500, #ea580c)' : 'transparent',
-                    color: isActive ? '#ffffff' : 'var(--text-muted, #64748b)',
-                    fontWeight: isActive ? 800 : 600,
-                    fontSize: '0.72rem',
-                    padding: '0.15rem 0.4rem',
-                    borderRadius: '6px',
-                    cursor: 'pointer',
-                    transition: 'all 0.15s ease'
-                  }}
-                >
-                  {opt.label}
-                </button>
-              );
-            })}
-          </div>
         </div>
       </div>
 
       {/* 2. EXECUTIVE METRIC KPI TILES */}
       <div style={{
         display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-        gap: '0.85rem'
+        gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))',
+        gap: '0.75rem'
       }}>
         {/* Metric 1: Total Revenue */}
         <div style={{
           background: 'var(--bg-card, #ffffff)',
           border: '1.5px solid var(--border-color, #e2e8f0)',
           borderRadius: '14px',
-          padding: '1rem 1.15rem',
+          padding: '0.85rem 1rem',
           position: 'relative',
           overflow: 'hidden',
           boxShadow: '0 2px 6px rgba(0,0,0,0.02)',
@@ -426,7 +378,7 @@ export const AdminExecutiveDashboard = ({
             background: 'var(--bg-card, #ffffff)',
             border: '1.5px solid var(--border-color, #e2e8f0)',
             borderRadius: '14px',
-            padding: '1rem 1.15rem',
+            padding: '0.85rem 1rem',
             position: 'relative',
             overflow: 'hidden',
             cursor: 'pointer',
@@ -469,7 +421,7 @@ export const AdminExecutiveDashboard = ({
           background: 'var(--bg-card, #ffffff)',
           border: '1.5px solid var(--border-color, #e2e8f0)',
           borderRadius: '14px',
-          padding: '1rem 1.15rem',
+          padding: '0.85rem 1rem',
           position: 'relative',
           overflow: 'hidden',
           boxShadow: '0 2px 6px rgba(0,0,0,0.02)'
@@ -513,7 +465,7 @@ export const AdminExecutiveDashboard = ({
             background: 'var(--bg-card, #ffffff)',
             border: '1.5px solid var(--border-color, #e2e8f0)',
             borderRadius: '14px',
-            padding: '1rem 1.15rem',
+            padding: '0.85rem 1rem',
             position: 'relative',
             overflow: 'hidden',
             cursor: 'pointer',
