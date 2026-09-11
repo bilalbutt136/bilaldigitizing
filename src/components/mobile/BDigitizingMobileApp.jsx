@@ -42,7 +42,6 @@ import {
   Globe,
   Phone,
   MessageCircle,
-  MessageSquare,
   ExternalLink,
   Star,
   Lock,
@@ -61,15 +60,12 @@ import {
   Building
 } from 'lucide-react';
 import { 
-  fetchConversations, 
   fetchNotificationsFromSupabase, 
   markNotificationAsReadInSupabase, 
-  subscribeToLiveMessages,
   upsertClientInSupabase,
   createNotificationInSupabase
 } from '../../services/supabaseService';
 import MobileSimpleOrderModal from '../customer/MobileSimpleOrderModal';
-import { ClientChatInbox } from '../customer/ClientChatInbox';
 import { THEME_PRESETS } from '../../utils/themePresets';
 import { handleNotificationClick } from '../../utils/notificationRouter';
 import { GoogleOAuthProvider } from '@react-oauth/google';
@@ -122,13 +118,13 @@ export const BDigitizingMobileApp = () => {
   const mobilePhone = (mobileCi.phone !== undefined ? mobileCi.phone : (siteSettings?.contactPhone || siteSettings?.supportPhone || '')).trim();
   const mobileEmail = (mobileCi.email !== undefined ? mobileCi.email : (siteSettings?.supportEmail || siteSettings?.contactEmail || '')).trim();
 
-  // Active Tab: 'home' | 'inbox' | 'categories' | 'orders' | 'profile' | 'login' | 'signup' | 'auth'
+  // Active Tab: 'home' | 'categories' | 'orders' | 'profile' | 'login' | 'signup' | 'auth'
   const getInitialMobileTab = () => {
     if (typeof window !== 'undefined') {
       try {
         const urlParams = new URLSearchParams(window.location.search);
         const tabParam = urlParams.get('tab');
-        const validTabs = ['home', 'inbox', 'categories', 'orders', 'profile', 'login', 'signup', 'auth'];
+        const validTabs = ['home', 'categories', 'orders', 'profile', 'login', 'signup', 'auth'];
         if (tabParam && validTabs.includes(tabParam)) return tabParam;
         
         const storedTab = localStorage.getItem('bdigi_mobile_active_tab');
@@ -266,9 +262,9 @@ export const BDigitizingMobileApp = () => {
         const stateTab = e?.state?.tab;
         const urlParams = new URLSearchParams(window.location.search);
         const tabParam = stateTab || urlParams.get('tab');
-        const validTabs = ['home', 'inbox', 'categories', 'orders', 'profile', 'login', 'signup', 'auth'];
+        const validTabs = ['home', 'categories', 'orders', 'profile', 'login', 'signup', 'auth'];
         
-        // If user is currently on inbox or any sub-tab and presses Android back key, return to home
+        // If user is currently on any sub-tab and presses Android back key, return to home
         if (mobileTab !== 'home') {
           setMobileTabState('home');
           try {
@@ -294,14 +290,12 @@ export const BDigitizingMobileApp = () => {
   // Orders filter: 'all' | 'awaiting_payment' | 'delivered' | 'active' | 'completed'
   const [orderFilter, setOrderFilter] = useState('all');
 
-  // Modals & Chat state
+  // Modals & State
   const [isOrderModalOpen, setIsOrderModalOpen] = useState(false);
   const [orderDefaultService, setOrderDefaultService] = useState('embroidery');
-  const [selectedChatOrderId, setSelectedChatOrderId] = useState(null);
   const [isOrderActionMenuOpen, setIsOrderActionMenuOpen] = useState(null); // order object
   
   // Real-time unread counts
-  const [unreadChatCount, setUnreadChatCount] = useState(0);
   const [notifications, setNotifications] = useState([]);
   const [isNotifDrawerOpen, setIsNotifDrawerOpen] = useState(false);
 
@@ -397,7 +391,7 @@ export const BDigitizingMobileApp = () => {
     }
   }, [mobileTab, userEmail, markOrdersAsRead]);
 
-  // Listen for global tab switch events (e.g. clicking Client Dashboard, Inbox, or Notifications from header)
+  // Listen for global tab switch events (e.g. clicking Client Dashboard, Orders, or Notifications from header)
   useEffect(() => {
     const handleTabSwitch = (e) => {
       const targetTab = e.detail?.tab;
@@ -419,11 +413,8 @@ export const BDigitizingMobileApp = () => {
         setIsLegalModalOpen(false);
         setIsNotifDrawerOpen(false);
         if (typeof window !== 'undefined') window.scrollTo({ top: 0, behavior: 'smooth' });
-      } else if (targetTab === 'inbox' || targetTab === 'chat' || targetTab === 'support') {
-        setMobileTab('inbox');
-        if (e.detail?.orderId) {
-          setSelectedChatOrderId(e.detail.orderId);
-        }
+      } else if (targetTab === 'support') {
+        setIsSupportModalOpen(true);
       } else if (targetTab === 'profile' || targetTab === 'wallet' || targetTab === 'settings' || targetTab === 'account') {
         setMobileTab('profile');
       }
@@ -522,7 +513,7 @@ export const BDigitizingMobileApp = () => {
 
   const unreadNotifCount = combinedNotifications.filter(n => !n.is_read && !n.read).length;
 
-  // Load Real-time Notifications & Messages
+  // Load Notifications
   useEffect(() => {
     let isMounted = true;
 
@@ -532,14 +523,6 @@ export const BDigitizingMobileApp = () => {
         if (isMounted && Array.isArray(notifs)) {
           setNotifications(notifs);
         }
-
-        if (userEmail) {
-          const convRes = await fetchConversations({ clientEmail: userEmail });
-          if (isMounted && convRes?.conversations) {
-            const totalUnread = convRes.conversations.reduce((sum, c) => sum + (c.clientUnreadCount || 0), 0);
-            setUnreadChatCount(totalUnread);
-          }
-        }
       } catch (err) {
         console.warn('Mobile app sync note:', err);
       }
@@ -547,25 +530,10 @@ export const BDigitizingMobileApp = () => {
 
     loadData();
 
-    const unsubscribe = subscribeToLiveMessages(
-      () => {
-        if (isMounted) loadData();
-      },
-      () => {
-        if (isMounted) loadData();
-      }
-    );
-
     return () => {
       isMounted = false;
-      if (typeof unsubscribe === 'function') unsubscribe();
     };
   }, [userEmail]);
-
-  const handleOpenChat = (orderOrChannelId = null) => {
-    setSelectedChatOrderId(orderOrChannelId);
-    setMobileTab('inbox');
-  };
 
   const handleOpenOrderConfigurator = (serviceType = 'embroidery') => {
     setOrderDefaultService(serviceType);
@@ -764,7 +732,7 @@ export const BDigitizingMobileApp = () => {
         display: 'flex',
         flexDirection: 'column',
         position: 'relative',
-        paddingBottom: (mobileTab === 'inbox' || ['login', 'signup', 'auth', 'forgot'].includes(mobileTab)) ? '0px' : '70px',
+        paddingBottom: (['login', 'signup', 'auth', 'forgot'].includes(mobileTab)) ? '0px' : '70px',
         overflowX: 'hidden',
         boxSizing: 'border-box',
         fontFamily: "'Inter', system-ui, -apple-system, sans-serif"
@@ -861,7 +829,7 @@ export const BDigitizingMobileApp = () => {
                   ? 'Join thousands of apparel brands and get instant access to 4–12h turnaround digitizing.' 
                   : mobileAuthMode === 'forgot'
                   ? 'Enter your account email and we will send you a secure password reset link.'
-                  : 'Access your order stitch test runs, downloads, and live digitizer chat.'}
+                  : 'Access your order stitch test runs, downloads, and real-time order tracking.'}
               </p>
             </div>
 
@@ -1879,32 +1847,6 @@ export const BDigitizingMobileApp = () => {
         </div>
       )}
 
-
-      {/* =========================================================================
-          SCREEN 2: INBOX / MESSAGES (Dedicated Fullscreen View)
-          ========================================================================= */}
-      {mobileTab === 'inbox' && (
-        <div style={{
-          display: 'flex',
-          flexDirection: 'column',
-          height: '100dvh',
-          maxHeight: '100dvh',
-          width: '100vw',
-          overflow: 'hidden',
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          zIndex: 9999,
-          background: isDark ? 'var(--color-background, #090d16)' : '#ffffff'
-        }}>
-          {/* Render Full Client Chat Inbox with built-in channels and complete scrolling */}
-          <div style={{ flex: 1, minHeight: 0, height: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-            <ClientChatInbox initialOrderId={selectedChatOrderId} onBack={() => setMobileTab('home')} />
-          </div>
-        </div>
-      )}
 
 
       {/* =========================================================================
@@ -3218,7 +3160,7 @@ export const BDigitizingMobileApp = () => {
                   </div>
                   <div>
                     <span style={{ fontSize: '0.9rem', fontWeight: 800, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a', display: 'block' }}>24/7 Support & Help Desk</span>
-                    <span style={{ fontSize: '0.72rem', color: isDark ? 'var(--color-text-secondary, #94a3b8)' : '#64748b' }}>WhatsApp direct, live chat & FAQs</span>
+                    <span style={{ fontSize: '0.72rem', color: isDark ? 'var(--color-text-secondary, #94a3b8)' : '#64748b' }}>WhatsApp direct, email helpdesk & FAQs</span>
                   </div>
                 </div>
                 <ChevronRight size={18} style={{ color: isDark ? '#94a3b8' : '#94a3b8' }} />
@@ -3462,7 +3404,7 @@ export const BDigitizingMobileApp = () => {
           gridTemplateColumns: 'repeat(5, 1fr)',
           alignItems: 'center',
           zIndex: isOrderModalOpen ? -1 : 800,
-          display: (isOrderModalOpen || ['inbox', 'login', 'signup', 'auth', 'forgot'].includes(mobileTab)) ? 'none' : 'grid',
+          display: (isOrderModalOpen || ['login', 'signup', 'auth', 'forgot'].includes(mobileTab)) ? 'none' : 'grid',
           paddingBottom: 'env(safe-area-inset-bottom, 0px)',
           boxShadow: isDark ? '0 -4px 16px rgba(0,0,0,0.35)' : '0 -4px 16px rgba(0,0,0,0.06)'
         }}
@@ -3501,12 +3443,11 @@ export const BDigitizingMobileApp = () => {
           <span style={{ fontSize: '0.68rem', fontWeight: mobileTab === 'home' ? 900 : 600 }}>Home</span>
         </button>
 
-        {/* Tab 2: Messages / Inbox */}
+        {/* Tab 2: Alerts / Notifications */}
         <button
           type="button"
           onClick={() => {
-            setMobileTab('inbox');
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+            setIsNotifDrawerOpen(true);
           }}
           style={{
             display: 'flex',
@@ -3518,12 +3459,12 @@ export const BDigitizingMobileApp = () => {
             cursor: 'pointer',
             padding: '0.25rem 0',
             position: 'relative',
-            color: mobileTab === 'inbox' ? (isDark ? '#34d399' : '#047857') : (isDark ? '#94a3b8' : '#64748b'),
+            color: isDark ? '#94a3b8' : '#64748b',
             gap: '0.18rem'
           }}
         >
           <div style={{
-            background: mobileTab === 'inbox' ? (isDark ? 'rgba(16, 185, 129, 0.15)' : '#ecfdf5') : 'transparent',
+            background: 'transparent',
             borderRadius: '12px',
             padding: '0.25rem 0.65rem',
             display: 'flex',
@@ -3532,8 +3473,8 @@ export const BDigitizingMobileApp = () => {
             position: 'relative',
             transition: 'all 0.2s ease'
           }}>
-            <Mail size={20} strokeWidth={mobileTab === 'inbox' ? 2.5 : 1.75} />
-            {unreadChatCount > 0 && (
+            <Bell size={20} strokeWidth={1.75} />
+            {unreadNotifCount > 0 && (
               <span style={{
                 position: 'absolute',
                 top: '2px',
@@ -3545,7 +3486,7 @@ export const BDigitizingMobileApp = () => {
               }} />
             )}
           </div>
-          <span style={{ fontSize: '0.68rem', fontWeight: mobileTab === 'inbox' ? 900 : 600 }}>Inbox</span>
+          <span style={{ fontSize: '0.68rem', fontWeight: 600 }}>Alerts</span>
         </button>
 
         {/* Tab 3: Search / Categories */}
@@ -3762,7 +3703,7 @@ export const BDigitizingMobileApp = () => {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.5rem 0', borderTop: isDark ? '1px solid var(--color-border, #334155)' : '1px solid #f1f5f9' }}>
               <div>
                 <span style={{ fontSize: '0.85rem', fontWeight: 800, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a', display: 'block' }}>Audio Notifications</span>
-                <span style={{ fontSize: '0.72rem', color: isDark ? 'var(--color-text-secondary, #94a3b8)' : '#64748b' }}>Play chime on live digitizer messages & delivery</span>
+                <span style={{ fontSize: '0.72rem', color: isDark ? 'var(--color-text-secondary, #94a3b8)' : '#64748b' }}>Play chime on order status updates & delivery</span>
               </div>
               <button
                 type="button"
@@ -4095,13 +4036,9 @@ export const BDigitizingMobileApp = () => {
               </button>
             </div>
 
-            {/* Action 1: Live Chat In-App */}
-            <button
-              type="button"
-              onClick={() => {
-                setIsSupportModalOpen(false);
-                handleOpenChat('help-support');
-              }}
+            {/* Action 1: Email Helpdesk */}
+            <a
+              href={`mailto:${mobileEmail || 'support@bilaldigitizing.com'}?subject=Support%20Request%20-%20BDigitizing`}
               style={{
                 padding: '0.95rem 1rem',
                 borderRadius: '14px',
@@ -4111,20 +4048,21 @@ export const BDigitizingMobileApp = () => {
                 alignItems: 'center',
                 justifyContent: 'space-between',
                 cursor: 'pointer',
-                textAlign: 'left'
+                textAlign: 'left',
+                textDecoration: 'none'
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                 <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: '#059669', color: '#ffffff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <MessageSquare size={20} />
+                  <Mail size={20} />
                 </div>
                 <div>
-                  <h4 style={{ margin: 0, fontSize: '0.92rem', fontWeight: 900, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a' }}>Live Support Chat</h4>
-                  <span style={{ fontSize: '0.72rem', color: isDark ? '#34d399' : '#047857', fontWeight: 700 }}>● Online • Response in &lt; 5 mins</span>
+                  <h4 style={{ margin: 0, fontSize: '0.92rem', fontWeight: 900, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a' }}>24/7 Studio Helpdesk</h4>
+                  <span style={{ fontSize: '0.72rem', color: isDark ? '#34d399' : '#047857', fontWeight: 700 }}>● Active Helpdesk • Direct Ticket</span>
                 </div>
               </div>
               <ChevronRight size={18} style={{ color: '#059669' }} />
-            </button>
+            </a>
 
             {/* Action 2: WhatsApp Direct or Phone Direct (Dynamic Auto-Fit) */}
             {cleanMobileWa ? (
@@ -4150,7 +4088,7 @@ export const BDigitizingMobileApp = () => {
                   </div>
                   <div>
                     <h4 style={{ margin: 0, fontSize: '0.92rem', fontWeight: 900, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a' }}>WhatsApp Master Desk</h4>
-                    <span style={{ fontSize: '0.72rem', color: isDark ? 'var(--color-text-secondary, #94a3b8)' : '#64748b' }}>Chat with master digitizers directly</span>
+                    <span style={{ fontSize: '0.72rem', color: isDark ? 'var(--color-text-secondary, #94a3b8)' : '#64748b' }}>Connect with master digitizers directly</span>
                   </div>
                 </div>
                 <ExternalLink size={18} style={{ color: isDark ? 'var(--color-text-secondary, #94a3b8)' : '#64748b' }} />
@@ -4287,7 +4225,7 @@ export const BDigitizingMobileApp = () => {
                   Topic Category
                 </label>
                 <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap' }}>
-                  {['Quality', 'Speed', 'Digitizer Chat', 'Pricing', 'App Experience'].map(cat => (
+                  {['Quality', 'Speed', 'Customer Support', 'Pricing', 'App Experience'].map(cat => (
                     <button
                       key={cat}
                       type="button"
@@ -4514,29 +4452,6 @@ export const BDigitizingMobileApp = () => {
               <ClipboardList size={18} style={{ color: '#059669' }} /> View Order & Download Files
             </button>
 
-            <button
-              type="button"
-              onClick={() => {
-                const ordId = isOrderActionMenuOpen.id;
-                setIsOrderActionMenuOpen(null);
-                handleOpenChat(ordId);
-              }}
-              style={{
-                padding: '0.85rem',
-                borderRadius: '10px',
-                border: isDark ? '1px solid var(--color-border, #334155)' : '1px solid #e2e8f0',
-                background: isDark ? 'var(--color-subtle, #1e293b)' : '#f8fafc',
-                fontSize: '0.88rem',
-                fontWeight: 800,
-                color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.65rem',
-                cursor: 'pointer'
-              }}
-            >
-              <Mail size={18} style={{ color: '#059669' }} /> Chat with Assigned Digitizer
-            </button>
           </div>
         </div>
       )}

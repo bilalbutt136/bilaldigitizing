@@ -8,19 +8,16 @@ import { StudioServicesManager } from './StudioServicesManager';
 import { SystemSettingsManager } from './SystemSettingsManager';
 import { WorkerManagementDesk } from './WorkerManagementDesk';
 
-import { AdminChatInbox } from './AdminChatInbox';
 import { AdminExecutiveDashboard } from './AdminExecutiveDashboard';
 import { PromotionsManager } from './PromotionsManager';
 import { ContactInfoManager } from './ContactInfoManager';
 import { PortfolioManager } from './PortfolioManager';
-import { fetchConversations, subscribeToLiveMessages, getAdminThreadUnreadCount } from '../../services/supabaseService';
 import { isSupabaseConfigured } from '../../lib/supabase/client';
 import { 
   LayoutDashboard, 
   ClipboardList, 
   Sliders, 
   Users, 
-  MessageSquare, 
   Image, 
   Settings, 
   LogOut, 
@@ -64,7 +61,6 @@ export const AdminDashboard = () => {
   } = useAppState();
 
   const [activeTabState, setActiveTabState] = useState(activeAdminTab || 'dashboard');
-  const [adminUnreadCount, setAdminUnreadCount] = useState(0);
   const [pendingWorkersCount, setPendingWorkersCount] = useState(0);
 
   React.useEffect(() => {
@@ -139,7 +135,7 @@ export const AdminDashboard = () => {
       const tabParam = urlParams.get('tab');
       const trackId = urlParams.get('trackOrder') || urlParams.get('orderId');
       if (tabParam) {
-        setActiveTab(tabParam === 'inbox' ? 'chat' : tabParam);
+        setActiveTab(tabParam === 'inbox' || tabParam === 'chat' ? 'dashboard' : tabParam);
       }
       if (trackId) {
         if (openOrderTrackerDrawer) {
@@ -156,53 +152,12 @@ export const AdminDashboard = () => {
     }
   }, []);
 
-  // Real-time unread messages calculator for Admin Desk
   React.useEffect(() => {
     if (!mounted) return;
-    let isMounted = true;
 
-    const loadAdminUnreadCount = async () => {
-      if (isSupabaseConfigured) {
-        try {
-          const convs = await fetchConversations();
-          if (convs && isMounted) {
-            let totalUnread = 0;
-            convs.forEach(c => {
-              totalUnread += getAdminThreadUnreadCount(c);
-            });
-            setAdminUnreadCount(totalUnread);
-          }
-        } catch { }
-      }
-    };
-
-    loadAdminUnreadCount();
-
-    const unsubscribe = subscribeToLiveMessages(
-      (msgPayload) => {
-        if (!isMounted) return;
-        const isInsert = msgPayload?.eventType === 'INSERT' || (!msgPayload?.eventType && !msgPayload?.old && Boolean(msgPayload?.new));
-        if (!isInsert) return;
-        const record = msgPayload.new || msgPayload.record;
-        if (record && !record.is_read && (record.sender === 'client' || record.sender === 'customer' || record.sender !== 'admin')) {
-          loadAdminUnreadCount();
-        }
-      },
-      (convPayload) => {
-        if (!isMounted) return;
-        loadAdminUnreadCount();
-      }
-    );
-
-    const handleReadSync = () => {
-      if (isMounted) loadAdminUnreadCount();
-    };
-    const handleOpenOrderChat = () => {
-      setActiveTab('chat');
-    };
     const handleAdminTabSwitch = (e) => {
-      if (e.detail?.tab) {
-        setActiveTab(e.detail.tab === 'inbox' ? 'chat' : e.detail.tab);
+      if (e.detail?.tab && e.detail.tab !== 'chat' && e.detail.tab !== 'inbox') {
+        setActiveTab(e.detail.tab);
       }
       if (e.detail?.orderId) {
         if (openOrderTrackerDrawer) {
@@ -218,16 +173,10 @@ export const AdminDashboard = () => {
       }
     };
 
-    window.addEventListener('bdigi_read_update', handleReadSync);
-    window.addEventListener('bdigi_open_order_chat', handleOpenOrderChat);
     window.addEventListener('bdigi_switch_admin_tab', handleAdminTabSwitch);
     window.addEventListener('bdigi_switch_tab', handleAdminTabSwitch);
 
     return () => {
-      isMounted = false;
-      if (typeof unsubscribe === 'function') unsubscribe();
-      window.removeEventListener('bdigi_read_update', handleReadSync);
-      window.removeEventListener('bdigi_open_order_chat', handleOpenOrderChat);
       window.removeEventListener('bdigi_switch_admin_tab', handleAdminTabSwitch);
       window.removeEventListener('bdigi_switch_tab', handleAdminTabSwitch);
     };
@@ -314,13 +263,6 @@ export const AdminDashboard = () => {
           icon: Scissors, 
           badge: pendingWorkersCount > 0 ? pendingWorkersCount : null,
           isUnread: pendingWorkersCount > 0
-        },
-        { 
-          id: 'chat', 
-          label: 'Messages', 
-          icon: MessageSquare, 
-          badge: adminUnreadCount > 0 ? adminUnreadCount : null,
-          isUnread: adminUnreadCount > 0
         }
       ]
     },
@@ -403,10 +345,6 @@ export const AdminDashboard = () => {
             overflow-x: hidden !important;
             scroll-behavior: smooth;
           }
-          .admin-main-content.chat-mode {
-            padding: 0.65rem 1.25rem 0.85rem !important;
-            overflow: hidden !important;
-          }
         }
         /* Custom scrollbar for sidebar & main content */
         .admin-sidebar-fixed::-webkit-scrollbar {
@@ -484,52 +422,12 @@ export const AdminDashboard = () => {
               {activeTab === 'services' && 'Service Rates & Tiers'}
               {activeTab === 'portfolio' && 'Portfolio & Work Gallery'}
               {activeTab === 'clients' && 'Client Directory'}
-              {activeTab === 'chat' && 'Messages'}
               {activeTab === 'promotions' && 'Promotions'}
               {activeTab === 'contact' && 'Contact Info'}
               {activeTab.startsWith('settings') && 'System Settings & Control Center'}
             </h3>
           </div>
         </div>
-
-        {/* Quick Mobile Messages Button for Admin */}
-        <button
-          type="button"
-          onClick={() => setActiveTab('chat')}
-          style={{
-            background: activeTab === 'chat' ? '#fff7ed' : 'var(--bg-surface)',
-            border: activeTab === 'chat' ? '1.5px solid var(--orange-500)' : '1px solid var(--border-color)',
-            color: activeTab === 'chat' ? 'var(--orange-500)' : 'var(--text-main)',
-            width: '38px',
-            height: '38px',
-            borderRadius: '10px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            cursor: 'pointer',
-            position: 'relative'
-          }}
-          aria-label="Open Messages"
-          title="Open Messages"
-        >
-          <MessageSquare size={18} />
-          {adminUnreadCount > 0 && (
-            <span style={{
-              position: 'absolute',
-              top: '-4px',
-              right: '-4px',
-              background: '#ef4444',
-              color: '#ffffff',
-              fontSize: '0.58rem',
-              fontWeight: 900,
-              borderRadius: '9999px',
-              padding: '0.05rem 0.25rem',
-              lineHeight: 1
-            }}>
-              {adminUnreadCount}
-            </span>
-          )}
-        </button>
       </div>
 
       {/* MOBILE SLIDE-OUT DRAWER OVERLAY */}
@@ -841,17 +739,16 @@ export const AdminDashboard = () => {
         flex: 1,
         minWidth: 0,
         width: '100%',
-        padding: activeTab === 'chat' ? '0.5rem 1rem 0.65rem' : '0.85rem 1.25rem 2.5rem',
+        padding: '0.85rem 1.25rem 2.5rem',
         boxSizing: 'border-box',
         height: '100%',
         maxHeight: '100%',
         minHeight: 0,
-        overflowY: activeTab === 'chat' ? 'hidden' : 'auto',
+        overflowY: 'auto',
         overflowX: 'hidden',
-        display: activeTab === 'chat' ? 'flex' : 'block',
-        flexDirection: 'column'
+        display: 'block'
       }}>
-        {activeTab !== 'chat' && activeTab !== 'dashboard' && (
+        {activeTab !== 'dashboard' && (
           <div style={{
             display: 'flex',
             justifyContent: 'space-between',
@@ -946,7 +843,6 @@ export const AdminDashboard = () => {
           <AdminExecutiveDashboard
             orders={orders}
             clients={clients}
-            adminUnreadCount={adminUnreadCount}
             setActiveTab={setActiveTab}
             setSelectedOrderForDrawer={setSelectedOrderForDrawer}
             setIsPricingSettingsOpen={setIsPricingSettingsOpen}
@@ -969,11 +865,6 @@ export const AdminDashboard = () => {
         {activeTab === 'services' && <StudioServicesManager />}
         {activeTab === 'portfolio' && <PortfolioManager />}
         {activeTab === 'clients' && <ClientDirectory />}
-        {activeTab === 'chat' && (
-          <div style={{ flex: 1, height: '100%', minHeight: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-            <AdminChatInbox />
-          </div>
-        )}
         {activeTab === 'promotions' && <PromotionsManager />}
         {activeTab === 'contact' && <ContactInfoManager />}
         {activeTab === 'settings' && <SystemSettingsManager activeSubTab="theme" />}

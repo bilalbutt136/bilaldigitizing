@@ -4,103 +4,6 @@ import { getServerAuthUser } from '../../../src/lib/supabase/serverAuth';
 
 export const dynamic = 'force-dynamic';
 
-function extractOfferFromMessage(msgRow) {
-  if (!msgRow) return null;
-  let off = msgRow.offer_data || msgRow.offer;
-  if (typeof off === 'string') {
-    try { off = JSON.parse(off); } catch { off = null; }
-  }
-  if (!off && msgRow.attachment && typeof msgRow.attachment === 'string') {
-    const trimmed = msgRow.attachment.trim();
-    if (trimmed.startsWith('{') && (trimmed.includes('"title"') || trimmed.includes('"price"') || trimmed.includes('"id"'))) {
-      try {
-        const parsed = JSON.parse(trimmed);
-        if (parsed && (parsed.id || parsed.title || parsed.price)) {
-          off = parsed;
-        }
-      } catch {}
-    }
-  }
-  if (!off && msgRow.text && msgRow.text.includes('[OFFER_DATA:')) {
-    try {
-      const match = msgRow.text.match(/\[OFFER_DATA:(\{.*?\})\]/s);
-      if (match && match[1]) off = JSON.parse(match[1]);
-    } catch {}
-  }
-  if (off && !off.conversation_id && msgRow.conversation_id) {
-    off.conversation_id = msgRow.conversation_id;
-  }
-  return off;
-}
-
-// Safely insert chat message using guaranteed PostgreSQL core columns with extended fallback
-async function insertChatMessage(supabase, messageObj) {
-  const coreRow = {
-    id: messageObj.id || `msg-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
-    conversation_id: messageObj.conversation_id,
-    sender: messageObj.sender || 'admin',
-    sender_name: messageObj.sender_name || 'Studio Support',
-    text: messageObj.text || '',
-    attachment: messageObj.attachment ? (typeof messageObj.attachment === 'string' ? messageObj.attachment : JSON.stringify(messageObj.attachment)) : null,
-    timestamp: messageObj.timestamp || new Date().toISOString(),
-    created_at: messageObj.created_at || new Date().toISOString(),
-    is_read: messageObj.is_read || false
-  };
-
-  try {
-    const extendedRow = { ...coreRow };
-    if (messageObj.type) extendedRow.type = messageObj.type;
-    if (messageObj.metadata) extendedRow.metadata = messageObj.metadata;
-    if (messageObj.offer_id) extendedRow.offer_id = messageObj.offer_id;
-    if (messageObj.offer_data) extendedRow.offer_data = messageObj.offer_data;
-    if (messageObj.client_email) extendedRow.client_email = messageObj.client_email;
-    if (messageObj.thread_id) extendedRow.thread_id = messageObj.thread_id;
-
-    const { data: insData, error: insErr } = await supabase.from('messages').insert([extendedRow]).select();
-    if (!insErr && insData && insData[0]) {
-      return insData[0];
-    }
-  } catch {}
-
-  const { data: coreData, error: coreErr } = await supabase.from('messages').insert([coreRow]).select();
-  if (coreErr) {
-    console.error('[insertChatMessage core error]:', coreErr.message);
-  }
-  return (coreData && coreData[0]) ? coreData[0] : coreRow;
-}
-
-// Safely update all message rows containing this offer across all schema variants
-async function updateOfferInMessages(supabase, targetOfferId, updatedOffer) {
-  if (!targetOfferId || !updatedOffer) return;
-  const serializedOffer = JSON.stringify(updatedOffer);
-  const updatedOfferText = `📋 Custom Offer: ${updatedOffer.title} ($${parseFloat(updatedOffer.final_price || updatedOffer.price || 0).toFixed(2)})\n\n[OFFER_DATA:${serializedOffer}]`;
-
-  try {
-    const { data: matchedMsgs } = await supabase
-      .from('messages')
-      .select('id, text, attachment')
-      .or(`text.ilike.%${targetOfferId}%,attachment.ilike.%${targetOfferId}%`);
-
-    if (Array.isArray(matchedMsgs) && matchedMsgs.length > 0) {
-      for (const m of matchedMsgs) {
-        let nextText = updatedOfferText;
-        if (m.text && m.text.includes('[OFFER_DATA:')) {
-          nextText = m.text.replace(/\[OFFER_DATA:(.*?)\]/s, `[OFFER_DATA:${serializedOffer}]`);
-        }
-        await supabase.from('messages').update({
-          attachment: serializedOffer,
-          text: nextText
-        }).eq('id', m.id);
-
-        try {
-          await supabase.from('messages').update({ offer_data: updatedOffer }).eq('id', m.id);
-        } catch {}
-      }
-    }
-  } catch (err) {
-    console.warn('[updateOfferInMessages notice]:', err.message);
-  }
-}
 
 async function findOffer(supabase, offerId, fallbackOffer = null) {
   if (!offerId && !fallbackOffer) return null;
@@ -108,55 +11,16 @@ async function findOffer(supabase, offerId, fallbackOffer = null) {
   let offer = null;
 
   if (offerId) {
-    // 1. Check custom_offers table by id, stripe_session_id, or order_id
     try {
-      const { data: offData, error: offErr } = await supabase
+      const { data: offData } = await supabase
         .from('custom_offers')
         .select('*')
         .or(`id.eq.${offerId},stripe_session_id.eq.${offerId},order_id.eq.${offerId}`)
         .maybeSingle();
-      if (!offErr && offData) offer = offData;
+      if (offData) offer = offData;
     } catch {}
-
-    // 2. Check messages table by id or text/attachment
-    if (!offer) {
-      try {
-        const { data: msgRow } = await supabase
-          .from('messages')
-          .select('*')
-          .eq('id', offerId)
-          .maybeSingle();
-        if (msgRow) offer = extractOfferFromMessage(msgRow);
-      } catch {}
-
-      if (!offer) {
-        try {
-          const { data: msgRows } = await supabase
-            .from('messages')
-            .select('*')
-            .or(`text.ilike.%${offerId}%,attachment.ilike.%${offerId}%`)
-            .limit(1);
-          if (msgRows && msgRows[0]) offer = extractOfferFromMessage(msgRows[0]);
-        } catch {}
-      }
-    }
-
-    // 3. Check order_messages table
-    if (!offer) {
-      try {
-        const { data: ordMsgs } = await supabase
-          .from('order_messages')
-          .select('*')
-          .or(`id.eq.${offerId},message.ilike.%${offerId}%`)
-          .limit(1);
-        if (ordMsgs && ordMsgs[0]) {
-          offer = ordMsgs[0].offer_data || extractOfferFromMessage(ordMsgs[0]);
-        }
-      } catch {}
-    }
   }
 
-  // 4. Fallback from client payload object
   if (!offer && fallbackOffer) {
     offer = typeof fallbackOffer === 'string' ? JSON.parse(fallbackOffer) : fallbackOffer;
   }
@@ -430,73 +294,6 @@ export async function POST(request) {
         console.warn('custom_offers table insert fallback:', err.message);
       }
 
-      // Create rich offer chat message with embedded offer data
-      const msgId = `msg-offer-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
-      const offerSerialized = JSON.stringify(offerDbRow);
-      const textWithOffer = `📋 Custom Offer: ${offerDbRow.title} ($${finalPrice.toFixed(2)})\n\n[OFFER_DATA:${offerSerialized}]`;
-
-      const coreMessageRow = {
-        id: msgId,
-        conversation_id: conversation_id,
-        sender: 'admin',
-        sender_name: 'Studio Support',
-        text: textWithOffer,
-        attachment: offerSerialized,
-        timestamp: nowIso,
-        created_at: nowIso,
-        is_read: false
-      };
-
-      const insertedMessage = await insertChatMessage(supabase, {
-        ...coreMessageRow,
-        type: 'custom_offer',
-        metadata: offerDbRow,
-        offer_id: offerId,
-        offer_data: offerDbRow
-      });
-
-      // Mirror to order_messages if this is an order conversation
-      const cIdLower = conversation_id.toLowerCase();
-      if (cIdLower.startsWith('order-') || cIdLower.startsWith('ord-') || cIdLower.startsWith('#')) {
-        const rawOrdId = conversation_id.replace(/^order-/, '').replace(/^#+/, '').trim();
-        try {
-          await supabase.from('order_messages').insert([{
-            order_id: rawOrdId,
-            sender: 'admin',
-            sender_role: 'admin',
-            sender_name: 'Studio Support',
-            message: textWithOffer,
-            offer_id: offerId,
-            offer_data: offerDbRow,
-            created_at: nowIso
-          }]);
-        } catch (omErr) {
-          try {
-            await supabase.from('order_messages').insert([{
-              order_id: rawOrdId,
-              sender: 'admin',
-              sender_role: 'admin',
-              sender_name: 'Studio Support',
-              message: textWithOffer,
-              created_at: nowIso
-            }]);
-          } catch {}
-        }
-      }
-
-
-
-      // Update primary conversation timestamp & client unread count
-      try {
-        const { data: cData } = await supabase.from('conversations').select('client_unread_count').eq('id', conversation_id).maybeSingle();
-        const nextClientUnread = (cData?.client_unread_count || 0) + 1;
-        await supabase.from('conversations').update({
-          updated_at: nowIso,
-          client_unread_count: nextClientUnread,
-          admin_unread_count: 0
-        }).eq('id', conversation_id);
-      } catch {}
-
       // Dispatch real customer notification
       if (cleanClientEmail && cleanClientEmail !== 'client@studio.com') {
         try {
@@ -507,7 +304,7 @@ export async function POST(request) {
             title: 'New Custom Offer Received',
             message: `Support sent you a custom offer: "${offerDbRow.title}" for $${finalPrice.toFixed(2)}. Click to review and accept.`,
             type: 'info',
-            link: `/client-portal?tab=inbox&chatId=${conversation_id}`,
+            link: `/client-portal?tab=orders`,
             read: false,
             created_at: nowIso
           }]);
@@ -518,12 +315,7 @@ export async function POST(request) {
 
       return NextResponse.json({
         success: true,
-        offer: offerDbRow,
-        message: {
-          ...insertedMessage,
-          offer_data: offerDbRow,
-          offer_id: offerId
-        }
+        offer: offerDbRow
       });
     }
 
@@ -661,34 +453,7 @@ export async function POST(request) {
         console.warn('custom_offers accept upsert notice:', err.message);
       }
 
-      // 4. Update messages containing this offer_id or serialized JSON
-      await updateOfferInMessages(supabase, targetOfferId, finalOfferData);
-      if (offerId && offerId !== targetOfferId) {
-        await updateOfferInMessages(supabase, offerId, finalOfferData);
-      }
-
-      // Also update order_messages if this is an order thread
-      try {
-        await supabase.from('order_messages').update({
-          offer_data: finalOfferData
-        }).or(`offer_id.eq.${targetOfferId},offer_id.eq.${offerId}`);
-      } catch {}
-
-      // 5. Post system confirmation message into the chat
-      const confirmMsgId = `msg-sys-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
-      const confirmMessage = {
-        id: confirmMsgId,
-        conversation_id: conversationId,
-        sender: 'admin',
-        sender_name: 'Studio System',
-        text: `🎉 Custom Offer Accepted! Order #${generatedOrderId} has been created. Please complete checkout ($${parseFloat(offer.final_price || offer.price || 0).toFixed(2)}) to send your order into production. Delivery: ${offer.delivery_time_text || '1 Day'}.`,
-        timestamp: nowIso,
-        created_at: nowIso,
-        is_read: false
-      };
-      await insertChatMessage(supabase, confirmMessage);
-
-      // 6. Notify Admin
+      // 4. Notify Admin
       try {
         await supabase.from('notifications').insert([{
           id: `notif-admin-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
@@ -697,7 +462,7 @@ export async function POST(request) {
           message: `${offer.client_name || 'Customer'} accepted the custom offer "${offer.title}" ($${parseFloat(offer.final_price || offer.price || 0).toFixed(2)}). Order #${generatedOrderId} is awaiting payment.`,
           type: 'info',
           order_id: generatedOrderId,
-          link: `/admin-portal?tab=chat&chatId=${conversationId}`,
+          link: `/admin-portal?tab=orders&trackOrder=${generatedOrderId}`,
           read: false,
           created_at: nowIso
         }]);
@@ -706,8 +471,7 @@ export async function POST(request) {
       return NextResponse.json({
         success: true,
         offer: finalOfferData,
-        order: orderPayload,
-        message: confirmMessage
+        order: orderPayload
       });
     }
 
@@ -724,8 +488,6 @@ export async function POST(request) {
       }
 
       const targetOfferId = offer.id || offerId;
-      const conversationId = offer.conversation_id || offer.thread_id;
-      const cleanEmail = (offer.client_email || user?.email || '').toLowerCase().trim();
 
       const updatedOffer = {
         ...offer,
@@ -738,48 +500,20 @@ export async function POST(request) {
         await supabase.from('custom_offers').update({ status: 'declined', updated_at: nowIso }).or(`id.eq.${targetOfferId},id.eq.${offerId}`);
       } catch {}
 
-      // 2. Update in messages table
-      await updateOfferInMessages(supabase, targetOfferId, updatedOffer);
-      if (offerId && offerId !== targetOfferId) {
-        await updateOfferInMessages(supabase, offerId, updatedOffer);
-      }
-
-      // 3. Update in order_messages table if applicable
       try {
-        await supabase.from('order_messages').update({ offer_data: updatedOffer }).or(`offer_id.eq.${targetOfferId},offer_id.eq.${offerId}`);
+        await supabase.from('notifications').insert([{
+          id: `notif-dec-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+          recipient_role: 'admin',
+          title: 'Custom Offer Declined',
+          message: `${offer.client_name || 'Customer'} declined the custom offer for "${offer.title || 'Custom Offer'}".`,
+          type: 'warning',
+          link: `/admin-portal?tab=orders`,
+          read: false,
+          created_at: nowIso
+        }]);
       } catch {}
 
-      let declineMsg = null;
-      if (conversationId) {
-        declineMsg = {
-          id: `msg-dec-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
-          conversation_id: conversationId,
-          thread_id: conversationId,
-          client_email: cleanEmail,
-          sender: 'client',
-          sender_name: offer.client_name || user?.user_metadata?.full_name || 'Client',
-          text: `❌ Declined custom offer: "${offer.title || 'Custom Offer'}".`,
-          timestamp: nowIso,
-          created_at: nowIso,
-          is_read: false
-        };
-        await insertChatMessage(supabase, declineMsg);
-
-        try {
-          await supabase.from('notifications').insert([{
-            id: `notif-dec-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
-            recipient_role: 'admin',
-            title: 'Custom Offer Declined',
-            message: `${offer.client_name || 'Customer'} declined the custom offer for "${offer.title || 'Custom Offer'}".`,
-            type: 'warning',
-            link: `/admin-portal?tab=chat&chatId=${conversationId}`,
-            read: false,
-            created_at: nowIso
-          }]);
-        } catch {}
-      }
-
-      return NextResponse.json({ success: true, offer: updatedOffer, message: declineMsg });
+      return NextResponse.json({ success: true, offer: updatedOffer });
     }
 
     // 4. ACTION: CANCEL / WITHDRAW OFFER (Admin only)
@@ -799,8 +533,6 @@ export async function POST(request) {
       }
 
       const targetOfferId = offer.id || offerId;
-      const conversationId = offer.conversation_id || offer.thread_id;
-      const cleanEmail = (offer.client_email || '').toLowerCase().trim();
 
       const updatedOffer = {
         ...offer,
@@ -813,36 +545,7 @@ export async function POST(request) {
         await supabase.from('custom_offers').update({ status: 'cancelled', updated_at: nowIso }).or(`id.eq.${targetOfferId},id.eq.${offerId}`);
       } catch {}
 
-      // 2. Update offer_data in messages table
-      await updateOfferInMessages(supabase, targetOfferId, updatedOffer);
-      if (offerId && offerId !== targetOfferId) {
-        await updateOfferInMessages(supabase, offerId, updatedOffer);
-      }
-
-      // 3. Update in order_messages table if applicable
-      try {
-        await supabase.from('order_messages').update({ offer_data: updatedOffer }).or(`offer_id.eq.${targetOfferId},offer_id.eq.${offerId}`);
-      } catch {}
-
-      // 4. Post announcement in conversation that offer was withdrawn
-      let cancelMsg = null;
-      if (conversationId) {
-        cancelMsg = {
-          id: `msg-can-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
-          conversation_id: conversationId,
-          thread_id: conversationId,
-          client_email: cleanEmail,
-          sender: 'admin',
-          sender_name: 'Studio Support',
-          text: `🚫 Offer "${offer.title || 'Custom Offer'}" was withdrawn by Studio Support.`,
-          timestamp: nowIso,
-          created_at: nowIso,
-          is_read: false
-        };
-        await insertChatMessage(supabase, cancelMsg);
-      }
-
-      return NextResponse.json({ success: true, status: 'cancelled', offer: updatedOffer, message: cancelMsg });
+      return NextResponse.json({ success: true, status: 'cancelled', offer: updatedOffer });
     }
 
     // 5. ACTION: PAY OFFER / MARK AS PAID
@@ -893,28 +596,7 @@ export async function POST(request) {
         console.warn('custom_offers pay update notice:', offErr.message);
       }
 
-      // 3. Update messages containing this offer
-      await updateOfferInMessages(supabase, targetOfferId, updatedOffer);
-      if (offerId && offerId !== targetOfferId) {
-        await updateOfferInMessages(supabase, offerId, updatedOffer);
-      }
-
-      // 4. Post chat confirmation
-      const paidMsg = {
-        id: `msg-paid-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
-        conversation_id: conversationId,
-        thread_id: conversationId,
-        client_email: cleanEmail,
-        sender: 'admin',
-        sender_name: 'Studio System',
-        text: `💳 Payment confirmed for Order #${targetOrderId || targetOfferId}! Your project is now in production with our master digitizers.`,
-        timestamp: nowIso,
-        created_at: nowIso,
-        is_read: false
-      };
-      await insertChatMessage(supabase, paidMsg);
-
-      return NextResponse.json({ success: true, offer: updatedOffer, message: paidMsg });
+      return NextResponse.json({ success: true, offer: updatedOffer });
     }
 
     return NextResponse.json({ error: 'Unknown action' }, { status: 400 });

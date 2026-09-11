@@ -11,7 +11,6 @@ import {
   Sparkles, 
   Sliders, 
   RefreshCw, 
-  MessageSquare, 
   Clock, 
   CheckCircle2, 
   AlertCircle, 
@@ -34,7 +33,6 @@ import { ArtworkLightboxModal } from '../common/ArtworkLightboxModal';
 export const AdminExecutiveDashboard = ({
   orders = [],
   clients = [],
-  adminUnreadCount = 0,
   setActiveTab,
   setSelectedOrderForDrawer,
   setIsPricingSettingsOpen,
@@ -175,13 +173,6 @@ export const AdminExecutiveDashboard = ({
       setSelectedOrderForDrawer(ord);
     } else {
       setActiveTab('orders');
-    }
-  };
-
-  const handleOpenChat = (clientEmail) => {
-    setActiveTab('chat');
-    if (typeof window !== 'undefined' && clientEmail) {
-      window.dispatchEvent(new CustomEvent('bdigi_open_client_chat', { detail: { email: clientEmail } }));
     }
   };
 
@@ -1125,30 +1116,6 @@ export const AdminExecutiveDashboard = ({
 
                       {/* Right: Action Buttons */}
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', flexShrink: 0 }}>
-                        {ord.clientEmail && (
-                          <button
-                            type="button"
-                            onClick={() => handleOpenChat(ord.clientEmail)}
-                            title="Chat with customer"
-                            style={{
-                              background: '#eff6ff',
-                              border: '1px solid #bfdbfe',
-                              color: '#2563eb',
-                              borderRadius: '8px',
-                              padding: '0.35rem 0.55rem',
-                              cursor: 'pointer',
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '0.25rem',
-                              fontSize: '0.75rem',
-                              fontWeight: 700
-                            }}
-                          >
-                            <MessageSquare size={13} />
-                            <span>Chat</span>
-                          </button>
-                        )}
-
                         <button
                           type="button"
                           onClick={() => handleOrderClick(ord)}
@@ -1219,42 +1186,6 @@ export const AdminExecutiveDashboard = ({
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-              {/* Unread Customer Inquiries */}
-              <div 
-                onClick={() => setActiveTab('chat')}
-                role="button"
-                tabIndex={0}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  padding: '0.65rem 0.8rem',
-                  borderRadius: '10px',
-                  background: adminUnreadCount > 0 ? '#eff6ff' : 'var(--bg-subtle, #f8fafc)',
-                  border: adminUnreadCount > 0 ? '1.5px solid #bfdbfe' : '1px solid #e2e8f0',
-                  cursor: 'pointer'
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <MessageSquare size={15} style={{ color: adminUnreadCount > 0 ? '#2563eb' : '#64748b' }} />
-                  <div>
-                    <div style={{ fontSize: '0.78rem', fontWeight: 800, color: 'var(--text-main, #0f172a)' }}>
-                      Customer Messages
-                    </div>
-                    <div style={{ fontSize: '0.68rem', color: 'var(--text-muted, #64748b)' }}>
-                      {adminUnreadCount > 0 ? `${adminUnreadCount} new unread inquiries` : 'All conversations answered'}
-                    </div>
-                  </div>
-                </div>
-                {adminUnreadCount > 0 ? (
-                  <span style={{ background: '#2563eb', color: '#ffffff', fontSize: '0.68rem', fontWeight: 900, borderRadius: '9999px', padding: '0.1rem 0.5rem' }}>
-                    {adminUnreadCount} new
-                  </span>
-                ) : (
-                  <span style={{ fontSize: '0.7rem', color: '#16a34a', fontWeight: 800 }}>Clear ✓</span>
-                )}
-              </div>
-
               {/* Pending Specs Verification */}
               <div 
                 onClick={() => { setSelectedStatus(selectedStatus === 'pending' ? 'all' : 'pending'); }}

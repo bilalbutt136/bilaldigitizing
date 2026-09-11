@@ -1428,21 +1428,6 @@ button, input, select, textarea, a {
   }
   .form-row-responsive { flex-direction: column !important; align-items: stretch !important; }
 
-  /* Floating Chat Responsive Adaptation */
-  .floating-chat-trigger {
-    bottom: 20px !important; 
-    right: 14px !important; 
-    padding: 0 !important;
-    width: 48px !important; 
-    height: 48px !important; 
-    border-radius: 50% !important;
-    justify-content: center !important; 
-    align-items: center !important;
-    box-shadow: 0 8px 24px rgba(249, 115, 22, 0.4) !important; 
-    z-index: 8500 !important;
-  }
-  .floating-chat-trigger > div:first-child { width: auto !important; height: auto !important; background: transparent !important; }
-  .floating-chat-window { bottom: 80px !important; right: 10px !important; left: 10px !important; width: auto !important; max-height: calc(100vh - 140px) !important; z-index: 9995 !important; }
   
   /* Native Mobile Bottom Navigation Toolbar */
   .mobile-bottom-nav { 
@@ -1479,10 +1464,6 @@ button, input, select, textarea, a {
     padding: 0.2rem 0 !important;
   }
 
-  /* On client dashboard screens with mobile bottom navigation, hide redundant floating bubble */
-  body:has(.mobile-bottom-nav) .floating-chat-trigger {
-    display: none !important;
-  }
 
   .dashboard-main-container { padding-bottom: 5.5rem !important; }
 
@@ -1607,33 +1588,6 @@ button, input, select, textarea, a {
     margin: 0 !important;
   }
 
-  .chat-inbox-grid {
-    grid-template-columns: 100% !important;
-    display: flex !important;
-    flex-direction: column !important;
-    width: 100% !important;
-    height: 100% !important;
-    min-height: 0 !important;
-    overflow: hidden !important;
-  }
-  .chat-threads-column {
-    width: 100% !important;
-    height: 100% !important;
-    flex: 1 !important;
-    min-height: 0 !important;
-  }
-  .chat-threads-column.hide-on-mobile-thread {
-    display: none !important;
-  }
-  .chat-messages-column {
-    width: 100% !important;
-    height: 100% !important;
-    flex: 1 !important;
-    min-height: 0 !important;
-  }
-  .chat-messages-column.hide-on-mobile-chat {
-    display: none !important;
-  }
   .client-portal-fluid-container {
     padding-left: 0.5rem !important;
     padding-right: 0.5rem !important;

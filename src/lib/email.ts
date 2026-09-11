@@ -5,19 +5,6 @@ import { createAdminClient } from './supabase/admin.js';
 // TYPES & INTERFACES
 // ==============================================================================
 
-export interface ChatMessageNotificationParams {
-  recipientEmail: string;
-  recipientName?: string;
-  senderName: string;
-  senderRole?: 'client' | 'admin' | 'support' | 'staff' | 'digitizer';
-  messageSnippet: string;
-  conversationId: string;
-  orderId?: string | null;
-  attachmentName?: string | null;
-  attachmentUrl?: string | null;
-  isClientRecipient?: boolean;
-}
-
 export interface OrderNotificationParams {
   orderId: string;
   clientEmail: string;
@@ -44,20 +31,6 @@ export interface EmailDispatchResult {
 // ==============================================================================
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const CHAT_DEBOUNCE_MS = 2 * 60 * 1000; // 2 minutes debounce per recipient/conversation to prevent email floods
-const chatNotificationTracker = new Map<string, number>();
-
-// Clean up expired debounce keys every 10 minutes
-if (typeof setInterval !== 'undefined') {
-  setInterval(() => {
-    const now = Date.now();
-    for (const [key, timestamp] of chatNotificationTracker.entries()) {
-      if (now - timestamp > CHAT_DEBOUNCE_MS * 2) {
-        chatNotificationTracker.delete(key);
-      }
-    }
-  }, 10 * 60 * 1000);
-}
 
 // ==============================================================================
 // CLIENT INITIALIZATION
@@ -308,151 +281,7 @@ const renderEmailShell = ({
 };
 
 // ==============================================================================
-// 1. CHAT MESSAGE NOTIFICATION SERVICE
-// ==============================================================================
-
-export async function sendChatMessageNotification(
-  params: ChatMessageNotificationParams
-): Promise<EmailDispatchResult> {
-  const {
-    recipientEmail,
-    recipientName = 'Valued User',
-    senderName,
-    messageSnippet,
-    conversationId,
-    orderId,
-    attachmentName,
-    attachmentUrl,
-    isClientRecipient = false
-  } = params;
-
-  if (!recipientEmail || !EMAIL_REGEX.test(recipientEmail.trim())) {
-    return { success: false, status: 'failed', error: `Invalid recipient email: ${recipientEmail}` };
-  }
-
-  // 1. Anti-spam Debounce: Prevent duplicate emails if multiple messages arrive within 2 minutes
-  const debounceKey = `chat:${conversationId}:${recipientEmail.toLowerCase().trim()}`;
-  const now = Date.now();
-  const lastSent = chatNotificationTracker.get(debounceKey);
-
-  if (lastSent && now - lastSent < CHAT_DEBOUNCE_MS) {
-    console.log(`[sendChatMessageNotification] Debounced notification for ${recipientEmail} (sent ${Math.round((now - lastSent) / 1000)}s ago).`);
-    return {
-      success: true,
-      status: 'rate_limited',
-      targetEmail: recipientEmail,
-      error: 'Notification suppressed by rapid-fire debounce window (2 minutes).'
-    };
-  }
-
-  // 2. Validate Settings from Supabase site_config
-  try {
-    const supabase = createAdminClient();
-    const { data: config } = await supabase
-      .from('site_config')
-      .select('value')
-      .eq('key', 'notification_settings')
-      .maybeSingle();
-
-    if (config?.value) {
-      const parsed = typeof config.value === 'string' ? JSON.parse(config.value) : config.value;
-      if (parsed?.messageAlerts === false && !isClientRecipient) {
-        await logNotificationToDb({
-          eventType: 'new_message',
-          recipientEmail,
-          senderName,
-          status: 'bypassed',
-          errorMessage: 'Message alerts disabled in admin settings.'
-        });
-        return { success: true, status: 'bypassed', targetEmail: recipientEmail };
-      }
-    }
-  } catch (err: any) {
-    console.warn('[sendChatMessageNotification] Config check notice:', err?.message);
-  }
-
-  const siteUrl = getSiteUrl();
-  const chatUrl = isClientRecipient
-    ? `${siteUrl}/client-portal?tab=chat&conversationId=${encodeURIComponent(conversationId)}`
-    : `${siteUrl}/admin-portal?tab=chat&conversationId=${encodeURIComponent(conversationId)}`;
-
-  const subject = orderId
-    ? `💬 New Message on Order #${orderId} from ${senderName} — Bilal Digitizing`
-    : `💬 New Studio Message from ${senderName} — Bilal Digitizing`;
-
-  const safeSnippet = messageSnippet && messageSnippet.trim()
-    ? messageSnippet.trim().replace(/</g, '&lt;').replace(/>/g, '&gt;')
-    : '(Sent an attachment or inquiry)';
-
-  const contentHtml = `
-    <p style="margin-top: 0; font-size: 15px;">
-      Hello <strong>${recipientName}</strong>,
-    </p>
-    <p style="color: #475569; font-size: 14.5px;">
-      You have received a new response in your active studio conversation from <strong>${senderName}</strong>:
-    </p>
-
-    <!-- Message Bubble -->
-    <div style="background-color: #f8fafc; border-left: 4px solid #ea580c; border-radius: 6px; padding: 16px 20px; margin: 20px 0; box-shadow: inset 0 1px 2px rgba(0,0,0,0.03);">
-      <p style="margin: 0; font-size: 15px; color: #0f172a; line-height: 1.55; white-space: pre-wrap; font-style: italic;">
-        "${safeSnippet}"
-      </p>
-      ${attachmentName ? `
-        <div style="margin-top: 12px; padding-top: 10px; border-top: 1px dashed #cbd5e1; font-size: 13px; color: #64748b;">
-          📎 <strong>Attachment:</strong> ${attachmentName}
-          ${attachmentUrl ? `(<a href="${attachmentUrl}" target="_blank" style="color: #ea580c; text-decoration: none;">Download</a>)` : ''}
-        </div>
-      ` : ''}
-    </div>
-
-    <div style="background-color: #f1f5f9; border-radius: 8px; padding: 12px 16px; margin: 18px 0; font-size: 13px; color: #64748b;">
-      <span style="font-weight: 700; color: #334155;">Channel:</span> ${orderId ? `Order #${orderId}` : 'Direct Customer Desk'} • 
-      <span style="font-weight: 700; color: #334155;">Time:</span> ${new Date().toUTCString()}
-    </div>
-  `;
-
-  const html = renderEmailShell({
-    badge: 'NEW MESSAGE ALERT',
-    badgeColor: '#ea580c',
-    title: `New Message from ${senderName}`,
-    subtitle: orderId ? `Pertaining to Order #${orderId}` : 'Studio Live Inbox',
-    children: contentHtml,
-    ctaText: 'Open & Reply in Studio Inbox',
-    ctaUrl: chatUrl
-  });
-
-  const dispatch = await sendMailWithRetry({ to: recipientEmail, subject, html });
-
-  if (dispatch.success) {
-    chatNotificationTracker.set(debounceKey, now);
-    await logNotificationToDb({
-      eventType: 'new_message',
-      recipientEmail,
-      recipientName,
-      senderName,
-      subject,
-      status: 'sent',
-      resendId: dispatch.id,
-      payload: { messageSnippet: safeSnippet, conversationId, orderId }
-    });
-    return { success: true, status: 'sent', resendId: dispatch.id, targetEmail: recipientEmail };
-  } else {
-    await logNotificationToDb({
-      eventType: 'new_message',
-      recipientEmail,
-      recipientName,
-      senderName,
-      subject,
-      status: 'failed',
-      errorMessage: dispatch.error,
-      payload: { messageSnippet: safeSnippet, conversationId, orderId }
-    });
-    return { success: false, status: 'failed', error: dispatch.error, targetEmail: recipientEmail };
-  }
-}
-
-// ==============================================================================
-// 2. ORDER NOTIFICATION SERVICE (Admin Alert + Client Confirmation)
+// ORDER NOTIFICATION SERVICE (Admin Alert + Client Confirmation)
 // ==============================================================================
 
 export async function sendOrderNotification(

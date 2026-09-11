@@ -6,7 +6,6 @@ import { usePathname } from 'next/navigation';
 import { AnnouncementBar } from '../public/AnnouncementBar';
 import { HeaderNav } from '../HeaderNav';
 import { Footer } from '../public/Footer';
-import { ClientLiveChatWidget } from '../customer/ClientLiveChatWidget';
 import { AuthModal } from '../auth/AuthModal';
 import { OrderWizardModal } from '../customer/OrderWizardModal';
 import { StoreOrderModal } from '../customer/StoreOrderModal';
@@ -73,9 +72,6 @@ export const ClientLayoutShell = ({ children }) => {
       {!isAppMode && (
         <div className="website-footer-zone">
           <Footer />
-          <div className="desktop-chat-container">
-            <ClientLiveChatWidget />
-          </div>
         </div>
       )}
 

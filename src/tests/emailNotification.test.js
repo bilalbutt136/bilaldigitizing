@@ -128,33 +128,6 @@ describe('Admin Email Notification & Routing Engine', () => {
     assert.equal(checkSecret({}, secret), false);
   });
 
-  test('chat notification debounce suppresses rapid-fire alerts within 2 minutes', () => {
-    const tracker = new Map();
-    const DEBOUNCE_MS = 120000;
-
-    const shouldSend = (conversationId, email, timestamp) => {
-      const key = `chat:${conversationId}:${email.toLowerCase().trim()}`;
-      const last = tracker.get(key);
-      if (last && timestamp - last < DEBOUNCE_MS) {
-        return false;
-      }
-      tracker.set(key, timestamp);
-      return true;
-    };
-
-    const t0 = 1000000;
-    // 1st message sends
-    assert.equal(shouldSend('conv-1', 'client@test.com', t0), true);
-    // 2nd message 30 seconds later is debounced/suppressed
-    assert.equal(shouldSend('conv-1', 'client@test.com', t0 + 30000), false);
-    // 3rd message 60 seconds later is debounced/suppressed
-    assert.equal(shouldSend('conv-1', 'client@test.com', t0 + 60000), false);
-    // Message in another conversation is allowed
-    assert.equal(shouldSend('conv-2', 'client@test.com', t0 + 70000), true);
-    // 4th message in conv-1 after 2.5 minutes is allowed
-    assert.equal(shouldSend('conv-1', 'client@test.com', t0 + 150000), true);
-  });
-
   test('correctly maps Supabase native webhooks and pg_net payloads', () => {
     const parsePayload = (raw) => {
       const isSupabaseDbWebhook = Boolean(raw.table && raw.record);
@@ -163,23 +136,13 @@ describe('Admin Email Notification & Routing Engine', () => {
 
       const event = (
         raw.event ||
-        (table === 'messages' ? 'new_message' : table === 'orders' ? 'new_order' : '') ||
+        (table === 'orders' ? 'new_order' : '') ||
         (raw.type ? String(raw.type).toLowerCase() : '')
       );
 
       const data = isSupabaseDbWebhook ? record : raw;
       return { event, data };
     };
-
-    // Supabase native webhook
-    const sbWebhook = {
-      type: 'INSERT',
-      table: 'messages',
-      record: { id: 'msg-1', text: 'Hello', sender: 'client' }
-    };
-    const parsedSb = parsePayload(sbWebhook);
-    assert.equal(parsedSb.event, 'new_message');
-    assert.equal(parsedSb.data.id, 'msg-1');
 
     // pg_net trigger payload
     const pgNetPayload = {

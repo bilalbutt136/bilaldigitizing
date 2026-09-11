@@ -295,13 +295,13 @@ export const Footer = () => {
                 </button>
               </li>
               <li>
-                <button 
-                  onClick={() => { if (typeof window !== 'undefined') window.dispatchEvent(new Event('bdigi_open_chat')); }}
-                  style={{ background: 'none', border: 'none', padding: 0, color: 'var(--orange-400)', fontWeight: 800, transition: 'color 0.2s', cursor: 'pointer', fontSize: 'inherit', textAlign: 'left' }}
-                  onMouseEnter={(e) => e.currentTarget.style.color = '#ffffff'} 
-                  onMouseLeave={(e) => e.currentTarget.style.color = 'var(--orange-400)'}>
-                  Support (24/7 Live Chat)
-                </button>
+                {email ? (
+                  <a href={`mailto:${email}`} style={{ color: 'var(--orange-400)', textDecoration: 'none', fontWeight: 800, transition: 'color 0.2s', fontSize: 'inherit', textAlign: 'left' }}
+                     onMouseEnter={(e) => e.currentTarget.style.color = '#ffffff'} 
+                     onMouseLeave={(e) => e.currentTarget.style.color = 'var(--orange-400)'}>
+                    24/7 Email Helpdesk
+                  </a>
+                ) : null}
               </li>
             </ul>
           </div>
@@ -395,40 +395,25 @@ export const Footer = () => {
                 <span>{businessHours || '24/7 Global Production Support'}</span>
               </div>
 
-              {/* 24/7 Instant Live Chat Trigger */}
+              {/* 24/7 Production Desk Status */}
               <div style={{ marginTop: '0.35rem' }}>
-                <button
-                  onClick={() => {
-                    if (typeof window !== 'undefined') {
-                      window.dispatchEvent(new Event('bdigi_open_chat'));
-                    }
-                  }}
+                <div
                   style={{
                     display: 'inline-flex',
                     alignItems: 'center',
                     gap: '0.45rem',
-                    background: 'rgba(255, 107, 0, 0.12)',
-                    border: '1px solid rgba(255, 107, 0, 0.3)',
-                    color: 'var(--orange-400)',
+                    background: 'rgba(34, 197, 94, 0.1)',
+                    border: '1px solid rgba(34, 197, 94, 0.25)',
+                    color: '#4ade80',
                     padding: '0.4rem 0.75rem',
                     borderRadius: '8px',
                     fontSize: '0.8rem',
-                    fontWeight: 800,
-                    cursor: 'pointer',
-                    transition: 'all 0.2s'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = 'var(--orange-500)';
-                    e.currentTarget.style.color = '#ffffff';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = 'rgba(255, 107, 0, 0.12)';
-                    e.currentTarget.style.color = 'var(--orange-400)';
+                    fontWeight: 700
                   }}
                 >
                   <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#22c55e', display: 'inline-block', boxShadow: '0 0 8px #22c55e' }}></span>
-                  24/7 Live Desk Online
-                </button>
+                  24/7 Production Desk Active
+                </div>
               </div>
             </div>
           </div>

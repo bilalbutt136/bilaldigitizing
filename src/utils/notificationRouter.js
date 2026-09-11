@@ -92,13 +92,7 @@ export function parseNotificationTarget(notif, orders = []) {
     }
   }
 
-  // 6. Detect type: 'message' | 'order' | 'offer' | 'general'
-  const isMessage = typeLower === 'message' || 
-                    titleLower.includes('message') || 
-                    titleLower.includes('support inquiry') || 
-                    titleLower.includes('live chat') ||
-                    messageLower.includes('sent you a message');
-
+  // 6. Detect type: 'order' | 'offer' | 'general'
   const isOffer = titleLower.includes('offer') || 
                   titleLower.includes('quote') || 
                   typeLower.includes('offer');
@@ -116,17 +110,16 @@ export function parseNotificationTarget(notif, orders = []) {
                   titleLower.includes('vector') || 
                   titleLower.includes('patch');
 
-  if (isMessage || isOffer) {
-    const finalChatId = conversationId || (orderId ? `order-${orderId}` : null);
+  if (isOffer || isOrder || orderId) {
     return {
-      type: isOffer ? 'offer' : 'message',
+      type: isOffer ? 'offer' : 'order',
       orderId,
-      conversationId: finalChatId,
+      conversationId: null,
       matchedOrder,
-      targetTab: 'inbox',
-      adminTab: 'chat',
-      customerTab: 'inbox',
-      mobileTab: 'inbox'
+      targetTab: 'orders',
+      adminTab: 'orders',
+      customerTab: 'orders',
+      mobileTab: 'orders'
     };
   }
 
@@ -204,16 +197,9 @@ export function handleNotificationClick(notif, context = {}) {
     return;
   }
 
-  // 4. Standalone 5-Tab Mobile App Mode
+  // 4. Standalone Mobile App Mode
   if (mobileMode === 'app') {
-    if (target.type === 'message' || target.type === 'offer') {
-      if (typeof setMobileTab === 'function') setMobileTab('inbox');
-      if (target.conversationId && typeof window !== 'undefined') {
-        window.dispatchEvent(new CustomEvent('bdigi_open_order_chat', { 
-          detail: { conversationId: target.conversationId, orderId: target.orderId } 
-        }));
-      }
-    } else if (target.type === 'order') {
+    if (target.type === 'order' || target.type === 'offer') {
       if (typeof setMobileTab === 'function') setMobileTab('orders');
       if (target.orderId) {
         if (typeof openOrderTrackerDrawer === 'function') {
@@ -234,21 +220,8 @@ export function handleNotificationClick(notif, context = {}) {
 
   // 5. Admin Desk Routing
   if (isAdmin) {
-    if (target.type === 'message' || target.type === 'offer') {
-      if (typeof setActiveAdminTab === 'function') setActiveAdminTab('chat');
-      if (typeof window !== 'undefined') {
-        window.dispatchEvent(new CustomEvent('bdigi_switch_admin_tab', { detail: { tab: 'chat', conversationId: target.conversationId, orderId: target.orderId } }));
-        window.dispatchEvent(new CustomEvent('bdigi_open_order_chat', { detail: { conversationId: target.conversationId, orderId: target.orderId } }));
-      }
-      
-      const adminChatUrl = `/admin-portal?tab=chat${target.conversationId ? `&chatId=${encodeURIComponent(target.conversationId)}` : ''}`;
-      if (typeof protectedNavigate === 'function') protectedNavigate('admin');
-      if (typeof navigate === 'function') navigate(adminChatUrl);
-    } else if (target.type === 'order') {
+    if (target.type === 'order' || target.type === 'offer') {
       if (typeof setActiveAdminTab === 'function') setActiveAdminTab('orders');
-      if (typeof window !== 'undefined') {
-        window.dispatchEvent(new CustomEvent('bdigi_switch_admin_tab', { detail: { tab: 'orders', orderId: target.orderId } }));
-      }
 
       if (target.orderId) {
         if (typeof openOrderTrackerDrawer === 'function') {
@@ -277,21 +250,8 @@ export function handleNotificationClick(notif, context = {}) {
   }
 
   // 6. Customer Portal Routing
-  if (target.type === 'message' || target.type === 'offer') {
-    if (typeof setActiveCustomerTab === 'function') setActiveCustomerTab('inbox');
-    if (typeof window !== 'undefined') {
-      window.dispatchEvent(new CustomEvent('bdigi_switch_tab', { detail: { tab: 'inbox', conversationId: target.conversationId, orderId: target.orderId } }));
-      window.dispatchEvent(new CustomEvent('bdigi_open_order_chat', { detail: { conversationId: target.conversationId, orderId: target.orderId } }));
-    }
-
-    const custChatUrl = `/client-portal?tab=inbox${target.conversationId ? `&chatId=${encodeURIComponent(target.conversationId)}` : ''}`;
-    if (typeof protectedNavigate === 'function') protectedNavigate('customer');
-    if (typeof navigate === 'function') navigate(custChatUrl);
-  } else if (target.type === 'order') {
+  if (target.type === 'order' || target.type === 'offer') {
     if (typeof setActiveCustomerTab === 'function') setActiveCustomerTab('orders');
-    if (typeof window !== 'undefined') {
-      window.dispatchEvent(new CustomEvent('bdigi_switch_tab', { detail: { tab: 'orders', orderId: target.orderId } }));
-    }
 
     if (target.orderId) {
       if (typeof openOrderTrackerDrawer === 'function') {

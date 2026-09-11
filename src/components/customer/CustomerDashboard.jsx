@@ -18,7 +18,6 @@ import {
   Layers,
   Package,
   User,
-  MessageSquare,
   Settings,
   LogOut,
   Menu,
@@ -42,7 +41,6 @@ import {
   ArrowRight
 } from 'lucide-react';
 import { ClientSidebar } from './ClientSidebar';
-import { ClientChatInbox } from './ClientChatInbox';
 import { MobileSimpleOrderModal } from './MobileSimpleOrderModal';
 import { ClientNotificationsView } from './ClientNotificationsView';
 import { EmbroideryDigitizingPage } from '../public/EmbroideryDigitizingPage';
@@ -50,7 +48,7 @@ import { VectorArtPage } from '../public/VectorArtPage';
 import { CustomPatchesSection } from '../public/CustomPatchesSection';
 import ThemePreviewCard from '../common/ThemePreviewCard';
 import { THEME_PRESETS } from '../../utils/themePresets';
-import { fetchConversations, fetchNotificationsFromSupabase, subscribeToLiveMessages, subscribeToNotificationListeners } from '../../services/supabaseService';
+import { fetchNotificationsFromSupabase, subscribeToNotificationListeners } from '../../services/supabaseService';
 import { isSupabaseConfigured } from '../../lib/supabase/client';
 
 export const CustomerDashboard = () => {
@@ -82,10 +80,7 @@ export const CustomerDashboard = () => {
     markAllNotificationsAsRead,
     refreshNotifications,
     unreadOrdersCount = 0,
-    markOrdersAsRead,
-    unreadChatCount = 0,
-    setUnreadChatCount,
-    refreshUnreadChatCount
+    markOrdersAsRead
   } = useAppState();
 
   const unreadNotifCount = unreadNotificationsCount;
@@ -96,12 +91,11 @@ export const CustomerDashboard = () => {
       const urlParams = new URLSearchParams(window.location.search);
       const tabParam = urlParams.get('tab');
       if (tabParam) {
-        return tabParam === 'support' ? 'inbox' : tabParam;
+        return tabParam === 'support' || tabParam === 'inbox' ? 'dashboard' : tabParam;
       }
     }
     return activeCustomerTab || 'dashboard';
   });
-  const [selectedOrderChatId, setSelectedOrderChatId] = useState(null);
   const [filterStatus, setFilterStatus] = useState('all');
   const [orderFilterTab, setOrderFilterTab] = useState('active'); // 'active' | 'completed' | 'all'
   const [searchTerm, setSearchTerm] = useState('');
@@ -141,7 +135,7 @@ export const CustomerDashboard = () => {
 
   const setActiveTab = React.useCallback((tab) => {
     if (!tab) return;
-    const normalizedTab = (tab === 'support') ? 'inbox' : tab;
+    const normalizedTab = (tab === 'support' || tab === 'inbox') ? 'dashboard' : tab;
     setActiveTabLocal(normalizedTab);
     if (setActiveCustomerTab) {
       setActiveCustomerTab(normalizedTab);
@@ -163,7 +157,7 @@ export const CustomerDashboard = () => {
       if (typeof window !== 'undefined') {
         const urlParams = new URLSearchParams(window.location.search);
         const tabParam = urlParams.get('tab') || 'dashboard';
-        const normalized = tabParam === 'support' ? 'inbox' : tabParam;
+        const normalized = (tabParam === 'support' || tabParam === 'inbox') ? 'dashboard' : tabParam;
         setActiveTabLocal(normalized);
         if (setActiveCustomerTab) {
           setActiveCustomerTab(normalized);
@@ -181,43 +175,24 @@ export const CustomerDashboard = () => {
     }
   }, [activeCustomerTab, activeTab]);
 
-  // Listen for direct tab switch events (e.g. from HeaderNav Inbox, Notifications, or Live Support buttons)
+  // Listen for direct tab switch events (e.g. from Notifications or Orders)
   React.useEffect(() => {
     const handleTabSwitch = (e) => {
       const targetTab = e.detail?.tab;
-      if (targetTab) {
-        setActiveTab(targetTab === 'support' ? 'inbox' : targetTab);
-      }
-
-      // When navigating to chat/inbox/support, close any open Order Details Drawer
-      if (targetTab === 'inbox' || targetTab === 'support' || targetTab === 'help-support' || targetTab === 'chat') {
-        if (setSelectedOrderForDrawer) {
-          setSelectedOrderForDrawer(null);
-        }
+      if (targetTab && targetTab !== 'inbox' && targetTab !== 'support') {
+        setActiveTab(targetTab);
       }
 
       if (e.detail?.orderId) {
         const rawOrderId = String(e.detail.orderId).trim();
-        if (targetTab === 'inbox' || targetTab === 'support') {
-          if (rawOrderId === 'inbox' || rawOrderId === 'support' || rawOrderId === 'general-support') {
-            setSelectedOrderChatId(null);
-          } else {
-            setSelectedOrderChatId(e.detail.conversationId || `order-${rawOrderId.replace(/^order-/, '')}`);
-          }
-        } else {
-          const cleanId = rawOrderId.replace(/^#+/, '');
-          const found = (orders || []).find(o => {
-            const oClean = String(o?.id || '').trim().replace(/^#+/, '');
-            return oClean === cleanId || o?.id === e.detail.orderId || formatOrderId(o?.id) === String(e.detail.orderId);
-          });
-          if (setSelectedOrderForDrawer) {
-            setSelectedOrderForDrawer(found || { id: `#${cleanId}`, title: `Order #${cleanId}`, status: 'in_progress' });
-          }
+        const cleanId = rawOrderId.replace(/^#+/, '');
+        const found = (orders || []).find(o => {
+          const oClean = String(o?.id || '').trim().replace(/^#+/, '');
+          return oClean === cleanId || o?.id === e.detail.orderId || formatOrderId(o?.id) === String(e.detail.orderId);
+        });
+        if (setSelectedOrderForDrawer) {
+          setSelectedOrderForDrawer(found || { id: `#${cleanId}`, title: `Order #${cleanId}`, status: 'in_progress' });
         }
-      } else if (e.detail?.conversationId) {
-        setSelectedOrderChatId(e.detail.conversationId);
-      } else if (targetTab === 'inbox' || targetTab === 'help-support') {
-        setSelectedOrderChatId(null);
       }
     };
     window.addEventListener('bdigi_switch_tab', handleTabSwitch);
@@ -227,9 +202,9 @@ export const CustomerDashboard = () => {
       initialTabSyncedRef.current = true;
       const urlParams = new URLSearchParams(window.location.search);
       const tabParam = urlParams.get('tab');
-      const trackId = urlParams.get('trackOrder') || ((tabParam !== 'inbox' && tabParam !== 'support' && tabParam !== 'help-support') ? urlParams.get('orderId') : null);
-      if (tabParam) {
-        setActiveTab(tabParam === 'support' ? 'inbox' : tabParam);
+      const trackId = urlParams.get('trackOrder') || urlParams.get('orderId');
+      if (tabParam && tabParam !== 'inbox' && tabParam !== 'support') {
+        setActiveTab(tabParam);
       }
       if (trackId && setSelectedOrderForDrawer) {
         const cleanTrackId = String(trackId).trim().replace(/^#+/, '');
@@ -242,7 +217,7 @@ export const CustomerDashboard = () => {
     }
 
     return () => window.removeEventListener('bdigi_switch_tab', handleTabSwitch);
-  }, []);
+  }, [orders, setSelectedOrderForDrawer, setActiveTab]);
 
   React.useEffect(() => {
     setMounted(true);
@@ -260,85 +235,7 @@ export const CustomerDashboard = () => {
   };
   const userEmail = activeUser?.email || '';
 
-  // Real-time unread messages calculator for Customer
   React.useEffect(() => {
-    if (!mounted) return;
-    let isMounted = true;
-
-    const loadUnreadCount = async () => {
-      if (isSupabaseConfigured) {
-        try {
-          const convs = await fetchConversations();
-          if (convs && isMounted) {
-            const clientEmail = (userEmail || '').toLowerCase().trim();
-            let count = 0;
-
-            convs.forEach(c => {
-              const cEmail = (c.clientEmail || c.client_email || '').toLowerCase().trim();
-              const isMatch = !clientEmail || cEmail === clientEmail || c.id === 'general-support' || !c.orderId;
-              if (!isMatch) return;
-
-              const msgs = c.messages || [];
-              if (msgs.length === 0) return;
-
-              const lastRead = typeof window !== 'undefined'
-                ? parseInt(localStorage.getItem('bdigi_read_client_' + c.id) || '0', 10)
-                : 0;
-
-              const unreadFromAdmin = msgs.filter(m => {
-                const isAdmin = m.sender === 'admin' || m.sender === 'support' || m.senderRole === 'admin';
-                if (!isAdmin) return false;
-                const msgTime = m.timestamp && !isNaN(new Date(m.timestamp).getTime()) ? new Date(m.timestamp).getTime() : 0;
-                return msgTime > lastRead;
-              });
-
-              count += unreadFromAdmin.length;
-            });
-
-            setUnreadChatCount(count);
-          }
-        } catch { }
-      }
-    };
-
-    loadUnreadCount();
-
-    const unsubscribe = subscribeToLiveMessages(
-      (msgPayload) => {
-        if (!isMounted) return;
-        const isInsert = msgPayload?.eventType === 'INSERT' || (!msgPayload?.eventType && !msgPayload?.old && Boolean(msgPayload?.new));
-        if (!isInsert) return;
-        const record = msgPayload.new || msgPayload.record;
-        if (record && !record.is_read && (record.sender === 'admin' || record.sender === 'support') && activeTab !== 'support' && activeTab !== 'inbox' && activeTab !== 'help-support') {
-          if (typeof setUnreadChatCount === 'function') {
-            setUnreadChatCount(prev => prev + 1);
-          }
-        }
-      },
-      (convPayload) => {
-        if (!isMounted) return;
-        loadUnreadCount();
-      }
-    );
-
-    const handleReadSync = () => {
-      if (isMounted) loadUnreadCount();
-    };
-    window.addEventListener('bdigi_read_update', handleReadSync);
-
-    return () => {
-      isMounted = false;
-      if (typeof unsubscribe === 'function') unsubscribe();
-      window.removeEventListener('bdigi_read_update', handleReadSync);
-    };
-  }, [mounted, userEmail, activeTab]);
-
-  React.useEffect(() => {
-    if (activeTab === 'support' || activeTab === 'help-support' || activeTab === 'inbox') {
-      if (typeof setUnreadChatCount === 'function') {
-        setUnreadChatCount(0);
-      }
-    }
     if (activeTab === 'notifications') {
       if (typeof markAllNotificationsAsRead === 'function') {
         markAllNotificationsAsRead();
@@ -349,7 +246,7 @@ export const CustomerDashboard = () => {
         markOrdersAsRead();
       }
     }
-  }, [activeTab, setUnreadChatCount, markAllNotificationsAsRead, markOrdersAsRead]);
+  }, [activeTab, markAllNotificationsAsRead, markOrdersAsRead]);
 
   // Live Notifications Count Loader & Real-time Subscription
   React.useEffect(() => {
@@ -358,36 +255,27 @@ export const CustomerDashboard = () => {
 
     const loadNotificationsCount = async () => {
       try {
-        if (typeof refreshNotifications === 'function') {
-          await refreshNotifications();
+        if (isSupabaseConfigured) {
+          const notifs = await fetchNotificationsFromSupabase(userEmail);
+          if (notifs && isMounted) {
+            refreshNotifications();
+          }
         }
       } catch {}
     };
 
     loadNotificationsCount();
 
-    const unsubscribe = subscribeToNotificationListeners(() => {
-      if (isMounted) loadNotificationsCount();
+    const unsubscribe = subscribeToNotificationListeners((payload) => {
+      if (!isMounted) return;
+      refreshNotifications();
     });
 
     return () => {
       isMounted = false;
       if (typeof unsubscribe === 'function') unsubscribe();
     };
-  }, [mounted, refreshNotifications]);
-
-  React.useEffect(() => {
-    const handleOpenOrderChat = (e) => {
-      if (e.detail?.orderId) {
-        setSelectedOrderChatId(e.detail.orderId);
-        setActiveTab('inbox');
-      }
-    };
-    window.addEventListener('bdigi_open_order_chat', handleOpenOrderChat);
-    return () => {
-      window.removeEventListener('bdigi_open_order_chat', handleOpenOrderChat);
-    };
-  }, [setActiveTab]);
+  }, [mounted, refreshNotifications, userEmail]);
 
   // Strict Category Helper Functions
   const isStoreOrder = (o) => {
@@ -724,11 +612,8 @@ export const CustomerDashboard = () => {
     );
   };
 
-  const handleOpenLiveSupport = (orderId = null) => {
-    if (orderId) {
-      setSelectedOrderChatId(orderId);
-    }
-    setActiveTab('inbox');
+  const handleOpenLiveSupport = () => {
+    navigate('/contact');
   };
 
   return (
@@ -765,34 +650,6 @@ export const CustomerDashboard = () => {
             flex: 1 !important;
             min-height: 0 !important;
           }
-          .dashboard-layout-grid {
-            height: 100% !important;
-            max-height: 100% !important;
-            overflow: hidden !important;
-            display: grid !important;
-            grid-template-columns: 280px 1fr !important;
-            gap: 1.5rem !important;
-            align-items: stretch !important;
-            flex: 1 !important;
-            min-height: 0 !important;
-            padding-bottom: 0.75rem !important;
-          }
-          .client-sidebar-saas {
-            height: 100% !important;
-            max-height: 100% !important;
-            position: relative !important;
-            top: 0 !important;
-            overflow: hidden !important;
-            flex-shrink: 0 !important;
-          }
-          .client-sidebar-scrollable-content {
-            height: 100% !important;
-            max-height: 100% !important;
-            overflow-y: auto !important;
-            overflow-x: hidden !important;
-            overscroll-behavior: contain !important;
-            scroll-behavior: smooth !important;
-          }
           .client-main-content {
             height: 100% !important;
             max-height: 100% !important;
@@ -802,41 +659,6 @@ export const CustomerDashboard = () => {
             scroll-behavior: smooth !important;
             padding-bottom: 3.5rem !important;
             padding-right: 0.35rem !important;
-          }
-        }
-
-        @media (max-width: 768px) {
-          .client-inbox-fullscreen-mobile {
-            position: fixed !important;
-            top: 0 !important;
-            left: 0 !important;
-            right: 0 !important;
-            bottom: 0 !important;
-            height: 100dvh !important;
-            max-height: 100dvh !important;
-            width: 100% !important;
-            border-radius: 0 !important;
-            border: none !important;
-            z-index: 99999 !important;
-            margin: 0 !important;
-            background: #ffffff !important;
-            display: flex !important;
-            flex-direction: column !important;
-            overflow: hidden !important;
-          }
-
-          body.chat-keyboard-active .mobile-bottom-nav,
-          body.chat-inbox-open .mobile-bottom-nav {
-            display: none !important;
-            transform: translateY(100%) !important;
-            pointer-events: none !important;
-            opacity: 0 !important;
-            transition: transform 0.2s ease, opacity 0.2s ease !important;
-          }
-
-          body.chat-keyboard-active .client-inbox-fullscreen-mobile {
-            bottom: 0px !important;
-            z-index: 99999 !important;
           }
         }
 
@@ -957,7 +779,6 @@ export const CustomerDashboard = () => {
             patchCount={patchOrders.length}
             storeCount={storeOrders.length}
             unreadOrdersCount={unreadOrdersCount}
-            unreadChatCount={unreadChatCount}
             unreadNotifCount={unreadNotificationsCount}
             unpaidCount={unpaidOrders.length}
             onOpenDepositModal={() => setIsDepositModalOpen(true)}
@@ -977,9 +798,8 @@ export const CustomerDashboard = () => {
               minWidth: 0,
               height: '100%',
               maxHeight: '100%',
-              display: (activeTab === 'support' || activeTab === 'help-support' || activeTab === 'inbox') ? 'flex' : 'block',
-              flexDirection: 'column',
-              overflowY: (activeTab === 'support' || activeTab === 'help-support' || activeTab === 'inbox') ? 'hidden' : 'auto',
+              display: 'block',
+              overflowY: 'auto',
               overflowX: 'hidden'
             }}
           >
@@ -1252,10 +1072,10 @@ export const CustomerDashboard = () => {
                     </div>
                   </div>
 
-                  {/* 5 Quick Action Cards */}
+                  {/* 4 Quick Action Cards */}
                   <div style={{
                     display: 'grid',
-                    gridTemplateColumns: 'repeat(5, minmax(0, 1fr))',
+                    gridTemplateColumns: 'repeat(4, minmax(0, 1fr))',
                     gap: '0.35rem',
                     marginBottom: '1.25rem',
                     width: '100%',
@@ -1319,38 +1139,7 @@ export const CustomerDashboard = () => {
                       )}
                     </button>
 
-                    {/* 3. Messages */}
-                    <button
-                      type="button"
-                      onClick={() => setActiveTab('inbox')}
-                      style={{
-                        background: isDark ? 'var(--color-surface, #111827)' : '#ffffff',
-                        border: isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid #e2e8f0',
-                        borderRadius: '14px',
-                        padding: '0.65rem 0.15rem',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '0.3rem',
-                        cursor: 'pointer',
-                        position: 'relative',
-                        minWidth: 0,
-                        boxSizing: 'border-box'
-                      }}
-                    >
-                      <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: '#fef3c7', color: '#d97706', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <MessageSquare size={20} />
-                      </div>
-                      <span style={{ fontSize: '0.66rem', fontWeight: 800, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '100%' }}>Messages</span>
-                      {unreadChatCount > 0 && (
-                        <span style={{ position: 'absolute', top: '4px', right: '4px', background: '#ef4444', color: '#fff', fontSize: '0.55rem', fontWeight: 900, width: '15px', height: '15px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                          {unreadChatCount}
-                        </span>
-                      )}
-                    </button>
-
-                    {/* 4. Notifications */}
+                    {/* 3. Notifications */}
                     <button
                       type="button"
                       onClick={() => setActiveTab('notifications')}
@@ -1381,7 +1170,7 @@ export const CustomerDashboard = () => {
                       )}
                     </button>
 
-                    {/* 5. Profile */}
+                    {/* 4. Profile */}
                     <button
                       type="button"
                       onClick={() => setActiveTab('profile')}
@@ -1460,14 +1249,6 @@ export const CustomerDashboard = () => {
                                   style={{ padding: '0.2rem 0.55rem', fontSize: '0.7rem', fontWeight: 700, borderRadius: '6px' }}
                                 >
                                   Track Order
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => handleOpenLiveSupport(topOrd.id)}
-                                  className="btn btn-sm btn-primary-orange"
-                                  style={{ padding: '0.2rem 0.55rem', fontSize: '0.7rem', fontWeight: 700, borderRadius: '6px' }}
-                                >
-                                  Chat <MessageSquare size={11} />
                                 </button>
                               </div>
                             </div>
@@ -2435,15 +2216,6 @@ export const CustomerDashboard = () => {
                               >
                                 {isDelivered ? '📥 Files & Details' : '🔍 Track Order'}
                               </button>
-
-                              <button
-                                type="button"
-                                onClick={() => handleOpenLiveSupport(ord.id)}
-                                className="btn btn-primary-orange"
-                                style={{ padding: '0.45rem', fontSize: '0.78rem', fontWeight: 800, borderRadius: '8px', justifyContent: 'center' }}
-                              >
-                                <MessageSquare size={13} /> Chat Digitizer
-                              </button>
                             </div>
                           </div>
                         );
@@ -2472,57 +2244,87 @@ export const CustomerDashboard = () => {
                     }
                   }
                 }}
-                onNavigateToChat={(chatId) => {
-                  setSelectedOrderChatId(chatId);
-                  setActiveTab('inbox');
-                }}
                 userEmail={userEmail}
               />
             )}
 
-            {/* TAB: CUSTOMER INBOX (MESSAGES & OFFERS) */}
-            {(activeTab === 'inbox' || activeTab === 'support') && (
-              <div 
-                className="client-inbox-fullscreen-mobile"
-                style={{ 
-                  flex: 1, 
-                  height: 'calc(100dvh - 140px)', 
-                  minHeight: '400px', 
-                  display: 'flex', 
-                  flexDirection: 'column', 
-                  overflow: 'hidden',
-                  borderRadius: '16px',
-                  border: isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid var(--border-color)',
-                  background: isDark ? 'var(--color-surface, #111827)' : '#ffffff'
-                }}
-              >
-                <ClientChatInbox 
-                  initialOrderId={selectedOrderChatId || "inbox"} 
-                  onBack={() => {
-                    setSelectedOrderChatId(null);
-                    setActiveTab('dashboard');
-                  }} 
-                />
-              </div>
-            )}
-
-            {/* TAB: 24/7 LIVE CUSTOMER SUPPORT HELPDESK */}
+            {/* TAB: 24/7 CUSTOMER SUPPORT HELPDESK */}
             {activeTab === 'help-support' && (
               <div 
-                className="client-inbox-fullscreen-mobile"
                 style={{ 
-                  flex: 1, 
-                  height: 'calc(100dvh - 140px)', 
-                  minHeight: '400px', 
-                  display: 'flex', 
-                  flexDirection: 'column', 
-                  overflow: 'hidden',
                   borderRadius: '16px',
                   border: isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid var(--border-color)',
-                  background: isDark ? 'var(--color-surface, #111827)' : '#ffffff'
+                  background: isDark ? 'var(--color-surface, #111827)' : '#ffffff',
+                  padding: '2.5rem 2rem',
+                  maxWidth: '750px',
+                  margin: '0 auto',
+                  width: '100%',
+                  boxSizing: 'border-box'
                 }}
               >
-                <ClientChatInbox initialOrderId="help-support" onBack={() => setActiveTab('dashboard')} />
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem', borderBottom: '1px solid var(--border-color, #e2e8f0)', paddingBottom: '1rem' }}>
+                  <div>
+                    <h2 style={{ fontSize: '1.4rem', fontWeight: 800, margin: '0 0 0.25rem 0', color: isDark ? '#ffffff' : '#0f172a' }}>
+                      24/7 Studio Helpdesk & Support
+                    </h2>
+                    <p style={{ fontSize: '0.88rem', color: 'var(--text-muted, #64748b)', margin: 0 }}>
+                      Our master digitizers and embroidery supervisors are active round-the-clock.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('dashboard')}
+                    className="btn btn-sm btn-outline"
+                    style={{ borderRadius: '8px', padding: '0.4rem 0.8rem', fontSize: '0.8rem', fontWeight: 700 }}
+                  >
+                    Back to Dashboard
+                  </button>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.25rem', marginBottom: '2rem' }}>
+                  <div style={{ padding: '1.5rem', borderRadius: '14px', background: isDark ? '#1e293b' : '#f8fafc', border: '1px solid var(--border-color, #e2e8f0)' }}>
+                    <div style={{ fontSize: '0.8rem', fontWeight: 800, textTransform: 'uppercase', color: 'var(--color-primary, #ea580c)', letterSpacing: '0.05em', marginBottom: '0.5rem' }}>
+                      Official Email Inquiries
+                    </div>
+                    <div style={{ fontSize: '1.05rem', fontWeight: 700, color: isDark ? '#ffffff' : '#0f172a', marginBottom: '0.35rem' }}>
+                      orders@bdigitizing-pro.com
+                    </div>
+                    <p style={{ fontSize: '0.82rem', color: 'var(--text-muted, #64748b)', margin: 0 }}>
+                      Send design requests, revision files, or urgent inquiries. Responses within 15-30 minutes.
+                    </p>
+                  </div>
+
+                  <div style={{ padding: '1.5rem', borderRadius: '14px', background: isDark ? '#1e293b' : '#f8fafc', border: '1px solid var(--border-color, #e2e8f0)' }}>
+                    <div style={{ fontSize: '0.8rem', fontWeight: 800, textTransform: 'uppercase', color: 'var(--color-primary, #ea580c)', letterSpacing: '0.05em', marginBottom: '0.5rem' }}>
+                      Direct WhatsApp Support
+                    </div>
+                    <div style={{ fontSize: '1.05rem', fontWeight: 700, color: isDark ? '#ffffff' : '#0f172a', marginBottom: '0.35rem' }}>
+                      +1 (800) 555-BDIGI
+                    </div>
+                    <p style={{ fontSize: '0.82rem', color: 'var(--text-muted, #64748b)', margin: 0 }}>
+                      Instant production status, machine format guidance, and urgent rush order expediting.
+                    </p>
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+                  <button
+                    type="button"
+                    onClick={() => navigate('/contact')}
+                    className="btn btn-primary"
+                    style={{ borderRadius: '10px', padding: '0.65rem 1.4rem', fontWeight: 800, fontSize: '0.9rem' }}
+                  >
+                    Open Contact Desk
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('orders')}
+                    className="btn btn-outline"
+                    style={{ borderRadius: '10px', padding: '0.65rem 1.4rem', fontWeight: 800, fontSize: '0.9rem' }}
+                  >
+                    View My Orders
+                  </button>
+                </div>
               </div>
             )}
 
@@ -2677,7 +2479,7 @@ export const CustomerDashboard = () => {
           backdropFilter: 'blur(24px)',
           WebkitBackdropFilter: 'blur(24px)',
           borderTop: '1px solid rgba(226, 232, 240, 0.95)',
-          display: (['inbox', 'support', 'help-support'].includes(activeTab)) ? 'none' : 'grid',
+          display: 'grid',
           gridTemplateColumns: 'repeat(5, 1fr)',
           alignItems: 'center',
           height: '64px',
@@ -2823,63 +2625,7 @@ export const CustomerDashboard = () => {
           </span>
         </button>
 
-        {/* Tab 4: Live Messages / Inbox */}
-        <button
-          type="button"
-          onClick={() => {
-            setActiveTab('inbox');
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-          }}
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            width: '100%',
-            color: (activeTab === 'support' || activeTab === 'inbox' || activeTab === 'help-support') ? 'var(--orange-600)' : '#64748b',
-            background: 'none',
-            border: 'none',
-            cursor: 'pointer',
-            padding: '0.2rem 0',
-            position: 'relative',
-            transition: 'all 0.18s ease'
-          }}
-        >
-          <div style={{
-            padding: '0.15rem 0.55rem',
-            borderRadius: '12px',
-            background: (activeTab === 'support' || activeTab === 'inbox' || activeTab === 'help-support') ? '#fff7ed' : 'transparent',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            position: 'relative'
-          }}>
-            <MessageSquare size={19} style={{ color: (activeTab === 'support' || activeTab === 'inbox' || activeTab === 'help-support') ? 'var(--orange-600)' : '#64748b' }} />
-            {unreadChatCount > 0 && (
-              <span style={{
-                position: 'absolute',
-                top: '-2px',
-                right: '4px',
-                background: '#ef4444',
-                color: '#ffffff',
-                fontSize: '0.58rem',
-                fontWeight: 900,
-                borderRadius: '9999px',
-                padding: '0.05rem 0.3rem',
-                minWidth: '15px',
-                textAlign: 'center',
-                lineHeight: 1.2
-              }}>
-                {unreadChatCount}
-              </span>
-            )}
-          </div>
-          <span style={{ fontSize: '0.65rem', fontWeight: (activeTab === 'support' || activeTab === 'inbox' || activeTab === 'help-support') ? 800 : 600, marginTop: '0.1rem' }}>
-            Inbox
-          </span>
-        </button>
-
-        {/* Tab 5: Alerts / Notifications */}
+        {/* Tab 4: Alerts / Notifications */}
         <button
           type="button"
           onClick={() => {
@@ -2932,6 +2678,44 @@ export const CustomerDashboard = () => {
           </div>
           <span style={{ fontSize: '0.65rem', fontWeight: activeTab === 'notifications' ? 800 : 600, marginTop: '0.1rem' }}>
             Alerts
+          </span>
+        </button>
+
+        {/* Tab 5: Profile / Account */}
+        <button
+          type="button"
+          onClick={() => {
+            setActiveTab('profile');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }}
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: '100%',
+            color: activeTab === 'profile' ? 'var(--orange-600)' : '#64748b',
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+            padding: '0.2rem 0',
+            position: 'relative',
+            transition: 'all 0.18s ease'
+          }}
+        >
+          <div style={{
+            padding: '0.15rem 0.55rem',
+            borderRadius: '12px',
+            background: activeTab === 'profile' ? '#fff7ed' : 'transparent',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            position: 'relative'
+          }}>
+            <User size={19} style={{ color: activeTab === 'profile' ? 'var(--orange-600)' : '#64748b' }} />
+          </div>
+          <span style={{ fontSize: '0.65rem', fontWeight: activeTab === 'profile' ? 800 : 600, marginTop: '0.1rem' }}>
+            Profile
           </span>
         </button>
       </nav>

@@ -21,7 +21,6 @@ import {
   Package, 
   PackageCheck, 
   Zap, 
-  MessageSquare, 
   CreditCard, 
   FileText, 
   Layers, 
@@ -63,7 +62,6 @@ export const OrderTrackerDrawer = () => {
     setSelectedOrderForDrawer,
     addRevisionRequest,
     updateOrderStatus,
-    addOrderMessage,
     orders,
     authUser,
     currentView,
@@ -90,13 +88,12 @@ export const OrderTrackerDrawer = () => {
 
   const isMobileLayout = isMobileScreen || mobileMode === 'app';
 
-  // Active section scroll / focus toggle: 'all' | 'requirements' | 'delivery' | 'modification' | 'messages'
+  // Active section scroll / focus toggle: 'all' | 'requirements' | 'delivery' | 'modification'
   const [activeSection, setActiveSection] = useState('all');
 
   // Form states
   const [revisionNote, setRevisionNote] = useState('');
   const [revisionImage, setRevisionImage] = useState(null);
-  const [chatMessageText, setChatMessageText] = useState('');
   const [deliveryMessage, setDeliveryMessage] = useState('');
   const [isDelivering, setIsDelivering] = useState(false);
   const [showLightbox, setShowLightbox] = useState(false);
@@ -115,7 +112,6 @@ export const OrderTrackerDrawer = () => {
   const workerDeskRef = useRef(null);
   const deliveryRef = useRef(null);
   const modificationRef = useRef(null);
-  const messagesRef = useRef(null);
 
   const handleCloseDrawer = () => {
     setSelectedOrderForDrawer(null);
@@ -274,37 +270,9 @@ export const OrderTrackerDrawer = () => {
       finalNote += `\n[Attached Reference File: ${revisionImage.name}]`;
     }
     await addRevisionRequest(ord.id, finalNote);
-    await addOrderMessage(ord.id, `🔄 Modification Requested:\n${finalNote}`, ord.clientName || 'Client', 'client');
     setRevisionNote('');
     setRevisionImage(null);
     showToast('Modification request sent to master digitizer desk.', 'success');
-  };
-
-  const handleKeyDown = (e) => {
-    if (e.key === 'Enter') {
-      const isMobileOrTouch = typeof window !== 'undefined' && (
-        window.innerWidth <= 768 || 
-        'ontouchstart' in window || 
-        navigator.maxTouchPoints > 0
-      );
-
-      // On mobile / touch screens, Enter creates a new line in the message box.
-      // On desktop keyboards, Enter sends the message and Shift+Enter creates a new line.
-      if (!isMobileOrTouch && !e.shiftKey) {
-        e.preventDefault();
-        handleSendMessage(e);
-      }
-    }
-  };
-
-  const handleSendMessage = async (e) => {
-    e?.preventDefault();
-    if (!chatMessageText.trim()) return;
-    const senderRole = isAdmin ? 'admin' : 'client';
-    const senderName = isAdmin ? (authUser?.name || 'Master Admin Desk') : (ord.clientName || 'Client');
-    await addOrderMessage(ord.id, chatMessageText.trim(), senderName, senderRole);
-    setChatMessageText('');
-    showToast('Message sent', 'success');
   };
 
   const processAdminFilesList = (files) => {
@@ -387,14 +355,6 @@ export const OrderTrackerDrawer = () => {
         deliveryDate: new Date().toISOString()
       });
 
-      // Also add as a chat notification message
-      await addOrderMessage(
-        ord.id,
-        `📦 Delivery #${newDeliveryNumber} Dispatched:\n${deliveryNoteText}\n${(uploadedCloudinaryFiles.length > 0 ? uploadedCloudinaryFiles.length : updatedFiles.length)} file(s) available for download.`,
-        authUser?.name || 'Master Digitizer Desk',
-        'admin'
-      );
-
       setAdminFilesList([]);
       setDeliveryMessage('');
       showToast(`🎉 Delivery #${newDeliveryNumber} successfully sent to client!`, 'success');
@@ -475,7 +435,6 @@ export const OrderTrackerDrawer = () => {
     if (setSelectedOrderForDrawer) {
       setSelectedOrderForDrawer(prev => prev ? { ...prev, status: 'completed' } : prev);
     }
-    await addOrderMessage(ord.id, '✅ Delivery Approved & Order Completed by Client.', ord.clientName || 'Client', 'client');
     showToast('🎉 Delivery approved! Thank you for choosing Bilal Digitizing.', 'success');
   };
 
@@ -730,15 +689,6 @@ export const OrderTrackerDrawer = () => {
               <RotateCcw size={14} /> Revision History ({ord.revisions.length})
             </button>
           )}
-
-          <button
-            type="button"
-            onClick={() => scrollToSection(messagesRef, 'messages')}
-            className={`btn btn-sm ${activeSection === 'messages' ? 'btn-primary-orange' : 'btn-outline'}`}
-            style={{ fontWeight: 800, fontSize: '0.8rem', gap: '0.35rem' }}
-          >
-            <MessageSquare size={14} /> Messages {Array.isArray(ord.messages) && ord.messages.length > 0 ? `(${ord.messages.length})` : ''}
-          </button>
         </div>
 
         {/* ==================================================================
@@ -1716,99 +1666,6 @@ export const OrderTrackerDrawer = () => {
               )}
             </div>
           )}
-
-          {/* ================================================================
-              SECTION D: LIVE MESSAGES & PROJECT COMMUNICATION
-             ================================================================ */}
-          <div 
-            ref={messagesRef}
-            style={{
-              background: 'var(--bg-card)',
-              borderRadius: '16px',
-              border: '1.5px solid var(--border-color)',
-              padding: '1.5rem',
-              boxShadow: 'var(--shadow-sm)'
-            }}
-          >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.75rem' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <span style={{ fontSize: '1.3rem' }}>💬</span>
-                <div>
-                  <h4 style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--text-main)', margin: 0 }}>
-                    Project Discussion & Activity
-                  </h4>
-                  <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-                    Direct communication with the master digitizing desk
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Message Feed */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem', maxHeight: '280px', overflowY: 'auto', padding: '0.35rem', marginBottom: '0.85rem' }}>
-              {(!Array.isArray(ord.messages) || ord.messages.length === 0) ? (
-                <div style={{ color: 'var(--text-muted)', fontSize: '0.82rem', padding: '1.5rem 1rem', textAlign: 'center', background: 'var(--bg-surface)', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
-                  No messages on this project yet. Write below to chat with your digitizer.
-                </div>
-              ) : (
-                ord.messages.map((msg, mIdx) => {
-                  const isMsgAdmin = msg.senderRole === 'admin' || msg.sender === 'admin';
-                  const isMe = isAdmin ? isMsgAdmin : !isMsgAdmin;
-                  const isRead = msg.is_read === true || msg.is_read === 'true';
-
-                  return (
-                    <div key={mIdx} style={{ 
-                      background: isMe 
-                        ? (isRead ? 'linear-gradient(135deg, #ea580c 0%, #c2410c 100%)' : 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)')
-                        : (!isRead ? '#fffbf5' : 'var(--bg-surface)'), 
-                      color: isMe ? '#ffffff' : 'var(--text-main)',
-                      border: isMe ? 'none' : (!isRead ? '1.5px solid #fed7aa' : '1px solid var(--border-color)'),
-                      borderLeft: (!isMe && !isRead) ? '4.5px solid #ea580c' : (isMe ? 'none' : '1px solid var(--border-color)'),
-                      boxShadow: isMe ? '0 2px 8px rgba(234, 88, 12, 0.2)' : (!isRead ? '0 3px 10px rgba(234, 88, 12, 0.1)' : 'none'),
-                      padding: '0.75rem 1rem', 
-                      borderRadius: '10px', 
-                      alignSelf: isMe ? 'flex-end' : 'flex-start',
-                      maxWidth: '85%'
-                    }}>
-                      <div style={{ fontSize: '0.68rem', color: isMe ? 'rgba(255,255,255,0.85)' : 'var(--text-muted)', fontWeight: 700, marginBottom: '0.2rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                        <span>{isMsgAdmin ? 'Master Digitizer Desk' : (msg.senderName || msg.sender || 'Client')}</span>
-                        <span>•</span>
-                        <span>{msg.timestamp ? new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Recent'}</span>
-                      </div>
-                      <div style={{ fontSize: '0.84rem', whiteSpace: 'pre-wrap', lineHeight: 1.4 }}>{msg.text}</div>
-                    </div>
-                  );
-                })
-              )}
-            </div>
-
-            {/* Message Composer */}
-            <form onSubmit={handleSendMessage} style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-end' }}>
-              <textarea 
-                rows={1}
-                className="form-control" 
-                placeholder="Type message..." 
-                value={chatMessageText} 
-                onChange={e => setChatMessageText(e.target.value)} 
-                onKeyDown={handleKeyDown}
-                style={{
-                  flex: 1,
-                  minHeight: '36px',
-                  maxHeight: '100px',
-                  fontSize: '0.85rem',
-                  padding: '0.45rem 0.75rem',
-                  resize: 'none',
-                  lineHeight: 1.4,
-                  overflowY: 'auto',
-                  fontFamily: 'inherit',
-                  boxSizing: 'border-box'
-                }}
-              />
-              <button type="submit" className="btn btn-primary-orange btn-sm" disabled={!chatMessageText.trim()} style={{ height: '36px', fontWeight: 800, gap: '0.3rem', whiteSpace: 'nowrap', flexShrink: 0, display: 'flex', alignItems: 'center' }}>
-                <Send size={14} /> Send
-              </button>
-            </form>
-          </div>
 
         </div>
 

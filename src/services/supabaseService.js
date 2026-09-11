@@ -1061,72 +1061,6 @@ export async function fetchCatalogFromSupabase() {
 }
 
 // ============================================================
-// ORDER MESSAGES (chat threads)
-// ============================================================
-
-export async function fetchOrderMessagesFromSupabase(orderId) {
-  if (!isSupabaseConfigured || !orderId) return [];
-
-  try {
-    const { data, error } = await supabase
-      .from('order_messages')
-      .select('*')
-      .eq('order_id', orderId)
-      .order('created_at', { ascending: true });
-
-    if (error) {
-      console.warn('Supabase fetch order messages error:', error.message);
-      return [];
-    }
-
-    return (data || []).map(m => ({
-      id: m.id,
-      sender: m.sender_name || m.sender_email,
-      senderName: m.sender_name || m.sender_email,
-      senderEmail: m.sender_email,
-      senderRole: m.sender_role || 'client',
-      text: m.content || '',
-      message: m.content || '',
-      attachment: Array.isArray(m.attachments) && m.attachments.length > 0 ? m.attachments[0] : null,
-      attachments: Array.isArray(m.attachments) ? m.attachments : [],
-      timestamp: m.created_at
-    }));
-  } catch (err) {
-    console.warn('Supabase fetch order messages exception:', err);
-    return [];
-  }
-}
-
-export async function addOrderMessageInSupabase(orderId, text, senderName, senderRole = 'client', attachments = []) {
-  const msgPayload = {
-    id: `msg-${Date.now()}`,
-    conversation_id: `order-${orderId}`,
-    order_id: orderId,
-    sender: senderRole === 'admin' ? 'admin' : 'client',
-    sender_name: senderName,
-    text,
-    attachment: attachments?.[0]?.name || null,
-    timestamp: new Date().toISOString()
-  };
-
-  // Instant broadcast over WebSocket channel
-  broadcastLiveMessage(msgPayload);
-
-  try {
-    const headers = await getAuthHeaders();
-    await fetch('/api/orders', {
-      method: 'POST',
-      headers,
-      body: JSON.stringify({ 
-        action: 'addMessage', 
-        payload: { order_id: orderId, message: text, is_staff: senderRole === 'admin', sender_name: senderName }
-      })
-    });
-    return { success: true, message: msgPayload };
-  } catch { return { success: false, message: msgPayload }; }
-}
-
-// ============================================================
 // ADMIN SESSION (server-verified via /api/admin/session)
 // ============================================================
 
@@ -1298,82 +1232,7 @@ export async function addStoreProduct(product) {
   } catch { return null; }
 }
 
-export async function createConversation(dbConv) {
-  try {
-    const headers = await getAuthHeaders();
-    const res = await fetch('/api/messages', {
-      method: 'POST',
-      headers,
-      body: JSON.stringify({ action: 'upsertConversation', payload: dbConv })
-    });
-    const data = await res.json();
-    return data.conversation;
-  } catch { return null; }
-}
 
-export async function fetchConversations(email, channel = '') {
-  try {
-    const headers = await getAuthHeaders();
-    headers['Cache-Control'] = 'no-cache, no-store, must-revalidate';
-    headers['Pragma'] = 'no-cache';
-    headers['Expires'] = '0';
-    const cleanEmail = email ? String(email).toLowerCase().trim() : '';
-    let query = cleanEmail ? `&clientEmail=${encodeURIComponent(cleanEmail)}` : '';
-    if (channel) query += `&channel=${encodeURIComponent(channel)}&type=${encodeURIComponent(channel)}`;
-    const res = await fetch(`/api/messages?action=fetchConversations${query}&_t=${Date.now()}`, {
-      headers,
-      cache: 'no-store',
-      next: { revalidate: 0 }
-    });
-    const data = await res.json();
-    return data.conversations || [];
-  } catch { return []; }
-}
-
-export async function fetchChatMessages(chatId, email, guestId = null, limit = 100, before = null, channel = '') {
-  try {
-    if (!chatId && !email && !guestId) return [];
-    const headers = await getAuthHeaders();
-    headers['Cache-Control'] = 'no-cache, no-store, must-revalidate';
-    headers['Pragma'] = 'no-cache';
-    headers['Expires'] = '0';
-    const cleanEmail = email ? String(email).toLowerCase().trim() : '';
-    const queryParts = [];
-    if (chatId) queryParts.push(`conversation_id=${encodeURIComponent(chatId)}`);
-    if (cleanEmail) queryParts.push(`clientEmail=${encodeURIComponent(cleanEmail)}`);
-    if (guestId) queryParts.push(`guest_id=${encodeURIComponent(guestId)}`);
-    if (limit) queryParts.push(`limit=${encodeURIComponent(limit)}`);
-    if (before) queryParts.push(`before=${encodeURIComponent(before)}`);
-    if (channel) queryParts.push(`channel=${encodeURIComponent(channel)}&type=${encodeURIComponent(channel)}`);
-    queryParts.push(`_t=${Date.now()}`);
-    
-    // Primary: dedicated chat messages endpoint
-    try {
-      const res = await fetch(`/api/chat/messages?${queryParts.join('&')}`, {
-        headers,
-        cache: 'no-store',
-        next: { revalidate: 0 }
-      });
-      if (res.ok) {
-        const data = await res.json();
-        if (Array.isArray(data.messages)) return data.messages;
-      }
-    } catch {}
-
-    // Fallback: legacy endpoint
-    const query = cleanEmail ? `&clientEmail=${encodeURIComponent(cleanEmail)}` : '';
-    const limitQuery = limit ? `&limit=${encodeURIComponent(limit)}` : '';
-    const beforeQuery = before ? `&before=${encodeURIComponent(before)}` : '';
-    const channelQuery = channel ? `&channel=${encodeURIComponent(channel)}&type=${encodeURIComponent(channel)}` : '';
-    const fallbackRes = await fetch(`/api/messages?action=fetchMessages&chatId=${encodeURIComponent(chatId || '')}${query}${limitQuery}${beforeQuery}${channelQuery}&_t=${Date.now()}`, {
-      headers,
-      cache: 'no-store',
-      next: { revalidate: 0 }
-    });
-    const fallbackData = await fallbackRes.json();
-    return fallbackData.messages || [];
-  } catch { return []; }
-}
 
 export function broadcastOfferStatusChange(offerId, status, offerObj = null) {
   if (!offerId) return;
@@ -1381,7 +1240,7 @@ export function broadcastOfferStatusChange(offerId, status, offerObj = null) {
     const detail = { offerId, status, offer: offerObj };
     window.dispatchEvent(new CustomEvent('bdigi_offer_status_change', { detail }));
     try {
-      const bc = new BroadcastChannel('bdigi_chat_sync');
+      const bc = new BroadcastChannel('bdigi_app_sync');
       bc.postMessage({ type: 'offer_status_change', ...detail });
       bc.close();
     } catch {}
@@ -1405,7 +1264,7 @@ export function broadcastLiveOrder(order, eventType = 'INSERT') {
     const detail = { order, eventType };
     window.dispatchEvent(new CustomEvent('bdigi_order_change', { detail }));
     try {
-      const bc = new BroadcastChannel('bdigi_chat_sync');
+      const bc = new BroadcastChannel('bdigi_app_sync');
       bc.postMessage({ type: 'order_change', ...detail });
       bc.close();
     } catch {}
@@ -1436,9 +1295,6 @@ export async function createCustomOffer(offerPayload) {
       body: JSON.stringify({ action: 'createOffer', payload: offerPayload })
     });
     const data = await res.json();
-    if (data.message) {
-      broadcastLiveMessage(data.message);
-    }
     if (data.offer) {
       broadcastOfferStatusChange(data.offer.id, data.offer.status || 'pending', data.offer);
     }
@@ -1460,7 +1316,6 @@ export async function createOfferCheckoutSession(offerId, options = {}) {
         amount: options.amount,
         method: options.method || 'card',
         clientEmail: options.clientEmail,
-        conversationId: options.conversationId,
         title: options.title,
         description: options.title
       })
@@ -1481,9 +1336,6 @@ export async function acceptCustomOffer(offerId, fallbackOffer = null) {
       body: JSON.stringify({ action: 'acceptOffer', payload: { offerId, offer: fallbackOffer } })
     });
     const data = await res.json();
-    if (data.message) {
-      broadcastLiveMessage(data.message);
-    }
     if (data.offer) {
       broadcastOfferStatusChange(offerId, data.offer.status || 'accepted', data.offer);
     }
@@ -1506,9 +1358,6 @@ export async function declineCustomOffer(offerId, fallbackOffer = null) {
       body: JSON.stringify({ action: 'declineOffer', payload: { offerId, offer: fallbackOffer } })
     });
     const data = await res.json();
-    if (data.message) {
-      broadcastLiveMessage(data.message);
-    }
     if (data.offer) {
       broadcastOfferStatusChange(offerId, data.offer.status || 'declined', data.offer);
     }
@@ -1528,9 +1377,6 @@ export async function cancelCustomOffer(offerId, fallbackOffer = null) {
       body: JSON.stringify({ action: 'cancelOffer', payload: { offerId, offer: fallbackOffer } })
     });
     const data = await res.json();
-    if (data.message) {
-      broadcastLiveMessage(data.message);
-    }
     if (data.offer) {
       broadcastOfferStatusChange(offerId, data.offer.status || 'cancelled', data.offer);
     }
@@ -1550,9 +1396,6 @@ export async function payCustomOffer(offerId, orderId = null) {
       body: JSON.stringify({ action: 'payOffer', payload: { offerId, orderId } })
     });
     const data = await res.json();
-    if (data.message) {
-      broadcastLiveMessage(data.message);
-    }
     if (data.offer) {
       broadcastOfferStatusChange(offerId, 'paid', data.offer);
     }
@@ -1560,20 +1403,6 @@ export async function payCustomOffer(offerId, orderId = null) {
       broadcastLiveOrder(data.order, 'UPDATE');
     }
     return data;
-  } catch (err) {
-    return { error: err.message };
-  }
-}
-
-export async function softDeleteChatMessage(messageId) {
-  try {
-    const headers = await getAuthHeaders();
-    const res = await fetch('/api/messages', {
-      method: 'POST',
-      headers,
-      body: JSON.stringify({ action: 'deleteMessage', payload: { messageId } })
-    });
-    return await res.json();
   } catch (err) {
     return { error: err.message };
   }
@@ -1593,221 +1422,11 @@ export async function fetchCustomOffer(offerId) {
   }
 }
 
-export async function addChatMessage(chatIdOrObj, messageObj = null) {
-  let targetChatId = '';
-  let payload = {};
-
-  if (typeof chatIdOrObj === 'object' && chatIdOrObj !== null && !messageObj) {
-    // Called with single object: addChatMessage({ conversation_id: '...', text: '...' })
-    payload = { ...chatIdOrObj };
-    targetChatId = String(payload.conversation_id || payload.thread_id || payload.chatId || '');
-  } else {
-    // Called with (chatId, messageObj): addChatMessage('inbox-...', { text: '...' })
-    targetChatId = typeof chatIdOrObj === 'string' ? chatIdOrObj : String(chatIdOrObj?.conversation_id || '');
-    payload = { ...(messageObj || {}) };
-  }
-
-  const isSupp = payload.chat_type === 'support' || payload.chatType === 'support' || payload.is_support === true || payload.isSupport === true || targetChatId.startsWith('support-');
-  const resolvedChatType = isSupp ? 'support' : (payload.chat_type || payload.chatType || 'inbox');
-
-  const fullMsg = {
-    ...payload,
-    conversation_id: targetChatId,
-    thread_id: targetChatId,
-    chat_type: resolvedChatType,
-    chatType: resolvedChatType,
-    is_support: isSupp,
-    isSupport: isSupp,
-    type: payload.type || (payload.offer_id || payload.offer_data ? 'custom_offer' : 'text'),
-    metadata: payload.metadata || {},
-    timestamp: payload.timestamp || payload.created_at || new Date().toISOString(),
-    created_at: payload.created_at || payload.timestamp || new Date().toISOString()
-  };
-
-  // Instant broadcast across all active browser windows
-  broadcastLiveMessage(fullMsg);
-
-  try {
-    const headers = await getAuthHeaders();
-    
-    // Primary: dedicated chat send endpoint
-    try {
-      const chatRes = await fetch('/api/chat/send', {
-        method: 'POST',
-        headers,
-        body: JSON.stringify(fullMsg)
-      });
-      if (chatRes.ok) {
-        const data = await chatRes.json();
-        if (data?.auto_reply) {
-          broadcastLiveMessage(data.auto_reply);
-        }
-        return data;
-      }
-    } catch {}
-
-    // Fallback: legacy endpoint
-    const res = await fetch('/api/messages', {
-      method: 'POST',
-      headers,
-      body: JSON.stringify({ action: 'insertMessage', payload: fullMsg })
-    });
-    if (res.ok) {
-      const data = await res.json();
-      if (data?.auto_reply) {
-        broadcastLiveMessage(data.auto_reply);
-      }
-      return data;
-    }
-    return true;
-  } catch { return false; }
-}
-
-export function getAdminThreadUnreadCount(conv) {
-  if (!conv) return 0;
-
-  const msgs = Array.isArray(conv.messages) ? conv.messages : [];
-  if (msgs.length > 0) {
-    const clientUnreadMsgs = msgs.filter(m => 
-      (m.sender === 'client' || m.sender === 'customer' || (m.sender && m.sender !== 'admin' && m.sender !== 'support')) && 
-      m.is_read !== true && 
-      m.is_read !== 'true'
-    );
-    return clientUnreadMsgs.length;
-  }
-
-  return Number(conv.adminUnreadCount ?? conv.admin_unread_count ?? conv.unreadCount ?? conv.unread_count ?? 0);
-}
-
-const recentMarkReadCalls = new Map();
-
-export async function markConversationAsRead(chatId, role = 'admin', clientEmail = '') {
-  try {
-    if (!chatId) return false;
-    const cleanEmail = clientEmail ? String(clientEmail).toLowerCase().trim() : '';
-    const throttleKey = `${chatId}_${role}_${cleanEmail}`;
-    const now = Date.now();
-
-    // Circuit breaker: prevent identical markAsRead calls within 3 seconds
-    if (recentMarkReadCalls.has(throttleKey)) {
-      const lastCalled = recentMarkReadCalls.get(throttleKey);
-      if (now - lastCalled < 3000) {
-        return true;
-      }
-    }
-    recentMarkReadCalls.set(throttleKey, now);
-
-    // Keep map small
-    if (recentMarkReadCalls.size > 200) {
-      for (const [k, t] of recentMarkReadCalls.entries()) {
-        if (now - t > 10000) recentMarkReadCalls.delete(k);
-      }
-    }
-
-    if (typeof window !== 'undefined') {
-      const nowTs = String(Date.now());
-      if (role === 'admin') {
-        localStorage.setItem('bdigi_read_admin_' + chatId, nowTs);
-        if (cleanEmail) localStorage.setItem('bdigi_read_admin_chat-' + cleanEmail, nowTs);
-      }
-      window.dispatchEvent(new CustomEvent('bdigi_read_update', { detail: { conversation_id: chatId, role, clientEmail: cleanEmail, is_read: true } }));
-      try {
-        const bc = new BroadcastChannel('bdigi_chat_sync');
-        bc.postMessage({ type: 'read_update', conversation_id: chatId, role, clientEmail: cleanEmail, is_read: true });
-        bc.close();
-      } catch {}
-    }
-
-    const channel = getSharedChatChannel();
-    if (channel) {
-      channel.send({
-        type: 'broadcast',
-        event: 'conversation_update',
-        payload: { 
-          id: chatId, 
-          unread_count: 0,
-          admin_unread_count: role === 'admin' ? 0 : undefined,
-          client_unread_count: role === 'client' ? 0 : undefined
-        }
-      });
-    }
-
-    const headers = await getAuthHeaders();
-    await fetch('/api/messages', {
-      method: 'POST',
-      headers,
-      body: JSON.stringify({ 
-        action: 'markAsRead', 
-        payload: { 
-          conversation_id: chatId,
-          role,
-          clientEmail: cleanEmail
-        } 
-      })
-    });
-
-    return true;
-  } catch { return false; }
-}
-
-export async function markConversationAsUnread(chatId, role = 'admin', clientEmail = '') {
-  try {
-    if (!chatId) return false;
-    const cleanEmail = clientEmail ? String(clientEmail).toLowerCase().trim() : '';
-
-    if (typeof window !== 'undefined') {
-      if (role === 'admin') {
-        localStorage.removeItem('bdigi_read_admin_' + chatId);
-        if (cleanEmail) localStorage.removeItem('bdigi_read_admin_chat-' + cleanEmail);
-      }
-      window.dispatchEvent(new CustomEvent('bdigi_read_update', { detail: { conversation_id: chatId, role, clientEmail: cleanEmail, is_read: false } }));
-      try {
-        const bc = new BroadcastChannel('bdigi_chat_sync');
-        bc.postMessage({ type: 'read_update', conversation_id: chatId, role, clientEmail: cleanEmail, is_read: false });
-        bc.close();
-      } catch {}
-    }
-
-    const channel = getSharedChatChannel();
-    if (channel) {
-      channel.send({
-        type: 'broadcast',
-        event: 'conversation_update',
-        payload: { 
-          id: chatId, 
-          unread_count: 1,
-          admin_unread_count: role === 'admin' ? 1 : undefined,
-          client_unread_count: role === 'client' ? 1 : undefined
-        }
-      });
-    }
-
-    const headers = await getAuthHeaders();
-    await fetch('/api/messages', {
-      method: 'POST',
-      headers,
-      body: JSON.stringify({ 
-        action: 'markAsUnread', 
-        payload: { 
-          conversation_id: chatId,
-          role,
-          clientEmail: cleanEmail
-        } 
-      })
-    });
-
-    return true;
-  } catch { return false; }
-}
-
 /**
- * Global Shared Supabase Realtime Hub for Live Messages & Conversations
+ * Global Shared Supabase Realtime Hub for Notifications & Orders
  * Combines ultra-low-latency WebSocket Broadcast with PostgreSQL mutations replication.
  */
 let globalChatChannel = null;
-const messageListeners = new Set();
-const conversationListeners = new Set();
-const typingListeners = new Set();
 const notificationListeners = new Set();
 const orderListeners = new Set();
 
@@ -1816,35 +1435,11 @@ export function getSharedChatChannel() {
   if (!globalChatChannel) {
     globalChatChannel = supabase.channel('bdigitizing-live-hub-v2', {
       config: {
-        broadcast: { self: false }   // ← CRITICAL: never echo our own outgoing broadcasts back to us
+        broadcast: { self: false }
       }
     });
 
     // 1. Instant WebSocket broadcast listeners
-    globalChatChannel.on('broadcast', { event: 'new_message' }, (event) => {
-      if (event.payload) {
-        messageListeners.forEach(listener => {
-          try { listener({ eventType: 'INSERT', new: event.payload, record: event.payload }); } catch (err) {}
-        });
-      }
-    });
-
-    globalChatChannel.on('broadcast', { event: 'conversation_update' }, (event) => {
-      if (event.payload) {
-        conversationListeners.forEach(listener => {
-          try { listener({ eventType: 'UPDATE', new: event.payload, record: event.payload }); } catch (err) {}
-        });
-      }
-    });
-
-    globalChatChannel.on('broadcast', { event: 'typing' }, (event) => {
-      if (event.payload) {
-        typingListeners.forEach(listener => {
-          try { listener(event.payload); } catch (err) {}
-        });
-      }
-    });
-
     globalChatChannel.on('broadcast', { event: 'new_notification' }, (event) => {
       if (event.payload) {
         notificationListeners.forEach(listener => {
@@ -1853,39 +1448,7 @@ export function getSharedChatChannel() {
       }
     });
 
-    // 2. Postgres replication listeners — INSERT and UPDATE for messages
-    globalChatChannel.on(
-      'postgres_changes',
-      { event: 'INSERT', schema: 'public', table: 'messages' },
-      (payload) => {
-        const enriched = { ...payload, eventType: 'INSERT', record: payload.new || payload.record };
-        messageListeners.forEach(listener => {
-          try { listener(enriched); } catch (err) {}
-        });
-      }
-    );
-
-    globalChatChannel.on(
-      'postgres_changes',
-      { event: 'UPDATE', schema: 'public', table: 'messages' },
-      (payload) => {
-        const enriched = { ...payload, eventType: 'UPDATE', record: payload.new || payload.record };
-        messageListeners.forEach(listener => {
-          try { listener(enriched); } catch (err) {}
-        });
-      }
-    );
-
-    globalChatChannel.on(
-      'postgres_changes',
-      { event: '*', schema: 'public', table: 'conversations' },
-      (payload) => {
-        conversationListeners.forEach(listener => {
-          try { listener(payload); } catch (err) {}
-        });
-      }
-    );
-
+    // 2. Postgres replication listeners
     globalChatChannel.on(
       'postgres_changes',
       { event: '*', schema: 'public', table: 'notifications' },
@@ -1968,27 +1531,6 @@ export function getSharedChatChannel() {
   return globalChatChannel;
 }
 
-export function broadcastLiveMessage(messagePayload) {
-  if (!messagePayload) return;
-
-  // Broadcast ONLY to other tabs/devices via WebSocket.
-  // The sending tab performs its own optimistic UI update in handleSendMessage —
-  // re-firing messageListeners here would cause the admin's own outgoing message
-  // to re-enter the notification handler and show a false "New message" toast.
-  try {
-    const channel = getSharedChatChannel();
-    if (channel) {
-      channel.send({
-        type: 'broadcast',
-        event: 'new_message',
-        payload: messagePayload
-      });
-    }
-  } catch (err) {
-    console.warn('Broadcast live message notice:', err);
-  }
-}
-
 export function broadcastLiveNotification(notificationPayload) {
   if (!notificationPayload) return;
 
@@ -2010,60 +1552,6 @@ export function broadcastLiveNotification(notificationPayload) {
   }
 }
 
-export function broadcastTypingStatus(conversationId, senderName, senderRole, isTyping = true) {
-  try {
-    const channel = getSharedChatChannel();
-    if (channel) {
-      channel.send({
-        type: 'broadcast',
-        event: 'typing',
-        payload: {
-          conversationId,
-          senderName,
-          senderRole,
-          isTyping,
-          timestamp: Date.now()
-        }
-      });
-    }
-  } catch (err) {
-    console.warn('Broadcast typing status notice:', err);
-  }
-}
-
-export function subscribeToTypingStatus(onTypingChange) {
-  if (onTypingChange) typingListeners.add(onTypingChange);
-  getSharedChatChannel();
-  return () => {
-    if (onTypingChange) typingListeners.delete(onTypingChange);
-  };
-}
-
-export function subscribeToLiveMessages(onMessageChange, onConversationChange) {
-  let msgFn = typeof onMessageChange === 'function' ? onMessageChange : null;
-  let convFn = typeof onConversationChange === 'function' ? onConversationChange : null;
-  let notifFn = null;
-
-  // Defensive support for object signature: { onMessage, onConversation, onNotification }
-  if (typeof onMessageChange === 'object' && onMessageChange !== null) {
-    if (typeof onMessageChange.onMessage === 'function') msgFn = onMessageChange.onMessage;
-    if (typeof onMessageChange.onConversation === 'function') convFn = onMessageChange.onConversation;
-    if (typeof onMessageChange.onNotification === 'function') notifFn = onMessageChange.onNotification;
-  }
-
-  if (msgFn) messageListeners.add(msgFn);
-  if (convFn) conversationListeners.add(convFn);
-  if (notifFn) notificationListeners.add(notifFn);
-
-  getSharedChatChannel();
-
-  return () => {
-    if (msgFn) messageListeners.delete(msgFn);
-    if (convFn) conversationListeners.delete(convFn);
-    if (notifFn) notificationListeners.delete(notifFn);
-  };
-}
-
 export function subscribeToNotificationListeners(onNotificationChange) {
   if (onNotificationChange) notificationListeners.add(onNotificationChange);
   getSharedChatChannel();
@@ -2082,15 +1570,24 @@ export function subscribeToOrders(onOrderChange) {
 
 export async function fetchNotificationsFromSupabase(userEmail = '') {
   try {
-    const headers = await getAuthHeaders();
+    if (!isSupabaseConfigured || !supabase) return [];
     const cleanEmail = (userEmail || '').toLowerCase().trim();
-    const url = `/api/messages?action=fetchNotifications${cleanEmail ? `&email=${encodeURIComponent(cleanEmail)}` : ''}`;
-    const res = await fetch(url, {
-      headers,
-      cache: 'no-store'
-    });
-    const data = await res.json();
-    return data.notifications || [];
+    let query = supabase
+      .from('notifications')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(100);
+
+    if (cleanEmail) {
+      query = query.or(`recipient_email.ilike.${cleanEmail},recipient_role.eq.all`);
+    }
+
+    const { data, error } = await query;
+    if (error) {
+      console.warn('Supabase fetch notifications error:', error.message);
+      return [];
+    }
+    return data || [];
   } catch { return []; }
 }
 
@@ -2145,14 +1642,23 @@ export function subscribeToNotifications({ onNewNotification, onNotificationUpda
 
 export async function createNotificationInSupabase(notif) {
   try {
-    const headers = await getAuthHeaders();
-    const res = await fetch('/api/messages', {
-      method: 'POST',
-      headers,
-      body: JSON.stringify({ action: 'createNotification', payload: notif })
-    });
-    const data = await res.json();
-    const result = data.notification || notif;
+    if (!isSupabaseConfigured || !supabase) return notif;
+    const item = {
+      id: notif.id || `notif_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`,
+      user_id: notif.user_id || null,
+      recipient_role: notif.recipient_role || 'admin',
+      recipient_email: notif.recipient_email || null,
+      title: notif.title || 'Notification',
+      message: notif.message || '',
+      type: notif.type || 'info',
+      link: notif.link || null,
+      order_id: notif.order_id || null,
+      read: notif.read || false,
+      created_at: notif.created_at || new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+    const { data, error } = await supabase.from('notifications').insert(item).select().single();
+    const result = data || item;
     broadcastLiveNotification(result);
     return result;
   } catch {
@@ -2173,17 +1679,17 @@ export async function markNotificationAsReadInSupabase(id) {
       } catch {}
     }
 
-    const headers = await getAuthHeaders();
-    await fetch('/api/messages', {
-      method: 'POST',
-      headers,
-      body: JSON.stringify({ action: 'markNotificationRead', payload: { id } })
-    });
+    if (isSupabaseConfigured && supabase) {
+      await supabase
+        .from('notifications')
+        .update({ read: true, updated_at: new Date().toISOString() })
+        .eq('id', id);
+    }
     return true;
   } catch { return false; }
 }
 
-export async function markAllNotificationsAsReadInSupabase() {
+export async function markAllNotificationsAsReadInSupabase(userEmail = '') {
   try {
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new CustomEvent('bdigi_notif_read_update', { detail: { all: true, read: true } }));
@@ -2194,12 +1700,16 @@ export async function markAllNotificationsAsReadInSupabase() {
       } catch {}
     }
 
-    const headers = await getAuthHeaders();
-    await fetch('/api/messages', {
-      method: 'POST',
-      headers,
-      body: JSON.stringify({ action: 'markAllNotificationsRead', payload: {} })
-    });
+    if (isSupabaseConfigured && supabase) {
+      let query = supabase
+        .from('notifications')
+        .update({ read: true, updated_at: new Date().toISOString() })
+        .eq('read', false);
+      if (userEmail) {
+        query = query.ilike('recipient_email', userEmail.toLowerCase().trim());
+      }
+      await query;
+    }
     return true;
   } catch { return false; }
 }

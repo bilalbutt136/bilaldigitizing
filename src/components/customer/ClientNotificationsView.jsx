@@ -6,7 +6,6 @@ import {
   CheckCheck, 
   Clock, 
   Package, 
-  MessageSquare, 
   Tag, 
   Sparkles, 
   ChevronRight, 
@@ -24,7 +23,7 @@ import { useAppState } from '../../context/StateContext';
 import { useNavigate } from '../../utils/navigation';
 import { handleNotificationClick, parseNotificationTarget } from '../../utils/notificationRouter';
 
-export const ClientNotificationsView = ({ onNavigateToOrder, onNavigateToChat, userEmail, isAdmin = false }) => {
+export const ClientNotificationsView = ({ onNavigateToOrder, userEmail, isAdmin = false }) => {
   const navigate = useNavigate();
   const {
     notifications = [],
@@ -59,27 +58,7 @@ export const ClientNotificationsView = ({ onNavigateToOrder, onNavigateToChat, u
 
     const target = parseNotificationTarget(notif, orders);
 
-    if (target.type === 'message' || target.type === 'offer') {
-      if (typeof onNavigateToChat === 'function') {
-        onNavigateToChat(target.conversationId || (target.orderId ? `order-${target.orderId}` : null));
-      } else {
-        handleNotificationClick(notif, {
-          markNotificationAsRead,
-          authUser,
-          currentUser,
-          isAuthenticated,
-          orders,
-          openOrderTrackerDrawer,
-          setSelectedOrderForDrawer,
-          setActiveAdminTab,
-          setActiveCustomerTab,
-          navigate,
-          protectedNavigate,
-          currentView: isAdmin ? 'admin' : (currentView || 'customer'),
-          mobileMode
-        });
-      }
-    } else if (target.type === 'order' || target.orderId) {
+    if (target.type === 'order' || target.orderId) {
       if (typeof onNavigateToOrder === 'function') {
         onNavigateToOrder(target.matchedOrder || target.orderId);
       }
@@ -91,12 +70,6 @@ export const ClientNotificationsView = ({ onNavigateToOrder, onNavigateToChat, u
           title: `Order #${String(target.orderId).replace(/^#+/, '')}`, 
           status: 'in_progress' 
         });
-      }
-      if (typeof setActiveCustomerTab === 'function') {
-        setActiveCustomerTab('orders');
-      }
-      if (typeof setActiveAdminTab === 'function' && (isAdmin || authUser?.role === 'admin')) {
-        setActiveAdminTab('orders');
       }
     } else {
       handleNotificationClick(notif, {
@@ -140,7 +113,7 @@ export const ClientNotificationsView = ({ onNavigateToOrder, onNavigateToChat, u
       return <Zap size={18} style={{ color: '#2563eb' }} />;
     }
     if (type === 'message' || type.includes('message') || title.includes('message') || title.includes('💬')) {
-      return <MessageSquare size={18} style={{ color: '#f97316' }} />;
+      return <Bell size={18} style={{ color: '#f97316' }} />;
     }
     if (type.includes('offer') || title.includes('offer') || title.includes('tag')) {
       return <Tag size={18} style={{ color: '#4f46e5' }} />;

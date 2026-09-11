@@ -20,7 +20,6 @@ import {
   fetchCatalogFromSupabase,
   fetchClientsFromSupabase,
   fetchOrdersFromSupabase,
-  addOrderMessageInSupabase,
   verifyAdminSession,
   fetchAdminUsers,
   addAdminUserInSupabase,
@@ -35,9 +34,6 @@ import {
   fetchHomePageContentFromSupabase,
   updateHomePageSettingsInSupabase,
   saveHeroServiceViaApi,
-  fetchConversations,
-  getAdminThreadUnreadCount,
-  subscribeToLiveMessages,
   fetchNotificationsFromSupabase,
   createNotificationInSupabase,
   markNotificationAsReadInSupabase,
@@ -623,48 +619,11 @@ export const StateProvider = ({ children }) => {
     return () => window.removeEventListener('bdigi_orders_read_sync', handleOrdersReadSync);
   }, []);
 
-  // Global Chat Unread Counter (Synced across customer and admin for Inbox badge)
-  const [unreadChatCount, setUnreadChatCount] = useState(0);
-  const refreshUnreadChatCountTimerRef = useRef(null);
-
-  const refreshUnreadChatCount = React.useCallback(async () => {
-    try {
-      const userEmail = authUser?.email || '';
-      const convs = await fetchConversations(userEmail);
-      if (Array.isArray(convs)) {
-        let currentRole = 'customer';
-        try {
-          const saved = localStorage.getItem('bdigi_auth_user');
-          if (saved) currentRole = JSON.parse(saved).role || 'customer';
-        } catch {}
-
-        let total = 0;
-        if (currentRole === 'admin') {
-          total = convs.reduce((sum, c) => sum + getAdminThreadUnreadCount(c), 0);
-        } else {
-          total = convs.reduce((sum, c) => sum + (c.clientUnreadCount ?? 0), 0);
-        }
-        setUnreadChatCount(total);
-      }
-    } catch (err) {
-      console.warn('Refresh unread count notice:', err);
-    }
-  }, [authUser]);
-
-  const debounceRefreshChatCount = React.useCallback(() => {
-    if (refreshUnreadChatCountTimerRef.current) clearTimeout(refreshUnreadChatCountTimerRef.current);
-    refreshUnreadChatCountTimerRef.current = setTimeout(() => {
-      refreshUnreadChatCount();
-    }, 400);
-  }, [refreshUnreadChatCount]);
-
-  // Global Realtime Listeners for Notifications & Messages
+  // Global Realtime Listeners for Notifications
   useEffect(() => {
     if (!isAuthenticated && !authUser) {
-      setUnreadChatCount(0);
       return;
     }
-    refreshUnreadChatCount();
     refreshNotifications();
 
     const userEmail = authUser?.email || '';
@@ -673,74 +632,56 @@ export const StateProvider = ({ children }) => {
     // 1. Cross-tab Notification Read Synchronization
     const handleNotifReadUpdate = (e) => {
       const { id, all } = e.detail || {};
-      setNotifications(prev => {
-        const safePrev = Array.isArray(prev) ? prev : [];
-        let updated;
-        if (all) {
-          updated = safePrev.map(n => ({ ...n, read: true, is_read: true }));
-        } else if (id) {
-          updated = safePrev.map(n => n.id === id ? { ...n, read: true, is_read: true } : n);
-        } else {
-          updated = safePrev;
-        }
-        saveNotificationsToStorage(updated);
-        return updated;
-      });
+      if (all) {
+        setNotifications(prev => {
+          const safePrev = Array.isArray(prev) ? prev : [];
+          const updated = safePrev.map(n => ({ ...n, read: true, is_read: true }));
+          saveNotificationsToStorage(updated);
+          return updated;
+        });
+      } else if (id) {
+        setNotifications(prev => {
+          const safePrev = Array.isArray(prev) ? prev : [];
+          const updated = safePrev.map(n => n.id === id ? { ...n, read: true, is_read: true } : n);
+          saveNotificationsToStorage(updated);
+          return updated;
+        });
+      }
     };
-
-    window.addEventListener('bdigi_notif_read_update', handleNotifReadUpdate);
 
     let notifBc = null;
     try {
-      notifBc = new BroadcastChannel('bdigi_notifs_sync');
-      notifBc.onmessage = (msg) => {
-        if (msg.data?.type === 'mark_all_read') {
-          handleNotifReadUpdate({ detail: { all: true } });
-        } else if (msg.data?.type === 'mark_read') {
-          handleNotifReadUpdate({ detail: { id: msg.data.id } });
-        }
-      };
+      if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+        notifBc = new BroadcastChannel('bdigi_notifs_sync');
+        notifBc.onmessage = (event) => {
+          if (event.data?.type === 'mark_all_read') {
+            handleNotifReadUpdate({ detail: { all: true } });
+          } else if (event.data?.type === 'mark_read') {
+            handleNotifReadUpdate({ detail: { id: event.data.id } });
+          }
+        };
+      }
     } catch {}
 
-    // 2. Global Live Notifications Listener
+    window.addEventListener('bdigi_notif_read_update', handleNotifReadUpdate);
+
+    // 2. Realtime Notification Stream (Direct Supabase WebSocket & Postgres replication)
     const unsubNotifs = subscribeToNotifications({
       userEmail,
       isAdmin: isAdminUser,
       onNewNotification: (notif) => {
-        if (!notif) return;
+        if (!notif || !notif.id) return;
         setNotifications(prev => {
           const safePrev = Array.isArray(prev) ? prev : [];
-          if (safePrev.some(n => n.id === notif.id)) return safePrev;
-
-          const item = {
-            id: notif.id || `notif-${Date.now()}`,
-            title: notif.title || 'System Notification',
-            message: notif.message || notif.description || '',
-            type: notif.type || 'info',
-            link: notif.link || null,
-            order_id: notif.order_id || notif.orderId || null,
-            orderId: notif.order_id || notif.orderId || null,
-            read: notif.read === true || notif.is_read === true,
-            is_read: notif.read === true || notif.is_read === true,
-            timestamp: notif.created_at || notif.timestamp || new Date().toISOString(),
-            created_at: notif.created_at || notif.timestamp || new Date().toISOString()
-          };
-
-          const nextList = [item, ...safePrev];
-          saveNotificationsToStorage(nextList);
-          return nextList;
+          if (safePrev.some(n => n.id === notif.id)) return prev;
+          const updated = [notif, ...safePrev];
+          saveNotificationsToStorage(updated);
+          return updated;
         });
-
-        try {
-          playNotificationSound('notification');
-        } catch {}
-
-        if (notif.title) {
-          showToast(`${notif.title}${notif.message ? `: ${notif.message}` : ''}`, notif.type || 'info');
-        }
+        showToast(`🔔 ${notif.title || 'New Notification'}: ${notif.message || ''}`, 'info');
       },
       onNotificationUpdate: (notif) => {
-        if (!notif) return;
+        if (!notif || !notif.id) return;
         setNotifications(prev => {
           const safePrev = Array.isArray(prev) ? prev : [];
           const updated = safePrev.map(n => n.id === notif.id ? { ...n, ...notif, read: notif.read === true || notif.is_read === true, is_read: notif.read === true || notif.is_read === true } : n);
@@ -750,92 +691,14 @@ export const StateProvider = ({ children }) => {
       }
     });
 
-    // 3. Live Chat Messages & Unread Counter Listener
-    const handleReadUpdate = () => {
-      debounceRefreshChatCount();
-    };
-
-    window.addEventListener('bdigi_read_update', handleReadUpdate);
-    const recentNotifiedMsgIds = new Map();
-
-    const unsubMessages = subscribeToLiveMessages((msgPayload) => {
-      debounceRefreshChatCount();
-
-      // STRICT GUARD: Only process INSERT events for toasts and sound alerts.
-      // Postgres UPDATE events (e.g. markAsRead changing is_read) must NEVER trigger toasts or sounds!
-      const isInsert = msgPayload?.eventType === 'INSERT' || (!msgPayload?.eventType && !msgPayload?.old && Boolean(msgPayload?.new));
-      if (!isInsert) return;
-
-      if (msgPayload && (msgPayload.new || msgPayload.record)) {
-        const msg = msgPayload.new || msgPayload.record;
-        if (!msg || !msg.id) return;
-
-        // Skip messages already marked read
-        if (msg.is_read === true || msg.is_read === 'true') return;
-
-        const now = Date.now();
-        // Guard against duplicate alerts for same message (WebSocket broadcast + Postgres replication)
-        if (recentNotifiedMsgIds.has(msg.id)) return;
-        recentNotifiedMsgIds.set(msg.id, now);
-
-        // Prune recent cache
-        if (recentNotifiedMsgIds.size > 200) {
-          for (const [mId, t] of recentNotifiedMsgIds.entries()) {
-            if (now - t > 120000) recentNotifiedMsgIds.delete(mId);
-          }
-        }
-
-        // Only notify if message is recent (within 90 seconds)
-        const msgTime = new Date(msg.created_at || msg.timestamp || 0).getTime();
-        if (!isNaN(msgTime) && msgTime > 0 && (now - msgTime) > 90000) return;
-
-        let currentRole = isAdminUser ? 'admin' : 'customer';
-        let myEmail = (userEmail || '').toLowerCase().trim();
-        try {
-          const saved = localStorage.getItem('bdigi_auth_user');
-          if (saved) {
-            const parsed = JSON.parse(saved);
-            if (parsed.role === 'admin') currentRole = 'admin';
-            if (!myEmail) myEmail = (parsed.email || '').toLowerCase().trim();
-          }
-        } catch {}
-        
-        if ((msg.sender === 'client' || msg.sender === 'worker') && currentRole === 'admin') {
-          playNotificationSound('chat');
-          showToast(`💬 New message from ${msg.sender_name || (msg.sender === 'worker' ? 'Assigned Digitizer' : 'Client')}`, 'info');
-        } else if ((msg.sender === 'admin' || msg.sender === 'digitizer' || msg.sender === 'worker' || msg.sender === 'staff') && currentRole !== 'admin') {
-          // Strictly verify that this message belongs to this specific customer
-          const msgEmail = (msg.client_email || msg.clientEmail || '').toLowerCase().trim();
-          const msgConvId = String(msg.conversation_id || '').toLowerCase().trim();
-          const isAddressedToMe = myEmail && (
-            msgEmail === myEmail ||
-            msgConvId === `inbox-${myEmail}` ||
-            msgConvId === `support-${myEmail}` ||
-            msgConvId.includes(myEmail) ||
-            (Array.isArray(orders) && orders.some(o => msgConvId === `order-${o.id}` || String(msg.order_id) === String(o.id)))
-          );
-
-          if (isAddressedToMe) {
-            playNotificationSound('chat');
-            showToast(`💬 New message from ${msg.sender_name || 'Studio Support'}`, 'info');
-          }
-        }
-      }
-    }, () => {
-      debounceRefreshChatCount();
-    });
-
     return () => {
       window.removeEventListener('bdigi_notif_read_update', handleNotifReadUpdate);
-      window.removeEventListener('bdigi_read_update', handleReadUpdate);
-      if (refreshUnreadChatCountTimerRef.current) clearTimeout(refreshUnreadChatCountTimerRef.current);
       if (notifBc) {
         try { notifBc.close(); } catch {}
       }
       if (typeof unsubNotifs === 'function') unsubNotifs();
-      if (typeof unsubMessages === 'function') unsubMessages();
     };
-  }, [isAuthenticated, authUser, refreshUnreadChatCount, debounceRefreshChatCount, refreshNotifications]);
+  }, [isAuthenticated, authUser, refreshNotifications]);
 
   // 4. Real-time synchronization for orders across tabs & events (e.g., custom offer acceptances)
   useEffect(() => {
@@ -1995,50 +1858,7 @@ export const StateProvider = ({ children }) => {
   };
 
 
-  const addOrderMessage = async (orderId, text, senderName, senderRole = 'admin', attachments = []) => {
-    if (!text && (!attachments || attachments.length === 0)) return;
 
-    let persisted = null;
-    if (isSupabaseConfigured) {
-      try {
-        persisted = await addOrderMessageInSupabase(orderId, text, senderName, senderRole, attachments);
-      } catch (err) {
-        console.warn('Supabase add order message notice:', err);
-      }
-    }
-
-    const returnedMsg = persisted?.message || (persisted?.id && persisted?.text ? persisted : null);
-    const msgObj = returnedMsg || {
-      id: `msg-${Date.now()}`,
-      sender: senderName || (senderRole === 'admin' ? 'Master Admin' : 'Client'),
-      senderRole,
-      text: text || '',
-      attachments: attachments || [],
-      timestamp: new Date().toISOString()
-    };
-
-    setOrders(prev => prev.map(ord => {
-      if (ord.id === orderId) {
-        const updatedMsgs = [...(ord.messages || []), msgObj];
-        return {
-          ...ord,
-          messages: updatedMsgs,
-          updatedAt: new Date().toISOString(),
-          history: [{ timestamp: new Date().toISOString(), label: `Message posted by ${msgObj.sender}` }, ...ord.history]
-        };
-      }
-      return ord;
-    }));
-
-    // Trigger email alert for new message
-    const targetOrder = orders.find(o => o.id === orderId);
-    triggerEmailNotification('NEW_MESSAGE', {
-      orderId,
-      clientEmail: targetOrder?.clientEmail,
-      messageText: text,
-      senderName: senderName || (senderRole === 'admin' ? 'Studio Support' : 'Client')
-    });
-  };
 
   const cancelOrder = async (orderId) => {
     setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: 'cancelled' } : o));
@@ -2490,8 +2310,7 @@ export const StateProvider = ({ children }) => {
       customBrandColors, setCustomBrandColors,
       notifications, addNotification, markNotificationAsRead, markAllNotificationsAsRead, unreadNotificationsCount, refreshNotifications,
       unreadOrdersCount, markOrdersAsRead, lastOrdersViewedTime,
-      unreadChatCount, setUnreadChatCount, refreshUnreadChatCount,
-      createOrder, updateOrderStatus, addRevisionRequest, addOrderMessage, cancelOrder,
+      createOrder, updateOrderStatus, addRevisionRequest, cancelOrder,
       fetchUserWalletBalance, refreshOrders, refreshClients,
       mobileMode, setMobileMode, isStandaloneApp
     }}>

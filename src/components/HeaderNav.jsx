@@ -12,7 +12,6 @@ import {
   Menu, 
   MoreVertical,
   X, 
-  MessageSquare, 
   Bell, 
   PenTool, 
   Image as ImageIcon, 
@@ -72,7 +71,6 @@ export const HeaderNav = () => {
     markNotificationAsRead,
     markAllNotificationsAsRead,
     unreadNotificationsCount = 0,
-    unreadChatCount = 0,
     setMobileMode,
     mobileMode,
     logout,
@@ -136,88 +134,8 @@ export const HeaderNav = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const handleOpenInbox = () => {
-    const isCurrentlyOnAdmin = typeof window !== 'undefined' && (
-      window.location.pathname.startsWith('/admin') ||
-      window.location.pathname.startsWith('/secure-admin-login')
-    );
-    const isCurrentlyOnClientPortal = typeof window !== 'undefined' && (
-      window.location.pathname.startsWith('/client-portal') ||
-      window.location.pathname.startsWith('/client')
-    );
-
-    // 1. If Admin Portal or Admin user
-    if (safeIsAuthenticated && (authUser?.role === 'admin' || isCurrentlyOnAdmin)) {
-      if (setActiveAdminTab) setActiveAdminTab('chat');
-      if (typeof window !== 'undefined') {
-        window.dispatchEvent(new CustomEvent('bdigi_switch_admin_tab', { detail: { tab: 'chat' } }));
-        window.dispatchEvent(new CustomEvent('bdigi_switch_tab', { detail: { tab: 'chat' } }));
-      }
-      if (!isCurrentlyOnAdmin) {
-        protectedNavigate('admin');
-        navigate('/admin-portal?tab=chat');
-      }
-      return;
-    }
-
-    // 2. If authenticated Client (inside Client Portal or on Public Site)
-    if (safeIsAuthenticated) {
-      if (setActiveCustomerTab) setActiveCustomerTab('inbox');
-      if (typeof window !== 'undefined') {
-        window.dispatchEvent(new CustomEvent('bdigi_switch_tab', { detail: { tab: 'inbox' } }));
-      }
-      protectedNavigate('customer', false);
-      navigate('/client-portal?tab=inbox');
-      return;
-    }
-
-    // 3. On Public Website for Unauthenticated Visitors
-    // Toggle the Live Support & Order Inquiry chat drawer directly on the screen
-    if (typeof window !== 'undefined') {
-      window.dispatchEvent(new CustomEvent('bdigi_toggle_chat'));
-      window.dispatchEvent(new CustomEvent('bdigi_open_chat'));
-
-      setTimeout(() => {
-        const chatWidget = document.querySelector('.live-chat-drawer-container') || document.querySelector('.live-chat-widget-root');
-        const chatBtn = document.querySelector('.live-chat-floating-button') || document.querySelector('[data-chat-trigger="true"]');
-        if (!chatWidget && chatBtn) {
-          chatBtn.click();
-        }
-      }, 50);
-    }
-  };
-
   const handleOpenLiveSupport = () => {
-    // 1. If Admin Portal or Admin user, navigate directly to Admin Chat & Inbox tab
-    if (safeIsAuthenticated && authUser?.role === 'admin') {
-      if (setActiveAdminTab) setActiveAdminTab('chat');
-      protectedNavigate('admin');
-      navigate('/admin-portal?tab=chat');
-      return;
-    }
-
-    // 2. If authenticated Client in Portal, open Help & Support chat
-    if (safeIsAuthenticated) {
-      if (setActiveCustomerTab) setActiveCustomerTab('help-support');
-      if (typeof window !== 'undefined') {
-        window.dispatchEvent(new CustomEvent('bdigi_switch_tab', { detail: { tab: 'help-support' } }));
-      }
-      protectedNavigate('customer', false);
-      navigate('/client-portal?tab=help-support');
-      return;
-    }
-
-    // 3. Open Live Support Chat widget on Public Home Page
-    if (typeof window !== 'undefined') {
-      window.dispatchEvent(new CustomEvent('bdigi_open_chat'));
-    }
-
-    setTimeout(() => {
-      const chatBtn = document.querySelector('.live-chat-floating-button') || document.querySelector('[data-chat-trigger="true"]');
-      if (chatBtn) {
-        chatBtn.click();
-      }
-    }, 100);
+    navigate('/contact');
   };
 
   const handleInstallMobileApp = async () => {
@@ -714,55 +632,6 @@ export const HeaderNav = () => {
                   </button>
                 )}
                 
-                {/* TOP HEADER CHAT / INBOX BUTTON */}
-                <button
-                    type="button"
-                    onClick={handleOpenInbox}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.45rem',
-                      background: unreadChatCount > 0 ? 'var(--color-primary)' : 'var(--color-primary-light)',
-                      border: unreadChatCount > 0 ? '1.5px solid var(--color-primary)' : '1px solid var(--color-border)',
-                      color: unreadChatCount > 0 ? 'var(--color-text-on-primary, #ffffff)' : 'var(--color-primary)',
-                      padding: '0.45rem 0.85rem',
-                      height: '38px',
-                      borderRadius: '9px',
-                      fontWeight: 800,
-                      fontSize: '0.85rem',
-                      cursor: 'pointer',
-                      position: 'relative',
-                      transition: 'all 0.15s ease'
-                    }}
-                    onMouseOver={(e) => { e.currentTarget.style.background = 'var(--color-primary)'; e.currentTarget.style.color = 'var(--color-text-on-primary, #ffffff)'; }}
-                    onMouseOut={(e) => { 
-                      e.currentTarget.style.background = unreadChatCount > 0 ? 'var(--color-primary)' : 'var(--color-primary-light)'; 
-                      e.currentTarget.style.color = unreadChatCount > 0 ? 'var(--color-text-on-primary, #ffffff)' : 'var(--color-primary)'; 
-                    }}
-                    title={safeAuthUser?.role === 'admin' ? 'Open Admin Chat Inbox' : 'Open Working Chat & Order Discussions'}
-                  >
-                    <MessageSquare size={16} />
-                    <span>Inbox</span>
-                    {unreadChatCount > 0 && (
-                      <span style={{
-                        background: 'var(--color-surface)',
-                        color: 'var(--color-primary)',
-                        fontSize: '0.68rem',
-                        fontWeight: 900,
-                        padding: '0.1rem 0.45rem',
-                        borderRadius: '9999px',
-                        minWidth: '18px',
-                        height: '18px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        boxShadow: '0 1px 3px rgba(0,0,0,0.15)'
-                      }}>
-                        {unreadChatCount}
-                      </span>
-                    )}
-                  </button>
-
                   {/* TOP HEADER NOTIFICATION BELL WITH DROPDOWN SUPPORT */}
                   <div ref={notificationDropdownRef} style={{ position: 'relative' }}>
                     <button
@@ -973,7 +842,7 @@ export const HeaderNav = () => {
                           onMouseOver={(e) => e.currentTarget.style.background = 'var(--color-primary-light, #fff7ed)'}
                           onMouseOut={(e) => e.currentTarget.style.background = 'transparent'}
                         >
-                          Support (24/7 Live Chat)
+                          Contact & Support
                         </button>
                       </div>
                     )}

@@ -3,7 +3,7 @@ import { AdminPortalClient } from '../admin-portal/AdminPortalClient';
 
 export const metadata = {
   title: 'Master Admin Operations Control Desk | B Digitizing Studio',
-  description: 'Manage digitizing orders, client directories, vector artwork processing, catalog CMS, and live support chat.',
+  description: 'Manage digitizing orders, client directories, vector artwork processing, catalog CMS, and studio operations.',
   robots: {
     index: false,
     follow: false

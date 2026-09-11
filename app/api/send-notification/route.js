@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { checkRateLimit, getClientIp, getRateLimitHeaders } from '../../../src/lib/rateLimit.js';
-import { sendChatMessageNotification, sendOrderNotification } from '../../../src/lib/email.js';
+import { sendOrderNotification } from '../../../src/lib/email.js';
 import { createAdminClient } from '../../../src/lib/supabase/admin.js';
 
 export const dynamic = 'force-dynamic';
@@ -105,101 +105,7 @@ export async function POST(req) {
     }
 
     // ==========================================================================
-    // HANDLER 1: NEW CHAT MESSAGE NOTIFICATION
-    // ==========================================================================
-    if (event === 'new_message' || event === 'message') {
-      const data = isSupabaseDbWebhook ? record : payload;
-
-      const conversationId = String(data.conversation_id || data.thread_id || data.chatId || '').trim();
-      const sender = String(data.sender || 'client').toLowerCase().trim();
-      const senderName = data.sender_name || data.senderName || (sender === 'client' ? 'Customer' : 'Studio Support');
-      const text = data.text || data.message || '';
-      const attachmentName = data.attachment_name || data.attachment || null;
-      const attachmentUrl = data.attachment_url || data.attachmentUrl || null;
-      const orderId = data.order_id || data.orderId || (conversationId.startsWith('order-') ? conversationId.replace('order-', '') : null);
-
-      // Determine recipient:
-      // If sender is client -> Recipient is studio admin
-      // If sender is admin/staff -> Recipient is client
-      const isClientSender = sender === 'client';
-      const isClientRecipient = !isClientSender;
-
-      let recipientEmail = data.recipient_email || data.recipientEmail || '';
-      let recipientName = data.recipient_name || data.recipientName || '';
-
-      // If sender is client and no explicit recipient provided, fetch dynamic admin email
-      if (isClientSender && !recipientEmail) {
-        try {
-          const supabase = createAdminClient();
-          const { data: config } = await supabase
-            .from('site_config')
-            .select('value')
-            .eq('key', 'admin_notification_email')
-            .maybeSingle();
-
-          if (config?.value) {
-            recipientEmail = String(config.value).trim().replace(/^["']|["']$/g, '');
-          }
-        } catch {}
-
-        if (!recipientEmail) {
-          recipientEmail = process.env.MASTER_ADMIN_EMAIL || process.env.ADMIN_EMAIL || process.env.NEXT_PUBLIC_ADMIN_EMAIL || 'orders@bdigitizing-pro.com';
-        }
-        recipientName = 'Studio Admin';
-      }
-
-      // If sender is admin and client email missing, lookup conversation
-      if (isClientRecipient && !recipientEmail && conversationId) {
-        try {
-          const supabase = createAdminClient();
-          const { data: conv } = await supabase
-            .from('conversations')
-            .select('client_email, client_name')
-            .eq('id', conversationId)
-            .maybeSingle();
-
-          if (conv?.client_email) {
-            recipientEmail = conv.client_email;
-            recipientName = conv.client_name || recipientName;
-          }
-        } catch {}
-      }
-
-      if (!recipientEmail || !recipientEmail.includes('@')) {
-        return NextResponse.json({
-          success: true,
-          status: 'bypassed',
-          message: 'Notification skipped: No valid recipient email address found for conversation.',
-          conversationId
-        });
-      }
-
-      // Dispatch chat notification
-      const result = await sendChatMessageNotification({
-        recipientEmail,
-        recipientName,
-        senderName,
-        senderRole: sender,
-        messageSnippet: text,
-        conversationId,
-        orderId,
-        attachmentName,
-        attachmentUrl,
-        isClientRecipient
-      });
-
-      return NextResponse.json({
-        success: result.success,
-        event: 'new_message',
-        status: result.status,
-        resendId: result.resendId,
-        recipientEmail,
-        error: result.error
-      });
-    }
-
-    // ==========================================================================
-    // HANDLER 2: NEW ORDER NOTIFICATION
+    // HANDLER: NEW ORDER NOTIFICATION
     // ==========================================================================
     if (event === 'new_order' || event === 'order') {
       const data = isSupabaseDbWebhook ? record : payload;

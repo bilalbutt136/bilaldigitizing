@@ -38,10 +38,10 @@
       "icons": [{ "src": "/favicon.svg", "sizes": "any" }]
     },
     {
-      "name": "Messages",
-      "short_name": "Messages",
-      "description": "Chat with live studio team and digitizers",
-      "url": "/client?tab=messages",
+      "name": "Support Desk",
+      "short_name": "Support",
+      "description": "24/7 Studio Helpdesk & Support",
+      "url": "/contact",
       "icons": [{ "src": "/favicon.svg", "sizes": "any" }]
     }
   ]

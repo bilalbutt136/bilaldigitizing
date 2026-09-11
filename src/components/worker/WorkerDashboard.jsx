@@ -19,7 +19,6 @@ import {
   Download,
   Wallet,
   FileText,
-  MessageSquare,
   Info
 } from 'lucide-react';
 import { generateWorkerPayoutInvoicePdf } from '../../utils/workerInvoicePdfGenerator';
@@ -938,29 +937,6 @@ export const WorkerDashboard = ({ worker, logoutRoute = '/portal/login' }) => {
                       {getWorkerStatusBadge(ord.worker_status)}
                     </div>
 
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setWorkspaceInitialTab('discussion');
-                        setSelectedOrder(ord);
-                      }}
-                      style={{
-                        background: 'rgba(59, 130, 246, 0.15)',
-                        color: '#60a5fa',
-                        border: '1px solid rgba(59, 130, 246, 0.3)',
-                        borderRadius: '8px',
-                        padding: '0.55rem 0.85rem',
-                        fontSize: '0.8rem',
-                        fontWeight: 800,
-                        cursor: 'pointer',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '0.35rem'
-                      }}
-                      title="Open Order Discussion Chat"
-                    >
-                      <MessageSquare size={13} /> Chat
-                    </button>
 
                     <button
                       type="button"

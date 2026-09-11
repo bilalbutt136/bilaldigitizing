@@ -7,7 +7,6 @@ import {
   PenTool,
   Package, 
   User, 
-  MessageSquare, 
   Settings, 
   LogOut, 
   Wallet,
@@ -26,7 +25,6 @@ export const ClientSidebar = ({
   vectorCount = 0,
   patchCount = 0,
   unreadOrdersCount = 0,
-  unreadChatCount = 0,
   unreadNotifCount = 0,
   unpaidCount = 0,
   onOpenDepositModal,
@@ -58,13 +56,6 @@ export const ClientSidebar = ({
           label: 'My Orders',
           icon: ClipboardList,
           badge: unreadOrdersCount > 0 ? unreadOrdersCount : null
-        },
-        { 
-          id: 'inbox', 
-          label: 'Inbox', 
-          icon: MessageSquare, 
-          badge: unreadChatCount > 0 ? unreadChatCount : null,
-          liveDot: true 
         },
         { 
           id: 'help-support', 
@@ -265,7 +256,7 @@ export const ClientSidebar = ({
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.12rem' }}>
               {sec.items.map(item => {
                 const IconComp = item.icon;
-                const isActive = (activeTab === item.id) || (item.id === 'inbox' && activeTab === 'support');
+                const isActive = activeTab === item.id;
 
                 return (
                   <button
@@ -304,8 +295,8 @@ export const ClientSidebar = ({
                       <span style={{ 
                         fontSize: '0.68rem', 
                         fontWeight: 800, 
-                        background: item.badgeColor || (item.id === 'inbox' || item.id === 'support' ? '#ef4444' : (isActive ? 'var(--color-primary)' : 'var(--color-primary-light)')), 
-                        color: (item.badgeColor || item.id === 'inbox' || item.id === 'support' || isActive) ? 'var(--color-text-on-primary, #ffffff)' : 'var(--color-primary)', 
+                        background: item.badgeColor || (isActive ? 'var(--color-primary)' : 'var(--color-primary-light)'), 
+                        color: (item.badgeColor || isActive) ? 'var(--color-text-on-primary, #ffffff)' : 'var(--color-primary)', 
                         padding: '0.08rem 0.4rem', 
                         borderRadius: '9999px',
                         flexShrink: 0

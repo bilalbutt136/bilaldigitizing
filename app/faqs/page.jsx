@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
+import Link from 'next/link';
 import { ChevronDown, MessageCircle, Search, Sparkles, HelpCircle, Layers, PenTool, Tag, CreditCard, ShieldCheck, Mail, ArrowRight } from 'lucide-react';
 import { useAppState } from '../../src/context/StateContext';
 
@@ -533,17 +534,8 @@ export default function FAQsPage() {
             gap: '1rem',
             flexWrap: 'wrap'
           }}>
-            <button 
-              type="button"
-              onClick={() => {
-                if (typeof window !== 'undefined') {
-                  window.dispatchEvent(new CustomEvent('bdigi_open_chat'));
-                  setTimeout(() => {
-                    const chatBtn = document.querySelector('.live-chat-floating-button') || document.querySelector('[data-chat-trigger="true"]');
-                    if (chatBtn) chatBtn.click();
-                  }, 100);
-                }
-              }}
+            <Link 
+              href="/contact"
               style={{
                 background: 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)',
                 color: '#ffffff',
@@ -557,13 +549,14 @@ export default function FAQsPage() {
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '0.5rem',
+                textDecoration: 'none',
                 transition: 'transform 0.15s ease'
               }}
               onMouseOver={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
               onMouseOut={(e) => e.currentTarget.style.transform = 'translateY(0)'}
             >
-              Start 24/7 Live Chat <ArrowRight size={18} />
-            </button>
+              Contact 24/7 Studio Desk <ArrowRight size={18} />
+            </Link>
 
             <a
               href="mailto:orders@bdigitizing-pro.com"

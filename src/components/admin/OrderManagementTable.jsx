@@ -5,14 +5,12 @@ import { useAppState, formatOrderId } from '../../context/StateContext';
 import { ArtworkLightboxModal } from '../common/ArtworkLightboxModal';
 import { AssignWorkerModal } from './AssignWorkerModal';
 import { ReviewWorkerUploadModal } from './ReviewWorkerUploadModal';
-import { OrderChatModal } from '../common/OrderChatModal';
 import { 
   CheckCircle, 
   Search, 
   ChevronRight,
   ZoomIn,
   Clock,
-  MessageSquare,
   UploadCloud,
   PackageCheck,
   PackageOpen,
@@ -71,7 +69,6 @@ export const OrderManagementTable = () => {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [assigningOrder, setAssigningOrder] = useState(null);
   const [reviewOrder, setReviewOrder] = useState(null);
-  const [chatOrder, setChatOrder] = useState(null);
   const [workersList, setWorkersList] = useState([]);
 
   // Fetch workers directory
@@ -798,28 +795,6 @@ export const OrderManagementTable = () => {
 
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
                           <button 
-                            type="button"
-                            onClick={() => setChatOrder(ord)}
-                            style={{ 
-                              fontWeight: 800, 
-                              fontSize: '0.74rem', 
-                              whiteSpace: 'nowrap', 
-                              gap: '0.25rem', 
-                              padding: '0.28rem 0.55rem', 
-                              borderRadius: '6px',
-                              background: 'rgba(59, 130, 246, 0.1)',
-                              color: '#2563eb',
-                              border: '1px solid rgba(59, 130, 246, 0.25)',
-                              cursor: 'pointer',
-                              display: 'inline-flex',
-                              alignItems: 'center'
-                            }}
-                            title="Open direct order chat"
-                          >
-                            <MessageSquare size={12} /> Chat
-                          </button>
-
-                          <button 
                             className="btn btn-primary-orange btn-sm"
                             onClick={() => setSelectedOrderForDrawer(ord)}
                             style={{ fontWeight: 800, fontSize: '0.74rem', whiteSpace: 'nowrap', gap: '0.25rem', padding: '0.28rem 0.6rem', borderRadius: '6px' }}
@@ -957,18 +932,6 @@ export const OrderManagementTable = () => {
             if (refreshOrders) refreshOrders();
             setReviewOrder(null);
           }}
-          showToast={showToast}
-        />
-      )}
-
-      {/* Direct Order Chat Modal */}
-      {chatOrder && (
-        <OrderChatModal
-          order={chatOrder}
-          isOpen={Boolean(chatOrder)}
-          onClose={() => setChatOrder(null)}
-          currentUserRole="admin"
-          currentUserName="Production Manager"
           showToast={showToast}
         />
       )}

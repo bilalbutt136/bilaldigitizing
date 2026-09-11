@@ -19,17 +19,13 @@ import {
   DollarSign,
   Palette,
   Scissors,
-  MessageSquare,
-  Send,
-  Paperclip,
   FileText,
   User,
   ShieldCheck,
   Loader2,
   FileCode
 } from 'lucide-react';
-import { supabaseClient } from '../../lib/supabaseClient';
-import { uploadFileToCloudinaryFull, broadcastLiveMessage, subscribeToLiveMessages } from '../../services/supabaseService';
+import { uploadFileToCloudinaryFull } from '../../services/supabaseService';
 
 const ACCEPTED_EXTENSIONS = [
   '.dst', '.pes', '.emb', '.exp', '.jef', '.zip', '.rar',
@@ -185,143 +181,7 @@ export const WorkerOrderWorkspaceModal = ({ order, isOpen, onClose, onOrderUpdat
   const [bidNotes, setBidNotes] = useState('');
   const [isBidding, setIsBidding] = useState(false);
 
-  // Order Chat / Discussion State
-  const [messages, setMessages] = useState([]);
-  const [inputText, setInputText] = useState('');
-  const [isSendingMessage, setIsSendingMessage] = useState(false);
-  const [isLoadingMessages, setIsLoadingMessages] = useState(false);
-  const [chatFile, setChatFile] = useState(null);
-  const [isUploadingChatFile, setIsUploadingChatFile] = useState(false);
-  const messagesEndRef = useRef(null);
-  const chatFileInputRef = useRef(null);
 
-  const orderId = order?.id;
-
-  const fetchOrderMessages = async (isBackground = false) => {
-    if (!orderId) return;
-    if (!isBackground) setIsLoadingMessages(true);
-    try {
-      const res = await fetch('/api/orders', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'fetchOrderMessages',
-          payload: { orderId }
-        })
-      });
-      const data = await res.json();
-      if (res.ok && Array.isArray(data.messages)) {
-        setMessages(data.messages);
-      }
-    } catch (err) {
-      console.warn('Worker chat fetch error:', err);
-    } finally {
-      if (!isBackground) setIsLoadingMessages(false);
-    }
-  };
-
-  // Real-time Chat Subscription for this Order
-  useEffect(() => {
-    if (!isOpen || !orderId) return;
-
-    fetchOrderMessages();
-
-    let channel = null;
-    try {
-      if (supabaseClient) {
-        channel = supabaseClient
-          .channel(`worker-order-chat-${orderId}`)
-          .on('postgres_changes', {
-            event: 'INSERT',
-            schema: 'public',
-            table: 'order_messages',
-            filter: `order_id=eq.${orderId}`
-          }, (payload) => {
-            if (payload?.new) {
-              setMessages(prev => {
-                if (prev.some(m => m.id === payload.new.id)) return prev;
-                return [...prev, payload.new];
-              });
-              setTimeout(() => {
-                messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-              }, 80);
-            }
-          })
-          .on('broadcast', { event: 'new_message' }, (event) => {
-            const p = event?.payload;
-            if (p && (String(p.order_id) === String(orderId) || String(p.conversation_id) === `order-${orderId}`)) {
-              setMessages(prev => {
-                if (prev.some(m => m.id === p.id)) return prev;
-                return [...prev, {
-                  id: p.id,
-                  order_id: orderId,
-                  message: p.text || p.message || '',
-                  sender_name: p.sender_name || p.senderName || 'Customer',
-                  sender_role: p.sender || 'client',
-                  is_staff: p.sender === 'admin' || p.sender === 'worker',
-                  attachment: p.attachment,
-                  attachment_url: p.attachment_url,
-                  attachment_name: p.attachment_name,
-                  created_at: p.created_at || p.timestamp || new Date().toISOString()
-                }];
-              });
-              setTimeout(() => {
-                messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-              }, 80);
-            }
-          })
-          .subscribe();
-      }
-    } catch (err) {
-      console.warn('Realtime channel error:', err);
-    }
-
-    // Also listen to the global shared live hub for instant broadcast updates
-    const unsubGlobal = subscribeToLiveMessages((msgPayload) => {
-      const p = msgPayload?.new || msgPayload?.record;
-      if (p && (String(p.order_id) === String(orderId) || String(p.conversation_id) === `order-${orderId}`)) {
-        setMessages(prev => {
-          if (prev.some(m => m.id === p.id)) return prev;
-          return [...prev, {
-            id: p.id,
-            order_id: orderId,
-            message: p.text || p.message || '',
-            sender_name: p.sender_name || p.senderName || 'Staff',
-            sender_role: p.sender_role || p.sender || 'admin',
-            is_staff: p.is_staff ?? (p.sender === 'admin' || p.sender === 'worker'),
-            attachment: p.attachment,
-            attachment_url: p.attachment_url,
-            attachment_name: p.attachment_name,
-            attachment_size: p.attachment_size,
-            created_at: p.created_at || p.timestamp || new Date().toISOString()
-          }];
-        });
-        setTimeout(() => {
-          messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-        }, 80);
-      }
-    });
-
-    const interval = setInterval(() => {
-      fetchOrderMessages(true);
-    }, 6000);
-
-    return () => {
-      if (channel && supabaseClient) {
-        supabaseClient.removeChannel(channel);
-      }
-      if (unsubGlobal) unsubGlobal();
-      clearInterval(interval);
-    };
-  }, [isOpen, orderId]);
-
-  useEffect(() => {
-    if (activeTab === 'discussion') {
-      setTimeout(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-      }, 100);
-    }
-  }, [activeTab, messages.length]);
 
   if (!isOpen || !order) return null;
 
@@ -515,156 +375,7 @@ export const WorkerOrderWorkspaceModal = ({ order, isOpen, onClose, onOrderUpdat
     }
   };
 
-  // 3. Worker Send Chat Message on this specific order
-  const handleSendChatMessage = async (e) => {
-    if (e && e.preventDefault) e.preventDefault();
-    const cleanText = inputText.trim();
-    if (!cleanText && !chatFile) return;
 
-    setIsSendingMessage(true);
-    let attachmentUrl = null;
-    let attachmentName = null;
-    let attachmentSize = null;
-
-    try {
-      if (chatFile) {
-        setIsUploadingChatFile(true);
-        try {
-          const uploadRes = await uploadFileToCloudinaryFull(chatFile);
-          if (uploadRes?.url) {
-            attachmentUrl = uploadRes.url;
-            attachmentName = chatFile.name;
-            attachmentSize = `${(chatFile.size / (1024 * 1024)).toFixed(2)} MB`;
-          }
-        } catch (uploadErr) {
-          console.warn('Chat upload fallback notice:', uploadErr);
-        } finally {
-          setIsUploadingChatFile(false);
-        }
-      }
-
-      const optimisticMsg = {
-        id: `optimistic-${Date.now()}`,
-        order_id: orderId,
-        sender: 'worker',
-        sender_role: 'worker',
-        sender_name: 'Assigned Artist',
-        message: cleanText,
-        attachment_url: attachmentUrl,
-        attachment_name: attachmentName,
-        attachment_size: attachmentSize,
-        created_at: new Date().toISOString()
-      };
-
-      setMessages(prev => [...prev, optimisticMsg]);
-      setInputText('');
-      setChatFile(null);
-      setTimeout(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-      }, 50);
-
-      const res = await fetch('/api/orders', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'addMessage',
-          payload: {
-            order_id: orderId,
-            message: cleanText,
-            sender_name: 'Assigned Artist',
-            attachment_url: attachmentUrl,
-            attachment_name: attachmentName,
-            attachment_size: attachmentSize
-          }
-        })
-      });
-
-      const data = await res.json();
-      if (!res.ok || !data.success) {
-        throw new Error(data.error || 'Message delivery failed.');
-      }
-
-      if (data.message) {
-        setMessages(prev => prev.map(m => m.id === optimisticMsg.id ? data.message : m));
-        broadcastLiveMessage({
-          id: data.message.id || optimisticMsg.id,
-          order_id: orderId,
-          conversation_id: `order-${orderId}`,
-          sender: 'worker',
-          sender_name: optimisticMsg.sender_name,
-          sender_role: 'worker',
-          is_staff: true,
-          text: cleanText,
-          message: cleanText,
-          attachment_url: attachmentUrl,
-          attachment_name: attachmentName,
-          attachment_size: attachmentSize,
-          created_at: data.message.created_at || new Date().toISOString()
-        });
-      }
-    } catch (err) {
-      if (showToast) showToast(err.message || 'Could not send message.', 'error');
-    } finally {
-      setIsSendingMessage(false);
-      setIsUploadingChatFile(false);
-    }
-  };
-
-  const getRoleBadge = (role) => {
-    const r = (role || '').toLowerCase();
-    if (r === 'admin' || r === 'support' || r === 'staff') {
-      return (
-        <span style={{
-          background: 'rgba(249, 115, 22, 0.15)',
-          color: '#f97316',
-          border: '1px solid rgba(249, 115, 22, 0.3)',
-          fontSize: '0.68rem',
-          fontWeight: 800,
-          padding: '0.1rem 0.4rem',
-          borderRadius: '4px',
-          display: 'inline-flex',
-          alignItems: 'center',
-          gap: '0.2rem'
-        }}>
-          <ShieldCheck size={10} /> Production Manager
-        </span>
-      );
-    }
-    if (r === 'worker' || r === 'digitizer') {
-      return (
-        <span style={{
-          background: 'rgba(59, 130, 246, 0.15)',
-          color: '#60a5fa',
-          border: '1px solid rgba(59, 130, 246, 0.3)',
-          fontSize: '0.68rem',
-          fontWeight: 800,
-          padding: '0.1rem 0.4rem',
-          borderRadius: '4px',
-          display: 'inline-flex',
-          alignItems: 'center',
-          gap: '0.2rem'
-        }}>
-          <Scissors size={10} /> You (Artist)
-        </span>
-      );
-    }
-    return (
-      <span style={{
-        background: 'rgba(16, 185, 129, 0.15)',
-        color: '#34d399',
-        border: '1px solid rgba(16, 185, 129, 0.3)',
-        fontSize: '0.68rem',
-        fontWeight: 800,
-        padding: '0.1rem 0.4rem',
-        borderRadius: '4px',
-        display: 'inline-flex',
-        alignItems: 'center',
-        gap: '0.2rem'
-      }}>
-        <User size={10} /> Client
-      </span>
-    );
-  };
 
   return (
     <div style={{
@@ -755,57 +466,29 @@ export const WorkerOrderWorkspaceModal = ({ order, isOpen, onClose, onOrderUpdat
             </button>
           </div>
 
-          {/* Workspace Tabs: Specifications vs Order Discussion */}
-          <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem', borderTop: '1px solid #1e293b', paddingTop: '0.75rem' }}>
-            <button
-              type="button"
-              onClick={() => setActiveTab('specs')}
+          {/* Workspace Header Subtitle */}
+          <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.75rem', borderTop: '1px solid #1e293b', paddingTop: '0.65rem' }}>
+            <span
               style={{
-                background: activeTab === 'specs' ? '#f97316' : '#1e293b',
-                color: activeTab === 'specs' ? '#ffffff' : '#94a3b8',
-                border: '1px solid',
-                borderColor: activeTab === 'specs' ? '#f97316' : '#334155',
-                borderRadius: '8px',
-                padding: '0.45rem 0.95rem',
-                fontSize: '0.825rem',
-                fontWeight: 800,
-                cursor: 'pointer',
+                background: 'rgba(249, 115, 22, 0.12)',
+                color: '#f97316',
+                border: '1px solid rgba(249, 115, 22, 0.3)',
+                borderRadius: '6px',
+                padding: '0.35rem 0.75rem',
+                fontSize: '0.78rem',
+                fontWeight: 700,
                 display: 'inline-flex',
                 alignItems: 'center',
-                gap: '0.4rem',
-                transition: 'all 0.15s ease'
+                gap: '0.4rem'
               }}
             >
-              <Layers size={14} /> Production Specs & Files
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setActiveTab('discussion')}
-              style={{
-                background: activeTab === 'discussion' ? '#3b82f6' : '#1e293b',
-                color: activeTab === 'discussion' ? '#ffffff' : '#94a3b8',
-                border: '1px solid',
-                borderColor: activeTab === 'discussion' ? '#3b82f6' : '#334155',
-                borderRadius: '8px',
-                padding: '0.45rem 0.95rem',
-                fontSize: '0.825rem',
-                fontWeight: 800,
-                cursor: 'pointer',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '0.4rem',
-                transition: 'all 0.15s ease'
-              }}
-            >
-              <MessageSquare size={14} /> Order Discussion {messages.length > 0 && `(${messages.length})`}
-            </button>
+              <Layers size={13} /> Production Specs & Digitizing Files
+            </span>
           </div>
         </div>
 
         {/* Modal Body */}
-        {activeTab === 'specs' ? (
-          <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+        <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
             {/* 1. Admin Assignment / Revision Instructions Notice */}
             {parsedInstructions.adminFeedback && (
               <div style={{
@@ -953,32 +636,11 @@ export const WorkerOrderWorkspaceModal = ({ order, isOpen, onClose, onOrderUpdat
                     </div>
 
                     {/* Placement Timing Tile */}
-                    <div style={{ gridColumn: 'span 2', background: '#1e293b', padding: '0.65rem 0.85rem', borderRadius: '8px', border: '1px solid #334155', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <div>
-                        <span style={{ fontSize: '0.725rem', color: '#94a3b8', display: 'block', fontWeight: 600 }}>ORDER PLACED TIMING</span>
-                        <span style={{ fontSize: '0.85rem', fontWeight: 800, color: '#ffffff', display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
-                          <Clock size={13} style={{ color: '#f97316' }} /> {placementTimeStr} {placementRelative && <span style={{ color: '#94a3b8', fontWeight: 600 }}>({placementRelative})</span>}
-                        </span>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => setActiveTab('discussion')}
-                        style={{
-                          background: 'rgba(59, 130, 246, 0.15)',
-                          color: '#60a5fa',
-                          border: '1px solid rgba(59, 130, 246, 0.3)',
-                          padding: '0.3rem 0.65rem',
-                          borderRadius: '6px',
-                          fontSize: '0.75rem',
-                          fontWeight: 800,
-                          cursor: 'pointer',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '0.3rem'
-                        }}
-                      >
-                        <MessageSquare size={12} /> Open Chat
-                      </button>
+                    <div style={{ gridColumn: 'span 2', background: '#1e293b', padding: '0.65rem 0.85rem', borderRadius: '8px', border: '1px solid #334155' }}>
+                      <span style={{ fontSize: '0.725rem', color: '#94a3b8', display: 'block', fontWeight: 600 }}>ORDER PLACED TIMING</span>
+                      <span style={{ fontSize: '0.85rem', fontWeight: 800, color: '#ffffff', display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+                        <Clock size={13} style={{ color: '#f97316' }} /> {placementTimeStr} {placementRelative && <span style={{ color: '#94a3b8', fontWeight: 600 }}>({placementRelative})</span>}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -1371,192 +1033,6 @@ export const WorkerOrderWorkspaceModal = ({ order, isOpen, onClose, onOrderUpdat
               </div>
             )}
           </div>
-        ) : (
-          /* ================================================================
-              ORDER DISCUSSION / CHAT TAB VIEW
-             ================================================================ */
-          <div style={{ display: 'flex', flexDirection: 'column', height: '620px', background: '#131d2e' }}>
-            {/* Thread Info Banner */}
-            <div style={{ padding: '0.75rem 1.25rem', background: '#0f172a', borderBottom: '1px solid #334155', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div style={{ fontSize: '0.8rem', color: '#94a3b8' }}>
-                Direct thread for <strong style={{ color: '#f97316' }}>{formatOrderId(order.id)}</strong> with Production Management
-              </div>
-              <button
-                type="button"
-                onClick={() => fetchOrderMessages(false)}
-                title="Refresh messages"
-                style={{ background: '#1e293b', border: '1px solid #334155', borderRadius: '6px', padding: '0.3rem 0.6rem', color: '#cbd5e1', fontSize: '0.75rem', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}
-              >
-                <RefreshCw size={12} /> Refresh
-              </button>
-            </div>
-
-            {/* Messages Scroll Area */}
-            <div style={{ flex: 1, padding: '1.25rem', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              {isLoadingMessages ? (
-                <div style={{ margin: 'auto', textAlign: 'center', color: '#94a3b8' }}>
-                  <Loader2 size={26} className="animate-spin" style={{ margin: '0 auto 0.5rem', color: '#3b82f6' }} />
-                  <p style={{ fontSize: '0.85rem', margin: 0 }}>Loading discussion history...</p>
-                </div>
-              ) : messages.length === 0 ? (
-                <div style={{ margin: 'auto', textAlign: 'center', color: '#64748b', maxWidth: '340px' }}>
-                  <div style={{ background: 'rgba(255,255,255,0.04)', width: '52px', height: '52px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 0.75rem' }}>
-                    <MessageSquare size={26} style={{ color: '#94a3b8' }} />
-                  </div>
-                  <h4 style={{ margin: '0 0 0.25rem 0', color: '#cbd5e1', fontSize: '0.95rem', fontWeight: 800 }}>
-                    No messages yet on {formatOrderId(order.id)}
-                  </h4>
-                  <p style={{ margin: 0, fontSize: '0.8rem' }}>
-                    Need clarification on stitch density, thread trims, or dimensions? Ask the Production Manager right here.
-                  </p>
-                </div>
-              ) : (
-                messages.map((msg, idx) => {
-                  const senderRole = (msg.sender_role || msg.sender || '').toLowerCase();
-                  const isMe = senderRole === 'worker';
-
-                  const hasAttachment = Boolean(msg.attachment_url || msg.attachment);
-                  const attachmentUrl = msg.attachment_url || (typeof msg.attachment === 'string' && msg.attachment.startsWith('http') ? msg.attachment : null);
-                  const isImage = attachmentUrl && (/\.(jpg|jpeg|png|webp|gif|svg)$/i.test(attachmentUrl) || attachmentUrl.includes('/artwork/'));
-
-                  return (
-                    <div
-                      key={msg.id || idx}
-                      style={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: isMe ? 'flex-end' : 'flex-start',
-                        maxWidth: '82%',
-                        alignSelf: isMe ? 'flex-end' : 'flex-start'
-                      }}
-                    >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.25rem', padding: '0 0.2rem' }}>
-                        <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#94a3b8' }}>
-                          {isMe ? 'You' : (msg.sender_name || 'Production Admin')}
-                        </span>
-                        {getRoleBadge(msg.sender_role || msg.sender)}
-                      </div>
-
-                      <div style={{
-                        background: isMe ? '#3b82f6' : '#1e293b',
-                        color: '#ffffff',
-                        border: isMe ? 'none' : '1px solid #334155',
-                        borderRadius: isMe ? '14px 14px 2px 14px' : '14px 14px 14px 2px',
-                        padding: '0.75rem 1rem',
-                        boxShadow: '0 2px 8px rgba(0,0,0,0.25)',
-                        fontSize: '0.875rem',
-                        lineHeight: 1.45,
-                        wordBreak: 'break-word'
-                      }}>
-                        {msg.message || msg.text}
-
-                        {hasAttachment && (
-                          <div style={{ marginTop: '0.6rem', borderTop: isMe ? '1px solid rgba(255,255,255,0.2)' : '1px solid #334155', paddingTop: '0.5rem' }}>
-                            {isImage ? (
-                              <div style={{ borderRadius: '8px', overflow: 'hidden', maxWidth: '240px', background: '#0f172a' }}>
-                                <img src={attachmentUrl} alt="Attachment preview" style={{ width: '100%', height: 'auto', display: 'block', maxHeight: '180px', objectFit: 'contain' }} />
-                                <div style={{ padding: '0.4rem 0.6rem', background: '#0f172a', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                  <span style={{ fontSize: '0.72rem', color: '#cbd5e1', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '140px' }}>
-                                    {msg.attachment_name || 'Image'}
-                                  </span>
-                                  <a href={attachmentUrl} target="_blank" rel="noreferrer" download style={{ color: '#38bdf8', fontSize: '0.72rem', textDecoration: 'none', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.2rem' }}>
-                                    <Download size={12} /> Save
-                                  </a>
-                                </div>
-                              </div>
-                            ) : (
-                              <div style={{ background: isMe ? 'rgba(0,0,0,0.15)' : '#0f172a', padding: '0.5rem 0.75rem', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem' }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', overflow: 'hidden' }}>
-                                  <FileCode size={16} style={{ color: '#38bdf8', flexShrink: 0 }} />
-                                  <span style={{ fontSize: '0.78rem', color: '#cbd5e1', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                    {msg.attachment_name || 'Attachment'}
-                                  </span>
-                                </div>
-                                {attachmentUrl && (
-                                  <a href={attachmentUrl} target="_blank" rel="noreferrer" download style={{ color: '#38bdf8', fontSize: '0.72rem', textDecoration: 'none', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '0.2rem' }}>
-                                    <Download size={12} /> Download
-                                  </a>
-                                )}
-                              </div>
-                            )}
-                          </div>
-                        )}
-                      </div>
-
-                      <span style={{ fontSize: '0.68rem', color: '#64748b', marginTop: '0.25rem', padding: '0 0.25rem' }}>
-                        {msg.created_at ? new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Sent'}
-                      </span>
-                    </div>
-                  );
-                })
-              )}
-              <div ref={messagesEndRef} />
-            </div>
-
-            {/* Chat Input Bar */}
-            <div style={{ padding: '0.85rem 1.15rem', background: '#0f172a', borderTop: '1px solid #334155' }}>
-              {chatFile && (
-                <div style={{ background: '#1e293b', border: '1px solid #334155', borderRadius: '8px', padding: '0.4rem 0.75rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem', fontSize: '0.78rem' }}>
-                  <span style={{ color: '#38bdf8', display: 'flex', alignItems: 'center', gap: '0.35rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    <Paperclip size={13} /> {chatFile.name} ({(chatFile.size / (1024 * 1024)).toFixed(2)} MB)
-                  </span>
-                  <button type="button" onClick={() => setChatFile(null)} style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer' }}>
-                    <X size={14} />
-                  </button>
-                </div>
-              )}
-
-              <form onSubmit={handleSendChatMessage} style={{ display: 'flex', gap: '0.65rem', alignItems: 'center' }}>
-                <input
-                  type="file"
-                  ref={chatFileInputRef}
-                  style={{ display: 'none' }}
-                  onChange={(e) => {
-                    if (e.target.files?.[0]) setChatFile(e.target.files[0]);
-                  }}
-                />
-
-                <button
-                  type="button"
-                  onClick={() => chatFileInputRef.current?.click()}
-                  title="Attach reference sample image or file"
-                  style={{ background: '#1e293b', border: '1px solid #334155', borderRadius: '8px', padding: '0.6rem', color: chatFile ? '#38bdf8' : '#94a3b8', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                >
-                  <Paperclip size={18} />
-                </button>
-
-                <input
-                  type="text"
-                  value={inputText}
-                  onChange={(e) => setInputText(e.target.value)}
-                  placeholder={`Ask Production Manager regarding ${formatOrderId(order.id)}...`}
-                  disabled={isSendingMessage || isUploadingChatFile}
-                  style={{ flex: 1, background: '#1e293b', border: '1px solid #334155', borderRadius: '8px', padding: '0.65rem 0.95rem', fontSize: '0.875rem', color: '#ffffff', outline: 'none' }}
-                />
-
-                <button
-                  type="submit"
-                  disabled={(!inputText.trim() && !chatFile) || isSendingMessage || isUploadingChatFile}
-                  style={{
-                    background: (inputText.trim() || chatFile) && !isSendingMessage ? '#3b82f6' : '#475569',
-                    color: '#ffffff',
-                    border: 'none',
-                    borderRadius: '8px',
-                    padding: '0.65rem 1.15rem',
-                    fontSize: '0.85rem',
-                    fontWeight: 800,
-                    cursor: (inputText.trim() || chatFile) && !isSendingMessage ? 'pointer' : 'not-allowed',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '0.35rem'
-                  }}
-                >
-                  {isSendingMessage ? <Loader2 size={16} className="animate-spin" /> : <><Send size={15} /> Send</>}
-                </button>
-              </form>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );

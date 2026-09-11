@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { ChevronRight, Clock, User, Tag } from 'lucide-react';
 import { supabase } from '../../src/lib/supabase/client';
 
@@ -370,16 +371,8 @@ export default function BlogsPage() {
           <p style={{ color: 'var(--navy-200)', fontSize: '1.1rem', maxWidth: '500px', margin: '0 auto 2rem auto' }}>
             Our industry experts are available 24/7 to review your artwork and recommend the best digitizing or manufacturing approach.
           </p>
-          <button 
-            onClick={() => {
-              if (typeof window !== 'undefined') {
-                window.dispatchEvent(new CustomEvent('bdigi_open_chat'));
-                setTimeout(() => {
-                  const chatBtn = document.querySelector('.live-chat-floating-button') || document.querySelector('[data-chat-trigger="true"]');
-                  if (chatBtn) chatBtn.click();
-                }, 100);
-              }
-            }}
+          <Link 
+            href="/contact"
             style={{
               background: 'linear-gradient(135deg, #ff7a00, #ff9d40)',
               color: '#ffffff',
@@ -393,13 +386,14 @@ export default function BlogsPage() {
               display: 'inline-flex',
               alignItems: 'center',
               gap: '0.5rem',
+              textDecoration: 'none',
               transition: 'transform 0.2s'
             }}
             onMouseOver={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
             onMouseOut={(e) => e.currentTarget.style.transform = 'translateY(0)'}
           >
-            Chat with an Expert <ChevronRight size={18} />
-          </button>
+            Talk to an Expert <ChevronRight size={18} />
+          </Link>
         </div>
 
       </div>

@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState, useEffect } from 'react';
 import { useAppState } from '../../../context/StateContext';
@@ -13,8 +13,8 @@ import {
   ShieldCheck, 
   RefreshCw, 
   Layers, 
-  MessageSquare, 
   ShoppingBag, 
+  HelpCircle, 
   RotateCcw,
   CheckCheck
 } from 'lucide-react';
@@ -338,7 +338,7 @@ export const AdminNotificationSettings = () => {
               </div>
             </div>
             <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: '0.4rem 0 0' }}>
-              All automated studio alerts, customer chat alerts, and new order notifications will route directly to this address.
+              All automated studio alerts, contact inquiries, and new order notifications will route directly to this address.
             </p>
           </div>
 
@@ -427,7 +427,7 @@ export const AdminNotificationSettings = () => {
               />
             </div>
 
-            {/* Toggle 2: Customer Chat & Inquiries */}
+            {/* Toggle 2: Contact Form & Support Inquiries */}
             <div style={{
               display: 'flex',
               alignItems: 'center',
@@ -449,14 +449,14 @@ export const AdminNotificationSettings = () => {
                   alignItems: 'center',
                   justifyContent: 'center'
                 }}>
-                  <MessageSquare size={18} />
+                  <HelpCircle size={18} />
                 </div>
                 <div>
                   <div style={{ fontSize: '0.875rem', fontWeight: 700, color: 'var(--text-main)' }}>
-                    Customer Chat & 24/7 Support Alert
+                    Contact Form & Helpdesk Inquiries Alert
                   </div>
                   <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                    Instant notification when a client posts a message or contact inquiry.
+                    Instant notification when a customer submits a contact inquiry or support ticket.
                   </div>
                 </div>
               </div>

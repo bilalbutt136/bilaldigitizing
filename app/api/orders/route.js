@@ -66,7 +66,7 @@ export async function GET(request) {
       
       let data = null;
       try {
-        let query = supabase.from('orders').select('id, title, client_name, client_email, service_category, service_type, fabric_type, requested_formats, is_rush, price, cost, status, payment_status, artwork_url, image_url, logo, user_id, worker_id, worker_status, worker_file_url, worker_file_name, worker_notes, worker_payout, worker_payout_status, admin_worker_feedback, worker_assigned_at, worker_submitted_at, worker_reviewed_at, paid_at, delivery_notes, notes, created_at, updated_at, order_files(id, file_name, file_format, file_type, public_url, file_url, uploaded_by, created_at), order_messages(id, message, sender_name, sender_role, is_staff, attachment_url, created_at)').order('created_at', { ascending: false });
+        let query = supabase.from('orders').select('id, title, client_name, client_email, service_category, service_type, fabric_type, requested_formats, is_rush, price, cost, status, payment_status, artwork_url, image_url, logo, user_id, worker_id, worker_status, worker_file_url, worker_file_name, worker_notes, worker_payout, worker_payout_status, admin_worker_feedback, worker_assigned_at, worker_submitted_at, worker_reviewed_at, paid_at, delivery_notes, notes, created_at, updated_at, order_files(id, file_name, file_format, file_type, public_url, file_url, uploaded_by, created_at)').order('created_at', { ascending: false });
         if (targetWorkerId) {
           query = query.eq('worker_id', targetWorkerId);
         } else if (targetEmail) {
@@ -145,18 +145,7 @@ export async function GET(request) {
         console.warn('revisions query notice:', rErr?.message);
       }
 
-      let messagesList = [];
-      try {
-        const { data: msgsData } = await supabase
-          .from('order_messages')
-          .select('id, order_id, message, text, sender_name, sender_role, is_staff, attachment_url, attachments, created_at')
-          .eq('order_id', orderId);
-        if (Array.isArray(msgsData)) messagesList = msgsData;
-      } catch (mErr) {
-        console.warn('order_messages query notice:', mErr?.message);
-      }
-
-      return NextResponse.json({ orderFiles: orderFilesList, revisions: revisionsList, messages: messagesList });
+      return NextResponse.json({ orderFiles: orderFilesList, revisions: revisionsList, messages: [] });
     }
 
     return NextResponse.json({ error: 'Unknown action' }, { status: 400 });
@@ -574,162 +563,6 @@ export async function POST(request) {
 
       return NextResponse.json({ success: true });
     }
-
-    if (action === 'addMessage') {
-      if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-      
-      const { data: orderData, error: orderError } = await supabase
-        .from('orders')
-        .select('client_email, client_name, title, type, service_category, worker_id, user_id')
-        .eq('id', payload.order_id)
-        .maybeSingle();
-
-      const isAssignedWorker = Boolean(
-        isWorker && (
-          (orderData?.worker_id && orderData.worker_id === user.id) ||
-          (orderData?.worker_id && workerData?.id && orderData.worker_id === workerData.id)
-        )
-      );
-
-      const isOrderClient = Boolean(
-        user.email && (
-          (orderData?.client_email && orderData.client_email.toLowerCase().trim() === user.email.toLowerCase().trim()) ||
-          (orderData?.user_id && orderData.user_id === user.id)
-        )
-      );
-
-      if (!isAdmin && !isAssignedWorker && !isOrderClient) {
-        if (orderError || !orderData) {
-          return NextResponse.json({ error: 'Order not found' }, { status: 404 });
-        }
-        return NextResponse.json({ error: 'Unauthorized: You are not assigned or owner of this order.' }, { status: 403 });
-      }
-
-      const nowIso = new Date().toISOString();
-      const clientEmail = (orderData?.client_email || user.email || '').toLowerCase().trim();
-      const clientName = orderData?.client_name || user.user_metadata?.full_name || 'Client';
-      const orderTitle = orderData?.title || payload.order_title || `Order #${payload.order_id}`;
-
-      const senderRole = isAdmin ? 'admin' : (isAssignedWorker ? 'worker' : 'client');
-      const senderName = isAdmin 
-        ? (payload.sender_name || 'Production Admin')
-        : (isAssignedWorker 
-            ? (payload.sender_name || workerData?.name || user.user_metadata?.full_name || 'Assigned Digitizer')
-            : (payload.sender_name || user.user_metadata?.full_name || clientName)
-          );
-
-      const safeMessagePayload = {
-        order_id: payload.order_id,
-        sender: senderRole,
-        sender_name: senderName,
-        sender_role: senderRole,
-        is_staff: isAdmin,
-        message: payload.message || payload.text || '',
-        attachment: payload.attachment || payload.attachment_name || null,
-        attachment_url: payload.attachment_url || payload.attachmentUrl || null,
-        attachment_name: payload.attachment_name || payload.attachmentName || null,
-        attachment_size: payload.attachment_size || payload.attachmentSize || null,
-        is_read: false,
-        created_at: nowIso
-      };
-
-      const { data: insertedMsg, error: insertErr } = await supabase
-        .from('order_messages')
-        .insert([safeMessagePayload])
-        .select()
-        .single();
-      if (insertErr) throw insertErr;
-
-      // Mirror to messages & conversations for unified real-time chat sync
-      try {
-        const convId = `order-${payload.order_id}`;
-        const { data: existingConv } = await supabase
-          .from('conversations')
-          .select('admin_unread_count, client_unread_count, unread_count')
-          .eq('id', convId)
-          .maybeSingle();
-
-        const newAdminUnread = isAdmin ? 0 : ((existingConv?.admin_unread_count || 0) + 1);
-        const newClientUnread = isAdmin ? ((existingConv?.client_unread_count || 0) + 1) : 0;
-
-        await supabase.from('conversations').upsert({
-          id: convId,
-          order_id: payload.order_id,
-          order_title: orderTitle,
-          client_email: clientEmail,
-          client_name: clientName,
-          status: 'online',
-          unread_count: newAdminUnread,
-          admin_unread_count: newAdminUnread,
-          client_unread_count: newClientUnread,
-          last_message: safeMessagePayload.message,
-          last_message_time: nowIso,
-          updated_at: nowIso
-        }, { onConflict: 'id' });
-
-        await supabase.from('messages').insert({
-          id: `msg-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
-          conversation_id: convId,
-          thread_id: convId,
-          sender: senderRole,
-          sender_name: senderName,
-          text: safeMessagePayload.message,
-          attachment: safeMessagePayload.attachment,
-          attachment_url: safeMessagePayload.attachment_url,
-          attachment_name: safeMessagePayload.attachment_name,
-          is_read: false,
-          timestamp: nowIso,
-          created_at: nowIso
-        });
-      } catch (convErr) {
-        console.warn('Mirror order message to chat notice:', convErr);
-      }
-
-      return NextResponse.json({ success: true, message: insertedMsg || safeMessagePayload });
-    }
-
-    if (action === 'fetchOrderMessages') {
-      if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-      const orderId = payload.orderId || payload.order_id;
-      if (!orderId) return NextResponse.json({ error: 'Order ID is required' }, { status: 400 });
-
-      const { data: orderData, error: orderError } = await supabase
-        .from('orders')
-        .select('client_email, user_id, worker_id')
-        .eq('id', orderId)
-        .maybeSingle();
-
-      if (orderError || !orderData) {
-        return NextResponse.json({ error: 'Order not found' }, { status: 404 });
-      }
-
-      const isAssignedWorker = Boolean(
-        isWorker && (
-          (orderData.worker_id && orderData.worker_id === user.id) ||
-          (orderData.worker_id && workerData?.id && orderData.worker_id === workerData.id)
-        )
-      );
-
-      const isOrderClient = Boolean(
-        user.email && (
-          (orderData.client_email && orderData.client_email.toLowerCase().trim() === user.email.toLowerCase().trim()) ||
-          (orderData.user_id && orderData.user_id === user.id)
-        )
-      );
-
-      if (!isAdmin && !isAssignedWorker && !isOrderClient) {
-        return NextResponse.json({ error: 'Unauthorized to view messages for this order' }, { status: 403 });
-      }
-
-      const { data: msgs, error: msgsErr } = await supabase
-        .from('order_messages')
-        .select('*')
-        .eq('order_id', orderId)
-        .order('created_at', { ascending: true });
-
-      if (msgsErr) throw msgsErr;
-      return NextResponse.json({ success: true, messages: msgs || [] });
-    }
     
     if (action === 'requestRevision') {
       if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -1104,36 +937,6 @@ export async function POST(request) {
         console.warn('order_files worker upload insert notice:', fileErr.message);
       }
 
-      // Post a message to order_messages so Admin sees submission in Discussion tab
-      try {
-        const fileListText = allFiles.length > 1
-          ? `${allFiles.length} files submitted: ${allFiles.map(f => f.name).join(', ')}`
-          : `File submitted: ${resolvedName}`;
-        const submitMsgText = `✅ Production files delivered for review. ${fileListText}${notes ? `\n\nProduction notes: ${notes}` : ''}`;
-        await supabase.from('order_messages').insert([{
-          order_id: orderId,
-          sender: 'worker',
-          sender_name: 'Assigned Artist',
-          sender_role: 'worker',
-          is_staff: false,
-          message: submitMsgText,
-          is_read: false,
-          created_at: nowIso
-        }]);
-        // Mirror to conversations unread count
-        const convId = `order-${orderId}`;
-        await supabase.from('conversations').upsert({
-          id: convId,
-          order_id: orderId,
-          last_message: submitMsgText,
-          last_message_time: nowIso,
-          admin_unread_count: 1,
-          updated_at: nowIso
-        }, { onConflict: 'id' });
-      } catch (msgErr) {
-        console.warn('Worker submit order_messages notice:', msgErr.message);
-      }
-
       // Dispatch notification to Admin
       try {
         await supabase.from('notifications').insert([{
@@ -1243,22 +1046,6 @@ export async function POST(request) {
           console.warn('Approval notifications notice:', notifErr.message);
         }
 
-        // Post approval message to order Discussion thread
-        try {
-          await supabase.from('order_messages').insert([{
-            order_id: orderId,
-            sender: 'admin',
-            sender_name: 'Production Manager',
-            sender_role: 'admin',
-            is_staff: true,
-            message: '✅ Quality inspection passed. Your production files have been approved and delivered to the client. Great work!',
-            is_read: false,
-            created_at: nowIso
-          }]);
-        } catch (msgErr) {
-          console.warn('Approval order_messages notice:', msgErr.message);
-        }
-
         return NextResponse.json({ success: true, worker_status: 'Completed', status: 'delivered' });
       } else if (decision === 'revision') {
         // Send back for revision
@@ -1275,32 +1062,6 @@ export async function POST(request) {
           .eq('id', orderId);
 
         if (updateErr) throw updateErr;
-
-        // Post revision feedback to order_messages so worker sees it in Discussion tab
-        try {
-          const revMsgText = `🔄 **Revision Required**\n\n${feedbackNotes || 'Admin has requested modifications. Please review the requirements and submit updated files.'}`;
-          await supabase.from('order_messages').insert([{
-            order_id: orderId,
-            sender: 'admin',
-            sender_name: 'Production Manager',
-            sender_role: 'admin',
-            is_staff: true,
-            message: revMsgText,
-            is_read: false,
-            created_at: nowIso
-          }]);
-          // Mirror to conversations so worker gets notification
-          const convId = `order-${orderId}`;
-          await supabase.from('conversations').upsert({
-            id: convId,
-            order_id: orderId,
-            last_message: revMsgText,
-            last_message_time: nowIso,
-            updated_at: nowIso
-          }, { onConflict: 'id' });
-        } catch (msgErr) {
-          console.warn('Revision order_messages notice:', msgErr.message);
-        }
 
         // Notify worker
         try {
