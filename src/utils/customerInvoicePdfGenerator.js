@@ -1,16 +1,9 @@
 'use client';
 
 /**
- * VIP International Commercial Tax Invoice PDF Generator
- * Conforms to US (IRS), UK (HMRC), EU (VAT Directive), Canada (CRA), and Australian (ATO)
- * international commercial invoicing and business expense standards.
- * 
- * Features:
- * - Deterministic international invoice numbering
- * - Itemized service and turnaround specifications
- * - Cross-border B2B digital export tax exemption classification
- * - System-generated electronic signature exemption clause (US E-SIGN 15 U.S.C. § 7001, EU eIDAS No 910/2014, UETA)
- * - Dynamic jsPDF + jspdf-autotable loading with CDN fallback
+ * VIP International Commercial Tax Invoice PDF Generator (Clean & Minimalist)
+ * Produces a sleek, executive 1-page commercial invoice with essential billing details
+ * and a concise international system-generated signature exemption notice.
  */
 
 export function formatOrderId(id) {
@@ -22,7 +15,7 @@ export function formatOrderId(id) {
 export function generateInvoiceNumber(order) {
   if (!order) return `INV-BD-${Date.now().toString().slice(-6)}`;
   const orderId = String(order.id || '').replace(/^#+/, '').replace(/^ORD-/i, '');
-  const cleanId = orderId.slice(0, 8).toUpperCase() || '00000000';
+  const cleanId = orderId.slice(0, 8).toUpperCase() || '0000';
   const orderYear = order.createdAt || order.created_at ? new Date(order.createdAt || order.created_at).getFullYear() : new Date().getFullYear();
   return `INV-BD-${orderYear}-${cleanId}`;
 }
@@ -30,9 +23,9 @@ export function generateInvoiceNumber(order) {
 export function getOrderServiceTitle(order) {
   if (!order) return 'Commercial Embroidery Digitizing';
   const cat = String(order.serviceCategory || order.service_category || order.type || order.serviceType || '').toLowerCase();
-  if (cat.includes('vector')) return 'Vector Graphic Conversion & Artwork Tracing';
-  if (cat.includes('patch')) return 'Manufactured Custom Physical Patches';
-  return 'Commercial Embroidery Digitizing';
+  if (cat.includes('vector')) return 'Vector Art Tracing';
+  if (cat.includes('patch')) return 'Custom Patches';
+  return 'Embroidery Digitizing';
 }
 
 export function getOrderFormatsString(order) {
@@ -43,9 +36,9 @@ export function getOrderFormatsString(order) {
     return order.requested_formats.map(f => String(f).toUpperCase()).join(', ');
   }
   const cat = String(order?.serviceCategory || order?.service_category || order?.type || '').toLowerCase();
-  if (cat.includes('vector')) return 'AI, EPS, SVG, High-Res PDF';
-  if (cat.includes('patch')) return 'Physical Goods • Velcro / Iron-On Backing';
-  return 'DST, PES, EMB (Wilcom Source), Production PDF';
+  if (cat.includes('vector')) return 'AI, EPS, SVG, PDF';
+  if (cat.includes('patch')) return 'Physical Goods';
+  return 'DST, PES, EMB';
 }
 
 export function getOrderTurnaroundTier(order) {
@@ -58,7 +51,7 @@ export function getOrderTurnaroundTier(order) {
     String(order?.notes || '').toLowerCase().includes('rush') ||
     String(order?.title || '').toLowerCase().includes('rush')
   );
-  return isRush ? 'Express Priority Rush (4-8 Hours)' : 'Standard Studio Turnaround (12-24 Hours)';
+  return isRush ? 'Rush (4-8 hr)' : 'Standard (12-24 hr)';
 }
 
 export function getOrderPriceNumeric(order) {
@@ -98,7 +91,6 @@ async function loadJsPdf() {
     } catch {}
     return { jsPDF, autoTable };
   } catch {
-    // Dynamic CDN fallback if bundling issue occurs
     if (window.jspdf && window.jspdf.jsPDF) {
       return { 
         jsPDF: window.jspdf.jsPDF, 
@@ -148,337 +140,240 @@ export async function generateCustomerTaxInvoicePdf({
     format: 'a4'
   });
 
-  // Palette & Standards
-  const navyDark = [15, 23, 42];        // #0f172a
-  const orangeBrand = [234, 88, 12];    // #ea580c
-  const greenEmerald = [16, 185, 129];  // #10b981
-  const slateText = [71, 85, 105];      // #475569
-  const slateMuted = [148, 163, 184];   // #94a3b8
-  const lightBg = [248, 250, 252];      // #f8fafc
-  const borderLight = [226, 232, 240];  // #e2e8f0
+  // Color Palette
+  const primaryNavy = [15, 23, 42];     // #0f172a
+  const brandOrange = [234, 88, 12];     // #ea580c
+  const paidGreen = [16, 185, 129];      // #10b981
+  const textDark = [30, 41, 59];         // #1e293b
+  const textMuted = [100, 116, 139];     // #64748b
+  const borderLight = [226, 232, 240];   // #e2e8f0
 
   const isPaid = isOrderPaidStatus(order);
   const invoiceNumber = generateInvoiceNumber(order);
   const price = getOrderPriceNumeric(order);
   const serviceTitle = getOrderServiceTitle(order);
   const formatsString = getOrderFormatsString(order);
-  const turnaroundTier = getOrderTurnaroundTier(order);
 
-  // Client Details
-  const clientName = client?.name || order?.client_name || order?.clientName || 'Commercial Client';
-  const clientCompany = client?.company || order?.client_company || order?.company || 'Corporate Design Account';
-  const clientEmail = client?.email || order?.client_email || order?.clientEmail || 'client@studio.com';
+  const clientName = client?.name || order?.client_name || order?.clientName || 'Valued Client';
+  const clientCompany = client?.company || order?.client_company || order?.company || '';
+  const clientEmail = client?.email || order?.client_email || order?.clientEmail || '';
 
   const orderDateRaw = order?.createdAt || order?.created_at || new Date();
   const issueDateFormatted = new Date(orderDateRaw).toLocaleDateString('en-US', {
-    month: 'long',
+    month: 'short',
     day: 'numeric',
     year: 'numeric'
   });
 
-  const paymentDateFormatted = order?.paid_at ? new Date(order.paid_at).toLocaleDateString('en-US', {
-    month: 'long',
-    day: 'numeric',
-    year: 'numeric'
-  }) : issueDateFormatted;
+  // Top Accent Stripe
+  doc.setFillColor(...brandOrange);
+  doc.rect(0, 0, 210, 4, 'F');
 
-  // 1. Top Decorative Brand Stripes
-  doc.setFillColor(...orangeBrand);
-  doc.rect(0, 0, 210, 4.5, 'F');
-
-  // 2. Official Header Section
-  doc.setFillColor(...navyDark);
-  doc.rect(0, 4.5, 210, 36, 'F');
-
-  // Studio Identity (Left)
-  doc.setTextColor(255, 255, 255);
+  // Header Left: Studio Brand
+  doc.setTextColor(...primaryNavy);
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(21);
-  doc.text('BILAL DIGITIZING', 14, 18);
+  doc.setFontSize(22);
+  doc.text('BILAL DIGITIZING', 16, 20);
 
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(8.5);
-  doc.setTextColor(203, 213, 225);
-  doc.text('Commercial Embroidery Digitizing & Vector Graphics Studio', 14, 24);
-  doc.text('International Cross-Border Digital Services Desk • Tax Reg ID: BD-INTL-TAX-984210', 14, 29);
-  doc.text('Web: www.bilaldigitizing.com • Email: billing@bilaldigitizing.com', 14, 34);
+  doc.setTextColor(...textMuted);
+  doc.text('Commercial Embroidery Digitizing & Vector Art', 16, 26);
+  doc.text('billing@bilaldigitizing.com • www.bilaldigitizing.com', 16, 31);
 
-  // Invoice Title & Status Badge (Right)
+  // Header Right: Invoice Title & Status
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(13);
-  doc.setTextColor(isPaid ? 52 : 251, isPaid ? 211 : 146, isPaid ? 153 : 60); // Emerald or Orange light
-  doc.text(isPaid ? 'COMMERCIAL TAX INVOICE' : 'COMMERCIAL PRO FORMA INVOICE', 210 - 14, 18, { align: 'right' });
+  doc.setFontSize(16);
+  doc.setTextColor(...primaryNavy);
+  doc.text('TAX INVOICE', 210 - 16, 20, { align: 'right' });
 
   doc.setFont('helvetica', 'normal');
-  doc.setFontSize(8.5);
-  doc.setTextColor(241, 245, 249);
-  doc.text(`DOCUMENT #: ${invoiceNumber}`, 210 - 14, 24, { align: 'right' });
+  doc.setFontSize(9);
+  doc.setTextColor(...textMuted);
+  doc.text(`Invoice: ${invoiceNumber}`, 210 - 16, 26, { align: 'right' });
+  doc.text(`Date: ${issueDateFormatted}`, 210 - 16, 31, { align: 'right' });
 
-  // Paid Status Pill on Top Right
+  // Paid / Unpaid Pill on top right
   if (isPaid) {
-    doc.setFillColor(...greenEmerald);
-    doc.roundedRect(210 - 14 - 38, 28, 38, 6.5, 1.5, 1.5, 'F');
+    doc.setFillColor(...paidGreen);
+    doc.roundedRect(210 - 16 - 28, 35, 28, 6, 1.5, 1.5, 'F');
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(7.5);
+    doc.setFontSize(8);
     doc.setTextColor(255, 255, 255);
-    doc.text('✓ PAID IN FULL', 210 - 14 - 19, 32.5, { align: 'center' });
+    doc.text('✓ PAID', 210 - 16 - 14, 39.2, { align: 'center' });
   } else {
-    doc.setFillColor(...orangeBrand);
-    doc.roundedRect(210 - 14 - 38, 28, 38, 6.5, 1.5, 1.5, 'F');
+    doc.setFillColor(...brandOrange);
+    doc.roundedRect(210 - 16 - 32, 35, 32, 6, 1.5, 1.5, 'F');
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(7.5);
+    doc.setFontSize(8);
     doc.setTextColor(255, 255, 255);
-    doc.text('⏳ PAYMENT PENDING', 210 - 14 - 19, 32.5, { align: 'center' });
+    doc.text('DUE / UNPAID', 210 - 16 - 16, 39.2, { align: 'center' });
   }
 
-  // 3. Bill-To & Metadata Summary Cards (Two-Column Grid)
-  const metaBoxY = 46;
-  const metaBoxHeight = 38;
-
-  // Left Box: Customer / Bill-To
-  doc.setFillColor(...lightBg);
-  doc.roundedRect(14, metaBoxY, 88, metaBoxHeight, 2.5, 2.5, 'F');
+  // Divider
   doc.setDrawColor(...borderLight);
   doc.setLineWidth(0.4);
-  doc.roundedRect(14, metaBoxY, 88, metaBoxHeight, 2.5, 2.5, 'S');
+  doc.line(16, 44, 210 - 16, 44);
 
+  // Bill To & Order Summary (Clean 2-Column Text)
+  const infoY = 52;
+  
+  // Left: Bill To
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(8);
-  doc.setTextColor(...orangeBrand);
-  doc.text('BILL TO (CLIENT / ORGANIZATION):', 18, metaBoxY + 7);
+  doc.setTextColor(...brandOrange);
+  doc.text('BILLED TO', 16, infoY);
 
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(10.5);
-  doc.setTextColor(...navyDark);
-  doc.text(String(clientName).slice(0, 34), 18, metaBoxY + 14);
+  doc.setTextColor(...primaryNavy);
+  doc.text(String(clientName).slice(0, 36), 16, infoY + 6);
 
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(8.5);
-  doc.setTextColor(...slateText);
-  doc.text(`Company: ${String(clientCompany).slice(0, 32)}`, 18, metaBoxY + 20);
-  doc.text(`Email: ${String(clientEmail).slice(0, 36)}`, 18, metaBoxY + 25.5);
-  doc.text('Account Type: Verified Commercial Client (International B2B)', 18, metaBoxY + 31);
+  doc.setTextColor(...textMuted);
+  let currentY = infoY + 11;
+  if (clientCompany) {
+    doc.text(clientCompany, 16, currentY);
+    currentY += 5;
+  }
+  if (clientEmail) {
+    doc.text(clientEmail, 16, currentY);
+  }
 
-  // Right Box: Transaction & Invoice Specifications
-  doc.setFillColor(...lightBg);
-  doc.roundedRect(108, metaBoxY, 88, metaBoxHeight, 2.5, 2.5, 'F');
-  doc.setDrawColor(...borderLight);
-  doc.setLineWidth(0.4);
-  doc.roundedRect(108, metaBoxY, 88, metaBoxHeight, 2.5, 2.5, 'S');
-
+  // Right: Order Reference
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(8);
-  doc.setTextColor(...orangeBrand);
-  doc.text('INVOICE & TAX SPECIFICATIONS:', 112, metaBoxY + 7);
+  doc.setTextColor(...brandOrange);
+  doc.text('ORDER DETAILS', 125, infoY);
 
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(8.5);
-  doc.setTextColor(...slateText);
-  doc.text('Issue Date:', 112, metaBoxY + 14);
+  doc.setTextColor(...textMuted);
+  doc.text('Order ID:', 125, infoY + 6);
   doc.setFont('helvetica', 'bold');
-  doc.setTextColor(...navyDark);
-  doc.text(issueDateFormatted, 150, metaBoxY + 14);
+  doc.setTextColor(...primaryNavy);
+  doc.text(formatOrderId(order?.id), 155, infoY + 6);
 
   doc.setFont('helvetica', 'normal');
-  doc.setTextColor(...slateText);
-  doc.text('Order Reference ID:', 112, metaBoxY + 20);
+  doc.setTextColor(...textMuted);
+  doc.text('Status:', 125, infoY + 11);
   doc.setFont('helvetica', 'bold');
-  doc.setTextColor(...navyDark);
-  doc.text(formatOrderId(order?.id), 150, metaBoxY + 20);
+  doc.setTextColor(...(isPaid ? paidGreen : brandOrange));
+  doc.text(isPaid ? 'Paid in Full' : 'Awaiting Payment', 155, infoY + 11);
 
   doc.setFont('helvetica', 'normal');
-  doc.setTextColor(...slateText);
-  doc.text('Settlement Status:', 112, metaBoxY + 25.5);
+  doc.setTextColor(...textMuted);
+  doc.text('Currency:', 125, infoY + 16);
   doc.setFont('helvetica', 'bold');
-  doc.setTextColor(...(isPaid ? greenEmerald : orangeBrand));
-  doc.text(isPaid ? `Settled (${paymentDateFormatted})` : 'Awaiting Payment', 150, metaBoxY + 25.5);
+  doc.setTextColor(...primaryNavy);
+  doc.text('USD ($)', 155, infoY + 16);
 
-  doc.setFont('helvetica', 'normal');
-  doc.setTextColor(...slateText);
-  doc.text('Billing Currency:', 112, metaBoxY + 31);
-  doc.setFont('helvetica', 'bold');
-  doc.setTextColor(...navyDark);
-  doc.text('USD ($) — United States Dollar', 150, metaBoxY + 31);
-
-  // 4. Itemized Service Breakdown Table
-  const tableStartY = 90;
+  // Items Table
+  const tableStartY = 74;
+  const itemTitle = order?.title ? `${serviceTitle} — ${order.title}` : serviceTitle;
+  
   const tableRows = [
     [
       '1',
-      `${serviceTitle}\nDesign Title: ${order?.title || 'Custom Client Design'}\nSpecifications: ${formatsString}`,
-      turnaroundTier,
+      itemTitle,
+      formatsString,
       '1',
-      `$${price.toFixed(2)} USD`,
-      `$${price.toFixed(2)} USD`
+      `$${price.toFixed(2)}`,
+      `$${price.toFixed(2)}`
     ]
   ];
 
-  let finalTableY = 120;
+  let finalY = 105;
 
   if (doc.autoTable) {
     doc.autoTable({
       startY: tableStartY,
-      head: [['#', 'SERVICE DESCRIPTION & SPECIFICATIONS', 'TURNAROUND TIER', 'QTY', 'UNIT RATE', 'AMOUNT (USD)']],
+      head: [['#', 'DESCRIPTION', 'FORMATS', 'QTY', 'PRICE', 'TOTAL (USD)']],
       body: tableRows,
-      theme: 'grid',
+      theme: 'plain',
       headStyles: {
-        fillColor: [15, 23, 42],
-        textColor: [255, 255, 255],
+        fillColor: [248, 250, 252],
+        textColor: [15, 23, 42],
         fontSize: 8,
         fontStyle: 'bold',
         halign: 'left'
       },
       columnStyles: {
-        0: { cellWidth: 10, halign: 'center' },
-        1: { cellWidth: 84 },
-        2: { cellWidth: 36, fontSize: 8 },
-        3: { cellWidth: 12, halign: 'center' },
-        4: { cellWidth: 24, halign: 'right' },
-        5: { cellWidth: 26, halign: 'right', fontStyle: 'bold' }
+        0: { cellWidth: 10, halign: 'center', textColor: textMuted },
+        1: { cellWidth: 86, fontStyle: 'bold', textColor: primaryNavy },
+        2: { cellWidth: 40, textColor: textMuted, fontSize: 8 },
+        3: { cellWidth: 12, halign: 'center', textColor: textDark },
+        4: { cellWidth: 20, halign: 'right', textColor: textMuted },
+        5: { cellWidth: 20, halign: 'right', fontStyle: 'bold', textColor: primaryNavy }
       },
       styles: {
         fontSize: 8.5,
-        cellPadding: 3.5,
-        overflow: 'linebreak',
+        cellPadding: 4,
         lineColor: [226, 232, 240],
-        lineWidth: 0.3
+        lineWidth: { bottom: 0.3 }
       },
-      alternateRowStyles: {
-        fillColor: [248, 250, 252]
-      },
-      margin: { left: 14, right: 14 }
+      margin: { left: 16, right: 16 }
     });
 
-    finalTableY = doc.lastAutoTable?.finalY ? doc.lastAutoTable.finalY + 8 : 130;
-  } else {
-    // Manual table rendering fallback
-    doc.setFontSize(9);
-    doc.setFont('helvetica', 'bold');
-    doc.text('Service Items:', 14, tableStartY);
-    doc.setFont('helvetica', 'normal');
-    doc.text(`1. ${serviceTitle} — ${order?.title || 'Design'} — $${price.toFixed(2)} USD`, 14, tableStartY + 6);
-    finalTableY = tableStartY + 16;
+    finalY = doc.lastAutoTable?.finalY ? doc.lastAutoTable.finalY + 8 : 105;
   }
 
-  // 5. Financial & Tax Calculation Summary (Right Side Box)
-  const summaryBoxWidth = 85;
-  const summaryBoxX = 210 - 14 - summaryBoxWidth;
-  const summaryBoxY = finalTableY;
+  // Summary (Clean Right-Aligned)
+  const sumX = 140;
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9);
+  doc.setTextColor(...textMuted);
+  doc.text('Subtotal:', sumX, finalY);
+  doc.setTextColor(...primaryNavy);
+  doc.setFont('helvetica', 'bold');
+  doc.text(`$${price.toFixed(2)}`, 210 - 16, finalY, { align: 'right' });
 
-  doc.setFillColor(...lightBg);
-  doc.roundedRect(summaryBoxX, summaryBoxY, summaryBoxWidth, 38, 2.5, 2.5, 'F');
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(...textMuted);
+  doc.text('Tax (0%):', sumX, finalY + 6);
+  doc.text('$0.00', 210 - 16, finalY + 6, { align: 'right' });
+
   doc.setDrawColor(...borderLight);
   doc.setLineWidth(0.4);
-  doc.roundedRect(summaryBoxX, summaryBoxY, summaryBoxWidth, 38, 2.5, 2.5, 'S');
-
-  // Subtotal
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(8.5);
-  doc.setTextColor(...slateText);
-  doc.text('Subtotal:', summaryBoxX + 6, summaryBoxY + 8);
-  doc.setFont('helvetica', 'bold');
-  doc.setTextColor(...navyDark);
-  doc.text(`$${price.toFixed(2)} USD`, summaryBoxX + summaryBoxWidth - 6, summaryBoxY + 8, { align: 'right' });
-
-  // Tax Exemption Line (0% Cross Border B2B Digital Export)
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(8);
-  doc.setTextColor(...slateText);
-  doc.text('Sales Tax / VAT (0.00%):', summaryBoxX + 6, summaryBoxY + 15);
-  doc.text('$0.00 USD', summaryBoxX + summaryBoxWidth - 6, summaryBoxY + 15, { align: 'right' });
-
-  doc.setFont('helvetica', 'italic');
-  doc.setFontSize(6.8);
-  doc.setTextColor(...slateMuted);
-  doc.text('* Zero-Rated B2B Digital Export Service', summaryBoxX + 6, summaryBoxY + 20.5);
-
-  // Line separator
-  doc.setDrawColor(...borderLight);
-  doc.line(summaryBoxX + 6, summaryBoxY + 23, summaryBoxX + summaryBoxWidth - 6, summaryBoxY + 23);
-
-  // Grand Total
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(9.5);
-  doc.setTextColor(...navyDark);
-  doc.text(isPaid ? 'TOTAL PAID:' : 'TOTAL AMOUNT DUE:', summaryBoxX + 6, summaryBoxY + 31);
+  doc.line(sumX, finalY + 9, 210 - 16, finalY + 9);
 
   doc.setFont('helvetica', 'bold');
+  doc.setFontSize(11);
+  doc.setTextColor(...primaryNavy);
+  doc.text(isPaid ? 'Total Paid:' : 'Total Due:', sumX, finalY + 16);
   doc.setFontSize(13);
-  doc.setTextColor(...(isPaid ? greenEmerald : orangeBrand));
-  doc.text(`$${price.toFixed(2)} USD`, summaryBoxX + summaryBoxWidth - 6, summaryBoxY + 31, { align: 'right' });
+  doc.setTextColor(...(isPaid ? paidGreen : brandOrange));
+  doc.text(`$${price.toFixed(2)} USD`, 210 - 16, finalY + 16, { align: 'right' });
 
-  // 6. Tax Exemption & Regulatory Context (Left of Summary Box)
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(8);
-  doc.setTextColor(...navyDark);
-  doc.text('TAX CLASSIFICATION & JURISDICTION COMPLIANCE:', 14, summaryBoxY + 7);
-
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(7.5);
-  doc.setTextColor(...slateText);
-  doc.text('• Supply Category: International cross-border digital design services.', 14, summaryBoxY + 13);
-  doc.text('• Cross-Border Treatment: Digital supply exported outside the supplier\'s', 14, summaryBoxY + 18);
-  doc.text('  territory; subject to customer tax reverse-charge where applicable.', 14, summaryBoxY + 22.5);
-  doc.text('• United States: IRS compliant commercial expense substantiation (Pub 583).', 14, summaryBoxY + 27.5);
-  doc.text('• UK / EU: Zero-rated cross-border B2B digital export services under VAT rules.', 14, summaryBoxY + 32);
-
-  // 7. Official VIP Verification Stamp (Rendered if Paid)
-  const stampY = summaryBoxY + 44;
-  if (isPaid) {
-    doc.setDrawColor(...greenEmerald);
-    doc.setLineWidth(0.7);
-    doc.roundedRect(14, stampY, 182, 14, 2, 2, 'S');
-    doc.setFillColor(236, 253, 245); // light emerald
-    doc.roundedRect(14, stampY, 182, 14, 2, 2, 'F');
-
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(8);
-    doc.setTextColor(6, 95, 70); // deep green
-    doc.text('OFFICIAL VERIFIED COMMERCIAL TRANSACTION • ELECTRONIC DESK CLEARANCE', 18, stampY + 5.5);
-
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(7.2);
-    doc.setTextColor(4, 120, 87);
-    doc.text(`Payment received and validated in full for Order ${formatOrderId(order?.id)}. Document Reference: ${invoiceNumber}`, 18, stampY + 10.5);
-  }
-
-  // 8. International Legal Validity & Electronic Signature Exemption (Requested by User)
-  const legalBoxY = isPaid ? stampY + 18 : summaryBoxY + 44;
-  
-  doc.setFillColor(241, 245, 249);
-  doc.roundedRect(14, legalBoxY, 182, 26, 2, 2, 'F');
+  // Minimalist 1-Sentence System-Generated & International Validity Note
+  const noteBoxY = finalY + 30;
+  doc.setFillColor(248, 250, 252);
+  doc.roundedRect(16, noteBoxY, 210 - 32, 16, 2, 2, 'F');
   doc.setDrawColor(...borderLight);
-  doc.setLineWidth(0.4);
-  doc.roundedRect(14, legalBoxY, 182, 26, 2, 2, 'S');
+  doc.setLineWidth(0.3);
+  doc.roundedRect(16, noteBoxY, 210 - 32, 16, 2, 2, 'S');
 
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(7.5);
-  doc.setTextColor(...navyDark);
-  doc.text('SYSTEM-GENERATED DOCUMENT — LEGAL VALIDITY & SIGNATURE EXEMPTION DECLARATION:', 18, legalBoxY + 5.5);
+  doc.setTextColor(...primaryNavy);
+  doc.text('✓ SYSTEM-GENERATED INVOICE — NO SIGNATURE OR STAMP REQUIRED', 20, noteBoxY + 6);
 
   doc.setFont('helvetica', 'normal');
-  doc.setFontSize(6.8);
-  doc.setTextColor(...slateText);
-  
-  const legalP1 = 'This document is an authentic commercial tax invoice generated automatically by the Bilal Digitizing billing system. Under the Electronic Signatures in Global and National Commerce Act (E-SIGN Act, 15 U.S.C. § 7001 - United States), the Uniform Electronic Transactions Act (UETA), the European Union Electronic Identification and Trust Services Regulation (eIDAS Regulation EU No 910/2014), and UNCITRAL Model Law on Electronic Commerce, this electronically authenticated invoice does not require a physical signature, company stamp, or seal to be legally binding.';
-  
-  const legalP2 = 'Valid for corporate tax deductions, VAT/sales tax input credits, IRS expense substantiation, and international audit compliance across the United States of America, Canada, United Kingdom, European Union, Australia, and worldwide.';
-
-  doc.text(doc.splitTextToSize(legalP1, 174), 18, legalBoxY + 10.5);
-  doc.setFont('helvetica', 'bold');
-  doc.text(doc.splitTextToSize(legalP2, 174), 18, legalBoxY + 21);
-
-  // 9. Page Footer
-  doc.setFont('helvetica', 'italic');
   doc.setFontSize(7);
-  doc.setTextColor(...slateMuted);
-  const nowStr = new Date().toLocaleString('en-US');
-  doc.text(`Generated on ${nowStr} • Electronic Record ID: ${invoiceNumber}`, 14, 287);
-  doc.text('Bilal Digitizing — International Commercial Billing Infrastructure • Page 1 of 1', 210 - 14, 287, { align: 'right' });
+  doc.setTextColor(...textMuted);
+  doc.text('Valid for business expense deduction & tax accounting worldwide (US E-SIGN Act, EU eIDAS & international rules).', 20, noteBoxY + 11.5);
 
-  // Generate Binary Blob & Return Handlers
+  // Footer
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(7.5);
+  doc.setTextColor(...textMuted);
+  doc.text(`Record ID: ${invoiceNumber} • Thank you for your business!`, 16, 285);
+  doc.text('Bilal Digitizing Commercial Studio', 210 - 16, 285, { align: 'right' });
+
+  // Generate Blob and Filename
   const blob = doc.output('blob');
-  const filename = `${invoiceNumber}_Tax_Invoice.pdf`;
+  const filename = `${invoiceNumber}_Invoice.pdf`;
 
   const downloadPdf = () => {
     doc.save(filename);

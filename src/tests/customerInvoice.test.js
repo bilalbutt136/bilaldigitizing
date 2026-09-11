@@ -29,9 +29,9 @@ describe('Customer Tax Invoice Generator & Legal Compliance', () => {
   });
 
   test('getOrderServiceTitle correctly resolves commercial service descriptions', () => {
-    assert.equal(getOrderServiceTitle({ serviceCategory: 'vector' }), 'Vector Graphic Conversion & Artwork Tracing');
-    assert.equal(getOrderServiceTitle({ type: 'patch' }), 'Manufactured Custom Physical Patches');
-    assert.equal(getOrderServiceTitle({ serviceCategory: 'embroidery' }), 'Commercial Embroidery Digitizing');
+    assert.equal(getOrderServiceTitle({ serviceCategory: 'vector' }), 'Vector Art Tracing');
+    assert.equal(getOrderServiceTitle({ type: 'patch' }), 'Custom Patches');
+    assert.equal(getOrderServiceTitle({ serviceCategory: 'embroidery' }), 'Embroidery Digitizing');
     assert.equal(getOrderServiceTitle(null), 'Commercial Embroidery Digitizing');
   });
 
@@ -42,26 +42,26 @@ describe('Customer Tax Invoice Generator & Legal Compliance', () => {
     );
     assert.equal(
       getOrderFormatsString({ serviceCategory: 'vector' }),
-      'AI, EPS, SVG, High-Res PDF'
+      'AI, EPS, SVG, PDF'
     );
     assert.equal(
       getOrderFormatsString({ serviceCategory: 'patch' }),
-      'Physical Goods • Velcro / Iron-On Backing'
+      'Physical Goods'
     );
   });
 
   test('getOrderTurnaroundTier accurately determines turnaround priority', () => {
     assert.equal(
       getOrderTurnaroundTier({ isRush: true }),
-      'Express Priority Rush (4-8 Hours)'
+      'Rush (4-8 hr)'
     );
     assert.equal(
       getOrderTurnaroundTier({ turnaround: '2-4 hours' }),
-      'Express Priority Rush (4-8 Hours)'
+      'Rush (4-8 hr)'
     );
     assert.equal(
       getOrderTurnaroundTier({ isRush: false }),
-      'Standard Studio Turnaround (12-24 Hours)'
+      'Standard (12-24 hr)'
     );
   });
 

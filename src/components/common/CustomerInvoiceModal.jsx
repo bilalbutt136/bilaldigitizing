@@ -7,13 +7,10 @@ import {
   Printer, 
   FileText, 
   CheckCircle2, 
-  ShieldCheck, 
   Clock, 
   Copy, 
   Check, 
-  ExternalLink,
-  Layers,
-  Sparkles
+  ShieldCheck
 } from 'lucide-react';
 import { 
   generateCustomerTaxInvoicePdf, 
@@ -21,7 +18,6 @@ import {
   formatOrderId, 
   getOrderServiceTitle, 
   getOrderFormatsString, 
-  getOrderTurnaroundTier, 
   getOrderPriceNumeric, 
   isOrderPaidStatus 
 } from '../../utils/customerInvoicePdfGenerator';
@@ -58,21 +54,20 @@ export const CustomerInvoiceModal = ({
   const price = getOrderPriceNumeric(order);
   const serviceTitle = getOrderServiceTitle(order);
   const formatsString = getOrderFormatsString(order);
-  const turnaroundTier = getOrderTurnaroundTier(order);
 
-  const clientName = client?.name || order?.client_name || order?.clientName || 'Commercial Client';
-  const clientCompany = client?.company || order?.client_company || order?.company || 'Corporate Design Account';
-  const clientEmail = client?.email || order?.client_email || order?.clientEmail || 'client@studio.com';
+  const clientName = client?.name || order?.client_name || order?.clientName || 'Valued Client';
+  const clientCompany = client?.company || order?.client_company || order?.company || '';
+  const clientEmail = client?.email || order?.client_email || order?.clientEmail || '';
 
   const orderDateRaw = order?.createdAt || order?.created_at || new Date();
   const issueDateFormatted = new Date(orderDateRaw).toLocaleDateString('en-US', {
-    month: 'long',
+    month: 'short',
     day: 'numeric',
     year: 'numeric'
   });
 
   const paymentDateFormatted = order?.paid_at ? new Date(order.paid_at).toLocaleDateString('en-US', {
-    month: 'long',
+    month: 'short',
     day: 'numeric',
     year: 'numeric'
   }) : issueDateFormatted;
@@ -110,7 +105,7 @@ export const CustomerInvoiceModal = ({
         position: 'fixed',
         inset: 0,
         zIndex: 999999,
-        background: 'rgba(15, 23, 42, 0.86)',
+        background: 'rgba(15, 23, 42, 0.82)',
         backdropFilter: 'blur(8px)',
         display: 'flex',
         alignItems: 'center',
@@ -124,47 +119,47 @@ export const CustomerInvoiceModal = ({
         onClick={(e) => e.stopPropagation()}
         style={{
           width: '100%',
-          maxWidth: '920px',
-          maxHeight: '94vh',
-          background: 'var(--bg-card, #ffffff)',
-          borderRadius: '18px',
+          maxWidth: '820px',
+          maxHeight: '92vh',
+          background: '#ffffff',
+          borderRadius: '16px',
           display: 'flex',
           flexDirection: 'column',
-          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.55)',
-          border: '1px solid var(--border-color, #e2e8f0)',
+          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.45)',
+          border: '1px solid #e2e8f0',
           overflow: 'hidden'
         }}
       >
-        {/* TOP MODAL CONTROLS BAR */}
+        {/* TOP ACTION BAR */}
         <div style={{
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
-          padding: '0.85rem 1.4rem',
-          background: 'var(--bg-surface, #f8fafc)',
-          borderBottom: '1px solid var(--border-color, #e2e8f0)',
+          padding: '0.8rem 1.4rem',
+          background: '#f8fafc',
+          borderBottom: '1px solid #e2e8f0',
           flexShrink: 0
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
             <div style={{
-              width: '32px',
-              height: '32px',
-              borderRadius: '8px',
-              background: 'var(--color-primary-light, rgba(249, 115, 22, 0.12))',
-              color: 'var(--color-primary, #ea580c)',
+              width: '30px',
+              height: '30px',
+              borderRadius: '7px',
+              background: 'rgba(234, 88, 12, 0.1)',
+              color: '#ea580c',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center'
             }}>
-              <FileText size={18} />
+              <FileText size={16} />
             </div>
             <div>
-              <div style={{ fontSize: '0.92rem', fontWeight: 800, color: 'var(--text-main, #0f172a)' }}>
-                International Tax Invoice Preview
-              </div>
-              <div style={{ fontSize: '0.74rem', color: 'var(--text-muted, #64748b)' }}>
+              <span style={{ fontSize: '0.9rem', fontWeight: 800, color: '#0f172a' }}>
+                Commercial Tax Invoice
+              </span>
+              <span style={{ fontSize: '0.75rem', color: '#64748b', marginLeft: '0.5rem' }}>
                 {invoiceNumber}
-              </div>
+              </span>
             </div>
           </div>
 
@@ -174,17 +169,17 @@ export const CustomerInvoiceModal = ({
               onClick={handleCopyInvoiceNumber}
               className="btn btn-outline btn-sm"
               style={{
-                fontSize: '0.78rem',
+                fontSize: '0.76rem',
                 fontWeight: 700,
-                padding: '0.35rem 0.65rem',
-                borderRadius: '8px',
+                padding: '0.32rem 0.65rem',
+                borderRadius: '7px',
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '0.3rem'
               }}
               title="Copy Invoice ID"
             >
-              {hasCopiedId ? <Check size={14} style={{ color: '#10b981' }} /> : <Copy size={14} />}
+              {hasCopiedId ? <Check size={13} style={{ color: '#10b981' }} /> : <Copy size={13} />}
               <span>{hasCopiedId ? 'Copied' : 'Copy ID'}</span>
             </button>
 
@@ -193,17 +188,17 @@ export const CustomerInvoiceModal = ({
               onClick={handlePrint}
               className="btn btn-outline btn-sm"
               style={{
-                fontSize: '0.78rem',
+                fontSize: '0.76rem',
                 fontWeight: 700,
-                padding: '0.35rem 0.75rem',
-                borderRadius: '8px',
+                padding: '0.32rem 0.75rem',
+                borderRadius: '7px',
                 display: 'inline-flex',
                 alignItems: 'center',
-                gap: '0.35rem'
+                gap: '0.3rem'
               }}
-              title="Print official invoice"
+              title="Print Invoice"
             >
-              <Printer size={14} /> Print
+              <Printer size={13} /> Print
             </button>
 
             <button
@@ -212,17 +207,17 @@ export const CustomerInvoiceModal = ({
               disabled={isGeneratingPdf}
               className="btn btn-primary-orange btn-sm"
               style={{
-                fontSize: '0.8rem',
+                fontSize: '0.78rem',
                 fontWeight: 800,
-                padding: '0.4rem 0.95rem',
-                borderRadius: '8px',
+                padding: '0.38rem 0.9rem',
+                borderRadius: '7px',
                 display: 'inline-flex',
                 alignItems: 'center',
-                gap: '0.4rem',
-                boxShadow: '0 4px 12px rgba(249, 115, 22, 0.35)'
+                gap: '0.35rem',
+                boxShadow: '0 3px 10px rgba(234, 88, 12, 0.3)'
               }}
             >
-              <Download size={14} /> {isGeneratingPdf ? 'Generating PDF...' : 'Download Official PDF'}
+              <Download size={13} /> {isGeneratingPdf ? 'Generating...' : 'Download PDF'}
             </button>
 
             <button
@@ -231,271 +226,209 @@ export const CustomerInvoiceModal = ({
               style={{
                 background: 'none',
                 border: 'none',
-                color: 'var(--text-muted, #64748b)',
-                padding: '0.4rem',
+                color: '#64748b',
+                padding: '0.35rem',
                 cursor: 'pointer',
                 borderRadius: '6px',
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'center'
+                justifyContent: 'center',
+                marginLeft: '0.2rem'
               }}
               title="Close (Esc)"
             >
-              <X size={20} />
+              <X size={18} />
             </button>
           </div>
         </div>
 
-        {/* INVOICE PAPER BODY (Scrollable Viewport) */}
+        {/* INVOICE CONTENT (Clean Executive Sheet) */}
         <div 
           className="printable-tax-invoice-sheet"
           style={{
             flex: 1,
             overflowY: 'auto',
-            padding: '1.75rem 2rem',
+            padding: '1.75rem 2.25rem',
             background: '#ffffff',
             color: '#0f172a',
-            fontSize: '0.875rem',
+            fontSize: '0.85rem',
             lineHeight: 1.5,
             boxSizing: 'border-box'
           }}
         >
-          {/* Top Decorative Stripe */}
-          <div style={{ height: '5px', background: 'linear-gradient(90deg, #ea580c 0%, #f97316 50%, #0f172a 100%)', borderRadius: '4px', marginBottom: '1.25rem' }} />
+          {/* Top Brand Accent Line */}
+          <div style={{ height: '4px', background: '#ea580c', borderRadius: '2px', marginBottom: '1.5rem' }} />
 
-          {/* Header Section */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem', borderBottom: '1.5px solid #e2e8f0', paddingBottom: '1.25rem', marginBottom: '1.25rem' }}>
+          {/* Header Row */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem', borderBottom: '1px solid #e2e8f0', paddingBottom: '1.25rem', marginBottom: '1.5rem' }}>
             <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <h1 style={{ margin: 0, fontSize: '1.65rem', fontWeight: 900, color: '#0f172a', letterSpacing: '-0.02em' }}>
-                  BILAL DIGITIZING
-                </h1>
-                <span style={{ background: '#fef3c7', color: '#b45309', border: '1px solid #fde68a', fontSize: '0.68rem', fontWeight: 800, padding: '0.1rem 0.45rem', borderRadius: '4px' }}>
-                  COMMERCIAL STUDIO
-                </span>
-              </div>
-              <p style={{ margin: '0.2rem 0 0', fontSize: '0.84rem', color: '#475569', fontWeight: 600 }}>
-                Commercial Embroidery Digitizing & Vector Graphics Studio
+              <h1 style={{ margin: 0, fontSize: '1.6rem', fontWeight: 900, color: '#0f172a', letterSpacing: '-0.02em' }}>
+                BILAL DIGITIZING
+              </h1>
+              <p style={{ margin: '0.15rem 0 0', fontSize: '0.82rem', color: '#64748b' }}>
+                Commercial Embroidery Digitizing & Vector Art
               </p>
-              <div style={{ fontSize: '0.78rem', color: '#64748b', marginTop: '0.35rem', lineHeight: 1.4 }}>
-                International Digital Services Desk • Tax Reg ID: <strong>BD-INTL-TAX-984210</strong><br />
-                Web: <span style={{ color: '#ea580c' }}>www.bilaldigitizing.com</span> • Support: <span style={{ color: '#ea580c' }}>billing@bilaldigitizing.com</span>
-              </div>
+              <p style={{ margin: '0.1rem 0 0', fontSize: '0.78rem', color: '#94a3b8' }}>
+                billing@bilaldigitizing.com • www.bilaldigitizing.com
+              </p>
             </div>
 
             <div style={{ textAlign: 'right' }}>
-              <div style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '0.35rem',
-                background: isPaid ? '#ecfdf5' : '#fff7ed',
-                color: isPaid ? '#047857' : '#c2410c',
-                border: isPaid ? '1.5px solid #a7f3d0' : '1.5px solid #fed7aa',
-                padding: '0.35rem 0.75rem',
-                borderRadius: '8px',
-                fontWeight: 900,
-                fontSize: '0.82rem',
-                textTransform: 'uppercase',
-                marginBottom: '0.45rem'
-              }}>
-                {isPaid ? <CheckCircle2 size={15} /> : <Clock size={15} />}
-                {isPaid ? 'Commercial Tax Invoice (Paid)' : 'Pro Forma Invoice (Unpaid)'}
+              <div style={{ fontSize: '1.35rem', fontWeight: 900, color: '#0f172a', letterSpacing: '0.02em' }}>
+                TAX INVOICE
               </div>
-              <div style={{ fontSize: '0.8rem', fontWeight: 800, color: '#0f172a' }}>
-                INVOICE #: <span style={{ fontFamily: 'monospace', fontSize: '0.85rem' }}>{invoiceNumber}</span>
+              <div style={{ fontSize: '0.82rem', fontWeight: 700, color: '#475569', marginTop: '0.15rem' }}>
+                {invoiceNumber}
               </div>
-              <div style={{ fontSize: '0.76rem', color: '#64748b', marginTop: '0.15rem' }}>
-                Date of Issue: <strong>{issueDateFormatted}</strong>
+              <div style={{ fontSize: '0.78rem', color: '#64748b', marginTop: '0.1rem' }}>
+                Date: {issueDateFormatted}
+              </div>
+              <div style={{ marginTop: '0.45rem' }}>
+                <span style={{
+                  background: isPaid ? '#ecfdf5' : '#fff7ed',
+                  color: isPaid ? '#047857' : '#c2410c',
+                  border: isPaid ? '1px solid #a7f3d0' : '1px solid #fed7aa',
+                  padding: '0.2rem 0.55rem',
+                  borderRadius: '5px',
+                  fontWeight: 800,
+                  fontSize: '0.72rem',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.25rem'
+                }}>
+                  {isPaid ? <CheckCircle2 size={12} /> : <Clock size={12} />}
+                  {isPaid ? 'PAID' : 'PAYMENT DUE'}
+                </span>
               </div>
             </div>
           </div>
 
-          {/* Two-Column Bill-To & Order Details Card */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1rem', marginBottom: '1.5rem' }}>
+          {/* Billed To & Order Details (Clean 2-Column Text) */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.5rem', marginBottom: '1.75rem' }}>
             
-            {/* Bill-To Box */}
-            <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '1rem' }}>
-              <div style={{ fontSize: '0.72rem', fontWeight: 800, color: '#ea580c', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '0.45rem' }}>
-                Bill To (Client / Entity)
+            {/* Left: Billed To */}
+            <div>
+              <div style={{ fontSize: '0.72rem', fontWeight: 800, color: '#ea580c', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '0.35rem' }}>
+                Billed To
               </div>
-              <div style={{ fontSize: '1rem', fontWeight: 800, color: '#0f172a' }}>
+              <div style={{ fontSize: '0.98rem', fontWeight: 800, color: '#0f172a' }}>
                 {clientName}
               </div>
-              <div style={{ fontSize: '0.82rem', color: '#475569', marginTop: '0.15rem' }}>
-                <strong>Organization:</strong> {clientCompany}
-              </div>
-              <div style={{ fontSize: '0.82rem', color: '#475569', marginTop: '0.15rem' }}>
-                <strong>Email:</strong> {clientEmail}
-              </div>
-              <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '0.4rem', background: '#ffffff', padding: '0.2rem 0.5rem', borderRadius: '4px', border: '1px solid #e2e8f0', display: 'inline-block' }}>
-                Verified Commercial Account • Cross-Border B2B Client
-              </div>
+              {clientCompany && (
+                <div style={{ fontSize: '0.82rem', color: '#475569', marginTop: '0.1rem' }}>
+                  {clientCompany}
+                </div>
+              )}
+              {clientEmail && (
+                <div style={{ fontSize: '0.8rem', color: '#64748b', marginTop: '0.1rem' }}>
+                  {clientEmail}
+                </div>
+              )}
             </div>
 
-            {/* Specifications Box */}
-            <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '1rem' }}>
-              <div style={{ fontSize: '0.72rem', fontWeight: 800, color: '#ea580c', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '0.45rem' }}>
-                Invoice & Order Specifications
+            {/* Right: Order Details */}
+            <div>
+              <div style={{ fontSize: '0.72rem', fontWeight: 800, color: '#ea580c', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '0.35rem' }}>
+                Order Details
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '120px 1fr', rowGap: '0.35rem', fontSize: '0.82rem' }}>
-                <span style={{ color: '#64748b' }}>Order Reference:</span>
+              <div style={{ display: 'grid', gridTemplateColumns: '95px 1fr', rowGap: '0.25rem', fontSize: '0.82rem' }}>
+                <span style={{ color: '#64748b' }}>Order ID:</span>
                 <span style={{ fontWeight: 800, color: '#0f172a' }}>{formatOrderId(order?.id)}</span>
 
-                <span style={{ color: '#64748b' }}>Payment Status:</span>
-                <span style={{ fontWeight: 800, color: isPaid ? '#10b981' : '#f59e0b' }}>
+                <span style={{ color: '#64748b' }}>Payment:</span>
+                <span style={{ fontWeight: 700, color: isPaid ? '#10b981' : '#ea580c' }}>
                   {isPaid ? `Paid in Full (${paymentDateFormatted})` : 'Awaiting Payment'}
                 </span>
 
                 <span style={{ color: '#64748b' }}>Currency:</span>
-                <span style={{ fontWeight: 800, color: '#0f172a' }}>USD ($) — US Dollar</span>
-
-                <span style={{ color: '#64748b' }}>Turnaround Tier:</span>
-                <span style={{ fontWeight: 700, color: '#0f172a' }}>{turnaroundTier}</span>
+                <span style={{ fontWeight: 700, color: '#0f172a' }}>USD ($)</span>
               </div>
             </div>
 
           </div>
 
-          {/* Itemized Services Breakdown Table */}
-          <div style={{ border: '1px solid #e2e8f0', borderRadius: '10px', overflow: 'hidden', marginBottom: '1.5rem' }}>
+          {/* Simple Clean Table */}
+          <div style={{ border: '1px solid #e2e8f0', borderRadius: '8px', overflow: 'hidden', marginBottom: '1.5rem' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.825rem' }}>
               <thead>
-                <tr style={{ background: '#0f172a', color: '#ffffff', fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.03em' }}>
+                <tr style={{ background: '#f8fafc', color: '#475569', fontSize: '0.74rem', fontWeight: 800, textTransform: 'uppercase', borderBottom: '1px solid #e2e8f0' }}>
                   <th style={{ padding: '0.65rem 0.85rem', width: '5%' }}>#</th>
-                  <th style={{ padding: '0.65rem 0.85rem', width: '50%' }}>Item & Service Description</th>
-                  <th style={{ padding: '0.65rem 0.85rem', width: '20%' }}>Turnaround</th>
+                  <th style={{ padding: '0.65rem 0.85rem', width: '55%' }}>Description</th>
+                  <th style={{ padding: '0.65rem 0.85rem', width: '20%' }}>Formats</th>
                   <th style={{ padding: '0.65rem 0.85rem', width: '8%', textAlign: 'center' }}>Qty</th>
-                  <th style={{ padding: '0.65rem 0.85rem', width: '17%', textAlign: 'right' }}>Total (USD)</th>
+                  <th style={{ padding: '0.65rem 0.85rem', width: '12%', textAlign: 'right' }}>Total</th>
                 </tr>
               </thead>
               <tbody>
-                <tr style={{ borderBottom: '1px solid #e2e8f0', background: '#f8fafc' }}>
-                  <td style={{ padding: '0.85rem', verticalAlign: 'top', fontWeight: 800, color: '#64748b' }}>1</td>
-                  <td style={{ padding: '0.85rem', verticalAlign: 'top' }}>
-                    <div style={{ fontWeight: 800, fontSize: '0.9rem', color: '#0f172a' }}>
+                <tr>
+                  <td style={{ padding: '0.75rem 0.85rem', verticalAlign: 'top', color: '#94a3b8' }}>1</td>
+                  <td style={{ padding: '0.75rem 0.85rem', verticalAlign: 'top' }}>
+                    <div style={{ fontWeight: 800, color: '#0f172a' }}>
                       {serviceTitle}
                     </div>
-                    <div style={{ fontSize: '0.8rem', color: '#475569', marginTop: '0.2rem' }}>
-                      <strong>Design:</strong> {order?.title || 'Custom Client Design'}
-                    </div>
-                    <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '0.15rem' }}>
-                      <strong>Deliverables:</strong> {formatsString}
-                    </div>
+                    {order?.title && (
+                      <div style={{ fontSize: '0.78rem', color: '#64748b', marginTop: '0.1rem' }}>
+                        Design: {order.title}
+                      </div>
+                    )}
                   </td>
-                  <td style={{ padding: '0.85rem', verticalAlign: 'top', color: '#334155', fontWeight: 600 }}>
-                    {turnaroundTier}
+                  <td style={{ padding: '0.75rem 0.85rem', verticalAlign: 'top', color: '#475569', fontSize: '0.78rem' }}>
+                    {formatsString}
                   </td>
-                  <td style={{ padding: '0.85rem', verticalAlign: 'top', textAlign: 'center', fontWeight: 800 }}>
+                  <td style={{ padding: '0.75rem 0.85rem', verticalAlign: 'top', textAlign: 'center', fontWeight: 700 }}>
                     1
                   </td>
-                  <td style={{ padding: '0.85rem', verticalAlign: 'top', textAlign: 'right', fontWeight: 800, fontSize: '0.95rem', color: '#0f172a' }}>
-                    ${price.toFixed(2)} USD
+                  <td style={{ padding: '0.75rem 0.85rem', verticalAlign: 'top', textAlign: 'right', fontWeight: 800, color: '#0f172a' }}>
+                    ${price.toFixed(2)}
                   </td>
                 </tr>
               </tbody>
             </table>
           </div>
 
-          {/* Financial & Tax Summary Box */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1.5rem', marginBottom: '1.5rem' }}>
-            
-            {/* Tax Rules & Compliance Notes (Left) */}
-            <div style={{ flex: 1, minWidth: '280px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '0.85rem 1rem' }}>
-              <div style={{ fontSize: '0.74rem', fontWeight: 800, color: '#0f172a', textTransform: 'uppercase', marginBottom: '0.35rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                <ShieldCheck size={15} style={{ color: '#10b981' }} /> Tax Treatment & Export Compliance
-              </div>
-              <ul style={{ margin: 0, paddingLeft: '1.1rem', fontSize: '0.74rem', color: '#475569', lineHeight: 1.5 }}>
-                <li><strong>Cross-Border Export:</strong> Zero-rated B2B digital service export under international trade treaties.</li>
-                <li><strong>United States:</strong> IRS-compliant commercial expense documentation under IRC § 162 / Pub 583.</li>
-                <li><strong>UK / European Union:</strong> Reverse charge mechanism applies for registered VAT entities.</li>
-              </ul>
-            </div>
-
-            {/* Calculations Box (Right) */}
-            <div style={{ width: '280px', background: '#f8fafc', border: '1.5px solid #e2e8f0', borderRadius: '12px', padding: '1rem' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.84rem', color: '#475569', marginBottom: '0.45rem' }}>
+          {/* Simple Right-Aligned Summary */}
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1.75rem' }}>
+            <div style={{ width: '220px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.82rem', color: '#64748b', marginBottom: '0.35rem' }}>
                 <span>Subtotal:</span>
-                <span style={{ fontWeight: 800, color: '#0f172a' }}>${price.toFixed(2)} USD</span>
+                <span style={{ fontWeight: 700, color: '#0f172a' }}>${price.toFixed(2)}</span>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.84rem', color: '#475569', marginBottom: '0.2rem' }}>
-                <span>Sales Tax / VAT (0%):</span>
-                <span>$0.00 USD</span>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.82rem', color: '#64748b', marginBottom: '0.45rem' }}>
+                <span>Tax (0%):</span>
+                <span>$0.00</span>
               </div>
-              <div style={{ fontSize: '0.68rem', color: '#64748b', fontStyle: 'italic', marginBottom: '0.55rem' }}>
-                * B2B Digital Export — Tax Exempt
-              </div>
-              <div style={{ height: '1px', background: '#cbd5e1', marginBottom: '0.55rem' }} />
+              <div style={{ height: '1px', background: '#e2e8f0', marginBottom: '0.45rem' }} />
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontWeight: 800, fontSize: '0.92rem', color: '#0f172a' }}>
+                <span style={{ fontWeight: 800, fontSize: '0.9rem', color: '#0f172a' }}>
                   {isPaid ? 'Total Paid:' : 'Total Due:'}
                 </span>
-                <span style={{ fontWeight: 900, fontSize: '1.25rem', color: isPaid ? '#10b981' : '#ea580c' }}>
+                <span style={{ fontWeight: 900, fontSize: '1.2rem', color: isPaid ? '#10b981' : '#ea580c' }}>
                   ${price.toFixed(2)} USD
                 </span>
               </div>
             </div>
-
           </div>
 
-          {/* Official Verification Stamp If Paid */}
-          {isPaid && (
-            <div style={{
-              background: '#ecfdf5',
-              border: '1.5px solid #a7f3d0',
-              borderRadius: '10px',
-              padding: '0.75rem 1rem',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.75rem',
-              marginBottom: '1.25rem'
-            }}>
-              <div style={{
-                width: '36px',
-                height: '36px',
-                borderRadius: '50%',
-                background: '#10b981',
-                color: '#ffffff',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                flexShrink: 0
-              }}>
-                <CheckCircle2 size={22} />
-              </div>
-              <div>
-                <div style={{ fontWeight: 900, fontSize: '0.82rem', color: '#065f46', textTransform: 'uppercase', letterSpacing: '0.03em' }}>
-                  Official Verified Commercial Transaction • Electronic Desk Clearance
-                </div>
-                <div style={{ fontSize: '0.74rem', color: '#047857', marginTop: '0.1rem' }}>
-                  Full payment received and authenticated for Order {formatOrderId(order?.id)}. Electronic Ledger Reference: {invoiceNumber}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* SYSTEM GENERATED LEGAL VALIDITY DECLARATION (Requested by User) */}
+          {/* Concise 1-Sentence System Generated International Note */}
           <div style={{
-            background: '#f1f5f9',
-            border: '1px solid #cbd5e1',
-            borderRadius: '10px',
-            padding: '0.85rem 1rem',
+            background: '#f8fafc',
+            border: '1px solid #e2e8f0',
+            borderRadius: '8px',
+            padding: '0.75rem 1rem',
             marginBottom: '1.25rem'
           }}>
-            <div style={{ fontSize: '0.74rem', fontWeight: 900, color: '#0f172a', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '0.35rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-              <ShieldCheck size={14} style={{ color: '#ea580c' }} /> System-Generated Document — Legal Validity & Signature Exemption Declaration
+            <div style={{ fontSize: '0.74rem', fontWeight: 800, color: '#0f172a', display: 'flex', alignItems: 'center', gap: '0.35rem', marginBottom: '0.2rem' }}>
+              <ShieldCheck size={14} style={{ color: '#10b981' }} /> System-Generated Invoice — No Signature Required
             </div>
-            <p style={{ margin: '0 0 0.35rem', fontSize: '0.72rem', color: '#475569', lineHeight: 1.45 }}>
-              This document is an authentic commercial tax invoice generated automatically by the Bilal Digitizing billing system. Under the Electronic Signatures in Global and National Commerce Act (E-SIGN Act, 15 U.S.C. § 7001 - United States), the Uniform Electronic Transactions Act (UETA), Regulation (EU) No 910/2014 (eIDAS - European Union), and the UNCITRAL Model Law on Electronic Commerce, this computer-generated document constitutes an authentic, legally binding tax receipt and proof of commercial expense without requiring any physical signature, seal, or corporate stamp.
-            </p>
-            <p style={{ margin: 0, fontSize: '0.72rem', fontWeight: 700, color: '#1e293b', lineHeight: 1.45 }}>
-              Valid for corporate tax deductions, VAT/sales tax input credits, IRS expense substantiation, and international audit compliance across the United States of America (IRS), Canada (CRA), United Kingdom (HMRC), European Union, Australia (ATO), and worldwide.
-            </p>
+            <div style={{ fontSize: '0.72rem', color: '#64748b', lineHeight: 1.4 }}>
+              This electronic invoice is legally valid worldwide for business expense deductions and tax accounting without a physical signature or stamp (compliant with US E-SIGN Act, EU eIDAS & international commercial standards).
+            </div>
           </div>
 
-          {/* Bottom Footer */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.7rem', color: '#94a3b8', borderTop: '1px solid #e2e8f0', paddingTop: '0.75rem' }}>
-            <span>Generated on {new Date().toLocaleString('en-US')} • Record ID: {invoiceNumber}</span>
-            <span>Bilal Digitizing — International Commercial Billing Infrastructure</span>
+          {/* Footer */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.7rem', color: '#94a3b8', borderTop: '1px solid #f1f5f9', paddingTop: '0.65rem' }}>
+            <span>Record ID: {invoiceNumber}</span>
+            <span>Bilal Digitizing Commercial Studio</span>
           </div>
 
         </div>
