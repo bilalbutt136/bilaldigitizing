@@ -10,3 +10,8 @@ if (!supabaseUrl || !supabaseKey) {
 export const isSupabaseConfigured = true
 
 export const supabase = createBrowserClient(supabaseUrl, supabaseKey)
+
+// Named export so components can call createClient() for Realtime subscriptions
+export function createClient() {
+  return supabase
+}
