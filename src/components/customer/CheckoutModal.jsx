@@ -157,6 +157,7 @@ export const CheckoutModal = () => {
     fetchUserWalletBalance,
     authUser,
     currentUser,
+    refreshOrders,
     protectedNavigate,
     theme
   } = useAppState();
@@ -298,6 +299,10 @@ export const CheckoutModal = () => {
           if (fetchUserWalletBalance && authUser?.email) {
             fetchUserWalletBalance(authUser.email);
           }
+
+          if (refreshOrders) {
+            refreshOrders().catch(() => {});
+          }
         } else {
           showToast('Wallet payment could not be completed. Please try again.', 'error');
           setSelectedMethod(null);
@@ -315,6 +320,33 @@ export const CheckoutModal = () => {
     // 2. Handle External Payment Gateways
     setSelectedMethod(methodId);
     setIsInitializing(true);
+
+    // If card payment is selected, attempt Stripe checkout first if available
+    if (methodId === 'card') {
+      try {
+        const stripeRes = await fetch('/api/checkout', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            amount: amount,
+            clientEmail: checkoutSession?.clientEmail || authUser?.email || currentUser?.email,
+            type: checkoutSession?.offerId ? 'custom_offer' : 'order_payment',
+            orderId: checkoutSession?.orderId || null,
+            offerId: checkoutSession?.offerId || null,
+            conversationId: checkoutSession?.conversationId || null,
+            title: checkoutSession?.title || checkoutSession?.orderTitle || 'Custom Design Order'
+          })
+        });
+        const stripeData = await stripeRes.json();
+        if (stripeRes.ok && stripeData.success && stripeData.url) {
+          window.location.href = stripeData.url;
+          return;
+        }
+      } catch (stripeErr) {
+        console.warn('Stripe checkout attempt notice:', stripeErr.message);
+      }
+    }
+
     try {
       const headers = await getAuthHeaders();
       const res = await fetch('/api/boltpayouts/create', {
@@ -416,6 +448,10 @@ export const CheckoutModal = () => {
 
             if (checkoutSession?.orderId && updateOrderStatus) {
               updateOrderStatus(checkoutSession.orderId, 'in_progress', { paymentStatus: 'paid', payment_status: 'paid' });
+            }
+
+            if (refreshOrders) {
+              refreshOrders().catch(() => {});
             }
           }
         } catch (err) {

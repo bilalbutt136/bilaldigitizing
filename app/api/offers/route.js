@@ -369,7 +369,13 @@ export async function POST(request) {
       }
 
       if (offer.status === 'accepted' || offer.status === 'paid') {
-        return NextResponse.json({ success: true, message: 'This offer is already accepted.', offer }, { status: 200 });
+        return NextResponse.json({ 
+          success: true, 
+          message: 'This offer is already accepted.', 
+          offer,
+          orderId: offer.order_id || offer.orderId,
+          alreadyAccepted: true
+        }, { status: 200 });
       }
 
       if (offer.status === 'declined' || offer.status === 'cancelled' || offer.status === 'withdrawn') {
@@ -517,7 +523,8 @@ export async function POST(request) {
       return NextResponse.json({
         success: true,
         offer: finalOfferData,
-        order: orderPayload
+        order: orderPayload,
+        orderId: generatedOrderId
       });
     }
 
@@ -637,8 +644,11 @@ export async function POST(request) {
       // 2. Update custom_offers
       const updatedOffer = {
         ...offer,
+        id: targetOfferId,
+        order_id: targetOrderId,
         status: 'paid',
         payment_status: 'paid',
+        accepted_at: offer.accepted_at || nowIso,
         updated_at: nowIso
       };
 
@@ -646,13 +656,102 @@ export async function POST(request) {
         await supabase.from('custom_offers').update({
           status: 'paid',
           payment_status: 'paid',
+          order_id: targetOrderId,
+          accepted_at: offer.accepted_at || nowIso,
           updated_at: nowIso
         }).eq('id', targetOfferId);
       } catch (offErr) {
         console.warn('custom_offers pay update notice:', offErr.message);
       }
 
-      return NextResponse.json({ success: true, offer: updatedOffer });
+      // 3. Synchronize messages table so chat threads show paid state immediately
+      try {
+        await supabase
+          .from('messages')
+          .update({ 
+            offer_data: updatedOffer,
+            attachment: JSON.stringify(updatedOffer)
+          })
+          .or(`offer_id.eq.${targetOfferId},offer_id.eq.${offerId}`);
+      } catch (mErr) {
+        console.warn('Sync paid offer to messages notice:', mErr.message);
+      }
+
+      // 4. Post system confirmation message in chat thread
+      if (conversationId) {
+        try {
+          await supabase.from('messages').insert([{
+            id: `msg-paid-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+            conversation_id: conversationId,
+            thread_id: conversationId,
+            client_email: cleanEmail,
+            sender: 'admin',
+            sender_name: 'Bilal Digitizing System',
+            text: `🎉 Custom Offer Accepted & Paid! Order #${targetOrderId} has been placed and sent to active production.`,
+            type: 'text',
+            created_at: nowIso
+          }]);
+        } catch (postMsgErr) {
+          console.warn('Post paid confirmation message notice:', postMsgErr.message);
+        }
+      }
+
+      // 5. Create Order Paid notifications for Admin and Client
+      try {
+        await supabase.from('notifications').insert([
+          {
+            id: `notif-paid-admin-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+            recipient_role: 'admin',
+            title: `💰 Payment Received: Order #${targetOrderId}`,
+            message: `Custom offer "${offer.title || 'Custom Design'}" ($${parseFloat(offer.final_price || offer.price || 0).toFixed(2)}) was paid. Order #${targetOrderId} is now in production.`,
+            type: 'success',
+            order_id: targetOrderId,
+            link: `/admin-portal?tab=orders&trackOrder=${targetOrderId}`,
+            read: false,
+            created_at: nowIso
+          },
+          {
+            id: `notif-paid-client-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+            recipient_role: 'client',
+            recipient_email: cleanEmail,
+            title: `🎉 Order #${targetOrderId} in Production!`,
+            message: `Payment confirmed for "${offer.title || 'Custom Design'}". Our digitizing team has begun production.`,
+            type: 'success',
+            order_id: targetOrderId,
+            link: `/client-portal?tab=orders&trackOrder=${targetOrderId}`,
+            read: false,
+            created_at: nowIso
+          }
+        ]);
+      } catch (notifErr) {
+        console.warn('Order paid notifications insert notice:', notifErr.message);
+      }
+
+      // 6. Non-blocking asynchronous email notification
+      try {
+        const siteBase = process.env.NEXT_PUBLIC_SITE_URL || 'https://bilaldigitizing.vercel.app';
+        fetch(`${siteBase}/api/email`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            type: 'NEW_ORDER',
+            orderId: targetOrderId,
+            clientEmail: cleanEmail,
+            clientName: offer.client_name || 'Client',
+            serviceName: offer.service_type || offer.title || 'Custom Digitizing Offer',
+            amount: parseFloat(offer.final_price || offer.price || 0),
+            orderDetails: {
+              id: targetOrderId,
+              title: offer.title || 'Custom Design Order',
+              instructions: offer.description || '',
+              price: parseFloat(offer.final_price || offer.price || 0),
+              turnaround: offer.delivery_time_text || '1 Day'
+            }
+          })
+        }).catch(e => console.warn('Email dispatch on custom offer pay notice:', e?.message));
+      } catch {}
+
+      return NextResponse.json({ success: true, offer: updatedOffer, orderId: targetOrderId });
     }
 
     return NextResponse.json({ error: 'Unknown action' }, { status: 400 });

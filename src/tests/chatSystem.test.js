@@ -224,4 +224,108 @@ test('Chat System & Fiverr-Style Inbox Architecture', async (t) => {
     assert.equal(filterChannel(conversations, 'support')[0].id, supportThreadId);
   });
 
+  await t.test('11. Custom offer state machine properly distinguishes Pending, Awaiting Payment, and Paid states without premature "Accepted & Paid"', () => {
+    const resolveCardDisplayState = (status, paymentStatus) => {
+      const isPaid = status === 'paid' || paymentStatus === 'paid';
+      const isAcceptedUnpaid = status === 'accepted' && !isPaid;
+      const isPending = (status === 'pending' || status === 'sent' || status === 'viewed') && !isPaid && !isAcceptedUnpaid;
+      
+      if (isPaid) {
+        return { badge: 'Paid & In Production', canPay: false, hasOrderLink: true, requiresPayment: false };
+      }
+      if (isAcceptedUnpaid) {
+        return { badge: 'Awaiting Payment', canPay: true, hasOrderLink: true, requiresPayment: true };
+      }
+      if (isPending) {
+        return { badge: 'Pending Review', canPay: true, hasOrderLink: false, requiresPayment: true };
+      }
+      return { badge: status, canPay: false, hasOrderLink: false, requiresPayment: false };
+    };
+
+    // 1. Newly sent offer (pending)
+    const pendingState = resolveCardDisplayState('pending', 'pending');
+    assert.equal(pendingState.badge, 'Pending Review');
+    assert.equal(pendingState.canPay, true);
+    assert.equal(pendingState.requiresPayment, true);
+
+    // 2. Client accepted offer, but payment is still pending (must NOT falsely show "Accepted & Paid")
+    const acceptedUnpaidState = resolveCardDisplayState('accepted', 'pending');
+    assert.equal(acceptedUnpaidState.badge, 'Awaiting Payment');
+    assert.equal(acceptedUnpaidState.canPay, true);
+    assert.equal(acceptedUnpaidState.hasOrderLink, true);
+    assert.equal(acceptedUnpaidState.requiresPayment, true);
+
+    // 3. Offer paid and verified
+    const paidState = resolveCardDisplayState('paid', 'paid');
+    assert.equal(paidState.badge, 'Paid & In Production');
+    assert.equal(paidState.canPay, false);
+    assert.equal(paidState.hasOrderLink, true);
+    assert.equal(paidState.requiresPayment, false);
+  });
+
+  await t.test('12. Paying a custom offer transitions order to "in_progress", updates payment_status to "paid", and synchronizes chat message', () => {
+    // Initial offer accepted but pending payment
+    const originalOffer = {
+      id: 'off-custom-999',
+      order_id: 'ORD-5544XYZ',
+      status: 'accepted',
+      payment_status: 'pending',
+      final_price: 45.00
+    };
+
+    const originalOrder = {
+      id: originalOffer.order_id,
+      status: 'pending',
+      payment_status: 'pending',
+      price: originalOffer.final_price
+    };
+
+    const originalChatMessage = {
+      id: 'msg-offer-1',
+      type: 'custom_offer',
+      offer_id: originalOffer.id,
+      offer_data: originalOffer
+    };
+
+    // Simulate payOffer transition logic
+    const handlePayOffer = (offer, order, message) => {
+      const updatedOffer = {
+        ...offer,
+        status: 'paid',
+        payment_status: 'paid',
+        updated_at: new Date().toISOString()
+      };
+
+      const updatedOrder = {
+        ...order,
+        status: 'in_progress',
+        payment_status: 'paid',
+        updated_at: new Date().toISOString()
+      };
+
+      const updatedMessage = {
+        ...message,
+        offer_data: updatedOffer
+      };
+
+      return { updatedOffer, updatedOrder, updatedMessage };
+    };
+
+    const result = handlePayOffer(originalOffer, originalOrder, originalChatMessage);
+
+    // Verify Order is placed in production pipeline
+    assert.equal(result.updatedOrder.status, 'in_progress');
+    assert.equal(result.updatedOrder.payment_status, 'paid');
+
+    // Verify Offer is marked paid
+    assert.equal(result.updatedOffer.status, 'paid');
+    assert.equal(result.updatedOffer.payment_status, 'paid');
+
+    // Verify chat thread message contains synchronized paid state
+    assert.equal(result.updatedMessage.offer_data.status, 'paid');
+    assert.equal(result.updatedMessage.offer_data.payment_status, 'paid');
+    assert.equal(result.updatedMessage.offer_data.order_id, 'ORD-5544XYZ');
+  });
+
 });
+

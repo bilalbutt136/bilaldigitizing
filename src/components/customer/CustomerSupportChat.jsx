@@ -143,6 +143,48 @@ export default function CustomerSupportChat({
     initConversation();
   }, [userEmail, chatType]);
 
+  // Handle return from Stripe or Gateway payment
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    const paymentStatus = params.get('payment');
+    const returnedOfferId = params.get('offerId');
+    const returnedOrderId = params.get('orderId');
+
+    if (paymentStatus === 'success' && (returnedOfferId || returnedOrderId)) {
+      showToast('🎉 Payment successful! Updating your custom offer and order...', 'success');
+      fetch('/api/offers', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'payOffer',
+          payload: { offerId: returnedOfferId, orderId: returnedOrderId }
+        })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data?.offer) {
+          setMessages(prev => prev.map(m => {
+            if (m.offer_id === returnedOfferId || m.id === returnedOfferId) {
+              return { ...m, offer_data: data.offer };
+            }
+            return m;
+          }));
+        }
+        if (conversationId) {
+          fetchMessages(conversationId);
+        }
+      })
+      .catch(err => console.warn('Payment success callback notice:', err));
+
+      const newUrl = new URL(window.location.href);
+      newUrl.searchParams.delete('payment');
+      newUrl.searchParams.delete('offerId');
+      newUrl.searchParams.delete('session_id');
+      window.history.replaceState({}, '', newUrl.toString());
+    }
+  }, [conversationId]);
+
   // Realtime Polling & Typing check
   useEffect(() => {
     if (!conversationId) return;
