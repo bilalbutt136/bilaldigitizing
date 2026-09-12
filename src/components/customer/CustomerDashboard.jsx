@@ -1512,6 +1512,7 @@ export const CustomerDashboard = () => {
                               <th style={{ padding: '0.45rem 0.75rem' }}>Delivery & Order Status</th>
                               <th style={{ padding: '0.45rem 0.75rem' }}>Payment Status</th>
                               <th style={{ padding: '0.45rem 0.75rem' }}>Cost</th>
+                              <th style={{ padding: '0.45rem 0.75rem', textAlign: 'center' }}>Invoice</th>
                               <th style={{ padding: '0.45rem 0.75rem', textAlign: 'right' }}>Actions</th>
                             </tr>
                           </thead>
@@ -1625,6 +1626,28 @@ export const CustomerDashboard = () => {
                                     ${parseFloat(ord?.price || ord?.totalPrice || 0).toFixed(2)}
                                   </td>
 
+                                  {/* Invoice */}
+                                  <td style={{ padding: '0.5rem 0.75rem', textAlign: 'center' }}>
+                                    <button 
+                                      type="button"
+                                      className="btn btn-outline btn-sm"
+                                      onClick={() => setInvoiceModalOrder(ord)}
+                                      style={{ 
+                                        padding: '0.32rem 0.65rem', 
+                                        fontSize: '0.74rem', 
+                                        fontWeight: 700, 
+                                        borderRadius: '6px',
+                                        whiteSpace: 'nowrap',
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        gap: '0.25rem'
+                                      }}
+                                      title="View & Download Official International Tax Invoice"
+                                    >
+                                      <Receipt size={12} /> Invoice
+                                    </button>
+                                  </td>
+
                                   {/* Actions */}
                                   <td style={{ padding: '0.5rem 0.75rem', textAlign: 'right' }}>
                                     <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
@@ -1672,25 +1695,6 @@ export const CustomerDashboard = () => {
                                           <Zap size={12} /> Pay Now
                                         </button>
                                       )}
-
-                                      <button 
-                                        type="button"
-                                        className="btn btn-outline btn-sm"
-                                        onClick={() => setInvoiceModalOrder(ord)}
-                                        style={{ 
-                                          padding: '0.32rem 0.65rem', 
-                                          fontSize: '0.74rem', 
-                                          fontWeight: 700, 
-                                          borderRadius: '6px',
-                                          whiteSpace: 'nowrap',
-                                          display: 'inline-flex',
-                                          alignItems: 'center',
-                                          gap: '0.25rem'
-                                        }}
-                                        title="View & Download Official International Tax Invoice"
-                                      >
-                                        <Receipt size={12} /> Invoice
-                                      </button>
 
                                       <button 
                                         type="button"

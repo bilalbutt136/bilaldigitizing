@@ -569,13 +569,14 @@ export const OrderManagementTable = () => {
               <th style={{ padding: '0.45rem 0.75rem' }}>PAYMENT</th>
               <th style={{ padding: '0.45rem 0.75rem' }}>STATUS</th>
               <th style={{ padding: '0.45rem 0.75rem', textAlign: 'center' }}>ARTWORK</th>
+              <th style={{ padding: '0.45rem 0.75rem', textAlign: 'center' }}>INVOICE</th>
               <th style={{ padding: '0.45rem 0.75rem', textAlign: 'right' }}>ACTIONS</th>
             </tr>
           </thead>
           <tbody>
             {filteredOrders.length === 0 ? (
               <tr>
-                <td colSpan={8} style={{ padding: '2.5rem 1rem', textAlign: 'center', color: 'var(--text-muted)' }}>
+                <td colSpan={9} style={{ padding: '2.5rem 1rem', textAlign: 'center', color: 'var(--text-muted)' }}>
                   <PackageOpen size={36} style={{ color: 'var(--text-light)', marginBottom: '0.5rem' }} />
                   <div style={{ fontWeight: 800, fontSize: '0.95rem', color: 'var(--navy-900)' }}>
                     No Orders Match Your Filters
@@ -743,7 +744,29 @@ export const OrderManagementTable = () => {
                       </div>
                     </td>
 
-                    {/* 8. ACTIONS */}
+                    {/* 8. INVOICE */}
+                    <td style={{ padding: '0.5rem 0.75rem', textAlign: 'center' }}>
+                      <button
+                        type="button"
+                        className="btn btn-outline btn-sm"
+                        onClick={() => setInvoiceModalOrder(ord)}
+                        style={{ 
+                          fontWeight: 800, 
+                          fontSize: '0.74rem', 
+                          whiteSpace: 'nowrap', 
+                          gap: '0.25rem', 
+                          padding: '0.28rem 0.6rem', 
+                          borderRadius: '6px',
+                          display: 'inline-flex',
+                          alignItems: 'center'
+                        }}
+                        title="View & Download Official International Tax Invoice"
+                      >
+                        <Receipt size={12} /> Invoice
+                      </button>
+                    </td>
+
+                    {/* 9. ACTIONS */}
                     <td style={{ padding: '0.5rem 0.75rem', textAlign: 'right' }}>
                       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.25rem' }}>
                         {(ord.worker_status === 'Review Pending' || ord.workerStatus === 'Review Pending') && (
@@ -796,24 +819,13 @@ export const OrderManagementTable = () => {
                           </button>
                         )}
 
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                          <button
-                            type="button"
-                            className="btn btn-outline btn-sm"
-                            onClick={() => setInvoiceModalOrder(ord)}
-                            style={{ fontWeight: 800, fontSize: '0.74rem', whiteSpace: 'nowrap', gap: '0.25rem', padding: '0.28rem 0.6rem', borderRadius: '6px' }}
-                            title="View & Download Official International Tax Invoice"
-                          >
-                            <Receipt size={12} /> Invoice
-                          </button>
-                          <button 
-                            className="btn btn-primary-orange btn-sm"
-                            onClick={() => setSelectedOrderForDrawer(ord)}
-                            style={{ fontWeight: 800, fontSize: '0.74rem', whiteSpace: 'nowrap', gap: '0.25rem', padding: '0.28rem 0.6rem', borderRadius: '6px' }}
-                          >
-                            Manage <ChevronRight size={12} />
-                          </button>
-                        </div>
+                        <button 
+                          className="btn btn-primary-orange btn-sm"
+                          onClick={() => setSelectedOrderForDrawer(ord)}
+                          style={{ fontWeight: 800, fontSize: '0.74rem', whiteSpace: 'nowrap', gap: '0.25rem', padding: '0.28rem 0.6rem', borderRadius: '6px' }}
+                        >
+                          Manage <ChevronRight size={12} />
+                        </button>
                       </div>
                     </td>
                   </tr>
