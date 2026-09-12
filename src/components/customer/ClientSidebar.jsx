@@ -60,14 +60,8 @@ export const ClientSidebar = ({
         },
         { 
           id: 'chat', 
-          label: 'Studio Live Chat', 
+          label: 'Customer Support & Chat', 
           icon: MessageSquare, 
-          badge: null
-        },
-        { 
-          id: 'help-support', 
-          label: 'Customer Support', 
-          icon: Headphones, 
           badge: null
         },
         {
@@ -261,7 +255,7 @@ export const ClientSidebar = ({
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.12rem' }}>
               {sec.items.map(item => {
                 const IconComp = item.icon;
-                const isActive = activeTab === item.id;
+                const isActive = activeTab === item.id || (item.id === 'chat' && activeTab === 'help-support');
 
                 return (
                   <button

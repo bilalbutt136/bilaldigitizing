@@ -58,6 +58,11 @@ export default function CustomerSupportChat({ defaultOrderId = null, initialTopi
     }, 80);
   };
 
+  const isImageAttachment = (name = '', url = '') => {
+    const check = (name || url || '').split('?')[0].toLowerCase();
+    return /\.(png|jpe?g|webp|gif|svg|bmp)$/i.test(check);
+  };
+
   // 1. Initialize or Fetch Conversation
   const initConversation = async () => {
     if (!userEmail) {
@@ -281,7 +286,10 @@ export default function CustomerSupportChat({ defaultOrderId = null, initialTopi
     <div style={{
       display: 'flex',
       flexDirection: 'column',
-      height: '620px',
+      height: '100%',
+      minHeight: '580px',
+      maxHeight: '100%',
+      flex: 1,
       background: '#ffffff',
       borderRadius: '16px',
       border: '1.5px solid #e2e8f0',
@@ -316,7 +324,8 @@ export default function CustomerSupportChat({ defaultOrderId = null, initialTopi
         color: '#ffffff',
         display: 'flex',
         alignItems: 'center',
-        justifyContent: 'space-between'
+        justifyContent: 'space-between',
+        flexShrink: 0
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
           <div style={{ position: 'relative' }}>
@@ -369,6 +378,7 @@ export default function CustomerSupportChat({ defaultOrderId = null, initialTopi
       {/* CHAT MESSAGES STREAM */}
       <div style={{
         flex: 1,
+        minHeight: 0,
         overflowY: 'auto',
         padding: '1.25rem',
         display: 'flex',
@@ -455,34 +465,109 @@ export default function CustomerSupportChat({ defaultOrderId = null, initialTopi
 
                     {/* ATTACHMENTS */}
                     {Array.isArray(msg.attachments) && msg.attachments.length > 0 && (
-                      <div style={{ marginTop: msg.text ? '0.65rem' : 0, display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                        {msg.attachments.map((att, aIdx) => (
-                          <a
-                            key={aIdx}
-                            href={att.url}
-                            target="_blank"
-                            rel="noreferrer"
-                            download={att.name}
-                            style={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '0.5rem',
-                              padding: '0.4rem 0.65rem',
-                              borderRadius: '6px',
-                              background: isClient ? 'rgba(255,255,255,0.15)' : '#f8fafc',
-                              color: isClient ? '#ffffff' : '#0f172a',
-                              textDecoration: 'none',
-                              fontSize: '0.78rem',
-                              border: isClient ? '1px solid rgba(255,255,255,0.2)' : '1px solid #e2e8f0'
-                            }}
-                          >
-                            <Download size={13} />
-                            <span style={{ fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                              {att.name}
-                            </span>
-                            {att.size && <span style={{ opacity: 0.75, fontSize: '0.7rem' }}>({att.size})</span>}
-                          </a>
-                        ))}
+                      <div style={{ marginTop: msg.text ? '0.65rem' : 0, display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
+                        {msg.attachments.map((att, aIdx) => {
+                          const isImg = isImageAttachment(att.name, att.url);
+                          if (isImg) {
+                            return (
+                              <div
+                                key={aIdx}
+                                style={{
+                                  borderRadius: '10px',
+                                  overflow: 'hidden',
+                                  border: isClient ? '1px solid rgba(255,255,255,0.3)' : '1px solid #e2e8f0',
+                                  background: isClient ? 'rgba(0,0,0,0.15)' : '#ffffff',
+                                  maxWidth: '340px'
+                                }}
+                              >
+                                <a
+                                  href={att.url}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  title="Click to view full image"
+                                  style={{ display: 'block', background: '#00000008', textDecoration: 'none' }}
+                                >
+                                  <img
+                                    src={att.url}
+                                    alt={att.name || 'Image'}
+                                    loading="lazy"
+                                    style={{
+                                      display: 'block',
+                                      width: '100%',
+                                      maxHeight: '250px',
+                                      objectFit: 'contain',
+                                      cursor: 'pointer',
+                                      borderRadius: '8px 8px 0 0'
+                                    }}
+                                  />
+                                </a>
+                                <div style={{
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'space-between',
+                                  padding: '0.35rem 0.6rem',
+                                  fontSize: '0.72rem',
+                                  borderTop: isClient ? '1px solid rgba(255,255,255,0.15)' : '1px solid #f1f5f9'
+                                }}>
+                                  <span style={{
+                                    fontWeight: 600,
+                                    overflow: 'hidden',
+                                    textOverflow: 'ellipsis',
+                                    whiteSpace: 'nowrap',
+                                    maxWidth: '180px',
+                                    color: isClient ? '#ffffff' : '#475569'
+                                  }}>
+                                    {att.name}
+                                  </span>
+                                  <a
+                                    href={att.url}
+                                    download={att.name}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    style={{
+                                      color: isClient ? '#ffffff' : '#ea580c',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      gap: '0.25rem',
+                                      textDecoration: 'none',
+                                      fontWeight: 700
+                                    }}
+                                  >
+                                    <Download size={12} /> {att.size || 'Download'}
+                                  </a>
+                                </div>
+                              </div>
+                            );
+                          }
+
+                          return (
+                            <a
+                              key={aIdx}
+                              href={att.url}
+                              target="_blank"
+                              rel="noreferrer"
+                              download={att.name}
+                              style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '0.5rem',
+                                padding: '0.4rem 0.65rem',
+                                borderRadius: '6px',
+                                background: isClient ? 'rgba(255,255,255,0.15)' : '#f8fafc',
+                                color: isClient ? '#ffffff' : '#0f172a',
+                                textDecoration: 'none',
+                                fontSize: '0.78rem',
+                                border: isClient ? '1px solid rgba(255,255,255,0.2)' : '1px solid #e2e8f0'
+                              }}
+                            >
+                              <Download size={13} />
+                              <span style={{ fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                {att.name}
+                              </span>
+                              {att.size && <span style={{ opacity: 0.75, fontSize: '0.7rem' }}>({att.size})</span>}
+                            </a>
+                          );
+                        })}
                       </div>
                     )}
                   </div>
@@ -505,7 +590,7 @@ export default function CustomerSupportChat({ defaultOrderId = null, initialTopi
 
       {/* PENDING ATTACHMENTS PREVIEW */}
       {pendingAttachments.length > 0 && (
-        <div style={{ padding: '0.5rem 1rem', background: '#f8fafc', borderTop: '1px solid #e2e8f0', display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+        <div style={{ padding: '0.5rem 1rem', background: '#f8fafc', borderTop: '1px solid #e2e8f0', display: 'flex', gap: '0.5rem', flexWrap: 'wrap', flexShrink: 0 }}>
           {pendingAttachments.map((att, idx) => (
             <div
               key={idx}
@@ -517,9 +602,16 @@ export default function CustomerSupportChat({ defaultOrderId = null, initialTopi
                 fontSize: '0.75rem',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '0.35rem'
+                gap: '0.45rem'
               }}
             >
+              {isImageAttachment(att.name, att.url) && (
+                <img
+                  src={att.url}
+                  alt=""
+                  style={{ width: '22px', height: '22px', borderRadius: '4px', objectFit: 'cover' }}
+                />
+              )}
               <span style={{ fontWeight: 600, color: '#0f172a' }}>{att.name}</span>
               <button
                 type="button"
@@ -542,7 +634,8 @@ export default function CustomerSupportChat({ defaultOrderId = null, initialTopi
           background: '#ffffff',
           display: 'flex',
           alignItems: 'center',
-          gap: '0.65rem'
+          gap: '0.65rem',
+          flexShrink: 0
         }}
       >
         <input

@@ -38,7 +38,8 @@ export const AuthModal = ({ isStandalonePage = false, initialMode = null }) => {
     showToast,
     openOrderWizard,
     orderWizardInitialData,
-    authModalTarget
+    authModalTarget,
+    setActiveCustomerTab
   } = useAppState();
 
   const isUserLoggedIn = Boolean(
@@ -245,6 +246,12 @@ export const AuthModal = ({ isStandalonePage = false, initialMode = null }) => {
       if (result?.role === 'admin') {
         navigate('/admin-portal');
       } else {
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('bdigi_customer_tab', 'dashboard');
+        }
+        if (setActiveCustomerTab) {
+          setActiveCustomerTab('dashboard');
+        }
         navigate('/client-portal');
         if (orderWizardInitialData || authModalTarget === 'customer') {
           setTimeout(() => {
@@ -293,6 +300,12 @@ export const AuthModal = ({ isStandalonePage = false, initialMode = null }) => {
         trackMetaEvent('CompleteRegistration', { method: 'email', status: 'success' }, userRole);
       }).catch(() => {});
 
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('bdigi_customer_tab', 'dashboard');
+      }
+      if (setActiveCustomerTab) {
+        setActiveCustomerTab('dashboard');
+      }
       navigate('/client-portal');
       if (orderWizardInitialData || authModalTarget === 'customer') {
         setTimeout(() => {
@@ -313,6 +326,12 @@ export const AuthModal = ({ isStandalonePage = false, initialMode = null }) => {
       if (res?.success) {
         setIsAuthModalOpen(false);
         showToast(`Welcome ${res.user?.name || res.user?.email || 'back'}!`, 'success');
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('bdigi_customer_tab', 'dashboard');
+        }
+        if (setActiveCustomerTab) {
+          setActiveCustomerTab('dashboard');
+        }
         navigate('/client-portal');
         if (orderWizardInitialData || authModalTarget === 'customer') {
           setTimeout(() => {

@@ -494,9 +494,22 @@ export default function AdminChatInbox() {
     }
   };
 
+  // Helper for image detection
+  const isImageAttachment = (name = '', url = '') => {
+    const check = (name || url || '').split('?')[0].toLowerCase();
+    return /\.(png|jpe?g|webp|gif|svg|bmp)$/i.test(check);
+  };
+
   // Helper for file format icon badge
   const renderAttachmentIcon = (name = '') => {
     const ext = name.split('.').pop().toLowerCase();
+    if (['png', 'jpg', 'jpeg', 'webp', 'gif', 'svg'].includes(ext)) {
+      return (
+        <div style={{ width: '40px', height: '40px', borderRadius: '8px', background: '#eff6ff', border: '1px solid #dbeafe', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#2563eb' }}>
+          <ImageIcon size={20} />
+        </div>
+      );
+    }
     if (['dst', 'pes', 'emb', 'exp', 'jef'].includes(ext)) {
       return (
         <div style={{ width: '40px', height: '40px', borderRadius: '8px', background: '#fff7ed', border: '1px solid #ffedd5', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ea580c', fontWeight: 800, fontSize: '0.7rem' }}>
@@ -528,7 +541,10 @@ export default function AdminChatInbox() {
   return (
     <div style={{
       display: 'flex',
-      height: 'calc(100vh - 120px)',
+      height: '100%',
+      maxHeight: '100%',
+      minHeight: 0,
+      flex: 1,
       background: '#ffffff',
       borderRadius: '12px',
       border: '1px solid #e2e8f0',
@@ -569,7 +585,11 @@ export default function AdminChatInbox() {
         display: 'flex',
         flexDirection: 'column',
         background: '#ffffff',
-        flexShrink: 0
+        flexShrink: 0,
+        height: '100%',
+        maxHeight: '100%',
+        minHeight: 0,
+        overflow: 'hidden'
       }}>
         {/* SIDEBAR HEADER: FILTER DROPDOWN & SEARCH */}
         <div style={{
@@ -578,7 +598,8 @@ export default function AdminChatInbox() {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          position: 'relative'
+          position: 'relative',
+          flexShrink: 0
         }}>
           {/* Dropdown Toggle */}
           <div style={{ position: 'relative' }}>
@@ -662,7 +683,7 @@ export default function AdminChatInbox() {
         </div>
 
         {/* SEARCH INPUT BAR */}
-        <div style={{ padding: '0.5rem 1rem', borderBottom: '1px solid #f8fafc' }}>
+        <div style={{ padding: '0.5rem 1rem', borderBottom: '1px solid #f8fafc', flexShrink: 0 }}>
           <div style={{
             display: 'flex',
             alignItems: 'center',
@@ -706,7 +727,7 @@ export default function AdminChatInbox() {
         </div>
 
         {/* CONVERSATION ITEMS LIST */}
-        <div style={{ flex: 1, overflowY: 'auto' }}>
+        <div style={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>
           {isLoadingThreads && conversations.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '2rem 1rem', color: '#94a3b8', fontSize: '0.85rem' }}>
               <Loader2 size={24} className="spin-icon" style={{ margin: '0 auto 0.5rem', color: '#ea580c' }} />
@@ -720,32 +741,34 @@ export default function AdminChatInbox() {
           ) : (
             conversations.map((conv) => {
               const isSelected = conv.id === activeConversationId;
-              const initial = (conv.client_name || conv.client_email || 'C')[0].toUpperCase();
               const hasUnread = (conv.unread_admin_count || 0) > 0;
+              const lastTime = formatRelativeTime(conv.last_message_at);
 
               return (
                 <div
                   key={conv.id}
-                  onClick={() => setActiveConversationId(conv.id)}
+                  onClick={() => handleSelectConversation(conv.id)}
                   style={{
                     padding: '0.85rem 1.1rem',
-                    borderBottom: '1px solid #f1f5f9',
-                    background: isSelected ? '#f8fafc' : '#ffffff',
-                    borderLeft: isSelected ? '3px solid #0f172a' : '3px solid transparent',
-                    cursor: 'pointer',
                     display: 'flex',
-                    alignItems: 'flex-start',
                     gap: '0.75rem',
-                    transition: 'background 0.12s ease'
+                    alignItems: 'flex-start',
+                    cursor: 'pointer',
+                    background: isSelected ? '#f8fafc' : '#ffffff',
+                    borderLeft: isSelected ? '3.5px solid #0f172a' : '3.5px solid transparent',
+                    borderBottom: '1px solid #f8fafc',
+                    transition: 'all 0.15s ease'
                   }}
+                  onMouseOver={(e) => { if (!isSelected) e.currentTarget.style.background = '#fafafa'; }}
+                  onMouseOut={(e) => { if (!isSelected) e.currentTarget.style.background = '#ffffff'; }}
                 >
-                  {/* AVATAR WITH ONLINE DOT */}
+                  {/* CLIENT AVATAR */}
                   <div style={{ position: 'relative', flexShrink: 0 }}>
                     <div style={{
                       width: '42px',
                       height: '42px',
                       borderRadius: '50%',
-                      background: isSelected ? '#fed7aa' : '#e2e8f0',
+                      background: isSelected ? '#fed7aa' : '#f1f5f9',
                       color: isSelected ? '#c2410c' : '#475569',
                       display: 'flex',
                       alignItems: 'center',
@@ -753,8 +776,9 @@ export default function AdminChatInbox() {
                       fontWeight: 800,
                       fontSize: '0.95rem'
                     }}>
-                      {initial}
+                      {(conv.client_name || conv.client_email || 'C')[0].toUpperCase()}
                     </div>
+                    {/* Active Status Dot */}
                     <span style={{
                       position: 'absolute',
                       bottom: '1px',
@@ -762,41 +786,42 @@ export default function AdminChatInbox() {
                       width: '10px',
                       height: '10px',
                       borderRadius: '50%',
-                      background: conv.status === 'online' ? '#22c55e' : '#94a3b8',
+                      background: '#22c55e',
                       border: '2px solid #ffffff'
                     }} />
                   </div>
 
-                  {/* THREAD INFO */}
+                  {/* THREAD DETAILS */}
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.2rem' }}>
                       <span style={{
-                        fontSize: '0.9rem',
                         fontWeight: hasUnread ? 800 : 700,
+                        fontSize: '0.9rem',
                         color: '#0f172a',
                         overflow: 'hidden',
                         textOverflow: 'ellipsis',
                         whiteSpace: 'nowrap'
                       }}>
-                        {conv.client_name || conv.client_email?.split('@')[0] || 'Client'}
+                        {conv.client_name || conv.client_email?.split('@')[0]}
                       </span>
-                      <span style={{ fontSize: '0.7rem', color: '#94a3b8', flexShrink: 0, marginLeft: '0.5rem' }}>
-                        {formatThreadTime(conv.last_message_at || conv.updated_at)}
+                      <span style={{ fontSize: '0.72rem', color: '#94a3b8', flexShrink: 0 }}>
+                        {lastTime}
                       </span>
                     </div>
 
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <span style={{
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem' }}>
+                      <p style={{
+                        margin: 0,
                         fontSize: '0.8rem',
                         color: hasUnread ? '#0f172a' : '#64748b',
-                        fontWeight: hasUnread ? 600 : 400,
+                        fontWeight: hasUnread ? 700 : 400,
                         overflow: 'hidden',
                         textOverflow: 'ellipsis',
                         whiteSpace: 'nowrap',
-                        maxWidth: '180px'
+                        flex: 1
                       }}>
-                        {conv.last_message || 'New conversation'}
-                      </span>
+                        {conv.last_message_text || 'Active thread'}
+                      </p>
 
                       {/* STAR TOGGLE & UNREAD BADGE */}
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
@@ -842,7 +867,11 @@ export default function AdminChatInbox() {
         display: 'flex',
         flexDirection: 'column',
         background: '#ffffff',
-        minWidth: 0
+        minWidth: 0,
+        height: '100%',
+        maxHeight: '100%',
+        minHeight: 0,
+        overflow: 'hidden'
       }}>
         {activeConversation ? (
           <>
@@ -853,7 +882,8 @@ export default function AdminChatInbox() {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
-              background: '#ffffff'
+              background: '#ffffff',
+              flexShrink: 0
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
                 <div style={{ position: 'relative' }}>
@@ -927,7 +957,8 @@ export default function AdminChatInbox() {
               display: 'flex',
               padding: '0 1.5rem',
               borderBottom: '1px solid #e2e8f0',
-              background: '#ffffff'
+              background: '#ffffff',
+              flexShrink: 0
             }}>
               <button
                 type="button"
@@ -967,7 +998,7 @@ export default function AdminChatInbox() {
             {/* TAB CONTENT */}
             {activeTab === 'saved' ? (
               /* SAVED AUTO-REPLIES TAB */
-              <div style={{ flex: 1, overflowY: 'auto', padding: '1.5rem' }}>
+              <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '1.5rem' }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
                   <div>
                     <h4 style={{ margin: 0, fontSize: '1rem', fontWeight: 800, color: '#0f172a' }}>
@@ -1068,13 +1099,14 @@ export default function AdminChatInbox() {
               </div>
             ) : (
               /* MESSAGES TAB */
-              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, height: '100%', overflow: 'hidden' }}>
                 {/* ATTACHED FILES GALLERY (Exact match to Reference Image) */}
                 {allAttachments.length > 0 && (
                   <div style={{
                     padding: '0.75rem 1.5rem',
                     borderBottom: '1px solid #f1f5f9',
-                    background: '#ffffff'
+                    background: '#ffffff',
+                    flexShrink: 0
                   }}>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
                       <button
@@ -1149,9 +1181,10 @@ export default function AdminChatInbox() {
                   </div>
                 )}
 
-                {/* MESSAGES STREAM */}
+                {/* MESSAGES STREAM (ONLY THIS INNER STREAM SCROLLS) */}
                 <div style={{
                   flex: 1,
+                  minHeight: 0,
                   overflowY: 'auto',
                   padding: '1.25rem 1.5rem',
                   display: 'flex',
@@ -1229,34 +1262,109 @@ export default function AdminChatInbox() {
 
                               {/* ATTACHMENTS INSIDE BUBBLE */}
                               {Array.isArray(msg.attachments) && msg.attachments.length > 0 && (
-                                <div style={{ marginTop: msg.text ? '0.65rem' : 0, display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                                  {msg.attachments.map((att, aIdx) => (
-                                    <a
-                                      key={aIdx}
-                                      href={att.url}
-                                      target="_blank"
-                                      rel="noreferrer"
-                                      download={att.name}
-                                      style={{
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        gap: '0.5rem',
-                                        padding: '0.4rem 0.65rem',
-                                        borderRadius: '6px',
-                                        background: isAdminMsg ? 'rgba(255,255,255,0.12)' : '#ffffff',
-                                        color: isAdminMsg ? '#ffffff' : '#0f172a',
-                                        textDecoration: 'none',
-                                        fontSize: '0.78rem',
-                                        border: isAdminMsg ? '1px solid rgba(255,255,255,0.15)' : '1px solid #e2e8f0'
-                                      }}
-                                    >
-                                      <Download size={13} />
-                                      <span style={{ fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                        {att.name}
-                                      </span>
-                                      {att.size && <span style={{ opacity: 0.75, fontSize: '0.7rem' }}>({att.size})</span>}
-                                    </a>
-                                  ))}
+                                <div style={{ marginTop: msg.text ? '0.65rem' : 0, display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
+                                  {msg.attachments.map((att, aIdx) => {
+                                    const isImg = isImageAttachment(att.name, att.url);
+                                    if (isImg) {
+                                      return (
+                                        <div
+                                          key={aIdx}
+                                          style={{
+                                            borderRadius: '10px',
+                                            overflow: 'hidden',
+                                            border: isAdminMsg ? '1px solid rgba(255,255,255,0.2)' : '1px solid #e2e8f0',
+                                            background: isAdminMsg ? 'rgba(0,0,0,0.25)' : '#ffffff',
+                                            maxWidth: '340px'
+                                          }}
+                                        >
+                                          <a
+                                            href={att.url}
+                                            target="_blank"
+                                            rel="noreferrer"
+                                            title="Click to view full size photo"
+                                            style={{ display: 'block', background: '#00000008', textDecoration: 'none' }}
+                                          >
+                                            <img
+                                              src={att.url}
+                                              alt={att.name || 'Photo'}
+                                              loading="lazy"
+                                              style={{
+                                                display: 'block',
+                                                width: '100%',
+                                                maxHeight: '260px',
+                                                objectFit: 'contain',
+                                                cursor: 'pointer',
+                                                borderRadius: '8px 8px 0 0'
+                                              }}
+                                            />
+                                          </a>
+                                          <div style={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'space-between',
+                                            padding: '0.35rem 0.6rem',
+                                            fontSize: '0.72rem',
+                                            borderTop: isAdminMsg ? '1px solid rgba(255,255,255,0.1)' : '1px solid #f1f5f9'
+                                          }}>
+                                            <span style={{
+                                              fontWeight: 600,
+                                              overflow: 'hidden',
+                                              textOverflow: 'ellipsis',
+                                              whiteSpace: 'nowrap',
+                                              maxWidth: '180px',
+                                              color: isAdminMsg ? '#e2e8f0' : '#475569'
+                                            }}>
+                                              {att.name}
+                                            </span>
+                                            <a
+                                              href={att.url}
+                                              download={att.name}
+                                              target="_blank"
+                                              rel="noreferrer"
+                                              style={{
+                                                color: isAdminMsg ? '#38bdf8' : '#ea580c',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '0.25rem',
+                                                textDecoration: 'none',
+                                                fontWeight: 700
+                                              }}
+                                            >
+                                              <Download size={12} /> {att.size || 'Download'}
+                                            </a>
+                                          </div>
+                                        </div>
+                                      );
+                                    }
+
+                                    return (
+                                      <a
+                                        key={aIdx}
+                                        href={att.url}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        download={att.name}
+                                        style={{
+                                          display: 'flex',
+                                          alignItems: 'center',
+                                          gap: '0.5rem',
+                                          padding: '0.4rem 0.65rem',
+                                          borderRadius: '6px',
+                                          background: isAdminMsg ? 'rgba(255,255,255,0.12)' : '#ffffff',
+                                          color: isAdminMsg ? '#ffffff' : '#0f172a',
+                                          textDecoration: 'none',
+                                          fontSize: '0.78rem',
+                                          border: isAdminMsg ? '1px solid rgba(255,255,255,0.15)' : '1px solid #e2e8f0'
+                                        }}
+                                      >
+                                        <Download size={13} />
+                                        <span style={{ fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                          {att.name}
+                                        </span>
+                                        {att.size && <span style={{ opacity: 0.75, fontSize: '0.7rem' }}>({att.size})</span>}
+                                      </a>
+                                    );
+                                  })}
                                 </div>
                               )}
                             </div>
@@ -1278,14 +1386,15 @@ export default function AdminChatInbox() {
                 </div>
 
                 {/* ============================================================ */}
-                {/* BOTTOM COMPOSER (Exact match to Reference Image)            */}
+                {/* BOTTOM COMPOSER (LOCKED AT BOTTOM, NEVER PUSHED OFF SCREEN)  */}
                 {/* ============================================================ */}
                 <div style={{
-                  padding: '1rem 1.5rem',
+                  padding: '0.85rem 1.5rem',
                   borderTop: '1px solid #e2e8f0',
-                  background: '#ffffff'
+                  background: '#ffffff',
+                  flexShrink: 0
                 }}>
-                  {/* PENDING ATTACHMENTS PREVIEW */}
+                  {/* PENDING ATTACHMENTS PREVIEW WITH PHOTO THUMBNAIL */}
                   {pendingAttachments.length > 0 && (
                     <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '0.65rem' }}>
                       {pendingAttachments.map((att, idx) => (
@@ -1299,9 +1408,16 @@ export default function AdminChatInbox() {
                             fontSize: '0.75rem',
                             display: 'flex',
                             alignItems: 'center',
-                            gap: '0.35rem'
+                            gap: '0.45rem'
                           }}
                         >
+                          {isImageAttachment(att.name, att.url) && (
+                            <img
+                              src={att.url}
+                              alt=""
+                              style={{ width: '22px', height: '22px', borderRadius: '4px', objectFit: 'cover' }}
+                            />
+                          )}
                           <span style={{ fontWeight: 600, color: '#0f172a' }}>{att.name}</span>
                           <button
                             type="button"

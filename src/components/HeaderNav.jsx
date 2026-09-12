@@ -13,6 +13,7 @@ import {
   MoreVertical,
   X, 
   Bell, 
+  MessageSquare, 
   PenTool, 
   Image as ImageIcon, 
   Award, 
@@ -90,6 +91,48 @@ export const HeaderNav = () => {
   const [isMobileServicesOpen, setIsMobileServicesOpen] = useState(false);
   const [isNotificationDropdownOpen, setIsNotificationDropdownOpen] = useState(false);
   const [isSupportDropdownOpen, setIsSupportDropdownOpen] = useState(false);
+  const [unreadChatCount, setUnreadChatCount] = useState(0);
+
+  // Sync unread chat count for top header inbox button
+  useEffect(() => {
+    if (!safeIsAuthenticated) {
+      setUnreadChatCount(0);
+      return;
+    }
+
+    const fetchUnreadChats = async () => {
+      try {
+        const emailQuery = !isAdmin && safeAuthUser?.email ? `&email=${encodeURIComponent(safeAuthUser.email)}` : '';
+        const res = await fetch(`/api/chat/conversations?filter=unread${emailQuery}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data?.conversations) {
+            const totalUnread = data.conversations.reduce((sum, c) => sum + (isAdmin ? (c.unread_admin_count || 0) : (c.unread_client_count || 0)), 0);
+            setUnreadChatCount(totalUnread);
+          }
+        }
+      } catch {}
+    };
+
+    fetchUnreadChats();
+    const interval = setInterval(fetchUnreadChats, 12000);
+    return () => clearInterval(interval);
+  }, [safeIsAuthenticated, isAdmin, safeAuthUser?.email]);
+
+  const handleInboxClick = () => {
+    if (isAdmin) {
+      if (setActiveAdminTab) setActiveAdminTab('inbox');
+      navigate('/admin-portal?tab=inbox');
+      if (setCurrentView) setCurrentView('admin');
+    } else if (safeIsAuthenticated) {
+      if (setActiveCustomerTab) setActiveCustomerTab('chat');
+      navigate('/client-portal?tab=chat');
+      if (setCurrentView) setCurrentView('customer');
+    } else {
+      setIsAuthModalOpen(true);
+      setAuthModalMode('login');
+    }
+  };
 
   useEffect(() => {
     if (isMobileMenuOpen) {
@@ -501,8 +544,55 @@ export const HeaderNav = () => {
             </button>
           )}
 
-          {/* Mobile Right Action Area (Clean Three-Lines Hamburger Menu) */}
-          <div className="mobile-only" style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', flexShrink: 0 }}>
+          {/* Mobile Right Action Area (Inbox & Clean Three-Lines Hamburger Menu) */}
+          <div className="mobile-only" style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', flexShrink: 0 }}>
+            {/* Mobile Inbox Icon */}
+            <button
+              type="button"
+              onClick={handleInboxClick}
+              style={{
+                position: 'relative',
+                background: 'transparent',
+                border: '1px solid var(--border-color)',
+                color: 'var(--text-main)',
+                width: '38px',
+                height: '38px',
+                minWidth: '38px',
+                minHeight: '38px',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0,
+                transition: 'all 0.2s ease'
+              }}
+              aria-label="Inbox & Support Chat"
+              title={isAdmin ? "Admin Inbox & Client Messages" : "Customer Support & Chat"}
+            >
+              <MessageSquare size={18} />
+              {unreadChatCount > 0 && (
+                <span style={{
+                  position: 'absolute',
+                  top: '2px',
+                  right: '2px',
+                  background: 'var(--color-primary, #ff7a00)',
+                  color: 'var(--color-text-on-primary, #ffffff)',
+                  fontSize: '0.6rem',
+                  fontWeight: 900,
+                  width: '15px',
+                  height: '15px',
+                  borderRadius: '50%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  border: '1.5px solid var(--color-surface, #ffffff)'
+                }}>
+                  {unreadChatCount > 99 ? '99+' : unreadChatCount}
+                </span>
+              )}
+            </button>
+
             {/* Mobile Three-Lines Menu Toggle Button */}
             <button
               type="button"
@@ -632,6 +722,52 @@ export const HeaderNav = () => {
                   </button>
                 )}
                 
+                  {/* TOP HEADER INBOX BUTTON */}
+                  <button
+                    type="button"
+                    onClick={handleInboxClick}
+                    style={{
+                      position: 'relative',
+                      background: 'var(--color-subtle, #f8fafc)',
+                      border: '1px solid var(--color-border)',
+                      color: 'var(--color-text-primary, var(--navy-800))',
+                      width: '38px',
+                      height: '38px',
+                      borderRadius: '9999px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      cursor: 'pointer',
+                      transition: 'all 0.15s ease'
+                    }}
+                    aria-label="Inbox & Support Chat"
+                    title={isAdmin ? "Admin Inbox & Client Messages" : "Customer Support & Chat"}
+                    onMouseOver={(e) => { e.currentTarget.style.borderColor = 'var(--color-primary, #ff7a00)'; }}
+                    onMouseOut={(e) => { e.currentTarget.style.borderColor = 'var(--color-border)'; }}
+                  >
+                    <MessageSquare size={17} />
+                    {unreadChatCount > 0 && (
+                      <span style={{
+                        position: 'absolute',
+                        top: '2px',
+                        right: '2px',
+                        background: 'var(--color-primary, #ff7a00)',
+                        color: 'var(--color-text-on-primary, #ffffff)',
+                        fontSize: '0.62rem',
+                        fontWeight: 900,
+                        width: '16px',
+                        height: '16px',
+                        borderRadius: '50%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        border: '1.5px solid var(--color-surface, #ffffff)'
+                      }}>
+                        {unreadChatCount > 99 ? '99+' : unreadChatCount}
+                      </span>
+                    )}
+                  </button>
+
                   {/* TOP HEADER NOTIFICATION BELL WITH DROPDOWN SUPPORT */}
                   <div ref={notificationDropdownRef} style={{ position: 'relative' }}>
                     <button

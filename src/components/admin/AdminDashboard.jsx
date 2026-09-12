@@ -691,16 +691,17 @@ export const AdminDashboard = () => {
         flex: 1,
         minWidth: 0,
         width: '100%',
-        padding: '0.85rem 1.25rem 2.5rem',
+        padding: activeTab === 'inbox' ? '0.45rem 0.75rem 0.45rem' : '0.85rem 1.25rem 2.5rem',
         boxSizing: 'border-box',
         height: '100%',
         maxHeight: '100%',
         minHeight: 0,
-        overflowY: 'auto',
+        overflowY: activeTab === 'inbox' ? 'hidden' : 'auto',
         overflowX: 'hidden',
-        display: 'block'
+        display: activeTab === 'inbox' ? 'flex' : 'block',
+        flexDirection: activeTab === 'inbox' ? 'column' : undefined
       }}>
-        {activeTab !== 'dashboard' && (
+        {activeTab !== 'dashboard' && activeTab !== 'inbox' && (
           <div style={{
             display: 'flex',
             justifyContent: 'space-between',

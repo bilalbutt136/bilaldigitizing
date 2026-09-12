@@ -104,9 +104,14 @@ export const StateProvider = ({ children }) => {
       const urlParams = new URLSearchParams(window.location.search);
       const tabParam = urlParams.get('tab');
       if (tabParam) {
-        return tabParam === 'support' ? 'inbox' : tabParam;
+        if (tabParam === 'support' || tabParam === 'inbox') return 'chat';
+        return tabParam;
       }
-      return localStorage.getItem('bdigi_customer_tab') || 'dashboard';
+      const savedTab = localStorage.getItem('bdigi_customer_tab');
+      if (savedTab && savedTab !== 'inbox' && savedTab !== 'support') {
+        return savedTab;
+      }
+      return 'dashboard';
     }
     return 'dashboard';
   });
@@ -129,9 +134,10 @@ export const StateProvider = ({ children }) => {
 
   const activeCustomerTab = activeCustomerTabState;
   const setActiveCustomerTab = (tab) => {
-    setActiveCustomerTabState(tab);
+    const cleanTab = (tab === 'inbox' || tab === 'support') ? 'chat' : tab;
+    setActiveCustomerTabState(cleanTab);
     if (typeof window !== 'undefined') {
-      localStorage.setItem('bdigi_customer_tab', tab);
+      localStorage.setItem('bdigi_customer_tab', cleanTab);
     }
   };
 

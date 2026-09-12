@@ -94,10 +94,15 @@ export const CustomerDashboard = () => {
       const urlParams = new URLSearchParams(window.location.search);
       const tabParam = urlParams.get('tab');
       if (tabParam) {
+        if (tabParam === 'support' || tabParam === 'inbox') return 'chat';
         return tabParam;
       }
+      const savedTab = localStorage.getItem('bdigi_customer_tab');
+      if (savedTab && savedTab !== 'inbox' && savedTab !== 'support') {
+        return savedTab;
+      }
     }
-    return activeCustomerTab || 'dashboard';
+    return activeCustomerTab && activeCustomerTab !== 'inbox' && activeCustomerTab !== 'support' ? activeCustomerTab : 'dashboard';
   });
   const [filterStatus, setFilterStatus] = useState('all');
   const [orderFilterTab, setOrderFilterTab] = useState('active'); // 'active' | 'completed' | 'all'
@@ -181,8 +186,9 @@ export const CustomerDashboard = () => {
       const urlParams = new URLSearchParams(window.location.search);
       const tabParam = urlParams.get('tab');
       const trackId = urlParams.get('trackOrder') || urlParams.get('orderId');
-      if (tabParam && tabParam !== 'inbox' && tabParam !== 'support') {
-        setActiveTab(tabParam);
+      if (tabParam) {
+        const cleanTab = (tabParam === 'inbox' || tabParam === 'support') ? 'chat' : tabParam;
+        setActiveTab(cleanTab);
       }
       if (trackId && setSelectedOrderForDrawer) {
         const cleanTrackId = String(trackId).trim().replace(/^#+/, '');
@@ -2316,115 +2322,9 @@ export const CustomerDashboard = () => {
               />
             )}
 
-            {/* TAB: 24/7 CUSTOMER SUPPORT HELPDESK */}
-            {activeTab === 'help-support' && (
-              <div 
-                style={{ 
-                  borderRadius: '16px',
-                  border: isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid var(--border-color)',
-                  background: isDark ? 'var(--color-surface, #111827)' : '#ffffff',
-                  padding: '2.5rem 2rem',
-                  maxWidth: '750px',
-                  margin: '0 auto',
-                  width: '100%',
-                  boxSizing: 'border-box'
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem', borderBottom: '1px solid var(--border-color, #e2e8f0)', paddingBottom: '1rem' }}>
-                  <div>
-                    <h2 style={{ fontSize: '1.4rem', fontWeight: 800, margin: '0 0 0.25rem 0', color: isDark ? '#ffffff' : '#0f172a' }}>
-                      24/7 Studio Helpdesk & Support
-                    </h2>
-                    <p style={{ fontSize: '0.88rem', color: 'var(--text-muted, #64748b)', margin: 0 }}>
-                      Our master digitizers and embroidery supervisors are active round-the-clock.
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setActiveTab('dashboard')}
-                    className="btn btn-sm btn-outline"
-                    style={{ borderRadius: '8px', padding: '0.4rem 0.8rem', fontSize: '0.8rem', fontWeight: 700 }}
-                  >
-                    Back to Dashboard
-                  </button>
-                </div>
-
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.25rem', marginBottom: '2rem' }}>
-                  <div style={{ padding: '1.5rem', borderRadius: '14px', background: isDark ? '#1e293b' : '#f8fafc', border: '1px solid var(--border-color, #e2e8f0)' }}>
-                    <div style={{ fontSize: '0.8rem', fontWeight: 800, textTransform: 'uppercase', color: 'var(--color-primary, #ea580c)', letterSpacing: '0.05em', marginBottom: '0.5rem' }}>
-                      Official Email Inquiries
-                    </div>
-                    <div style={{ fontSize: '1.05rem', fontWeight: 700, color: isDark ? '#ffffff' : '#0f172a', marginBottom: '0.35rem' }}>
-                      orders@bdigitizing-pro.com
-                    </div>
-                    <p style={{ fontSize: '0.82rem', color: 'var(--text-muted, #64748b)', margin: 0 }}>
-                      Send design requests, revision files, or urgent inquiries. Responses within 15-30 minutes.
-                    </p>
-                  </div>
-
-                  <div style={{ padding: '1.5rem', borderRadius: '14px', background: isDark ? '#1e293b' : '#f8fafc', border: '1px solid var(--border-color, #e2e8f0)' }}>
-                    <div style={{ fontSize: '0.8rem', fontWeight: 800, textTransform: 'uppercase', color: 'var(--color-primary, #ea580c)', letterSpacing: '0.05em', marginBottom: '0.5rem' }}>
-                      Direct WhatsApp Support
-                    </div>
-                    <div style={{ fontSize: '1.05rem', fontWeight: 700, color: isDark ? '#ffffff' : '#0f172a', marginBottom: '0.35rem' }}>
-                      +1 (800) 555-BDIGI
-                    </div>
-                    <p style={{ fontSize: '0.82rem', color: 'var(--text-muted, #64748b)', margin: 0 }}>
-                      Instant production status, machine format guidance, and urgent rush order expediting.
-                    </p>
-                  </div>
-                </div>
-
-                <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', marginBottom: '2rem' }}>
-                  <button
-                    type="button"
-                    onClick={() => setActiveTab('chat')}
-                    className="btn btn-primary"
-                    style={{ borderRadius: '10px', padding: '0.65rem 1.4rem', fontWeight: 800, fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '0.45rem' }}
-                  >
-                    <Sparkles size={16} /> Open Studio Live Chat
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => navigate('/contact')}
-                    className="btn btn-outline"
-                    style={{ borderRadius: '10px', padding: '0.65rem 1.4rem', fontWeight: 800, fontSize: '0.9rem' }}
-                  >
-                    Contact Desk Form
-                  </button>
-                </div>
-
-                {/* Embedded Live Support Chat */}
-                <div style={{ marginTop: '1.5rem', borderTop: '1px solid var(--border-color, #e2e8f0)', paddingTop: '1.5rem' }}>
-                  <h3 style={{ fontSize: '1.1rem', fontWeight: 800, marginBottom: '0.75rem', color: isDark ? '#ffffff' : '#0f172a' }}>
-                    Instant Production Desk Chat
-                  </h3>
-                  <CustomerSupportChat />
-                </div>
-              </div>
-            )}
-
-            {/* TAB: DEDICATED STUDIO LIVE CHAT */}
-            {activeTab === 'chat' && (
-              <div style={{ maxWidth: '840px', margin: '0 auto', width: '100%' }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
-                  <div>
-                    <h2 style={{ fontSize: '1.35rem', fontWeight: 800, margin: '0 0 0.2rem 0', color: isDark ? '#ffffff' : '#0f172a' }}>
-                      Studio Live Messaging
-                    </h2>
-                    <p style={{ fontSize: '0.82rem', color: 'var(--text-muted, #64748b)', margin: 0 }}>
-                      Direct communication with our master digitizers. Review custom offers and upload design files.
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setActiveTab('dashboard')}
-                    className="btn btn-sm btn-outline"
-                    style={{ borderRadius: '8px', padding: '0.4rem 0.8rem', fontSize: '0.8rem', fontWeight: 700 }}
-                  >
-                    Back to Dashboard
-                  </button>
-                </div>
+            {/* TAB: 24/7 CUSTOMER SUPPORT & STUDIO LIVE CHAT (FULL SCREEN AREA) */}
+            {(activeTab === 'chat' || activeTab === 'help-support') && (
+              <div style={{ width: '100%', height: 'calc(100vh - 110px)', minHeight: '580px', display: 'flex', flexDirection: 'column' }}>
                 <CustomerSupportChat />
               </div>
             )}
