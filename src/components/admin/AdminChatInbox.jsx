@@ -35,7 +35,7 @@ import {
 
 const COMMON_EMOJIS = ['👋', '✅', '🧵', '✨', '👌', '🙏', '📁', '👕', '🧢', '🔥', '🚀', '💯'];
 
-export default function AdminChatInbox({ initialChannel = 'all' }) {
+export default function AdminChatInbox({ initialChannel = 'inbox' }) {
   const { authUser, orders = [] } = useAppState();
 
   const [conversations, setConversations] = useState([]);
@@ -44,8 +44,8 @@ export default function AdminChatInbox({ initialChannel = 'all' }) {
   const [isLoadingThreads, setIsLoadingThreads] = useState(true);
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
 
-  // Channel filter: 'all' | 'inbox' | 'support' (Item 5: Separate Support & Inbox)
-  const [activeChannel, setActiveChannel] = useState(initialChannel);
+  // Channel filter: 'inbox' | 'support' (Strictly isolated channels, no 'all')
+  const [activeChannel, setActiveChannel] = useState(initialChannel === 'support' ? 'support' : 'inbox');
 
   // Filters & Search
   const [searchQuery, setSearchQuery] = useState('');
@@ -108,25 +108,28 @@ export default function AdminChatInbox({ initialChannel = 'all' }) {
 
   useEffect(() => {
     if (initialChannel) {
-      setActiveChannel(initialChannel);
+      setActiveChannel(initialChannel === 'support' ? 'support' : 'inbox');
     }
   }, [initialChannel]);
 
   // 1. Fetch Conversations
   const fetchConversations = async (filter = activeFilter, query = searchQuery, channel = activeChannel) => {
     try {
-      let url = `/api/chat/conversations?filter=${filter}`;
-      if (channel && channel !== 'all') url += `&channel=${channel}`;
+      const targetChannel = channel === 'support' ? 'support' : 'inbox';
+      let url = `/api/chat/conversations?filter=${filter}&channel=${targetChannel}`;
       if (query) url += `&q=${encodeURIComponent(query)}`;
       const res = await fetch(url);
       const data = await res.json();
       if (data?.conversations) {
         setConversations(data.conversations);
-        // If no conversation selected, select first one
-        if (!activeConversationId && data.conversations.length > 0) {
-          setActiveConversationId(data.conversations[0].id);
-        } else if (data.conversations.length > 0 && !data.conversations.some(c => c.id === activeConversationId)) {
-          setActiveConversationId(data.conversations[0].id);
+        // If current active conversation is not in this channel's list, select first one or reset
+        if (data.conversations.length > 0) {
+          if (!activeConversationId || !data.conversations.some(c => c.id === activeConversationId)) {
+            setActiveConversationId(data.conversations[0].id);
+          }
+        } else {
+          setActiveConversationId(null);
+          setMessages([]);
         }
       }
     } catch (err) {
@@ -178,9 +181,10 @@ export default function AdminChatInbox({ initialChannel = 'all' }) {
   };
 
   useEffect(() => {
-    fetchConversations(activeFilter, searchQuery);
+    fetchConversations(activeFilter, searchQuery, activeChannel);
     fetchSavedReplies();
-  }, [activeFilter]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeFilter, activeChannel]);
 
   useEffect(() => {
     if (activeConversationId) {
@@ -717,10 +721,10 @@ export default function AdminChatInbox({ initialChannel = 'all' }) {
           </div>
         </div>
 
-        {/* CHANNEL TABS: ALL / INBOX & OFFERS / 24/7 SUPPORT (Item 5) */}
+        {/* CHANNEL TABS: INBOX & OFFERS vs 24/7 SUPPORT DESK (Strict Channel Separation) */}
         <div style={{
           display: 'flex',
-          gap: '0.35rem',
+          gap: '0.45rem',
           padding: '0.45rem 1rem',
           borderBottom: '1px solid #f1f5f9',
           background: '#f8fafc',
@@ -729,34 +733,14 @@ export default function AdminChatInbox({ initialChannel = 'all' }) {
           <button
             type="button"
             onClick={() => {
-              setActiveChannel('all');
-              fetchConversations(activeFilter, searchQuery, 'all');
-            }}
-            style={{
-              flex: 1,
-              padding: '0.35rem 0.45rem',
-              borderRadius: '6px',
-              fontSize: '0.75rem',
-              fontWeight: 700,
-              border: activeChannel === 'all' ? '1.5px solid #0f172a' : '1px solid #cbd5e1',
-              background: activeChannel === 'all' ? '#0f172a' : '#ffffff',
-              color: activeChannel === 'all' ? '#ffffff' : '#475569',
-              cursor: 'pointer'
-            }}
-          >
-            All
-          </button>
-          <button
-            type="button"
-            onClick={() => {
               setActiveChannel('inbox');
               fetchConversations(activeFilter, searchQuery, 'inbox');
             }}
             style={{
-              flex: 1.3,
-              padding: '0.35rem 0.45rem',
+              flex: 1,
+              padding: '0.45rem 0.5rem',
               borderRadius: '6px',
-              fontSize: '0.75rem',
+              fontSize: '0.78rem',
               fontWeight: 700,
               border: activeChannel === 'inbox' ? '1.5px solid #ea580c' : '1px solid #cbd5e1',
               background: activeChannel === 'inbox' ? '#fff7ed' : '#ffffff',
@@ -765,7 +749,8 @@ export default function AdminChatInbox({ initialChannel = 'all' }) {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              gap: '0.25rem'
+              gap: '0.35rem',
+              transition: 'all 0.15s ease'
             }}
           >
             <span>📥</span> Inbox & Offers
@@ -777,10 +762,10 @@ export default function AdminChatInbox({ initialChannel = 'all' }) {
               fetchConversations(activeFilter, searchQuery, 'support');
             }}
             style={{
-              flex: 1.2,
-              padding: '0.35rem 0.45rem',
+              flex: 1,
+              padding: '0.45rem 0.5rem',
               borderRadius: '6px',
-              fontSize: '0.75rem',
+              fontSize: '0.78rem',
               fontWeight: 700,
               border: activeChannel === 'support' ? '1.5px solid #2563eb' : '1px solid #cbd5e1',
               background: activeChannel === 'support' ? '#eff6ff' : '#ffffff',
@@ -789,7 +774,8 @@ export default function AdminChatInbox({ initialChannel = 'all' }) {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              gap: '0.25rem'
+              gap: '0.35rem',
+              transition: 'all 0.15s ease'
             }}
           >
             <span>🎧</span> Support Desk
@@ -849,8 +835,14 @@ export default function AdminChatInbox({ initialChannel = 'all' }) {
             </div>
           ) : conversations.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '2.5rem 1rem', color: '#94a3b8' }}>
-              <p style={{ fontSize: '0.88rem', margin: '0 0 0.25rem 0', fontWeight: 600 }}>No conversations found</p>
-              <span style={{ fontSize: '0.78rem' }}>When clients send messages or place orders, threads will appear here.</span>
+              <p style={{ fontSize: '0.88rem', margin: '0 0 0.25rem 0', fontWeight: 600 }}>
+                {activeChannel === 'support' ? 'No support tickets found' : 'No inbox conversations found'}
+              </p>
+              <span style={{ fontSize: '0.78rem' }}>
+                {activeChannel === 'support'
+                  ? 'Client inquiries submitted via 24/7 Support Desk will appear here.'
+                  : 'Direct client inquiries, orders, and custom offers will appear here.'}
+              </span>
             </div>
           ) : (
             conversations.map((conv) => {
@@ -1772,24 +1764,26 @@ export default function AdminChatInbox({ initialChannel = 'all' }) {
 
                     {/* RIGHT CONTROLS: CREATE AN OFFER & SEND (Exact match to Reference) */}
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
-                      {/* "Create an offer" Button */}
-                      <button
-                        type="button"
-                        onClick={() => setIsCreateOfferModalOpen(true)}
-                        style={{
-                          background: '#ffffff',
-                          color: '#0f172a',
-                          border: '1.5px solid #0f172a',
-                          borderRadius: '6px',
-                          padding: '0.4rem 1rem',
-                          fontSize: '0.85rem',
-                          fontWeight: 700,
-                          cursor: 'pointer',
-                          transition: 'all 0.15s ease'
-                        }}
-                      >
-                        Create an offer
-                      </button>
+                      {/* "Create an offer" Button (Strictly for Inbox & Offers channel) */}
+                      {activeChannel === 'inbox' && (
+                        <button
+                          type="button"
+                          onClick={() => setIsCreateOfferModalOpen(true)}
+                          style={{
+                            background: '#ffffff',
+                            color: '#0f172a',
+                            border: '1.5px solid #0f172a',
+                            borderRadius: '6px',
+                            padding: '0.4rem 1rem',
+                            fontSize: '0.85rem',
+                            fontWeight: 700,
+                            cursor: 'pointer',
+                            transition: 'all 0.15s ease'
+                          }}
+                        >
+                          Create an offer
+                        </button>
+                      )}
 
                       {/* Send Button */}
                       <button

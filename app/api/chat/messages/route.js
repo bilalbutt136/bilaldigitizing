@@ -39,14 +39,25 @@ export async function GET(request) {
       return NextResponse.json({ messages: [] });
     }
 
-    // Fetch live custom offers for this conversation or client to ensure latest status is synced
+    // Strict Channel Isolation: Check if current thread is a support thread
+    const isSupportThread = conversationId && (
+      conversationId.startsWith('support-') || 
+      conversationId === 'general-support' || 
+      conversationId === 'help-support'
+    );
+
     let syncedMessages = messages || [];
-    if (conversationId || clientEmail) {
+
+    if (isSupportThread) {
+      // RULE: Support Desk is strictly for customer support inquiries.
+      // NEVER leak or synthesize custom offers into support threads.
+      syncedMessages = syncedMessages.filter(msg => msg.type !== 'custom_offer' && !msg.offer_id);
+    } else if (conversationId || clientEmail) {
+      // INBOX CHANNEL: Fetch & sync live custom offers strictly for this inbox conversation
       try {
         let offerQuery = supabase.from('custom_offers').select('*');
-        if (conversationId && clientEmail) {
-          offerQuery = offerQuery.or(`conversation_id.eq.${conversationId},client_email.ilike.${clientEmail}`);
-        } else if (conversationId) {
+        if (conversationId) {
+          // Strictly match by conversation_id to avoid cross-thread offer leakage
           offerQuery = offerQuery.eq('conversation_id', conversationId);
         } else if (clientEmail) {
           offerQuery = offerQuery.ilike('client_email', clientEmail);
@@ -75,12 +86,18 @@ export async function GET(request) {
           });
 
           // 2. Synthesize missing offer messages for any custom_offer not yet in messages
-          // This guarantees custom offers always show on both sender and receiver sides!
+          // This guarantees custom offers always show on both sender and receiver sides in Inbox!
           const missingOffers = offers.filter(off => !seenOfferIds.has(off.id));
           for (const off of missingOffers) {
+            const targetConvId = conversationId || off.conversation_id;
+            // Never synthesize into a support thread
+            if (targetConvId && (targetConvId.startsWith('support-') || targetConvId === 'general-support' || targetConvId === 'help-support')) {
+              continue;
+            }
+
             const synthesizedMsg = {
               id: `msg-offer-${off.id}`,
-              conversation_id: conversationId || off.conversation_id,
+              conversation_id: targetConvId,
               client_email: off.client_email || clientEmail,
               sender: 'admin',
               sender_name: 'Bilal Digitizing Support',
@@ -143,6 +160,11 @@ export async function POST(request) {
     const cleanEmail = (client_email || user?.email || '').toLowerCase().trim();
     if (!cleanEmail) {
       return NextResponse.json({ error: 'Missing client_email' }, { status: 400 });
+    }
+
+    const isSupportThread = conversation_id.startsWith('support-') || conversation_id === 'general-support' || conversation_id === 'help-support';
+    if (isSupportThread && (offer_id || type === 'custom_offer')) {
+      return NextResponse.json({ error: 'Custom offers cannot be dispatched in Support Desk. Please use the Inbox channel.' }, { status: 400 });
     }
 
     // Role enforcement

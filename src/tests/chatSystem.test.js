@@ -196,32 +196,110 @@ test('Chat System & Fiverr-Style Inbox Architecture', async (t) => {
     assert.equal(shouldSendNotification('offer', 'Custom Offer Accepted!'), true);
   });
 
-  await t.test('10. Inbox and Support chat threads are completely isolated', () => {
-    const userEmail = 'john.doe@example.com';
+  await t.test('10. Inbox and Support channels are strictly isolated with no "all" option and zero message mixing', () => {
+    // 1. Elimination of "all" option: Only 'inbox' and 'support' channels exist
+    const resolveChannel = (requestedChannel) => {
+      const sanitized = (requestedChannel || '').toLowerCase().trim();
+      return sanitized === 'support' ? 'support' : 'inbox';
+    };
+
+    assert.equal(resolveChannel('all'), 'inbox'); // 'all' is invalid, defaults to inbox
+    assert.equal(resolveChannel(''), 'inbox');
+    assert.equal(resolveChannel(undefined), 'inbox');
+    assert.equal(resolveChannel('inbox'), 'inbox');
+    assert.equal(resolveChannel('support'), 'support');
+
+    // 2. Thread isolation: Inbox vs Support threads
+    const userEmail = 'bilalsadiq612@gmail.com';
     const cleanEmail = userEmail.replace(/[^a-zA-Z0-9]/g, '_');
 
     const inboxThreadId = `inbox-${cleanEmail}`;
     const supportThreadId = `support-${cleanEmail}`;
 
-    assert.notEqual(inboxThreadId, supportThreadId);
-    assert.ok(inboxThreadId.startsWith('inbox-'));
-    assert.ok(supportThreadId.startsWith('support-'));
-
-    const conversations = [
-      { id: inboxThreadId, chat_type: 'inbox', tags: ['inbox'] },
-      { id: supportThreadId, chat_type: 'support', tags: ['support'] }
+    const rawConversations = [
+      { id: inboxThreadId, client_email: userEmail, client_name: 'MUHAMMAD BILAL', order_title: 'Direct Studio Communication & Offers', tags: ['inbox'] },
+      { id: supportThreadId, client_email: userEmail, client_name: 'MUHAMMAD BILAL', order_title: '24/7 Customer Support Desk', tags: ['support'] },
+      { id: 'general-support', client_email: 'guest@example.com', client_name: 'Guest User', order_title: '24/7 Customer Support Desk', tags: ['support'] },
+      { id: 'inbox-other_client', client_email: 'other@example.com', client_name: 'Other Client', order_title: 'Digitizing Order', tags: ['inbox'] }
     ];
 
-    const filterChannel = (list, channel) => {
-      if (channel === 'inbox') return list.filter(c => c.id.startsWith('inbox-') || (c.tags && c.tags.includes('inbox')));
-      if (channel === 'support') return list.filter(c => c.id.startsWith('support-') || (c.tags && c.tags.includes('support')));
-      return list;
+    const filterConversationsByChannel = (convs, channel) => {
+      const active = resolveChannel(channel);
+      if (active === 'support') {
+        return convs.filter(c => 
+          (c.id || '').startsWith('support-') || 
+          c.id === 'general-support' || 
+          c.id === 'help-support' ||
+          (Array.isArray(c.tags) && c.tags.includes('support')) ||
+          (c.order_title || '').toLowerCase().includes('support')
+        );
+      } else {
+        return convs.filter(c => 
+          !(c.id || '').startsWith('support-') && 
+          c.id !== 'general-support' && 
+          c.id !== 'help-support' &&
+          (!Array.isArray(c.tags) || !c.tags.includes('support')) &&
+          !(c.order_title || '').toLowerCase().includes('support')
+        );
+      }
     };
 
-    assert.equal(filterChannel(conversations, 'inbox').length, 1);
-    assert.equal(filterChannel(conversations, 'inbox')[0].id, inboxThreadId);
-    assert.equal(filterChannel(conversations, 'support').length, 1);
-    assert.equal(filterChannel(conversations, 'support')[0].id, supportThreadId);
+    const inboxList = filterConversationsByChannel(rawConversations, 'inbox');
+    const supportList = filterConversationsByChannel(rawConversations, 'support');
+
+    // Verify inbox only has inbox threads
+    assert.equal(inboxList.length, 2);
+    assert.ok(inboxList.every(c => !c.id.startsWith('support-') && !c.tags.includes('support')));
+
+    // Verify support only has support threads
+    assert.equal(supportList.length, 2);
+    assert.ok(supportList.every(c => c.id.startsWith('support-') || c.id === 'general-support' || c.tags.includes('support')));
+
+    // 3. Client deduplication test
+    const duplicateList = [
+      { id: 'inbox-bilalsadiq612_gmail_com', client_email: 'bilalsadiq612@gmail.com', last_message_at: '2026-09-12T16:00:00Z' },
+      { id: 'conv-bilalsadiq612_gmail_com', client_email: 'bilalsadiq612@gmail.com', last_message_at: '2026-09-11T12:00:00Z' }
+    ];
+
+    const deduplicate = (list) => {
+      const seen = new Set();
+      const out = [];
+      for (const item of list) {
+        const email = (item.client_email || '').toLowerCase().trim();
+        if (email) {
+          if (!seen.has(email)) {
+            seen.add(email);
+            out.push(item);
+          }
+        } else {
+          out.push(item);
+        }
+      }
+      return out;
+    };
+
+    const deduplicated = deduplicate(duplicateList);
+    assert.equal(deduplicated.length, 1);
+    assert.equal(deduplicated[0].id, 'inbox-bilalsadiq612_gmail_com');
+
+    // 4. Custom offers are strictly forbidden from support threads
+    const mixedMessages = [
+      { id: 'msg-1', conversation_id: supportThreadId, text: 'Need help with order', type: 'text' },
+      { id: 'msg-2', conversation_id: supportThreadId, text: 'Custom Offer: Cap Logo', type: 'custom_offer', offer_id: 'off-123' },
+      { id: 'msg-3', conversation_id: supportThreadId, text: 'Thank you for your help', type: 'text' }
+    ];
+
+    const sanitizeSupportMessages = (msgs, convId) => {
+      const isSupport = convId.startsWith('support-') || convId === 'general-support';
+      if (isSupport) {
+        return msgs.filter(m => m.type !== 'custom_offer' && !m.offer_id);
+      }
+      return msgs;
+    };
+
+    const sanitizedSupport = sanitizeSupportMessages(mixedMessages, supportThreadId);
+    assert.equal(sanitizedSupport.length, 2);
+    assert.ok(sanitizedSupport.every(m => m.type !== 'custom_offer' && !m.offer_id));
   });
 
   await t.test('11. Custom offer state machine properly distinguishes Pending, Awaiting Payment, and Paid states without premature "Accepted & Paid"', () => {

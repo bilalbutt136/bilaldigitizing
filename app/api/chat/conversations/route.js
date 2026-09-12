@@ -10,7 +10,8 @@ export async function GET(request) {
     const { searchParams } = new URL(request.url);
     const q = (searchParams.get('q') || '').toLowerCase().trim();
     const filter = searchParams.get('filter') || 'all'; // 'all' | 'unread' | 'starred'
-    const chatType = (searchParams.get('chat_type') || searchParams.get('channel') || 'all').toLowerCase().trim(); // 'all' | 'inbox' | 'support'
+    const rawChatType = (searchParams.get('channel') || searchParams.get('chat_type') || 'inbox').toLowerCase().trim();
+    const chatType = rawChatType === 'support' ? 'support' : 'inbox'; // Strict isolation: only 'inbox' or 'support'
     const requestedEmail = searchParams.get('email')?.toLowerCase().trim();
 
     const supabase = createAdminClient();
@@ -99,25 +100,42 @@ export async function GET(request) {
       }
     }
 
-    // Filter by channel/chat_type if specified (Item 5: Separate Inbox and Support)
+    // Strict channel isolation: 'support' vs 'inbox' (no 'all')
     let results = conversations || [];
     if (chatType === 'support') {
       results = results.filter(c => 
         (c.id || '').startsWith('support-') || 
-        c.id === 'general-support' ||
+        c.id === 'general-support' || 
         c.id === 'help-support' ||
         (Array.isArray(c.tags) && c.tags.includes('support')) ||
         (c.order_title || '').toLowerCase().includes('support')
       );
-    } else if (chatType === 'inbox') {
+    } else {
+      // Strictly 'inbox' (inbox inquiries, order communications, custom offers)
       results = results.filter(c => 
         !(c.id || '').startsWith('support-') && 
         c.id !== 'general-support' && 
         c.id !== 'help-support' &&
         (!Array.isArray(c.tags) || !c.tags.includes('support')) &&
-        !(c.order_title || '').toLowerCase().includes('24/7 customer support')
+        !(c.order_title || '').toLowerCase().includes('support')
       );
     }
+
+    // Deduplicate conversations by client_email so that a client never appears twice in the same channel
+    const seenEmails = new Set();
+    const deduplicatedResults = [];
+    for (const c of results) {
+      const email = (c.client_email || '').toLowerCase().trim();
+      if (email) {
+        if (!seenEmails.has(email)) {
+          seenEmails.add(email);
+          deduplicatedResults.push(c);
+        }
+      } else {
+        deduplicatedResults.push(c);
+      }
+    }
+    results = deduplicatedResults;
 
     // Apply client-side search query filtering if provided
     if (q) {
