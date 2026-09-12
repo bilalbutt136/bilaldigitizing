@@ -493,6 +493,11 @@ export default function AdminChatInbox() {
       return '';
     }
   };
+  const formatRelativeTime = formatThreadTime;
+
+  const handleSelectConversation = (convId) => {
+    setActiveConversationId(convId);
+  };
 
   // Helper for image detection
   const isImageAttachment = (name = '', url = '') => {
@@ -742,7 +747,7 @@ export default function AdminChatInbox() {
             conversations.map((conv) => {
               const isSelected = conv.id === activeConversationId;
               const hasUnread = (conv.unread_admin_count || 0) > 0;
-              const lastTime = formatRelativeTime(conv.last_message_at);
+              const lastTime = formatThreadTime(conv.last_message_at || conv.updated_at);
 
               return (
                 <div
