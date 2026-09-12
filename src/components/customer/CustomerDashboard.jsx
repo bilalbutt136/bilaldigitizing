@@ -94,15 +94,15 @@ export const CustomerDashboard = () => {
       const urlParams = new URLSearchParams(window.location.search);
       const tabParam = urlParams.get('tab');
       if (tabParam) {
-        if (tabParam === 'support' || tabParam === 'inbox') return 'chat';
+        if (tabParam === 'chat') return 'inbox';
         return tabParam;
       }
       const savedTab = localStorage.getItem('bdigi_customer_tab');
-      if (savedTab && savedTab !== 'inbox' && savedTab !== 'support') {
+      if (savedTab) {
         return savedTab;
       }
     }
-    return activeCustomerTab && activeCustomerTab !== 'inbox' && activeCustomerTab !== 'support' ? activeCustomerTab : 'dashboard';
+    return activeCustomerTab ? activeCustomerTab : 'dashboard';
   });
   const [filterStatus, setFilterStatus] = useState('all');
   const [orderFilterTab, setOrderFilterTab] = useState('active'); // 'active' | 'completed' | 'all'
@@ -187,7 +187,7 @@ export const CustomerDashboard = () => {
       const tabParam = urlParams.get('tab');
       const trackId = urlParams.get('trackOrder') || urlParams.get('orderId');
       if (tabParam) {
-        const cleanTab = (tabParam === 'inbox' || tabParam === 'support') ? 'chat' : tabParam;
+        const cleanTab = tabParam === 'chat' ? 'inbox' : tabParam;
         setActiveTab(cleanTab);
       }
       if (trackId && setSelectedOrderForDrawer) {
@@ -2322,10 +2322,17 @@ export const CustomerDashboard = () => {
               />
             )}
 
-            {/* TAB: 24/7 CUSTOMER SUPPORT & STUDIO LIVE CHAT (FULL SCREEN AREA) */}
-            {(activeTab === 'chat' || activeTab === 'help-support') && (
+            {/* TAB: STUDIO INBOX & CUSTOM OFFERS */}
+            {(activeTab === 'inbox' || activeTab === 'chat') && (
               <div style={{ width: '100%', height: 'calc(100vh - 110px)', minHeight: '580px', display: 'flex', flexDirection: 'column' }}>
-                <CustomerSupportChat />
+                <CustomerSupportChat chatType="inbox" key="client-inbox" />
+              </div>
+            )}
+
+            {/* TAB: 24/7 CUSTOMER SUPPORT DESK */}
+            {(activeTab === 'support' || activeTab === 'help-support') && (
+              <div style={{ width: '100%', height: 'calc(100vh - 110px)', minHeight: '580px', display: 'flex', flexDirection: 'column' }}>
+                <CustomerSupportChat chatType="support" key="client-support" />
               </div>
             )}
 

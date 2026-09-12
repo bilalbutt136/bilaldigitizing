@@ -443,6 +443,12 @@ export const StateProvider = ({ children }) => {
           
           freshNotifs.forEach(n => {
             if (n && n.id) {
+              const nType = (n.type || '').toLowerCase();
+              const nTitle = (n.title || '').toLowerCase();
+              // Item 3: Exclude message notifications (only order placed, delivered, or order-related)
+              if (nType === 'chat' || nType === 'message' || nTitle.includes('new message')) {
+                return;
+              }
               map.set(n.id, {
                 id: n.id,
                 title: n.title || 'Notification',
@@ -677,6 +683,12 @@ export const StateProvider = ({ children }) => {
       isAdmin: isAdminUser,
       onNewNotification: (notif) => {
         if (!notif || !notif.id) return;
+        // Item 3: Exclude message notifications (only order placed, delivered, or order-related)
+        const notifType = (notif.type || '').toLowerCase();
+        const notifTitle = (notif.title || '').toLowerCase();
+        if (notifType === 'chat' || notifType === 'message' || notifTitle.includes('new message')) {
+          return;
+        }
         setNotifications(prev => {
           const safePrev = Array.isArray(prev) ? prev : [];
           if (safePrev.some(n => n.id === notif.id)) return prev;

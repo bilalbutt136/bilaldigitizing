@@ -59,9 +59,15 @@ export const ClientSidebar = ({
           badge: unreadOrdersCount > 0 ? unreadOrdersCount : null
         },
         { 
-          id: 'chat', 
-          label: 'Customer Support & Chat', 
+          id: 'inbox', 
+          label: 'Inbox & Offers', 
           icon: MessageSquare, 
+          badge: null
+        },
+        { 
+          id: 'support', 
+          label: '24/7 Live Support', 
+          icon: Headphones, 
           badge: null
         },
         {
@@ -255,7 +261,9 @@ export const ClientSidebar = ({
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.12rem' }}>
               {sec.items.map(item => {
                 const IconComp = item.icon;
-                const isActive = activeTab === item.id || (item.id === 'chat' && activeTab === 'help-support');
+                const isActive = activeTab === item.id || 
+                  (item.id === 'inbox' && activeTab === 'chat') ||
+                  (item.id === 'support' && activeTab === 'help-support');
 
                 return (
                   <button

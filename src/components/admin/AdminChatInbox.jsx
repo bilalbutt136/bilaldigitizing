@@ -35,7 +35,7 @@ import {
 
 const COMMON_EMOJIS = ['👋', '✅', '🧵', '✨', '👌', '🙏', '📁', '👕', '🧢', '🔥', '🚀', '💯'];
 
-export default function AdminChatInbox() {
+export default function AdminChatInbox({ initialChannel = 'all' }) {
   const { authUser, orders = [] } = useAppState();
 
   const [conversations, setConversations] = useState([]);
@@ -43,6 +43,9 @@ export default function AdminChatInbox() {
   const [messages, setMessages] = useState([]);
   const [isLoadingThreads, setIsLoadingThreads] = useState(true);
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
+
+  // Channel filter: 'all' | 'inbox' | 'support' (Item 5: Separate Support & Inbox)
+  const [activeChannel, setActiveChannel] = useState(initialChannel);
 
   // Filters & Search
   const [searchQuery, setSearchQuery] = useState('');
@@ -88,11 +91,32 @@ export default function AdminChatInbox() {
 
   const messagesEndRef = useRef(null);
   const fileInputRef = useRef(null);
+  const textareaRef = useRef(null);
+
+  const adjustTextareaHeight = (el) => {
+    if (!el) return;
+    el.style.height = 'auto';
+    const nextH = Math.min(Math.max(el.scrollHeight, 48), 180);
+    el.style.height = `${nextH}px`;
+  };
+
+  useEffect(() => {
+    if (textareaRef.current) {
+      adjustTextareaHeight(textareaRef.current);
+    }
+  }, [inputText]);
+
+  useEffect(() => {
+    if (initialChannel) {
+      setActiveChannel(initialChannel);
+    }
+  }, [initialChannel]);
 
   // 1. Fetch Conversations
-  const fetchConversations = async (filter = activeFilter, query = searchQuery) => {
+  const fetchConversations = async (filter = activeFilter, query = searchQuery, channel = activeChannel) => {
     try {
       let url = `/api/chat/conversations?filter=${filter}`;
+      if (channel && channel !== 'all') url += `&channel=${channel}`;
       if (query) url += `&q=${encodeURIComponent(query)}`;
       const res = await fetch(url);
       const data = await res.json();
@@ -100,6 +124,8 @@ export default function AdminChatInbox() {
         setConversations(data.conversations);
         // If no conversation selected, select first one
         if (!activeConversationId && data.conversations.length > 0) {
+          setActiveConversationId(data.conversations[0].id);
+        } else if (data.conversations.length > 0 && !data.conversations.some(c => c.id === activeConversationId)) {
           setActiveConversationId(data.conversations[0].id);
         }
       }
@@ -278,6 +304,7 @@ export default function AdminChatInbox() {
   // Handle Typing indicator broadcast
   const handleInputChange = (e) => {
     setInputText(e.target.value);
+    adjustTextareaHeight(e.target);
 
     // Notify backend of typing
     if (activeConversationId) {
@@ -392,6 +419,9 @@ export default function AdminChatInbox() {
     setInputText('');
     setPendingAttachments([]);
     setPreviousDraft(null);
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto';
+    }
 
     try {
       const res = await fetch('/api/chat/messages', {
@@ -685,6 +715,85 @@ export default function AdminChatInbox() {
               <RefreshCw size={17} />
             </button>
           </div>
+        </div>
+
+        {/* CHANNEL TABS: ALL / INBOX & OFFERS / 24/7 SUPPORT (Item 5) */}
+        <div style={{
+          display: 'flex',
+          gap: '0.35rem',
+          padding: '0.45rem 1rem',
+          borderBottom: '1px solid #f1f5f9',
+          background: '#f8fafc',
+          flexShrink: 0
+        }}>
+          <button
+            type="button"
+            onClick={() => {
+              setActiveChannel('all');
+              fetchConversations(activeFilter, searchQuery, 'all');
+            }}
+            style={{
+              flex: 1,
+              padding: '0.35rem 0.45rem',
+              borderRadius: '6px',
+              fontSize: '0.75rem',
+              fontWeight: 700,
+              border: activeChannel === 'all' ? '1.5px solid #0f172a' : '1px solid #cbd5e1',
+              background: activeChannel === 'all' ? '#0f172a' : '#ffffff',
+              color: activeChannel === 'all' ? '#ffffff' : '#475569',
+              cursor: 'pointer'
+            }}
+          >
+            All
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setActiveChannel('inbox');
+              fetchConversations(activeFilter, searchQuery, 'inbox');
+            }}
+            style={{
+              flex: 1.3,
+              padding: '0.35rem 0.45rem',
+              borderRadius: '6px',
+              fontSize: '0.75rem',
+              fontWeight: 700,
+              border: activeChannel === 'inbox' ? '1.5px solid #ea580c' : '1px solid #cbd5e1',
+              background: activeChannel === 'inbox' ? '#fff7ed' : '#ffffff',
+              color: activeChannel === 'inbox' ? '#ea580c' : '#475569',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '0.25rem'
+            }}
+          >
+            <span>📥</span> Inbox & Offers
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setActiveChannel('support');
+              fetchConversations(activeFilter, searchQuery, 'support');
+            }}
+            style={{
+              flex: 1.2,
+              padding: '0.35rem 0.45rem',
+              borderRadius: '6px',
+              fontSize: '0.75rem',
+              fontWeight: 700,
+              border: activeChannel === 'support' ? '1.5px solid #2563eb' : '1px solid #cbd5e1',
+              background: activeChannel === 'support' ? '#eff6ff' : '#ffffff',
+              color: activeChannel === 'support' ? '#2563eb' : '#475569',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '0.25rem'
+            }}
+          >
+            <span>🎧</span> Support Desk
+          </button>
         </div>
 
         {/* SEARCH INPUT BAR */}
@@ -1461,10 +1570,11 @@ export default function AdminChatInbox() {
                     </div>
                   )}
 
-                  {/* TEXTAREA INPUT */}
+                  {/* TEXTAREA INPUT (Item 1: Auto-resize) */}
                   <div style={{ position: 'relative' }}>
                     <textarea
-                      rows={2}
+                      ref={textareaRef}
+                      rows={1}
                       placeholder="Type a message..."
                       value={inputText}
                       onChange={handleInputChange}
@@ -1483,8 +1593,11 @@ export default function AdminChatInbox() {
                         outline: 'none',
                         resize: 'none',
                         fontFamily: 'inherit',
+                        minHeight: '48px',
+                        maxHeight: '180px',
                         lineHeight: 1.4,
-                        boxSizing: 'border-box'
+                        boxSizing: 'border-box',
+                        overflowY: 'auto'
                       }}
                     />
                   </div>
@@ -1730,9 +1843,16 @@ export default function AdminChatInbox() {
           conversationId={activeConversation.id}
           clientName={activeConversation.client_name}
           clientEmail={activeConversation.client_email}
-          onOfferCreated={(createdOffer) => {
+          onOfferCreated={(createdOffer, createdMessage) => {
             setIsCreateOfferModalOpen(false);
+            if (createdMessage) {
+              setMessages(prev => {
+                if (prev.some(m => m.id === createdMessage.id)) return prev;
+                return [...prev, createdMessage];
+              });
+            }
             fetchActiveMessages(activeConversation.id);
+            fetchConversations(activeFilter, searchQuery, activeChannel);
             showToast('Custom offer dispatched to client!', 'success');
           }}
           showToast={showToast}

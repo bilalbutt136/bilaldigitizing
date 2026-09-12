@@ -10,6 +10,7 @@ export async function GET(request) {
     const { searchParams } = new URL(request.url);
     const q = (searchParams.get('q') || '').toLowerCase().trim();
     const filter = searchParams.get('filter') || 'all'; // 'all' | 'unread' | 'starred'
+    const chatType = (searchParams.get('chat_type') || searchParams.get('channel') || 'all').toLowerCase().trim(); // 'all' | 'inbox' | 'support'
     const requestedEmail = searchParams.get('email')?.toLowerCase().trim();
 
     const supabase = createAdminClient();
@@ -64,7 +65,7 @@ export async function GET(request) {
 
           const syncRows = [];
           for (const [email, ord] of uniqueEmails.entries()) {
-            const convId = `conv-${email.replace(/[^a-zA-Z0-9]/g, '_')}`;
+            const convId = `inbox-${email.replace(/[^a-zA-Z0-9]/g, '_')}`;
             syncRows.push({
               id: convId,
               client_email: email,
@@ -73,6 +74,7 @@ export async function GET(request) {
               order_id: ord.id ? String(ord.id) : null,
               order_title: ord.service_name || 'Embroidery Digitizing Project',
               status: 'online',
+              tags: ['inbox'],
               last_message: `Order #${String(ord.id).replace(/^#+/, '')} placed for ${ord.service_name || 'Embroidery Services'}.`,
               last_message_at: ord.created_at || new Date().toISOString(),
               unread_admin_count: 0,
@@ -97,8 +99,27 @@ export async function GET(request) {
       }
     }
 
-    // Apply client-side search query filtering if provided
+    // Filter by channel/chat_type if specified (Item 5: Separate Inbox and Support)
     let results = conversations || [];
+    if (chatType === 'support') {
+      results = results.filter(c => 
+        (c.id || '').startsWith('support-') || 
+        c.id === 'general-support' ||
+        c.id === 'help-support' ||
+        (Array.isArray(c.tags) && c.tags.includes('support')) ||
+        (c.order_title || '').toLowerCase().includes('support')
+      );
+    } else if (chatType === 'inbox') {
+      results = results.filter(c => 
+        !(c.id || '').startsWith('support-') && 
+        c.id !== 'general-support' && 
+        c.id !== 'help-support' &&
+        (!Array.isArray(c.tags) || !c.tags.includes('support')) &&
+        !(c.order_title || '').toLowerCase().includes('24/7 customer support')
+      );
+    }
+
+    // Apply client-side search query filtering if provided
     if (q) {
       results = results.filter(c => 
         (c.client_name || '').toLowerCase().includes(q) ||
@@ -181,7 +202,10 @@ export async function POST(request) {
         return NextResponse.json({ error: 'Email is required to establish conversation thread.' }, { status: 400 });
       }
 
-      const convId = conversationId || `conv-${email.replace(/[^a-zA-Z0-9]/g, '_')}`;
+      const reqChatType = (body.chatType || body.chat_type || (conversationId && conversationId.startsWith('support-') ? 'support' : 'inbox')).toLowerCase();
+      const isSupport = reqChatType === 'support' || (conversationId && (conversationId.startsWith('support-') || conversationId === 'general-support'));
+      const defaultPrefix = isSupport ? 'support' : 'inbox';
+      const convId = conversationId || `${defaultPrefix}-${email.replace(/[^a-zA-Z0-9]/g, '_')}`;
 
       // Check existing
       const { data: existing } = await supabase
@@ -200,9 +224,12 @@ export async function POST(request) {
         client_name: clientName || email.split('@')[0] || 'Client',
         client_company: clientCompany || '',
         order_id: orderId || null,
-        order_title: orderTitle || 'Direct Studio Communication',
+        order_title: orderTitle || (isSupport ? '24/7 Customer Support Desk' : 'Direct Studio Communication & Offers'),
         status: 'online',
-        last_message: 'Conversation started with Bilal Digitizing Studio.',
+        tags: isSupport ? ['support'] : ['inbox'],
+        last_message: isSupport 
+          ? 'Customer support request initiated with Bilal Digitizing 24/7 Desk.'
+          : 'Conversation started with Bilal Digitizing Studio.',
         last_message_at: new Date().toISOString(),
         unread_admin_count: 0,
         unread_client_count: 0,

@@ -20,15 +20,20 @@ import {
   Clock
 } from 'lucide-react';
 
-export default function CustomerSupportChat({ defaultOrderId = null, initialTopic = '' }) {
+export default function CustomerSupportChat({ 
+  defaultOrderId = null, 
+  initialTopic = '',
+  chatType = 'inbox' // 'inbox' | 'support'
+}) {
   const { authUser, currentUser } = useAppState();
 
   const user = authUser || currentUser || {};
   const userEmail = (user?.email || '').toLowerCase().trim();
   const userName = user?.name || userEmail.split('@')[0] || 'Valued Client';
 
+  const defaultConvPrefix = chatType === 'support' ? 'support' : 'inbox';
   const [conversationId, setConversationId] = useState(() => {
-    return userEmail ? `conv-${userEmail.replace(/[^a-zA-Z0-9]/g, '_')}` : 'conv-guest';
+    return userEmail ? `${defaultConvPrefix}-${userEmail.replace(/[^a-zA-Z0-9]/g, '_')}` : `${defaultConvPrefix}-guest`;
   });
 
   const [messages, setMessages] = useState([]);
@@ -44,6 +49,7 @@ export default function CustomerSupportChat({ defaultOrderId = null, initialTopi
 
   const messagesEndRef = useRef(null);
   const fileInputRef = useRef(null);
+  const textareaRef = useRef(null);
 
   // Toast notifications
   const [toast, setToast] = useState(null);
@@ -57,6 +63,20 @@ export default function CustomerSupportChat({ defaultOrderId = null, initialTopi
       messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, 80);
   };
+
+  const adjustTextareaHeight = (el) => {
+    if (!el) return;
+    el.style.height = 'auto';
+    const nextH = Math.min(Math.max(el.scrollHeight, 40), 160);
+    el.style.height = `${nextH}px`;
+  };
+
+  // Re-adjust height if inputText changes from presets
+  useEffect(() => {
+    if (textareaRef.current) {
+      adjustTextareaHeight(textareaRef.current);
+    }
+  }, [inputText]);
 
   const isImageAttachment = (name = '', url = '') => {
     const check = (name || url || '').split('?')[0].toLowerCase();
@@ -78,7 +98,8 @@ export default function CustomerSupportChat({ defaultOrderId = null, initialTopi
           action: 'getOrCreate',
           clientEmail: userEmail,
           clientName: userName,
-          orderId: defaultOrderId
+          orderId: defaultOrderId,
+          chatType
         })
       });
       const data = await res.json();
@@ -116,8 +137,11 @@ export default function CustomerSupportChat({ defaultOrderId = null, initialTopi
   };
 
   useEffect(() => {
+    const prefix = chatType === 'support' ? 'support' : 'inbox';
+    const nextId = userEmail ? `${prefix}-${userEmail.replace(/[^a-zA-Z0-9]/g, '_')}` : `${prefix}-guest`;
+    setConversationId(nextId);
     initConversation();
-  }, [userEmail]);
+  }, [userEmail, chatType]);
 
   // Realtime Polling & Typing check
   useEffect(() => {
@@ -178,6 +202,7 @@ export default function CustomerSupportChat({ defaultOrderId = null, initialTopi
   // Typing notification
   const handleInputChange = (e) => {
     setInputText(e.target.value);
+    adjustTextareaHeight(e.target);
     if (conversationId) {
       if (!typingTimeoutRef.current) {
         fetch('/api/chat/typing', {
@@ -195,6 +220,13 @@ export default function CustomerSupportChat({ defaultOrderId = null, initialTopi
         }).catch(() => {});
         typingTimeoutRef.current = null;
       }, 2500);
+    }
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSendMessage(e);
     }
   };
 
@@ -251,6 +283,9 @@ export default function CustomerSupportChat({ defaultOrderId = null, initialTopi
     setIsSending(true);
     setInputText('');
     setPendingAttachments([]);
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto';
+    }
 
     try {
       const res = await fetch('/api/chat/messages', {
@@ -357,10 +392,12 @@ export default function CustomerSupportChat({ defaultOrderId = null, initialTopi
 
           <div>
             <h3 style={{ fontSize: '1rem', fontWeight: 800, margin: 0, color: '#ffffff', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-              Bilal Digitizing Support Desk <ShieldCheck size={14} color="#38bdf8" />
+              {chatType === 'support' ? '24/7 Studio Customer Support' : 'Studio Inbox & Custom Offers'} <ShieldCheck size={14} color="#38bdf8" />
             </h3>
             <p style={{ fontSize: '0.75rem', color: '#94a3b8', margin: '0.1rem 0 0' }}>
-              Online • Digitizers active 24/7 • Avg. reply 5-15 mins
+              {chatType === 'support' 
+                ? 'Online • Support Team Active 24/7 • Order & Revisions Help'
+                : 'Direct Chat with Digitizers • Custom Offers & Stitch Quotes'}
             </p>
           </div>
         </div>
@@ -633,7 +670,7 @@ export default function CustomerSupportChat({ defaultOrderId = null, initialTopi
           borderTop: '1px solid #e2e8f0',
           background: '#ffffff',
           display: 'flex',
-          alignItems: 'center',
+          alignItems: 'flex-end',
           gap: '0.65rem',
           flexShrink: 0
         }}
@@ -651,25 +688,33 @@ export default function CustomerSupportChat({ defaultOrderId = null, initialTopi
           type="button"
           onClick={() => fileInputRef.current?.click()}
           disabled={isUploading}
-          style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#64748b', padding: '6px' }}
+          style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#64748b', padding: '8px 4px', marginBottom: '4px' }}
           title="Attach artwork, logo, or stitch file"
         >
           {isUploading ? <Loader2 size={20} className="spin-icon" color="#ea580c" /> : <Paperclip size={20} />}
         </button>
 
-        <input
-          type="text"
-          placeholder="Type your message..."
+        <textarea
+          ref={textareaRef}
+          rows={1}
+          placeholder={chatType === 'support' ? "Describe your question or issue to support..." : "Type a message or project inquiry..."}
           value={inputText}
           onChange={handleInputChange}
+          onKeyDown={handleKeyDown}
           style={{
             flex: 1,
             border: '1.5px solid #e2e8f0',
-            borderRadius: '24px',
+            borderRadius: '20px',
             padding: '0.65rem 1.15rem',
             fontSize: '0.88rem',
             outline: 'none',
-            fontFamily: 'inherit'
+            fontFamily: 'inherit',
+            resize: 'none',
+            minHeight: '40px',
+            maxHeight: '160px',
+            lineHeight: 1.4,
+            boxSizing: 'border-box',
+            overflowY: 'auto'
           }}
         />
 
@@ -687,7 +732,8 @@ export default function CustomerSupportChat({ defaultOrderId = null, initialTopi
             alignItems: 'center',
             justifyContent: 'center',
             cursor: (!inputText.trim() && pendingAttachments.length === 0) ? 'not-allowed' : 'pointer',
-            flexShrink: 0
+            flexShrink: 0,
+            marginBottom: '3px'
           }}
         >
           {isSending ? <Loader2 size={16} className="spin-icon" /> : <Send size={16} />}

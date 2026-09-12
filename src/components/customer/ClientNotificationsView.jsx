@@ -134,6 +134,12 @@ export const ClientNotificationsView = ({ onNavigateToOrder, userEmail, isAdmin 
   };
 
   const filteredNotifs = notifications.filter(n => {
+    const nType = (n.type || '').toLowerCase();
+    const nTitle = (n.title || '').toLowerCase();
+    // Item 3: Exclude message notifications
+    if (nType === 'chat' || nType === 'message' || nTitle.includes('new message')) {
+      return false;
+    }
     const isUnread = !n.is_read && !n.read;
     if (filter === 'unread') return isUnread;
     return true;

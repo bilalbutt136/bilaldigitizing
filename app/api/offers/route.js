@@ -294,6 +294,41 @@ export async function POST(request) {
         console.warn('custom_offers table insert fallback:', err.message);
       }
 
+      // Insert corresponding message into messages table so it is immediately visible in chat on both sides
+      const offerMessageId = `msg-offer-${offerId}`;
+      const offerMessageRow = {
+        id: offerMessageId,
+        conversation_id: conversation_id,
+        client_email: cleanClientEmail || 'client@studio.com',
+        sender: 'admin',
+        sender_name: 'Bilal Digitizing Support',
+        sender_email: user?.email || 'support@bilaldigitizing.com',
+        text: `Custom Offer: ${offerDbRow.title}`,
+        type: 'custom_offer',
+        offer_id: offerId,
+        offer_data: offerDbRow,
+        is_read: false,
+        created_at: nowIso
+      };
+
+      try {
+        await supabase.from('messages').insert([offerMessageRow]);
+      } catch (msgErr) {
+        console.warn('Chat message insertion for offer notice:', msgErr.message);
+      }
+
+      // Update conversation thread snippet and unread counter
+      try {
+        await supabase.from('conversations').update({
+          last_message: `Custom Offer: ${offerDbRow.title} ($${finalPrice.toFixed(2)})`,
+          last_message_at: nowIso,
+          updated_at: nowIso,
+          unread_client_count: 1
+        }).eq('id', conversation_id);
+      } catch (convErr) {
+        console.warn('Conversation update for offer notice:', convErr.message);
+      }
+
       // Dispatch real customer notification
       if (cleanClientEmail && cleanClientEmail !== 'client@studio.com') {
         try {
@@ -315,7 +350,8 @@ export async function POST(request) {
 
       return NextResponse.json({
         success: true,
-        offer: offerDbRow
+        offer: offerDbRow,
+        message: offerMessageRow
       });
     }
 
@@ -453,6 +489,16 @@ export async function POST(request) {
         console.warn('custom_offers accept upsert notice:', err.message);
       }
 
+      // Also update messages table with accepted status so both sides reflect immediately
+      try {
+        await supabase
+          .from('messages')
+          .update({ offer_data: finalOfferData })
+          .or(`offer_id.eq.${targetOfferId},offer_id.eq.${offerId}`);
+      } catch (mErr) {
+        console.warn('Sync accepted offer to messages notice:', mErr.message);
+      }
+
       // 4. Notify Admin
       try {
         await supabase.from('notifications').insert([{
@@ -499,6 +545,16 @@ export async function POST(request) {
       try {
         await supabase.from('custom_offers').update({ status: 'declined', updated_at: nowIso }).or(`id.eq.${targetOfferId},id.eq.${offerId}`);
       } catch {}
+
+      // 2. Also update messages table with declined status so both sides reflect immediately
+      try {
+        await supabase
+          .from('messages')
+          .update({ offer_data: updatedOffer })
+          .or(`offer_id.eq.${targetOfferId},offer_id.eq.${offerId}`);
+      } catch (mErr) {
+        console.warn('Sync declined offer to messages notice:', mErr.message);
+      }
 
       try {
         await supabase.from('notifications').insert([{

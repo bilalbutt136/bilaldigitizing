@@ -38,7 +38,8 @@ import {
   Building2,
   Mail,
   Scissors,
-  MessageSquare
+  MessageSquare,
+  Headphones
 } from 'lucide-react';
 
 export const AdminDashboard = () => {
@@ -242,10 +243,16 @@ export const AdminDashboard = () => {
         { id: 'orders', label: 'Orders & Production', icon: ClipboardList, badge: activeJobsCount },
         { 
           id: 'inbox', 
-          label: 'Client Messages', 
+          label: 'Client Inbox & Offers', 
           icon: MessageSquare, 
           badge: unreadChatCount > 0 ? unreadChatCount : null,
           isUnread: unreadChatCount > 0
+        },
+        { 
+          id: 'support', 
+          label: '24/7 Support Desk', 
+          icon: Headphones, 
+          badge: null
         },
         { id: 'clients', label: 'Accounts & Wallets', icon: Users, badge: safeClients.length },
         { 
@@ -769,7 +776,12 @@ export const AdminDashboard = () => {
 
         {/* FIVERR-STYLE MASTER CLIENT MESSAGING INBOX */}
         {activeTab === 'inbox' && (
-          <AdminChatInbox />
+          <AdminChatInbox initialChannel="inbox" key="admin-inbox" />
+        )}
+
+        {/* 24/7 CLIENT SUPPORT TICKETS & DESK */}
+        {activeTab === 'support' && (
+          <AdminChatInbox initialChannel="support" key="admin-support" />
         )}
 
         {activeTab === 'workers' && (

@@ -39,14 +39,20 @@ export async function GET(request) {
       return NextResponse.json({ messages: [] });
     }
 
-    // Fetch live custom offers for this conversation to ensure latest status is synced
+    // Fetch live custom offers for this conversation or client to ensure latest status is synced
     let syncedMessages = messages || [];
-    if (conversationId) {
+    if (conversationId || clientEmail) {
       try {
-        const { data: offers } = await supabase
-          .from('custom_offers')
-          .select('*')
-          .eq('conversation_id', conversationId);
+        let offerQuery = supabase.from('custom_offers').select('*');
+        if (conversationId && clientEmail) {
+          offerQuery = offerQuery.or(`conversation_id.eq.${conversationId},client_email.ilike.${clientEmail}`);
+        } else if (conversationId) {
+          offerQuery = offerQuery.eq('conversation_id', conversationId);
+        } else if (clientEmail) {
+          offerQuery = offerQuery.ilike('client_email', clientEmail);
+        }
+
+        const { data: offers } = await offerQuery;
 
         if (offers && offers.length > 0) {
           const offerMap = new Map();
@@ -54,15 +60,47 @@ export async function GET(request) {
             offerMap.set(off.id, off);
           });
 
+          // 1. Sync offer_data on existing messages
+          const seenOfferIds = new Set();
           syncedMessages = syncedMessages.map(msg => {
             if (msg.offer_id && offerMap.has(msg.offer_id)) {
+              seenOfferIds.add(msg.offer_id);
               return {
                 ...msg,
+                type: 'custom_offer',
                 offer_data: offerMap.get(msg.offer_id)
               };
             }
             return msg;
           });
+
+          // 2. Synthesize missing offer messages for any custom_offer not yet in messages
+          // This guarantees custom offers always show on both sender and receiver sides!
+          const missingOffers = offers.filter(off => !seenOfferIds.has(off.id));
+          for (const off of missingOffers) {
+            const synthesizedMsg = {
+              id: `msg-offer-${off.id}`,
+              conversation_id: conversationId || off.conversation_id,
+              client_email: off.client_email || clientEmail,
+              sender: 'admin',
+              sender_name: 'Bilal Digitizing Support',
+              sender_email: off.created_by || 'support@bilaldigitizing.com',
+              text: `Custom Offer: ${off.title}`,
+              type: 'custom_offer',
+              offer_id: off.id,
+              offer_data: off,
+              attachments: [],
+              is_read: false,
+              created_at: off.created_at || new Date().toISOString()
+            };
+            syncedMessages.push(synthesizedMsg);
+
+            // Safely backfill into messages table asynchronously
+            supabase.from('messages').insert([synthesizedMsg]).then(() => {}).catch(() => {});
+          }
+
+          // Sort messages by created_at ascending
+          syncedMessages.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
         }
       } catch (offErr) {
         console.warn('[Chat Offers Sync Notice]:', offErr.message);
@@ -124,11 +162,14 @@ export async function POST(request) {
         .maybeSingle();
 
       if (!convExists) {
+        const isSupportThread = conversation_id.startsWith('support-') || conversation_id === 'general-support';
         await supabase.from('conversations').insert([{
           id: conversation_id,
           client_email: cleanEmail,
           client_name: effectiveSender === 'client' ? effectiveSenderName : cleanEmail.split('@')[0],
+          order_title: isSupportThread ? '24/7 Customer Support Desk' : 'Direct Studio Communication & Offers',
           status: 'online',
+          tags: isSupportThread ? ['support'] : ['inbox'],
           last_message: text || (attachments.length > 0 ? `Sent ${attachments.length} attachment(s)` : 'New message'),
           last_message_at: nowIso,
           unread_admin_count: effectiveSender === 'client' ? 1 : 0,
@@ -210,24 +251,8 @@ export async function POST(request) {
       console.warn('[Chat Conversation Update Notice]:', updErr.message);
     }
 
-    // 4. Send notification if sender is admin and recipient is client
-    if (effectiveSender === 'admin' && cleanEmail && cleanEmail !== 'client@studio.com') {
-      try {
-        await supabase.from('notifications').insert([{
-          id: `notif-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
-          recipient_role: 'client',
-          recipient_email: cleanEmail,
-          title: offer_id ? 'New Custom Offer' : 'New Message from Support',
-          message: text ? text.substring(0, 140) : (offer_id ? `Support sent you a custom offer: "${offer_data?.title || 'Digitizing'}"` : 'You received new production files from Bilal Digitizing.'),
-          type: offer_id ? 'offer' : 'chat',
-          link: '/client-portal?tab=chat',
-          read: false,
-          created_at: nowIso
-        }]);
-      } catch (notifErr) {
-        console.warn('[Chat Notification Notice]:', notifErr.message);
-      }
-    }
+    // NOTE: Rule #3 enforced: Chat messages do NOT trigger notification alerts.
+    // Notifications are reserved strictly for order lifecycle events (placed, delivered, etc.).
 
     return NextResponse.json({ success: true, message: insertedMsg });
   } catch (err) {

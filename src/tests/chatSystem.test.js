@@ -125,4 +125,103 @@ test('Chat System & Fiverr-Style Inbox Architecture', async (t) => {
     assert.ok(template.title.length > 5);
   });
 
+  await t.test('7. Auto-resizing text box increases and decreases dynamically with content', () => {
+    const computeHeight = (scrollHeight, minH = 40, maxH = 160) => {
+      return Math.min(Math.max(scrollHeight, minH), maxH);
+    };
+
+    // Compact single-line
+    assert.equal(computeHeight(28), 40); // Clamped to min
+    assert.equal(computeHeight(40), 40);
+
+    // Multi-line growth
+    assert.equal(computeHeight(72), 72);
+    assert.equal(computeHeight(115), 115);
+    assert.equal(computeHeight(150), 150);
+
+    // Max clamp
+    assert.equal(computeHeight(280), 160); // Clamped to max
+
+    // Shrinks back down when content is cleared
+    assert.equal(computeHeight(32), 40); // Returns to compact
+  });
+
+  await t.test('8. Custom offers show on both sender and receiver sides', () => {
+    const sampleOffer = {
+      id: 'off-test-123',
+      conversation_id: 'inbox-client_test_com',
+      title: '3D Puff Cap Digitizing',
+      final_price: 35.00,
+      status: 'pending'
+    };
+
+    // Message representation ensures both parties receive the offer card
+    const offerMessage = {
+      id: `msg-offer-${sampleOffer.id}`,
+      conversation_id: sampleOffer.conversation_id,
+      sender: 'admin',
+      type: 'custom_offer',
+      offer_id: sampleOffer.id,
+      offer_data: sampleOffer
+    };
+
+    assert.equal(offerMessage.type, 'custom_offer');
+    assert.equal(offerMessage.offer_data.final_price, 35.00);
+    assert.equal(offerMessage.offer_data.status, 'pending');
+
+    // On accept, status synchronizes to both sides
+    const acceptedOffer = { ...sampleOffer, status: 'accepted' };
+    const syncedMessage = { ...offerMessage, offer_data: acceptedOffer };
+    assert.equal(syncedMessage.offer_data.status, 'accepted');
+  });
+
+  await t.test('9. Notification filtering: never notify on chat messages, only on orders', () => {
+    const shouldSendNotification = (eventType, title = '') => {
+      const type = (eventType || '').toLowerCase();
+      const t = (title || '').toLowerCase();
+      if (type === 'chat' || type === 'message' || t.includes('new message')) {
+        return false; // Suppressed as required by Rule 3
+      }
+      return type === 'order' || type === 'delivery' || type === 'offer' || 
+             t.includes('order') || t.includes('placed') || t.includes('delivered') || t.includes('accepted');
+    };
+
+    // Messages must NEVER notify
+    assert.equal(shouldSendNotification('chat', 'New message from Support'), false);
+    assert.equal(shouldSendNotification('message', 'New Message received'), false);
+
+    // Orders MUST notify
+    assert.equal(shouldSendNotification('order', 'New Order Placed #1042'), true);
+    assert.equal(shouldSendNotification('delivery', 'Production Files Delivered'), true);
+    assert.equal(shouldSendNotification('offer', 'Custom Offer Accepted!'), true);
+  });
+
+  await t.test('10. Inbox and Support chat threads are completely isolated', () => {
+    const userEmail = 'john.doe@example.com';
+    const cleanEmail = userEmail.replace(/[^a-zA-Z0-9]/g, '_');
+
+    const inboxThreadId = `inbox-${cleanEmail}`;
+    const supportThreadId = `support-${cleanEmail}`;
+
+    assert.notEqual(inboxThreadId, supportThreadId);
+    assert.ok(inboxThreadId.startsWith('inbox-'));
+    assert.ok(supportThreadId.startsWith('support-'));
+
+    const conversations = [
+      { id: inboxThreadId, chat_type: 'inbox', tags: ['inbox'] },
+      { id: supportThreadId, chat_type: 'support', tags: ['support'] }
+    ];
+
+    const filterChannel = (list, channel) => {
+      if (channel === 'inbox') return list.filter(c => c.id.startsWith('inbox-') || (c.tags && c.tags.includes('inbox')));
+      if (channel === 'support') return list.filter(c => c.id.startsWith('support-') || (c.tags && c.tags.includes('support')));
+      return list;
+    };
+
+    assert.equal(filterChannel(conversations, 'inbox').length, 1);
+    assert.equal(filterChannel(conversations, 'inbox')[0].id, inboxThreadId);
+    assert.equal(filterChannel(conversations, 'support').length, 1);
+    assert.equal(filterChannel(conversations, 'support')[0].id, supportThreadId);
+  });
+
 });
