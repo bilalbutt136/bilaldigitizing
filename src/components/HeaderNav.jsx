@@ -125,8 +125,8 @@ export const HeaderNav = () => {
       navigate('/admin-portal?tab=inbox');
       if (setCurrentView) setCurrentView('admin');
     } else if (safeIsAuthenticated) {
-      if (setActiveCustomerTab) setActiveCustomerTab('chat');
-      navigate('/client-portal?tab=chat');
+      if (setActiveCustomerTab) setActiveCustomerTab('inbox');
+      navigate('/client-portal?tab=inbox');
       if (setCurrentView) setCurrentView('customer');
     } else {
       setIsAuthModalOpen(true);
@@ -178,7 +178,13 @@ export const HeaderNav = () => {
   }, []);
 
   const handleOpenLiveSupport = () => {
-    navigate('/contact');
+    if (safeIsAuthenticated && !isAdmin) {
+      if (setActiveCustomerTab) setActiveCustomerTab('support');
+      navigate('/client-portal?tab=support');
+      if (setCurrentView) setCurrentView('customer');
+    } else {
+      navigate('/contact');
+    }
   };
 
   const handleInstallMobileApp = async () => {

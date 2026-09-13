@@ -119,7 +119,7 @@ export const CustomerDashboard = () => {
 
   const setActiveTab = React.useCallback((tab) => {
     if (!tab) return;
-    const normalizedTab = tab;
+    const normalizedTab = tab === 'chat' ? 'inbox' : tab;
     setActiveTabLocal(normalizedTab);
     if (setActiveCustomerTab) {
       setActiveCustomerTab(normalizedTab);
@@ -140,7 +140,8 @@ export const CustomerDashboard = () => {
     const handlePopState = () => {
       if (typeof window !== 'undefined') {
         const urlParams = new URLSearchParams(window.location.search);
-        const tabParam = urlParams.get('tab') || 'dashboard';
+        const rawParam = urlParams.get('tab') || 'dashboard';
+        const tabParam = rawParam === 'chat' ? 'inbox' : rawParam;
         setActiveTabLocal(tabParam);
         if (setActiveCustomerTab) {
           setActiveCustomerTab(tabParam);
@@ -153,8 +154,11 @@ export const CustomerDashboard = () => {
 
   // Sync with global activeCustomerTab changes (e.g. from top header navigation)
   React.useEffect(() => {
-    if (activeCustomerTab && activeCustomerTab !== activeTab) {
-      setActiveTabLocal(activeCustomerTab);
+    if (activeCustomerTab) {
+      const normalizedGlobal = activeCustomerTab === 'chat' ? 'inbox' : activeCustomerTab;
+      if (normalizedGlobal !== activeTab) {
+        setActiveTabLocal(normalizedGlobal);
+      }
     }
   }, [activeCustomerTab, activeTab]);
 
@@ -597,7 +601,7 @@ export const CustomerDashboard = () => {
   };
 
   const handleOpenLiveSupport = () => {
-    navigate('/contact');
+    setActiveTab('support');
   };
 
   return (

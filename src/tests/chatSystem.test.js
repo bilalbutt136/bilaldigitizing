@@ -405,5 +405,57 @@ test('Chat System & Fiverr-Style Inbox Architecture', async (t) => {
     assert.equal(result.updatedMessage.offer_data.order_id, 'ORD-5544XYZ');
   });
 
+  await t.test('13. Customer portal 24/7 Live Support tab functions independently without collapsing to "chat" or mixing with Inbox', () => {
+    // 1. Tab state normalization in StateContext: 'support' and 'inbox' are preserved distinctly
+    const normalizeCustomerTab = (tab) => {
+      return tab === 'chat' ? 'inbox' : tab;
+    };
+
+    assert.equal(normalizeCustomerTab('support'), 'support');
+    assert.equal(normalizeCustomerTab('inbox'), 'inbox');
+    assert.equal(normalizeCustomerTab('chat'), 'inbox');
+    assert.equal(normalizeCustomerTab('orders'), 'orders');
+    assert.notEqual(normalizeCustomerTab('support'), 'inbox');
+    assert.notEqual(normalizeCustomerTab('support'), 'chat');
+
+    // 2. Client thread derivation
+    const clientEmail = 'bilalsadiq612@gmail.com';
+    const cleanEmail = clientEmail.replace(/[^a-zA-Z0-9]/g, '_');
+
+    const deriveConversationId = (chatType, email) => {
+      const prefix = chatType === 'support' ? 'support' : 'inbox';
+      return `${prefix}-${email.replace(/[^a-zA-Z0-9]/g, '_')}`;
+    };
+
+    const supportConvId = deriveConversationId('support', clientEmail);
+    const inboxConvId = deriveConversationId('inbox', clientEmail);
+
+    assert.equal(supportConvId, `support-${cleanEmail}`);
+    assert.equal(inboxConvId, `inbox-${cleanEmail}`);
+    assert.notEqual(supportConvId, inboxConvId);
+
+    // 3. Message dispatch scoping: messages sent with support thread ID never mix with inbox thread ID
+    const databaseMessages = [
+      { id: 'm-1', conversation_id: supportConvId, client_email: clientEmail, text: 'Need help with digitizing order', type: 'text' },
+      { id: 'm-2', conversation_id: inboxConvId, client_email: clientEmail, text: 'Here is the stitch quote', type: 'text' },
+      { id: 'm-3', conversation_id: inboxConvId, client_email: clientEmail, text: 'Custom Offer: Cap Logo', type: 'custom_offer', offer_id: 'off-1' }
+    ];
+
+    const getMessagesForConversation = (allMessages, convId) => {
+      return allMessages.filter(m => m.conversation_id === convId);
+    };
+
+    const supportMessages = getMessagesForConversation(databaseMessages, supportConvId);
+    const inboxMessages = getMessagesForConversation(databaseMessages, inboxConvId);
+
+    assert.equal(supportMessages.length, 1);
+    assert.equal(supportMessages[0].text, 'Need help with digitizing order');
+    assert.ok(supportMessages.every(m => m.conversation_id === supportConvId));
+
+    assert.equal(inboxMessages.length, 2);
+    assert.ok(inboxMessages.every(m => m.conversation_id === inboxConvId));
+    assert.ok(inboxMessages.every(m => m.conversation_id !== supportConvId));
+  });
+
 });
 

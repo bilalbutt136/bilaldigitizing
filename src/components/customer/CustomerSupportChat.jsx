@@ -84,11 +84,14 @@ export default function CustomerSupportChat({
   };
 
   // 1. Initialize or Fetch Conversation
-  const initConversation = async () => {
+  const initConversation = async (targetId) => {
     if (!userEmail) {
       setIsLoading(false);
       return;
     }
+
+    const prefix = chatType === 'support' ? 'support' : 'inbox';
+    const convIdToUse = targetId || conversationId || (userEmail ? `${prefix}-${userEmail.replace(/[^a-zA-Z0-9]/g, '_')}` : `${prefix}-guest`);
 
     try {
       const res = await fetch('/api/chat/conversations', {
@@ -96,6 +99,7 @@ export default function CustomerSupportChat({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           action: 'getOrCreate',
+          conversationId: convIdToUse,
           clientEmail: userEmail,
           clientName: userName,
           orderId: defaultOrderId,
@@ -103,9 +107,10 @@ export default function CustomerSupportChat({
         })
       });
       const data = await res.json();
-      if (data?.conversation?.id) {
-        setConversationId(data.conversation.id);
-        fetchMessages(data.conversation.id);
+      const resolvedId = data?.conversation?.id || convIdToUse;
+      if (resolvedId) {
+        setConversationId(resolvedId);
+        fetchMessages(resolvedId);
       }
     } catch (err) {
       console.warn('[Customer Chat] Init error:', err);
@@ -140,7 +145,9 @@ export default function CustomerSupportChat({
     const prefix = chatType === 'support' ? 'support' : 'inbox';
     const nextId = userEmail ? `${prefix}-${userEmail.replace(/[^a-zA-Z0-9]/g, '_')}` : `${prefix}-guest`;
     setConversationId(nextId);
-    initConversation();
+    setMessages([]);
+    setIsLoading(true);
+    initConversation(nextId);
   }, [userEmail, chatType]);
 
   // Handle return from Stripe or Gateway payment

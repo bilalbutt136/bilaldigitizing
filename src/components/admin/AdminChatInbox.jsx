@@ -733,8 +733,12 @@ export default function AdminChatInbox({ initialChannel = 'inbox' }) {
           <button
             type="button"
             onClick={() => {
-              setActiveChannel('inbox');
-              fetchConversations(activeFilter, searchQuery, 'inbox');
+              if (activeChannel !== 'inbox') {
+                setActiveChannel('inbox');
+                setMessages([]);
+                setActiveConversationId(null);
+                fetchConversations(activeFilter, searchQuery, 'inbox');
+              }
             }}
             style={{
               flex: 1,
@@ -758,8 +762,12 @@ export default function AdminChatInbox({ initialChannel = 'inbox' }) {
           <button
             type="button"
             onClick={() => {
-              setActiveChannel('support');
-              fetchConversations(activeFilter, searchQuery, 'support');
+              if (activeChannel !== 'support') {
+                setActiveChannel('support');
+                setMessages([]);
+                setActiveConversationId(null);
+                fetchConversations(activeFilter, searchQuery, 'support');
+              }
             }}
             style={{
               flex: 1,

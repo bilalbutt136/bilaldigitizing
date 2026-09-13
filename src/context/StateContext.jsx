@@ -104,11 +104,12 @@ export const StateProvider = ({ children }) => {
       const urlParams = new URLSearchParams(window.location.search);
       const tabParam = urlParams.get('tab');
       if (tabParam) {
-        if (tabParam === 'support' || tabParam === 'inbox') return 'chat';
+        if (tabParam === 'chat') return 'inbox';
         return tabParam;
       }
       const savedTab = localStorage.getItem('bdigi_customer_tab');
-      if (savedTab && savedTab !== 'inbox' && savedTab !== 'support') {
+      if (savedTab) {
+        if (savedTab === 'chat') return 'inbox';
         return savedTab;
       }
       return 'dashboard';
@@ -134,7 +135,7 @@ export const StateProvider = ({ children }) => {
 
   const activeCustomerTab = activeCustomerTabState;
   const setActiveCustomerTab = (tab) => {
-    const cleanTab = (tab === 'inbox' || tab === 'support') ? 'chat' : tab;
+    const cleanTab = tab === 'chat' ? 'inbox' : tab;
     setActiveCustomerTabState(cleanTab);
     if (typeof window !== 'undefined') {
       localStorage.setItem('bdigi_customer_tab', cleanTab);

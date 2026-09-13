@@ -416,6 +416,7 @@ export const AdminDashboard = () => {
               {activeTab === 'dashboard' && 'Executive Overview'}
               {activeTab === 'orders' && 'Orders & Production Management'}
               {activeTab === 'inbox' && 'Client Messages & Studio Inbox'}
+              {activeTab === 'support' && '24/7 Support Desk & Tickets'}
               {activeTab === 'services' && 'Service Rates & Tiers'}
               {activeTab === 'portfolio' && 'Portfolio & Work Gallery'}
               {activeTab === 'clients' && 'Client Directory'}
@@ -698,17 +699,17 @@ export const AdminDashboard = () => {
         flex: 1,
         minWidth: 0,
         width: '100%',
-        padding: activeTab === 'inbox' ? '0.45rem 0.75rem 0.45rem' : '0.85rem 1.25rem 2.5rem',
+        padding: (activeTab === 'inbox' || activeTab === 'support') ? '0.45rem 0.75rem 0.45rem' : '0.85rem 1.25rem 2.5rem',
         boxSizing: 'border-box',
         height: '100%',
         maxHeight: '100%',
         minHeight: 0,
-        overflowY: activeTab === 'inbox' ? 'hidden' : 'auto',
+        overflowY: (activeTab === 'inbox' || activeTab === 'support') ? 'hidden' : 'auto',
         overflowX: 'hidden',
-        display: activeTab === 'inbox' ? 'flex' : 'block',
-        flexDirection: activeTab === 'inbox' ? 'column' : undefined
+        display: (activeTab === 'inbox' || activeTab === 'support') ? 'flex' : 'block',
+        flexDirection: (activeTab === 'inbox' || activeTab === 'support') ? 'column' : undefined
       }}>
-        {activeTab !== 'dashboard' && activeTab !== 'inbox' && (
+        {activeTab !== 'dashboard' && activeTab !== 'inbox' && activeTab !== 'support' && (
           <div style={{
             display: 'flex',
             justifyContent: 'space-between',
