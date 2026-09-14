@@ -90,8 +90,31 @@ export default function CustomerSupportChat({
   const adjustTextareaHeight = (el) => {
     if (!el) return;
     el.style.height = 'auto';
-    const nextH = Math.min(Math.max(el.scrollHeight, 40), 160);
+    const nextH = Math.min(Math.max(el.scrollHeight, 42), 140);
     el.style.height = `${nextH}px`;
+    // Prevent ugly scrollbars when text fits within bounds
+    if (el.scrollHeight > 138) {
+      el.style.overflowY = 'auto';
+    } else {
+      el.style.overflowY = 'hidden';
+    }
+  };
+
+  const handleInputFocus = () => {
+    scrollToBottom();
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('bdigi_chat_focus', { detail: { focused: true } }));
+    }
+  };
+
+  const handleInputBlur = () => {
+    if (typeof window !== 'undefined') {
+      setTimeout(() => {
+        if (!document.activeElement?.closest('.customer-chat-composer')) {
+          window.dispatchEvent(new CustomEvent('bdigi_chat_focus', { detail: { focused: false } }));
+        }
+      }, 120);
+    }
   };
 
   // Re-adjust height if inputText changes from presets
@@ -425,21 +448,31 @@ export default function CustomerSupportChat({
           font-family: inherit;
           box-sizing: border-box;
         }
-        @media (min-width: 769px) {
+        @media (min-width: 1025px) {
           .customer-chat-root {
             border-radius: 16px;
             border: 1.5px solid #e2e8f0;
             box-shadow: 0 4px 24px rgba(15, 23, 42, 0.06);
             min-height: 520px;
           }
+          .customer-chat-composer {
+            border-radius: 0 0 16px 16px;
+          }
         }
-        @media (max-width: 768px) {
+        @media (max-width: 1024px) {
           .customer-chat-root {
             border-radius: 0 !important;
             border: none !important;
             box-shadow: none !important;
             min-height: 0 !important;
             height: 100% !important;
+            width: 100% !important;
+          }
+          .customer-chat-composer {
+            border-radius: 0 !important;
+            border-left: none !important;
+            border-right: none !important;
+            border-bottom: none !important;
           }
         }
         .customer-chat-stream::-webkit-scrollbar {
@@ -455,10 +488,27 @@ export default function CustomerSupportChat({
         .customer-chat-stream::-webkit-scrollbar-thumb:hover {
           background: rgba(234, 88, 12, 0.4);
         }
+        .customer-chat-input {
+          scrollbar-width: thin;
+          scrollbar-color: rgba(148, 163, 184, 0.3) transparent;
+        }
+        .customer-chat-input::-webkit-scrollbar {
+          width: 4px;
+        }
+        .customer-chat-input::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        .customer-chat-input::-webkit-scrollbar-thumb {
+          background: rgba(148, 163, 184, 0.3);
+          border-radius: 4px;
+        }
         .customer-chat-input:focus {
           border-color: #ea580c !important;
           background-color: #ffffff !important;
-          box-shadow: 0 0 0 3px rgba(234, 88, 12, 0.1) !important;
+          box-shadow: 0 0 0 3px rgba(234, 88, 12, 0.12) !important;
+        }
+        .customer-chat-composer button:active {
+          transform: scale(0.95);
         }
         .dot-typing {
           position: relative;
@@ -958,14 +1008,18 @@ export default function CustomerSupportChat({
       {/* INPUT COMPOSER */}
       <form
         onSubmit={handleSendMessage}
+        className="customer-chat-composer"
         style={{
-          padding: '0.55rem 0.85rem',
+          padding: '0.65rem 0.85rem',
           borderTop: '1px solid #e2e8f0',
           background: '#ffffff',
           display: 'flex',
           alignItems: 'flex-end',
           gap: '0.55rem',
-          flexShrink: 0
+          flexShrink: 0,
+          boxShadow: '0 -2px 10px rgba(15, 23, 42, 0.03)',
+          boxSizing: 'border-box',
+          width: '100%'
         }}
       >
         <input
@@ -982,22 +1036,36 @@ export default function CustomerSupportChat({
           onClick={() => fileInputRef.current?.click()}
           disabled={isUploading}
           style={{
-            background: 'none',
-            border: 'none',
+            background: '#f1f5f9',
+            border: '1px solid #e2e8f0',
             borderRadius: '50%',
-            width: '38px',
-            height: '38px',
+            width: '40px',
+            height: '40px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            cursor: 'pointer',
-            color: '#64748b',
+            cursor: isUploading ? 'wait' : 'pointer',
+            color: '#475569',
             flexShrink: 0,
-            marginBottom: '1px'
+            marginBottom: '1px',
+            transition: 'all 0.15s ease'
+          }}
+          onMouseEnter={(e) => {
+            if (!isUploading) {
+              e.currentTarget.style.background = '#e2e8f0';
+              e.currentTarget.style.color = '#0f172a';
+            }
+          }}
+          onMouseLeave={(e) => {
+            if (!isUploading) {
+              e.currentTarget.style.background = '#f1f5f9';
+              e.currentTarget.style.color = '#475569';
+            }
           }}
           title="Attach artwork, logo, or stitch file"
+          aria-label="Attach file"
         >
-          {isUploading ? <Loader2 size={19} className="spin-icon" color="#ea580c" /> : <Paperclip size={19} />}
+          {isUploading ? <Loader2 size={18} className="spin-icon" color="#ea580c" /> : <Paperclip size={18} />}
         </button>
 
         <textarea
@@ -1008,23 +1076,26 @@ export default function CustomerSupportChat({
           value={inputText}
           onChange={handleInputChange}
           onKeyDown={handleKeyDown}
-          onFocus={scrollToBottom}
+          onFocus={handleInputFocus}
+          onBlur={handleInputBlur}
           className="customer-chat-input"
           style={{
             flex: 1,
-            border: '1.5px solid #e2e8f0',
+            border: '1.5px solid #cbd5e1',
             background: '#f8fafc',
-            borderRadius: '20px',
-            padding: '0.55rem 0.95rem',
-            fontSize: '0.88rem',
+            borderRadius: '22px',
+            padding: '0.62rem 1.05rem',
+            fontSize: '0.95rem',
             outline: 'none',
             fontFamily: 'inherit',
             resize: 'none',
-            minHeight: '38px',
-            maxHeight: '130px',
-            lineHeight: 1.4,
+            minHeight: '42px',
+            maxHeight: '140px',
+            lineHeight: 1.45,
             boxSizing: 'border-box',
-            overflowY: 'auto'
+            overflowY: 'hidden',
+            color: '#0f172a',
+            transition: 'border-color 0.18s ease, background-color 0.18s ease, box-shadow 0.18s ease'
           }}
         />
 
@@ -1033,24 +1104,26 @@ export default function CustomerSupportChat({
           disabled={isSending || (!inputText.trim() && pendingAttachments.length === 0)}
           style={{
             background: (!inputText.trim() && pendingAttachments.length === 0)
-              ? '#e2e8f0'
+              ? '#f1f5f9'
               : 'linear-gradient(135deg, #ff7a00 0%, #ea580c 100%)',
             color: (!inputText.trim() && pendingAttachments.length === 0) ? '#94a3b8' : '#ffffff',
-            border: 'none',
+            border: (!inputText.trim() && pendingAttachments.length === 0) ? '1.5px solid #e2e8f0' : 'none',
             borderRadius: '50%',
-            width: '38px',
-            height: '38px',
+            width: '42px',
+            height: '42px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             cursor: (!inputText.trim() && pendingAttachments.length === 0) ? 'not-allowed' : 'pointer',
             flexShrink: 0,
             marginBottom: '1px',
-            boxShadow: (!inputText.trim() && pendingAttachments.length === 0) ? 'none' : '0 2px 8px rgba(234, 88, 12, 0.35)',
-            transition: 'all 0.18s ease'
+            boxShadow: (!inputText.trim() && pendingAttachments.length === 0) ? 'none' : '0 3px 12px rgba(234, 88, 12, 0.35)',
+            transform: (!inputText.trim() && pendingAttachments.length === 0) ? 'none' : 'translateY(-1px)',
+            transition: 'all 0.18s cubic-bezier(0.4, 0, 0.2, 1)'
           }}
+          aria-label="Send message"
         >
-          {isSending ? <Loader2 size={16} className="spin-icon" /> : <Send size={16} style={{ marginLeft: '1px' }} />}
+          {isSending ? <Loader2 size={17} className="spin-icon" /> : <Send size={17} style={{ marginLeft: '1px' }} />}
         </button>
       </form>
     </div>

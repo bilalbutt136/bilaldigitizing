@@ -1466,6 +1466,7 @@ button, input, select, textarea, a {
 
 
   .dashboard-main-container { padding-bottom: 5.5rem !important; }
+  .dashboard-main-container.client-portal-chat-mode { padding-bottom: 0 !important; }
 
   /* Mobile App Specific Components */
   .desktop-table-view { display: none !important; }

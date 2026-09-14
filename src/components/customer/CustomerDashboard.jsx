@@ -115,10 +115,20 @@ export const CustomerDashboard = () => {
   const [isMobileOrderOpen, setIsMobileOrderOpen] = useState(false);
   const [mobileOrderDefaultService, setMobileOrderDefaultService] = useState('embroidery');
   const [invoiceModalOrder, setInvoiceModalOrder] = useState(null);
+  const [isChatInputFocused, setIsChatInputFocused] = useState(false);
 
   // Client-side mounting guard for hydration safety
   const [mounted, setMounted] = React.useState(false);
   const initialTabSyncedRef = React.useRef(false);
+
+  // Sync virtual keyboard / input focus state for chat
+  React.useEffect(() => {
+    const handleChatFocusEvent = (e) => {
+      setIsChatInputFocused(Boolean(e.detail?.focused));
+    };
+    window.addEventListener('bdigi_chat_focus', handleChatFocusEvent);
+    return () => window.removeEventListener('bdigi_chat_focus', handleChatFocusEvent);
+  }, []);
 
   const setActiveTab = React.useCallback((tab) => {
     if (!tab) return;
@@ -640,16 +650,18 @@ export const CustomerDashboard = () => {
     setActiveTab('support');
   };
 
-  return (
+    const isChatTab = activeTab === 'inbox' || activeTab === 'chat' || activeTab === 'support' || activeTab === 'help-support';
+
+    return (
     <div 
-      className="dashboard-main-container client-portal-wrapper" 
+      className={`dashboard-main-container client-portal-wrapper ${isChatTab ? 'client-portal-chat-mode' : ''} ${isChatTab && isChatInputFocused ? 'chat-input-focused' : ''}`}
       style={{ 
         background: 'var(--bg-main)', 
         position: 'relative', 
         width: '100%',
-        minHeight: 'calc(100vh - 65px)',
-        height: 'calc(100vh - 65px)',
-        maxHeight: 'calc(100vh - 65px)',
+        minHeight: isChatTab ? 'calc(100dvh - 65px)' : 'calc(100vh - 65px)',
+        height: isChatTab ? 'calc(100dvh - 65px)' : 'calc(100vh - 65px)',
+        maxHeight: isChatTab ? 'calc(100dvh - 65px)' : 'calc(100vh - 65px)',
         display: 'flex',
         flexDirection: 'column',
         boxSizing: 'border-box',
@@ -711,14 +723,41 @@ export const CustomerDashboard = () => {
         }
 
         @media (max-width: 1024px) {
-          .client-main-chat-tab {
-            padding: 0 0 64px 0 !important;
+          .client-portal-wrapper.client-portal-chat-mode {
+            padding-bottom: 0 !important;
+            padding-top: 0 !important;
+            padding-left: 0 !important;
+            padding-right: 0 !important;
+            height: calc(100dvh - 65px) !important;
+            max-height: calc(100dvh - 65px) !important;
+            min-height: calc(100dvh - 65px) !important;
+          }
+          .client-portal-chat-mode .client-portal-body {
             height: 100% !important;
             max-height: 100% !important;
+            min-height: 0 !important;
+            padding: 0 !important;
+            margin: 0 !important;
+          }
+          .client-main-chat-tab {
+            padding: 0 !important;
+            margin: 0 !important;
+            height: calc(100% - 64px) !important;
+            max-height: calc(100% - 64px) !important;
             display: flex !important;
             flex-direction: column !important;
             overflow: hidden !important;
             min-height: 0 !important;
+            border-radius: 0 !important;
+          }
+          /* When typing in chat, expand to full viewport height since bottom nav is hidden */
+          .client-portal-wrapper.chat-input-focused .client-main-chat-tab {
+            height: 100% !important;
+            max-height: 100% !important;
+          }
+          .client-portal-wrapper.chat-input-focused .mobile-bottom-nav,
+          .bottom-nav-hidden {
+            display: none !important;
           }
         }
 
@@ -2544,7 +2583,7 @@ export const CustomerDashboard = () => {
 
       {/* 3. FIXED NATIVE APP BOTTOM NAVIGATION BAR (Fiverr Standard Equal-Divide) */}
       <nav 
-        className="mobile-only mobile-bottom-nav"
+        className={`mobile-only mobile-bottom-nav ${isChatTab && isChatInputFocused ? 'bottom-nav-hidden' : ''}`}
         style={{
           position: 'fixed',
           bottom: 0,
@@ -2556,7 +2595,7 @@ export const CustomerDashboard = () => {
           backdropFilter: 'blur(24px)',
           WebkitBackdropFilter: 'blur(24px)',
           borderTop: '1px solid rgba(226, 232, 240, 0.95)',
-          display: 'grid',
+          display: (isChatTab && isChatInputFocused) ? 'none' : 'grid',
           gridTemplateColumns: 'repeat(5, 1fr)',
           alignItems: 'center',
           height: '64px',
