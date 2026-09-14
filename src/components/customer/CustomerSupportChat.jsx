@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useAppState } from '../../context/StateContext';
 import { createClient } from '../../lib/supabase/client';
 import OfferCardMessage from '../common/OfferCardMessage';
+import { downloadFileDirectly } from '../../utils/fileDownloader';
 import {
   Send,
   Paperclip,
@@ -18,7 +19,8 @@ import {
   Sparkles,
   ShieldCheck,
   Clock,
-  MessageSquare
+  MessageSquare,
+  ExternalLink
 } from 'lucide-react';
 
 const formatChatTime = (dateStr) => {
@@ -79,6 +81,27 @@ export default function CustomerSupportChat({
   const showToast = (message, type = 'info') => {
     setToast({ message, type });
     setTimeout(() => setToast(null), 3500);
+  };
+
+  const [downloadingFileUrl, setDownloadingFileUrl] = useState(null);
+
+  const handleDownloadFile = async (att, e) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    if (!att?.url) return;
+    try {
+      setDownloadingFileUrl(att.url);
+      showToast(`Downloading ${att.name || 'file'}...`, 'info');
+      await downloadFileDirectly(att.url, att.name);
+      showToast(`Downloaded ${att.name || 'file'} successfully!`, 'success');
+    } catch (err) {
+      console.error('[Chat] Download error:', err);
+      showToast(`Failed to download ${att.name || 'file'}.`, 'error');
+    } finally {
+      setDownloadingFileUrl(null);
+    }
   };
 
   const scrollToBottom = () => {
@@ -817,24 +840,28 @@ export default function CustomerSupportChat({
                         <div style={{ marginTop: msg.text ? '0.55rem' : 0, display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
                           {msg.attachments.map((att, aIdx) => {
                             const isImg = isImageAttachment(att.name, att.url);
+                            const isDownloading = downloadingFileUrl === att.url;
+
                             if (isImg) {
                               return (
                                 <div
                                   key={aIdx}
                                   style={{
-                                    borderRadius: '10px',
+                                    borderRadius: '12px',
                                     overflow: 'hidden',
-                                    border: isClient ? '1px solid rgba(255,255,255,0.3)' : '1px solid #e2e8f0',
-                                    background: isClient ? 'rgba(0,0,0,0.15)' : '#f8fafc',
-                                    maxWidth: '320px'
+                                    border: isClient ? '1px solid rgba(255,255,255,0.25)' : '1px solid #e2e8f0',
+                                    background: isClient ? 'rgba(0,0,0,0.18)' : '#f8fafc',
+                                    maxWidth: '320px',
+                                    boxShadow: '0 2px 8px rgba(0,0,0,0.06)'
                                   }}
                                 >
+                                  {/* DIRECT VIEW ON CLICK */}
                                   <a
                                     href={att.url}
                                     target="_blank"
-                                    rel="noreferrer"
-                                    title="Click to view full image"
-                                    style={{ display: 'block', textDecoration: 'none' }}
+                                    rel="noopener noreferrer"
+                                    title="Click to open full image directly"
+                                    style={{ display: 'block', textDecoration: 'none', background: '#00000008' }}
                                   >
                                     <img
                                       src={att.url}
@@ -853,70 +880,182 @@ export default function CustomerSupportChat({
                                     display: 'flex',
                                     alignItems: 'center',
                                     justifyContent: 'space-between',
-                                    padding: '0.35rem 0.6rem',
+                                    padding: '0.4rem 0.65rem',
                                     fontSize: '0.72rem',
+                                    gap: '0.5rem',
                                     borderTop: isClient ? '1px solid rgba(255,255,255,0.15)' : '1px solid #e2e8f0',
-                                    background: isClient ? 'rgba(0,0,0,0.2)' : '#ffffff'
+                                    background: isClient ? 'rgba(0,0,0,0.22)' : '#ffffff'
                                   }}>
-                                    <span style={{
-                                      fontWeight: 600,
-                                      overflow: 'hidden',
-                                      textOverflow: 'ellipsis',
-                                      whiteSpace: 'nowrap',
-                                      maxWidth: '170px',
-                                      color: isClient ? '#ffffff' : '#334155'
-                                    }}>
-                                      {att.name}
-                                    </span>
-                                    <a
-                                      href={att.url}
-                                      download={att.name}
-                                      target="_blank"
-                                      rel="noreferrer"
-                                      style={{
-                                        color: isClient ? '#ffffff' : '#ea580c',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        gap: '0.25rem',
-                                        textDecoration: 'none',
-                                        fontWeight: 700
-                                      }}
-                                    >
-                                      <Download size={12} /> {att.size || 'Download'}
-                                    </a>
+                                    <div style={{ minWidth: 0, flex: 1 }}>
+                                      <div style={{
+                                        fontWeight: 600,
+                                        overflow: 'hidden',
+                                        textOverflow: 'ellipsis',
+                                        whiteSpace: 'nowrap',
+                                        color: isClient ? '#ffffff' : '#334155'
+                                      }}>
+                                        {att.name}
+                                      </div>
+                                      {att.size && (
+                                        <div style={{ fontSize: '0.62rem', opacity: 0.8, color: isClient ? '#e2e8f0' : '#64748b' }}>
+                                          {att.size}
+                                        </div>
+                                      )}
+                                    </div>
+
+                                    {/* Action buttons: Direct view (Open) and Functional Download */}
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', flexShrink: 0 }}>
+                                      <a
+                                        href={att.url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        style={{
+                                          color: isClient ? '#ffffff' : '#475569',
+                                          display: 'inline-flex',
+                                          alignItems: 'center',
+                                          gap: '0.2rem',
+                                          textDecoration: 'none',
+                                          fontWeight: 700,
+                                          fontSize: '0.68rem',
+                                          padding: '0.22rem 0.45rem',
+                                          borderRadius: '5px',
+                                          background: isClient ? 'rgba(255,255,255,0.15)' : '#f1f5f9'
+                                        }}
+                                        title="Open image directly in new tab"
+                                      >
+                                        <ExternalLink size={11} /> Open
+                                      </a>
+
+                                      <button
+                                        type="button"
+                                        onClick={(e) => handleDownloadFile(att, e)}
+                                        disabled={isDownloading}
+                                        style={{
+                                          color: isClient ? '#ea580c' : '#ffffff',
+                                          display: 'inline-flex',
+                                          alignItems: 'center',
+                                          gap: '0.25rem',
+                                          fontWeight: 800,
+                                          fontSize: '0.68rem',
+                                          padding: '0.22rem 0.55rem',
+                                          borderRadius: '5px',
+                                          border: 'none',
+                                          cursor: isDownloading ? 'wait' : 'pointer',
+                                          background: isClient ? '#ffffff' : 'linear-gradient(135deg, #ff7a00 0%, #ea580c 100%)',
+                                          boxShadow: isClient ? '0 1px 4px rgba(0,0,0,0.12)' : '0 2px 6px rgba(234, 88, 12, 0.25)',
+                                          transition: 'all 0.15s ease'
+                                        }}
+                                        title="Download image directly to device"
+                                      >
+                                        {isDownloading ? <Loader2 size={11} className="spin-icon" /> : <Download size={11} />}
+                                        {isDownloading ? 'Saving...' : 'Download'}
+                                      </button>
+                                    </div>
                                   </div>
                                 </div>
                               );
                             }
 
+                            const ext = (att.name || '').split('.').pop()?.toUpperCase() || 'FILE';
+
                             return (
-                              <a
+                              <div
                                 key={aIdx}
-                                href={att.url}
-                                target="_blank"
-                                rel="noreferrer"
-                                download={att.name}
                                 style={{
                                   display: 'flex',
                                   alignItems: 'center',
-                                  gap: '0.5rem',
-                                  padding: '0.45rem 0.75rem',
-                                  borderRadius: '8px',
+                                  justifyContent: 'space-between',
+                                  gap: '0.55rem',
+                                  padding: '0.5rem 0.75rem',
+                                  borderRadius: '9px',
                                   background: isClient ? 'rgba(255,255,255,0.18)' : '#f8fafc',
                                   color: isClient ? '#ffffff' : '#0f172a',
-                                  textDecoration: 'none',
-                                  fontSize: '0.78rem',
                                   border: isClient ? '1px solid rgba(255,255,255,0.25)' : '1px solid #e2e8f0',
-                                  transition: 'background 0.15s ease'
+                                  boxShadow: '0 1px 3px rgba(0,0,0,0.02)',
+                                  maxWidth: '350px'
                                 }}
                               >
-                                <FileText size={15} style={{ flexShrink: 0, color: isClient ? '#ffffff' : '#ea580c' }} />
-                                <span style={{ fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
-                                  {att.name}
-                                </span>
-                                {att.size && <span style={{ opacity: 0.8, fontSize: '0.7rem', flexShrink: 0 }}>({att.size})</span>}
-                                <Download size={13} style={{ flexShrink: 0, opacity: 0.85 }} />
-                              </a>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', minWidth: 0, flex: 1 }}>
+                                  <div style={{
+                                    padding: '0.15rem 0.38rem',
+                                    borderRadius: '4px',
+                                    background: isClient ? 'rgba(255,255,255,0.25)' : '#e2e8f0',
+                                    color: isClient ? '#ffffff' : '#0f172a',
+                                    fontSize: '0.62rem',
+                                    fontWeight: 900,
+                                    letterSpacing: '0.03em',
+                                    flexShrink: 0
+                                  }}>
+                                    {ext}
+                                  </div>
+                                  <div style={{ minWidth: 0, flex: 1 }}>
+                                    <div style={{
+                                      fontWeight: 600,
+                                      overflow: 'hidden',
+                                      textOverflow: 'ellipsis',
+                                      whiteSpace: 'nowrap',
+                                      fontSize: '0.78rem'
+                                    }} title={att.name}>
+                                      {att.name}
+                                    </div>
+                                    {att.size && (
+                                      <div style={{ fontSize: '0.64rem', opacity: 0.8, color: isClient ? '#e2e8f0' : '#64748b' }}>
+                                        {att.size}
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', flexShrink: 0 }}>
+                                  <a
+                                    href={att.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    style={{
+                                      color: isClient ? '#ffffff' : '#475569',
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      gap: '0.2rem',
+                                      textDecoration: 'none',
+                                      fontWeight: 700,
+                                      fontSize: '0.68rem',
+                                      padding: '0.22rem 0.45rem',
+                                      borderRadius: '5px',
+                                      background: isClient ? 'rgba(255,255,255,0.15)' : '#ffffff',
+                                      border: isClient ? '1px solid rgba(255,255,255,0.2)' : '1px solid #cbd5e1',
+                                      transition: 'all 0.15s ease'
+                                    }}
+                                    title="Open file directly in new tab"
+                                  >
+                                    <ExternalLink size={11} /> Open
+                                  </a>
+
+                                  <button
+                                    type="button"
+                                    onClick={(e) => handleDownloadFile(att, e)}
+                                    disabled={isDownloading}
+                                    style={{
+                                      color: isClient ? '#ea580c' : '#ffffff',
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      gap: '0.25rem',
+                                      fontWeight: 800,
+                                      fontSize: '0.68rem',
+                                      padding: '0.22rem 0.55rem',
+                                      borderRadius: '5px',
+                                      border: 'none',
+                                      cursor: isDownloading ? 'wait' : 'pointer',
+                                      background: isClient ? '#ffffff' : 'linear-gradient(135deg, #ff7a00 0%, #ea580c 100%)',
+                                      boxShadow: isClient ? '0 1px 4px rgba(0,0,0,0.12)' : '0 2px 6px rgba(234, 88, 12, 0.25)',
+                                      transition: 'all 0.15s ease'
+                                    }}
+                                    title="Download file directly to device"
+                                  >
+                                    {isDownloading ? <Loader2 size={11} className="spin-icon" /> : <Download size={11} />}
+                                    {isDownloading ? 'Saving...' : 'Download'}
+                                  </button>
+                                </div>
+                              </div>
                             );
                           })}
                         </div>

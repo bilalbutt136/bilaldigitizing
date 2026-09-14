@@ -5,6 +5,7 @@ import { useAppState } from '../../context/StateContext';
 import { createClient } from '../../lib/supabase/client';
 import OfferCardMessage from '../common/OfferCardMessage';
 import AdminCreateOfferModal from './AdminCreateOfferModal';
+import { downloadFileDirectly } from '../../utils/fileDownloader';
 import {
   Search,
   ChevronDown,
@@ -30,7 +31,8 @@ import {
   Plus,
   Trash2,
   CornerDownLeft,
-  Undo2
+  Undo2,
+  ExternalLink
 } from 'lucide-react';
 
 const COMMON_EMOJIS = ['👋', '✅', '🧵', '✨', '👌', '🙏', '📁', '👕', '🧢', '🔥', '🚀', '💯'];
@@ -87,6 +89,27 @@ export default function AdminChatInbox({ initialChannel = 'inbox' }) {
   const showToast = (message, type = 'info') => {
     setToast({ message, type });
     setTimeout(() => setToast(null), 4000);
+  };
+
+  const [downloadingFileUrl, setDownloadingFileUrl] = useState(null);
+
+  const handleDownloadFile = async (att, e) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    if (!att?.url) return;
+    try {
+      setDownloadingFileUrl(att.url);
+      showToast(`Downloading ${att.name || 'file'}...`, 'info');
+      await downloadFileDirectly(att.url, att.name);
+      showToast(`Downloaded ${att.name || 'file'} successfully!`, 'success');
+    } catch (err) {
+      console.error('[Admin Chat] Download error:', err);
+      showToast(`Failed to download ${att.name || 'file'}.`, 'error');
+    } finally {
+      setDownloadingFileUrl(null);
+    }
   };
 
   const messagesEndRef = useRef(null);
@@ -1377,108 +1400,222 @@ export default function AdminChatInbox({ initialChannel = 'inbox' }) {
                               {/* ATTACHMENTS INSIDE BUBBLE */}
                               {Array.isArray(msg.attachments) && msg.attachments.length > 0 && (
                                 <div style={{ marginTop: msg.text ? '0.65rem' : 0, display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
-                                  {msg.attachments.map((att, aIdx) => {
-                                    const isImg = isImageAttachment(att.name, att.url);
-                                    if (isImg) {
-                                      return (
-                                        <div
-                                          key={aIdx}
-                                          style={{
-                                            borderRadius: '10px',
-                                            overflow: 'hidden',
-                                            border: isAdminMsg ? '1px solid rgba(255,255,255,0.2)' : '1px solid #e2e8f0',
-                                            background: isAdminMsg ? 'rgba(0,0,0,0.25)' : '#ffffff',
-                                            maxWidth: '340px'
-                                          }}
-                                        >
-                                          <a
-                                            href={att.url}
-                                            target="_blank"
-                                            rel="noreferrer"
-                                            title="Click to view full size photo"
-                                            style={{ display: 'block', background: '#00000008', textDecoration: 'none' }}
-                                          >
-                                            <img
-                                              src={att.url}
-                                              alt={att.name || 'Photo'}
-                                              loading="lazy"
-                                              style={{
-                                                display: 'block',
-                                                width: '100%',
-                                                maxHeight: '260px',
-                                                objectFit: 'contain',
-                                                cursor: 'pointer',
-                                                borderRadius: '8px 8px 0 0'
-                                              }}
-                                            />
-                                          </a>
-                                          <div style={{
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'space-between',
-                                            padding: '0.35rem 0.6rem',
-                                            fontSize: '0.72rem',
-                                            borderTop: isAdminMsg ? '1px solid rgba(255,255,255,0.1)' : '1px solid #f1f5f9'
-                                          }}>
-                                            <span style={{
-                                              fontWeight: 600,
-                                              overflow: 'hidden',
-                                              textOverflow: 'ellipsis',
-                                              whiteSpace: 'nowrap',
-                                              maxWidth: '180px',
-                                              color: isAdminMsg ? '#e2e8f0' : '#475569'
-                                            }}>
-                                              {att.name}
-                                            </span>
-                                            <a
-                                              href={att.url}
-                                              download={att.name}
-                                              target="_blank"
-                                              rel="noreferrer"
-                                              style={{
-                                                color: isAdminMsg ? '#38bdf8' : '#ea580c',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                gap: '0.25rem',
-                                                textDecoration: 'none',
-                                                fontWeight: 700
-                                              }}
-                                            >
-                                              <Download size={12} /> {att.size || 'Download'}
-                                            </a>
-                                          </div>
-                                        </div>
-                                      );
-                                    }
+                                   {msg.attachments.map((att, aIdx) => {
+                                     const isImg = isImageAttachment(att.name, att.url);
+                                     const isDownloading = downloadingFileUrl === att.url;
 
-                                    return (
-                                      <a
-                                        key={aIdx}
-                                        href={att.url}
-                                        target="_blank"
-                                        rel="noreferrer"
-                                        download={att.name}
-                                        style={{
-                                          display: 'flex',
-                                          alignItems: 'center',
-                                          gap: '0.5rem',
-                                          padding: '0.4rem 0.65rem',
-                                          borderRadius: '6px',
-                                          background: isAdminMsg ? 'rgba(255,255,255,0.12)' : '#ffffff',
-                                          color: isAdminMsg ? '#ffffff' : '#0f172a',
-                                          textDecoration: 'none',
-                                          fontSize: '0.78rem',
-                                          border: isAdminMsg ? '1px solid rgba(255,255,255,0.15)' : '1px solid #e2e8f0'
-                                        }}
-                                      >
-                                        <Download size={13} />
-                                        <span style={{ fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                          {att.name}
-                                        </span>
-                                        {att.size && <span style={{ opacity: 0.75, fontSize: '0.7rem' }}>({att.size})</span>}
-                                      </a>
-                                    );
-                                  })}
+                                     if (isImg) {
+                                       return (
+                                         <div
+                                           key={aIdx}
+                                           style={{
+                                             borderRadius: '12px',
+                                             overflow: 'hidden',
+                                             border: isAdminMsg ? '1px solid rgba(255,255,255,0.2)' : '1px solid #e2e8f0',
+                                             background: isAdminMsg ? 'rgba(0,0,0,0.25)' : '#ffffff',
+                                             maxWidth: '340px',
+                                             boxShadow: '0 2px 8px rgba(0,0,0,0.06)'
+                                           }}
+                                         >
+                                           <a
+                                             href={att.url}
+                                             target="_blank"
+                                             rel="noopener noreferrer"
+                                             title="Click to open full photo directly"
+                                             style={{ display: 'block', background: '#00000008', textDecoration: 'none' }}
+                                           >
+                                             <img
+                                               src={att.url}
+                                               alt={att.name || 'Photo'}
+                                               loading="lazy"
+                                               style={{
+                                                 display: 'block',
+                                                 width: '100%',
+                                                 maxHeight: '260px',
+                                                 objectFit: 'contain',
+                                                 cursor: 'pointer',
+                                                 borderRadius: '8px 8px 0 0'
+                                               }}
+                                             />
+                                           </a>
+                                           <div style={{
+                                             display: 'flex',
+                                             alignItems: 'center',
+                                             justifyContent: 'space-between',
+                                             padding: '0.4rem 0.65rem',
+                                             fontSize: '0.72rem',
+                                             gap: '0.5rem',
+                                             borderTop: isAdminMsg ? '1px solid rgba(255,255,255,0.1)' : '1px solid #f1f5f9'
+                                           }}>
+                                             <div style={{ minWidth: 0, flex: 1 }}>
+                                               <div style={{
+                                                 fontWeight: 600,
+                                                 overflow: 'hidden',
+                                                 textOverflow: 'ellipsis',
+                                                 whiteSpace: 'nowrap',
+                                                 color: isAdminMsg ? '#e2e8f0' : '#475569'
+                                               }}>
+                                                 {att.name}
+                                               </div>
+                                               {att.size && (
+                                                 <div style={{ fontSize: '0.62rem', opacity: 0.75, color: isAdminMsg ? '#94a3b8' : '#64748b' }}>
+                                                   {att.size}
+                                                 </div>
+                                               )}
+                                             </div>
+
+                                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', flexShrink: 0 }}>
+                                               <a
+                                                 href={att.url}
+                                                 target="_blank"
+                                                 rel="noopener noreferrer"
+                                                 style={{
+                                                   color: isAdminMsg ? '#ffffff' : '#475569',
+                                                   display: 'inline-flex',
+                                                   alignItems: 'center',
+                                                   gap: '0.2rem',
+                                                   textDecoration: 'none',
+                                                   fontWeight: 700,
+                                                   fontSize: '0.68rem',
+                                                   padding: '0.22rem 0.45rem',
+                                                   borderRadius: '5px',
+                                                   background: isAdminMsg ? 'rgba(255,255,255,0.15)' : '#f1f5f9'
+                                                 }}
+                                                 title="Open image directly in new tab"
+                                               >
+                                                 <ExternalLink size={11} /> Open
+                                               </a>
+
+                                               <button
+                                                 type="button"
+                                                 onClick={(e) => handleDownloadFile(att, e)}
+                                                 disabled={isDownloading}
+                                                 style={{
+                                                   color: '#ffffff',
+                                                   display: 'inline-flex',
+                                                   alignItems: 'center',
+                                                   gap: '0.25rem',
+                                                   fontWeight: 800,
+                                                   fontSize: '0.68rem',
+                                                   padding: '0.22rem 0.55rem',
+                                                   borderRadius: '5px',
+                                                   border: 'none',
+                                                   cursor: isDownloading ? 'wait' : 'pointer',
+                                                   background: 'linear-gradient(135deg, #ff7a00 0%, #ea580c 100%)',
+                                                   boxShadow: '0 2px 6px rgba(234, 88, 12, 0.25)',
+                                                   transition: 'all 0.15s ease'
+                                                 }}
+                                                 title="Download image directly to device"
+                                               >
+                                                 {isDownloading ? <Loader2 size={11} className="spin-icon" /> : <Download size={11} />}
+                                                 {isDownloading ? 'Saving...' : 'Download'}
+                                               </button>
+                                             </div>
+                                           </div>
+                                         </div>
+                                       );
+                                     }
+
+                                     const ext = (att.name || '').split('.').pop()?.toUpperCase() || 'FILE';
+
+                                     return (
+                                       <div
+                                         key={aIdx}
+                                         style={{
+                                           display: 'flex',
+                                           alignItems: 'center',
+                                           justifyContent: 'space-between',
+                                           gap: '0.55rem',
+                                           padding: '0.5rem 0.75rem',
+                                           borderRadius: '8px',
+                                           background: isAdminMsg ? 'rgba(255,255,255,0.12)' : '#ffffff',
+                                           color: isAdminMsg ? '#ffffff' : '#0f172a',
+                                           border: isAdminMsg ? '1px solid rgba(255,255,255,0.15)' : '1px solid #e2e8f0',
+                                           boxShadow: '0 1px 3px rgba(0,0,0,0.02)',
+                                           maxWidth: '350px'
+                                         }}
+                                       >
+                                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', minWidth: 0, flex: 1 }}>
+                                           <div style={{
+                                             padding: '0.15rem 0.38rem',
+                                             borderRadius: '4px',
+                                             background: isAdminMsg ? 'rgba(255,255,255,0.2)' : '#e2e8f0',
+                                             color: isAdminMsg ? '#ffffff' : '#0f172a',
+                                             fontSize: '0.62rem',
+                                             fontWeight: 900,
+                                             letterSpacing: '0.03em',
+                                             flexShrink: 0
+                                           }}>
+                                             {ext}
+                                           </div>
+                                           <div style={{ minWidth: 0, flex: 1 }}>
+                                             <div style={{
+                                               fontWeight: 600,
+                                               overflow: 'hidden',
+                                               textOverflow: 'ellipsis',
+                                               whiteSpace: 'nowrap',
+                                               fontSize: '0.78rem'
+                                             }} title={att.name}>
+                                               {att.name}
+                                             </div>
+                                             {att.size && (
+                                               <div style={{ fontSize: '0.64rem', opacity: 0.75, color: isAdminMsg ? '#94a3b8' : '#64748b' }}>
+                                                 {att.size}
+                                               </div>
+                                             )}
+                                           </div>
+                                         </div>
+
+                                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', flexShrink: 0 }}>
+                                           <a
+                                             href={att.url}
+                                             target="_blank"
+                                             rel="noopener noreferrer"
+                                             style={{
+                                               color: isAdminMsg ? '#ffffff' : '#475569',
+                                               display: 'inline-flex',
+                                               alignItems: 'center',
+                                               gap: '0.2rem',
+                                               textDecoration: 'none',
+                                               fontWeight: 700,
+                                               fontSize: '0.68rem',
+                                               padding: '0.22rem 0.45rem',
+                                               borderRadius: '5px',
+                                               background: isAdminMsg ? 'rgba(255,255,255,0.15)' : '#f1f5f9'
+                                             }}
+                                             title="Open file directly in new tab"
+                                           >
+                                             <ExternalLink size={11} /> Open
+                                           </a>
+
+                                           <button
+                                             type="button"
+                                             onClick={(e) => handleDownloadFile(att, e)}
+                                             disabled={isDownloading}
+                                             style={{
+                                               color: '#ffffff',
+                                               display: 'inline-flex',
+                                               alignItems: 'center',
+                                               gap: '0.25rem',
+                                               fontWeight: 800,
+                                               fontSize: '0.68rem',
+                                               padding: '0.22rem 0.55rem',
+                                               borderRadius: '5px',
+                                               border: 'none',
+                                               cursor: isDownloading ? 'wait' : 'pointer',
+                                               background: 'linear-gradient(135deg, #ff7a00 0%, #ea580c 100%)',
+                                               boxShadow: '0 2px 6px rgba(234, 88, 12, 0.25)',
+                                               transition: 'all 0.15s ease'
+                                             }}
+                                             title="Download file directly to device"
+                                           >
+                                             {isDownloading ? <Loader2 size={11} className="spin-icon" /> : <Download size={11} />}
+                                             {isDownloading ? 'Saving...' : 'Download'}
+                                           </button>
+                                         </div>
+                                       </div>
+                                     );
+                                   })}
                                 </div>
                               )}
                             </div>
