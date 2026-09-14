@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useAppState } from '../../context/StateContext';
 import { createClient } from '../../lib/supabase/client';
 import OfferCardMessage from '../common/OfferCardMessage';
@@ -80,6 +80,9 @@ export default function AdminChatInbox({ initialChannel = 'inbox' }) {
   // Typing state
   const [isClientTyping, setIsClientTyping] = useState(false);
   const typingTimeoutRef = useRef(null);
+  const isTypingActiveRef = useRef(false);
+  const clientTypingDismissRef = useRef(null);
+  const channelRef = useRef(null);
 
   // Emoji picker toggle
   const [isEmojiPickerOpen, setIsEmojiPickerOpen] = useState(false);
@@ -215,16 +218,22 @@ export default function AdminChatInbox({ initialChannel = 'inbox' }) {
     }
   }, [activeConversationId]);
 
-  // Real-time polling & typing check
+  // Real-time polling & silent sync
   useEffect(() => {
     if (!activeConversationId) return;
 
     const interval = setInterval(async () => {
-      // Check typing
+      // Check typing as secondary fallback (only updates if actively typing)
       try {
         const tRes = await fetch(`/api/chat/typing?conversationId=${encodeURIComponent(activeConversationId)}&forRole=admin`);
         const tData = await tRes.json();
-        setIsClientTyping(Boolean(tData?.isTyping));
+        if (tData?.isTyping) {
+          setIsClientTyping(true);
+          clearTimeout(clientTypingDismissRef.current);
+          clientTypingDismissRef.current = setTimeout(() => {
+            setIsClientTyping(false);
+          }, 3500);
+        }
       } catch {}
 
       // Refresh messages quietly
@@ -241,7 +250,7 @@ export default function AdminChatInbox({ initialChannel = 'inbox' }) {
     return () => clearInterval(interval);
   }, [activeConversationId, messages.length]);
 
-  // Realtime Supabase Channel Subscription for instant push
+  // Realtime Supabase Channel Subscription for instant push & broadcast
   useEffect(() => {
     if (!activeConversationId) return;
 
@@ -249,7 +258,9 @@ export default function AdminChatInbox({ initialChannel = 'inbox' }) {
     if (!supabase) return;
 
     const channel = supabase
-      .channel(`chat-admin-${activeConversationId}`)
+      .channel(`chat-room-${activeConversationId}`, {
+        config: { broadcast: { self: false } }
+      })
       .on('postgres_changes', {
         event: 'INSERT',
         schema: 'public',
@@ -264,9 +275,25 @@ export default function AdminChatInbox({ initialChannel = 'inbox' }) {
           scrollToBottom();
         }
       })
+      .on('broadcast', { event: 'typing' }, ({ payload }) => {
+        if (payload?.role === 'client') {
+          const active = Boolean(payload.isTyping);
+          setIsClientTyping(active);
+          clearTimeout(clientTypingDismissRef.current);
+          if (active) {
+            clientTypingDismissRef.current = setTimeout(() => {
+              setIsClientTyping(false);
+            }, 3500);
+          }
+        }
+      })
       .subscribe();
 
+    channelRef.current = channel;
+
     return () => {
+      clearTimeout(clientTypingDismissRef.current);
+      channelRef.current = null;
       supabase.removeChannel(channel);
     };
   }, [activeConversationId]);
@@ -328,29 +355,52 @@ export default function AdminChatInbox({ initialChannel = 'inbox' }) {
     }
   };
 
+  // Broadcast typing helper with immediate WebSocket dispatch & API backup
+  const broadcastTyping = useCallback((isTyping) => {
+    if (!activeConversationId) return;
+    const typingBool = Boolean(isTyping);
+
+    // 1. Instant WebSocket Realtime broadcast (<30ms)
+    try {
+      if (channelRef.current) {
+        channelRef.current.send({
+          type: 'broadcast',
+          event: 'typing',
+          payload: {
+            role: 'admin',
+            isTyping: typingBool,
+            conversationId: activeConversationId,
+            timestamp: Date.now()
+          }
+        });
+      }
+    } catch (err) {
+      console.warn('Realtime admin typing broadcast notice:', err);
+    }
+
+    // 2. Serverless API sync fallback
+    fetch('/api/chat/typing', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ conversationId: activeConversationId, senderRole: 'admin', isTyping: typingBool })
+    }).catch(() => {});
+  }, [activeConversationId]);
+
   // Handle Typing indicator broadcast
   const handleInputChange = (e) => {
     setInputText(e.target.value);
     adjustTextareaHeight(e.target);
 
-    // Notify backend of typing
     if (activeConversationId) {
-      if (!typingTimeoutRef.current) {
-        fetch('/api/chat/typing', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ conversationId: activeConversationId, senderRole: 'admin', isTyping: true })
-        }).catch(() => {});
+      if (!isTypingActiveRef.current) {
+        isTypingActiveRef.current = true;
+        broadcastTyping(true);
       }
       clearTimeout(typingTimeoutRef.current);
       typingTimeoutRef.current = setTimeout(() => {
-        fetch('/api/chat/typing', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ conversationId: activeConversationId, senderRole: 'admin', isTyping: false })
-        }).catch(() => {});
-        typingTimeoutRef.current = null;
-      }, 2500);
+        isTypingActiveRef.current = false;
+        broadcastTyping(false);
+      }, 2000);
     }
   };
 
@@ -438,6 +488,13 @@ export default function AdminChatInbox({ initialChannel = 'inbox' }) {
   const handleSendMessage = async (e) => {
     e?.preventDefault();
     if ((!inputText.trim() && pendingAttachments.length === 0) || isSendingMessage || !activeConversationId) return;
+
+    // Immediately cancel and broadcast typing cessation
+    clearTimeout(typingTimeoutRef.current);
+    if (isTypingActiveRef.current) {
+      isTypingActiveRef.current = false;
+      broadcastTyping(false);
+    }
 
     const messageText = inputText.trim();
     const attachmentsToSend = [...pendingAttachments];

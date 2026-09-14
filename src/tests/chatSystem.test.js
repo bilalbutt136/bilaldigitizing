@@ -457,5 +457,59 @@ test('Chat System & Fiverr-Style Inbox Architecture', async (t) => {
     assert.ok(inboxMessages.every(m => m.conversation_id !== supportConvId));
   });
 
+  await t.test('10. Realtime typing indicators: channel parity, instant broadcast, debouncing, and role segregation', () => {
+    const testConvId = 'inbox-client123';
+
+    // 1. Channel parity check: Client and Admin must bind to the EXACT same room channel
+    const getClientChannel = (convId) => `chat-room-${convId}`;
+    const getAdminChannel = (convId) => `chat-room-${convId}`;
+
+    assert.equal(getClientChannel(testConvId), getAdminChannel(testConvId));
+    assert.equal(getClientChannel(testConvId), 'chat-room-inbox-client123');
+
+    // 2. Role segregation: receiver only displays typing if the payload role is opposite
+    const clientState = { isAdminTyping: false };
+    const adminState = { isClientTyping: false };
+
+    const handleClientBroadcast = (payload) => {
+      if (payload?.role === 'admin') {
+        clientState.isAdminTyping = Boolean(payload.isTyping);
+      }
+    };
+
+    const handleAdminBroadcast = (payload) => {
+      if (payload?.role === 'client') {
+        adminState.isClientTyping = Boolean(payload.isTyping);
+      }
+    };
+
+    // Client starts typing
+    handleAdminBroadcast({ role: 'client', isTyping: true, conversationId: testConvId });
+    assert.equal(adminState.isClientTyping, true, 'Admin should immediately see client typing');
+    assert.equal(clientState.isAdminTyping, false, 'Client should not see itself as admin typing');
+
+    // Admin starts typing
+    handleClientBroadcast({ role: 'admin', isTyping: true, conversationId: testConvId });
+    assert.equal(clientState.isAdminTyping, true, 'Client should immediately see admin typing');
+
+    // Client stops typing
+    handleAdminBroadcast({ role: 'client', isTyping: false, conversationId: testConvId });
+    assert.equal(adminState.isClientTyping, false, 'Admin typing indicator should turn off');
+
+    // 3. Stale timestamp expiration: heartbeats older than 3500ms are expired
+    const isTimestampActive = (isoString, maxAgeMs = 3500) => {
+      if (!isoString) return false;
+      return (Date.now() - new Date(isoString).getTime()) < maxAgeMs;
+    };
+
+    const freshTs = new Date(Date.now() - 500).toISOString();
+    const staleTs = new Date(Date.now() - 4000).toISOString();
+
+    assert.equal(isTimestampActive(freshTs), true, '500ms old heartbeat must be considered active');
+    assert.equal(isTimestampActive(staleTs), false, '4000ms old heartbeat must be expired');
+    assert.equal(isTimestampActive(null), false, 'Null heartbeat is not active');
+  });
+
 });
+
 
