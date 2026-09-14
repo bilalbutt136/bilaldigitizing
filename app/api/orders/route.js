@@ -66,7 +66,7 @@ export async function GET(request) {
       
       let data = null;
       try {
-        let query = supabase.from('orders').select('id, title, client_name, client_email, service_category, service_type, fabric_type, requested_formats, is_rush, price, cost, status, payment_status, artwork_url, image_url, logo, user_id, worker_id, worker_status, worker_file_url, worker_file_name, worker_notes, worker_payout, worker_payout_status, admin_worker_feedback, worker_assigned_at, worker_submitted_at, worker_reviewed_at, paid_at, delivery_notes, notes, created_at, updated_at, order_files(id, file_name, file_format, file_type, public_url, file_url, uploaded_by, created_at)').order('created_at', { ascending: false });
+        let query = supabase.from('orders').select('id, title, client_name, client_email, service_category, service_type, fabric_type, requested_formats, is_rush, price, cost, status, payment_status, artwork_url, image_url, logo, user_id, worker_id, worker_status, worker_file_url, worker_file_name, worker_files, worker_notes, worker_payout, worker_payout_status, admin_worker_feedback, worker_assigned_at, worker_submitted_at, worker_reviewed_at, paid_at, output_file_url, notes, created_at, updated_at, order_files(id, file_name, file_format, file_type, public_url, file_url, uploaded_by, created_at)').order('created_at', { ascending: false });
         if (targetWorkerId) {
           query = query.eq('worker_id', targetWorkerId);
         } else if (targetEmail) {
@@ -79,7 +79,7 @@ export async function GET(request) {
         data = res.data;
       } catch (nestedErr) {
         console.warn('Nested orders query fallback notice:', nestedErr);
-        let fallbackQuery = supabase.from('orders').select('id, title, client_name, client_email, service_category, service_type, is_rush, price, status, payment_status, artwork_url, image_url, worker_id, worker_status, worker_payout, worker_payout_status, notes, created_at, updated_at').order('created_at', { ascending: false });
+        let fallbackQuery = supabase.from('orders').select('id, title, client_name, client_email, service_category, service_type, fabric_type, requested_formats, is_rush, price, status, payment_status, artwork_url, image_url, logo, user_id, worker_id, worker_status, worker_file_url, worker_file_name, worker_files, output_file_url, notes, created_at, updated_at, order_files(id, file_name, file_format, file_type, public_url, file_url, uploaded_by, created_at)').order('created_at', { ascending: false });
         if (targetWorkerId) {
           fallbackQuery = fallbackQuery.eq('worker_id', targetWorkerId);
         } else if (targetEmail) {
@@ -390,7 +390,7 @@ export async function POST(request) {
       }
       const updatePayload = { status: resolvedStatus, updated_at: new Date().toISOString() };
       
-      if (extraData?.deliveryNotes || extraData?.deliveryMessage) {
+      if (extraData?.deliveryNotes || extraData?.deliveryMessage || extraData?.deliveries || extraData?.uploadedMachineFiles) {
         let existingNotes = {};
         try {
           if (targetOrder?.notes) {
@@ -399,9 +399,24 @@ export async function POST(request) {
         } catch {
           existingNotes = { notes: targetOrder?.notes || '' };
         }
-        existingNotes.deliveryNotes = extraData.deliveryNotes || extraData.deliveryMessage;
+        if (extraData.deliveryNotes || extraData.deliveryMessage) {
+          existingNotes.deliveryNotes = extraData.deliveryNotes || extraData.deliveryMessage;
+        }
+        if (extraData.deliveries) {
+          existingNotes.deliveries = extraData.deliveries;
+        }
+        if (extraData.uploadedMachineFiles) {
+          existingNotes.uploadedMachineFiles = extraData.uploadedMachineFiles;
+        }
         existingNotes.deliveryDate = new Date().toISOString();
         updatePayload.notes = JSON.stringify(existingNotes);
+      }
+
+      if (extraData?.outputFileUrl || extraData?.output_file_url) {
+        updatePayload.output_file_url = extraData.outputFileUrl || extraData.output_file_url;
+      }
+      if (extraData?.workerFileUrl || extraData?.worker_file_url) {
+        updatePayload.worker_file_url = extraData.workerFileUrl || extraData.worker_file_url;
       }
 
       if (payStatus) {
@@ -416,28 +431,34 @@ export async function POST(request) {
 
       if (error) throw error;
       
-      // Process uploaded machine files for admin delivery
-      if (extraData?.uploadedMachineFiles && Array.isArray(extraData.uploadedMachineFiles)) {
+      // Process uploaded machine files & deliveries files for delivery
+      const allDeliveryFiles = [
+        ...(Array.isArray(extraData?.uploadedMachineFiles) ? extraData.uploadedMachineFiles : []),
+        ...(Array.isArray(extraData?.deliveries) ? extraData.deliveries.flatMap(d => Array.isArray(d?.files) ? d.files : (d?.fileUrl || d?.url ? [d] : [])) : [])
+      ];
+
+      if (allDeliveryFiles.length > 0) {
         const resolvedOrderId = targetOrder?.id || orderId;
-        for (const file of extraData.uploadedMachineFiles) {
-          if (!file.url || file.error) continue;
+        for (const file of allDeliveryFiles) {
+          const fUrl = file.url || file.fileUrl || file.public_url || file.file_url;
+          if (!fUrl || file.error) continue;
           
           const { data: existing } = await supabase
             .from('order_files')
             .select('id')
-            .eq('file_url', file.url)
+            .eq('file_url', fUrl)
             .maybeSingle();
             
           if (!existing) {
             await supabase.from('order_files').insert([{
               order_id: resolvedOrderId,
-              file_name: file.name || 'machine_file',
-              file_format: file.format || file.name?.split('.').pop() || 'unknown',
+              file_name: file.name || file.fileName || file.file_name || 'machine_file',
+              file_format: (file.format || file.file_format || (file.name || '').split('.').pop() || 'dst').toLowerCase(),
               file_type: 'machine_file',
               bucket_name: 'portfolio-images',
-              file_path: file.public_id || file.url,
-              public_url: file.url,
-              file_url: file.url,
+              file_path: file.public_id || fUrl,
+              public_url: fUrl,
+              file_url: fUrl,
               uploaded_by: 'admin'
             }]);
           }

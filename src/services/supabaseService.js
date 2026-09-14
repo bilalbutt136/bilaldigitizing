@@ -290,6 +290,45 @@ export async function fetchOrdersFromSupabase(customEmail = null, customOrderIds
         uploadedAt: f.created_at
       }));
 
+      // Combine all machine files, worker deliverables, and notes deliveries into complete deliverable suite
+      const rawDeliverables = [
+        ...machineFiles,
+        ...workerFiles,
+        ...(Array.isArray(notesData.uploadedMachineFiles) ? notesData.uploadedMachineFiles : []),
+        ...(Array.isArray(notesData.deliveries) ? notesData.deliveries.flatMap(d => Array.isArray(d?.files) ? d.files : (d?.fileUrl || d?.url ? [d] : [])) : [])
+      ];
+
+      const seenDeliverableKeys = new Set();
+      const combinedMachineFiles = [];
+      for (const f of rawDeliverables) {
+        if (!f) continue;
+        const fileUrl = f.url || f.public_url || f.file_url;
+        const fileName = f.name || f.file_name;
+        const key = fileUrl || fileName;
+        if (key && !seenDeliverableKeys.has(key)) {
+          seenDeliverableKeys.add(key);
+          const ext = (f.format || f.file_format || (fileName || '').split('.').pop() || 'dst').toLowerCase();
+          combinedMachineFiles.push({
+            id: f.id || key,
+            name: fileName || `Production_File.${ext}`,
+            format: ext,
+            url: fileUrl,
+            public_url: fileUrl,
+            public_id: f.public_id || f.file_path || null,
+            uploadedAt: f.uploadedAt || f.created_at || new Date().toISOString()
+          });
+        }
+      }
+
+      const resolvedOutputFileUrl = 
+        order.output_file_url || 
+        order.outputFileUrl || 
+        combinedMachineFiles[0]?.url || 
+        workerFiles[0]?.url || 
+        order.worker_file_url || 
+        notesData.outputFileUrl || 
+        null;
+
       const rawOrderMessages = order.order_messages || [];
       const mappedOrderMessages = rawOrderMessages.map(m => ({
         id: m.id,
@@ -344,8 +383,13 @@ export async function fetchOrdersFromSupabase(customEmail = null, customOrderIds
         image_url: primaryArtworkUrl,
         logo: primaryArtworkUrl,
         uploadedFiles: clientFiles.length > 0 ? clientFiles : (notesData.uploadedFiles || []),
-        uploadedMachineFiles: machineFiles,
+        uploadedMachineFiles: combinedMachineFiles,
+        uploaded_machine_files: combinedMachineFiles,
+        outputFileUrl: resolvedOutputFileUrl,
+        output_file_url: resolvedOutputFileUrl,
+        deliveries: notesData.deliveries || [],
         workerFiles: workerFiles,
+        worker_files: workerFiles,
         workerId: order.worker_id,
         worker_id: order.worker_id,
         workerStatus: order.worker_status || 'Unassigned',

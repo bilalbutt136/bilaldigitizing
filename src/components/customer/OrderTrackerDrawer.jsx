@@ -372,10 +372,88 @@ export const OrderTrackerDrawer = () => {
     }
   };
 
+  const userFormats = ord.requestedFormats || ['dst', 'pes', 'emb'];
+  const allDownloadFormats = Array.from(new Set([...userFormats, 'pdf']));
+
+  // Comprehensive deliverable aggregation: combine files from uploadedMachineFiles, workerFiles, order_files, deliveries, outputFileUrl, etc.
+  let notesDeliveries = [];
+  let notesMachineFiles = [];
+  try {
+    if (ord.notes && typeof ord.notes === 'string' && ord.notes.trim().startsWith('{')) {
+      const parsedNotes = JSON.parse(ord.notes);
+      notesDeliveries = parsedNotes.deliveries || [];
+      notesMachineFiles = parsedNotes.uploadedMachineFiles || [];
+    }
+  } catch {}
+
+  const rawMachineFilesList = [
+    ...(Array.isArray(ord.uploadedMachineFiles) ? ord.uploadedMachineFiles : []),
+    ...(Array.isArray(ord.uploaded_machine_files) ? ord.uploaded_machine_files : []),
+    ...(Array.isArray(notesMachineFiles) ? notesMachineFiles : []),
+    ...(Array.isArray(ord.workerFiles) ? ord.workerFiles : []),
+    ...(Array.isArray(ord.worker_files) ? ord.worker_files : []),
+    ...(Array.isArray(ord.order_files) ? ord.order_files.filter(f => f && f.file_type !== 'client_artwork') : []),
+    ...(Array.isArray(ord.orderFiles) ? ord.orderFiles.filter(f => f && f.file_type !== 'client_artwork') : []),
+    ...(Array.isArray(ord.deliveries) ? ord.deliveries.flatMap(d => Array.isArray(d?.files) ? d.files : (d?.fileUrl || d?.url ? [d] : [])) : []),
+    ...(Array.isArray(notesDeliveries) ? notesDeliveries.flatMap(d => Array.isArray(d?.files) ? d.files : (d?.fileUrl || d?.url ? [d] : [])) : [])
+  ];
+
+  if (ord.output_file_url || ord.outputFileUrl) {
+    const outUrl = ord.output_file_url || ord.outputFileUrl;
+    const outExt = (outUrl.split('.').pop()?.split('?')[0] || 'dst').toLowerCase();
+    rawMachineFilesList.push({
+      url: outUrl,
+      public_url: outUrl,
+      name: `${(ord.title || 'Order').replace(/\s+/g, '_')}_master.${outExt}`,
+      format: outExt
+    });
+  }
+
+  if (ord.worker_file_url || ord.workerFileUrl) {
+    const wUrl = ord.worker_file_url || ord.workerFileUrl;
+    const wExt = (ord.worker_file_name?.split('.').pop() || wUrl.split('.').pop()?.split('?')[0] || 'dst').toLowerCase();
+    rawMachineFilesList.push({
+      url: wUrl,
+      public_url: wUrl,
+      name: ord.worker_file_name || `${(ord.title || 'Order').replace(/\s+/g, '_')}_digitized.${wExt}`,
+      format: wExt
+    });
+  }
+
+  const seenMachineKeys = new Set();
+  const uniqueMachineFiles = [];
+  for (const rawF of rawMachineFilesList) {
+    if (!rawF) continue;
+    const fileUrl = rawF.url || rawF.public_url || rawF.file_url;
+    const fileName = rawF.name || rawF.file_name;
+    const key = fileUrl || fileName;
+    if (key && !seenMachineKeys.has(key)) {
+      seenMachineKeys.add(key);
+      const ext = (rawF.format || rawF.file_format || (fileName || '').split('.').pop() || 'dst').toLowerCase();
+      uniqueMachineFiles.push({
+        id: rawF.id || key,
+        name: fileName || `Production_File.${ext}`,
+        format: ext,
+        url: fileUrl,
+        public_url: fileUrl,
+        public_id: rawF.public_id || rawF.file_path || null,
+        uploadedAt: rawF.uploadedAt || rawF.created_at || null
+      });
+    }
+  }
+
   const handleOpenFileAsset = (fileObj, fallbackFormatKey) => {
-    const fileUrl = fileObj?.url || ord.outputFileUrl;
+    let target = fileObj;
     const formatKey = (fileObj?.format || fallbackFormatKey || 'dst').toLowerCase();
-    const fileName = fileObj?.name || `${(ord.title || 'Order').replace(/\s+/g, '_')}_${formatOrderId(ord.id)}.${formatKey}`;
+    
+    if (!target || !target.url) {
+      target = uniqueMachineFiles.find(f => (f.format || '').toLowerCase() === formatKey) ||
+               uniqueMachineFiles.find(f => (f.name || '').toLowerCase().endsWith(`.${formatKey}`)) ||
+               null;
+    }
+
+    const fileUrl = target?.url || ord.output_file_url || ord.outputFileUrl || ord.worker_file_url;
+    const fileName = target?.name || `${(ord.title || 'Order').replace(/\s+/g, '_')}_${formatOrderId(ord.id)}.${formatKey}`;
 
     if (formatKey === 'pdf') {
       if (fileUrl && (fileUrl.toLowerCase().endsWith('.pdf') || fileUrl.includes('.pdf'))) {
@@ -394,18 +472,25 @@ export const OrderTrackerDrawer = () => {
   };
 
   const handleDownloadFileAsset = async (fileObj, fallbackFormatKey) => {
-    const fileUrl = fileObj?.url || ord.outputFileUrl;
+    let target = fileObj;
     const formatKey = (fileObj?.format || fallbackFormatKey || 'dst').toLowerCase();
-    const fileName = fileObj?.name || `${(ord.title || 'Order').replace(/\s+/g, '_')}_${formatOrderId(ord.id)}.${formatKey}`;
-    const fileKey = fileObj?.id || fileObj?.url || fileObj?.name || formatKey;
-
-    if (!fileUrl && formatKey === 'pdf') {
-      setShowWorksheetModal(true);
-      return;
+    
+    if (!target || !target.url) {
+      target = uniqueMachineFiles.find(f => (f.format || '').toLowerCase() === formatKey) ||
+               uniqueMachineFiles.find(f => (f.name || '').toLowerCase().endsWith(`.${formatKey}`)) ||
+               null;
     }
 
+    const fileUrl = target?.url || ord.output_file_url || ord.outputFileUrl || ord.worker_file_url;
+    const fileName = target?.name || `${(ord.title || 'Order').replace(/\s+/g, '_')}_${formatOrderId(ord.id)}.${formatKey}`;
+    const fileKey = target?.id || target?.url || target?.name || formatKey;
+
     if (!fileUrl) {
-      setShowWorksheetModal(true);
+      if (formatKey === 'pdf') {
+        setShowWorksheetModal(true);
+      } else {
+        showToast(`Production file for .${formatKey.toUpperCase()} is being prepared.`, 'info');
+      }
       return;
     }
 
@@ -421,14 +506,6 @@ export const OrderTrackerDrawer = () => {
       setDownloadingFileKey(null);
     }
   };
-
-  const userFormats = ord.requestedFormats || ['dst', 'pes', 'emb'];
-  const allDownloadFormats = Array.from(new Set([...userFormats, 'pdf']));
-
-  const uniqueMachineFiles = (ord.uploadedMachineFiles || []).reduce((acc, file) => {
-    if (!acc.some(f => f.name === file.name)) acc.push(file);
-    return acc;
-  }, []);
 
   const handleDownloadAll = async () => {
     const filesToDownload = uniqueMachineFiles.length > 0 ? uniqueMachineFiles : allDownloadFormats.map(fmt => ({ name: null, format: fmt }));
