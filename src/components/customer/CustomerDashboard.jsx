@@ -700,6 +700,26 @@ export const CustomerDashboard = () => {
             padding: 0.85rem 1.5rem 3.5rem !important;
             box-sizing: border-box !important;
           }
+          .client-main-chat-tab {
+            padding: 1rem 1.5rem 1.5rem !important;
+            height: 100% !important;
+            max-height: 100% !important;
+            display: flex !important;
+            flex-direction: column !important;
+            overflow: hidden !important;
+          }
+        }
+
+        @media (max-width: 1024px) {
+          .client-main-chat-tab {
+            padding: 0 0 64px 0 !important;
+            height: 100% !important;
+            max-height: 100% !important;
+            display: flex !important;
+            flex-direction: column !important;
+            overflow: hidden !important;
+            min-height: 0 !important;
+          }
         }
 
         /* Custom smooth scrollbar for Client Portal main content */
@@ -774,62 +794,65 @@ export const CustomerDashboard = () => {
             RIGHT CONTENT WORKSPACE PANE (INDEPENDENTLY SCROLLABLE)
            ================================================================== */}
         <main 
-          className="client-main-content"
+          className={`client-main-content ${(activeTab === 'inbox' || activeTab === 'chat' || activeTab === 'support' || activeTab === 'help-support') ? 'client-main-chat-tab' : ''}`}
           style={{ 
             flex: 1,
             minWidth: 0,
             width: '100%',
             height: '100%',
             maxHeight: '100%',
-            display: 'block',
-            overflowY: 'auto',
+            display: (activeTab === 'inbox' || activeTab === 'chat' || activeTab === 'support' || activeTab === 'help-support') ? 'flex' : 'block',
+            flexDirection: (activeTab === 'inbox' || activeTab === 'chat' || activeTab === 'support' || activeTab === 'help-support') ? 'column' : undefined,
+            overflowY: (activeTab === 'inbox' || activeTab === 'chat' || activeTab === 'support' || activeTab === 'help-support') ? 'hidden' : 'auto',
             overflowX: 'hidden',
-            padding: '0.85rem 1.5rem 3.5rem',
+            padding: (activeTab === 'inbox' || activeTab === 'chat' || activeTab === 'support' || activeTab === 'help-support') ? undefined : '0.85rem 1.5rem 3.5rem',
             boxSizing: 'border-box'
           }}
         >
-          {/* Optional App Mode Launch Banner for Mobile Screens */}
-          <div 
-            className="mobile-only"
-            style={{
-              background: 'linear-gradient(135deg, rgba(249, 115, 22, 0.08) 0%, rgba(249, 115, 22, 0.02) 100%)',
-              borderBottom: '1px solid var(--border-color)',
-              padding: '0.45rem 0.85rem',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: '0.5rem',
-              marginBottom: '0.65rem',
-              borderRadius: '8px'
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
-              <Sparkles size={14} style={{ color: 'var(--orange-500)', flexShrink: 0 }} />
-              <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-main)' }}>
-                Prefer the full-screen 5-Tab App?
-              </span>
-            </div>
-            <button
-              type="button"
-              onClick={() => {
-                if (setMobileMode) setMobileMode('app');
-                showToast('Switched to App Mode 📱', 'info');
-              }}
+          {/* Optional App Mode Launch Banner for Mobile Screens - Only on Dashboard */}
+          {activeTab === 'dashboard' && (
+            <div 
+              className="mobile-only"
               style={{
-                background: 'var(--orange-500)',
-                color: '#ffffff',
-                border: 'none',
-                borderRadius: '6px',
-                padding: '0.25rem 0.6rem',
-                fontSize: '0.72rem',
-                fontWeight: 800,
-                cursor: 'pointer',
-                whiteSpace: 'nowrap'
+                background: 'linear-gradient(135deg, rgba(249, 115, 22, 0.08) 0%, rgba(249, 115, 22, 0.02) 100%)',
+                borderBottom: '1px solid var(--border-color)',
+                padding: '0.45rem 0.85rem',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: '0.5rem',
+                marginBottom: '0.65rem',
+                borderRadius: '8px'
               }}
             >
-              Launch App
-            </button>
-          </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                <Sparkles size={14} style={{ color: 'var(--orange-500)', flexShrink: 0 }} />
+                <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-main)' }}>
+                  Prefer the full-screen 5-Tab App?
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  if (setMobileMode) setMobileMode('app');
+                  showToast('Switched to App Mode 📱', 'info');
+                }}
+                style={{
+                  background: 'var(--orange-500)',
+                  color: '#ffffff',
+                  border: 'none',
+                  borderRadius: '6px',
+                  padding: '0.25rem 0.6rem',
+                  fontSize: '0.72rem',
+                  fontWeight: 800,
+                  cursor: 'pointer',
+                  whiteSpace: 'nowrap'
+                }}
+              >
+                Launch App
+              </button>
+            </div>
+          )}
             
             {/* TAB 0: MAIN CLIENT DASHBOARD */}
             {activeTab === 'dashboard' && (
@@ -2363,14 +2386,14 @@ export const CustomerDashboard = () => {
 
             {/* TAB: STUDIO INBOX & CUSTOM OFFERS */}
             {(activeTab === 'inbox' || activeTab === 'chat') && (
-              <div style={{ width: '100%', height: 'calc(100vh - 110px)', minHeight: '580px', display: 'flex', flexDirection: 'column' }}>
+              <div style={{ width: '100%', height: '100%', minHeight: 0, flex: 1, display: 'flex', flexDirection: 'column' }}>
                 <CustomerSupportChat chatType="inbox" key="client-inbox" />
               </div>
             )}
 
             {/* TAB: 24/7 CUSTOMER SUPPORT DESK */}
             {(activeTab === 'support' || activeTab === 'help-support') && (
-              <div style={{ width: '100%', height: 'calc(100vh - 110px)', minHeight: '580px', display: 'flex', flexDirection: 'column' }}>
+              <div style={{ width: '100%', height: '100%', minHeight: 0, flex: 1, display: 'flex', flexDirection: 'column' }}>
                 <CustomerSupportChat chatType="support" key="client-support" />
               </div>
             )}
