@@ -60,11 +60,17 @@ function formatContentDisposition(disposition, filename) {
 function createBinaryResponse(buffer, contentType, disposition, filename, request, isHead = false) {
   const totalSize = buffer.byteLength;
   const contentDisposition = formatContentDisposition(disposition, filename);
+  const isAttachment = disposition === 'attachment';
+  // When attachment/download is requested, force application/octet-stream and nosniff
+  // so mobile/desktop browsers do NOT display images/PDFs inline in the tab
+  const effectiveContentType = isAttachment ? 'application/octet-stream' : contentType;
+
   const commonHeaders = {
-    'Content-Type': contentType,
+    'Content-Type': effectiveContentType,
     'Content-Disposition': contentDisposition,
     'Accept-Ranges': 'bytes',
-    'Cache-Control': 'public, max-age=31536000, immutable',
+    'Cache-Control': isAttachment ? 'no-cache, no-store, must-revalidate' : 'public, max-age=31536000, immutable',
+    'X-Content-Type-Options': 'nosniff',
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'GET, HEAD, OPTIONS',
     'Access-Control-Allow-Headers': 'Range, Content-Type, Authorization',
@@ -199,7 +205,8 @@ async function handleFileRequest(request, isHead = false) {
     const { searchParams } = new URL(request.url);
     let fileUrl = searchParams.get('url');
     let filename = searchParams.get('filename') || 'file';
-    const isPreview = searchParams.get('preview') === 'true';
+    const isDownload = searchParams.get('download') === 'true';
+    const isPreview = searchParams.get('preview') === 'true' && !isDownload;
 
     if (!fileUrl) {
       return NextResponse.json({ error: 'Missing file URL parameter' }, { status: 400 });

@@ -1,11 +1,12 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { formatOrderId } from '../../context/StateContext';
-import { triggerFileDownload, openPdfInNewTab } from '../../utils/fileDownloader';
-import { X, Download, Scissors, ExternalLink } from 'lucide-react';
+import { downloadFileDirectly, openPdfInNewTab, openFileInNewTab } from '../../utils/fileDownloader';
+import { X, Download, Scissors, ExternalLink, Loader2 } from 'lucide-react';
 
 export const ArtworkLightboxModal = ({ order, onClose }) => {
+  const [isDownloading, setIsDownloading] = useState(false);
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key === 'Escape') {
@@ -62,13 +63,24 @@ export const ArtworkLightboxModal = ({ order, onClose }) => {
   );
   const fileName = isPdf && !rawFileName.toLowerCase().endsWith('.pdf') ? `${rawFileName}.pdf` : rawFileName;
 
-  const handleDownloadArtwork = () => {
-    const ext = isPdf ? 'pdf' : (fileName.split('.').pop().toLowerCase() || 'png');
-    triggerFileDownload(imageSrc, fileName, ext);
+  const handleDownloadArtwork = async () => {
+    if (isDownloading) return;
+    setIsDownloading(true);
+    try {
+      await downloadFileDirectly(imageSrc, fileName);
+    } catch (err) {
+      console.error('Download error:', err);
+    } finally {
+      setIsDownloading(false);
+    }
   };
 
-  const handleOpenPdfTab = () => {
-    openPdfInNewTab(imageSrc, fileName);
+  const handleOpenAsset = () => {
+    if (isPdf) {
+      openPdfInNewTab(imageSrc, fileName);
+    } else {
+      openFileInNewTab(imageSrc, fileName);
+    }
   };
 
   return (
@@ -185,23 +197,26 @@ export const ArtworkLightboxModal = ({ order, onClose }) => {
           </div>
 
           {/* Action Footer */}
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '1.5rem' }}>
-            {isPdf && (
-              <button
-                type="button"
-                onClick={handleOpenPdfTab}
-                className="btn btn-outline"
-                style={{ gap: '0.5rem' }}
-              >
-                <ExternalLink size={16} /> Open in Chrome
-              </button>
-            )}
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '1.5rem', flexWrap: 'wrap' }}>
+            <button
+              type="button"
+              onClick={handleOpenAsset}
+              className="btn btn-outline"
+              style={{ gap: '0.5rem' }}
+              title="Open asset in new tab"
+            >
+              <ExternalLink size={16} /> Open in New Tab
+            </button>
             <button 
+              type="button"
+              disabled={isDownloading}
               onClick={handleDownloadArtwork}
               className="btn btn-primary-orange"
               style={{ gap: '0.5rem' }}
+              title="Download asset directly to disk"
             >
-              <Download size={16} /> Download {isPdf ? 'PDF Asset' : 'High-Res Source Asset'}
+              {isDownloading ? <Loader2 size={16} className="spin-icon" /> : <Download size={16} />}
+              {isDownloading ? 'Saving...' : `Download ${isPdf ? 'PDF Asset' : 'High-Res Source Asset'}`}
             </button>
           </div>
 

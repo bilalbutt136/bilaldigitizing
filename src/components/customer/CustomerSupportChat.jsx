@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useAppState } from '../../context/StateContext';
 import { createClient } from '../../lib/supabase/client';
 import OfferCardMessage from '../common/OfferCardMessage';
-import { downloadFileDirectly } from '../../utils/fileDownloader';
+import { downloadFileDirectly, openFileInNewTab } from '../../utils/fileDownloader';
 import {
   Send,
   Paperclip,
@@ -968,16 +968,16 @@ export default function CustomerSupportChat({
 
                                     {/* Action buttons: Direct view (Open) and Functional Download */}
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', flexShrink: 0 }}>
-                                      <a
-                                        href={att.url}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
+                                      <button
+                                        type="button"
+                                        onClick={() => openFileInNewTab(att.url, att.name)}
                                         style={{
                                           color: isClient ? '#ffffff' : '#475569',
                                           display: 'inline-flex',
                                           alignItems: 'center',
                                           gap: '0.2rem',
-                                          textDecoration: 'none',
+                                          cursor: 'pointer',
+                                          border: isClient ? '1px solid rgba(255,255,255,0.2)' : '1px solid #cbd5e1',
                                           fontWeight: 700,
                                           fontSize: '0.68rem',
                                           padding: '0.22rem 0.45rem',
@@ -987,7 +987,7 @@ export default function CustomerSupportChat({
                                         title="Open image directly in new tab"
                                       >
                                         <ExternalLink size={11} /> Open
-                                      </a>
+                                      </button>
 
                                       <button
                                         type="button"
@@ -1070,16 +1070,15 @@ export default function CustomerSupportChat({
                                 </div>
 
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', flexShrink: 0 }}>
-                                  <a
-                                    href={att.url}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
+                                  <button
+                                    type="button"
+                                    onClick={() => openFileInNewTab(att.url, att.name)}
                                     style={{
                                       color: isClient ? '#ffffff' : '#475569',
                                       display: 'inline-flex',
                                       alignItems: 'center',
                                       gap: '0.2rem',
-                                      textDecoration: 'none',
+                                      cursor: 'pointer',
                                       fontWeight: 700,
                                       fontSize: '0.68rem',
                                       padding: '0.22rem 0.45rem',
@@ -1091,7 +1090,7 @@ export default function CustomerSupportChat({
                                     title="Open file directly in new tab"
                                   >
                                     <ExternalLink size={11} /> Open
-                                  </a>
+                                  </button>
 
                                   <button
                                     type="button"

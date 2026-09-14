@@ -5,7 +5,7 @@ import { useAppState } from '../../context/StateContext';
 import { createClient } from '../../lib/supabase/client';
 import OfferCardMessage from '../common/OfferCardMessage';
 import AdminCreateOfferModal from './AdminCreateOfferModal';
-import { downloadFileDirectly } from '../../utils/fileDownloader';
+import { downloadFileDirectly, openFileInNewTab } from '../../utils/fileDownloader';
 import {
   Search,
   ChevronDown,
@@ -550,20 +550,21 @@ export default function AdminChatInbox({ initialChannel = 'inbox' }) {
   };
 
   // Batch "Download All" handler
-  const handleDownloadAll = () => {
+  const handleDownloadAll = async () => {
     if (allAttachments.length === 0) return;
     showToast(`Starting download of ${allAttachments.length} file(s)...`, 'info');
-    allAttachments.forEach((att, idx) => {
-      setTimeout(() => {
-        const link = document.createElement('a');
-        link.href = att.url;
-        link.download = att.name;
-        link.target = '_blank';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-      }, idx * 450);
-    });
+    for (let idx = 0; idx < allAttachments.length; idx++) {
+      const att = allAttachments[idx];
+      try {
+        await downloadFileDirectly(att.url, att.name);
+      } catch (err) {
+        console.error('Batch download error for file:', att.name, err);
+      }
+      if (idx < allAttachments.length - 1) {
+        await new Promise(r => setTimeout(r, 500));
+      }
+    }
+    showToast(`Finished downloading ${allAttachments.length} file(s)!`, 'success');
   };
 
   // Quick Reply creation
@@ -1330,47 +1331,92 @@ export default function AdminChatInbox({ initialChannel = 'inbox' }) {
                       overflowX: 'auto',
                       paddingBottom: '0.4rem'
                     }}>
-                      {allAttachments.map((att, idx) => (
-                        <a
-                          key={idx}
-                          href={att.url}
-                          target="_blank"
-                          rel="noreferrer"
-                          download={att.name}
-                          style={{
-                            border: '1px solid #e2e8f0',
-                            borderRadius: '8px',
-                            background: '#ffffff',
-                            padding: '0.65rem 0.85rem',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '0.65rem',
-                            textDecoration: 'none',
-                            minWidth: '180px',
-                            maxWidth: '220px',
-                            flexShrink: 0,
-                            boxShadow: '0 1px 4px rgba(0,0,0,0.03)',
-                            transition: 'border-color 0.15s ease'
-                          }}
-                        >
-                          {renderAttachmentIcon(att.name)}
-                          <div style={{ minWidth: 0, flex: 1 }}>
-                            <div style={{
-                              fontSize: '0.8rem',
-                              fontWeight: 700,
-                              color: '#0f172a',
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis',
-                              whiteSpace: 'nowrap'
-                            }}>
-                              {att.name}
+                      {allAttachments.map((att, idx) => {
+                        const isDownloading = downloadingFileUrl === att.url;
+                        return (
+                          <div
+                            key={idx}
+                            style={{
+                              border: '1px solid #e2e8f0',
+                              borderRadius: '8px',
+                              background: '#ffffff',
+                              padding: '0.6rem 0.75rem',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '0.65rem',
+                              minWidth: '220px',
+                              maxWidth: '280px',
+                              flexShrink: 0,
+                              boxShadow: '0 1px 4px rgba(0,0,0,0.03)',
+                              transition: 'border-color 0.15s ease'
+                            }}
+                          >
+                            {renderAttachmentIcon(att.name)}
+                            <div style={{ minWidth: 0, flex: 1 }}>
+                              <div
+                                style={{
+                                  fontSize: '0.8rem',
+                                  fontWeight: 700,
+                                  color: '#0f172a',
+                                  overflow: 'hidden',
+                                  textOverflow: 'ellipsis',
+                                  whiteSpace: 'nowrap'
+                                }}
+                                title={att.name}
+                              >
+                                {att.name}
+                              </div>
+                              <div style={{ fontSize: '0.7rem', color: '#64748b' }}>
+                                {att.size || 'Ready'}
+                              </div>
                             </div>
-                            <div style={{ fontSize: '0.7rem', color: '#64748b', display: 'flex', alignItems: 'center', gap: '0.2rem' }}>
-                              <Download size={11} /> {att.size || 'Ready'}
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', flexShrink: 0 }}>
+                              <button
+                                type="button"
+                                onClick={() => openFileInNewTab(att.url, att.name)}
+                                style={{
+                                  border: '1px solid #cbd5e1',
+                                  background: '#f8fafc',
+                                  color: '#334155',
+                                  borderRadius: '5px',
+                                  padding: '0.25rem 0.45rem',
+                                  fontSize: '0.68rem',
+                                  fontWeight: 700,
+                                  cursor: 'pointer',
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '0.2rem'
+                                }}
+                                title="Open in new tab"
+                              >
+                                <ExternalLink size={11} /> Open
+                              </button>
+                              <button
+                                type="button"
+                                onClick={(e) => handleDownloadFile(att, e)}
+                                disabled={isDownloading}
+                                style={{
+                                  border: 'none',
+                                  background: 'linear-gradient(135deg, #ff7a00 0%, #ea580c 100%)',
+                                  color: '#ffffff',
+                                  borderRadius: '5px',
+                                  padding: '0.25rem 0.5rem',
+                                  fontSize: '0.68rem',
+                                  fontWeight: 800,
+                                  cursor: isDownloading ? 'wait' : 'pointer',
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '0.25rem'
+                                }}
+                                title="Download directly"
+                              >
+                                {isDownloading ? <Loader2 size={11} className="spin-icon" /> : <Download size={11} />}
+                                Download
+                              </button>
                             </div>
                           </div>
-                        </a>
-                      ))}
+                        );
+                      })}
                     </div>
                   </div>
                 )}

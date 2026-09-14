@@ -11,15 +11,18 @@ import {
   ExternalLink,
   Clock,
   User,
-  Scissors
+  Scissors,
+  Loader2
 } from 'lucide-react';
 import { formatOrderId } from '../../context/StateContext';
 import { formatPlacementTiming } from '../worker/WorkerOrderWorkspaceModal';
+import { downloadFileDirectly, openFileInNewTab } from '../../utils/fileDownloader';
 
 export const ReviewWorkerUploadModal = ({ order, isOpen, onClose, onReviewed, showToast }) => {
   const [feedbackNotes, setFeedbackNotes] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [showRevisionInput, setShowRevisionInput] = useState(false);
+  const [downloadingUrl, setDownloadingUrl] = useState(null);
 
   if (!isOpen || !order) return null;
 
@@ -240,27 +243,62 @@ export const ReviewWorkerUploadModal = ({ order, isOpen, onClose, onReviewed, sh
                     </div>
 
                     {fUrl && (
-                      <a
-                        href={fUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        download={fName}
-                        style={{
-                          background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
-                          color: '#ffffff',
-                          padding: '0.5rem 1rem',
-                          borderRadius: '8px',
-                          fontWeight: 800,
-                          fontSize: '0.8rem',
-                          textDecoration: 'none',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '0.35rem',
-                          boxShadow: '0 2px 6px rgba(37, 99, 235, 0.25)'
-                        }}
-                      >
-                        <Download size={14} /> Download {fExt}
-                      </a>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', flexWrap: 'wrap' }}>
+                        <button
+                          type="button"
+                          onClick={() => openFileInNewTab(fUrl, fName)}
+                          style={{
+                            background: '#ffffff',
+                            color: '#2563eb',
+                            border: '1.5px solid #bfdbfe',
+                            padding: '0.45rem 0.85rem',
+                            borderRadius: '8px',
+                            fontWeight: 800,
+                            fontSize: '0.78rem',
+                            cursor: 'pointer',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '0.3rem'
+                          }}
+                          title="Open file in new tab"
+                        >
+                          <ExternalLink size={13} /> Open
+                        </button>
+                        <button
+                          type="button"
+                          disabled={downloadingUrl === fUrl}
+                          onClick={async () => {
+                            setDownloadingUrl(fUrl);
+                            try {
+                              if (showToast) showToast(`Downloading ${fName}...`, 'info');
+                              await downloadFileDirectly(fUrl, fName);
+                              if (showToast) showToast(`Saved ${fName}!`, 'success');
+                            } catch {
+                              if (showToast) showToast(`Failed to download ${fName}`, 'error');
+                            } finally {
+                              setDownloadingUrl(null);
+                            }
+                          }}
+                          style={{
+                            background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+                            color: '#ffffff',
+                            border: 'none',
+                            padding: '0.45rem 0.95rem',
+                            borderRadius: '8px',
+                            fontWeight: 800,
+                            fontSize: '0.78rem',
+                            cursor: downloadingUrl === fUrl ? 'wait' : 'pointer',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '0.35rem',
+                            boxShadow: '0 2px 6px rgba(37, 99, 235, 0.25)'
+                          }}
+                          title="Download directly to disk"
+                        >
+                          {downloadingUrl === fUrl ? <Loader2 size={13} className="spin-icon" /> : <Download size={13} />}
+                          Download {fExt}
+                        </button>
+                      </div>
                     )}
                   </div>
                 );

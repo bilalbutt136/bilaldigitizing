@@ -5,7 +5,7 @@ import { useAppState, formatOrderId, formatDimensions, formatFabric } from '../.
 import { ArtworkLightboxModal } from '../common/ArtworkLightboxModal';
 import { ProductionWorksheetModal } from '../common/ProductionWorksheetModal';
 import { PdfPreviewModal } from '../common/PdfPreviewModal';
-import { triggerFileDownload, openPdfInNewTab } from '../../utils/fileDownloader';
+import { triggerFileDownload, downloadFileDirectly, openPdfInNewTab, openFileInNewTab } from '../../utils/fileDownloader';
 import { 
   X, 
   CheckCircle2, 
@@ -36,7 +36,9 @@ import {
   UserCheck,
   AlertCircle,
   AlertTriangle,
-  Receipt
+  Receipt,
+  ExternalLink,
+  Loader2
 } from 'lucide-react';
 import { uploadFileToCloudinaryFull } from '../../services/supabaseService';
 import { AssignWorkerModal } from '../admin/AssignWorkerModal';
@@ -103,6 +105,7 @@ export const OrderTrackerDrawer = () => {
   const [showWorksheetModal, setShowWorksheetModal] = useState(false);
   const [activePdfPreview, setActivePdfPreview] = useState(null);
   const [showInvoiceModal, setShowInvoiceModal] = useState(false);
+  const [downloadingFileKey, setDownloadingFileKey] = useState(null);
 
   // Admin Multiple File Upload Array State
   const [adminFilesList, setAdminFilesList] = useState([]);
@@ -369,28 +372,53 @@ export const OrderTrackerDrawer = () => {
     }
   };
 
-  const handleDownloadFileAsset = (fileObj, fallbackFormatKey) => {
-    if (fileObj && fileObj.url) {
-      const fileName = fileObj.name || `${(ord.title || 'Order').replace(/\s+/g, '_')}_${formatOrderId(ord.id)}.${fileObj.format || fallbackFormatKey || 'dst'}`;
-      triggerFileDownload(fileObj.url, fileName);
-      return;
-    }
+  const handleOpenFileAsset = (fileObj, fallbackFormatKey) => {
+    const fileUrl = fileObj?.url || ord.outputFileUrl;
+    const formatKey = (fileObj?.format || fallbackFormatKey || 'dst').toLowerCase();
+    const fileName = fileObj?.name || `${(ord.title || 'Order').replace(/\s+/g, '_')}_${formatOrderId(ord.id)}.${formatKey}`;
 
-    const formatKey = (fallbackFormatKey || 'dst').toLowerCase();
     if (formatKey === 'pdf') {
-      if (ord.outputFileUrl && (ord.outputFileUrl.toLowerCase().endsWith('.pdf') || ord.outputFileUrl.includes('.pdf'))) {
-        triggerFileDownload(ord.outputFileUrl, `${(ord.title || 'Order').replace(/\s+/g, '_')}_${formatOrderId(ord.id)}.pdf`);
+      if (fileUrl && (fileUrl.toLowerCase().endsWith('.pdf') || fileUrl.includes('.pdf'))) {
+        openPdfInNewTab(fileUrl, fileName);
       } else {
         setShowWorksheetModal(true);
       }
       return;
     }
 
-    const fileName = `${(ord.title || 'Order').replace(/\s+/g, '_')}_${formatOrderId(ord.id)}.${formatKey}`;
-    if (ord.outputFileUrl) {
-      triggerFileDownload(ord.outputFileUrl, fileName);
+    if (fileUrl) {
+      openFileInNewTab(fileUrl, fileName);
     } else {
       setShowWorksheetModal(true);
+    }
+  };
+
+  const handleDownloadFileAsset = async (fileObj, fallbackFormatKey) => {
+    const fileUrl = fileObj?.url || ord.outputFileUrl;
+    const formatKey = (fileObj?.format || fallbackFormatKey || 'dst').toLowerCase();
+    const fileName = fileObj?.name || `${(ord.title || 'Order').replace(/\s+/g, '_')}_${formatOrderId(ord.id)}.${formatKey}`;
+    const fileKey = fileObj?.id || fileObj?.url || fileObj?.name || formatKey;
+
+    if (!fileUrl && formatKey === 'pdf') {
+      setShowWorksheetModal(true);
+      return;
+    }
+
+    if (!fileUrl) {
+      setShowWorksheetModal(true);
+      return;
+    }
+
+    setDownloadingFileKey(fileKey);
+    try {
+      showToast(`Downloading ${fileName}...`, 'info');
+      await downloadFileDirectly(fileUrl, fileName);
+      showToast(`Saved ${fileName}`, 'success');
+    } catch (err) {
+      console.error('Download error:', err);
+      showToast(`Could not download ${fileName}`, 'error');
+    } finally {
+      setDownloadingFileKey(null);
     }
   };
 
@@ -402,18 +430,21 @@ export const OrderTrackerDrawer = () => {
     return acc;
   }, []);
 
-  const handleDownloadAll = () => {
+  const handleDownloadAll = async () => {
     const filesToDownload = uniqueMachineFiles.length > 0 ? uniqueMachineFiles : allDownloadFormats.map(fmt => ({ name: null, format: fmt }));
-    filesToDownload.forEach((file, index) => {
-      setTimeout(() => {
-        if (file.name === null) {
-          handleDownloadFileAsset(null, file.format);
-        } else {
-          const ext = file.format || (file.name && file.name.split('.').pop().toLowerCase()) || 'dst';
-          handleDownloadFileAsset(file, ext);
-        }
-      }, index * 400);
-    });
+    showToast(`Starting batch download of ${filesToDownload.length} files...`, 'info');
+    for (let i = 0; i < filesToDownload.length; i++) {
+      const file = filesToDownload[i];
+      if (file.name === null) {
+        await handleDownloadFileAsset(null, file.format);
+      } else {
+        const ext = file.format || (file.name && file.name.split('.').pop().toLowerCase()) || 'dst';
+        await handleDownloadFileAsset(file, ext);
+      }
+      if (i < filesToDownload.length - 1) {
+        await new Promise(r => setTimeout(r, 600));
+      }
+    }
   };
 
   const handleLaunchPayment = () => {
@@ -937,17 +968,42 @@ export const OrderTrackerDrawer = () => {
                   )}
                 </div>
 
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
-                  <a
-                    href={ord.worker_file_url || ord.workerFileUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    download
+                <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
+                  <button
+                    type="button"
+                    onClick={() => openFileInNewTab(ord.worker_file_url || ord.workerFileUrl, ord.worker_file_name || ord.workerFileName || 'digitized_stitch_file.dst')}
                     className="btn btn-sm"
-                    style={{ background: '#2563eb', color: '#ffffff', fontWeight: 700, fontSize: '0.78rem', display: 'inline-flex', alignItems: 'center', gap: '0.35rem', textDecoration: 'none', borderRadius: '6px' }}
+                    style={{ background: '#ffffff', color: '#2563eb', border: '1px solid #bfdbfe', fontWeight: 700, fontSize: '0.78rem', display: 'inline-flex', alignItems: 'center', gap: '0.35rem', borderRadius: '6px' }}
                   >
-                    <Download size={13} /> Download Worker File
-                  </a>
+                    <ExternalLink size={13} /> Open
+                  </button>
+                  <button
+                    type="button"
+                    disabled={downloadingFileKey === (ord.worker_file_url || ord.workerFileUrl)}
+                    onClick={async () => {
+                      const fUrl = ord.worker_file_url || ord.workerFileUrl;
+                      const fName = ord.worker_file_name || ord.workerFileName || 'digitized_stitch_file.dst';
+                      setDownloadingFileKey(fUrl);
+                      try {
+                        showToast(`Downloading ${fName}...`, 'info');
+                        await downloadFileDirectly(fUrl, fName);
+                        showToast(`Saved ${fName}`, 'success');
+                      } catch {
+                        showToast(`Failed to download ${fName}`, 'error');
+                      } finally {
+                        setDownloadingFileKey(null);
+                      }
+                    }}
+                    className="btn btn-sm"
+                    style={{ background: '#2563eb', color: '#ffffff', fontWeight: 700, fontSize: '0.78rem', display: 'inline-flex', alignItems: 'center', gap: '0.35rem', borderRadius: '6px' }}
+                  >
+                    {downloadingFileKey === (ord.worker_file_url || ord.workerFileUrl) ? (
+                      <Loader2 size={13} className="animate-spin" />
+                    ) : (
+                      <Download size={13} />
+                    )}
+                    Download
+                  </button>
                 </div>
               </div>
             )}
@@ -1087,35 +1143,63 @@ export const OrderTrackerDrawer = () => {
                                   </div>
                                 </div>
                                 {isPdf ? (
-                                  <div style={{ display: 'flex', gap: '0.3rem' }}>
-                                    {f.url && (
-                                      <button
-                                        type="button"
-                                        onClick={() => setActivePdfPreview({ url: f.url, name: f.name || 'document.pdf' })}
-                                        className="btn btn-outline btn-sm"
-                                        style={{ flex: 1, gap: '0.2rem', justifyContent: 'center', fontSize: '0.72rem', fontWeight: 700, padding: '0.3rem 0.35rem' }}
-                                      >
-                                        👁️ View
-                                      </button>
-                                    )}
+                                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.3rem' }}>
                                     <button
                                       type="button"
+                                      onClick={() => {
+                                        if (f.url) {
+                                          setActivePdfPreview({ url: f.url, name: f.name || 'document.pdf' });
+                                        } else {
+                                          handleOpenFileAsset(f, 'pdf');
+                                        }
+                                      }}
+                                      className="btn btn-outline btn-sm"
+                                      style={{ gap: '0.2rem', justifyContent: 'center', fontSize: '0.72rem', fontWeight: 700, padding: '0.3rem 0.35rem' }}
+                                    >
+                                      <ExternalLink size={11} /> Open
+                                    </button>
+                                    <button
+                                      type="button"
+                                      disabled={downloadingFileKey === (f.id || f.url || f.name || 'pdf')}
                                       onClick={() => handleDownloadFileAsset(f, 'pdf')}
                                       className="btn btn-primary-orange btn-sm"
-                                      style={{ flex: 1, gap: '0.2rem', justifyContent: 'center', fontSize: '0.72rem', fontWeight: 800, padding: '0.3rem 0.35rem' }}
+                                      style={{ gap: '0.2rem', justifyContent: 'center', fontSize: '0.72rem', fontWeight: 800, padding: '0.3rem 0.35rem' }}
                                     >
-                                      <Download size={11} /> Download
+                                      {downloadingFileKey === (f.id || f.url || f.name || 'pdf') ? (
+                                        <Loader2 size={11} className="animate-spin" />
+                                      ) : (
+                                        <Download size={11} />
+                                      )}
+                                      Download
                                     </button>
                                   </div>
                                 ) : (
-                                  <button
-                                    type="button"
-                                    onClick={() => handleDownloadFileAsset(f, ext)}
-                                    className="btn btn-outline btn-sm"
-                                    style={{ width: '100%', gap: '0.25rem', justifyContent: 'center', fontSize: '0.75rem', fontWeight: 700, padding: '0.3rem 0.5rem' }}
-                                  >
-                                    <Download size={12} /> Download .{ext}
-                                  </button>
+                                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.3rem' }}>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleOpenFileAsset(f, ext)}
+                                      className="btn btn-outline btn-sm"
+                                      style={{ gap: '0.2rem', justifyContent: 'center', fontSize: '0.72rem', fontWeight: 700, padding: '0.3rem 0.35rem' }}
+                                      title={`Open ${f.name || ext}`}
+                                    >
+                                      <ExternalLink size={11} /> Open
+                                    </button>
+                                    <button
+                                      type="button"
+                                      disabled={downloadingFileKey === (f.id || f.url || f.name || ext)}
+                                      onClick={() => handleDownloadFileAsset(f, ext)}
+                                      className="btn btn-primary-orange btn-sm"
+                                      style={{ gap: '0.2rem', justifyContent: 'center', fontSize: '0.72rem', fontWeight: 800, padding: '0.3rem 0.35rem' }}
+                                      title={`Download ${f.name || ext}`}
+                                    >
+                                      {downloadingFileKey === (f.id || f.url || f.name || ext) ? (
+                                        <Loader2 size={11} className="animate-spin" />
+                                      ) : (
+                                        <Download size={11} />
+                                      )}
+                                      Download
+                                    </button>
+                                  </div>
                                 )}
                               </div>
                             );
@@ -1155,35 +1239,63 @@ export const OrderTrackerDrawer = () => {
                                 </div>
                               </div>
                               {isPdf ? (
-                                <div style={{ display: 'flex', gap: '0.35rem' }}>
-                                  {f.url && (
-                                    <button
-                                      type="button"
-                                      onClick={() => setActivePdfPreview({ url: f.url, name: f.name || 'document.pdf' })}
-                                      className="btn btn-outline btn-sm"
-                                      style={{ flex: 1, gap: '0.25rem', justifyContent: 'center', fontSize: '0.75rem', fontWeight: 700 }}
-                                    >
-                                      👁️ View
-                                    </button>
-                                  )}
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.35rem' }}>
                                   <button
                                     type="button"
+                                    onClick={() => {
+                                      if (f.url) {
+                                        setActivePdfPreview({ url: f.url, name: f.name || 'document.pdf' });
+                                      } else {
+                                        handleOpenFileAsset(f, 'pdf');
+                                      }
+                                    }}
+                                    className="btn btn-outline btn-sm"
+                                    style={{ gap: '0.2rem', justifyContent: 'center', fontSize: '0.75rem', fontWeight: 700 }}
+                                  >
+                                    <ExternalLink size={12} /> Open
+                                  </button>
+                                  <button
+                                    type="button"
+                                    disabled={downloadingFileKey === (f.id || f.url || f.name || 'pdf')}
                                     onClick={() => handleDownloadFileAsset(f, 'pdf')}
                                     className="btn btn-primary-orange btn-sm"
-                                    style={{ flex: 1, gap: '0.25rem', justifyContent: 'center', fontSize: '0.75rem', fontWeight: 800 }}
+                                    style={{ gap: '0.2rem', justifyContent: 'center', fontSize: '0.75rem', fontWeight: 800 }}
                                   >
-                                    <Download size={13} /> Download
+                                    {downloadingFileKey === (f.id || f.url || f.name || 'pdf') ? (
+                                      <Loader2 size={12} className="animate-spin" />
+                                    ) : (
+                                      <Download size={12} />
+                                    )}
+                                    Download
                                   </button>
                                 </div>
                               ) : (
-                                <button
-                                  type="button"
-                                  onClick={() => handleDownloadFileAsset(f, ext)}
-                                  className="btn btn-outline btn-sm"
-                                  style={{ width: '100%', gap: '0.3rem', justifyContent: 'center', fontSize: '0.78rem', fontWeight: 700 }}
-                                >
-                                  <Download size={13} /> Download .{ext}
-                                </button>
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.35rem' }}>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleOpenFileAsset(f, ext)}
+                                    className="btn btn-outline btn-sm"
+                                    style={{ gap: '0.2rem', justifyContent: 'center', fontSize: '0.75rem', fontWeight: 700 }}
+                                    title={`Open ${f.name || ext}`}
+                                  >
+                                    <ExternalLink size={12} /> Open
+                                  </button>
+                                  <button
+                                    type="button"
+                                    disabled={downloadingFileKey === (f.id || f.url || f.name || ext)}
+                                    onClick={() => handleDownloadFileAsset(f, ext)}
+                                    className="btn btn-primary-orange btn-sm"
+                                    style={{ gap: '0.2rem', justifyContent: 'center', fontSize: '0.75rem', fontWeight: 800 }}
+                                    title={`Download ${f.name || ext}`}
+                                  >
+                                    {downloadingFileKey === (f.id || f.url || f.name || ext) ? (
+                                      <Loader2 size={12} className="animate-spin" />
+                                    ) : (
+                                      <Download size={12} />
+                                    )}
+                                    Download
+                                  </button>
+                                </div>
                               )}
                             </div>
                           );
@@ -1202,14 +1314,30 @@ export const OrderTrackerDrawer = () => {
                                   <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>Standard Production Package</div>
                                 </div>
                               </div>
-                              <button
-                                type="button"
-                                onClick={() => handleDownloadFileAsset(null, fmt)}
-                                className="btn btn-outline btn-sm"
-                                style={{ width: '100%', gap: '0.3rem', justifyContent: 'center', fontSize: '0.78rem', fontWeight: 700 }}
-                              >
-                                <Download size={13} /> {isPdf ? 'Open / Download PDF' : `Download .${fmt.toUpperCase()}`}
-                              </button>
+                              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.35rem' }}>
+                                <button
+                                  type="button"
+                                  onClick={() => handleOpenFileAsset(null, fmt)}
+                                  className="btn btn-outline btn-sm"
+                                  style={{ gap: '0.2rem', justifyContent: 'center', fontSize: '0.75rem', fontWeight: 700, padding: '0.35rem 0.3rem' }}
+                                >
+                                  <ExternalLink size={12} /> Open
+                                </button>
+                                <button
+                                  type="button"
+                                  disabled={downloadingFileKey === fmt}
+                                  onClick={() => handleDownloadFileAsset(null, fmt)}
+                                  className="btn btn-primary-orange btn-sm"
+                                  style={{ gap: '0.2rem', justifyContent: 'center', fontSize: '0.75rem', fontWeight: 800, padding: '0.35rem 0.3rem' }}
+                                >
+                                  {downloadingFileKey === fmt ? (
+                                    <Loader2 size={12} className="animate-spin" />
+                                  ) : (
+                                    <Download size={12} />
+                                  )}
+                                  Download
+                                </button>
+                              </div>
                             </div>
                           );
                         })
@@ -1424,20 +1552,51 @@ export const OrderTrackerDrawer = () => {
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '0.65rem' }}>
                   {uniqueArtworkFiles.map((artFile, aIdx) => {
                     const fileExt = (artFile.format || artFile.name?.split('.').pop() || 'png').toUpperCase();
+                    const artUrl = artFile.url || artFile.public_url;
+                    const artName = artFile.name || `artwork_${aIdx + 1}.${fileExt.toLowerCase()}`;
                     return (
-                      <div key={aIdx} style={{ background: 'var(--bg-surface)', padding: '0.5rem 0.75rem', borderRadius: '8px', border: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <div key={aIdx} style={{ background: 'var(--bg-surface)', padding: '0.6rem 0.75rem', borderRadius: '8px', border: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem' }}>
                         <div style={{ minWidth: 0, flex: 1 }}>
-                          <div style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-main)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{artFile.name || `Artwork_${aIdx + 1}.${fileExt.toLowerCase()}`}</div>
+                          <div style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-main)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{artName}</div>
                           <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>.{fileExt} Original</div>
                         </div>
-                        <button
-                          type="button"
-                          onClick={() => triggerFileDownload(artFile.url || artFile.public_url, artFile.name || `artwork_${aIdx + 1}.${fileExt.toLowerCase()}`, fileExt.toLowerCase())}
-                          style={{ border: 'none', background: 'none', color: 'var(--orange-500)', cursor: 'pointer', padding: '0.2rem' }}
-                          title="Download Original"
-                        >
-                          <Download size={14} />
-                        </button>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', flexShrink: 0 }}>
+                          <button
+                            type="button"
+                            onClick={() => openFileInNewTab(artUrl, artName)}
+                            className="btn btn-outline btn-sm"
+                            style={{ padding: '0.25rem 0.45rem', fontSize: '0.72rem', fontWeight: 700, gap: '0.25rem', display: 'inline-flex', alignItems: 'center' }}
+                            title="Open Original"
+                          >
+                            <ExternalLink size={12} /> Open
+                          </button>
+                          <button
+                            type="button"
+                            disabled={downloadingFileKey === (artUrl || artName)}
+                            onClick={async () => {
+                              setDownloadingFileKey(artUrl || artName);
+                              try {
+                                showToast(`Downloading ${artName}...`, 'info');
+                                await downloadFileDirectly(artUrl, artName);
+                                showToast(`Saved ${artName}`, 'success');
+                              } catch {
+                                showToast(`Failed to download ${artName}`, 'error');
+                              } finally {
+                                setDownloadingFileKey(null);
+                              }
+                            }}
+                            className="btn btn-primary-orange btn-sm"
+                            style={{ padding: '0.25rem 0.45rem', fontSize: '0.72rem', fontWeight: 700, gap: '0.25rem', display: 'inline-flex', alignItems: 'center' }}
+                            title="Download Original"
+                          >
+                            {downloadingFileKey === (artUrl || artName) ? (
+                              <Loader2 size={12} className="animate-spin" />
+                            ) : (
+                              <Download size={12} />
+                            )}
+                            Download
+                          </button>
+                        </div>
                       </div>
                     );
                   })}

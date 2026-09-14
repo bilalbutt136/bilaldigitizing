@@ -26,6 +26,7 @@ import {
   FileCode
 } from 'lucide-react';
 import { uploadFileToCloudinaryFull } from '../../services/supabaseService';
+import { downloadFileDirectly, openFileInNewTab } from '../../utils/fileDownloader';
 
 const ACCEPTED_EXTENSIONS = [
   '.dst', '.pes', '.emb', '.exp', '.jef', '.zip', '.rar',
@@ -180,6 +181,8 @@ export const WorkerOrderWorkspaceModal = ({ order, isOpen, onClose, onOrderUpdat
   );
   const [bidNotes, setBidNotes] = useState('');
   const [isBidding, setIsBidding] = useState(false);
+  const [isDownloadingArtwork, setIsDownloadingArtwork] = useState(false);
+  const [downloadingFileKey, setDownloadingFileKey] = useState(null);
 
 
 
@@ -572,23 +575,61 @@ export const WorkerOrderWorkspaceModal = ({ order, isOpen, onClose, onOrderUpdat
                   </div>
                 </div>
 
-                <a
-                  href={artworkSrc}
-                  target="_blank"
-                  rel="noreferrer"
-                  download
-                  style={{
-                    color: '#38bdf8',
-                    fontSize: '0.825rem',
-                    fontWeight: 700,
-                    textDecoration: 'none',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '0.35rem'
-                  }}
-                >
-                  <Download size={14} /> Download Original Image
-                </a>
+                <div style={{ display: 'flex', gap: '0.4rem', marginTop: '0.25rem', flexWrap: 'wrap', justifyContent: 'center' }}>
+                  <button
+                    type="button"
+                    onClick={() => openFileInNewTab(artworkSrc, `${order.title || 'Artwork'}.png`)}
+                    style={{
+                      color: '#ffffff',
+                      background: '#1e293b',
+                      border: '1px solid #334155',
+                      padding: '0.35rem 0.65rem',
+                      borderRadius: '6px',
+                      fontSize: '0.78rem',
+                      fontWeight: 700,
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '0.3rem',
+                      cursor: 'pointer'
+                    }}
+                    title="Open artwork in new tab"
+                  >
+                    <ExternalLink size={13} /> Open
+                  </button>
+                  <button
+                    type="button"
+                    disabled={isDownloadingArtwork}
+                    onClick={async () => {
+                      setIsDownloadingArtwork(true);
+                      try {
+                        if (showToast) showToast('Downloading artwork image...', 'info');
+                        await downloadFileDirectly(artworkSrc, `${(order.title || 'Artwork').replace(/\s+/g, '_')}_original.png`);
+                        if (showToast) showToast('Artwork saved successfully!', 'success');
+                      } catch {
+                        if (showToast) showToast('Failed to download artwork', 'error');
+                      } finally {
+                        setIsDownloadingArtwork(false);
+                      }
+                    }}
+                    style={{
+                      color: '#ffffff',
+                      background: 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)',
+                      border: 'none',
+                      padding: '0.35rem 0.65rem',
+                      borderRadius: '6px',
+                      fontSize: '0.78rem',
+                      fontWeight: 800,
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '0.3rem',
+                      cursor: isDownloadingArtwork ? 'wait' : 'pointer'
+                    }}
+                    title="Download artwork image directly"
+                  >
+                    {isDownloadingArtwork ? <Loader2 size={13} className="spin-icon" /> : <Download size={13} />}
+                    Download
+                  </button>
+                </div>
               </div>
 
               {/* Production Specifications */}
@@ -937,12 +978,66 @@ export const WorkerOrderWorkspaceModal = ({ order, isOpen, onClose, onOrderUpdat
 
                 {/* If no new files selected but has previous submission */}
                 {selectedFiles.length === 0 && order.worker_file_url && (
-                  <div style={{ background: '#0f172a', border: '1px solid #334155', borderRadius: '8px', padding: '0.6rem 0.85rem', marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <FileCheck size={16} style={{ color: '#38bdf8', flexShrink: 0 }} />
-                    <span style={{ fontSize: '0.85rem', color: '#38bdf8', fontWeight: 700 }}>
-                      Current: {order.worker_file_name || 'production_deliverable_file'}
-                    </span>
-                    <span style={{ fontSize: '0.75rem', color: '#94a3b8', marginLeft: 'auto' }}>Add new files above to replace</span>
+                  <div style={{ background: '#0f172a', border: '1px solid #334155', borderRadius: '8px', padding: '0.6rem 0.85rem', marginBottom: '1.25rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem', flexWrap: 'wrap' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', minWidth: 0, flex: 1 }}>
+                      <FileCheck size={16} style={{ color: '#38bdf8', flexShrink: 0 }} />
+                      <span style={{ fontSize: '0.85rem', color: '#38bdf8', fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        Current: {order.worker_file_name || 'production_deliverable_file'}
+                      </span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                      <button
+                        type="button"
+                        onClick={() => openFileInNewTab(order.worker_file_url, order.worker_file_name || 'digitized_stitch_file.dst')}
+                        style={{
+                          background: '#1e293b',
+                          color: '#ffffff',
+                          border: '1px solid #334155',
+                          borderRadius: '6px',
+                          padding: '0.25rem 0.55rem',
+                          fontSize: '0.72rem',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '0.25rem'
+                        }}
+                      >
+                        <ExternalLink size={12} /> Open
+                      </button>
+                      <button
+                        type="button"
+                        disabled={downloadingFileKey === order.worker_file_url}
+                        onClick={async () => {
+                          setDownloadingFileKey(order.worker_file_url);
+                          try {
+                            if (showToast) showToast('Downloading file...', 'info');
+                            await downloadFileDirectly(order.worker_file_url, order.worker_file_name || 'digitized_stitch_file.dst');
+                            if (showToast) showToast('File saved!', 'success');
+                          } catch {
+                            if (showToast) showToast('Download failed', 'error');
+                          } finally {
+                            setDownloadingFileKey(null);
+                          }
+                        }}
+                        style={{
+                          background: 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)',
+                          color: '#ffffff',
+                          border: 'none',
+                          borderRadius: '6px',
+                          padding: '0.25rem 0.6rem',
+                          fontSize: '0.72rem',
+                          fontWeight: 800,
+                          cursor: downloadingFileKey === order.worker_file_url ? 'wait' : 'pointer',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '0.25rem'
+                        }}
+                      >
+                        {downloadingFileKey === order.worker_file_url ? <Loader2 size={12} className="spin-icon" /> : <Download size={12} />}
+                        Download
+                      </button>
+                    </div>
                   </div>
                 )}
 
