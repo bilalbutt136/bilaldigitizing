@@ -1638,3 +1638,88 @@ html[data-mobile-mode="app"] .mobile-app-wrapper {
   width: 100% !important;
   min-height: 100vh !important;
 }
+
+/* =========================================================================
+   MOBILE RESPONSIVE RULES: ORDER WIZARD & CUSTOMER DASHBOARD
+   ========================================================================= */
+@media (max-width: 768px) {
+  .customer-stat-cards-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 0.5rem !important;
+  }
+
+  .order-wizard-overlay {
+    padding: 0.25rem !important;
+    align-items: flex-end !important;
+  }
+
+  .order-wizard-dialog {
+    max-height: 96vh !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    border-radius: 20px 20px 0 0 !important;
+  }
+
+  .order-wizard-services-grid {
+    grid-template-columns: 1fr !important;
+    gap: 0.75rem !important;
+  }
+
+  .order-wizard-packages-grid {
+    grid-template-columns: 1fr !important;
+    gap: 0.65rem !important;
+  }
+
+  .desktop-only-package-details {
+    display: none !important;
+  }
+
+  .mobile-only-package-summary {
+    display: block !important;
+  }
+
+  .order-wizard-two-col {
+    grid-template-columns: 1fr !important;
+    gap: 0.65rem !important;
+  }
+
+  .order-wizard-header-mobile {
+    padding: 0.75rem 1rem !important;
+  }
+
+  .order-wizard-body-mobile {
+    padding: 0.85rem 1rem !important;
+  }
+
+  .order-wizard-footer-mobile {
+    padding: 0.75rem 1rem !important;
+  }
+}
+
+@media (min-width: 769px) {
+  .order-wizard-services-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.15rem;
+  }
+
+  .order-wizard-packages-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+  }
+
+  .desktop-only-package-details {
+    display: block;
+  }
+
+  .mobile-only-package-summary {
+    display: none;
+  }
+
+  .order-wizard-two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.85rem;
+  }
+}

@@ -10,6 +10,7 @@ import {
   ClipboardList, 
   User, 
   Bell, 
+  MessageSquare,
   SlidersHorizontal, 
   MoreVertical, 
   ChevronRight, 
@@ -3473,7 +3474,7 @@ export const BDigitizingMobileApp = () => {
             position: 'relative',
             transition: 'all 0.2s ease'
           }}>
-            <Bell size={20} strokeWidth={1.75} />
+            <MessageSquare size={20} strokeWidth={1.75} />
             {unreadNotifCount > 0 && (
               <span style={{
                 position: 'absolute',
@@ -3486,7 +3487,7 @@ export const BDigitizingMobileApp = () => {
               }} />
             )}
           </div>
-          <span style={{ fontSize: '0.68rem', fontWeight: 600 }}>Alerts</span>
+          <span style={{ fontSize: '0.68rem', fontWeight: 600 }}>Inbox</span>
         </button>
 
         {/* Tab 3: Search / Categories */}

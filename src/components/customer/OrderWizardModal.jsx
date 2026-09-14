@@ -780,7 +780,7 @@ export const OrderWizardModal = () => {
   return (
     <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
       <div 
-        className="modal-overlay"
+        className="modal-overlay order-wizard-overlay"
         onClick={(e) => {
           if (e.target === e.currentTarget) setIsOrderWizardOpen(false);
         }}
@@ -816,14 +816,17 @@ export const OrderWizardModal = () => {
           }}
         >
           {/* HEADER: Title & 5-Step Progress Stepper */}
-          <div style={{
-            padding: '1rem 1.5rem',
-            borderBottom: '1.5px solid var(--color-border, #e2e8f0)',
-            background: 'var(--color-surface, #ffffff)',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '0.85rem'
-          }}>
+          <div 
+            className="order-wizard-header-mobile"
+            style={{
+              padding: '1rem 1.5rem',
+              borderBottom: '1.5px solid var(--color-border, #e2e8f0)',
+              background: 'var(--color-surface, #ffffff)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '0.85rem'
+            }}
+          >
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
@@ -946,15 +949,18 @@ export const OrderWizardModal = () => {
           </div>
 
           {/* MAIN MODAL BODY */}
-          <div style={{
-            flex: 1,
-            overflowY: 'auto',
-            padding: '1.25rem 1.5rem',
-            background: 'var(--color-surface, #ffffff)',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '1.15rem'
-          }}>
+          <div 
+            className="order-wizard-body-mobile"
+            style={{
+              flex: 1,
+              overflowY: 'auto',
+              padding: '1.25rem 1.5rem',
+              background: 'var(--color-surface, #ffffff)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '1.15rem'
+            }}
+          >
             
             {/* =========================================================================
                 STEP 1: SELECT 1 OF 3 CORE SERVICES
@@ -983,7 +989,7 @@ export const OrderWizardModal = () => {
                   </p>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1.15rem' }}>
+                <div className="order-wizard-services-grid">
                   {SERVICE_OPTIONS.map(opt => {
                     const isSelected = selectedService === opt.id;
                     const IconC = opt.icon;
@@ -1316,7 +1322,7 @@ export const OrderWizardModal = () => {
                 </div>
 
                 {/* 3 Package Tier Cards */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem' }}>
+                <div className="order-wizard-packages-grid">
                   {currentPackages.map((pkg, idx) => {
                     const isSelected = selectedPackage?.id === pkg.id || (!selectedPackage && idx === 0);
 
@@ -1324,6 +1330,7 @@ export const OrderWizardModal = () => {
                       <div
                         key={pkg.id || idx}
                         onClick={() => handleSelectPackage(pkg)}
+                        className={`order-wizard-package-card ${isSelected ? 'selected' : ''}`}
                         style={{
                           border: isSelected ? '2.5px solid #059669' : '1.5px solid var(--color-border, #cbd5e1)',
                           background: isSelected 
@@ -1336,25 +1343,36 @@ export const OrderWizardModal = () => {
                           display: 'flex',
                           flexDirection: 'column',
                           gap: '0.55rem',
-                          transition: 'all 0.15s ease'
+                          transition: 'all 0.15s ease',
+                          position: 'relative'
                         }}
                       >
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                          <span style={{
-                            background: isSelected 
-                              ? '#059669' 
-                              : (isDark ? 'rgba(255, 255, 255, 0.08)' : '#f1f5f9'),
-                            color: isSelected 
-                              ? '#ffffff' 
-                              : 'var(--color-text-secondary, #475569)',
-                            fontSize: '0.62rem',
-                            fontWeight: 900,
-                            padding: '0.15rem 0.5rem',
-                            borderRadius: '4px',
-                            textTransform: 'uppercase'
-                          }}>
-                            {pkg.badge}
-                          </span>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.5rem' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                            <div style={{
+                              width: '18px',
+                              height: '18px',
+                              borderRadius: '50%',
+                              border: isSelected ? '5px solid #059669' : '2px solid var(--color-border, #cbd5e1)',
+                              background: isSelected ? '#059669' : 'transparent',
+                              flexShrink: 0
+                            }} />
+                            <span style={{
+                              background: isSelected 
+                                ? '#059669' 
+                                : (isDark ? 'rgba(255, 255, 255, 0.08)' : '#f1f5f9'),
+                              color: isSelected 
+                                ? '#ffffff' 
+                                : 'var(--color-text-secondary, #475569)',
+                              fontSize: '0.62rem',
+                              fontWeight: 900,
+                              padding: '0.15rem 0.5rem',
+                              borderRadius: '4px',
+                              textTransform: 'uppercase'
+                            }}>
+                              {pkg.badge}
+                            </span>
+                          </div>
 
                           <div style={{ textAlign: 'right' }}>
                             <span style={{ fontSize: '1.25rem', fontWeight: 900, color: isDark ? '#34d399' : '#047857' }}>
@@ -1370,26 +1388,34 @@ export const OrderWizardModal = () => {
                           {pkg.title}
                         </h4>
 
-                        <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--color-text-muted, #64748b)', lineHeight: 1.35, flex: 1 }}>
-                          {pkg.subtitle}
-                        </p>
+                        {/* Mobile Concise Details (Shows clean summary on mobile) */}
+                        <div className="mobile-only-package-summary" style={{ fontSize: '0.74rem', color: 'var(--color-text-muted, #64748b)', fontWeight: 600 }}>
+                          {pkg.turnaround ? `⏱ ${pkg.turnaround} • ` : ''}{pkg.defaultPlacement || (pkg.features && pkg.features[0]) || 'Standard Specs'}
+                        </div>
 
-                        {Array.isArray(pkg.features) && pkg.features.length > 0 && (
-                          <div style={{ 
-                            borderTop: '1px dashed var(--color-border, #cbd5e1)', 
-                            paddingTop: '0.5rem', 
-                            display: 'flex', 
-                            flexDirection: 'column', 
-                            gap: '0.25rem' 
-                          }}>
-                            {pkg.features.slice(0, 3).map((feat, fIdx) => (
-                              <div key={fIdx} style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.72rem', color: 'var(--color-text-secondary, #334155)' }}>
-                                <CheckCircle2 size={13} style={{ color: '#059669', flexShrink: 0 }} />
-                                <span>{feat}</span>
-                              </div>
-                            ))}
-                          </div>
-                        )}
+                        {/* Desktop Detailed Specifications (Visible on PC) */}
+                        <div className="desktop-only-package-details">
+                          <p style={{ margin: '0 0 0.55rem', fontSize: '0.75rem', color: 'var(--color-text-muted, #64748b)', lineHeight: 1.35 }}>
+                            {pkg.subtitle}
+                          </p>
+
+                          {Array.isArray(pkg.features) && pkg.features.length > 0 && (
+                            <div style={{ 
+                              borderTop: '1px dashed var(--color-border, #cbd5e1)', 
+                              paddingTop: '0.5rem', 
+                              display: 'flex', 
+                              flexDirection: 'column', 
+                              gap: '0.25rem' 
+                            }}>
+                              {pkg.features.slice(0, 3).map((feat, fIdx) => (
+                                <div key={fIdx} style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.72rem', color: 'var(--color-text-secondary, #334155)' }}>
+                                  <CheckCircle2 size={13} style={{ color: '#059669', flexShrink: 0 }} />
+                                  <span>{feat}</span>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
                       </div>
                     );
                   })}
@@ -1476,7 +1502,7 @@ export const OrderWizardModal = () => {
                     </div>
                     <div>
                       <div style={{ fontSize: '0.98rem', fontWeight: 900, color: 'var(--color-text-primary, #0f172a)' }}>
-                        {isUploading ? 'Uploading and verifying files...' : 'Drag and Drop Artwork Files Here, or Click to Browse'}
+                        {isUploading ? 'Uploading and verifying files...' : 'Drag and Drop Artwork Files Here, or Tap to Browse'}
                       </div>
                       <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted, #64748b)', marginTop: '0.15rem' }}>
                         Supported formats: JPG, PNG, PDF, AI, EPS, SVG, DST, PES, EMB, PSD up to 50MB
@@ -1504,7 +1530,7 @@ export const OrderWizardModal = () => {
                         marginTop: '0.35rem'
                       }}
                     >
-                      <Upload size={14} /> Browse from Computer
+                      <Upload size={14} /> Browse & Upload Files
                     </button>
                   </div>
 
@@ -1689,7 +1715,7 @@ export const OrderWizardModal = () => {
 
                 {/* Placement / Style specific */}
                 {selectedService === 'embroidery' && (
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.85rem' }}>
+                  <div className="order-wizard-two-col" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.85rem' }}>
                     <div>
                       <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 900, color: 'var(--color-text-primary, #0f172a)', marginBottom: '0.35rem' }}>
                         Placement
@@ -1745,7 +1771,7 @@ export const OrderWizardModal = () => {
                 )}
 
                 {selectedService === 'patch' && (
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.85rem' }}>
+                  <div className="order-wizard-two-col" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.85rem' }}>
                     <div>
                       <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 900, color: 'var(--color-text-primary, #0f172a)', marginBottom: '0.35rem' }}>
                         Patch Style
@@ -2185,15 +2211,18 @@ export const OrderWizardModal = () => {
           </div>
 
           {/* FOOTER NAVIGATION CONTROLS */}
-          <div style={{
-            padding: '1rem 1.5rem',
-            borderTop: '1.5px solid var(--color-border, #e2e8f0)',
-            background: 'var(--color-surface, #ffffff)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: '1rem'
-          }}>
+          <div 
+            className="order-wizard-footer-mobile"
+            style={{
+              padding: '1rem 1.5rem',
+              borderTop: '1.5px solid var(--color-border, #e2e8f0)',
+              background: 'var(--color-surface, #ffffff)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '1rem'
+            }}
+          >
             {step > 1 ? (
               <button
                 type="button"

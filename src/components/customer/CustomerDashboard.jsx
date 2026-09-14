@@ -39,7 +39,8 @@ import {
   Sparkles,
   Check,
   ArrowRight,
-  Receipt
+  Receipt,
+  MessageSquare
 } from 'lucide-react';
 import { ClientSidebar } from './ClientSidebar';
 import { MobileSimpleOrderModal } from './MobileSimpleOrderModal';
@@ -53,6 +54,7 @@ import { THEME_PRESETS } from '../../utils/themePresets';
 import { fetchNotificationsFromSupabase, subscribeToNotificationListeners } from '../../services/supabaseService';
 import { isSupabaseConfigured } from '../../lib/supabase/client';
 import CustomerSupportChat from './CustomerSupportChat';
+import { matchCategory } from '../../utils/categoryUtils';
 
 export const CustomerDashboard = () => {
   const navigate = useNavigate();
@@ -83,7 +85,8 @@ export const CustomerDashboard = () => {
     markAllNotificationsAsRead,
     refreshNotifications,
     unreadOrdersCount = 0,
-    markOrdersAsRead
+    markOrdersAsRead,
+    dynamicPricingTiers = []
   } = useAppState();
 
   const unreadNotifCount = unreadNotificationsCount;
@@ -361,6 +364,39 @@ export const CustomerDashboard = () => {
   const completedOrders = currentTabOrders.filter(o => o?.status === 'completed');
 
   const totalSpent = myOrders.reduce((acc, curr) => acc + (parseFloat(curr?.price) || 0), 0);
+
+  // Live dynamic package tier starting prices from Supabase
+  const embTiers = (dynamicPricingTiers || []).filter(t => matchCategory(t?.service_type, 'embroidery'));
+  const vecTiers = (dynamicPricingTiers || []).filter(t => matchCategory(t?.service_type, 'vector'));
+  const patchTiers = (dynamicPricingTiers || []).filter(t => matchCategory(t?.service_type, 'patch'));
+
+  const embMinPrice = embTiers.length > 0 ? Math.min(...embTiers.map(t => Number(t?.price) || 10)) : 10;
+  const vecMinPrice = vecTiers.length > 0 ? Math.min(...vecTiers.map(t => Number(t?.price) || 15)) : 15;
+  const patchMinPrice = patchTiers.length > 0 ? Math.min(...patchTiers.map(t => Number(t?.price) || 1.5)) : 1.5;
+
+  const studioServiceList = [
+    { 
+      id: 'embroidery', 
+      title: 'Embroidery Digitizing', 
+      desc: 'DST, PES, EMB files with wilcom native stitch pathing', 
+      icon: Layers, 
+      price: `$${embMinPrice % 1 === 0 ? embMinPrice : embMinPrice.toFixed(2)}` 
+    },
+    { 
+      id: 'vector', 
+      title: 'Vector Art Tracing', 
+      desc: 'Crisp vector AI, EPS, SVG for printing & engraving', 
+      icon: PenTool, 
+      price: `$${vecMinPrice % 1 === 0 ? vecMinPrice : vecMinPrice.toFixed(2)}` 
+    },
+    { 
+      id: 'patch', 
+      title: 'Custom Physical Patches', 
+      desc: 'Manufactured custom patches with velcro/iron-on backing', 
+      icon: Package, 
+      price: patchMinPrice < 10 ? `$${patchMinPrice.toFixed(2)} / pc` : `$${patchMinPrice}` 
+    }
+  ];
 
   const [customerPage, setCustomerPage] = useState(1);
   const [customerPageSize, setCustomerPageSize] = useState(10);
@@ -865,12 +901,15 @@ export const CustomerDashboard = () => {
                 </div>
 
                 {/* Summary Stat Cards - Compact & High Information Density */}
-                <div style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))',
-                  gap: '0.75rem',
-                  marginBottom: '1rem'
-                }}>
+                <div 
+                  className="customer-stat-cards-grid"
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))',
+                    gap: '0.75rem',
+                    marginBottom: '1rem'
+                  }}
+                >
                   {/* Card 1: Wallet Balance */}
                   <div 
                     className="card" 
@@ -1168,10 +1207,10 @@ export const CustomerDashboard = () => {
                       )}
                     </button>
 
-                    {/* 3. Notifications */}
+                    {/* 3. Studio Inbox & Messages */}
                     <button
                       type="button"
-                      onClick={() => setActiveTab('notifications')}
+                      onClick={() => setActiveTab('inbox')}
                       style={{
                         background: isDark ? 'var(--color-surface, #111827)' : '#ffffff',
                         border: isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid #e2e8f0',
@@ -1188,12 +1227,12 @@ export const CustomerDashboard = () => {
                         boxSizing: 'border-box'
                       }}
                     >
-                      <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: '#f1f5f9', color: '#475569', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <Bell size={20} />
+                      <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: '#eef2ff', color: '#6366f1', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <MessageSquare size={20} />
                       </div>
-                      <span style={{ fontSize: '0.66rem', fontWeight: 800, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '100%' }}>Alerts</span>
+                      <span style={{ fontSize: '0.66rem', fontWeight: 800, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '100%' }}>Inbox</span>
                       {unreadNotifCount > 0 && (
-                        <span style={{ position: 'absolute', top: '4px', right: '4px', background: '#f97316', color: '#fff', fontSize: '0.55rem', fontWeight: 900, width: '15px', height: '15px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <span style={{ position: 'absolute', top: '4px', right: '4px', background: '#6366f1', color: '#fff', fontSize: '0.55rem', fontWeight: 900, width: '15px', height: '15px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                           {unreadNotifCount}
                         </span>
                       )}
@@ -1293,11 +1332,7 @@ export const CustomerDashboard = () => {
                       Studio Services
                     </div>
 
-                    {[
-                      { id: 'embroidery', title: 'Embroidery Digitizing', desc: 'DST, PES, EMB files with wilcom native stitch pathing', icon: Layers, price: '$15' },
-                      { id: 'vector', title: 'Vector Art Tracing', desc: 'Crisp vector AI, EPS, SVG for printing & engraving', icon: PenTool, price: '$12' },
-                      { id: 'patch', title: 'Custom Physical Patches', desc: 'Manufactured custom patches with velcro/iron-on backing', icon: Package, price: '$45' }
-                    ].map(svc => {
+                    {studioServiceList.map(svc => {
                       const IconComp = svc.icon;
                       return (
                         <div
@@ -2644,11 +2679,11 @@ export const CustomerDashboard = () => {
           </span>
         </button>
 
-        {/* Tab 4: Alerts / Notifications */}
+        {/* Tab 4: Inbox & Messages */}
         <button
           type="button"
           onClick={() => {
-            setActiveTab('notifications');
+            setActiveTab('inbox');
             window.scrollTo({ top: 0, behavior: 'smooth' });
           }}
           style={{
@@ -2657,7 +2692,7 @@ export const CustomerDashboard = () => {
             alignItems: 'center',
             justifyContent: 'center',
             width: '100%',
-            color: activeTab === 'notifications' ? 'var(--orange-600)' : '#64748b',
+            color: (activeTab === 'inbox' || activeTab === 'chat') ? 'var(--orange-600)' : '#64748b',
             background: 'none',
             border: 'none',
             cursor: 'pointer',
@@ -2669,13 +2704,13 @@ export const CustomerDashboard = () => {
           <div style={{
             padding: '0.15rem 0.55rem',
             borderRadius: '12px',
-            background: activeTab === 'notifications' ? '#fff7ed' : 'transparent',
+            background: (activeTab === 'inbox' || activeTab === 'chat') ? '#fff7ed' : 'transparent',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             position: 'relative'
           }}>
-            <Bell size={19} style={{ color: activeTab === 'notifications' ? 'var(--orange-600)' : '#64748b' }} />
+            <MessageSquare size={19} style={{ color: (activeTab === 'inbox' || activeTab === 'chat') ? 'var(--orange-600)' : '#64748b' }} />
             {unreadNotifCount > 0 && (
               <span style={{
                 position: 'absolute',
@@ -2695,8 +2730,8 @@ export const CustomerDashboard = () => {
               </span>
             )}
           </div>
-          <span style={{ fontSize: '0.65rem', fontWeight: activeTab === 'notifications' ? 800 : 600, marginTop: '0.1rem' }}>
-            Alerts
+          <span style={{ fontSize: '0.65rem', fontWeight: (activeTab === 'inbox' || activeTab === 'chat') ? 800 : 600, marginTop: '0.1rem' }}>
+            Inbox
           </span>
         </button>
 
