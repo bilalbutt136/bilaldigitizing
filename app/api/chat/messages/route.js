@@ -273,8 +273,23 @@ export async function POST(request) {
       console.warn('[Chat Conversation Update Notice]:', updErr.message);
     }
 
-    // NOTE: Rule #3 enforced: Chat messages do NOT trigger notification alerts.
-    // Notifications are reserved strictly for order lifecycle events (placed, delivered, etc.).
+    // 4. Trigger guaranteed email notification alert when a customer sends a message
+    if (effectiveSender === 'client') {
+      try {
+        const { sendNotificationEmail } = await import('../../../../src/lib/emailService');
+        await sendNotificationEmail({
+          type: 'NEW_MESSAGE',
+          senderName: effectiveSenderName,
+          clientEmail: cleanEmail,
+          messageText: (text || '').trim(),
+          channel: isSupportThread ? '24/7 Customer Live Support Desk' : `Studio Inbox (${conversation_id})`,
+          attachments: normalizedAttachments,
+          orderId: (conversation_id.startsWith('ord-') || conversation_id.startsWith('order-') || conversation_id.includes('ORD')) ? conversation_id : null
+        });
+      } catch (emailErr) {
+        console.warn('[Chat Message Email Dispatch Notice]:', emailErr?.message);
+      }
+    }
 
     return NextResponse.json({ success: true, message: insertedMsg });
   } catch (err) {

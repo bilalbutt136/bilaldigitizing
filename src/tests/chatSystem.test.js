@@ -175,25 +175,33 @@ test('Chat System & Fiverr-Style Inbox Architecture', async (t) => {
     assert.equal(syncedMessage.offer_data.status, 'accepted');
   });
 
-  await t.test('9. Notification filtering: never notify on chat messages, only on orders', () => {
-    const shouldSendNotification = (eventType, title = '') => {
+  await t.test('9. Notification routing: customer messages and new orders both trigger guaranteed admin alerts', () => {
+    const shouldSendNotification = (eventType, title = '', sender = 'client') => {
       const type = (eventType || '').toLowerCase();
       const t = (title || '').toLowerCase();
+      
+      // Admin messages to client do not notify admin
+      if (sender === 'admin') return false;
+
+      // Customer chat messages ALWAYS notify admin (offline guarantee)
       if (type === 'chat' || type === 'message' || t.includes('new message')) {
-        return false; // Suppressed as required by Rule 3
+        return true;
       }
       return type === 'order' || type === 'delivery' || type === 'offer' || 
              t.includes('order') || t.includes('placed') || t.includes('delivered') || t.includes('accepted');
     };
 
-    // Messages must NEVER notify
-    assert.equal(shouldSendNotification('chat', 'New message from Support'), false);
-    assert.equal(shouldSendNotification('message', 'New Message received'), false);
+    // Customer messages MUST notify admin
+    assert.equal(shouldSendNotification('chat', 'New message from Client', 'client'), true);
+    assert.equal(shouldSendNotification('message', 'New Message received', 'client'), true);
+
+    // Admin replies do not self-notify
+    assert.equal(shouldSendNotification('chat', 'Admin reply sent', 'admin'), false);
 
     // Orders MUST notify
-    assert.equal(shouldSendNotification('order', 'New Order Placed #1042'), true);
-    assert.equal(shouldSendNotification('delivery', 'Production Files Delivered'), true);
-    assert.equal(shouldSendNotification('offer', 'Custom Offer Accepted!'), true);
+    assert.equal(shouldSendNotification('order', 'New Order Placed #1042', 'client'), true);
+    assert.equal(shouldSendNotification('delivery', 'Production Files Delivered', 'client'), true);
+    assert.equal(shouldSendNotification('offer', 'Custom Offer Accepted!', 'client'), true);
   });
 
   await t.test('10. Inbox and Support channels are strictly isolated with no "all" option and zero message mixing', () => {

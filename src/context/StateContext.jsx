@@ -1591,12 +1591,13 @@ export const StateProvider = ({ children }) => {
           orderId: orderObj.id || orderObj.orderId,
           clientEmail: orderObj.clientEmail || orderObj.client_email,
           clientName: orderObj.clientName || orderObj.client_name,
-          serviceName: orderObj.serviceType || orderObj.service_type || orderObj.title,
+          serviceName: orderObj.serviceType || orderObj.service_type || orderObj.title || orderObj.serviceCategory || 'Custom Digitizing',
           amount: orderObj.price || orderObj.amount || orderObj.total,
           revisionNotes: orderObj.revisionNotes,
           messageText: orderObj.messageText,
           senderName: orderObj.senderName,
-          recipientEmail: orderObj.recipientEmail
+          recipientEmail: orderObj.recipientEmail,
+          orderDetails: orderObj
         })
       });
     } catch (err) {

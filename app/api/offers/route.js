@@ -727,29 +727,27 @@ export async function POST(request) {
         console.warn('Order paid notifications insert notice:', notifErr.message);
       }
 
-      // 6. Non-blocking asynchronous email notification
+      // 6. Guaranteed email notification on custom offer acceptance & order creation
       try {
-        const siteBase = process.env.NEXT_PUBLIC_SITE_URL || 'https://bilaldigitizing.vercel.app';
-        fetch(`${siteBase}/api/email`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            type: 'NEW_ORDER',
-            orderId: targetOrderId,
-            clientEmail: cleanEmail,
-            clientName: offer.client_name || 'Client',
-            serviceName: offer.service_type || offer.title || 'Custom Digitizing Offer',
-            amount: parseFloat(offer.final_price || offer.price || 0),
-            orderDetails: {
-              id: targetOrderId,
-              title: offer.title || 'Custom Design Order',
-              instructions: offer.description || '',
-              price: parseFloat(offer.final_price || offer.price || 0),
-              turnaround: offer.delivery_time_text || '1 Day'
-            }
-          })
-        }).catch(e => console.warn('Email dispatch on custom offer pay notice:', e?.message));
-      } catch {}
+        const { sendNotificationEmail } = await import('../../../src/lib/emailService');
+        await sendNotificationEmail({
+          type: 'NEW_ORDER',
+          orderId: targetOrderId,
+          clientEmail: cleanEmail,
+          clientName: offer.client_name || 'Client',
+          serviceName: offer.service_type || offer.title || 'Custom Digitizing Offer',
+          amount: parseFloat(offer.final_price || offer.price || 0),
+          orderDetails: {
+            id: targetOrderId,
+            title: offer.title || 'Custom Design Order',
+            instructions: offer.description || '',
+            price: parseFloat(offer.final_price || offer.price || 0),
+            turnaround: offer.delivery_time_text || '1 Day'
+          }
+        });
+      } catch (e) {
+        console.warn('Email dispatch on custom offer pay notice:', e?.message);
+      }
 
       return NextResponse.json({ success: true, offer: updatedOffer, orderId: targetOrderId });
     }

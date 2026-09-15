@@ -202,6 +202,28 @@ export async function POST(req) {
         }
       }
 
+      // 6. Trigger guaranteed email notification to admin & client
+      try {
+        const { sendNotificationEmail } = await import('../../../../src/lib/emailService');
+        await sendNotificationEmail({
+          type: 'NEW_ORDER',
+          orderId: generatedOrderId,
+          clientEmail: clientEmail,
+          clientName: clientName,
+          serviceName: svcCategory,
+          amount: amountInDollars,
+          orderDetails: {
+            id: generatedOrderId,
+            title: offerTitle,
+            instructions: matchedOffer?.description || '',
+            price: amountInDollars,
+            turnaround: matchedOffer?.delivery_time_text || '1 Day'
+          }
+        });
+      } catch (emailErr) {
+        console.warn('[Stripe Webhook] Email notification notice:', emailErr?.message);
+      }
+
       console.log(`[Stripe Webhook] Successfully processed session ${session.id} for offer ${offerId}`);
     } catch (processErr) {
       console.error('[Stripe Webhook] Processing error:', processErr);

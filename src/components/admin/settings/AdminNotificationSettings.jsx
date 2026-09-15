@@ -98,7 +98,7 @@ export const AdminNotificationSettings = () => {
     }
   };
 
-  const handleSendTestEmail = async () => {
+  const handleSendTestEmail = async (testType = 'TEST_EMAIL') => {
     const cleanEmail = adminEmail.trim().toLowerCase();
     if (!cleanEmail || !EMAIL_REGEX.test(cleanEmail)) {
       showToast('Please enter a valid email address before sending a test.', 'warning');
@@ -109,19 +109,44 @@ export const AdminNotificationSettings = () => {
     setTestResult(null);
 
     try {
+      const payload = {
+        type: testType,
+        adminEmail: cleanEmail,
+      };
+
+      if (testType === 'NEW_MESSAGE') {
+        payload.senderName = 'Alex Mercer (Client)';
+        payload.clientEmail = 'alex.mercer@example.com';
+        payload.messageText = 'Hello Bilal! Could you please check if this vector logo can be digitized for a left chest cap embroidery?';
+        payload.channel = 'Inbox (#ORD-PREVIEW)';
+        payload.orderId = 'ORD-PREVIEW-101';
+      } else if (testType === 'NEW_ORDER') {
+        payload.orderDetails = {
+          orderId: 'ORD-LIVE-TEST',
+          serviceCategory: 'Embroidery Digitizing',
+          tier: 'Left Chest / Hat Digitizing',
+          price: 25,
+          fabricType: 'Structured Cotton Twill',
+          requiredFormat: 'DST, PES, EMB',
+          turnaround: 'Rush (4-8 Hours)',
+          clientNotes: 'Urgent turnaround requested for corporate uniform embroidery.'
+        };
+      }
+
       const res = await fetch('/api/email', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          type: 'TEST_EMAIL',
-          adminEmail: cleanEmail
-        })
+        body: JSON.stringify(payload)
       });
 
       const data = await res.json();
       if (res.ok && data?.success) {
-        setTestResult({ success: true, message: `Test email dispatched to ${cleanEmail}` });
-        showToast(`Test email successfully dispatched to ${cleanEmail}!`, 'success');
+        const typeLabel = testType === 'NEW_ORDER' ? 'Order' : testType === 'NEW_MESSAGE' ? 'Customer Message' : 'Configuration';
+        setTestResult({ 
+          success: true, 
+          message: `Test ${typeLabel} email dispatched to ${data.recipient || cleanEmail}! ${data.fallbackApplied ? '(Auto-routed to verified inbox bilalsadiq612@gmail.com)' : ''}` 
+        });
+        showToast(`Test ${typeLabel} email dispatched successfully!`, 'success');
       } else {
         const errorMsg = data?.error || data?.details || 'Failed to dispatch test email';
         setTestResult({ success: false, message: errorMsg });
@@ -184,38 +209,55 @@ export const AdminNotificationSettings = () => {
             </div>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
             <button
               type="button"
-              onClick={handleSendTestEmail}
+              onClick={() => handleSendTestEmail('NEW_ORDER')}
               disabled={isSendingTest || !isValidEmail}
+              title="Dispatches a realistic Order Placement email notification to test your inbox"
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
-                gap: '0.5rem',
-                padding: '0.65rem 1.15rem',
+                gap: '0.4rem',
+                padding: '0.55rem 0.95rem',
                 borderRadius: '10px',
                 border: '1px solid var(--border-color)',
                 background: 'var(--bg-card)',
                 color: 'var(--text-main)',
-                fontSize: '0.85rem',
+                fontSize: '0.8rem',
                 fontWeight: 700,
                 cursor: isValidEmail && !isSendingTest ? 'pointer' : 'not-allowed',
                 opacity: isValidEmail && !isSendingTest ? 1 : 0.6,
                 transition: 'all 0.2s'
               }}
             >
-              {isSendingTest ? (
-                <>
-                  <RefreshCw size={15} className="spin-icon" style={{ color: 'var(--orange-500)' }} />
-                  <span>Sending Test...</span>
-                </>
-              ) : (
-                <>
-                  <Send size={15} style={{ color: 'var(--orange-500)' }} />
-                  <span>Send Test Email</span>
-                </>
-              )}
+              <ShoppingBag size={14} style={{ color: 'var(--orange-500)' }} />
+              <span>Test Order Alert</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handleSendTestEmail('NEW_MESSAGE')}
+              disabled={isSendingTest || !isValidEmail}
+              title="Dispatches a realistic Customer Chat/Support Message notification to test your inbox"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.4rem',
+                padding: '0.55rem 0.95rem',
+                borderRadius: '10px',
+                border: '1px solid var(--border-color)',
+                background: 'var(--bg-card)',
+                color: 'var(--text-main)',
+                fontSize: '0.8rem',
+                fontWeight: 700,
+                cursor: isValidEmail && !isSendingTest ? 'pointer' : 'not-allowed',
+                opacity: isValidEmail && !isSendingTest ? 1 : 0.6,
+                transition: 'all 0.2s'
+              }}
+            >
+              <Mail size={14} style={{ color: '#3b82f6' }} />
+              <span>Test Message Alert</span>
             </button>
 
             <button
@@ -226,12 +268,12 @@ export const AdminNotificationSettings = () => {
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '0.5rem',
-                padding: '0.65rem 1.25rem',
+                padding: '0.55rem 1.15rem',
                 borderRadius: '10px',
                 border: 'none',
                 background: 'linear-gradient(135deg, var(--orange-500) 0%, #c2410c 100%)',
                 color: '#ffffff',
-                fontSize: '0.85rem',
+                fontSize: '0.825rem',
                 fontWeight: 800,
                 cursor: isSaving ? 'wait' : 'pointer',
                 boxShadow: '0 4px 12px rgba(234, 88, 12, 0.25)',
@@ -240,12 +282,12 @@ export const AdminNotificationSettings = () => {
             >
               {isSaving ? (
                 <>
-                  <RefreshCw size={15} className="spin-icon" />
+                  <RefreshCw size={14} className="spin-icon" />
                   <span>Saving...</span>
                 </>
               ) : (
                 <>
-                  <Save size={15} />
+                  <Save size={14} />
                   <span>Save Settings</span>
                 </>
               )}
@@ -349,19 +391,23 @@ export const AdminNotificationSettings = () => {
             padding: '1rem',
             display: 'flex',
             flexDirection: 'column',
-            gap: '0.5rem'
+            gap: '0.55rem'
           }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.8rem' }}>
               <span style={{ color: 'var(--text-muted)', fontWeight: 600 }}>Delivery Service Provider:</span>
               <span style={{ color: 'var(--text-main)', fontWeight: 700 }}>Resend Transactional API</span>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.8rem' }}>
-              <span style={{ color: 'var(--text-muted)', fontWeight: 600 }}>Persistence Layer:</span>
-              <span style={{ color: '#16a34a', fontWeight: 700 }}>Supabase site_config (Key-Value)</span>
+              <span style={{ color: 'var(--text-muted)', fontWeight: 600 }}>Verified Safe Recipient:</span>
+              <span style={{ color: '#16a34a', fontWeight: 700 }}>bilalsadiq612@gmail.com</span>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.8rem' }}>
-              <span style={{ color: 'var(--text-muted)', fontWeight: 600 }}>Execution Mode:</span>
-              <span style={{ color: 'var(--text-main)', fontWeight: 700 }}>Non-blocking Asynchronous</span>
+              <span style={{ color: 'var(--text-muted)', fontWeight: 600 }}>200% Guarantee Engine:</span>
+              <span style={{ color: '#2563eb', fontWeight: 700 }}>Direct In-Process + Auto-Failover</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.8rem' }}>
+              <span style={{ color: 'var(--text-muted)', fontWeight: 600 }}>Persistence Layer:</span>
+              <span style={{ color: '#16a34a', fontWeight: 700 }}>Supabase site_config (Key-Value)</span>
             </div>
           </div>
         </div>
@@ -427,7 +473,7 @@ export const AdminNotificationSettings = () => {
               />
             </div>
 
-            {/* Toggle 2: Contact Form & Support Inquiries */}
+            {/* Toggle 2: Customer Chat & Support Messages */}
             <div style={{
               display: 'flex',
               alignItems: 'center',
@@ -449,14 +495,14 @@ export const AdminNotificationSettings = () => {
                   alignItems: 'center',
                   justifyContent: 'center'
                 }}>
-                  <HelpCircle size={18} />
+                  <Mail size={18} />
                 </div>
                 <div>
                   <div style={{ fontSize: '0.875rem', fontWeight: 700, color: 'var(--text-main)' }}>
-                    Contact Form & Helpdesk Inquiries Alert
+                    Customer Chat & Support Message Alert
                   </div>
                   <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                    Instant notification when a customer submits a contact inquiry or support ticket.
+                    Instant notification when any customer sends a chat message, 24/7 Live Desk inquiry, or contact form ticket.
                   </div>
                 </div>
               </div>
