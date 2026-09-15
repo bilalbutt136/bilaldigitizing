@@ -1077,6 +1077,9 @@ export async function fetchCatalogFromSupabase() {
 
         return {
           ...rawSettings,
+          metaPixelId: rawSettings?.metaPixelId || configMap['meta_pixel_id'] || configMap['metaPixelId'] || null,
+          googleAnalyticsId: rawSettings?.googleAnalyticsId || configMap['google_analytics_id'] || configMap['googleAnalyticsId'] || null,
+          tiktokPixelId: rawSettings?.tiktokPixelId || configMap['tiktok_pixel_id'] || configMap['tiktokPixelId'] || null,
           promotions: safePromotions,
           announcement: dynamicAnnouncement,
           promotionalBanner: {
@@ -1781,13 +1784,33 @@ export async function fetchTrackingEventsFromSupabase() {
       .from('tracking_events')
       .select('*')
       .order('event_time', { ascending: false })
-      .limit(100);
+      .limit(150);
       
     if (error) {
       console.warn('Supabase fetch tracking events error:', error.message);
       return [];
     }
-    return data || [];
+    
+    return (data || []).map(row => {
+      let telemetry = null;
+      if (row.metadata && typeof row.metadata === 'object') {
+        telemetry = row.metadata;
+      } else if (typeof row.traffic_source === 'string' && row.traffic_source.trim().startsWith('{')) {
+        try {
+          telemetry = JSON.parse(row.traffic_source);
+        } catch {}
+      }
+      return {
+        ...row,
+        telemetry: telemetry || {
+          trafficSource: row.traffic_source || 'Direct',
+          trafficChannel: 'Direct',
+          browser: 'Unknown Browser',
+          os: 'Unknown OS',
+          deviceType: 'Desktop'
+        }
+      };
+    });
   } catch (err) {
     console.warn('Supabase fetch tracking events exception:', err);
     return [];

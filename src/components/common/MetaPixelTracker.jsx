@@ -3,9 +3,12 @@
 import React, { useEffect, useRef } from 'react';
 import { useLocation } from '../../utils/navigation';
 import { useAppState } from '../../context/StateContext';
+import { getVisitorTelemetry, generateUUID, resolveUserIdentity } from '../../utils/visitorTracker';
 
-// Direct, bulletproof DOM injector for Meta Pixel to guarantee instant detection by Meta Pixel Helper
-export const injectMetaPixel = (pixelId) => {
+/**
+ * Direct DOM injector for official Meta Pixel to guarantee instant detection by Meta Pixel Helper
+ */
+export const injectMetaPixel = (pixelId, advancedMatching = null) => {
   if (typeof window === 'undefined') return;
   const cleanId = String(pixelId || '').trim();
   if (!cleanId) return;
@@ -42,9 +45,14 @@ export const injectMetaPixel = (pixelId) => {
     }
   }
 
-  // 3. Initialize the Pixel ID and track PageView
+  // 3. Initialize the Pixel ID with Advanced Matching and track initial PageView
+  const matchPayload = (advancedMatching && typeof advancedMatching === 'object') ? advancedMatching : {};
   if (window._fbq_active_pixel_id !== cleanId) {
-    window.fbq('init', cleanId);
+    if (Object.keys(matchPayload).length > 0) {
+      window.fbq('init', cleanId, matchPayload);
+    } else {
+      window.fbq('init', cleanId);
+    }
     window.fbq('track', 'PageView');
     window._fbq_active_pixel_id = cleanId;
     try {
@@ -53,42 +61,23 @@ export const injectMetaPixel = (pixelId) => {
   }
 };
 
-// Helper to resolve accurate user identity (e.g. "Haji Ramzan (haji.ramzan@gmail.com)" or "Platform Admin")
-export const resolveUserIdentity = (userObj = null, customRole = null) => {
-  if (customRole) return customRole;
+export { resolveUserIdentity };
 
-  if (userObj && typeof userObj === 'object') {
-    if (userObj.role === 'admin') {
-      return userObj.email ? `Platform Admin (${userObj.email})` : 'Platform Admin';
-    }
-    const name = userObj.name || userObj.fullName || userObj.user_metadata?.full_name || 'Customer';
-    if (userObj.email) {
-      return `${name} (${userObj.email})`;
-    }
-    return name;
+/**
+ * Builds Meta Advanced Matching data from user object
+ */
+const buildAdvancedMatchingData = (user) => {
+  if (!user || typeof user !== 'object') return {};
+  const data = {};
+  if (user.email) data.em = String(user.email).trim().toLowerCase();
+  if (user.phone) data.ph = String(user.phone).replace(/\D/g, '');
+  if (user.name || user.fullName) {
+    const parts = String(user.name || user.fullName).trim().split(' ');
+    data.fn = parts[0] ? parts[0].toLowerCase() : '';
+    data.ln = parts.slice(1).join(' ') ? parts.slice(1).join(' ').toLowerCase() : '';
   }
-
-  // Check localStorage for logged-in user details
-  if (typeof window !== 'undefined') {
-    try {
-      const stored = localStorage.getItem('auth_user') || localStorage.getItem('bdigi_auth_user');
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        if (parsed && typeof parsed === 'object') {
-          if (parsed.role === 'admin') {
-            return parsed.email ? `Platform Admin (${parsed.email})` : 'Platform Admin';
-          }
-          const name = parsed.name || parsed.fullName || 'Customer';
-          if (parsed.email) {
-            return `${name} (${parsed.email})`;
-          }
-          return name;
-        }
-      }
-    } catch {}
-  }
-
-  return 'Guest Visitor';
+  if (user.id) data.external_id = String(user.id);
+  return data;
 };
 
 export const MetaPixelTracker = () => {
@@ -108,55 +97,142 @@ export const MetaPixelTracker = () => {
   // 1. Immediately inject and initialize when ID is available
   useEffect(() => {
     if (activePixelId) {
-      injectMetaPixel(activePixelId);
+      const matchData = buildAdvancedMatchingData(authUser);
+      injectMetaPixel(activePixelId, matchData);
     }
-  }, [activePixelId]);
+  }, [activePixelId, authUser]);
 
-  // 2. Track route changes
+  // 2. Track route changes with full visitor telemetry
   useEffect(() => {
     if (typeof window === 'undefined') return;
     if (prevPathRef.current === pathname) return;
     prevPathRef.current = pathname;
 
+    const matchData = buildAdvancedMatchingData(authUser);
     if (activePixelId) {
-      injectMetaPixel(activePixelId);
+      injectMetaPixel(activePixelId, matchData);
     }
 
+    // Capture complete technical, attribution, device, and session details
+    const telemetry = getVisitorTelemetry(authUser);
+    const eventId = generateUUID();
+
+    // Fire PageView to Meta Pixel with rich event metadata
     if (window.fbq) {
       window.fbq('track', 'PageView', {
-        page_path: pathname,
-        page_title: typeof document !== 'undefined' ? document.title : ''
-      });
+        page_title: telemetry.pageTitle,
+        page_path: telemetry.pagePath,
+        page_location: telemetry.pageUrl,
+        referrer: telemetry.referrer || 'Direct',
+        traffic_source: telemetry.trafficSource,
+        traffic_channel: telemetry.trafficChannel,
+        device: telemetry.deviceType,
+        os: telemetry.os,
+        browser: telemetry.browser,
+        utm_source: telemetry.utmSource,
+        utm_medium: telemetry.utmMedium,
+        utm_campaign: telemetry.utmCampaign,
+        utm_term: telemetry.utmTerm,
+        utm_content: telemetry.utmContent,
+        fbclid: telemetry.fbclid,
+        screen: telemetry.screenResolution,
+        visitor_id: telemetry.visitorId,
+        session_id: telemetry.sessionId,
+        visit_count: telemetry.visitCount
+      }, { eventID: eventId });
     }
 
-    // Auto-detect high-intent content pages for ViewContent event
+    // Auto-detect high-intent content pages for standard ViewContent event
     let viewContentData = null;
+    let standardEventName = null;
+
     if (pathname.includes('/services/embroidery-digitizing')) {
-      viewContentData = { content_name: 'Embroidery Digitizing', content_category: 'Embroidery Digitizing Service', content_type: 'service', value: 10.00, currency: 'USD' };
+      standardEventName = 'ViewContent';
+      viewContentData = { 
+        content_name: 'Embroidery Digitizing', 
+        content_category: 'Embroidery Digitizing Services', 
+        content_type: 'service', 
+        value: 10.00, 
+        currency: 'USD' 
+      };
     } else if (pathname.includes('/services/vector-tracing')) {
-      viewContentData = { content_name: 'Vector Art Tracing', content_category: 'Vector Art Service', content_type: 'service', value: 8.00, currency: 'USD' };
+      standardEventName = 'ViewContent';
+      viewContentData = { 
+        content_name: 'Vector Art Tracing', 
+        content_category: 'Vector Art Services', 
+        content_type: 'service', 
+        value: 8.00, 
+        currency: 'USD' 
+      };
     } else if (pathname.includes('/custom-patches')) {
-      viewContentData = { content_name: 'Custom Patches', content_category: 'Physical Patches Service', content_type: 'product', value: 150.00, currency: 'USD' };
+      standardEventName = 'ViewContent';
+      viewContentData = { 
+        content_name: 'Custom Physical Patches', 
+        content_category: 'Physical Manufactured Emblems', 
+        content_type: 'product', 
+        value: 150.00, 
+        currency: 'USD' 
+      };
     } else if (pathname.includes('/pricing')) {
-      viewContentData = { content_name: 'Commercial Pricing Table', content_category: 'Pricing', content_type: 'service' };
+      standardEventName = 'ViewContent';
+      viewContentData = { 
+        content_name: 'Commercial Pricing Packages', 
+        content_category: 'Pricing', 
+        content_type: 'service' 
+      };
     } else if (pathname.includes('/portfolio')) {
-      viewContentData = { content_name: 'Production Showcase Portfolio', content_category: 'Portfolio', content_type: 'gallery' };
+      standardEventName = 'ViewContent';
+      viewContentData = { 
+        content_name: 'Production Showcase Portfolio', 
+        content_category: 'Portfolio', 
+        content_type: 'gallery' 
+      };
+    } else if (pathname.includes('/blogs')) {
+      standardEventName = 'ViewContent';
+      viewContentData = { 
+        content_name: 'Embroidery & Vector Knowledgebase', 
+        content_category: 'Articles', 
+        content_type: 'article' 
+      };
+    } else if (pathname === '/order' || pathname.includes('/order?')) {
+      standardEventName = 'InitiateCheckout';
+      viewContentData = { 
+        content_name: 'Order Configuration Wizard', 
+        content_category: 'Studio Checkout', 
+        content_type: 'order' 
+      };
     }
 
     if (viewContentData && window.fbq) {
-      window.fbq('track', 'ViewContent', viewContentData);
+      window.fbq('track', standardEventName, {
+        ...viewContentData,
+        page_title: telemetry.pageTitle,
+        page_path: telemetry.pagePath,
+        traffic_source: telemetry.trafficSource,
+        device: telemetry.deviceType,
+        os: telemetry.os,
+        browser: telemetry.browser,
+        visitor_id: telemetry.visitorId,
+        session_id: telemetry.sessionId
+      }, { eventID: `${eventId}_view` });
     }
 
-    // Log to Supabase Tracking Events Table
+    // Persist full telemetry to Supabase tracking_events table
     import('../../services/supabaseService').then(({ logTrackingEventToSupabase }) => {
-      const role = resolveUserIdentity(authUser);
       logTrackingEventToSupabase({
-        eventName: viewContentData ? 'ViewContent' : 'PageView',
-        userRole: role,
-        source: 'Visitor browser',
-        trafficSource: window.location.hostname || 'Direct',
-        value: viewContentData?.value ? `$${viewContentData.value}` : '—',
-        pagePath: pathname
+        eventName: standardEventName || 'PageView',
+        userRole: telemetry.userRole,
+        source: `${telemetry.browser} on ${telemetry.os} (${telemetry.deviceType})`,
+        trafficSource: telemetry.trafficSource,
+        value: viewContentData?.value ? `$${viewContentData.value.toFixed(2)}` : '—',
+        pagePath: telemetry.pagePath,
+        eventId: eventId,
+        details: {
+          ...telemetry,
+          eventData: viewContentData || null,
+          metaPixelActive: Boolean(activePixelId && window.fbq),
+          metaPixelId: activePixelId || null
+        }
       });
     }).catch(() => {});
   }, [pathname, activePixelId, authUser]);
@@ -164,7 +240,10 @@ export const MetaPixelTracker = () => {
   return null;
 };
 
-// Standard and Custom Meta Pixel Event Dispatcher for the entire application
+/**
+ * Standard and Custom Meta Pixel Event Dispatcher for the entire application
+ * Used by checkout, registration, contact forms, and custom offers
+ */
 export const trackMetaEvent = (eventName, data = {}, customUserRole = null) => {
   if (typeof window === 'undefined') return;
 
@@ -200,27 +279,53 @@ export const trackMetaEvent = (eventName, data = {}, customUserRole = null) => {
   ];
 
   const isStandard = standardEvents.includes(eventName);
+  const telemetry = getVisitorTelemetry(null, customUserRole);
+  const eventId = generateUUID();
+
+  const fullEventData = {
+    ...data,
+    page_title: telemetry.pageTitle,
+    page_path: telemetry.pagePath,
+    traffic_source: telemetry.trafficSource,
+    device: telemetry.deviceType,
+    os: telemetry.os,
+    browser: telemetry.browser,
+    utm_source: telemetry.utmSource,
+    utm_campaign: telemetry.utmCampaign,
+    fbclid: telemetry.fbclid,
+    visitor_id: telemetry.visitorId,
+    session_id: telemetry.sessionId
+  };
 
   if (window.fbq) {
     if (isStandard) {
-      window.fbq('track', eventName, data);
+      window.fbq('track', eventName, fullEventData, { eventID: eventId });
     } else {
-      window.fbq('trackCustom', eventName, data);
+      window.fbq('trackCustom', eventName, fullEventData, { eventID: eventId });
     }
   }
 
-  // Persist to Supabase tracking_events table for Admin Analytics
+  // Persist to Supabase tracking_events table with complete metadata
   import('../../services/supabaseService').then(({ logTrackingEventToSupabase }) => {
-    const role = resolveUserIdentity(null, customUserRole);
-    const valueStr = data?.value !== undefined ? (typeof data.value === 'number' ? `$${data.value.toFixed(2)}` : String(data.value)) : '—';
+    const role = telemetry.userRole;
+    const valueStr = data?.value !== undefined 
+      ? (typeof data.value === 'number' ? `$${data.value.toFixed(2)}` : String(data.value)) 
+      : '—';
 
     logTrackingEventToSupabase({
       eventName: eventName,
       userRole: role,
-      source: 'Visitor browser',
-      trafficSource: window.location.hostname || 'Direct',
+      source: `${telemetry.browser} on ${telemetry.os} (${telemetry.deviceType})`,
+      trafficSource: telemetry.trafficSource,
       value: valueStr,
-      pagePath: window.location.pathname || '/'
+      pagePath: window.location.pathname || '/',
+      eventId: eventId,
+      details: {
+        ...telemetry,
+        customEventData: data,
+        metaPixelActive: Boolean(currentId && window.fbq),
+        metaPixelId: currentId || null
+      }
     });
   }).catch(() => {});
 };

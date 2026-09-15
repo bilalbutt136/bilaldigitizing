@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { useAppState } from '../../context/StateContext';
-import { BookOpen, Radio, BarChart2, Megaphone, Activity, RefreshCw, CheckCircle2, ShieldCheck, Save } from 'lucide-react';
+import { BookOpen, Radio, BarChart2, Megaphone, Activity, RefreshCw, CheckCircle2, ShieldCheck, Save, Eye } from 'lucide-react';
+import { VisitorDetailsModal } from './tracking/VisitorDetailsModal';
 
 export const AdminMetaPixel = () => {
   const { siteSettings, updateSiteSettings, showToast } = useAppState();
@@ -13,6 +14,7 @@ export const AdminMetaPixel = () => {
   const [activeTab, setActiveTab] = useState('setup');
   const [events, setEvents] = useState([]);
   const [loadingEvents, setLoadingEvents] = useState(false);
+  const [selectedEvent, setSelectedEvent] = useState(null);
   
   useEffect(() => {
     if (activeTab === 'log') {
@@ -347,42 +349,107 @@ export const AdminMetaPixel = () => {
           </div>
           
           <div style={{ overflowX: 'auto', background: '#f8fafc', padding: '1rem' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '800px' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '950px' }}>
               <thead>
                 <tr>
                   <th style={{ padding: '1rem', borderBottom: '1px solid var(--border-color)', color: '#64748b', fontWeight: 700, fontSize: '0.75rem', textTransform: 'uppercase' }}>When</th>
                   <th style={{ padding: '1rem', borderBottom: '1px solid var(--border-color)', color: '#64748b', fontWeight: 700, fontSize: '0.75rem', textTransform: 'uppercase' }}>Who</th>
                   <th style={{ padding: '1rem', borderBottom: '1px solid var(--border-color)', color: '#64748b', fontWeight: 700, fontSize: '0.75rem', textTransform: 'uppercase' }}>What Happened</th>
-                  <th style={{ padding: '1rem', borderBottom: '1px solid var(--border-color)', color: '#64748b', fontWeight: 700, fontSize: '0.75rem', textTransform: 'uppercase' }}>Source</th>
-                  <th style={{ padding: '1rem', borderBottom: '1px solid var(--border-color)', color: '#64748b', fontWeight: 700, fontSize: '0.75rem', textTransform: 'uppercase' }}>Traffic Source</th>
-                  <th style={{ padding: '1rem', borderBottom: '1px solid var(--border-color)', color: '#64748b', fontWeight: 700, fontSize: '0.75rem', textTransform: 'uppercase' }}>Value</th>
+                  <th style={{ padding: '1rem', borderBottom: '1px solid var(--border-color)', color: '#64748b', fontWeight: 700, fontSize: '0.75rem', textTransform: 'uppercase' }}>Device / OS</th>
+                  <th style={{ padding: '1rem', borderBottom: '1px solid var(--border-color)', color: '#64748b', fontWeight: 700, fontSize: '0.75rem', textTransform: 'uppercase' }}>Traffic Channel</th>
+                  <th style={{ padding: '1rem', borderBottom: '1px solid var(--border-color)', color: '#64748b', fontWeight: 700, fontSize: '0.75rem', textTransform: 'uppercase' }}>Location</th>
                   <th style={{ padding: '1rem', borderBottom: '1px solid var(--border-color)', color: '#64748b', fontWeight: 700, fontSize: '0.75rem', textTransform: 'uppercase' }}>Page</th>
+                  <th style={{ padding: '1rem', borderBottom: '1px solid var(--border-color)', color: '#64748b', fontWeight: 700, fontSize: '0.75rem', textTransform: 'uppercase', textAlign: 'right' }}>Details</th>
                 </tr>
               </thead>
               <tbody>
                 {loadingEvents ? (
-                  <tr><td colSpan="7" style={{ padding: '2rem', textAlign: 'center', color: '#64748b' }}>Loading activity logs...</td></tr>
+                  <tr><td colSpan="8" style={{ padding: '2rem', textAlign: 'center', color: '#64748b' }}>Loading activity logs...</td></tr>
                 ) : events.length === 0 ? (
-                  <tr><td colSpan="7" style={{ padding: '2rem', textAlign: 'center', color: '#64748b' }}>No events recorded yet. Try simulating a page visit.</td></tr>
+                  <tr><td colSpan="8" style={{ padding: '2rem', textAlign: 'center', color: '#64748b' }}>No events recorded yet. Try simulating a page visit.</td></tr>
                 ) : (
-                  events.map((ev) => (
-                    <tr key={ev.id} style={{ borderBottom: '1px solid #e2e8f0', background: '#ffffff' }}>
-                      <td style={{ padding: '1rem', fontSize: '0.85rem', color: '#64748b' }}>
-                        {new Date(ev.event_time).toLocaleString()}
-                      </td>
-                      <td style={{ padding: '1rem', fontSize: '0.85rem', color: '#64748b' }}>{ev.user_role}</td>
-                      <td style={{ padding: '1rem', fontSize: '0.85rem', fontWeight: 700, color: '#0f172a' }}>{ev.event_name}</td>
-                      <td style={{ padding: '1rem', fontSize: '0.85rem', color: '#64748b' }}>{ev.source}</td>
-                      <td style={{ padding: '1rem', fontSize: '0.85rem', color: '#64748b' }}>{ev.traffic_source}</td>
-                      <td style={{ padding: '1rem', fontSize: '0.85rem', color: '#64748b' }}>{ev.value}</td>
-                      <td style={{ padding: '1rem', fontSize: '0.85rem', color: '#64748b' }}>{ev.page_path}</td>
-                    </tr>
-                  ))
+                  events.map((ev) => {
+                    const tel = ev.telemetry || {};
+                    const whatDisplay = ev.event_name || 'PageView';
+                    const deviceDisplay = tel.os ? `${tel.browser || 'Browser'} / ${tel.os} (${tel.deviceType || 'Desktop'})` : (ev.source || 'Desktop');
+                    const trafficChannel = tel.trafficChannel || (ev.traffic_source?.startsWith('{') ? 'Direct' : (ev.traffic_source || 'Direct'));
+                    const locationDisplay = tel.city && tel.city !== 'Unknown' 
+                      ? `${tel.city}, ${tel.country || ''}` 
+                      : (tel.country && tel.country !== 'Unknown' ? tel.country : '—');
+                    const isReturning = Boolean(tel.isReturningVisitor || (tel.visitCount && tel.visitCount > 1));
+
+                    return (
+                      <tr key={ev.id} style={{ borderBottom: '1px solid #e2e8f0', background: '#ffffff' }}>
+                        <td style={{ padding: '1rem', fontSize: '0.85rem', color: '#64748b', whiteSpace: 'nowrap' }}>
+                          {new Date(ev.event_time).toLocaleString()}
+                        </td>
+                        <td style={{ padding: '1rem', fontSize: '0.85rem', color: '#64748b' }}>
+                          <div style={{ fontWeight: 600, color: '#0f172a' }}>{ev.user_role}</div>
+                          {isReturning && (
+                            <span style={{ display: 'inline-block', fontSize: '0.68rem', fontWeight: 700, padding: '1px 6px', borderRadius: '4px', background: '#fef3c7', color: '#b45309', marginTop: '2px' }}>
+                              Visit #{tel.visitCount}
+                            </span>
+                          )}
+                        </td>
+                        <td style={{ padding: '1rem', fontSize: '0.85rem' }}>
+                          <span style={{ 
+                            display: 'inline-block', 
+                            padding: '3px 8px', 
+                            borderRadius: '6px', 
+                            fontWeight: 700, 
+                            fontSize: '0.75rem',
+                            background: whatDisplay === 'PageView' ? '#e0f2fe' : (whatDisplay === 'InitiateCheckout' || whatDisplay === 'Purchase' ? '#dcfce7' : '#f3e8ff'),
+                            color: whatDisplay === 'PageView' ? '#0369a1' : (whatDisplay === 'InitiateCheckout' || whatDisplay === 'Purchase' ? '#15803d' : '#7e22ce')
+                          }}>
+                            {whatDisplay}
+                          </span>
+                        </td>
+                        <td style={{ padding: '1rem', fontSize: '0.82rem', color: '#64748b' }}>{deviceDisplay}</td>
+                        <td style={{ padding: '1rem', fontSize: '0.82rem', color: '#64748b' }}>
+                          <span style={{ fontWeight: 600, color: '#334155' }}>{trafficChannel}</span>
+                          {tel.fbclid && (
+                            <span style={{ display: 'block', fontSize: '0.68rem', color: '#2563eb', fontWeight: 700 }}>Meta Ad Click</span>
+                          )}
+                        </td>
+                        <td style={{ padding: '1rem', fontSize: '0.82rem', color: '#64748b' }}>{locationDisplay}</td>
+                        <td style={{ padding: '1rem', fontSize: '0.82rem', color: '#64748b', fontFamily: 'monospace' }}>{ev.page_path}</td>
+                        <td style={{ padding: '1rem', textAlign: 'right' }}>
+                          <button
+                            type="button"
+                            onClick={() => setSelectedEvent(ev)}
+                            style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '0.35rem',
+                              padding: '0.45rem 0.75rem',
+                              borderRadius: '8px',
+                              border: '1px solid #cbd5e1',
+                              background: '#ffffff',
+                              color: '#0f172a',
+                              fontSize: '0.78rem',
+                              fontWeight: 700,
+                              cursor: 'pointer',
+                              boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
+                            }}
+                          >
+                            <Eye size={13} style={{ color: '#2563eb' }} /> View Details
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })
                 )}
               </tbody>
             </table>
           </div>
         </div>
+      )}
+
+      {selectedEvent && (
+        <VisitorDetailsModal
+          event={selectedEvent}
+          onClose={() => setSelectedEvent(null)}
+        />
       )}
 
       {(activeTab !== 'setup' && activeTab !== 'log') && (

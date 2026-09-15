@@ -2069,6 +2069,7 @@ export const StateProvider = ({ children }) => {
   };
 
   const updateSiteSettings = async (newSettings) => {
+    let mergedSettings = null;
     setSiteSettings(prev => {
       const merged = {
         ...prev,
@@ -2084,10 +2085,14 @@ export const StateProvider = ({ children }) => {
         },
         promoCodes: newSettings?.promoCodes || prev?.promoCodes || []
       };
+      mergedSettings = merged;
 
       if (typeof window !== 'undefined') {
         try {
           localStorage.setItem('site_settings_live', JSON.stringify(merged));
+          if (merged.metaPixelId) {
+            localStorage.setItem('meta_pixel_id', merged.metaPixelId);
+          }
           window.dispatchEvent(new CustomEvent('site_settings_updated', { detail: merged }));
           window.dispatchEvent(new CustomEvent('bdigi_promotions_sync', { detail: merged }));
           if ('BroadcastChannel' in window) {
@@ -2101,7 +2106,17 @@ export const StateProvider = ({ children }) => {
       return merged;
     });
 
-    await saveCmsConfigToSupabase('site_settings', newSettings);
+    const settingsToSave = mergedSettings || newSettings;
+    await saveCmsConfigToSupabase('site_settings', settingsToSave);
+    if (newSettings.metaPixelId !== undefined) {
+      await saveCmsConfigToSupabase('meta_pixel_id', newSettings.metaPixelId);
+    }
+    if (newSettings.googleAnalyticsId !== undefined) {
+      await saveCmsConfigToSupabase('google_analytics_id', newSettings.googleAnalyticsId);
+    }
+    if (newSettings.tiktokPixelId !== undefined) {
+      await saveCmsConfigToSupabase('tiktok_pixel_id', newSettings.tiktokPixelId);
+    }
     if (newSettings.promotions) {
       await saveCmsConfigToSupabase('promotions', newSettings.promotions);
     }

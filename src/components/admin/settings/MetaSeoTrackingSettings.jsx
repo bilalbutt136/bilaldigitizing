@@ -16,14 +16,17 @@ import {
   ExternalLink,
   Layers,
   Activity,
-  Code
+  Code,
+  Eye
 } from 'lucide-react';
+import { VisitorDetailsModal } from '../tracking/VisitorDetailsModal';
 
 export const MetaSeoTrackingSettings = () => {
   const { siteSettings = {}, updateSiteSettings, showToast } = useAppState();
 
   const [activeSubTab, setActiveSubTab] = useState('tracking'); // 'tracking' | 'seo' | 'logs'
   const [isSaving, setIsSaving] = useState(false);
+  const [selectedEvent, setSelectedEvent] = useState(null);
 
   // Tracking IDs Local State
   const [metaPixelId, setMetaPixelId] = useState(siteSettings?.metaPixelId || '');
@@ -73,18 +76,14 @@ export const MetaSeoTrackingSettings = () => {
 
   const handleSimulatePageVisit = async () => {
     try {
-      const { logTrackingEventToSupabase } = await import('../../../services/supabaseService');
-      const testEvent = {
-        eventName: 'PageView',
-        userRole: 'Platform Admin',
-        source: 'Visitor browser',
-        trafficSource: 'www.google.com',
-        value: '—',
-        pagePath: '/admin/meta-pixel'
-      };
-      await logTrackingEventToSupabase(testEvent);
-      if (showToast) showToast('Test PageView event simulated and recorded in database!', 'success');
-      loadEvents();
+      const { trackMetaEvent } = await import('../../common/MetaPixelTracker');
+      trackMetaEvent('PageView', {
+        page_title: 'Live Studio Verification',
+        content_name: 'Simulated Admin Verification',
+        value: '—'
+      }, 'Platform Admin (Simulation)');
+      if (showToast) showToast('⚡ PageView simulated and recorded in live database with full telemetry!', 'success');
+      setTimeout(loadEvents, 800);
     } catch (err) {
       console.error('Simulate event error:', err);
     }
@@ -607,50 +606,99 @@ export const MetaSeoTrackingSettings = () => {
             </div>
           ) : (
             <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '850px' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '950px' }}>
                 <thead>
                   <tr style={{ borderBottom: '1.5px solid var(--border-color, #e2e8f0)' }}>
                     <th style={{ padding: '0.85rem 1rem', color: '#64748b', fontWeight: 800, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>WHEN</th>
                     <th style={{ padding: '0.85rem 1rem', color: '#64748b', fontWeight: 800, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>WHO</th>
                     <th style={{ padding: '0.85rem 1rem', color: '#64748b', fontWeight: 800, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>WHAT HAPPENED</th>
-                    <th style={{ padding: '0.85rem 1rem', color: '#64748b', fontWeight: 800, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>SOURCE</th>
-                    <th style={{ padding: '0.85rem 1rem', color: '#64748b', fontWeight: 800, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>TRAFFIC SOURCE</th>
-                    <th style={{ padding: '0.85rem 1rem', color: '#64748b', fontWeight: 800, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>VALUE</th>
+                    <th style={{ padding: '0.85rem 1rem', color: '#64748b', fontWeight: 800, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>DEVICE / OS</th>
+                    <th style={{ padding: '0.85rem 1rem', color: '#64748b', fontWeight: 800, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>TRAFFIC CHANNEL</th>
+                    <th style={{ padding: '0.85rem 1rem', color: '#64748b', fontWeight: 800, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>LOCATION</th>
                     <th style={{ padding: '0.85rem 1rem', color: '#64748b', fontWeight: 800, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>PAGE</th>
+                    <th style={{ padding: '0.85rem 1rem', color: '#64748b', fontWeight: 800, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.04em', textAlign: 'right' }}>DETAILS</th>
                   </tr>
                 </thead>
                 <tbody>
                   {events.map((ev, idx) => {
                     const timeDisplay = formatEventTime(ev.event_time || ev.created_at);
-                    const whoDisplay = ev.user_role || (ev.user_email ? `Client (${ev.user_email})` : 'Platform Admin');
+                    const tel = ev.telemetry || {};
+                    const whoDisplay = ev.user_role || (ev.user_email ? `Customer (${ev.user_email})` : 'Guest Visitor');
                     const whatDisplay = ev.event_name || 'PageView';
-                    const sourceDisplay = ev.source || 'Visitor browser';
-                    const trafficDisplay = ev.traffic_source || 'www.google.com';
-                    const valueDisplay = ev.value !== undefined && ev.value !== null && ev.value !== '' ? ev.value : '—';
+                    
+                    const deviceDisplay = tel.os ? `${tel.browser || 'Browser'} / ${tel.os} (${tel.deviceType || 'Desktop'})` : (ev.source || 'Desktop');
+                    const trafficChannel = tel.trafficChannel || (ev.traffic_source?.startsWith('{') ? 'Direct' : (ev.traffic_source || 'Direct'));
+                    const locationDisplay = tel.city && tel.city !== 'Unknown' 
+                      ? `${tel.city}, ${tel.country || ''}` 
+                      : (tel.country && tel.country !== 'Unknown' ? tel.country : '—');
                     const pageDisplay = ev.page_path || ev.page_url || '/';
+                    const isReturning = Boolean(tel.isReturningVisitor || (tel.visitCount && tel.visitCount > 1));
 
                     return (
                       <tr key={ev.id || idx} style={{ borderBottom: '1px solid var(--border-color, #e2e8f0)', background: 'transparent' }}>
                         <td style={{ padding: '1rem', fontSize: '0.84rem', color: '#64748b', whiteSpace: 'nowrap' }}>
                           {timeDisplay}
                         </td>
-                        <td style={{ padding: '1rem', fontSize: '0.84rem', color: '#64748b' }}>
-                          {whoDisplay}
+                        <td style={{ padding: '1rem', fontSize: '0.84rem' }}>
+                          <div style={{ fontWeight: 600, color: 'var(--color-text-primary, #0f172a)' }}>{whoDisplay}</div>
+                          {isReturning && (
+                            <span style={{ display: 'inline-block', fontSize: '0.68rem', fontWeight: 700, padding: '1px 6px', borderRadius: '4px', background: '#fef3c7', color: '#b45309', marginTop: '2px' }}>
+                              Visit #{tel.visitCount}
+                            </span>
+                          )}
                         </td>
-                        <td style={{ padding: '1rem', fontSize: '0.88rem', fontWeight: 800, color: 'var(--color-text-primary, #0f172a)' }}>
-                          {whatDisplay}
+                        <td style={{ padding: '1rem', fontSize: '0.88rem' }}>
+                          <span style={{ 
+                            display: 'inline-block', 
+                            padding: '3px 8px', 
+                            borderRadius: '6px', 
+                            fontWeight: 700, 
+                            fontSize: '0.75rem',
+                            background: whatDisplay === 'PageView' ? '#e0f2fe' : (whatDisplay === 'InitiateCheckout' || whatDisplay === 'Purchase' ? '#dcfce7' : '#f3e8ff'),
+                            color: whatDisplay === 'PageView' ? '#0369a1' : (whatDisplay === 'InitiateCheckout' || whatDisplay === 'Purchase' ? '#15803d' : '#7e22ce')
+                          }}>
+                            {whatDisplay}
+                          </span>
                         </td>
-                        <td style={{ padding: '1rem', fontSize: '0.84rem', color: '#64748b' }}>
-                          {sourceDisplay}
+                        <td style={{ padding: '1rem', fontSize: '0.82rem', color: '#64748b' }}>
+                          {deviceDisplay}
                         </td>
-                        <td style={{ padding: '1rem', fontSize: '0.84rem', color: '#64748b' }}>
-                          {trafficDisplay}
+                        <td style={{ padding: '1rem', fontSize: '0.82rem' }}>
+                          <span style={{ fontWeight: 600, color: 'var(--color-text-primary, #334155)' }}>{trafficChannel}</span>
+                          {tel.fbclid && (
+                            <span style={{ display: 'block', fontSize: '0.68rem', color: '#2563eb', fontWeight: 700 }}>Meta Ad Click</span>
+                          )}
+                          {tel.utmCampaign && (
+                            <span style={{ display: 'block', fontSize: '0.68rem', color: '#64748b' }}>Campaign: {tel.utmCampaign}</span>
+                          )}
                         </td>
-                        <td style={{ padding: '1rem', fontSize: '0.84rem', color: '#64748b' }}>
-                          {valueDisplay}
+                        <td style={{ padding: '1rem', fontSize: '0.82rem', color: '#64748b' }}>
+                          {locationDisplay}
                         </td>
-                        <td style={{ padding: '1rem', fontSize: '0.84rem', color: '#64748b', fontFamily: 'monospace' }}>
+                        <td style={{ padding: '1rem', fontSize: '0.82rem', color: '#64748b', fontFamily: 'monospace' }}>
                           {pageDisplay}
+                        </td>
+                        <td style={{ padding: '1rem', textAlign: 'right' }}>
+                          <button
+                            type="button"
+                            onClick={() => setSelectedEvent(ev)}
+                            style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '0.35rem',
+                              padding: '0.45rem 0.75rem',
+                              borderRadius: '8px',
+                              border: '1px solid var(--border-color, #cbd5e1)',
+                              background: 'var(--color-surface, #ffffff)',
+                              color: 'var(--color-text-primary, #0f172a)',
+                              fontSize: '0.78rem',
+                              fontWeight: 700,
+                              cursor: 'pointer',
+                              boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
+                            }}
+                          >
+                            <Eye size={13} style={{ color: '#2563eb' }} /> View Details
+                          </button>
                         </td>
                       </tr>
                     );
@@ -661,6 +709,14 @@ export const MetaSeoTrackingSettings = () => {
           )}
 
         </div>
+      )}
+
+      {/* Interactive Visitor Details Modal */}
+      {selectedEvent && (
+        <VisitorDetailsModal
+          event={selectedEvent}
+          onClose={() => setSelectedEvent(null)}
+        />
       )}
 
     </div>
