@@ -223,7 +223,7 @@ export const CustomerDashboard = () => {
   React.useEffect(() => {
     setMounted(true);
     if (isAuthInitialized && !authUser && !currentUser) {
-      navigate('/login');
+      navigate('/login?redirect=/client-portal', { replace: true });
     }
   }, [isAuthInitialized, authUser, currentUser, navigate]);
 

@@ -14,36 +14,55 @@ export function ClientPortalClient() {
     authUser, 
     mobileMode, 
     currentView,
-    setCurrentView,
-    setIsAuthModalOpen,
-    setAuthModalMode
+    setCurrentView
   } = useAppState();
+
+  const isUserLoggedIn = Boolean(
+    isAuthenticated || 
+    authUser?.email || 
+    (typeof window !== 'undefined' && (() => {
+      try {
+        const saved = localStorage.getItem('bdigi_auth_user');
+        return Boolean(saved && JSON.parse(saved)?.email);
+      } catch { return false; }
+    })())
+  );
 
   useEffect(() => {
     if (!isAuthInitialized) return;
 
-    let isUserLoggedIn = isAuthenticated || !!authUser;
-    if (!isUserLoggedIn && typeof window !== 'undefined') {
-      try {
-        const saved = localStorage.getItem('bdigi_auth_user');
-        if (saved && JSON.parse(saved)?.email) {
-          isUserLoggedIn = true;
-        }
-      } catch {}
-    }
-
     if (!isUserLoggedIn) {
-      setAuthModalMode('login');
-      setIsAuthModalOpen(true);
       if (currentView !== 'public') setCurrentView('public');
-      navigate('/');
+      navigate('/login?redirect=/client-portal', { replace: true });
     } else {
       if (currentView !== 'customer') setCurrentView('customer');
       if (typeof document !== 'undefined') {
         document.cookie = 'bdigi_auth=true; path=/; max-age=31536000; SameSite=Lax';
       }
     }
-  }, [isAuthInitialized, isAuthenticated, authUser, currentView, setCurrentView, setIsAuthModalOpen, setAuthModalMode, navigate]);
+  }, [isAuthInitialized, isUserLoggedIn, currentView, setCurrentView, navigate]);
+
+  if (!isAuthInitialized || !isUserLoggedIn) {
+    return (
+      <div style={{
+        minHeight: '60vh',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '2rem'
+      }}>
+        <div style={{
+          width: '36px',
+          height: '36px',
+          border: '3px solid #e2e8f0',
+          borderTopColor: 'var(--color-primary, #ea580c)',
+          borderRadius: '50%',
+          animation: 'spin 0.8s linear infinite'
+        }} />
+      </div>
+    );
+  }
 
   if (mobileMode === 'app') {
     return (

@@ -650,7 +650,6 @@ export const HeaderNav = () => {
                 onClick={() => {
                   setAuthModalMode('login');
                   setIsAuthModalOpen(true);
-                  navigate('/login');
                 }}
               >
                 <User size={14} /> Client Login
@@ -1191,7 +1190,6 @@ export const HeaderNav = () => {
                       setAuthModalMode('login');
                       setIsAuthModalOpen(true);
                       setIsMobileMenuOpen(false);
-                      navigate('/login');
                     }}
                     style={{
                       background: isDark ? '#1e293b' : '#f8fafc',
@@ -1217,7 +1215,6 @@ export const HeaderNav = () => {
                       setAuthModalMode('signup');
                       setIsAuthModalOpen(true);
                       setIsMobileMenuOpen(false);
-                      navigate('/signup');
                     }}
                     style={{
                       background: 'linear-gradient(135deg, var(--color-secondary) 0%, var(--color-primary) 100%)',

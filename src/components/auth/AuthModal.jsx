@@ -253,7 +253,7 @@ export const AuthModal = ({ isStandalonePage = false, initialMode = null }) => {
           setActiveCustomerTab('dashboard');
         }
         navigate('/client-portal');
-        if (orderWizardInitialData || authModalTarget === 'customer') {
+        if (orderWizardInitialData) {
           setTimeout(() => {
             if (openOrderWizard) openOrderWizard();
           }, 150);
@@ -307,7 +307,7 @@ export const AuthModal = ({ isStandalonePage = false, initialMode = null }) => {
         setActiveCustomerTab('dashboard');
       }
       navigate('/client-portal');
-      if (orderWizardInitialData || authModalTarget === 'customer') {
+      if (orderWizardInitialData) {
         setTimeout(() => {
           if (openOrderWizard) openOrderWizard();
         }, 150);
@@ -333,7 +333,7 @@ export const AuthModal = ({ isStandalonePage = false, initialMode = null }) => {
           setActiveCustomerTab('dashboard');
         }
         navigate('/client-portal');
-        if (orderWizardInitialData || authModalTarget === 'customer') {
+        if (orderWizardInitialData) {
           setTimeout(() => {
             if (openOrderWizard) openOrderWizard();
           }, 150);
