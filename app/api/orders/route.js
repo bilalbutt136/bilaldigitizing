@@ -377,10 +377,26 @@ export async function POST(request) {
         if (targetOrder && (targetOrder.client_email || '').toLowerCase().trim() !== (user.email || '').toLowerCase().trim()) {
           return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
         }
+
+        // Security check: non-admin clients can only perform legitimate client lifecycle actions
+        const allowedClientTransitions = ['completed', 'revision', 'revision_requested', 'cancelled'];
+        if (newStatus && !allowedClientTransitions.includes(newStatus)) {
+          const isCurrentlyPaid = targetOrder?.payment_status === 'paid';
+          if (!isCurrentlyPaid && (newStatus === 'in_progress' || extraData?.paymentStatus === 'paid' || extraData?.payment_status === 'paid')) {
+            return NextResponse.json({ error: 'Unauthorized status transition. Unpaid orders cannot be moved to in_progress directly.' }, { status: 403 });
+          }
+        }
       }
 
-      const payStatus = extraData?.paymentStatus || extraData?.payment_status || (newStatus === 'in_progress' ? 'paid' : null);
-      let resolvedStatus = newStatus || 'in_progress';
+      // Only administrators can directly override payment_status via updateStatus API
+      let payStatus = null;
+      if (isAdmin) {
+        payStatus = extraData?.paymentStatus || extraData?.payment_status || (newStatus === 'in_progress' ? 'paid' : null);
+      } else if (targetOrder?.payment_status === 'paid') {
+        payStatus = 'paid';
+      }
+
+      let resolvedStatus = newStatus || targetOrder?.status || 'in_progress';
       if (payStatus === 'paid' && (resolvedStatus === 'awaiting_payment' || resolvedStatus === 'pending_payment' || resolvedStatus === 'submitted' || !resolvedStatus)) {
         resolvedStatus = 'in_progress';
       }

@@ -18,26 +18,17 @@ import {
   Layers,
   Package,
   User,
-  Settings,
-  LogOut,
-  Menu,
   Sun,
   Moon,
   PenTool,
   X,
-  CreditCard,
   Zap,
-  AlertCircle,
   PackageCheck,
   Plus,
   Palette,
-  Bell,
   ClipboardList,
   Home,
-  Download,
-  Smartphone,
   Sparkles,
-  Check,
   ArrowRight,
   Receipt,
   MessageSquare
@@ -73,7 +64,6 @@ export const CustomerDashboard = () => {
     showToast,
     logout,
     theme,
-    toggleTheme,
     setTheme,
     colorTheme,
     setColorTheme,
@@ -89,7 +79,6 @@ export const CustomerDashboard = () => {
     dynamicPricingTiers = []
   } = useAppState();
 
-  const unreadNotifCount = unreadNotificationsCount;
   const isDark = theme === 'dark';
 
   const [activeTab, setActiveTabLocal] = useState(() => {
@@ -256,7 +245,7 @@ export const CustomerDashboard = () => {
         const unreadTotal = (data.conversations || []).reduce((acc, c) => acc + (c.unread_client_count || 0), 0);
         setUnreadSupportCount(unreadTotal);
       }
-    } catch (e) {
+    } catch {
       // silent
     }
   }, [userEmail]);
@@ -307,7 +296,7 @@ export const CustomerDashboard = () => {
 
     loadNotificationsCount();
 
-    const unsubscribe = subscribeToNotificationListeners((payload) => {
+    const unsubscribe = subscribeToNotificationListeners((_payload) => {
       if (!isMounted) return;
       refreshNotifications();
     });
@@ -3159,7 +3148,7 @@ export const CustomerDashboard = () => {
         isOpen={isMobileOrderOpen}
         onClose={() => setIsMobileOrderOpen(false)}
         defaultService={mobileOrderDefaultService}
-        onOrderCreated={(newOrd) => {
+        onOrderCreated={(_newOrd) => {
           setActiveTab('orders');
         }}
       />

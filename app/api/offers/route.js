@@ -628,6 +628,25 @@ export async function POST(request) {
       const conversationId = offer.conversation_id || offer.thread_id || 'general-support';
       const cleanEmail = (offer.client_email || user?.email || '').toLowerCase().trim();
 
+      // Security check: non-admins can only sync if the order is already verified as paid in the database
+      if (!isAdmin) {
+        if (!targetOrderId) {
+          return NextResponse.json({ error: 'Unauthorized. Offer has no associated order.' }, { status: 403 });
+        }
+        const { data: dbOrder } = await supabase
+          .from('orders')
+          .select('id, payment_status, client_email')
+          .or(`id.eq.${targetOrderId},id.eq.#${targetOrderId}`)
+          .maybeSingle();
+
+        const isOrderPaid = dbOrder?.payment_status === 'paid';
+        if (!isOrderPaid) {
+          return NextResponse.json({ 
+            error: 'Unauthorized. Unpaid offers cannot be marked as paid directly. Please complete checkout.' 
+          }, { status: 403 });
+        }
+      }
+
       // 1. Update order
       if (targetOrderId) {
         try {

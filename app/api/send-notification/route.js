@@ -152,6 +152,46 @@ export async function POST(req) {
       });
     }
 
+    // ==========================================================================
+    // HANDLER: NEW MESSAGE NOTIFICATION
+    // ==========================================================================
+    if (event === 'new_message' || event === 'message') {
+      const data = isSupabaseDbWebhook ? record : payload;
+
+      const messageText = data.text || data.message || data.content || '';
+      const clientEmail = (data.client_email || data.clientEmail || '').toLowerCase().trim();
+      const sender = String(data.sender || 'client').toLowerCase();
+      const senderName = data.sender_name || data.senderName || (sender === 'admin' ? 'Studio Support' : 'Customer');
+      const conversationId = data.conversation_id || data.conversationId || '';
+      const orderId = data.order_id || data.orderId || null;
+      const attachments = Array.isArray(data.attachments) ? data.attachments : [];
+
+      const channel = conversationId.startsWith('support-') || conversationId === 'general-support'
+        ? '24/7 Live Support'
+        : (orderId ? `Order #${orderId}` : 'Studio Direct Inbox');
+
+      const { sendNotificationEmail } = await import('../../../src/lib/emailService.js');
+      const result = await sendNotificationEmail({
+        type: 'NEW_MESSAGE',
+        orderId,
+        clientEmail,
+        clientName: senderName,
+        messageText,
+        senderName,
+        recipientEmail: sender === 'admin' ? clientEmail : null,
+        channel,
+        attachments
+      });
+
+      return NextResponse.json({
+        success: result?.success !== false,
+        event: 'new_message',
+        recipient: result?.adminMessage?.recipient || result?.recipient,
+        conversationId,
+        error: result?.error || null
+      });
+    }
+
     return NextResponse.json(
       { success: false, error: `Unrecognized notification event type: "${event}". Expected "new_message" or "new_order".` },
       { status: 400 }

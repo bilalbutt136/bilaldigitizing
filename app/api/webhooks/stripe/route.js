@@ -44,8 +44,10 @@ export async function POST(req) {
     const session = event.data.object;
     const metadata = session.metadata || {};
 
-    // Extract offer_id and thread_id
+    // Extract offer_id, order_id, type and thread_id
     const offerId = metadata.offer_id || metadata.offerId || null;
+    const orderId = metadata.orderId || metadata.order_id || null;
+    const type = metadata.type || null;
     const threadId = metadata.thread_id || metadata.threadId || metadata.conversation_id || metadata.conversationId || null;
     const clientEmail = (metadata.clientEmail || session.customer_details?.email || '').toLowerCase().trim();
     const clientName = session.customer_details?.name || metadata.client_name || 'Client';
@@ -53,9 +55,9 @@ export async function POST(req) {
     const nowIso = new Date().toISOString();
 
     try {
-      // 1. Fetch existing offer details if available
-      let matchedOffer = null;
       if (offerId) {
+        // 1. Fetch existing offer details if available
+        let matchedOffer = null;
         try {
           const { data: offData } = await supabase
             .from('custom_offers')
@@ -77,11 +79,10 @@ export async function POST(req) {
             }
           } catch {}
         }
-      }
 
-      // 2. Generate new production order ID
-      const rawOrderNum = Math.random().toString(36).substring(2, 7).toUpperCase();
-      const generatedOrderId = `ORD-${Date.now().toString().slice(-4)}${rawOrderNum}`;
+        // 2. Generate new production order ID
+        const rawOrderNum = Math.random().toString(36).substring(2, 7).toUpperCase();
+        const generatedOrderId = `ORD-${Date.now().toString().slice(-4)}${rawOrderNum}`;
 
       const offerTitle = matchedOffer?.title || metadata.title || 'Custom Design Order';
       const svcCategory = matchedOffer?.service_type || 'Embroidery Digitizing';
@@ -224,7 +225,62 @@ export async function POST(req) {
         console.warn('[Stripe Webhook] Email notification notice:', emailErr?.message);
       }
 
-      console.log(`[Stripe Webhook] Successfully processed session ${session.id} for offer ${offerId}`);
+        console.log(`[Stripe Webhook] Successfully processed session ${session.id} for offer ${offerId}`);
+      } else if (orderId && type !== 'deposit') {
+        // Direct standard order payment
+        const { error: ordUpdateErr } = await supabase
+          .from('orders')
+          .update({
+            payment_status: 'paid',
+            status: 'in_progress',
+            updated_at: nowIso
+          })
+          .eq('id', orderId);
+
+        if (ordUpdateErr) {
+          console.error('[Stripe Webhook] Error updating order status:', ordUpdateErr.message);
+          throw ordUpdateErr;
+        }
+
+        // Log transaction
+        await supabase.from('transactions').insert([{
+          client_email: clientEmail,
+          type: 'order_payment',
+          amount: amountInDollars,
+          payment_method: 'Stripe Card',
+          description: `Stripe Direct Order Payment for Order #${String(orderId).slice(0, 8)} ($${amountInDollars.toFixed(2)})`
+        }]);
+
+        console.log(`[Stripe Webhook] Successfully marked order ${orderId} as Paid.`);
+      } else if (type === 'deposit' && clientEmail && amountInDollars > 0) {
+        // Studio Wallet deposit top-up
+        const { data: clientRow } = await supabase
+          .from('clients')
+          .select('id, wallet_balance')
+          .ilike('email', clientEmail)
+          .maybeSingle();
+
+        if (clientRow) {
+          const newBal = parseFloat((parseFloat(clientRow.wallet_balance || 0) + amountInDollars).toFixed(2));
+          await supabase
+            .from('clients')
+            .update({ wallet_balance: newBal, updated_at: nowIso })
+            .eq('id', clientRow.id);
+
+          await supabase.from('transactions').insert([{
+            user_id: clientRow.id,
+            client_email: clientEmail,
+            type: 'deposit',
+            amount: amountInDollars,
+            payment_method: 'Stripe Card',
+            description: `Studio Wallet Deposit Top-up via Stripe (+ $${amountInDollars.toFixed(2)})`
+          }]);
+
+          console.log(`[Stripe Webhook] Credited $${amountInDollars} to wallet for ${clientEmail}. New balance: $${newBal}`);
+        } else {
+          console.warn(`[Stripe Webhook] Client not found for deposit: ${clientEmail}`);
+        }
+      }
     } catch (processErr) {
       console.error('[Stripe Webhook] Processing error:', processErr);
       return NextResponse.json({ error: 'Webhook processing error', details: processErr.message }, { status: 500 });

@@ -17,16 +17,10 @@ export function ClientPortalClient() {
     setCurrentView
   } = useAppState();
 
-  const isUserLoggedIn = Boolean(
-    isAuthenticated || 
-    authUser?.email || 
-    (typeof window !== 'undefined' && (() => {
-      try {
-        const saved = localStorage.getItem('bdigi_auth_user');
-        return Boolean(saved && JSON.parse(saved)?.email);
-      } catch { return false; }
-    })())
-  );
+  // Once backend auth resolves, strictly enforce authenticated backend session (Rule 3: Auth Enforcement)
+  const isUserLoggedIn = isAuthInitialized
+    ? Boolean(isAuthenticated && authUser?.email)
+    : Boolean(isAuthenticated || authUser?.email);
 
   useEffect(() => {
     if (!isAuthInitialized) return;

@@ -120,17 +120,17 @@ const nextConfig = {
       },
       {
         source: '/services',
-        destination: '/#sew-outs',
+        destination: '/#services',
         permanent: true,
       },
       {
         source: '/formats',
-        destination: '/#sew-outs',
+        destination: '/#services',
         permanent: true,
       },
       {
         source: '/faq',
-        destination: '/#faqs',
+        destination: '/faqs',
         permanent: true,
       },
     ];
