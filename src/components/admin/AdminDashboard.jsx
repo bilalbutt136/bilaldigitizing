@@ -66,22 +66,31 @@ export const AdminDashboard = () => {
   const [activeTabState, setActiveTabState] = useState(activeAdminTab || 'dashboard');
   const [pendingWorkersCount, setPendingWorkersCount] = useState(0);
   const [unreadChatCount, setUnreadChatCount] = useState(0);
+  const [unreadSupportCount, setUnreadSupportCount] = useState(0);
 
-  // Sync unread chat messages for admin badge
+  // Sync unread chat & support desk messages for admin badges
   React.useEffect(() => {
     const fetchUnreadChats = async () => {
       try {
-        const res = await fetch('/api/chat/conversations?filter=unread');
-        const data = await res.json();
-        if (data?.conversations) {
-          const totalUnread = data.conversations.reduce((sum, c) => sum + (c.unread_admin_count || 0), 0);
-          setUnreadChatCount(totalUnread);
+        const [inboxRes, supportRes] = await Promise.all([
+          fetch('/api/chat/conversations?filter=unread&channel=inbox'),
+          fetch('/api/chat/conversations?filter=unread&channel=support')
+        ]);
+        const [inboxData, supportData] = await Promise.all([inboxRes.json(), supportRes.json()]);
+
+        if (inboxData?.conversations) {
+          const inboxTotal = inboxData.conversations.reduce((sum, c) => sum + (c.unread_admin_count || 0), 0);
+          setUnreadChatCount(inboxTotal);
+        }
+        if (supportData?.conversations) {
+          const supportTotal = supportData.conversations.reduce((sum, c) => sum + (c.unread_admin_count || 0), 0);
+          setUnreadSupportCount(supportTotal);
         }
       } catch {}
     };
 
     fetchUnreadChats();
-    const interval = setInterval(fetchUnreadChats, 12000);
+    const interval = setInterval(fetchUnreadChats, 8000);
     return () => clearInterval(interval);
   }, []);
 
@@ -252,7 +261,8 @@ export const AdminDashboard = () => {
           id: 'support', 
           label: '24/7 Support Desk', 
           icon: Headphones, 
-          badge: null
+          badge: unreadSupportCount > 0 ? unreadSupportCount : null,
+          isUnread: unreadSupportCount > 0
         },
         { id: 'clients', label: 'Accounts & Wallets', icon: Users, badge: safeClients.length },
         { 

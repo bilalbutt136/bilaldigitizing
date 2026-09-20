@@ -27,6 +27,8 @@ export const ClientSidebar = ({
   patchCount = 0,
   unreadOrdersCount = 0,
   unreadNotifCount = 0,
+  unreadInboxCount = 0,
+  unreadSupportCount = 0,
   unpaidCount = 0,
   onOpenDepositModal,
   onOpenLiveSupport,
@@ -62,13 +64,13 @@ export const ClientSidebar = ({
           id: 'inbox', 
           label: 'Inbox & Offers', 
           icon: MessageSquare, 
-          badge: null
+          badge: unreadInboxCount > 0 ? unreadInboxCount : null
         },
         { 
           id: 'support', 
           label: '24/7 Live Support', 
           icon: Headphones, 
-          badge: null
+          badge: unreadSupportCount > 0 ? unreadSupportCount : null
         },
         {
           id: 'notifications',

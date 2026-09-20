@@ -58,8 +58,11 @@ import {
   EyeOff,
   AlertCircle,
   Loader2,
-  Building
+  Building,
+  Headphones
 } from 'lucide-react';
+import CustomerSupportChat from '../customer/CustomerSupportChat';
+import { playMessageChime, unlockAudioContext } from '../../utils/audioNotification';
 import { 
   fetchNotificationsFromSupabase, 
   markNotificationAsReadInSupabase, 
@@ -85,7 +88,6 @@ export const BDigitizingMobileApp = () => {
     login,
     register,
     loginWithGoogle,
-    loginWithApple,
     requestPasswordReset,
     openOrderTrackerDrawer,
     setSelectedOrderForDrawer,
@@ -119,13 +121,14 @@ export const BDigitizingMobileApp = () => {
   const mobilePhone = (mobileCi.phone !== undefined ? mobileCi.phone : (siteSettings?.contactPhone || siteSettings?.supportPhone || '')).trim();
   const mobileEmail = (mobileCi.email !== undefined ? mobileCi.email : (siteSettings?.supportEmail || siteSettings?.contactEmail || '')).trim();
 
-  // Active Tab: 'home' | 'categories' | 'orders' | 'profile' | 'login' | 'signup' | 'auth'
+  const validTabs = ['home', 'categories', 'orders', 'profile', 'chat', 'support', 'inbox', 'login', 'signup', 'auth'];
+
+  // Active Tab: 'home' | 'categories' | 'orders' | 'profile' | 'chat' | 'support' | 'inbox' | 'login' | 'signup' | 'auth'
   const getInitialMobileTab = () => {
     if (typeof window !== 'undefined') {
       try {
         const urlParams = new URLSearchParams(window.location.search);
         const tabParam = urlParams.get('tab');
-        const validTabs = ['home', 'categories', 'orders', 'profile', 'login', 'signup', 'auth'];
         if (tabParam && validTabs.includes(tabParam)) return tabParam;
         
         const storedTab = localStorage.getItem('bdigi_mobile_active_tab');
@@ -136,9 +139,61 @@ export const BDigitizingMobileApp = () => {
   };
 
   const [mobileTab, setMobileTabState] = useState(getInitialMobileTab);
+  const [mobileChatMode, setMobileChatMode] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('tab') === 'inbox') return 'inbox';
+    }
+    return 'support';
+  }); // 'support' | 'inbox'
+
+  const [unreadInboxCount, setUnreadInboxCount] = useState(0);
+  const [unreadSupportCount, setUnreadSupportCount] = useState(0);
+
+  const fetchMobileChatUnread = React.useCallback(async () => {
+    const email = (activeUser?.email || '').toLowerCase().trim();
+    if (!email) return;
+    try {
+      const [resInbox, resSupport] = await Promise.all([
+        fetch(`/api/chat/conversations?filter=unread&channel=inbox&email=${encodeURIComponent(email)}`),
+        fetch(`/api/chat/conversations?filter=unread&channel=support&email=${encodeURIComponent(email)}`)
+      ]);
+      if (resInbox.ok) {
+        const data = await resInbox.json();
+        const unreadTotal = (data.conversations || []).reduce((acc, c) => acc + (c.unread_client_count || 0), 0);
+        setUnreadInboxCount(unreadTotal);
+      }
+      if (resSupport.ok) {
+        const data = await resSupport.json();
+        const unreadTotal = (data.conversations || []).reduce((acc, c) => acc + (c.unread_client_count || 0), 0);
+        setUnreadSupportCount(unreadTotal);
+      }
+    } catch {}
+  }, [activeUser?.email]);
+
+  useEffect(() => {
+    fetchMobileChatUnread();
+    const interval = setInterval(fetchMobileChatUnread, 15000);
+    return () => clearInterval(interval);
+  }, [fetchMobileChatUnread]);
+
+  useEffect(() => {
+    if (mobileTab === 'chat' || mobileTab === 'support' || mobileTab === 'inbox') {
+      if (mobileTab === 'inbox' || mobileChatMode === 'inbox') {
+        setUnreadInboxCount(0);
+      } else {
+        setUnreadSupportCount(0);
+      }
+    }
+  }, [mobileTab, mobileChatMode]);
 
   const setMobileTab = (newTab) => {
     setMobileTabState(newTab);
+    if (newTab === 'support') {
+      setMobileChatMode('support');
+    } else if (newTab === 'inbox') {
+      setMobileChatMode('inbox');
+    }
     if (typeof window !== 'undefined') {
       try {
         localStorage.setItem('bdigi_mobile_active_tab', newTab);
@@ -263,7 +318,7 @@ export const BDigitizingMobileApp = () => {
         const stateTab = e?.state?.tab;
         const urlParams = new URLSearchParams(window.location.search);
         const tabParam = stateTab || urlParams.get('tab');
-        const validTabs = ['home', 'categories', 'orders', 'profile', 'login', 'signup', 'auth'];
+        const validTabs = ['home', 'categories', 'orders', 'profile', 'chat', 'support', 'inbox', 'login', 'signup', 'auth'];
         
         // If user is currently on any sub-tab and presses Android back key, return to home
         if (mobileTab !== 'home') {
@@ -588,26 +643,51 @@ export const BDigitizingMobileApp = () => {
     setIsPreferencesModalOpen(false);
   };
 
+  const handleToggleSound = (forcedVal = null) => {
+    const nextVal = forcedVal !== null ? forcedVal : !soundEnabled;
+    setSoundEnabled(nextVal);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('bdigi_audio_enabled', String(nextVal));
+    }
+    if (nextVal) {
+      unlockAudioContext();
+      playMessageChime(true);
+      showToast('🔊 Audio alert chime active & tested loud and clear!', 'success');
+    } else {
+      showToast('🔕 Audio alerts muted.', 'info');
+    }
+  };
+
+  const handleTestSound = () => {
+    unlockAudioContext();
+    playMessageChime(true);
+    showToast('🔔 Chime tested loud and clear!', 'success');
+  };
+
   const handleSubmitFeedback = async (e) => {
     e.preventDefault();
     if (!feedbackText.trim()) {
       showToast('Please write a brief feedback note.', 'error');
       return;
     }
-    setIsSubmittingFeedback(true);
+
     try {
-      await createNotificationInSupabase({
-        type: 'client_feedback',
-        title: `Feedback from ${userName} (${feedbackRating} Stars - ${feedbackCategory})`,
-        body: feedbackText.trim(),
-        user_email: userEmail || 'guest@bdigitizing.pro'
-      });
-      showToast('Thank you! Your feedback has been sent to our management team. ⭐', 'success');
+      setIsSubmittingFeedback(true);
+      if (typeof window !== 'undefined') {
+        const existing = JSON.parse(localStorage.getItem('bdigi_user_feedback') || '[]');
+        existing.push({
+          rating: feedbackRating,
+          text: feedbackText.trim(),
+          submittedAt: new Date().toISOString(),
+          user: activeUser?.email || 'Anonymous'
+        });
+        localStorage.setItem('bdigi_user_feedback', JSON.stringify(existing));
+      }
+      showToast('Thank you for your rating & feedback! ⭐️', 'success');
       setFeedbackText('');
       setIsFeedbackModalOpen(false);
-    } catch (err) {
-      showToast('Thank you for your rating! ⭐', 'success');
-      setIsFeedbackModalOpen(false);
+    } catch {
+      showToast('Could not save feedback. Please try again.', 'error');
     } finally {
       setIsSubmittingFeedback(false);
     }
@@ -641,12 +721,12 @@ export const BDigitizingMobileApp = () => {
       id: 'patch',
       category: 'patches',
       title: 'Custom Physical Patches',
-      subtitle: 'Embroidered, 3D Molded PVC Rubber, Woven & Leather Patches',
-      startingPrice: 'From $1.50 / pc',
+      subtitle: 'Sample Batch $4.50/pc (50–100 Pcs) • Wholesale Bulk $1.50/pc',
+      startingPrice: 'Starts $4.50 / pc',
       eta: '3–7 Days',
       icon: Package,
       color: '#0284c7',
-      tags: ['patches', 'pvc', 'embroidered', 'woven', 'leather', 'velcro', 'iron-on', 'sample']
+      tags: ['patches', 'pvc', 'embroidered', 'woven', 'leather', 'velcro', 'iron-on', 'sample', 'bulk']
     },
     {
       id: 'embroidery',
@@ -1347,49 +1427,6 @@ export const BDigitizingMobileApp = () => {
                       onAuthError={(err) => setAuthErrorMessage(err)}
                     />
                   </GoogleOAuthProvider>
-
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      setIsAuthLoading(true);
-                      try {
-                        const res = await loginWithApple();
-                        setIsAuthLoading(false);
-                        if (res?.success) {
-                          showToast('Welcome!', 'success');
-                          setMobileTab('home');
-                        } else if (res?.error) {
-                          setAuthErrorMessage('Apple Sign-In is in verification with Apple Developer. Please use Google or Email/Password.');
-                        }
-                      } catch (err) {
-                        setIsAuthLoading(false);
-                        setAuthErrorMessage(err?.message || 'Apple Sign-In failed.');
-                      }
-                    }}
-                    style={{
-                      width: '100%',
-                      height: '46px',
-                      padding: '0 1rem',
-                      borderRadius: '12px',
-                      border: '1.5px solid #000000',
-                      background: '#000000',
-                      color: '#ffffff',
-                      fontSize: '0.92rem',
-                      fontWeight: 700,
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '0.65rem',
-                      boxShadow: '0 2px 6px rgba(0,0,0,0.1)',
-                      boxSizing: 'border-box'
-                    }}
-                  >
-                    <svg width="18" height="18" viewBox="0 0 170 170" fill="#ffffff">
-                      <path d="M150.37 130.25c-2.45 5.66-5.35 10.87-8.71 15.66-4.58 6.53-8.33 11.05-11.22 13.56-4.48 4.12-9.28 6.23-14.42 6.35-3.69 0-8.14-1.05-13.32-3.18-5.19-2.12-9.97-3.17-14.34-3.17-4.58 0-9.49 1.05-14.75 3.17-5.26 2.13-9.5 3.24-12.74 3.35-4.35.13-9.16-1.9-14.42-6.08-3.69-3.08-7.56-7.85-11.6-14.29-6.3-9.98-11.19-21.72-14.68-35.21-3.48-13.49-5.23-25.59-5.23-36.29 0-14.39 3.52-26.31 10.56-35.76 7.04-9.45 15.82-14.28 26.34-14.49 4.36 0 9.27 1.13 14.73 3.39 5.46 2.26 9.23 3.44 11.32 3.55 1.74-.11 5.63-1.32 11.68-3.64 6.05-2.32 10.9-3.37 14.56-3.15 11.53.64 20.67 4.96 27.42 12.96-10.02 6.09-14.92 14.54-14.71 25.35.22 8.49 3.44 15.65 9.67 21.48 6.23 5.83 13.68 9.17 22.35 10.02-1.96 6.09-4.27 12.08-6.93 17.97zM119.22 33.15c0-6.73 2.45-13.06 7.35-18.99 4.9-5.93 10.9-9.74 18-11.43-.22 1.3-.43 2.5-.64 3.6-1.52 7.07-4.8 13.39-9.84 18.96-5.04 5.57-11.02 9.07-17.94 10.5-.43-.88-.86-1.76-1.28-2.64h-.65z"/>
-                    </svg>
-                    <span>Continue with Apple</span>
-                  </button>
                 </div>
               </>
             )}
@@ -1779,7 +1816,10 @@ export const BDigitizingMobileApp = () => {
                     Custom Patches
                   </div>
                   <span style={{ fontSize: '0.8rem', color: isDark ? '#38bdf8' : '#0284c7', fontWeight: 900, display: 'block', marginTop: '0.3rem' }}>
-                    From $1.50 / pc
+                    Starts $4.50 / pc
+                  </span>
+                  <span style={{ fontSize: '0.66rem', color: isDark ? '#94a3b8' : '#64748b', fontWeight: 700, display: 'block', marginTop: '0.1rem' }}>
+                    50 Pcs Min • Bulk $1.50
                   </span>
                 </div>
               </div>
@@ -3143,7 +3183,41 @@ export const BDigitizingMobileApp = () => {
             </div>
 
             <div style={{ background: isDark ? 'var(--color-surface, #111827)' : '#ffffff', borderRadius: '16px', border: isDark ? '1px solid var(--color-border, #334155)' : '1px solid #e2e8f0', overflow: 'hidden', boxShadow: isDark ? '0 2px 8px rgba(0,0,0,0.2)' : '0 2px 8px rgba(0,0,0,0.02)' }}>
-              {/* 24/7 Support Desk */}
+              {/* 24/7 Live Support Chat Desk */}
+              <div 
+                onClick={() => {
+                  setMobileChatMode('support');
+                  setMobileTab('chat');
+                }}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '0.9rem 1.15rem',
+                  borderBottom: isDark ? '1px solid var(--color-border, #334155)' : '1px solid #f1f5f9',
+                  cursor: 'pointer'
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+                  <div style={{ background: 'rgba(16, 185, 129, 0.12)', color: '#16a34a', padding: '0.45rem', borderRadius: '10px' }}>
+                    <Headphones size={18} />
+                  </div>
+                  <div>
+                    <span style={{ fontSize: '0.9rem', fontWeight: 800, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a', display: 'block' }}>24/7 Live Support Chat Desk</span>
+                    <span style={{ fontSize: '0.72rem', color: isDark ? 'var(--color-text-secondary, #94a3b8)' : '#64748b' }}>Real-time chat, instant replies & sound chimes</span>
+                  </div>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                  {unreadSupportCount > 0 && (
+                    <span style={{ background: '#ef4444', color: '#fff', fontSize: '0.62rem', fontWeight: 900, borderRadius: '9999px', padding: '0.1rem 0.45rem' }}>
+                      {unreadSupportCount} new
+                    </span>
+                  )}
+                  <ChevronRight size={18} style={{ color: isDark ? '#94a3b8' : '#94a3b8' }} />
+                </div>
+              </div>
+
+              {/* Direct WhatsApp & Studio Hotlines */}
               <div 
                 onClick={() => setIsSupportModalOpen(true)}
                 style={{
@@ -3156,12 +3230,12 @@ export const BDigitizingMobileApp = () => {
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
-                  <div style={{ background: 'rgba(16, 185, 129, 0.12)', color: '#16a34a', padding: '0.45rem', borderRadius: '10px' }}>
+                  <div style={{ background: 'rgba(59, 130, 246, 0.12)', color: '#3b82f6', padding: '0.45rem', borderRadius: '10px' }}>
                     <HelpCircle size={18} />
                   </div>
                   <div>
-                    <span style={{ fontSize: '0.9rem', fontWeight: 800, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a', display: 'block' }}>24/7 Support & Help Desk</span>
-                    <span style={{ fontSize: '0.72rem', color: isDark ? 'var(--color-text-secondary, #94a3b8)' : '#64748b' }}>WhatsApp direct, email helpdesk & FAQs</span>
+                    <span style={{ fontSize: '0.9rem', fontWeight: 800, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a', display: 'block' }}>WhatsApp Desk & Hotlines</span>
+                    <span style={{ fontSize: '0.72rem', color: isDark ? 'var(--color-text-secondary, #94a3b8)' : '#64748b' }}>Direct WhatsApp, phone hotline & FAQs</span>
                   </div>
                 </div>
                 <ChevronRight size={18} style={{ color: isDark ? '#94a3b8' : '#94a3b8' }} />
@@ -3388,6 +3462,171 @@ export const BDigitizingMobileApp = () => {
         </div>
       )}
 
+      {/* =========================================================================
+          SCREEN 6: 24/7 SUPPORT DESK & INBOX CHAT (LIVE REAL-TIME CONVERSATION)
+          ========================================================================= */}
+      {(mobileTab === 'chat' || mobileTab === 'support' || mobileTab === 'inbox') && (
+        <div style={{
+          display: 'flex',
+          flexDirection: 'column',
+          height: 'calc(100vh - 66px)',
+          maxHeight: 'calc(100vh - 66px)',
+          overflow: 'hidden',
+          background: isDark ? 'var(--color-background, #090d16)' : '#f8fafc',
+          position: 'relative'
+        }}>
+          {/* Header with channel switcher */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            padding: '0.65rem 0.85rem',
+            background: isDark ? 'var(--color-surface, #111827)' : '#ffffff',
+            borderBottom: isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid #cbd5e1',
+            gap: '0.5rem',
+            flexShrink: 0
+          }}>
+            <button
+              type="button"
+              onClick={() => setMobileTab('home')}
+              style={{
+                background: isDark ? 'var(--color-subtle, #1e293b)' : '#f1f5f9',
+                border: 'none',
+                borderRadius: '10px',
+                padding: '0.45rem',
+                color: isDark ? '#ffffff' : '#0f172a',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}
+              title="Return to Home"
+            >
+              <ArrowLeft size={18} />
+            </button>
+
+            {/* Channel Switcher Tabs */}
+            <div style={{
+              display: 'flex',
+              background: isDark ? 'var(--color-subtle, #1e293b)' : '#f1f5f9',
+              padding: '0.2rem',
+              borderRadius: '12px',
+              gap: '0.25rem',
+              flex: 1,
+              maxWidth: '310px'
+            }}>
+              <button
+                type="button"
+                onClick={() => setMobileChatMode('support')}
+                style={{
+                  flex: 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '0.35rem',
+                  padding: '0.45rem 0.4rem',
+                  borderRadius: '10px',
+                  border: 'none',
+                  fontSize: '0.78rem',
+                  fontWeight: mobileChatMode === 'support' ? 900 : 600,
+                  cursor: 'pointer',
+                  background: mobileChatMode === 'support' ? '#059669' : 'transparent',
+                  color: mobileChatMode === 'support' ? '#ffffff' : (isDark ? '#94a3b8' : '#64748b'),
+                  boxShadow: mobileChatMode === 'support' ? '0 2px 6px rgba(5, 150, 105, 0.3)' : 'none',
+                  transition: 'all 0.18s ease'
+                }}
+              >
+                <Headphones size={14} />
+                <span>24/7 Support</span>
+                {unreadSupportCount > 0 && (
+                  <span style={{
+                    background: '#ef4444',
+                    color: '#ffffff',
+                    fontSize: '0.55rem',
+                    fontWeight: 900,
+                    borderRadius: '9999px',
+                    padding: '0.05rem 0.35rem'
+                  }}>
+                    {unreadSupportCount}
+                  </span>
+                )}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setMobileChatMode('inbox')}
+                style={{
+                  flex: 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '0.35rem',
+                  padding: '0.45rem 0.4rem',
+                  borderRadius: '10px',
+                  border: 'none',
+                  fontSize: '0.78rem',
+                  fontWeight: mobileChatMode === 'inbox' ? 900 : 600,
+                  cursor: 'pointer',
+                  background: mobileChatMode === 'inbox' ? '#ea580c' : 'transparent',
+                  color: mobileChatMode === 'inbox' ? '#ffffff' : (isDark ? '#94a3b8' : '#64748b'),
+                  boxShadow: mobileChatMode === 'inbox' ? '0 2px 6px rgba(234, 88, 12, 0.3)' : 'none',
+                  transition: 'all 0.18s ease'
+                }}
+              >
+                <MessageSquare size={14} />
+                <span>Inbox</span>
+                {unreadInboxCount > 0 && (
+                  <span style={{
+                    background: '#ef4444',
+                    color: '#ffffff',
+                    fontSize: '0.55rem',
+                    fontWeight: 900,
+                    borderRadius: '9999px',
+                    padding: '0.05rem 0.35rem'
+                  }}>
+                    {unreadInboxCount}
+                  </span>
+                )}
+              </button>
+            </div>
+
+            {/* Chime Sound Test Button */}
+            <button
+              type="button"
+              onClick={handleTestSound}
+              style={{
+                background: isDark ? 'var(--color-subtle, #1e293b)' : '#f1f5f9',
+                border: 'none',
+                borderRadius: '10px',
+                padding: '0.45rem',
+                color: soundEnabled ? (isDark ? '#34d399' : '#059669') : (isDark ? '#94a3b8' : '#64748b'),
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}
+              title="Test notification sound chime"
+            >
+              {soundEnabled ? <Volume2 size={18} /> : <VolumeX size={18} />}
+            </button>
+          </div>
+
+          {/* Embedded CustomerSupportChat */}
+          <div style={{
+            flex: 1,
+            minHeight: 0,
+            display: 'flex',
+            flexDirection: 'column',
+            overflow: 'hidden'
+          }}>
+            <CustomerSupportChat
+              chatType={mobileChatMode}
+              key={`mobile-chat-screen-${mobileChatMode}`}
+            />
+          </div>
+        </div>
+      )}
+
 
       {/* =========================================================================
           UNIVERSAL BOTTOM 5-TAB NAVIGATION BAR
@@ -3444,11 +3683,13 @@ export const BDigitizingMobileApp = () => {
           <span style={{ fontSize: '0.68rem', fontWeight: mobileTab === 'home' ? 900 : 600 }}>Home</span>
         </button>
 
-        {/* Tab 2: Alerts / Notifications */}
+        {/* Tab 2: Support Desk & Chat */}
         <button
           type="button"
           onClick={() => {
-            setIsNotifDrawerOpen(true);
+            setMobileChatMode('support');
+            setMobileTab('chat');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
           }}
           style={{
             display: 'flex',
@@ -3460,12 +3701,12 @@ export const BDigitizingMobileApp = () => {
             cursor: 'pointer',
             padding: '0.25rem 0',
             position: 'relative',
-            color: isDark ? '#94a3b8' : '#64748b',
+            color: (mobileTab === 'chat' || mobileTab === 'support' || mobileTab === 'inbox') ? (isDark ? '#34d399' : '#047857') : (isDark ? '#94a3b8' : '#64748b'),
             gap: '0.18rem'
           }}
         >
           <div style={{
-            background: 'transparent',
+            background: (mobileTab === 'chat' || mobileTab === 'support' || mobileTab === 'inbox') ? (isDark ? 'rgba(16, 185, 129, 0.15)' : '#ecfdf5') : 'transparent',
             borderRadius: '12px',
             padding: '0.25rem 0.65rem',
             display: 'flex',
@@ -3474,20 +3715,29 @@ export const BDigitizingMobileApp = () => {
             position: 'relative',
             transition: 'all 0.2s ease'
           }}>
-            <MessageSquare size={20} strokeWidth={1.75} />
-            {unreadNotifCount > 0 && (
+            <Headphones size={20} strokeWidth={(mobileTab === 'chat' || mobileTab === 'support' || mobileTab === 'inbox') ? 2.5 : 1.75} />
+            {(unreadSupportCount + unreadInboxCount) > 0 && (
               <span style={{
                 position: 'absolute',
-                top: '2px',
-                right: '4px',
-                width: '8px',
-                height: '8px',
-                borderRadius: '50%',
-                background: '#ef4444'
-              }} />
+                top: '-2px',
+                right: '2px',
+                minWidth: '15px',
+                height: '15px',
+                borderRadius: '9999px',
+                background: '#ef4444',
+                color: '#ffffff',
+                fontSize: '0.55rem',
+                fontWeight: 900,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: '0 3px'
+              }}>
+                {unreadSupportCount + unreadInboxCount}
+              </span>
             )}
           </div>
-          <span style={{ fontSize: '0.68rem', fontWeight: 600 }}>Inbox</span>
+          <span style={{ fontSize: '0.68rem', fontWeight: (mobileTab === 'chat' || mobileTab === 'support' || mobileTab === 'inbox') ? 900 : 600 }}>Support</span>
         </button>
 
         {/* Tab 3: Search / Categories */}
@@ -3704,28 +3954,47 @@ export const BDigitizingMobileApp = () => {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.5rem 0', borderTop: isDark ? '1px solid var(--color-border, #334155)' : '1px solid #f1f5f9' }}>
               <div>
                 <span style={{ fontSize: '0.85rem', fontWeight: 800, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a', display: 'block' }}>Audio Notifications</span>
-                <span style={{ fontSize: '0.72rem', color: isDark ? 'var(--color-text-secondary, #94a3b8)' : '#64748b' }}>Play chime on order status updates & delivery</span>
+                <span style={{ fontSize: '0.72rem', color: isDark ? 'var(--color-text-secondary, #94a3b8)' : '#64748b' }}>Play chime on incoming messages, support & orders</span>
               </div>
-              <button
-                type="button"
-                onClick={() => setSoundEnabled(!soundEnabled)}
-                style={{
-                  background: soundEnabled ? (isDark ? 'rgba(16, 185, 129, 0.15)' : '#ecfdf5') : (isDark ? 'var(--color-subtle, #1e293b)' : '#f1f5f9'),
-                  color: soundEnabled ? (isDark ? '#34d399' : '#047857') : (isDark ? '#94a3b8' : '#64748b'),
-                  border: soundEnabled ? '1.5px solid #86efac' : (isDark ? '1px solid var(--color-border, #334155)' : '1px solid #cbd5e1'),
-                  borderRadius: '10px',
-                  padding: '0.4rem 0.75rem',
-                  fontSize: '0.75rem',
-                  fontWeight: 800,
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.35rem'
-                }}
-              >
-                {soundEnabled ? <Volume2 size={16} /> : <VolumeX size={16} />}
-                <span>{soundEnabled ? 'Enabled' : 'Muted'}</span>
-              </button>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                <button
+                  type="button"
+                  onClick={() => handleToggleSound()}
+                  style={{
+                    background: soundEnabled ? (isDark ? 'rgba(16, 185, 129, 0.15)' : '#ecfdf5') : (isDark ? 'var(--color-subtle, #1e293b)' : '#f1f5f9'),
+                    color: soundEnabled ? (isDark ? '#34d399' : '#047857') : (isDark ? '#94a3b8' : '#64748b'),
+                    border: soundEnabled ? '1.5px solid #86efac' : (isDark ? '1px solid var(--color-border, #334155)' : '1px solid #cbd5e1'),
+                    borderRadius: '10px',
+                    padding: '0.4rem 0.65rem',
+                    fontSize: '0.75rem',
+                    fontWeight: 800,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.35rem'
+                  }}
+                >
+                  {soundEnabled ? <Volume2 size={16} /> : <VolumeX size={16} />}
+                  <span>{soundEnabled ? 'Enabled' : 'Muted'}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={handleTestSound}
+                  style={{
+                    background: isDark ? 'var(--color-subtle, #1e293b)' : '#f8fafc',
+                    color: isDark ? '#38bdf8' : '#0284c7',
+                    border: isDark ? '1px solid var(--color-border, #334155)' : '1px solid #e2e8f0',
+                    borderRadius: '10px',
+                    padding: '0.4rem 0.55rem',
+                    fontSize: '0.72rem',
+                    fontWeight: 700,
+                    cursor: 'pointer'
+                  }}
+                  title="Test Sound"
+                >
+                  🔊 Test
+                </button>
+              </div>
             </div>
 
             {/* Default Embroidery Format */}
@@ -4037,7 +4306,41 @@ export const BDigitizingMobileApp = () => {
               </button>
             </div>
 
-            {/* Action 1: Email Helpdesk */}
+            {/* Primary Action: Open Live Support Chat */}
+            <button
+              type="button"
+              onClick={() => {
+                setIsSupportModalOpen(false);
+                setMobileChatMode('support');
+                setMobileTab('chat');
+              }}
+              style={{
+                padding: '0.95rem 1rem',
+                borderRadius: '14px',
+                border: isDark ? '1.5px solid rgba(16, 185, 129, 0.5)' : '1.5px solid #86efac',
+                background: isDark ? 'linear-gradient(135deg, rgba(5, 150, 105, 0.25) 0%, rgba(16, 185, 129, 0.15) 100%)' : '#ecfdf5',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                cursor: 'pointer',
+                textAlign: 'left',
+                width: '100%',
+                boxShadow: '0 4px 12px rgba(5, 150, 105, 0.15)'
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: '#059669', color: '#ffffff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Headphones size={22} />
+                </div>
+                <div>
+                  <h4 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 900, color: isDark ? '#34d399' : '#065f46' }}>Open Live Support Chat</h4>
+                  <span style={{ fontSize: '0.72rem', color: isDark ? '#a7f3d0' : '#047857', fontWeight: 700 }}>● Active Specialists • Real-time Chat & Sound Chimes</span>
+                </div>
+              </div>
+              <ChevronRight size={18} style={{ color: '#059669' }} />
+            </button>
+
+            {/* Action 2: Email Helpdesk */}
             <a
               href={`mailto:${mobileEmail || 'support@bilaldigitizing.com'}?subject=Support%20Request%20-%20BDigitizing`}
               style={{

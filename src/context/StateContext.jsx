@@ -10,8 +10,6 @@ import {
   signInWithGoogleIdToken,
   signInWithGoogleOAuth,
   promptGoogleIdentitySignIn,
-  signInWithAppleIdToken,
-  signInWithAppleOAuth,
   signInWithSupabaseAuth,
   signUpWithSupabaseAuth,
   sendPasswordResetEmail,
@@ -1434,25 +1432,6 @@ export const StateProvider = ({ children }) => {
     }
   };
 
-  const loginWithApple = async (idToken) => {
-    showToast('Authenticating with Apple...', 'info');
-    if (idToken && typeof idToken === 'string' && idToken.length > 20) {
-      const res = await signInWithAppleIdToken(idToken);
-      if (!res.success) {
-        showToast(res.error || 'Apple Sign-In failed.', 'error');
-      } else {
-        await finishAuth(res.data.user);
-      }
-      return res;
-    } else {
-      const res = await signInWithAppleOAuth('/client-portal');
-      if (!res.success) {
-        showToast(res.error || 'Apple Sign-In failed.', 'error');
-      }
-      return res;
-    }
-  };
-
   const register = async (name, email, password, company) => {
     const cleanEmail = (email || '').toLowerCase().trim();
     const cleanName = (name || '').trim();
@@ -2298,7 +2277,7 @@ export const StateProvider = ({ children }) => {
       isAuthenticated, setIsAuthenticated,
       isAuthInitialized,
       authUser, currentUser: authUser, setAuthUser,
-      login, loginWithGoogle, loginWithApple, register, logout, protectedNavigate,
+      login, loginWithGoogle, register, logout, protectedNavigate,
       requestPasswordReset, updatePassword,
       isAuthModalOpen, setIsAuthModalOpen,
       authModalMode, setAuthModalMode,

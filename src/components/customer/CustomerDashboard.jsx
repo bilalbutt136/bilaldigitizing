@@ -236,6 +236,46 @@ export const CustomerDashboard = () => {
   };
   const userEmail = activeUser?.email || '';
 
+  const [unreadInboxCount, setUnreadInboxCount] = useState(0);
+  const [unreadSupportCount, setUnreadSupportCount] = useState(0);
+
+  const fetchClientChatUnread = React.useCallback(async () => {
+    if (!userEmail) return;
+    try {
+      const [resInbox, resSupport] = await Promise.all([
+        fetch(`/api/chat/conversations?filter=unread&channel=inbox&email=${encodeURIComponent(userEmail)}`),
+        fetch(`/api/chat/conversations?filter=unread&channel=support&email=${encodeURIComponent(userEmail)}`)
+      ]);
+      if (resInbox.ok) {
+        const data = await resInbox.json();
+        const unreadTotal = (data.conversations || []).reduce((acc, c) => acc + (c.unread_client_count || 0), 0);
+        setUnreadInboxCount(unreadTotal);
+      }
+      if (resSupport.ok) {
+        const data = await resSupport.json();
+        const unreadTotal = (data.conversations || []).reduce((acc, c) => acc + (c.unread_client_count || 0), 0);
+        setUnreadSupportCount(unreadTotal);
+      }
+    } catch (e) {
+      // silent
+    }
+  }, [userEmail]);
+
+  React.useEffect(() => {
+    if (!mounted || !userEmail) return;
+    fetchClientChatUnread();
+    const interval = setInterval(fetchClientChatUnread, 15000);
+    return () => clearInterval(interval);
+  }, [mounted, userEmail, fetchClientChatUnread]);
+
+  React.useEffect(() => {
+    if (activeTab === 'inbox' || activeTab === 'chat') {
+      setUnreadInboxCount(0);
+    } else if (activeTab === 'support' || activeTab === 'help-support') {
+      setUnreadSupportCount(0);
+    }
+  }, [activeTab]);
+
   React.useEffect(() => {
     if (activeTab === 'notifications') {
       if (typeof markAllNotificationsAsRead === 'function') {
@@ -820,6 +860,8 @@ export const CustomerDashboard = () => {
           storeCount={storeOrders.length}
           unreadOrdersCount={unreadOrdersCount}
           unreadNotifCount={unreadNotificationsCount}
+          unreadInboxCount={unreadInboxCount}
+          unreadSupportCount={unreadSupportCount}
           unpaidCount={unpaidOrders.length}
           onOpenDepositModal={() => setIsDepositModalOpen(true)}
           onOpenLiveSupport={handleOpenLiveSupport}
@@ -1293,9 +1335,9 @@ export const CustomerDashboard = () => {
                         <MessageSquare size={20} />
                       </div>
                       <span style={{ fontSize: '0.66rem', fontWeight: 800, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '100%' }}>Inbox</span>
-                      {unreadNotifCount > 0 && (
+                      {(unreadInboxCount + unreadSupportCount) > 0 && (
                         <span style={{ position: 'absolute', top: '4px', right: '4px', background: '#6366f1', color: '#fff', fontSize: '0.55rem', fontWeight: 900, width: '15px', height: '15px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                          {unreadNotifCount}
+                          {unreadInboxCount + unreadSupportCount}
                         </span>
                       )}
                     </button>
@@ -2773,7 +2815,7 @@ export const CustomerDashboard = () => {
             position: 'relative'
           }}>
             <MessageSquare size={19} style={{ color: (activeTab === 'inbox' || activeTab === 'chat') ? 'var(--orange-600)' : '#64748b' }} />
-            {unreadNotifCount > 0 && (
+            {(unreadInboxCount + unreadSupportCount) > 0 && (
               <span style={{
                 position: 'absolute',
                 top: '-2px',
@@ -2788,7 +2830,7 @@ export const CustomerDashboard = () => {
                 textAlign: 'center',
                 lineHeight: 1.2
               }}>
-                {unreadNotifCount}
+                {unreadInboxCount + unreadSupportCount}
               </span>
             )}
           </div>

@@ -7,38 +7,48 @@
 let audioContextInstance = null;
 let hasUserInteracted = false;
 let lastSoundPlayedTime = 0;
-const SOUND_DEBOUNCE_MS = 650; // Strictly prevent duplicate double-ringing
+const SOUND_DEBOUNCE_MS = 350; // Prevent duplicate rapid ringing while allowing immediate responses
 
-// Listen for first user interaction on window to initialize or resume Web Audio
-if (typeof window !== 'undefined') {
-  const unlockAudio = () => {
-    hasUserInteracted = true;
+export const unlockAudioContext = () => {
+  hasUserInteracted = true;
+  try {
+    const AudioCtx = (typeof window !== 'undefined') && (window.AudioContext || window.webkitAudioContext);
+    if (AudioCtx && (!audioContextInstance || audioContextInstance.state === 'closed')) {
+      audioContextInstance = new AudioCtx();
+    }
     if (audioContextInstance && audioContextInstance.state === 'suspended') {
       audioContextInstance.resume().catch(() => {});
     }
-    window.removeEventListener('pointerdown', unlockAudio);
-    window.removeEventListener('keydown', unlockAudio);
-    window.removeEventListener('click', unlockAudio);
+  } catch {}
+};
+
+// Listen for any user interaction on window to unlock Web Audio immediately
+if (typeof window !== 'undefined') {
+  const handleInteraction = () => {
+    unlockAudioContext();
+    window.removeEventListener('pointerdown', handleInteraction);
+    window.removeEventListener('mousedown', handleInteraction);
+    window.removeEventListener('touchstart', handleInteraction);
+    window.removeEventListener('keydown', handleInteraction);
+    window.removeEventListener('click', handleInteraction);
   };
 
-  window.addEventListener('pointerdown', unlockAudio, { passive: true });
-  window.addEventListener('keydown', unlockAudio, { passive: true });
-  window.addEventListener('click', unlockAudio, { passive: true });
+  window.addEventListener('pointerdown', handleInteraction, { passive: true });
+  window.addEventListener('mousedown', handleInteraction, { passive: true });
+  window.addEventListener('touchstart', handleInteraction, { passive: true });
+  window.addEventListener('keydown', handleInteraction, { passive: true });
+  window.addEventListener('click', handleInteraction, { passive: true });
 }
 
-export const playNotificationSound = (type = 'notification') => {
+export const playNotificationSound = (type = 'chat', force = false) => {
   try {
     if (typeof window === 'undefined') return;
 
-    // Do not attempt to play if browser autoplay policy has not received a user interaction yet
-    if (!hasUserInteracted) return;
-
-    // Anti-Double-Ring Debounce Guard: Guarantee only ONE crisp chime plays per event
-    const nowMs = Date.now();
-    if (nowMs - lastSoundPlayedTime < SOUND_DEBOUNCE_MS) {
-      return;
-    }
-    lastSoundPlayedTime = nowMs;
+    // Check if user disabled audio in localStorage
+    try {
+      const isMuted = localStorage.getItem('bdigi_audio_enabled') === 'false';
+      if (isMuted && !force) return;
+    } catch {}
 
     const AudioCtx = window.AudioContext || window.webkitAudioContext;
     if (!AudioCtx) return;
@@ -52,7 +62,12 @@ export const playNotificationSound = (type = 'notification') => {
       ctx.resume().catch(() => {});
     }
 
-    if (ctx.state !== 'running') return;
+    // Anti-Double-Ring Debounce Guard: Guarantee only ONE crisp chime plays per event
+    const nowMs = Date.now();
+    if (!force && nowMs - lastSoundPlayedTime < SOUND_DEBOUNCE_MS) {
+      return;
+    }
+    lastSoundPlayedTime = nowMs;
 
     const now = ctx.currentTime;
 
@@ -166,3 +181,13 @@ export const playNotificationSound = (type = 'notification') => {
     // Fail gracefully
   }
 };
+
+/**
+ * Convenient loud and clear chime for incoming chat messages
+ */
+export const playMessageChime = (force = false) => {
+  playNotificationSound('chat', force);
+};
+
+export default playNotificationSound;
+

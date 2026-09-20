@@ -5,6 +5,7 @@ import { useAppState } from '../../context/StateContext';
 import { createClient } from '../../lib/supabase/client';
 import OfferCardMessage from '../common/OfferCardMessage';
 import { downloadFileDirectly, openFileInNewTab } from '../../utils/fileDownloader';
+import { playMessageChime, unlockAudioContext } from '../../utils/audioNotification';
 import {
   Send,
   Paperclip,
@@ -20,7 +21,9 @@ import {
   ShieldCheck,
   Clock,
   MessageSquare,
-  ExternalLink
+  ExternalLink,
+  Volume2,
+  VolumeX
 } from 'lucide-react';
 
 const formatChatTime = (dateStr) => {
@@ -84,6 +87,29 @@ export default function CustomerSupportChat({
   const showToast = (message, type = 'info') => {
     setToast({ message, type });
     setTimeout(() => setToast(null), 3500);
+  };
+
+  // Sound alert state & toggle
+  const [isAudioEnabled, setIsAudioEnabled] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('bdigi_audio_enabled') !== 'false';
+    }
+    return true;
+  });
+
+  const handleToggleSound = () => {
+    const nextVal = !isAudioEnabled;
+    setIsAudioEnabled(nextVal);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('bdigi_audio_enabled', String(nextVal));
+    }
+    if (nextVal) {
+      unlockAudioContext();
+      playMessageChime(true);
+      showToast('🔔 Message chime active & tested loud and clear!', 'success');
+    } else {
+      showToast('🔕 Message chime muted.', 'info');
+    }
   };
 
   const [downloadingFileUrl, setDownloadingFileUrl] = useState(null);
@@ -292,6 +318,12 @@ export default function CustomerSupportChat({
         const mRes = await fetch(`/api/chat/messages?conversationId=${encodeURIComponent(conversationId)}&clientEmail=${encodeURIComponent(userEmail)}`);
         const mData = await mRes.json();
         if (mData?.messages && mData.messages.length !== messages.length) {
+          if (mData.messages.length > messages.length) {
+            const newArrivals = mData.messages.slice(messages.length);
+            if (newArrivals.some(m => m.sender !== 'client')) {
+              playMessageChime();
+            }
+          }
           setMessages(mData.messages);
           scrollToBottom();
         }
@@ -319,6 +351,9 @@ export default function CustomerSupportChat({
         filter: `conversation_id=eq.${conversationId}`
       }, (payload) => {
         if (payload.new) {
+          if (payload.new.sender !== 'client') {
+            playMessageChime();
+          }
           setMessages(prev => {
             if (prev.some(m => m.id === payload.new.id)) return prev;
             return [...prev, payload.new];
@@ -489,6 +524,26 @@ export default function CustomerSupportChat({
       textareaRef.current.style.height = 'auto';
     }
 
+    // Optimistic message placeholder so message displays instantly on screen
+    const tempId = `temp-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
+    const optimisticMessage = {
+      id: tempId,
+      conversation_id: conversationId,
+      client_email: userEmail,
+      sender: 'client',
+      sender_name: userName,
+      sender_email: userEmail,
+      text: messageText,
+      type: attachmentsToSend.length > 0 && !messageText ? 'attachment' : 'text',
+      attachments: attachmentsToSend,
+      created_at: new Date().toISOString(),
+      is_read: false,
+      isPending: true
+    };
+
+    setMessages(prev => [...prev, optimisticMessage]);
+    scrollToBottom();
+
     try {
       const res = await fetch('/api/chat/messages', {
         method: 'POST',
@@ -507,11 +562,15 @@ export default function CustomerSupportChat({
 
       const data = await res.json();
       if (data?.message) {
-        setMessages(prev => [...prev, data.message]);
+        setMessages(prev => prev.map(m => m.id === tempId ? data.message : m));
         scrollToBottom();
+      } else {
+        throw new Error(data?.error || 'Failed to dispatch message.');
       }
-    } catch {
-      showToast('Failed to send message.', 'error');
+    } catch (err) {
+      showToast(err?.message || 'Failed to send message.', 'error');
+      // Remove failed optimistic message and restore inputs so user can retry
+      setMessages(prev => prev.filter(m => m.id !== tempId));
       setInputText(messageText);
       setPendingAttachments(attachmentsToSend);
     } finally {
@@ -702,27 +761,51 @@ export default function CustomerSupportChat({
           </div>
         </div>
 
-        <button
-          type="button"
-          onClick={() => fetchMessages(conversationId)}
-          style={{
-            background: 'rgba(255,255,255,0.08)',
-            border: '1px solid rgba(255,255,255,0.12)',
-            borderRadius: '8px',
-            padding: '6px 8px',
-            color: '#ffffff',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.3rem',
-            fontSize: '0.72rem',
-            fontWeight: 700,
-            flexShrink: 0
-          }}
-          title="Refresh chat messages"
-        >
-          <RefreshCw size={13} />
-        </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexShrink: 0 }}>
+          <button
+            type="button"
+            onClick={handleToggleSound}
+            style={{
+              background: isAudioEnabled ? 'rgba(34, 197, 94, 0.15)' : 'rgba(255,255,255,0.08)',
+              border: isAudioEnabled ? '1px solid rgba(34, 197, 94, 0.35)' : '1px solid rgba(255,255,255,0.12)',
+              borderRadius: '8px',
+              padding: '6px 9px',
+              color: isAudioEnabled ? '#4ade80' : '#94a3b8',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.35rem',
+              fontSize: '0.72rem',
+              fontWeight: 700,
+              transition: 'all 0.15s ease'
+            }}
+            title={isAudioEnabled ? "Sound enabled (Click to test chime or mute)" : "Sound muted (Click to enable)"}
+          >
+            {isAudioEnabled ? <Volume2 size={13} /> : <VolumeX size={13} />}
+            <span>{isAudioEnabled ? 'Sound ON' : 'Muted'}</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => fetchMessages(conversationId)}
+            style={{
+              background: 'rgba(255,255,255,0.08)',
+              border: '1px solid rgba(255,255,255,0.12)',
+              borderRadius: '8px',
+              padding: '6px 8px',
+              color: '#ffffff',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.3rem',
+              fontSize: '0.72rem',
+              fontWeight: 700
+            }}
+            title="Refresh chat messages"
+          >
+            <RefreshCw size={13} />
+          </button>
+        </div>
       </div>
 
       {/* CHAT MESSAGES STREAM */}

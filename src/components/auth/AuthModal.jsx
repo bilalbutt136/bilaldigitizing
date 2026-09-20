@@ -15,10 +15,8 @@ import {
 } from 'lucide-react';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import { GoogleCustomSignInButton } from './GoogleCustomSignInButton';
-import AppleSignin from 'react-apple-signin-auth';
 
 const GOOGLE_CLIENT_ID = (process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '421520521310-7appibeh1m7cdd90iid17lsq8thlq2oc.apps.googleusercontent.com').trim();
-const APPLE_CLIENT_ID = process.env.NEXT_PUBLIC_APPLE_CLIENT_ID || '';
 
 export const AuthModal = ({ isStandalonePage = false, initialMode = null }) => {
   const navigate = useNavigate();
@@ -31,7 +29,6 @@ export const AuthModal = ({ isStandalonePage = false, initialMode = null }) => {
     isAuthenticated,
     login,
     loginWithGoogle,
-    loginWithApple,
     register,
     requestPasswordReset,
     updatePassword,
@@ -776,7 +773,7 @@ export const AuthModal = ({ isStandalonePage = false, initialMode = null }) => {
                 <div style={{ flex: 1, height: '1px', background: 'var(--border-color)' }} />
               </div>
 
-              {/* BOTTOM SECTION: SOCIAL LOGINS (GOOGLE & APPLE) */}
+              {/* BOTTOM SECTION: SOCIAL LOGIN (GOOGLE) */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem', width: '100%' }}>
                 {/* Google 1-Click Button */}
                 <GoogleCustomSignInButton
@@ -786,59 +783,6 @@ export const AuthModal = ({ isStandalonePage = false, initialMode = null }) => {
                     showToast(err, 'error');
                   }}
                 />
-
-                {/* Apple 1-Click Button */}
-                <button
-                  type="button"
-                  onClick={async () => {
-                    setIsLoading(true);
-                    try {
-                      const res = await loginWithApple();
-                      setIsLoading(false);
-                      if (res?.success) {
-                        setIsAuthModalOpen(false);
-                        navigate('/client-portal');
-                      } else if (res?.error) {
-                        const msg = String(res.error || '');
-                        if (msg.includes('not enabled') || msg.includes('validation') || msg.includes('misconfigured')) {
-                          setErrorModalText('Apple Sign-In is currently in verification with the Apple Developer Program. Please use "Continue with Google" or create an account with Email & Password to sign in instantly.');
-                        } else {
-                          setErrorModalText(msg);
-                        }
-                        showToast('Apple Sign-In note', 'info');
-                      }
-                    } catch (err) {
-                      setIsLoading(false);
-                      showToast(err?.message || 'Apple Sign-In failed.', 'error');
-                    }
-                  }}
-                  style={{
-                    width: '100%',
-                    height: '46px',
-                    padding: '0 1rem',
-                    borderRadius: '12px',
-                    border: '1.5px solid #000000',
-                    background: '#000000',
-                    color: '#ffffff',
-                    fontSize: '0.92rem',
-                    fontWeight: 700,
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '0.65rem',
-                    boxShadow: '0 2px 6px rgba(0,0,0,0.1)',
-                    boxSizing: 'border-box',
-                    transition: 'all 0.15s ease'
-                  }}
-                  onMouseOver={(e) => { e.currentTarget.style.opacity = '0.92'; }}
-                  onMouseOut={(e) => { e.currentTarget.style.opacity = '1'; }}
-                >
-                  <svg width="18" height="18" viewBox="0 0 170 170" fill="#ffffff">
-                    <path d="M150.37 130.25c-2.45 5.66-5.35 10.87-8.71 15.66-4.58 6.53-8.33 11.05-11.22 13.56-4.48 4.12-9.28 6.23-14.42 6.35-3.69 0-8.14-1.05-13.32-3.18-5.19-2.12-9.97-3.17-14.34-3.17-4.58 0-9.49 1.05-14.75 3.17-5.26 2.13-9.5 3.24-12.74 3.35-4.35.13-9.16-1.9-14.42-6.08-3.69-3.08-7.56-7.85-11.6-14.29-6.3-9.98-11.19-21.72-14.68-35.21-3.48-13.49-5.23-25.59-5.23-36.29 0-14.39 3.52-26.31 10.56-35.76 7.04-9.45 15.82-14.28 26.34-14.49 4.36 0 9.27 1.13 14.73 3.39 5.46 2.26 9.23 3.44 11.32 3.55 1.74-.11 5.63-1.32 11.68-3.64 6.05-2.32 10.9-3.37 14.56-3.15 11.53.64 20.67 4.96 27.42 12.96-10.02 6.09-14.92 14.54-14.71 25.35.22 8.49 3.44 15.65 9.67 21.48 6.23 5.83 13.68 9.17 22.35 10.02-1.96 6.09-4.27 12.08-6.93 17.97zM119.22 33.15c0-6.73 2.45-13.06 7.35-18.99 4.9-5.93 10.9-9.74 18-11.43-.22 1.3-.43 2.5-.64 3.6-1.52 7.07-4.8 13.39-9.84 18.96-5.04 5.57-11.02 9.07-17.94 10.5-.43-.88-.86-1.76-1.28-2.64h-.65z"/>
-                  </svg>
-                  <span>Continue with Apple</span>
-                </button>
               </div>
 
               <div style={{ marginTop: '0.65rem', textAlign: 'center', fontSize: '0.7rem', color: 'var(--text-muted)' }}>
@@ -968,7 +912,7 @@ export const AuthModal = ({ isStandalonePage = false, initialMode = null }) => {
                 <div style={{ flex: 1, height: '1px', background: 'var(--border-color)' }} />
               </div>
 
-              {/* SOCIAL LOGINS FOR LOGIN */}
+              {/* SOCIAL LOGIN (GOOGLE) */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem', width: '100%' }}>
                 {/* Google 1-Click Button */}
                 <GoogleCustomSignInButton
@@ -978,59 +922,6 @@ export const AuthModal = ({ isStandalonePage = false, initialMode = null }) => {
                     showToast(err, 'error');
                   }}
                 />
-
-                {/* Apple 1-Click Button */}
-                <button
-                  type="button"
-                  onClick={async () => {
-                    setIsLoading(true);
-                    try {
-                      const res = await loginWithApple();
-                      setIsLoading(false);
-                      if (res?.success) {
-                        setIsAuthModalOpen(false);
-                        navigate('/client-portal');
-                      } else if (res?.error) {
-                        const msg = String(res.error || '');
-                        if (msg.includes('not enabled') || msg.includes('validation') || msg.includes('misconfigured')) {
-                          setErrorModalText('Apple Sign-In is currently in verification with the Apple Developer Program. Please use "Continue with Google" or sign in with your Email & Password.');
-                        } else {
-                          setErrorModalText(msg);
-                        }
-                        showToast('Apple Sign-In note', 'info');
-                      }
-                    } catch (err) {
-                      setIsLoading(false);
-                      showToast(err?.message || 'Apple Sign-In failed.', 'error');
-                    }
-                  }}
-                  style={{
-                    width: '100%',
-                    height: '46px',
-                    padding: '0 1rem',
-                    borderRadius: '12px',
-                    border: '1.5px solid #000000',
-                    background: '#000000',
-                    color: '#ffffff',
-                    fontSize: '0.92rem',
-                    fontWeight: 700,
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '0.65rem',
-                    boxShadow: '0 2px 6px rgba(0,0,0,0.1)',
-                    boxSizing: 'border-box',
-                    transition: 'all 0.15s ease'
-                  }}
-                  onMouseOver={(e) => { e.currentTarget.style.opacity = '0.92'; }}
-                  onMouseOut={(e) => { e.currentTarget.style.opacity = '1'; }}
-                >
-                  <svg width="18" height="18" viewBox="0 0 170 170" fill="#ffffff">
-                    <path d="M150.37 130.25c-2.45 5.66-5.35 10.87-8.71 15.66-4.58 6.53-8.33 11.05-11.22 13.56-4.48 4.12-9.28 6.23-14.42 6.35-3.69 0-8.14-1.05-13.32-3.18-5.19-2.12-9.97-3.17-14.34-3.17-4.58 0-9.49 1.05-14.75 3.17-5.26 2.13-9.5 3.24-12.74 3.35-4.35.13-9.16-1.9-14.42-6.08-3.69-3.08-7.56-7.85-11.6-14.29-6.3-9.98-11.19-21.72-14.68-35.21-3.48-13.49-5.23-25.59-5.23-36.29 0-14.39 3.52-26.31 10.56-35.76 7.04-9.45 15.82-14.28 26.34-14.49 4.36 0 9.27 1.13 14.73 3.39 5.46 2.26 9.23 3.44 11.32 3.55 1.74-.11 5.63-1.32 11.68-3.64 6.05-2.32 10.9-3.37 14.56-3.15 11.53.64 20.67 4.96 27.42 12.96-10.02 6.09-14.92 14.54-14.71 25.35.22 8.49 3.44 15.65 9.67 21.48 6.23 5.83 13.68 9.17 22.35 10.02-1.96 6.09-4.27 12.08-6.93 17.97zM119.22 33.15c0-6.73 2.45-13.06 7.35-18.99 4.9-5.93 10.9-9.74 18-11.43-.22 1.3-.43 2.5-.64 3.6-1.52 7.07-4.8 13.39-9.84 18.96-5.04 5.57-11.02 9.07-17.94 10.5-.43-.88-.86-1.76-1.28-2.64h-.65z"/>
-                  </svg>
-                  <span>Continue with Apple</span>
-                </button>
               </div>
             </form>
           )}

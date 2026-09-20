@@ -447,7 +447,7 @@ export const Footer = () => {
 
           {/* Payment Card Badges */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flexWrap: 'wrap' }}>
-            {['VISA', 'MASTERCARD', 'AMEX', 'DISCOVER', 'PAYPAL', 'APPLE PAY', 'GOOGLE PAY'].map((badge) => (
+            {['VISA', 'MASTERCARD', 'AMEX', 'DISCOVER', 'PAYPAL', 'GOOGLE PAY'].map((badge) => (
               <span
                 key={badge}
                 style={{

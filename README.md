@@ -28,7 +28,7 @@ A high-performance, full-stack digital digitizing and vector tracing platform bu
 | **Framework** | Next.js 15.5+ (App Router) |
 | **Language** | JavaScript (ESM, React 19) |
 | **Database** | PostgreSQL via Supabase |
-| **Auth** | Supabase SSR Auth, Google OAuth, Apple Sign-In |
+| **Auth** | Supabase SSR Auth, Google OAuth |
 | **Payments** | Stripe API, BoltPayouts API |
 | **AI** | Google Gemini SDK (`@google/genai`) |
 | **Email** | Resend API |

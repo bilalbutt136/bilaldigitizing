@@ -82,7 +82,7 @@ const MASTER_DEFAULT_FAQS = [
     questions: [
       {
         q: 'What payment methods and gateways do you accept?',
-        a: 'We accept all major credit and debit cards (Visa, MasterCard, American Express, Discover, JCB), PayPal, Apple Pay, Google Pay, and Bolt Checkout. All transactions are processed in USD.'
+        a: 'We accept all major credit and debit cards (Visa, MasterCard, American Express, Discover, JCB), PayPal, Google Pay, and Bolt Checkout. All transactions are processed in USD.'
       },
       {
         q: 'Is my payment and credit card information secure?',

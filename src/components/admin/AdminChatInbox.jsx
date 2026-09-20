@@ -6,6 +6,7 @@ import { createClient } from '../../lib/supabase/client';
 import OfferCardMessage from '../common/OfferCardMessage';
 import AdminCreateOfferModal from './AdminCreateOfferModal';
 import { downloadFileDirectly, openFileInNewTab } from '../../utils/fileDownloader';
+import { playMessageChime, unlockAudioContext } from '../../utils/audioNotification';
 import {
   Search,
   ChevronDown,
@@ -32,7 +33,9 @@ import {
   Trash2,
   CornerDownLeft,
   Undo2,
-  ExternalLink
+  ExternalLink,
+  Volume2,
+  VolumeX
 } from 'lucide-react';
 
 const COMMON_EMOJIS = ['👋', '✅', '🧵', '✨', '👌', '🙏', '📁', '👕', '🧢', '🔥', '🚀', '💯'];
@@ -132,6 +135,47 @@ export default function AdminChatInbox({ initialChannel = 'inbox' }) {
     }
   }, [inputText]);
 
+  // Sound alert state & toggle
+  const [isAudioEnabled, setIsAudioEnabled] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('bdigi_audio_enabled') !== 'false';
+    }
+    return true;
+  });
+
+  const handleToggleSound = () => {
+    const nextVal = !isAudioEnabled;
+    setIsAudioEnabled(nextVal);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('bdigi_audio_enabled', String(nextVal));
+    }
+    if (nextVal) {
+      unlockAudioContext();
+      playMessageChime(true);
+      showToast('🔔 Admin audio alerts active & chime tested loud and clear!', 'success');
+    } else {
+      showToast('🔕 Admin audio alerts muted.', 'info');
+    }
+  };
+
+  // Channel unread counts: { inbox: number, support: number }
+  const [channelUnreadCounts, setChannelUnreadCounts] = useState({ inbox: 0, support: 0 });
+
+  const fetchChannelUnreadCounts = useCallback(async () => {
+    try {
+      const [inboxRes, supportRes] = await Promise.all([
+        fetch('/api/chat/conversations?filter=unread&channel=inbox'),
+        fetch('/api/chat/conversations?filter=unread&channel=support')
+      ]);
+      const [inboxData, supportData] = await Promise.all([inboxRes.json(), supportRes.json()]);
+
+      const inboxTotal = (inboxData?.conversations || []).reduce((sum, c) => sum + (c.unread_admin_count || 0), 0);
+      const supportTotal = (supportData?.conversations || []).reduce((sum, c) => sum + (c.unread_admin_count || 0), 0);
+
+      setChannelUnreadCounts({ inbox: inboxTotal, support: supportTotal });
+    } catch {}
+  }, []);
+
   useEffect(() => {
     if (initialChannel) {
       setActiveChannel(initialChannel === 'support' ? 'support' : 'inbox');
@@ -139,7 +183,7 @@ export default function AdminChatInbox({ initialChannel = 'inbox' }) {
   }, [initialChannel]);
 
   // 1. Fetch Conversations
-  const fetchConversations = async (filter = activeFilter, query = searchQuery, channel = activeChannel) => {
+  const fetchConversations = async (filter = activeFilter, query = searchQuery, channel = activeChannel, silent = false) => {
     try {
       const targetChannel = channel === 'support' ? 'support' : 'inbox';
       let url = `/api/chat/conversations?filter=${filter}&channel=${targetChannel}`;
@@ -148,16 +192,19 @@ export default function AdminChatInbox({ initialChannel = 'inbox' }) {
       const data = await res.json();
       if (data?.conversations) {
         setConversations(data.conversations);
-        // If current active conversation is not in this channel's list, select first one or reset
-        if (data.conversations.length > 0) {
-          if (!activeConversationId || !data.conversations.some(c => c.id === activeConversationId)) {
-            setActiveConversationId(data.conversations[0].id);
+        if (!silent) {
+          // If current active conversation is not in this channel's list, select first one or reset
+          if (data.conversations.length > 0) {
+            if (!activeConversationId || !data.conversations.some(c => c.id === activeConversationId)) {
+              setActiveConversationId(data.conversations[0].id);
+            }
+          } else {
+            setActiveConversationId(null);
+            setMessages([]);
           }
-        } else {
-          setActiveConversationId(null);
-          setMessages([]);
         }
       }
+      fetchChannelUnreadCounts();
     } catch (err) {
       console.warn('[Admin Chat] Failed to load conversations:', err);
     } finally {
@@ -186,6 +233,7 @@ export default function AdminChatInbox({ initialChannel = 'inbox' }) {
 
       // Update local unread counter
       setConversations(prev => prev.map(c => c.id === convId ? { ...c, unread_admin_count: 0 } : c));
+      fetchChannelUnreadCounts();
     } catch (err) {
       console.warn('[Admin Chat] Failed to load messages:', err);
     } finally {
@@ -209,6 +257,7 @@ export default function AdminChatInbox({ initialChannel = 'inbox' }) {
   useEffect(() => {
     fetchConversations(activeFilter, searchQuery, activeChannel);
     fetchSavedReplies();
+    fetchChannelUnreadCounts();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeFilter, activeChannel]);
 
@@ -220,83 +269,137 @@ export default function AdminChatInbox({ initialChannel = 'inbox' }) {
 
   // Real-time polling & silent sync
   useEffect(() => {
-    if (!activeConversationId) return;
-
     const interval = setInterval(async () => {
-      // Check typing as secondary fallback (only updates if actively typing)
-      try {
-        const tRes = await fetch(`/api/chat/typing?conversationId=${encodeURIComponent(activeConversationId)}&forRole=admin`);
-        const tData = await tRes.json();
-        if (tData?.isTyping) {
-          setIsClientTyping(true);
-          clearTimeout(clientTypingDismissRef.current);
-          clientTypingDismissRef.current = setTimeout(() => {
-            setIsClientTyping(false);
-          }, 3500);
-        }
-      } catch {}
-
-      // Refresh messages quietly
-      try {
-        const mRes = await fetch(`/api/chat/messages?conversationId=${encodeURIComponent(activeConversationId)}`);
-        const mData = await mRes.json();
-        if (mData?.messages && mData.messages.length !== messages.length) {
-          setMessages(mData.messages);
-          scrollToBottom();
-        }
-      } catch {}
-    }, 3500);
-
-    return () => clearInterval(interval);
-  }, [activeConversationId, messages.length]);
-
-  // Realtime Supabase Channel Subscription for instant push & broadcast
-  useEffect(() => {
-    if (!activeConversationId) return;
-
-    const supabase = createClient();
-    if (!supabase) return;
-
-    const channel = supabase
-      .channel(`chat-room-${activeConversationId}`, {
-        config: { broadcast: { self: false } }
-      })
-      .on('postgres_changes', {
-        event: 'INSERT',
-        schema: 'public',
-        table: 'messages',
-        filter: `conversation_id=eq.${activeConversationId}`
-      }, (payload) => {
-        if (payload.new) {
-          setMessages(prev => {
-            if (prev.some(m => m.id === payload.new.id)) return prev;
-            return [...prev, payload.new];
-          });
-          scrollToBottom();
-        }
-      })
-      .on('broadcast', { event: 'typing' }, ({ payload }) => {
-        if (payload?.role === 'client') {
-          const active = Boolean(payload.isTyping);
-          setIsClientTyping(active);
-          clearTimeout(clientTypingDismissRef.current);
-          if (active) {
+      // 1. Silent sync for active conversation messages
+      if (activeConversationId) {
+        try {
+          const tRes = await fetch(`/api/chat/typing?conversationId=${encodeURIComponent(activeConversationId)}&forRole=admin`);
+          const tData = await tRes.json();
+          if (tData?.isTyping) {
+            setIsClientTyping(true);
+            clearTimeout(clientTypingDismissRef.current);
             clientTypingDismissRef.current = setTimeout(() => {
               setIsClientTyping(false);
             }, 3500);
           }
+        } catch {}
+
+        try {
+          const mRes = await fetch(`/api/chat/messages?conversationId=${encodeURIComponent(activeConversationId)}`);
+          const mData = await mRes.json();
+          if (mData?.messages && mData.messages.length !== messages.length) {
+            if (mData.messages.length > messages.length) {
+              const arrivals = mData.messages.slice(messages.length);
+              if (arrivals.some(m => m.sender === 'client')) {
+                playMessageChime();
+              }
+            }
+            setMessages(mData.messages);
+            scrollToBottom();
+          }
+        } catch {}
+      }
+
+      // 2. Silent sync for channel threads
+      try {
+        const targetChannel = activeChannel === 'support' ? 'support' : 'inbox';
+        let url = `/api/chat/conversations?filter=${activeFilter}&channel=${targetChannel}`;
+        if (searchQuery) url += `&q=${encodeURIComponent(searchQuery)}`;
+        const cRes = await fetch(url);
+        const cData = await cRes.json();
+        if (cData?.conversations) {
+          setConversations(cData.conversations);
+        }
+      } catch {}
+
+      // 3. Keep badges fresh
+      fetchChannelUnreadCounts();
+    }, 4000);
+
+    return () => clearInterval(interval);
+  }, [activeConversationId, messages.length, activeChannel, activeFilter, searchQuery, fetchChannelUnreadCounts]);
+
+  // Global Realtime Supabase Channel Subscription for instant push & broadcast
+  useEffect(() => {
+    const supabase = createClient();
+    if (!supabase) return;
+
+    // 1. Dedicated active room channel for instant messages and typing
+    let activeChannelSub = null;
+    if (activeConversationId) {
+      activeChannelSub = supabase
+        .channel(`chat-room-${activeConversationId}`, {
+          config: { broadcast: { self: false } }
+        })
+        .on('postgres_changes', {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'messages',
+          filter: `conversation_id=eq.${activeConversationId}`
+        }, (payload) => {
+          if (payload.new) {
+            if (payload.new.sender === 'client') {
+              playMessageChime();
+            }
+            setMessages(prev => {
+              if (prev.some(m => m.id === payload.new.id)) return prev;
+              return [...prev, payload.new];
+            });
+            scrollToBottom();
+          }
+        })
+        .on('broadcast', { event: 'typing' }, ({ payload }) => {
+          if (payload?.role === 'client') {
+            const active = Boolean(payload.isTyping);
+            setIsClientTyping(active);
+            clearTimeout(clientTypingDismissRef.current);
+            if (active) {
+              clientTypingDismissRef.current = setTimeout(() => {
+                setIsClientTyping(false);
+              }, 3500);
+            }
+          }
+        })
+        .subscribe();
+
+      channelRef.current = activeChannelSub;
+    }
+
+    // 2. Global listener across ALL messages & conversations so incoming messages in Support or Inbox
+    // immediately play the audio chime and refresh sidebar threads without missing anything!
+    const globalSub = supabase
+      .channel('admin-global-chat-monitor')
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'messages'
+      }, (payload) => {
+        if (payload.new && payload.new.sender === 'client') {
+          // Play loud chime alert
+          playMessageChime();
+
+          // Refresh conversations and unread badges immediately
+          fetchConversations(activeFilter, searchQuery, activeChannel, true);
+          fetchChannelUnreadCounts();
         }
       })
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'conversations'
+      }, () => {
+        fetchConversations(activeFilter, searchQuery, activeChannel, true);
+        fetchChannelUnreadCounts();
+      })
       .subscribe();
-
-    channelRef.current = channel;
 
     return () => {
       clearTimeout(clientTypingDismissRef.current);
       channelRef.current = null;
-      supabase.removeChannel(channel);
+      if (activeChannelSub) supabase.removeChannel(activeChannelSub);
+      supabase.removeChannel(globalSub);
     };
-  }, [activeConversationId]);
+  }, [activeConversationId, activeChannel, activeFilter, searchQuery, fetchChannelUnreadCounts]);
 
   const scrollToBottom = () => {
     setTimeout(() => {
@@ -838,7 +941,21 @@ export default function AdminChatInbox({ initialChannel = 'inbox' }) {
               transition: 'all 0.15s ease'
             }}
           >
-            <span>📥</span> Inbox & Offers
+            <span>📥</span>
+            <span>Inbox & Offers</span>
+            {channelUnreadCounts.inbox > 0 && (
+              <span style={{
+                background: '#ea580c',
+                color: '#ffffff',
+                fontSize: '0.62rem',
+                fontWeight: 900,
+                padding: '0.1rem 0.35rem',
+                borderRadius: '8px',
+                lineHeight: 1
+              }}>
+                {channelUnreadCounts.inbox}
+              </span>
+            )}
           </button>
           <button
             type="button"
@@ -867,7 +984,21 @@ export default function AdminChatInbox({ initialChannel = 'inbox' }) {
               transition: 'all 0.15s ease'
             }}
           >
-            <span>🎧</span> Support Desk
+            <span>🎧</span>
+            <span>Support Desk</span>
+            {channelUnreadCounts.support > 0 && (
+              <span style={{
+                background: '#2563eb',
+                color: '#ffffff',
+                fontSize: '0.62rem',
+                fontWeight: 900,
+                padding: '0.1rem 0.35rem',
+                borderRadius: '8px',
+                lineHeight: 1
+              }}>
+                {channelUnreadCounts.support}
+              </span>
+            )}
           </button>
         </div>
 
@@ -1118,8 +1249,30 @@ export default function AdminChatInbox({ initialChannel = 'inbox' }) {
                 </div>
               </div>
 
-              {/* ACTION ICONS: TAG, STAR, MENU */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              {/* ACTION ICONS: SOUND, TAG, STAR, REFRESH */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                <button
+                  type="button"
+                  onClick={handleToggleSound}
+                  style={{
+                    background: isAudioEnabled ? '#ecfdf5' : '#f1f5f9',
+                    border: isAudioEnabled ? '1px solid #a7f3d0' : '1px solid #cbd5e1',
+                    borderRadius: '8px',
+                    padding: '5px 8px',
+                    color: isAudioEnabled ? '#059669' : '#64748b',
+                    cursor: 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.3rem',
+                    fontSize: '0.72rem',
+                    fontWeight: 700,
+                    transition: 'all 0.15s ease'
+                  }}
+                  title={isAudioEnabled ? "Admin sound alerts enabled (Click to test chime or mute)" : "Admin sound alerts muted (Click to enable)"}
+                >
+                  {isAudioEnabled ? <Volume2 size={15} /> : <VolumeX size={15} />}
+                  <span>{isAudioEnabled ? 'Sound ON' : 'Muted'}</span>
+                </button>
                 <button
                   type="button"
                   onClick={(e) => handleToggleStar(activeConversation.id, e)}

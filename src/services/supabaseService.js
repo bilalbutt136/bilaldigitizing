@@ -67,40 +67,6 @@ export async function signInWithGoogleOAuth(redirectTo = '/client-portal') {
   }
 }
 
-export async function signInWithAppleIdToken(idToken) {
-  if (!isSupabaseConfigured) return { success: false, error: 'Database not configured.' };
-  try {
-    const { data, error } = await supabase.auth.signInWithIdToken({
-      provider: 'apple',
-      token: idToken,
-    });
-    if (error) return { success: false, error: error.message };
-    return { success: true, data };
-  } catch (err) {
-    console.error('Apple ID Token auth error:', err);
-    return { success: false, error: err?.message || 'Apple Authentication error.' };
-  }
-}
-
-export async function signInWithAppleOAuth(redirectTo = '/client-portal') {
-  if (!isSupabaseConfigured) return { success: false, error: 'Database not configured.' };
-  try {
-    const origin = typeof window !== 'undefined' ? window.location.origin : '';
-    const targetUrl = `${origin}/auth/callback?next=${encodeURIComponent(redirectTo)}`;
-    const { data, error } = await supabase.auth.signInWithOAuth({
-      provider: 'apple',
-      options: {
-        redirectTo: targetUrl
-      }
-    });
-    if (error) return { success: false, error: error.message };
-    return { success: true, data };
-  } catch (err) {
-    console.error('Apple OAuth error:', err);
-    return { success: false, error: err?.message || 'Apple OAuth error.' };
-  }
-}
-
 export async function signInWithSupabaseAuth(email, password) {
   try {
     const cleanEmail = (email || '').toLowerCase().trim();
