@@ -21,9 +21,6 @@ import {
   Tag,
   MoreHorizontal,
   X,
-  FileText,
-  Layers,
-  Image as ImageIcon,
   Check,
   CheckCheck,
   Loader2,
@@ -412,30 +409,6 @@ export default function AdminChatInbox({ initialChannel = 'inbox' }) {
     return conversations.find(c => c.id === activeConversationId) || null;
   }, [conversations, activeConversationId]);
 
-  // Extract all attachments across this conversation for the Top Gallery
-  const allAttachments = useMemo(() => {
-    const list = [];
-    messages.forEach(msg => {
-      if (Array.isArray(msg.attachments) && msg.attachments.length > 0) {
-        msg.attachments.forEach(att => {
-          if (att?.url && !list.some(item => item.url === att.url)) {
-            list.push({ ...att, messageId: msg.id, createdAt: msg.created_at });
-          }
-        });
-      } else if (msg.attachment_url && !list.some(item => item.url === msg.attachment_url)) {
-        list.push({
-          name: msg.attachment_name || 'attachment',
-          url: msg.attachment_url,
-          size: msg.attachment_size || '',
-          type: msg.attachment_type || '',
-          messageId: msg.id,
-          createdAt: msg.created_at
-        });
-      }
-    });
-    return list;
-  }, [messages]);
-
   // Toggle Star Conversation
   const handleToggleStar = async (convId, e) => {
     e?.stopPropagation();
@@ -652,24 +625,6 @@ export default function AdminChatInbox({ initialChannel = 'inbox' }) {
     }
   };
 
-  // Batch "Download All" handler
-  const handleDownloadAll = async () => {
-    if (allAttachments.length === 0) return;
-    showToast(`Starting download of ${allAttachments.length} file(s)...`, 'info');
-    for (let idx = 0; idx < allAttachments.length; idx++) {
-      const att = allAttachments[idx];
-      try {
-        await downloadFileDirectly(att.url, att.name);
-      } catch (err) {
-        console.error('Batch download error for file:', att.name, err);
-      }
-      if (idx < allAttachments.length - 1) {
-        await new Promise(r => setTimeout(r, 500));
-      }
-    }
-    showToast(`Finished downloading ${allAttachments.length} file(s)!`, 'success');
-  };
-
   // Quick Reply creation
   const handleSaveNewReply = async () => {
     if (!newReplyTitle.trim() || !newReplyContent.trim()) {
@@ -721,44 +676,6 @@ export default function AdminChatInbox({ initialChannel = 'inbox' }) {
   const isImageAttachment = (name = '', url = '') => {
     const check = (name || url || '').split('?')[0].toLowerCase();
     return /\.(png|jpe?g|webp|gif|svg|bmp)$/i.test(check);
-  };
-
-  // Helper for file format icon badge
-  const renderAttachmentIcon = (name = '') => {
-    const ext = name.split('.').pop().toLowerCase();
-    if (['png', 'jpg', 'jpeg', 'webp', 'gif', 'svg'].includes(ext)) {
-      return (
-        <div style={{ width: '40px', height: '40px', borderRadius: '8px', background: '#eff6ff', border: '1px solid #dbeafe', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#2563eb' }}>
-          <ImageIcon size={20} />
-        </div>
-      );
-    }
-    if (['dst', 'pes', 'emb', 'exp', 'jef'].includes(ext)) {
-      return (
-        <div style={{ width: '40px', height: '40px', borderRadius: '8px', background: '#fff7ed', border: '1px solid #ffedd5', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ea580c', fontWeight: 800, fontSize: '0.7rem' }}>
-          {ext.toUpperCase()}
-        </div>
-      );
-    }
-    if (['ai', 'eps', 'svg', 'cdr'].includes(ext)) {
-      return (
-        <div style={{ width: '40px', height: '40px', borderRadius: '8px', background: '#f0fdf4', border: '1px solid #dcfce7', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#16a34a', fontWeight: 800, fontSize: '0.7rem' }}>
-          {ext.toUpperCase()}
-        </div>
-      );
-    }
-    if (ext === 'pdf') {
-      return (
-        <div style={{ width: '40px', height: '40px', borderRadius: '8px', background: '#fef2f2', border: '1px solid #fee2e2', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#dc2626', fontWeight: 800, fontSize: '0.7rem' }}>
-          PDF
-        </div>
-      );
-    }
-    return (
-      <div style={{ width: '40px', height: '40px', borderRadius: '8px', background: '#f8fafc', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748b' }}>
-        <FileText size={20} />
-      </div>
-    );
   };
 
   return (
@@ -1448,132 +1365,6 @@ export default function AdminChatInbox({ initialChannel = 'inbox' }) {
             ) : (
               /* MESSAGES TAB */
               <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, height: '100%', overflow: 'hidden' }}>
-                {/* ATTACHED FILES GALLERY (Exact match to Reference Image) */}
-                {allAttachments.length > 0 && (
-                  <div style={{
-                    padding: '0.75rem 1.5rem',
-                    borderBottom: '1px solid #f1f5f9',
-                    background: '#ffffff',
-                    flexShrink: 0
-                  }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                      <button
-                        type="button"
-                        onClick={handleDownloadAll}
-                        style={{
-                          background: 'none',
-                          border: 'none',
-                          padding: 0,
-                          color: '#2563eb',
-                          fontWeight: 700,
-                          fontSize: '0.85rem',
-                          cursor: 'pointer',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '0.3rem'
-                        }}
-                      >
-                        Download All ({allAttachments.length})
-                      </button>
-                    </div>
-
-                    {/* HORIZONTAL CARDS GALLERY */}
-                    <div style={{
-                      display: 'flex',
-                      gap: '0.85rem',
-                      overflowX: 'auto',
-                      paddingBottom: '0.4rem'
-                    }}>
-                      {allAttachments.map((att, idx) => {
-                        const isDownloading = downloadingFileUrl === att.url;
-                        return (
-                          <div
-                            key={idx}
-                            style={{
-                              border: '1px solid #e2e8f0',
-                              borderRadius: '8px',
-                              background: '#ffffff',
-                              padding: '0.6rem 0.75rem',
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '0.65rem',
-                              minWidth: '220px',
-                              maxWidth: '280px',
-                              flexShrink: 0,
-                              boxShadow: '0 1px 4px rgba(0,0,0,0.03)',
-                              transition: 'border-color 0.15s ease'
-                            }}
-                          >
-                            {renderAttachmentIcon(att.name)}
-                            <div style={{ minWidth: 0, flex: 1 }}>
-                              <div
-                                style={{
-                                  fontSize: '0.8rem',
-                                  fontWeight: 700,
-                                  color: '#0f172a',
-                                  overflow: 'hidden',
-                                  textOverflow: 'ellipsis',
-                                  whiteSpace: 'nowrap'
-                                }}
-                                title={att.name}
-                              >
-                                {att.name}
-                              </div>
-                              <div style={{ fontSize: '0.7rem', color: '#64748b' }}>
-                                {att.size || 'Ready'}
-                              </div>
-                            </div>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', flexShrink: 0 }}>
-                              <button
-                                type="button"
-                                onClick={() => openFileInNewTab(att.url, att.name)}
-                                style={{
-                                  border: '1px solid #cbd5e1',
-                                  background: '#f8fafc',
-                                  color: '#334155',
-                                  borderRadius: '5px',
-                                  padding: '0.25rem 0.45rem',
-                                  fontSize: '0.68rem',
-                                  fontWeight: 700,
-                                  cursor: 'pointer',
-                                  display: 'inline-flex',
-                                  alignItems: 'center',
-                                  gap: '0.2rem'
-                                }}
-                                title="Open in new tab"
-                              >
-                                <ExternalLink size={11} /> Open
-                              </button>
-                              <button
-                                type="button"
-                                onClick={(e) => handleDownloadFile(att, e)}
-                                disabled={isDownloading}
-                                style={{
-                                  border: 'none',
-                                  background: 'linear-gradient(135deg, #ff7a00 0%, #ea580c 100%)',
-                                  color: '#ffffff',
-                                  borderRadius: '5px',
-                                  padding: '0.25rem 0.5rem',
-                                  fontSize: '0.68rem',
-                                  fontWeight: 800,
-                                  cursor: isDownloading ? 'wait' : 'pointer',
-                                  display: 'inline-flex',
-                                  alignItems: 'center',
-                                  gap: '0.25rem'
-                                }}
-                                title="Download directly"
-                              >
-                                {isDownloading ? <Loader2 size={11} className="spin-icon" /> : <Download size={11} />}
-                                Download
-                              </button>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-
                 {/* MESSAGES STREAM (ONLY THIS INNER STREAM SCROLLS) */}
                 <div style={{
                   flex: 1,
