@@ -79,6 +79,15 @@ export const CustomerDashboard = () => {
     dynamicPricingTiers = []
   } = useAppState();
 
+  // Safe User Resolution - declared at top to prevent any TDZ errors
+  const activeUser = authUser || currentUser || {
+    name: 'Client',
+    email: '',
+    company: '',
+    role: 'customer'
+  };
+  const userEmail = activeUser?.email || '';
+
   const isDark = theme === 'dark';
 
   const [activeTab, setActiveTabLocal] = useState(() => {
@@ -215,15 +224,6 @@ export const CustomerDashboard = () => {
       navigate('/login?redirect=/client-portal', { replace: true });
     }
   }, [isAuthInitialized, authUser, currentUser, navigate]);
-
-  // Safe User Resolution
-  const activeUser = authUser || currentUser || {
-    name: 'Client',
-    email: '',
-    company: '',
-    role: 'customer'
-  };
-  const userEmail = activeUser?.email || '';
 
   const [unreadInboxCount, setUnreadInboxCount] = useState(0);
   const [unreadSupportCount, setUnreadSupportCount] = useState(0);

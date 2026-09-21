@@ -4,6 +4,7 @@ import React, { useEffect } from 'react';
 import { useAppState } from '../../src/context/StateContext';
 import { CustomerDashboard } from '../../src/components/customer/CustomerDashboard';
 import { BDigitizingMobileApp } from '../../src/components/mobile/BDigitizingMobileApp';
+import { ErrorBoundary } from '../../src/components/ErrorBoundary';
 import { useNavigate } from '../../src/utils/navigation';
 
 export function ClientPortalClient() {
@@ -60,11 +61,17 @@ export function ClientPortalClient() {
 
   if (mobileMode === 'app') {
     return (
-      <div className="mobile-app-wrapper" style={{ width: '100%', minHeight: '100vh', background: '#ffffff' }}>
-        <BDigitizingMobileApp />
-      </div>
+      <ErrorBoundary fallback={<CustomerDashboard />}>
+        <div className="mobile-app-wrapper" style={{ width: '100%', minHeight: '100vh', background: '#ffffff' }}>
+          <BDigitizingMobileApp />
+        </div>
+      </ErrorBoundary>
     );
   }
 
-  return <CustomerDashboard />;
+  return (
+    <ErrorBoundary>
+      <CustomerDashboard />
+    </ErrorBoundary>
+  );
 }

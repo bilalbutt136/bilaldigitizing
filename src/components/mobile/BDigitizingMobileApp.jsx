@@ -113,6 +113,12 @@ export const BDigitizingMobileApp = () => {
     siteSettings = {}
   } = useAppState();
 
+  // Active authenticated user (NO mock fallback) - declared before any hooks or callbacks
+  const activeUser = authUser || currentUser || null;
+  const userEmail = activeUser?.email ? activeUser.email.toLowerCase().trim() : '';
+  const userName = activeUser?.user_metadata?.full_name || activeUser?.name || (userEmail ? userEmail.split('@')[0] : 'Guest Visitor');
+  const userInitial = (userName?.[0] || 'B').toUpperCase();
+
   const isDark = theme === 'dark';
 
   const mobileCi = siteSettings?.contactInfo || {};
@@ -151,7 +157,7 @@ export const BDigitizingMobileApp = () => {
   const [unreadSupportCount, setUnreadSupportCount] = useState(0);
 
   const fetchMobileChatUnread = React.useCallback(async () => {
-    const email = (activeUser?.email || '').toLowerCase().trim();
+    const email = (activeUser?.email || userEmail || '').toLowerCase().trim();
     if (!email) return;
     try {
       const [resInbox, resSupport] = await Promise.all([
@@ -169,7 +175,7 @@ export const BDigitizingMobileApp = () => {
         setUnreadSupportCount(unreadTotal);
       }
     } catch {}
-  }, [activeUser?.email]);
+  }, [userEmail, activeUser?.email]);
 
   useEffect(() => {
     fetchMobileChatUnread();
@@ -384,12 +390,6 @@ export const BDigitizingMobileApp = () => {
   const [feedbackCategory, setFeedbackCategory] = useState('Quality');
   const [feedbackText, setFeedbackText] = useState('');
   const [isSubmittingFeedback, setIsSubmittingFeedback] = useState(false);
-
-  // Active authenticated user (NO mock fallback)
-  const activeUser = authUser || currentUser || null;
-  const userEmail = activeUser?.email ? activeUser.email.toLowerCase().trim() : '';
-  const userName = activeUser?.user_metadata?.full_name || activeUser?.name || (userEmail ? userEmail.split('@')[0] : 'Guest Visitor');
-  const userInitial = (userName?.[0] || 'B').toUpperCase();
 
   // Load Saved Preferences on Mount
   useEffect(() => {

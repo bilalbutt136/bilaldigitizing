@@ -86,6 +86,20 @@ export const StateProvider = ({ children }) => {
   const [isAuthInitialized, setIsAuthInitialized] = useState(false);
   const [authUser, setAuthUser] = useState(initialAuth.user);
 
+  // Global Toast Notification State - hoisted early so all callbacks/effects can safely access it
+  const [toast, setToast] = useState(null);
+  const showToast = (message, type = 'info', playSound = false) => {
+    setToast({ message, type, id: Date.now() });
+    if (playSound) {
+      try {
+        playNotificationSound('notification');
+      } catch {}
+    }
+    setTimeout(() => {
+      setToast(null);
+    }, 4000);
+  };
+
   // Auth modal & Tab navigation states
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [authModalMode, setAuthModalMode] = useState('login');
@@ -408,7 +422,6 @@ export const StateProvider = ({ children }) => {
   const [selectedStoreItem, setSelectedStoreItem] = useState(null);
   const [selectedOrderForDrawer, setSelectedOrderForDrawer] = useState(null);
   const [isPricingSettingsOpen, setIsPricingSettingsOpen] = useState(false);
-  const [toast, setToast] = useState(null);
 
   // Global Order Notification System State with localStorage Persistence & Live Sync
   const [notifications, setNotifications] = useState(() => {
@@ -786,18 +799,6 @@ export const StateProvider = ({ children }) => {
       }
     };
   }, []);
-
-  const showToast = (message, type = 'info', playSound = false) => {
-    setToast({ message, type, id: Date.now() });
-    if (playSound) {
-      try {
-        playNotificationSound('notification');
-      } catch {}
-    }
-    setTimeout(() => {
-      setToast(null);
-    }, 4000);
-  };
 
   // Build the app-facing user record from a Supabase session user + role
   const buildAuthUser = (sbUser, role) => {
