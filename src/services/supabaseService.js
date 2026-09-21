@@ -173,13 +173,25 @@ export async function updateUserPassword(newPassword) {
 
 
 // Fetch all orders from Supabase DB
-export async function fetchOrdersFromSupabase(customEmail = null, customOrderIds = null) {
+export async function fetchOrdersFromSupabase(customEmail = null, customOrderIds = null, customUserId = null) {
   try {
     const headers = await getAuthHeaders();
     let url = '/api/orders?action=fetchAll';
     const params = new URLSearchParams();
 
     let resolvedEmail = customEmail;
+    let resolvedUserId = customUserId;
+
+    if (supabase && (!resolvedEmail || !resolvedUserId)) {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user) {
+          if (!resolvedEmail) resolvedEmail = session.user.email;
+          if (!resolvedUserId) resolvedUserId = session.user.id;
+        }
+      } catch {}
+    }
+
     if (!resolvedEmail && typeof window !== 'undefined') {
       try {
         const authSaved = JSON.parse(localStorage.getItem('bdigi_auth_user') || 'null');
@@ -187,25 +199,12 @@ export async function fetchOrdersFromSupabase(customEmail = null, customOrderIds
         // Do NOT auto-restrict to admin email: admin views all orders across the studio
         if (authSaved?.role !== 'admin') {
           resolvedEmail = authSaved?.email || clientSaved?.email || localStorage.getItem('bdigi_user_email') || null;
+          if (!resolvedUserId) resolvedUserId = authSaved?.id || null;
         }
       } catch {}
     }
     if (resolvedEmail) params.append('email', resolvedEmail);
-
-    let resolvedOrderIds = customOrderIds;
-    if (!resolvedOrderIds && typeof window !== 'undefined') {
-      try {
-        const authSaved = JSON.parse(localStorage.getItem('bdigi_auth_user') || 'null');
-        // Admin does not restrict to local guest order IDs
-        if (authSaved?.role !== 'admin') {
-          const localIds = JSON.parse(localStorage.getItem('bdigi_my_order_ids') || '[]');
-          if (Array.isArray(localIds) && localIds.length > 0) {
-            resolvedOrderIds = localIds.join(',');
-          }
-        }
-      } catch {}
-    }
-    if (resolvedOrderIds) params.append('orderIds', resolvedOrderIds);
+    if (resolvedUserId) params.append('userId', resolvedUserId);
 
     const qs = params.toString();
     if (qs) url += `&${qs}`;

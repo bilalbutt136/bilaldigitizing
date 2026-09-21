@@ -332,8 +332,19 @@ export const CustomerDashboard = () => {
     return typeStr === 'embroidery' || typeStr === 'digitizing' || typeStr === '' || !o?.type;
   };
 
-  // Filter client's orders by exact service category (including locally created orders)
+  // Filter client's orders strictly by authenticated identity
   const myOrders = (orders || []).filter(o => {
+    const cEmail = (o?.clientEmail || o?.client_email || '').toLowerCase().trim();
+    const uEmail = (userEmail || '').toLowerCase().trim();
+    const oUserId = String(o?.user_id || o?.clientId || o?.client_id || o?.created_by || '').toLowerCase().trim();
+    const curUserId = String(activeUser?.id || '').toLowerCase().trim();
+
+    if (uEmail || curUserId) {
+      if (uEmail && cEmail && cEmail === uEmail) return true;
+      if (curUserId && oUserId && oUserId === curUserId) return true;
+      return false;
+    }
+
     let localOrderIds = [];
     if (typeof window !== 'undefined') {
       try {
@@ -342,11 +353,7 @@ export const CustomerDashboard = () => {
     }
     const cleanId = String(o?.id || '').trim().replace(/^#+/, '');
     const isLocalMatch = localOrderIds.some(lid => String(lid).trim().replace(/^#+/, '') === cleanId);
-    if (isLocalMatch) return true;
-
-    const cEmail = (o?.clientEmail || o?.client_email || '').toLowerCase().trim();
-    const uEmail = (userEmail || '').toLowerCase().trim();
-    return cEmail && uEmail && cEmail === uEmail;
+    return isLocalMatch;
   });
 
   const isOrderPaid = (o) => {

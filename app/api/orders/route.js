@@ -17,7 +17,6 @@ export async function GET(request) {
     if (action === 'fetchAll') {
       const emailParam = searchParams.get('email');
       const clientEmailFilter = searchParams.get('clientEmail');
-      const orderIdsParam = searchParams.get('orderIds');
       const workerIdParam = searchParams.get('workerId');
       
       const configuredAdmins = [
@@ -50,29 +49,32 @@ export async function GET(request) {
         targetEmail = user.email.toLowerCase().trim();
       }
 
-      // Guest order ID lookup: sanitize and cap to max 10 IDs
-      let parsedOrderIds = [];
-      if (orderIdsParam) {
-        parsedOrderIds = orderIdsParam
-          .split(',')
-          .map(id => id.trim())
-          .filter(id => id.length >= 3 && id.length <= 100)
-          .slice(0, 10);
-      }
-
-      if (!isAdmin && !isWorker && !targetEmail && parsedOrderIds.length === 0) {
+      // If unauthenticated, return empty orders immediately to prevent cross-account leaks
+      if (!isAdmin && !isWorker && !user) {
         return NextResponse.json({ orders: [] });
       }
       
       let data = null;
       try {
         let query = supabase.from('orders').select('id, title, client_name, client_email, service_category, service_type, fabric_type, requested_formats, is_rush, price, cost, status, payment_status, artwork_url, image_url, logo, user_id, worker_id, worker_status, worker_file_url, worker_file_name, worker_files, worker_notes, worker_payout, worker_payout_status, admin_worker_feedback, worker_assigned_at, worker_submitted_at, worker_reviewed_at, paid_at, output_file_url, notes, created_at, updated_at, order_files(id, file_name, file_format, file_type, public_url, file_url, uploaded_by, created_at)').order('created_at', { ascending: false });
-        if (targetWorkerId) {
+        if (isAdmin) {
+          if (targetWorkerId) {
+            query = query.eq('worker_id', targetWorkerId);
+          } else if (targetEmail) {
+            query = query.ilike('client_email', targetEmail);
+          }
+        } else if (isWorker) {
           query = query.eq('worker_id', targetWorkerId);
-        } else if (targetEmail) {
-          query = query.ilike('client_email', targetEmail);
-        } else if (!isAdmin && parsedOrderIds.length > 0) {
-          query = query.in('id', parsedOrderIds);
+        } else if (user) {
+          // Authenticated customer: strictly isolate to their own user_id or email
+          const safeEmail = (user.email || '').toLowerCase().trim();
+          if (user.id && safeEmail) {
+            query = query.or(`user_id.eq.${user.id},client_email.ilike.${safeEmail}`);
+          } else if (user.id) {
+            query = query.eq('user_id', user.id);
+          } else if (safeEmail) {
+            query = query.ilike('client_email', safeEmail);
+          }
         }
         const res = await query;
         if (res.error) throw res.error;
@@ -80,12 +82,23 @@ export async function GET(request) {
       } catch (nestedErr) {
         console.warn('Nested orders query fallback notice:', nestedErr);
         let fallbackQuery = supabase.from('orders').select('id, title, client_name, client_email, service_category, service_type, fabric_type, requested_formats, is_rush, price, status, payment_status, artwork_url, image_url, logo, user_id, worker_id, worker_status, worker_file_url, worker_file_name, worker_files, output_file_url, notes, created_at, updated_at, order_files(id, file_name, file_format, file_type, public_url, file_url, uploaded_by, created_at)').order('created_at', { ascending: false });
-        if (targetWorkerId) {
+        if (isAdmin) {
+          if (targetWorkerId) {
+            fallbackQuery = fallbackQuery.eq('worker_id', targetWorkerId);
+          } else if (targetEmail) {
+            fallbackQuery = fallbackQuery.ilike('client_email', targetEmail);
+          }
+        } else if (isWorker) {
           fallbackQuery = fallbackQuery.eq('worker_id', targetWorkerId);
-        } else if (targetEmail) {
-          fallbackQuery = fallbackQuery.ilike('client_email', targetEmail);
-        } else if (!isAdmin && parsedOrderIds.length > 0) {
-          fallbackQuery = fallbackQuery.in('id', parsedOrderIds);
+        } else if (user) {
+          const safeEmail = (user.email || '').toLowerCase().trim();
+          if (user.id && safeEmail) {
+            fallbackQuery = fallbackQuery.or(`user_id.eq.${user.id},client_email.ilike.${safeEmail}`);
+          } else if (user.id) {
+            fallbackQuery = fallbackQuery.eq('user_id', user.id);
+          } else if (safeEmail) {
+            fallbackQuery = fallbackQuery.ilike('client_email', safeEmail);
+          }
         }
         const fallbackRes = await fallbackQuery;
         if (fallbackRes.error) throw fallbackRes.error;
@@ -106,8 +119,8 @@ export async function GET(request) {
       if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
       
       if (!isAdmin) {
-        const { data: orderData, error: orderError } = await supabase.from('orders').select('client_email, worker_id').eq('id', orderId).single();
-        const isClientOwner = orderData?.client_email?.toLowerCase().trim() === user.email.toLowerCase().trim();
+        const { data: orderData, error: orderError } = await supabase.from('orders').select('client_email, worker_id, user_id').eq('id', orderId).single();
+        const isClientOwner = (orderData?.client_email?.toLowerCase().trim() === user.email?.toLowerCase().trim()) || (orderData?.user_id && orderData.user_id === user.id);
         const isAssignedWorker = isWorker && (orderData?.worker_id === user.id || orderData?.worker_id === workerData?.id);
 
         if (orderError || (!isClientOwner && !isAssignedWorker)) {

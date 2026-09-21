@@ -87,3 +87,64 @@ describe('In-Memory Rate Limiting', () => {
     assert.ok(headers['Retry-After']);
   });
 });
+
+describe('Cross-Account Order Isolation & Access Control', () => {
+  const mockOrders = [
+    { id: 'ord-101', user_id: 'user-aaa', client_email: 'alice@example.com', title: 'Alice Order 1' },
+    { id: 'ord-102', user_id: 'user-aaa', client_email: 'alice@example.com', title: 'Alice Order 2' },
+    { id: 'ord-201', user_id: 'user-bbb', client_email: 'bob@example.com', title: 'Bob Order 1' },
+    { id: 'ord-301', user_id: 'user-ccc', client_email: 'charlie@example.com', title: 'Charlie Order 1' }
+  ];
+
+  function filterUserOrders(orders, authenticatedUser, localOrderIds = []) {
+    const userEmail = (authenticatedUser?.email || '').toLowerCase().trim();
+    const currentUserId = String(authenticatedUser?.id || '').toLowerCase().trim();
+    const isAdmin = authenticatedUser?.role === 'admin';
+
+    if (isAdmin) return orders;
+
+    return orders.filter(o => {
+      const cEmail = (o?.client_email || o?.clientEmail || '').toLowerCase().trim();
+      const oUserId = String(o?.user_id || o?.clientId || '').toLowerCase().trim();
+
+      if (userEmail || currentUserId) {
+        if (userEmail && cEmail && cEmail === userEmail) return true;
+        if (currentUserId && oUserId && oUserId === currentUserId) return true;
+        return false;
+      }
+
+      const cleanId = String(o?.id || '').trim().replace(/^#+/, '');
+      return localOrderIds.some(lid => String(lid).trim().replace(/^#+/, '') === cleanId);
+    });
+  }
+
+  test('authenticated user only sees their own orders and not other accounts', () => {
+    const aliceUser = { id: 'user-aaa', email: 'alice@example.com', role: 'customer' };
+    const aliceVisible = filterUserOrders(mockOrders, aliceUser, ['ord-201', 'ord-301']);
+    assert.equal(aliceVisible.length, 2);
+    assert.deepEqual(aliceVisible.map(o => o.id), ['ord-101', 'ord-102']);
+  });
+
+  test('localOrderIds from previous user session do not leak to another authenticated user', () => {
+    const bobUser = { id: 'user-bbb', email: 'bob@example.com', role: 'customer' };
+    // Alice's order IDs left over in localStorage
+    const dirtyLocalStorage = ['ord-101', 'ord-102'];
+    const bobVisible = filterUserOrders(mockOrders, bobUser, dirtyLocalStorage);
+    assert.equal(bobVisible.length, 1);
+    assert.equal(bobVisible[0].id, 'ord-201');
+  });
+
+  test('unauthenticated guest can only see localOrderIds from their own session', () => {
+    const guestLocalIds = ['ord-301'];
+    const guestVisible = filterUserOrders(mockOrders, null, guestLocalIds);
+    assert.equal(guestVisible.length, 1);
+    assert.equal(guestVisible[0].id, 'ord-301');
+  });
+
+  test('platform admin can view all orders across accounts', () => {
+    const adminUser = { id: 'admin-001', email: 'bilalsadiq612@gmail.com', role: 'admin' };
+    const adminVisible = filterUserOrders(mockOrders, adminUser, []);
+    assert.equal(adminVisible.length, 4);
+  });
+});
+

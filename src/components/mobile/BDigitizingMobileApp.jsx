@@ -496,6 +496,16 @@ export const BDigitizingMobileApp = () => {
   const myOrders = orders.filter(o => {
     if (isAdmin) return true;
 
+    const clientEmail = (o?.client_email || o?.clientEmail || o?.user_email || o?.userEmail || o?.email || o?.recipient_email || '').toLowerCase().trim();
+    const orderUserId = String(o?.user_id || o?.clientId || o?.client_id || o?.created_by || '').toLowerCase().trim();
+    const currentUserId = String(activeUser?.id || '').toLowerCase().trim();
+
+    if (userEmail || currentUserId) {
+      if (userEmail && clientEmail && clientEmail === userEmail) return true;
+      if (currentUserId && orderUserId && orderUserId === currentUserId) return true;
+      return false;
+    }
+    
     let localOrderIds = [];
     if (typeof window !== 'undefined') {
       try {
@@ -504,17 +514,7 @@ export const BDigitizingMobileApp = () => {
     }
     const cleanId = String(o?.id || '').trim().replace(/^#+/, '');
     const isLocalMatch = localOrderIds.some(lid => String(lid).trim().replace(/^#+/, '') === cleanId);
-    if (isLocalMatch) return true;
-
-    const clientEmail = (o?.client_email || o?.clientEmail || o?.user_email || o?.userEmail || o?.email || o?.recipient_email || '').toLowerCase().trim();
-    if (userEmail) {
-      if (clientEmail === userEmail) return true;
-      if (o?.created_by && (String(o.created_by).toLowerCase() === activeUser?.id?.toLowerCase() || String(o.created_by).toLowerCase() === userEmail)) return true;
-      if (o?.clientId && (String(o.clientId).toLowerCase() === activeUser?.id?.toLowerCase() || String(o.clientId).toLowerCase() === userEmail)) return true;
-      if (o?.client_id && (String(o.client_id).toLowerCase() === activeUser?.id?.toLowerCase() || String(o.client_id).toLowerCase() === userEmail)) return true;
-    }
-    
-    return !userEmail && (isLocalMatch || !clientEmail || clientEmail === 'guest@bdigitizing.pro');
+    return isLocalMatch;
   });
 
   const unpaidOrders = myOrders.filter(o => isOrderUnpaid(o));

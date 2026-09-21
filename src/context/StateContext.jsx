@@ -744,15 +744,17 @@ export const StateProvider = ({ children }) => {
       const incomingOrder = orderPayload.order || orderPayload;
       if (!incomingOrder || !incomingOrder.id) return;
 
-      // Also persist to localStorage bdigi_my_order_ids if customer
-      if (typeof window !== 'undefined') {
-        try {
-          const localIds = JSON.parse(localStorage.getItem('bdigi_my_order_ids') || '[]');
-          if (!localIds.includes(incomingOrder.id)) {
-            localIds.push(incomingOrder.id);
-            localStorage.setItem('bdigi_my_order_ids', JSON.stringify(localIds));
-          }
-        } catch {}
+      // Only accept if admin or matching authenticated user
+      const currentUserEmail = (authUser?.email || '').toLowerCase().trim();
+      const currentUserId = authUser?.id || null;
+      const orderEmail = (incomingOrder.client_email || incomingOrder.clientEmail || '').toLowerCase().trim();
+      const orderUserId = incomingOrder.user_id || incomingOrder.clientId || incomingOrder.created_by || null;
+      const isAdminUser = authUser?.role === 'admin';
+
+      if (!isAdminUser && currentUserEmail) {
+        const emailMatch = orderEmail && orderEmail === currentUserEmail;
+        const idMatch = currentUserId && orderUserId && String(orderUserId) === String(currentUserId);
+        if (!emailMatch && !idMatch) return;
       }
 
       setOrders(prev => {
@@ -931,7 +933,7 @@ export const StateProvider = ({ children }) => {
             if (!cancelled) setWalletBalance(balance);
           });
 
-          fetchOrdersFromSupabase().then(dbOrders => {
+          fetchOrdersFromSupabase(role === 'admin' ? null : session.user.email, null, role === 'admin' ? null : session.user.id).then(dbOrders => {
             if (!cancelled && dbOrders) setOrders(dbOrders);
           });
 
@@ -943,10 +945,13 @@ export const StateProvider = ({ children }) => {
             setAuthUser(null);
             setCurrentView('public');
             setWalletBalance(0);
+            setOrders([]);
             try {
               if (typeof window !== 'undefined') {
                 localStorage.removeItem('bdigi_auth_user');
                 localStorage.removeItem('bdigi_current_view');
+                localStorage.removeItem('bdigi_my_order_ids');
+                localStorage.removeItem('bdigi_user_email');
                 if (typeof document !== 'undefined') {
                   document.cookie = 'bdigi_auth=; path=/; max-age=0; SameSite=Lax';
                   document.cookie = 'bdigi_user_email=; path=/; max-age=0; SameSite=Lax';
@@ -1010,10 +1015,20 @@ export const StateProvider = ({ children }) => {
             });
           }
 
-          // Fetch orders from Supabase DB
-          const dbOrders = await fetchOrdersFromSupabase();
-          if (!cancelled && dbOrders) {
-            setOrders(dbOrders);
+          // Fetch orders from Supabase DB only for active authenticated session
+          const { data: { session: initSession } } = await supabase.auth.getSession();
+          if (initSession?.user) {
+            const initRole = await resolveRole(initSession.user.email, initSession.user);
+            const dbOrders = await fetchOrdersFromSupabase(
+              initRole === 'admin' ? null : initSession.user.email,
+              null,
+              initRole === 'admin' ? null : initSession.user.id
+            );
+            if (!cancelled && dbOrders) {
+              setOrders(dbOrders);
+            }
+          } else {
+            if (!cancelled) setOrders([]);
           }
         } catch (err) {
           console.warn('Initial data load notice:', err);
@@ -1184,9 +1199,17 @@ export const StateProvider = ({ children }) => {
         }
 
         try {
-          const freshOrders = await fetchOrdersFromSupabase();
-          if (freshOrders && Array.isArray(freshOrders)) {
-            setOrders(freshOrders);
+          const { data: { session: rtSession } } = await supabase.auth.getSession();
+          if (rtSession?.user) {
+            const rtRole = await resolveRole(rtSession.user.email, rtSession.user);
+            const freshOrders = await fetchOrdersFromSupabase(
+              rtRole === 'admin' ? null : rtSession.user.email,
+              null,
+              rtRole === 'admin' ? null : rtSession.user.id
+            );
+            if (freshOrders && Array.isArray(freshOrders)) {
+              setOrders(freshOrders);
+            }
           }
         } catch (err) {
           console.warn('Realtime order update fetch notice:', err);
@@ -1211,10 +1234,18 @@ export const StateProvider = ({ children }) => {
             setAuthUser(null);
             setCurrentView('public');
             setWalletBalance(0);
+            setOrders([]); // Wipe orders state immediately on sign out
             try {
               if (typeof window !== 'undefined') {
                 localStorage.removeItem('bdigi_auth_user');
                 localStorage.removeItem('bdigi_current_view');
+                localStorage.removeItem('bdigi_my_order_ids');
+                localStorage.removeItem('bdigi_user_email');
+                if (typeof document !== 'undefined') {
+                  document.cookie = 'bdigi_auth=; path=/; max-age=0; SameSite=Lax';
+                  document.cookie = 'bdigi_user_email=; path=/; max-age=0; SameSite=Lax';
+                  document.cookie = 'bdigi_user_role=; path=/; max-age=0; SameSite=Lax';
+                }
               }
             } catch {}
             return;
@@ -1243,7 +1274,7 @@ export const StateProvider = ({ children }) => {
               });
             }
 
-            fetchOrdersFromSupabase().then(freshOrders => {
+            fetchOrdersFromSupabase(role === 'admin' ? null : session.user.email, null, role === 'admin' ? null : session.user.id).then(freshOrders => {
               if (!cancelled && freshOrders) setOrders(freshOrders);
             });
 
@@ -1901,13 +1932,8 @@ export const StateProvider = ({ children }) => {
     try {
       const isAdminUser = authUser?.role === 'admin';
       const email = isAdminUser ? null : (authUser?.email || currentUser?.email || null);
-      let localIds = [];
-      if (typeof window !== 'undefined' && !isAdminUser) {
-        try {
-          localIds = JSON.parse(localStorage.getItem('bdigi_my_order_ids') || '[]');
-        } catch {}
-      }
-      const freshOrders = await fetchOrdersFromSupabase(email, localIds.length > 0 ? localIds.join(',') : null);
+      const userId = isAdminUser ? null : (authUser?.id || currentUser?.id || null);
+      const freshOrders = await fetchOrdersFromSupabase(email, null, userId);
       if (freshOrders && Array.isArray(freshOrders)) {
         setOrders(freshOrders);
         return freshOrders;
