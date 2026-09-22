@@ -148,13 +148,7 @@ export const BDigitizingMobileApp = () => {
   };
 
   const [mobileTab, setMobileTabState] = useState(getInitialMobileTab);
-  const [mobileChatMode, setMobileChatMode] = useState(() => {
-    if (typeof window !== 'undefined') {
-      const urlParams = new URLSearchParams(window.location.search);
-      if (urlParams.get('tab') === 'inbox') return 'inbox';
-    }
-    return 'support';
-  }); // 'support' | 'inbox'
+  const [mobileChatMode, setMobileChatMode] = useState('inbox'); // Default to unified Inbox
 
   const [unreadInboxCount, setUnreadInboxCount] = useState(0);
   const [unreadSupportCount, setUnreadSupportCount] = useState(0);
@@ -188,19 +182,14 @@ export const BDigitizingMobileApp = () => {
 
   useEffect(() => {
     if (mobileTab === 'chat' || mobileTab === 'support' || mobileTab === 'inbox') {
-      if (mobileTab === 'inbox' || mobileChatMode === 'inbox') {
-        setUnreadInboxCount(0);
-      } else {
-        setUnreadSupportCount(0);
-      }
+      setUnreadInboxCount(0);
+      setUnreadSupportCount(0);
     }
-  }, [mobileTab, mobileChatMode]);
+  }, [mobileTab]);
 
   const setMobileTab = (newTab) => {
     setMobileTabState(newTab);
-    if (newTab === 'support') {
-      setMobileChatMode('support');
-    } else if (newTab === 'inbox') {
+    if (newTab === 'inbox' || newTab === 'chat' || newTab === 'support') {
       setMobileChatMode('inbox');
     }
     if (typeof window !== 'undefined') {
@@ -1554,55 +1543,13 @@ export const BDigitizingMobileApp = () => {
             </span>
           </div>
 
-          {/* Quick Metrics Studio Overview Banner */}
-          {myOrders.length > 0 && (
-            <div 
-              onClick={() => setMobileTab('orders')}
-              style={{
-                background: 'linear-gradient(135deg, #090f1d 0%, #111a2e 100%)',
-                borderRadius: '16px',
-                padding: '0.9rem 1.15rem',
-                color: '#ffffff',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                cursor: 'pointer',
-                boxShadow: '0 4px 16px rgba(15, 23, 42, 0.12)'
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                <div style={{
-                  width: '38px',
-                  height: '38px',
-                  borderRadius: '10px',
-                  background: 'rgba(255,255,255,0.12)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  flexShrink: 0
-                }}>
-                  <Layers size={20} style={{ color: '#10b981' }} />
-                </div>
-                <div>
-                  <div style={{ fontSize: '0.9rem', fontWeight: 800 }}>
-                    Active Studio Tracker
-                  </div>
-                  <div style={{ fontSize: '0.74rem', color: '#94a3b8', marginTop: '0.1rem' }}>
-                    {activeOrdersCount} in production • {deliveredOrdersCount} delivered • {totalOrdersCount} total
-                  </div>
-                </div>
-              </div>
-              <ChevronRight size={18} style={{ color: '#94a3b8' }} />
-            </div>
-          )}
-
-          {/* Unpaid / Waiting for Payment Widget */}
-          {unpaidOrders.length > 0 && (
+          {/* Priority Order Action or Studio Tracker (Single clean card) */}
+          {unpaidOrders.length > 0 ? (
             <div style={{
               background: isDark ? 'rgba(234, 88, 12, 0.15)' : 'linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)',
               border: isDark ? '1.5px solid rgba(234, 88, 12, 0.4)' : '1.5px solid #fde68a',
               borderRadius: '16px',
-              padding: '0.9rem 1rem',
+              padding: '0.85rem 1rem',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
@@ -1610,24 +1557,24 @@ export const BDigitizingMobileApp = () => {
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
                 <div style={{
-                  width: '38px',
-                  height: '38px',
+                  width: '36px',
+                  height: '36px',
                   borderRadius: '10px',
                   background: 'linear-gradient(135deg, #ea580c 0%, #c2410c 100%)',
                   color: '#ffffff',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  boxShadow: '0 2px 6px rgba(234, 88, 12, 0.3)'
+                  flexShrink: 0
                 }}>
-                  <CreditCard size={20} />
+                  <CreditCard size={18} />
                 </div>
                 <div>
-                  <h4 style={{ margin: 0, fontSize: '0.9rem', fontWeight: 900, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a' }}>
-                    {unpaidOrders.length} Order{unpaidOrders.length > 1 ? 's' : ''} Waiting for Payment
+                  <h4 style={{ margin: 0, fontSize: '0.88rem', fontWeight: 900, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a' }}>
+                    {unpaidOrders.length} Order{unpaidOrders.length > 1 ? 's' : ''} Awaiting Payment
                   </h4>
-                  <span style={{ fontSize: '0.74rem', color: isDark ? '#fb923c' : '#c2410c', fontWeight: 700 }}>
-                    Complete payment to start master digitizing
+                  <span style={{ fontSize: '0.72rem', color: isDark ? '#fb923c' : '#c2410c', fontWeight: 700 }}>
+                    Pay to start production
                   </span>
                 </div>
               </div>
@@ -1643,8 +1590,8 @@ export const BDigitizingMobileApp = () => {
                   color: '#ffffff',
                   border: 'none',
                   borderRadius: '8px',
-                  padding: '0.45rem 0.85rem',
-                  fontSize: '0.78rem',
+                  padding: '0.4rem 0.8rem',
+                  fontSize: '0.75rem',
                   fontWeight: 900,
                   cursor: 'pointer',
                   boxShadow: '0 2px 8px rgba(234, 88, 12, 0.35)'
@@ -1653,63 +1600,95 @@ export const BDigitizingMobileApp = () => {
                 Pay Now →
               </button>
             </div>
-          )}
-
-          {/* Active Orders Widget */}
-          {activeOrders.length > 0 && (
-            <div style={{
-              background: isDark ? 'rgba(16, 185, 129, 0.12)' : '#f0fdf4',
-              border: isDark ? '1.5px solid rgba(16, 185, 129, 0.35)' : '1.5px solid #86efac',
-              borderRadius: '16px',
-              padding: '0.9rem 1rem',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              boxShadow: isDark ? '0 4px 14px rgba(0, 0, 0, 0.2)' : '0 4px 14px rgba(16, 185, 129, 0.08)'
-            }}>
+          ) : activeOrders.length > 0 ? (
+            <div 
+              onClick={() => {
+                setOrderFilter('active');
+                setMobileTab('orders');
+              }}
+              style={{
+                background: isDark ? 'rgba(16, 185, 129, 0.12)' : '#f0fdf4',
+                border: isDark ? '1.5px solid rgba(16, 185, 129, 0.35)' : '1.5px solid #86efac',
+                borderRadius: '16px',
+                padding: '0.85rem 1rem',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                boxShadow: isDark ? '0 4px 14px rgba(0, 0, 0, 0.2)' : '0 4px 14px rgba(16, 185, 129, 0.08)',
+                cursor: 'pointer'
+              }}
+            >
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
                 <div style={{
-                  width: '38px',
-                  height: '38px',
+                  width: '36px',
+                  height: '36px',
                   borderRadius: '10px',
                   background: '#059669',
                   color: '#ffffff',
                   display: 'flex',
                   alignItems: 'center',
-                  justifyContent: 'center'
+                  justifyContent: 'center',
+                  flexShrink: 0
                 }}>
-                  <Zap size={20} />
+                  <Zap size={18} />
                 </div>
                 <div>
-                  <h4 style={{ margin: 0, fontSize: '0.9rem', fontWeight: 900, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a' }}>
+                  <h4 style={{ margin: 0, fontSize: '0.88rem', fontWeight: 900, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a' }}>
                     {activeOrders.length} Order{activeOrders.length > 1 ? 's' : ''} in Production
                   </h4>
-                  <span style={{ fontSize: '0.74rem', color: isDark ? '#34d399' : '#047857', fontWeight: 700 }}>
-                    Master digitizers are testing stitch pathing
+                  <span style={{ fontSize: '0.72rem', color: isDark ? '#34d399' : '#047857', fontWeight: 700 }}>
+                    In progress with studio team
                   </span>
                 </div>
               </div>
 
-              <button
-                type="button"
-                onClick={() => setMobileTab('orders')}
-                style={{
-                  background: isDark ? 'var(--color-surface, #111827)' : '#ffffff',
-                  border: isDark ? '1.5px solid #059669' : '1.5px solid #86efac',
-                  borderRadius: '8px',
-                  padding: '0.45rem 0.85rem',
-                  fontSize: '0.78rem',
-                  fontWeight: 800,
-                  color: isDark ? '#34d399' : '#047857',
-                  cursor: 'pointer'
-                }}
-              >
+              <span style={{ fontSize: '0.75rem', fontWeight: 800, color: isDark ? '#34d399' : '#047857' }}>
                 Track →
-              </button>
+              </span>
             </div>
-          )}
+          ) : myOrders.length > 0 ? (
+            <div 
+              onClick={() => setMobileTab('orders')}
+              style={{
+                background: isDark ? 'var(--color-surface, #111827)' : '#ffffff',
+                border: isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid #e2e8f0',
+                borderRadius: '16px',
+                padding: '0.85rem 1.15rem',
+                color: isDark ? '#ffffff' : '#0f172a',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                cursor: 'pointer',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.02)'
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <div style={{
+                  width: '36px',
+                  height: '36px',
+                  borderRadius: '10px',
+                  background: isDark ? 'var(--color-subtle, #1e293b)' : '#f1f5f9',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0
+                }}>
+                  <ClipboardList size={18} style={{ color: '#059669' }} />
+                </div>
+                <div>
+                  <div style={{ fontSize: '0.88rem', fontWeight: 800 }}>
+                    My Studio Orders
+                  </div>
+                  <div style={{ fontSize: '0.72rem', color: isDark ? '#94a3b8' : '#64748b', marginTop: '0.1rem' }}>
+                    {totalOrdersCount} orders total • View history & files
+                  </div>
+                </div>
+              </div>
+              <ChevronRight size={18} style={{ color: '#94a3b8' }} />
+            </div>
+          ) : null}
 
-          {/* Popular Services Section (Horizontal Slider) */}
+          {/* Popular Services Section */}
           <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
               <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 900, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a' }}>
@@ -1834,43 +1813,8 @@ export const BDigitizingMobileApp = () => {
                   <span style={{ fontSize: '0.8rem', color: isDark ? '#38bdf8' : '#0284c7', fontWeight: 900, display: 'block', marginTop: '0.3rem' }}>
                     Starts $3.50 / pc
                   </span>
-                  <span style={{ fontSize: '0.66rem', color: isDark ? '#94a3b8' : '#64748b', fontWeight: 700, display: 'block', marginTop: '0.1rem' }}>
-                    50 Pcs Min • Starts $3.50 / pc
-                  </span>
-                </div>
-              </div>
-
-              {/* Card 4: 4-8 Hour Express Rush */}
-              <div
-                onClick={() => handleOpenOrderConfigurator('embroidery')}
-                style={{
-                  minWidth: '155px',
-                  width: '155px',
-                  background: isDark ? 'var(--color-surface, #111827)' : '#ffffff',
-                  borderRadius: '16px',
-                  border: isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid #cbd5e1',
-                  overflow: 'hidden',
-                  cursor: 'pointer',
-                  boxShadow: isDark ? '0 2px 10px rgba(0,0,0,0.2)' : '0 2px 10px rgba(0,0,0,0.03)',
-                  flexShrink: 0
-                }}
-              >
-                <div style={{
-                  height: '110px',
-                  background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: '#ffffff'
-                }}>
-                  <Zap size={42} strokeWidth={2} />
-                </div>
-                <div style={{ padding: '0.75rem 0.85rem' }}>
-                  <div style={{ margin: 0, fontSize: '0.9rem', fontWeight: 900, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a', lineHeight: 1.25 }}>
-                    Express 2–6h Rush
-                  </div>
-                  <span style={{ fontSize: '0.8rem', color: isDark ? '#fbbf24' : '#d97706', fontWeight: 900, display: 'block', marginTop: '0.3rem' }}>
-                    +$10 Speed Fee
+                  <span style={{ fontSize: '0.68rem', color: isDark ? '#94a3b8' : '#64748b', fontWeight: 700, display: 'block', marginTop: '0.1rem' }}>
+                    50 Pcs Minimum
                   </span>
                 </div>
               </div>
@@ -2182,247 +2126,33 @@ export const BDigitizingMobileApp = () => {
             </div>
           </div>
 
-          {/* =========================================================================
-              LIVE ORDER DATA STATISTICS & KPI DASHBOARD (COMPACTED)
-              ========================================================================= */}
-          <div style={{ padding: '0.45rem 0.75rem 0.15rem', display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div style={{ fontSize: '0.72rem', fontWeight: 800, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a', textTransform: 'uppercase', letterSpacing: '0.04em', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                <Activity size={13} style={{ color: '#059669' }} />
-                <span>Live Studio Statistics</span>
-              </div>
-              <span style={{ fontSize: '0.65rem', color: isDark ? 'var(--color-text-secondary, #94a3b8)' : '#64748b', fontWeight: 600 }}>
-                Tap metric to filter
-              </span>
-            </div>
-
-            {/* Grid of 5 Key Stat Cards + Total Spend Pill */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.45rem' }}>
-              {/* Total Orders Card */}
-              <div 
-                onClick={() => setOrderFilter('all')}
-                style={{
-                  background: orderFilter === 'all' ? 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)' : (isDark ? 'var(--color-surface, #111827)' : '#ffffff'),
-                  color: orderFilter === 'all' ? '#ffffff' : (isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a'),
-                  border: orderFilter === 'all' ? '1.5px solid #38bdf8' : (isDark ? '1px solid var(--color-border, #334155)' : '1px solid #e2e8f0'),
-                  borderRadius: '10px',
-                  padding: '0.55rem 0.4rem',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  textAlign: 'center',
-                  cursor: 'pointer',
-                  boxShadow: isDark ? '0 1px 4px rgba(0,0,0,0.2)' : '0 1px 4px rgba(0,0,0,0.03)',
-                  transition: 'all 0.15s ease'
-                }}
-              >
-                <ClipboardList size={16} style={{ color: orderFilter === 'all' ? '#38bdf8' : (isDark ? '#94a3b8' : '#64748b'), marginBottom: '0.15rem' }} />
-                <div style={{ fontSize: '1.05rem', fontWeight: 900, lineHeight: 1 }}>
-                  {totalOrdersCount}
-                </div>
-                <div style={{ fontSize: '0.6rem', fontWeight: 700, color: orderFilter === 'all' ? '#cbd5e1' : (isDark ? 'var(--color-text-secondary, #94a3b8)' : '#64748b'), marginTop: '0.15rem', textTransform: 'uppercase' }}>
-                  Total Orders
-                </div>
-              </div>
-
-              {/* Waiting for Payment Card */}
-              <div 
-                onClick={() => setOrderFilter('awaiting_payment')}
-                style={{
-                  background: orderFilter === 'awaiting_payment' ? 'linear-gradient(135deg, #ea580c 0%, #c2410c 100%)' : (isDark ? 'var(--color-surface, #111827)' : '#ffffff'),
-                  color: orderFilter === 'awaiting_payment' ? '#ffffff' : (isDark ? '#fb923c' : '#0f172a'),
-                  border: orderFilter === 'awaiting_payment' ? '1.5px solid #ea580c' : (unpaidOrdersCount > 0 ? (isDark ? '1px solid #ea580c' : '1px solid #fdba74') : (isDark ? '1px solid var(--color-border, #334155)' : '1px solid #e2e8f0')),
-                  borderRadius: '10px',
-                  padding: '0.55rem 0.4rem',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  textAlign: 'center',
-                  cursor: 'pointer',
-                  boxShadow: unpaidOrdersCount > 0 ? '0 2px 8px rgba(234, 88, 12, 0.2)' : (isDark ? '0 1px 4px rgba(0,0,0,0.2)' : '0 1px 4px rgba(0,0,0,0.03)'),
-                  transition: 'all 0.15s ease'
-                }}
-              >
-                <CreditCard size={16} style={{ color: orderFilter === 'awaiting_payment' ? '#fef08a' : '#ea580c', marginBottom: '0.15rem' }} />
-                <div style={{ fontSize: '1.05rem', fontWeight: 900, lineHeight: 1, color: orderFilter === 'awaiting_payment' ? '#ffffff' : (isDark ? '#fb923c' : '#c2410c') }}>
-                  {unpaidOrdersCount}
-                </div>
-                <div style={{ fontSize: '0.6rem', fontWeight: 700, color: orderFilter === 'awaiting_payment' ? '#fed7aa' : (isDark ? '#fb923c' : '#c2410c'), marginTop: '0.15rem', textTransform: 'uppercase' }}>
-                  Waiting Pay
-                </div>
-              </div>
-
-              {/* In Production Card */}
-              <div 
-                onClick={() => setOrderFilter('active')}
-                style={{
-                  background: orderFilter === 'active' ? 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)' : (isDark ? 'var(--color-surface, #111827)' : '#ffffff'),
-                  color: orderFilter === 'active' ? '#ffffff' : (isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a'),
-                  border: orderFilter === 'active' ? '1.5px solid #0284c7' : (isDark ? '1px solid rgba(2, 132, 199, 0.4)' : '1px solid #bae6fd'),
-                  borderRadius: '10px',
-                  padding: '0.55rem 0.4rem',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  textAlign: 'center',
-                  cursor: 'pointer',
-                  boxShadow: isDark ? '0 1px 4px rgba(0,0,0,0.2)' : '0 1px 4px rgba(0,0,0,0.03)',
-                  transition: 'all 0.15s ease'
-                }}
-              >
-                <Zap size={16} style={{ color: orderFilter === 'active' ? '#bae6fd' : '#0284c7', marginBottom: '0.15rem' }} />
-                <div style={{ fontSize: '1.05rem', fontWeight: 900, lineHeight: 1, color: orderFilter === 'active' ? '#ffffff' : (isDark ? '#38bdf8' : '#0369a1') }}>
-                  {activeOrdersCount}
-                </div>
-                <div style={{ fontSize: '0.6rem', fontWeight: 700, color: orderFilter === 'active' ? '#e0f2fe' : (isDark ? 'var(--color-text-secondary, #94a3b8)' : '#64748b'), marginTop: '0.15rem', textTransform: 'uppercase' }}>
-                  In Production
-                </div>
-              </div>
-
-              {/* Delivered Card */}
-              <div 
-                onClick={() => setOrderFilter('delivered')}
-                style={{
-                  background: orderFilter === 'delivered' ? 'linear-gradient(135deg, #059669 0%, #047857 100%)' : (isDark ? 'var(--color-surface, #111827)' : '#ffffff'),
-                  color: orderFilter === 'delivered' ? '#ffffff' : (isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a'),
-                  border: orderFilter === 'delivered' ? '1.5px solid #059669' : (isDark ? '1px solid rgba(16, 185, 129, 0.4)' : '1px solid #a7f3d0'),
-                  borderRadius: '10px',
-                  padding: '0.55rem 0.4rem',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  textAlign: 'center',
-                  cursor: 'pointer',
-                  boxShadow: isDark ? '0 1px 4px rgba(0,0,0,0.2)' : '0 1px 4px rgba(0,0,0,0.03)',
-                  transition: 'all 0.15s ease'
-                }}
-              >
-                <Package size={16} style={{ color: orderFilter === 'delivered' ? '#a7f3d0' : '#059669', marginBottom: '0.15rem' }} />
-                <div style={{ fontSize: '1.05rem', fontWeight: 900, lineHeight: 1, color: orderFilter === 'delivered' ? '#ffffff' : (isDark ? '#34d399' : '#047857') }}>
-                  {deliveredOrdersCount}
-                </div>
-                <div style={{ fontSize: '0.6rem', fontWeight: 700, color: orderFilter === 'delivered' ? '#d1fae5' : (isDark ? 'var(--color-text-secondary, #94a3b8)' : '#64748b'), marginTop: '0.15rem', textTransform: 'uppercase' }}>
-                  Delivered
-                </div>
-              </div>
-
-              {/* Completed Card */}
-              <div 
-                onClick={() => setOrderFilter('completed')}
-                style={{
-                  background: orderFilter === 'completed' ? 'linear-gradient(135deg, #334155 0%, #1e293b 100%)' : (isDark ? 'var(--color-surface, #111827)' : '#ffffff'),
-                  color: orderFilter === 'completed' ? '#ffffff' : (isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a'),
-                  border: orderFilter === 'completed' ? '1.5px solid #64748b' : (isDark ? '1px solid var(--color-border, #334155)' : '1px solid #e2e8f0'),
-                  borderRadius: '10px',
-                  padding: '0.55rem 0.4rem',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  textAlign: 'center',
-                  cursor: 'pointer',
-                  boxShadow: isDark ? '0 1px 4px rgba(0,0,0,0.2)' : '0 1px 4px rgba(0,0,0,0.03)',
-                  transition: 'all 0.15s ease'
-                }}
-              >
-                <CheckCircle2 size={16} style={{ color: orderFilter === 'completed' ? '#94a3b8' : (isDark ? '#94a3b8' : '#64748b'), marginBottom: '0.15rem' }} />
-                <div style={{ fontSize: '1.05rem', fontWeight: 900, lineHeight: 1 }}>
-                  {completedOrdersCount}
-                </div>
-                <div style={{ fontSize: '0.6rem', fontWeight: 700, color: orderFilter === 'completed' ? '#cbd5e1' : (isDark ? 'var(--color-text-secondary, #94a3b8)' : '#64748b'), marginTop: '0.15rem', textTransform: 'uppercase' }}>
-                  Completed
-                </div>
-              </div>
-
-              {/* Total Spend Pill */}
-              <div 
-                style={{
-                  background: isDark ? 'var(--color-surface, #111827)' : '#f8fafc',
-                  border: isDark ? '1px solid var(--color-border, #334155)' : '1px solid #e2e8f0',
-                  borderRadius: '10px',
-                  padding: '0.55rem 0.4rem',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  textAlign: 'center'
-                }}
-              >
-                <DollarSign size={16} style={{ color: '#059669', marginBottom: '0.15rem' }} />
-                <div style={{ fontSize: '1.02rem', fontWeight: 900, lineHeight: 1, color: isDark ? '#34d399' : '#059669' }}>
-                  ${totalValueSpent.toFixed(0)}
-                </div>
-                <div style={{ fontSize: '0.6rem', fontWeight: 700, color: isDark ? 'var(--color-text-secondary, #94a3b8)' : '#64748b', marginTop: '0.15rem', textTransform: 'uppercase' }}>
-                  Total Value
-                </div>
-              </div>
-            </div>
-
-            {/* Action Required Alert Banner for Unpaid Orders */}
-            {unpaidOrdersCount > 0 && (
-              <div style={{
-                background: isDark ? 'rgba(234, 88, 12, 0.15)' : 'linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)',
-                border: isDark ? '1px solid rgba(234, 88, 12, 0.4)' : '1px solid #fde68a',
+          {/* Unpaid Alert Banner (Concise single line) */}
+          {unpaidOrdersCount > 0 && orderFilter !== 'awaiting_payment' && (
+            <div 
+              onClick={() => setOrderFilter('awaiting_payment')}
+              style={{
+                margin: '0.4rem 0.75rem 0',
+                padding: '0.5rem 0.75rem',
+                background: isDark ? 'rgba(234, 88, 12, 0.15)' : '#fff7ed',
+                border: isDark ? '1px solid rgba(234, 88, 12, 0.4)' : '1px solid #fed7aa',
                 borderRadius: '10px',
-                padding: '0.55rem 0.75rem',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
-                gap: '0.5rem',
-                boxShadow: isDark ? '0 2px 8px rgba(0, 0, 0, 0.2)' : '0 2px 8px rgba(245, 158, 11, 0.12)'
-              }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', minWidth: 0 }}>
-                  <div style={{
-                    width: '28px',
-                    height: '28px',
-                    borderRadius: '8px',
-                    background: 'linear-gradient(135deg, #ea580c 0%, #c2410c 100%)',
-                    color: '#ffffff',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    flexShrink: 0
-                  }}>
-                    <CreditCard size={15} />
-                  </div>
-                  <div style={{ minWidth: 0 }}>
-                    <div style={{ fontSize: '0.8rem', fontWeight: 900, color: isDark ? '#fb923c' : '#9a3412', lineHeight: 1.2 }}>
-                      {unpaidOrdersCount} Order{unpaidOrdersCount > 1 ? 's' : ''} Awaiting Payment
-                    </div>
-                    <div style={{ fontSize: '0.68rem', color: isDark ? '#fed7aa' : '#c2410c', marginTop: '1px' }}>
-                      Complete payment to start master digitizing
-                    </div>
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setOrderFilter('awaiting_payment');
-                    if (unpaidOrders[0]) handleOpenPaymentForOrder(unpaidOrders[0]);
-                  }}
-                  style={{
-                    background: 'linear-gradient(135deg, #ea580c 0%, #c2410c 100%)',
-                    color: '#ffffff',
-                    border: 'none',
-                    borderRadius: '8px',
-                    padding: '0.38rem 0.75rem',
-                    fontSize: '0.74rem',
-                    fontWeight: 900,
-                    cursor: 'pointer',
-                    whiteSpace: 'nowrap',
-                    flexShrink: 0,
-                    boxShadow: '0 2px 6px rgba(234, 88, 12, 0.25)'
-                  }}
-                >
-                  Pay Now
-                </button>
+                cursor: 'pointer'
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                <CreditCard size={15} style={{ color: '#ea580c' }} />
+                <span style={{ fontSize: '0.78rem', fontWeight: 800, color: isDark ? '#fb923c' : '#c2410c' }}>
+                  {unpaidOrdersCount} order{unpaidOrdersCount > 1 ? 's' : ''} awaiting payment
+                </span>
               </div>
-            )}
-          </div>
+              <span style={{ fontSize: '0.75rem', fontWeight: 900, color: '#ea580c' }}>
+                Pay Now →
+              </span>
+            </div>
+          )}
 
           {/* Sub-filter Switcher */}
           <div style={{ padding: '0.45rem 0.75rem 0.2rem', display: 'flex', gap: '0.4rem', overflowX: 'auto', WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none' }}>
@@ -3028,84 +2758,9 @@ export const BDigitizingMobileApp = () => {
 
           </div>
 
-          {/* Floating Commercial Account & Production Guarantees Card */}
-          <div style={{ padding: '0 1.25rem', marginTop: '-20px' }}>
-            <div style={{
-              background: isDark ? 'var(--color-surface, #111827)' : '#ffffff',
-              borderRadius: '16px',
-              padding: '1.15rem',
-              boxShadow: isDark ? '0 8px 24px rgba(0, 0, 0, 0.3)' : '0 8px 24px rgba(15, 23, 42, 0.08)',
-              border: isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid #e2e8f0',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '0.85rem'
-            }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <div style={{ background: 'rgba(234, 88, 12, 0.12)', color: '#ea580c', padding: '0.45rem', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <ShieldCheck size={18} />
-                  </div>
-                  <div>
-                    <div style={{ fontSize: '0.92rem', fontWeight: 900, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a', lineHeight: 1.2 }}>
-                      {isAuthenticated ? 'Commercial Partner Account' : 'Bilal Studio Production Guarantees'}
-                    </div>
-                    <span style={{ fontSize: '0.72rem', color: isDark ? 'var(--color-text-secondary, #94a3b8)' : '#64748b' }}>
-                      {isAuthenticated ? 'Verified Commercial Production Access' : '11+ Years Master Embroidery Craftsmanship'}
-                    </span>
-                  </div>
-                </div>
-
-                {isAuthenticated ? (
-                  <span style={{ fontSize: '0.68rem', fontWeight: 800, background: isDark ? 'rgba(16, 185, 129, 0.15)' : '#dcfce7', color: isDark ? '#34d399' : '#15803d', padding: '0.2rem 0.6rem', borderRadius: '9999px', border: isDark ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid #bbf7d0' }}>
-                    ● Active
-                  </span>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setMobileAuthMode('login');
-                      setMobileTab('login');
-                    }}
-                    style={{
-                      background: '#ea580c',
-                      color: '#ffffff',
-                      border: 'none',
-                      borderRadius: '8px',
-                      padding: '0.3rem 0.65rem',
-                      fontSize: '0.72rem',
-                      fontWeight: 800,
-                      cursor: 'pointer'
-                    }}
-                  >
-                    Sign In ➔
-                  </button>
-                )}
-              </div>
-
-              {/* 3 Pillars of Commercial Production */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.5rem', paddingTop: '0.75rem', borderTop: isDark ? '1px solid var(--color-border, #334155)' : '1px solid #f1f5f9' }}>
-                <div style={{ textAlign: 'center', background: isDark ? 'var(--color-subtle, #1e293b)' : '#f8fafc', padding: '0.6rem 0.25rem', borderRadius: '10px', border: isDark ? '1px solid var(--color-border, #334155)' : '1px solid #f1f5f9' }}>
-                  <span style={{ fontSize: '0.95rem', display: 'block' }}>⚡</span>
-                  <strong style={{ fontSize: '0.74rem', color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a', display: 'block', marginTop: '2px' }}>8-12h Express</strong>
-                  <span style={{ fontSize: '0.62rem', color: isDark ? 'var(--color-text-secondary, #94a3b8)' : '#64748b' }}>Turnaround</span>
-                </div>
-                <div style={{ textAlign: 'center', background: isDark ? 'var(--color-subtle, #1e293b)' : '#f8fafc', padding: '0.6rem 0.25rem', borderRadius: '10px', border: isDark ? '1px solid var(--color-border, #334155)' : '1px solid #f1f5f9' }}>
-                  <span style={{ fontSize: '0.95rem', display: 'block' }}>🧵</span>
-                  <strong style={{ fontSize: '0.74rem', color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a', display: 'block', marginTop: '2px' }}>100% Tested</strong>
-                  <span style={{ fontSize: '0.62rem', color: isDark ? 'var(--color-text-secondary, #94a3b8)' : '#64748b' }}>Sew-Out QA</span>
-                </div>
-                <div style={{ textAlign: 'center', background: isDark ? 'var(--color-subtle, #1e293b)' : '#f8fafc', padding: '0.6rem 0.25rem', borderRadius: '10px', border: isDark ? '1px solid var(--color-border, #334155)' : '1px solid #f1f5f9' }}>
-                  <span style={{ fontSize: '0.95rem', display: 'block' }}>💬</span>
-                  <strong style={{ fontSize: '0.74rem', color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a', display: 'block', marginTop: '2px' }}>24/7 Desk</strong>
-                  <span style={{ fontSize: '0.62rem', color: isDark ? 'var(--color-text-secondary, #94a3b8)' : '#64748b' }}>Master Support</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
           {/* SECTION 1: ACCOUNT & ORDERS */}
-          <div style={{ padding: '1.25rem 1.25rem 0.35rem' }}>
-            <div style={{ fontSize: '0.72rem', fontWeight: 800, color: isDark ? 'var(--color-text-secondary, #94a3b8)' : '#64748b', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.65rem' }}>
+          <div style={{ padding: '0.85rem 1.25rem 0.35rem' }}>
+            <div style={{ fontSize: '0.72rem', fontWeight: 800, color: isDark ? 'var(--color-text-secondary, #94a3b8)' : '#64748b', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.5rem' }}>
               Account & Orders
             </div>
 
@@ -3159,11 +2814,11 @@ export const BDigitizingMobileApp = () => {
                   </div>
                   <div>
                     <span style={{ fontSize: '0.9rem', fontWeight: 800, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a', display: 'block' }}>Wallet & Payments</span>
-                    <span style={{ fontSize: '0.72rem', color: isDark ? 'var(--color-text-secondary, #94a3b8)' : '#64748b' }}>Balance: ${walletBalance.toFixed(2)} • Deposit via Stripe</span>
+                    <span style={{ fontSize: '0.72rem', color: isDark ? 'var(--color-text-secondary, #94a3b8)' : '#64748b' }}>Balance: ${walletBalance.toFixed(2)}</span>
                   </div>
                 </div>
                 <span style={{ fontSize: '0.75rem', fontWeight: 800, color: isDark ? '#34d399' : '#15803d', background: isDark ? 'rgba(16, 185, 129, 0.15)' : '#dcfce7', padding: '0.15rem 0.5rem', borderRadius: '6px' }}>
-                  + Deposit
+                  + Top-Up
                 </span>
               </div>
 
@@ -3192,18 +2847,18 @@ export const BDigitizingMobileApp = () => {
             </div>
           </div>
 
-          {/* SECTION 2: STUDIO SUPPORT & POLICIES */}
+          {/* SECTION 2: STUDIO DESK */}
           <div style={{ padding: '0.75rem 1.25rem 0.35rem' }}>
-            <div style={{ fontSize: '0.72rem', fontWeight: 800, color: isDark ? 'var(--color-text-secondary, #94a3b8)' : '#64748b', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.65rem' }}>
-              Studio Support & Guarantees
+            <div style={{ fontSize: '0.72rem', fontWeight: 800, color: isDark ? 'var(--color-text-secondary, #94a3b8)' : '#64748b', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.5rem' }}>
+              Studio Desk & Help
             </div>
 
             <div style={{ background: isDark ? 'var(--color-surface, #111827)' : '#ffffff', borderRadius: '16px', border: isDark ? '1px solid var(--color-border, #334155)' : '1px solid #e2e8f0', overflow: 'hidden', boxShadow: isDark ? '0 2px 8px rgba(0,0,0,0.2)' : '0 2px 8px rgba(0,0,0,0.02)' }}>
-              {/* 24/7 Live Support Chat Desk */}
+              {/* Inbox & Studio Messages */}
               <div 
                 onClick={() => {
-                  setMobileChatMode('support');
-                  setMobileTab('chat');
+                  setMobileChatMode('inbox');
+                  setMobileTab('inbox');
                 }}
                 style={{
                   display: 'flex',
@@ -3215,18 +2870,18 @@ export const BDigitizingMobileApp = () => {
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
-                  <div style={{ background: 'rgba(16, 185, 129, 0.12)', color: '#16a34a', padding: '0.45rem', borderRadius: '10px' }}>
-                    <Headphones size={18} />
+                  <div style={{ background: 'rgba(16, 185, 129, 0.12)', color: '#059669', padding: '0.45rem', borderRadius: '10px' }}>
+                    <MessageSquare size={18} />
                   </div>
                   <div>
-                    <span style={{ fontSize: '0.9rem', fontWeight: 800, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a', display: 'block' }}>24/7 Live Support Chat Desk</span>
-                    <span style={{ fontSize: '0.72rem', color: isDark ? 'var(--color-text-secondary, #94a3b8)' : '#64748b' }}>Real-time chat, instant replies & sound chimes</span>
+                    <span style={{ fontSize: '0.9rem', fontWeight: 800, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a', display: 'block' }}>Inbox & Studio Messages</span>
+                    <span style={{ fontSize: '0.72rem', color: isDark ? 'var(--color-text-secondary, #94a3b8)' : '#64748b' }}>Chat with master digitizers & support</span>
                   </div>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                  {unreadSupportCount > 0 && (
+                  {(unreadSupportCount + unreadInboxCount) > 0 && (
                     <span style={{ background: '#ef4444', color: '#fff', fontSize: '0.62rem', fontWeight: 900, borderRadius: '9999px', padding: '0.1rem 0.45rem' }}>
-                      {unreadSupportCount} new
+                      {unreadSupportCount + unreadInboxCount} new
                     </span>
                   )}
                   <ChevronRight size={18} style={{ color: isDark ? '#94a3b8' : '#94a3b8' }} />
@@ -3257,7 +2912,7 @@ export const BDigitizingMobileApp = () => {
                 <ChevronRight size={18} style={{ color: isDark ? '#94a3b8' : '#94a3b8' }} />
               </div>
 
-              {/* Service Rates & Tiers */}
+              {/* Service Rates & Packages */}
               <div 
                 onClick={() => setMobileTab('categories')}
                 style={{
@@ -3274,8 +2929,8 @@ export const BDigitizingMobileApp = () => {
                     <Tag size={18} />
                   </div>
                   <div>
-                    <span style={{ fontSize: '0.9rem', fontWeight: 800, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a', display: 'block' }}>Service Rates & Tiers</span>
-                    <span style={{ fontSize: '0.72rem', color: isDark ? 'var(--color-text-secondary, #94a3b8)' : '#64748b' }}>Embroidery from $12 • Vector from $10</span>
+                    <span style={{ fontSize: '0.9rem', fontWeight: 800, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a', display: 'block' }}>Service Rates & Packages</span>
+                    <span style={{ fontSize: '0.72rem', color: isDark ? 'var(--color-text-secondary, #94a3b8)' : '#64748b' }}>View all rates, turnarounds & tiers</span>
                   </div>
                 </div>
                 <ChevronRight size={18} style={{ color: isDark ? '#94a3b8' : '#94a3b8' }} />
@@ -3491,122 +3146,49 @@ export const BDigitizingMobileApp = () => {
           background: isDark ? 'var(--color-background, #090d16)' : '#f8fafc',
           position: 'relative'
         }}>
-          {/* Header with channel switcher */}
+          {/* Mobile Studio Inbox Header */}
           <div style={{
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            padding: '0.65rem 0.85rem',
+            padding: '0.75rem 1rem',
             background: isDark ? 'var(--color-surface, #111827)' : '#ffffff',
             borderBottom: isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid #cbd5e1',
-            gap: '0.5rem',
             flexShrink: 0
           }}>
-            <button
-              type="button"
-              onClick={() => setMobileTab('home')}
-              style={{
-                background: isDark ? 'var(--color-subtle, #1e293b)' : '#f1f5f9',
-                border: 'none',
-                borderRadius: '10px',
-                padding: '0.45rem',
-                color: isDark ? '#ffffff' : '#0f172a',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}
-              title="Return to Home"
-            >
-              <ArrowLeft size={18} />
-            </button>
-
-            {/* Channel Switcher Tabs */}
-            <div style={{
-              display: 'flex',
-              background: isDark ? 'var(--color-subtle, #1e293b)' : '#f1f5f9',
-              padding: '0.2rem',
-              borderRadius: '12px',
-              gap: '0.25rem',
-              flex: 1,
-              maxWidth: '310px'
-            }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
               <button
                 type="button"
-                onClick={() => setMobileChatMode('support')}
+                onClick={() => setMobileTab('home')}
                 style={{
-                  flex: 1,
+                  background: isDark ? 'var(--color-subtle, #1e293b)' : '#f1f5f9',
+                  border: 'none',
+                  borderRadius: '10px',
+                  padding: '0.45rem',
+                  color: isDark ? '#ffffff' : '#0f172a',
+                  cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '0.35rem',
-                  padding: '0.45rem 0.4rem',
-                  borderRadius: '10px',
-                  border: 'none',
-                  fontSize: '0.78rem',
-                  fontWeight: mobileChatMode === 'support' ? 900 : 600,
-                  cursor: 'pointer',
-                  background: mobileChatMode === 'support' ? '#059669' : 'transparent',
-                  color: mobileChatMode === 'support' ? '#ffffff' : (isDark ? '#94a3b8' : '#64748b'),
-                  boxShadow: mobileChatMode === 'support' ? '0 2px 6px rgba(5, 150, 105, 0.3)' : 'none',
-                  transition: 'all 0.18s ease'
+                  justifyContent: 'center'
                 }}
+                title="Return to Home"
               >
-                <Headphones size={14} />
-                <span>24/7 Support</span>
-                {unreadSupportCount > 0 && (
-                  <span style={{
-                    background: '#ef4444',
-                    color: '#ffffff',
-                    fontSize: '0.55rem',
-                    fontWeight: 900,
-                    borderRadius: '9999px',
-                    padding: '0.05rem 0.35rem'
-                  }}>
-                    {unreadSupportCount}
-                  </span>
-                )}
+                <ArrowLeft size={18} />
               </button>
-
-              <button
-                type="button"
-                onClick={() => setMobileChatMode('inbox')}
-                style={{
-                  flex: 1,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '0.35rem',
-                  padding: '0.45rem 0.4rem',
-                  borderRadius: '10px',
-                  border: 'none',
-                  fontSize: '0.78rem',
-                  fontWeight: mobileChatMode === 'inbox' ? 900 : 600,
-                  cursor: 'pointer',
-                  background: mobileChatMode === 'inbox' ? '#ea580c' : 'transparent',
-                  color: mobileChatMode === 'inbox' ? '#ffffff' : (isDark ? '#94a3b8' : '#64748b'),
-                  boxShadow: mobileChatMode === 'inbox' ? '0 2px 6px rgba(234, 88, 12, 0.3)' : 'none',
-                  transition: 'all 0.18s ease'
-                }}
-              >
-                <MessageSquare size={14} />
-                <span>Inbox</span>
-                {unreadInboxCount > 0 && (
-                  <span style={{
-                    background: '#ef4444',
-                    color: '#ffffff',
-                    fontSize: '0.55rem',
-                    fontWeight: 900,
-                    borderRadius: '9999px',
-                    padding: '0.05rem 0.35rem'
-                  }}>
-                    {unreadInboxCount}
+              <div>
+                <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 900, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a' }}>
+                  Studio Inbox
+                </h3>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', marginTop: '0.1rem' }}>
+                  <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#10b981', display: 'inline-block' }} />
+                  <span style={{ fontSize: '0.72rem', color: isDark ? '#34d399' : '#059669', fontWeight: 700 }}>
+                    Digitizers & Support Active
                   </span>
-                )}
-              </button>
+                </div>
+              </div>
             </div>
 
-            {/* Chime Sound Test Button */}
+            {/* Chime Sound Notification Toggle */}
             <button
               type="button"
               onClick={handleTestSound}
@@ -3621,7 +3203,7 @@ export const BDigitizingMobileApp = () => {
                 alignItems: 'center',
                 justifyContent: 'center'
               }}
-              title="Test notification sound chime"
+              title="Notification sound chime"
             >
               {soundEnabled ? <Volume2 size={18} /> : <VolumeX size={18} />}
             </button>
@@ -3636,8 +3218,8 @@ export const BDigitizingMobileApp = () => {
             overflow: 'hidden'
           }}>
             <CustomerSupportChat
-              chatType={mobileChatMode}
-              key={`mobile-chat-screen-${mobileChatMode}`}
+              chatType="inbox"
+              key="mobile-chat-screen-inbox"
             />
           </div>
         </div>
@@ -3699,12 +3281,12 @@ export const BDigitizingMobileApp = () => {
           <span style={{ fontSize: '0.68rem', fontWeight: mobileTab === 'home' ? 900 : 600 }}>Home</span>
         </button>
 
-        {/* Tab 2: Support Desk & Chat */}
+        {/* Tab 2: Inbox */}
         <button
           type="button"
           onClick={() => {
-            setMobileChatMode('support');
-            setMobileTab('chat');
+            setMobileChatMode('inbox');
+            setMobileTab('inbox');
             window.scrollTo({ top: 0, behavior: 'smooth' });
           }}
           style={{
@@ -3717,12 +3299,12 @@ export const BDigitizingMobileApp = () => {
             cursor: 'pointer',
             padding: '0.25rem 0',
             position: 'relative',
-            color: (mobileTab === 'chat' || mobileTab === 'support' || mobileTab === 'inbox') ? (isDark ? '#34d399' : '#047857') : (isDark ? '#94a3b8' : '#64748b'),
+            color: (mobileTab === 'inbox' || mobileTab === 'chat' || mobileTab === 'support') ? (isDark ? '#34d399' : '#047857') : (isDark ? '#94a3b8' : '#64748b'),
             gap: '0.18rem'
           }}
         >
           <div style={{
-            background: (mobileTab === 'chat' || mobileTab === 'support' || mobileTab === 'inbox') ? (isDark ? 'rgba(16, 185, 129, 0.15)' : '#ecfdf5') : 'transparent',
+            background: (mobileTab === 'inbox' || mobileTab === 'chat' || mobileTab === 'support') ? (isDark ? 'rgba(16, 185, 129, 0.15)' : '#ecfdf5') : 'transparent',
             borderRadius: '12px',
             padding: '0.25rem 0.65rem',
             display: 'flex',
@@ -3731,7 +3313,7 @@ export const BDigitizingMobileApp = () => {
             position: 'relative',
             transition: 'all 0.2s ease'
           }}>
-            <Headphones size={20} strokeWidth={(mobileTab === 'chat' || mobileTab === 'support' || mobileTab === 'inbox') ? 2.5 : 1.75} />
+            <MessageSquare size={20} strokeWidth={(mobileTab === 'inbox' || mobileTab === 'chat' || mobileTab === 'support') ? 2.5 : 1.75} />
             {(unreadSupportCount + unreadInboxCount) > 0 && (
               <span style={{
                 position: 'absolute',
@@ -3753,7 +3335,7 @@ export const BDigitizingMobileApp = () => {
               </span>
             )}
           </div>
-          <span style={{ fontSize: '0.68rem', fontWeight: (mobileTab === 'chat' || mobileTab === 'support' || mobileTab === 'inbox') ? 900 : 600 }}>Support</span>
+          <span style={{ fontSize: '0.68rem', fontWeight: (mobileTab === 'inbox' || mobileTab === 'chat' || mobileTab === 'support') ? 900 : 600 }}>Inbox</span>
         </button>
 
         {/* Tab 3: Search / Categories */}
