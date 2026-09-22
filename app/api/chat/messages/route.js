@@ -306,6 +306,18 @@ export async function POST(request) {
       console.warn('[Chat Push Service Import Notice]:', pushImportErr?.message);
     }
 
+    // 6. Instant Real-Time WebSocket Broadcast (for WhatsApp-style on-screen popup)
+    try {
+      const liveChannel = supabase.channel('bdigitizing-live-hub-v2');
+      await liveChannel.send({
+        type: 'broadcast',
+        event: 'new_chat_message',
+        payload: insertedMsg
+      });
+    } catch (bErr) {
+      console.warn('[Chat Live Broadcast Notice]:', bErr?.message);
+    }
+
     return NextResponse.json({ success: true, message: insertedMsg });
   } catch (err) {
     console.error('[Chat Messages POST Error]:', err);

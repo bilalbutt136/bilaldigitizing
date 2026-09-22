@@ -34,7 +34,6 @@ import {
   Volume2,
   VolumeX
 } from 'lucide-react';
-import PushNotificationBanner from '../common/PushNotificationBanner';
 
 const COMMON_EMOJIS = ['👋', '✅', '🧵', '✨', '👌', '🙏', '📁', '👕', '🧢', '🔥', '🚀', '💯'];
 
@@ -1009,11 +1008,6 @@ export default function AdminChatInbox({ initialChannel = 'inbox' }) {
               </button>
             )}
           </div>
-        </div>
-
-        {/* Lock Screen Push Notification Banner */}
-        <div style={{ padding: '0.5rem 0.85rem' }}>
-          <PushNotificationBanner compact={true} showTestButton={true} />
         </div>
 
         {/* CONVERSATION ITEMS LIST */}

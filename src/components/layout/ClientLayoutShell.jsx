@@ -17,6 +17,7 @@ import GlobalUploadModal from '../common/GlobalUploadModal';
 import { MetaPixelTracker } from '../common/MetaPixelTracker';
 import { PWAInstallBanner } from '../common/PWAInstallBanner';
 import { PWARegistrar } from '../common/PWARegistrar';
+import { WhatsAppMessagePopup } from '../common/WhatsAppMessagePopup';
 
 export const ClientLayoutShell = ({ children }) => {
   const { mobileMode } = useAppState();
@@ -89,6 +90,7 @@ export const ClientLayoutShell = ({ children }) => {
       {/* PWA Prompt Banner (Visible on mobile website to offer App installation or launch) */}
       {!isAppMode && <PWAInstallBanner />}
       <PWARegistrar />
+      <WhatsAppMessagePopup />
     </div>
   );
 };

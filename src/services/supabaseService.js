@@ -1541,6 +1541,24 @@ export function getSharedChatChannel() {
       }
     });
 
+    // 3. Instant WhatsApp-style Chat Message Realtime Dispatch
+    globalChatChannel.on('broadcast', { event: 'new_chat_message' }, (event) => {
+      if (event.payload && typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('bdigi_new_chat_message', { detail: event.payload }));
+      }
+    });
+
+    globalChatChannel.on(
+      'postgres_changes',
+      { event: 'INSERT', schema: 'public', table: 'messages' },
+      (payload) => {
+        const msg = payload.new || payload.record;
+        if (msg && typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('bdigi_new_chat_message', { detail: msg }));
+        }
+      }
+    );
+
     globalChatChannel.subscribe((status, err) => {
       if (status === 'SUBSCRIBED') {
         // Channel connected
@@ -1593,6 +1611,25 @@ export function broadcastLiveNotification(notificationPayload) {
     }
   } catch (err) {
     console.warn('Broadcast live notification notice:', err);
+  }
+}
+
+export function broadcastLiveChatMessage(messagePayload) {
+  if (!messagePayload) return;
+  try {
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('bdigi_new_chat_message', { detail: messagePayload }));
+    }
+    const channel = getSharedChatChannel();
+    if (channel) {
+      channel.send({
+        type: 'broadcast',
+        event: 'new_chat_message',
+        payload: messagePayload
+      });
+    }
+  } catch (err) {
+    console.warn('Broadcast live chat message notice:', err);
   }
 }
 
