@@ -345,26 +345,48 @@ export const StateProvider = ({ children }) => {
     return {
       promotions: [
         {
-          id: 'promo-sale-15',
+          id: 'promo-sale-granular',
           name: 'SALE',
           type: 'all_orders',
-          discountPercent: 15,
+          discountPercent: 20,
+          serviceDiscounts: {
+            embroidery: 20,
+            vector: 10,
+            patch: 5
+          },
+          serviceStatus: {
+            embroidery: true,
+            vector: true,
+            patch: true
+          },
           startDate: new Date().toISOString().split('T')[0],
           endDate: new Date(Date.now() + 30 * 86400000).toISOString().split('T')[0],
           status: 'active',
           maxOrdersLimit: 500,
           ordersCount: 0,
-          servicesIncluded: 'All Studio Services',
-          promoCode: 'SAVE15',
+          servicesIncluded: 'Embroidery: 20% | Vector: 10% | Patches: 5%',
+          promoCode: 'SAVEPROMO',
           createdAt: new Date().toISOString()
         }
       ],
+      service_discounts: {
+        embroidery: 20,
+        vector: 10,
+        patch: 5,
+        enabled: true
+      },
+      serviceDiscounts: {
+        embroidery: 20,
+        vector: 10,
+        patch: 5,
+        enabled: true
+      },
       announcement: {
         enabled: true,
         badge: 'SALE',
-        text: 'Get 15% OFF on All Custom Embroidery Digitizing & Vector Art Orders!',
-        promoCode: 'SAVE15',
-        linkText: 'Claim 15% Off',
+        text: 'Special Studio Promo: 20% OFF Digitizing, 10% OFF Vector, 5% OFF Patches!',
+        promoCode: 'SAVEPROMO',
+        linkText: 'Claim 20% Off',
         linkUrl: '/order',
         theme: 'orange',
         bgColor: 'linear-gradient(90deg, #ea580c 0%, #f97316 50%, #ea580c 100%)',
@@ -372,7 +394,7 @@ export const StateProvider = ({ children }) => {
         showCodeBadge: true,
         showCountdown: true,
         countdownHours: 24,
-        discountValue: 15
+        discountValue: 20
       },
       promotionalBanner: {
         enabled: false,
@@ -2082,6 +2104,8 @@ export const StateProvider = ({ children }) => {
         ...prev,
         ...newSettings,
         promotions: newSettings?.promotions || prev?.promotions || [],
+        service_discounts: newSettings?.service_discounts || newSettings?.serviceDiscounts || prev?.service_discounts || { embroidery: 20, vector: 10, patch: 5, enabled: true },
+        serviceDiscounts: newSettings?.service_discounts || newSettings?.serviceDiscounts || prev?.serviceDiscounts || { embroidery: 20, vector: 10, patch: 5, enabled: true },
         announcement: {
           ...(prev?.announcement || {}),
           ...(newSettings?.announcement || {})
@@ -2126,6 +2150,11 @@ export const StateProvider = ({ children }) => {
     }
     if (newSettings.promotions) {
       await saveCmsConfigToSupabase('promotions', newSettings.promotions);
+    }
+    if (newSettings.service_discounts || newSettings.serviceDiscounts) {
+      const sDiscounts = newSettings.service_discounts || newSettings.serviceDiscounts;
+      await saveCmsConfigToSupabase('service_discounts', sDiscounts);
+      await saveCmsConfigToSupabase('serviceDiscounts', sDiscounts);
     }
     if (newSettings.announcement) {
       await saveCmsConfigToSupabase('announcement', newSettings.announcement);

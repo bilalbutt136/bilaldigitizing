@@ -26,19 +26,30 @@ export const AnnouncementBar = () => {
     ? siteSettings.promotions.find(p => p.status === 'active')
     : null;
 
+  const serviceRates = activePromo?.serviceDiscounts || siteSettings?.service_discounts || siteSettings?.serviceDiscounts;
+  const isGranular = Boolean(serviceRates && (serviceRates.embroidery !== undefined || serviceRates.vector !== undefined || serviceRates.patch !== undefined));
+  const embRate = serviceRates?.embroidery ?? activePromo?.discountPercent ?? 20;
+  const vecRate = serviceRates?.vector ?? activePromo?.discountPercent ?? 10;
+  const pchRate = serviceRates?.patch ?? activePromo?.discountPercent ?? 5;
+  const maxRate = Math.max(embRate, vecRate, pchRate);
+
+  const dynamicText = isGranular
+    ? `🧵 ${embRate}% OFF Digitizing • 🎨 ${vecRate}% OFF Vector • 🛡️ ${pchRate}% OFF Patches | Limited Time!`
+    : (activePromo ? `Get up to ${activePromo.discountPercent}% OFF on All Custom Digitizing & Vector Orders!` : rawAnnouncement?.text);
+
   // Dynamically derive announcement details from active promotion if present or use manual config
-  const announcement = activePromo ? {
+  const announcement = (activePromo || isGranular) ? {
     enabled: rawAnnouncement?.enabled !== false,
-    text: `Get ${activePromo.discountPercent}% OFF on All Custom Embroidery Digitizing & Vector Art Orders!`,
-    badge: activePromo.name ? activePromo.name.toUpperCase() : (rawAnnouncement?.badge || 'SALE'),
-    promoCode: activePromo.promoCode || (rawAnnouncement?.promoCode || `PROMO${activePromo.discountPercent}`),
-    linkText: `Claim ${activePromo.discountPercent}% Off`,
+    text: dynamicText,
+    badge: activePromo?.name ? activePromo.name.toUpperCase() : (isGranular ? 'LIVE PROMO' : (rawAnnouncement?.badge || 'SALE')),
+    promoCode: activePromo?.promoCode || (rawAnnouncement?.promoCode || `SAVE${maxRate}`),
+    linkText: `Claim Discount (Up to ${maxRate}% Off)`,
     linkUrl: rawAnnouncement?.linkUrl || '/order',
     showCountdown: rawAnnouncement?.showCountdown !== false,
     showCodeBadge: rawAnnouncement?.showCodeBadge !== false,
     theme: (rawAnnouncement?.theme === 'emerald' ? 'orange' : rawAnnouncement?.theme) || 'orange',
     textColor: rawAnnouncement?.textColor || '#ffffff',
-    discountValue: activePromo.discountPercent
+    discountValue: maxRate
   } : (rawAnnouncement?.enabled && rawAnnouncement?.text ? {
     ...rawAnnouncement,
     theme: (rawAnnouncement.theme === 'emerald' ? 'orange' : rawAnnouncement.theme) || 'orange'

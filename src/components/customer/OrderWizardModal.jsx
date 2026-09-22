@@ -34,6 +34,13 @@ import {
 } from 'lucide-react';
 import { uploadFileToCloudinaryFull } from '../../services/supabaseService';
 import { matchCategory } from '../../utils/categoryUtils';
+import { 
+  getActivePromotion, 
+  getServiceDiscountPercent, 
+  calculateOrderPricing, 
+  getServiceDisplayName, 
+  normalizeServiceKey 
+} from '../../utils/promoUtils';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import { GoogleCustomSignInButton } from '../auth/GoogleCustomSignInButton';
 
@@ -412,18 +419,21 @@ export const OrderWizardModal = () => {
       setOrderTitle('');
       setAppliedPromo(null);
 
-      // Check default promo code
-      const promo = orderWizardInitialData?.promoCode || siteSettings?.announcement?.promoCode;
-      if (promo) {
-        setPromoCodeInput(promo);
+      // Check active live promotion from Supabase siteSettings
+      const livePromo = getActivePromotion(siteSettings?.promotions);
+      const initialCode = orderWizardInitialData?.promoCode || siteSettings?.announcement?.promoCode || livePromo?.promoCode || 'PROMO';
+      const hasServiceDiscount = Boolean(livePromo || (siteSettings?.service_discounts && siteSettings?.service_discounts?.enabled !== false));
+
+      if (hasServiceDiscount || orderWizardInitialData?.promoCode || siteSettings?.announcement?.promoCode) {
+        setPromoCodeInput(initialCode);
         setAppliedPromo({
-          code: promo.toUpperCase(),
-          discountPercent: 15,
-          discountAmount: 0
+          code: initialCode.toUpperCase(),
+          isGranular: true,
+          promoObj: livePromo
         });
       }
     }
-  }, [isOrderWizardOpen, orderWizardInitialData]);
+  }, [isOrderWizardOpen, orderWizardInitialData, siteSettings?.promotions, siteSettings?.service_discounts]);
 
   if (!isOrderWizardOpen) return null;
 
@@ -431,25 +441,27 @@ export const OrderWizardModal = () => {
   const activePkg = selectedPackage || currentPackages[0];
 
   const unitPrice = Number(activePkg?.price || (selectedService === 'patch' ? 2.50 : 15));
-  const baseSubtotal = parseFloat((unitPrice * quantity).toFixed(2));
+  const activePromotion = getActivePromotion(siteSettings?.promotions);
 
-  let volumeDiscountPercent = 0;
-  if (selectedService !== 'patch') {
-    if (quantity >= 25) volumeDiscountPercent = 25;
-    else if (quantity >= 10) volumeDiscountPercent = 15;
-    else if (quantity >= 5) volumeDiscountPercent = 10;
-    else if (quantity >= 3) volumeDiscountPercent = 5;
-  }
+  // Compute pricing via centralized promotional discount engine
+  const pricingResult = calculateOrderPricing({
+    service: selectedService,
+    unitPrice,
+    quantity,
+    isRush,
+    activePromo: appliedPromo?.promoObj || activePromotion,
+    siteSettings,
+    customPromoPercent: appliedPromo?.isCustomPercent ? appliedPromo.discountPercent : undefined
+  });
 
-  const volumeDiscountAmount = parseFloat(((baseSubtotal * volumeDiscountPercent) / 100).toFixed(2));
-  const rushFee = isRush ? (selectedService === 'patch' ? 25 : 10) : 0;
-  
-  let promoDiscountAmount = 0;
-  if (appliedPromo && appliedPromo.discountPercent) {
-    promoDiscountAmount = parseFloat((((baseSubtotal - volumeDiscountAmount) * appliedPromo.discountPercent) / 100).toFixed(2));
-  }
-
+  const baseSubtotal = pricingResult.baseSubtotal;
+  const volumeDiscountPercent = pricingResult.volumeDiscountPercent;
+  const volumeDiscountAmount = pricingResult.volumeDiscountAmount;
+  const promoDiscountPercent = appliedPromo ? pricingResult.promoDiscountPercent : 0;
+  const promoDiscountAmount = appliedPromo ? pricingResult.promoDiscountAmount : 0;
+  const rushFee = pricingResult.rushFee;
   const totalPrice = Math.max(0, parseFloat((baseSubtotal - volumeDiscountAmount - promoDiscountAmount + rushFee).toFixed(2)));
+  const serviceDisplayName = pricingResult.serviceName;
 
   const handleSelectService = (serviceId) => {
     setSelectedService(serviceId);
@@ -576,17 +588,56 @@ export const OrderWizardModal = () => {
   const handleApplyPromo = () => {
     if (!promoCodeInput || !promoCodeInput.trim()) return;
     const clean = promoCodeInput.trim().toUpperCase();
-    if (clean === 'SAVE15' || clean === 'SAVE10' || clean === 'WELCOME' || clean === 'PROMO') {
-      const pct = clean === 'SAVE10' ? 10 : 15;
+
+    // 1. Check matching campaign in siteSettings.promotions
+    const matchedPromo = Array.isArray(siteSettings?.promotions)
+      ? siteSettings.promotions.find(p => p.promoCode?.toUpperCase() === clean || p.id === clean || p.name?.toUpperCase() === clean)
+      : null;
+
+    if (matchedPromo) {
       setAppliedPromo({
         code: clean,
-        discountPercent: pct,
-        discountAmount: parseFloat((((baseSubtotal - volumeDiscountAmount) * pct) / 100).toFixed(2))
+        isGranular: true,
+        promoObj: matchedPromo
+      });
+      const pct = getServiceDiscountPercent(selectedService, matchedPromo, siteSettings);
+      if (showToast) showToast(`Campaign "${matchedPromo.name || clean}" applied! (${getServiceDisplayName(selectedService)}: ${pct}% OFF)`, 'success');
+      return;
+    }
+
+    // 2. Check explicit percentage codes like SAVE20, SAVE15, SAVE10, SAVE5
+    const saveMatch = clean.match(/^SAVE(\d+)$/);
+    if (saveMatch) {
+      const pct = parseInt(saveMatch[1], 10);
+      setAppliedPromo({
+        code: clean,
+        isCustomPercent: true,
+        discountPercent: pct
       });
       if (showToast) showToast(`Coupon ${clean} applied! (-${pct}% discount)`, 'success');
-    } else {
-      if (showToast) showToast('Invalid promo code. Use SAVE15 for 15% off.', 'error');
+      return;
     }
+
+    // 3. Generic promotional codes
+    if (clean === 'WELCOME' || clean === 'PROMO' || clean === 'SPECIAL' || clean === 'DISCOUNT') {
+      setAppliedPromo({
+        code: clean,
+        isGranular: true,
+        promoObj: activePromotion
+      });
+      const pct = getServiceDiscountPercent(selectedService, activePromotion, siteSettings);
+      if (showToast) showToast(`Promo ${clean} applied! (${getServiceDisplayName(selectedService)}: ${pct}% OFF)`, 'success');
+      return;
+    }
+
+    // Fallback: apply with live rates
+    setAppliedPromo({
+      code: clean,
+      isGranular: true,
+      promoObj: activePromotion
+    });
+    const pct = getServiceDiscountPercent(selectedService, activePromotion, siteSettings);
+    if (showToast) showToast(`Coupon ${clean} applied with active promotional discount (${pct}% OFF)`, 'success');
   };
 
   const handleGoogleAuthSuccess = async (googleUser) => {
@@ -683,8 +734,19 @@ export const OrderWizardModal = () => {
         price: totalPrice,
         totalPrice: totalPrice,
         base_price: baseSubtotal,
-        discount_amount: volumeDiscountAmount + promoDiscountAmount,
+        discount_amount: parseFloat((volumeDiscountAmount + promoDiscountAmount).toFixed(2)),
         applied_promo_code: appliedPromo?.code || null,
+        discount_breakdown: {
+          base_price: baseSubtotal,
+          volume_discount_percent: volumeDiscountPercent,
+          volume_discount_amount: volumeDiscountAmount,
+          promo_discount_percent: promoDiscountPercent,
+          promo_discount_amount: promoDiscountAmount,
+          service_key: selectedService,
+          service_name: serviceDisplayName,
+          rush_fee: rushFee,
+          final_price: totalPrice
+        },
         isRush: isRush,
         notes: notes.trim(),
         placement: placement,
@@ -740,6 +802,9 @@ export const OrderWizardModal = () => {
         amount: totalPrice,
         price: totalPrice,
         totalPrice: totalPrice,
+        base_price: baseSubtotal,
+        discount_amount: parseFloat((volumeDiscountAmount + promoDiscountAmount).toFixed(2)),
+        discount_breakdown: orderPayload.discount_breakdown,
         orderId: resultingId,
         title: derivedTitle,
         clientEmail: clientEmail,
@@ -2017,6 +2082,61 @@ export const OrderWizardModal = () => {
                     >
                       Apply Code
                     </button>
+                  </div>
+
+                  {/* Itemized Pricing Breakdown with Granular Service Discount */}
+                  <div style={{
+                    background: 'var(--color-surface, #ffffff)',
+                    padding: '0.85rem 1rem',
+                    borderRadius: '10px',
+                    border: '1px solid var(--color-border, #e2e8f0)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '0.45rem',
+                    fontSize: '0.82rem'
+                  }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--color-text-secondary, #475569)' }}>
+                      <span>Base Subtotal ({quantity} {selectedService === 'patch' ? 'pcs' : 'item(s)'} × ${unitPrice.toFixed(2)})</span>
+                      <span style={{ fontWeight: 600, color: 'var(--color-text-primary, #0f172a)' }}>${baseSubtotal.toFixed(2)}</span>
+                    </div>
+
+                    {volumeDiscountAmount > 0 && (
+                      <div style={{ display: 'flex', justifyContent: 'space-between', color: '#059669', fontWeight: 600 }}>
+                        <span>Volume Tier Discount ({volumeDiscountPercent}% OFF)</span>
+                        <span>-${volumeDiscountAmount.toFixed(2)}</span>
+                      </div>
+                    )}
+
+                    {promoDiscountAmount > 0 && (
+                      <div style={{ display: 'flex', justifyContent: 'space-between', color: '#059669', fontWeight: 700 }}>
+                        <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                          <Tag size={13} /> Promotional Discount ({serviceDisplayName}: {promoDiscountPercent}% OFF)
+                        </span>
+                        <span>-${promoDiscountAmount.toFixed(2)}</span>
+                      </div>
+                    )}
+
+                    {rushFee > 0 && (
+                      <div style={{ display: 'flex', justifyContent: 'space-between', color: '#ea580c', fontWeight: 600 }}>
+                        <span>⚡ 2–4H Express Rush Turnaround</span>
+                        <span>+${rushFee.toFixed(2)}</span>
+                      </div>
+                    )}
+
+                    <div style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      borderTop: '1px solid var(--color-border, #e2e8f0)',
+                      paddingTop: '0.5rem',
+                      marginTop: '0.2rem',
+                      fontWeight: 900,
+                      fontSize: '0.92rem',
+                      color: 'var(--color-text-primary, #0f172a)'
+                    }}>
+                      <span>Total Due</span>
+                      <span style={{ color: isDark ? '#34d399' : '#047857', fontSize: '1.1rem' }}>${totalPrice.toFixed(2)}</span>
+                    </div>
                   </div>
                 </div>
 

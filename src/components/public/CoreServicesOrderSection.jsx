@@ -20,10 +20,16 @@ import {
 } from 'lucide-react';
 import { PackageCard } from './PackageCard';
 import { uploadFileToCloudinaryFull } from '../../services/supabaseService';
+import { 
+  getActivePromotion, 
+  getServiceDiscountPercent, 
+  getServiceDisplayName, 
+  normalizeServiceKey 
+} from '../../utils/promoUtils';
 
 export const CoreServicesOrderSection = ({ defaultService = 'digitizing', hideTabs = false, initialTier = 'standard' }) => {
   const navigate = useNavigate();
-  const { dynamicPricingTiers = [], patchCards = [], pricing = {}, createOrder, protectedNavigate, showToast } = useAppState();
+  const { dynamicPricingTiers = [], patchCards = [], pricing = {}, siteSettings, createOrder, protectedNavigate, showToast } = useAppState();
 
   // Dynamic patch craft / material rate resolver connected to database & CMS
   const getPatchStyleBaseRate = (styleName) => {
@@ -599,6 +605,12 @@ export const CoreServicesOrderSection = ({ defaultService = 'digitizing', hideTa
 
     const primaryArtworkUrl = allUploadedFiles[0]?.url || null;
 
+    const activePromo = getActivePromotion(siteSettings?.promotions);
+    const promoPercent = getServiceDiscountPercent(activeService, activePromo, siteSettings);
+    const rawPrice = parseFloat(totalPrice) || 0;
+    const promoDiscountAmount = promoPercent > 0 ? parseFloat(((rawPrice * promoPercent) / 100).toFixed(2)) : 0;
+    const finalPrice = Math.max(0, parseFloat((rawPrice - promoDiscountAmount).toFixed(2)));
+
     const newOrderPayload = {
       title: orderTitle,
       type: activeService,
@@ -608,7 +620,19 @@ export const CoreServicesOrderSection = ({ defaultService = 'digitizing', hideTa
         activeService === 'patches' ? `Custom Patches (${placementsSummary})` :
         activeService === 'tshirts' ? `Custom T-Shirts (${Object.values(tshirtSizes).reduce((a, b) => a + Number(b), 0)} Pcs)` :
         `Custom Caps & 3D Hats (${capQuantity}x ${capStyle})`,
-      price: parseFloat(totalPrice),
+      price: finalPrice,
+      totalPrice: finalPrice,
+      base_price: rawPrice,
+      discount_amount: promoDiscountAmount,
+      applied_promo_code: promoPercent > 0 ? (activePromo?.promoCode || `SAVE${promoPercent}`) : null,
+      discount_breakdown: {
+        base_price: rawPrice,
+        promo_discount_percent: promoPercent,
+        promo_discount_amount: promoDiscountAmount,
+        service_key: activeService,
+        service_name: getServiceDisplayName(activeService),
+        final_price: finalPrice
+      },
       isRush: activeService === 'digitizing' ? isRush : (activeService === 'vector' ? (totalPlacementCount === 1 && isRush) : false),
       notes,
       requestedFormats: activeService === 'vector' ? vectorFormats : targetFormats,
@@ -643,6 +667,12 @@ export const CoreServicesOrderSection = ({ defaultService = 'digitizing', hideTa
       navigate('/client-portal');
     }
   };
+
+  const liveActivePromo = getActivePromotion(siteSettings?.promotions);
+  const livePromoPercent = getServiceDiscountPercent(activeService, liveActivePromo, siteSettings);
+  const baseCalculatedPrice = parseFloat(calculatePrice()) || 0;
+  const livePromoDiscount = livePromoPercent > 0 ? parseFloat(((baseCalculatedPrice * livePromoPercent) / 100).toFixed(2)) : 0;
+  const liveFinalPrice = Math.max(0, parseFloat((baseCalculatedPrice - livePromoDiscount).toFixed(2)));
 
   return (
     <section id="order-builder" style={{ 
@@ -1708,9 +1738,25 @@ export const CoreServicesOrderSection = ({ defaultService = 'digitizing', hideTa
                   </div>
                 )}
 
+                {livePromoPercent > 0 && (
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.45rem', color: '#34d399', fontSize: '0.84rem', fontWeight: 700 }}>
+                    <span>Promo Discount ({getServiceDisplayName(activeService)}: {livePromoPercent}% OFF):</span>
+                    <span>-${livePromoDiscount.toFixed(2)}</span>
+                  </div>
+                )}
+
                 <div style={{ borderTop: '1px dashed rgba(255,255,255,0.2)', paddingTop: '0.85rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <span style={{ fontSize: '1.05rem', fontWeight: 800, color: '#ffffff' }}>Total Price:</span>
-                  <span style={{ fontSize: '1.65rem', fontWeight: 800, color: 'var(--orange-400)' }}>${calculatePrice()}</span>
+                  <div style={{ textAlign: 'right' }}>
+                    {livePromoPercent > 0 && (
+                      <span style={{ fontSize: '1.1rem', color: '#94a3b8', textDecoration: 'line-through', marginRight: '0.55rem', fontWeight: 700 }}>
+                        ${baseCalculatedPrice.toFixed(2)}
+                      </span>
+                    )}
+                    <span style={{ fontSize: '1.65rem', fontWeight: 800, color: 'var(--orange-400)' }}>
+                      ${liveFinalPrice.toFixed(2)}
+                    </span>
+                  </div>
                 </div>
               </div>
 
@@ -1721,7 +1767,7 @@ export const CoreServicesOrderSection = ({ defaultService = 'digitizing', hideTa
                 className="btn btn-primary-orange btn-lg"
                 style={{ width: '100%', justifyContent: 'center', fontWeight: 800, gap: '0.5rem', background: 'linear-gradient(135deg, var(--color-secondary) 0%, var(--color-primary) 100%)', borderColor: 'var(--color-primary)', boxShadow: '0 4px 14px var(--color-primary-glow)' }}
               >
-                {isSubmitting ? 'Processing Order...' : `Complete Order ($${calculatePrice()})`} <ArrowRight size={18} />
+                {isSubmitting ? 'Processing Order...' : `Complete Order ($${liveFinalPrice.toFixed(2)})`} <ArrowRight size={18} />
               </button>
 
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem', fontSize: '0.78rem', color: '#94a3b8', marginTop: '0.85rem' }}>

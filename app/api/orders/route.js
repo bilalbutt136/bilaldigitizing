@@ -231,6 +231,10 @@ export async function POST(request) {
         image_url: primaryArtworkUrl,
         logo: primaryArtworkUrl,
         user_id: user?.id || null,
+        discount_amount: primaryDbRow.discount_amount !== undefined ? parseFloat(primaryDbRow.discount_amount || 0) : 0.00,
+        applied_promo_code: primaryDbRow.applied_promo_code || primaryDbRow.promoCode || null,
+        base_price: primaryDbRow.base_price !== undefined ? parseFloat(primaryDbRow.base_price || primaryDbRow.price || 0) : null,
+        discount_breakdown: primaryDbRow.discount_breakdown || null,
         notes: JSON.stringify({
           notes: primaryDbRow.notes || '',
           patchStyle: primaryDbRow.patchStyle,
@@ -245,10 +249,25 @@ export async function POST(request) {
         })
       };
 
-      const { data: insertedOrder, error: orderErr } = await supabase.from('orders').insert([mappedDbRow]).select();
+      let insertedOrder = null;
+      let { data: orderData, error: orderErr } = await supabase.from('orders').insert([mappedDbRow]).select();
       if (orderErr) {
-        console.error("Order Insert Error:", orderErr);
-        throw orderErr;
+        // If discount columns are not yet in the DB schema, safely fallback without them
+        if (orderErr.message && (orderErr.message.includes('discount_') || orderErr.message.includes('applied_promo_') || orderErr.message.includes('base_price'))) {
+          console.warn('[Orders API] Retrying order insert without discount columns:', orderErr.message);
+          const { discount_amount, applied_promo_code, base_price, discount_breakdown, ...legacyDbRow } = mappedDbRow;
+          const retryRes = await supabase.from('orders').insert([legacyDbRow]).select();
+          if (retryRes.error) {
+            console.error("Order Insert Error after retry:", retryRes.error);
+            throw retryRes.error;
+          }
+          insertedOrder = retryRes.data;
+        } else {
+          console.error("Order Insert Error:", orderErr);
+          throw orderErr;
+        }
+      } else {
+        insertedOrder = orderData;
       }
       
       if (orderFiles && orderFiles.length > 0) {

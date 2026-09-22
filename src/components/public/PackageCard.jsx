@@ -2,6 +2,8 @@
 
 import React from 'react';
 import { CheckCircle, Zap, Trophy, Sparkles, Clock, ArrowRight, Layers, PenTool, Tag } from 'lucide-react';
+import { useAppState } from '../../context/StateContext';
+import { getServiceDiscountPercent, normalizeServiceKey } from '../../utils/promoUtils';
 
 const PALETTES = [
   {
@@ -70,6 +72,10 @@ export const PackageCard = ({ cat = {}, idx = 0, onSelect, forceCategory = '' })
   const tierTheme = getTierTheme(idx, rawService);
   const IconComp = cat.icon || (idx === 0 ? Zap : idx === 1 ? Trophy : Sparkles);
   
+  const { siteSettings } = useAppState?.() || {};
+  const activePromo = Array.isArray(siteSettings?.promotions) ? siteSettings.promotions.find(p => p.status === 'active') : null;
+  const promoPercent = getServiceDiscountPercent(rawService, activePromo, siteSettings);
+
   // Rate Formatting with exact 2 decimal places e.g. $4.50, $15.00
   let numericPrice = (cat.price !== undefined && cat.price !== null && cat.price !== '') ? parseFloat(cat.price) : null;
   let displayRate = '$10.00';
@@ -180,7 +186,7 @@ export const PackageCard = ({ cat = {}, idx = 0, onSelect, forceCategory = '' })
           justifyContent: 'center',
           textAlign: 'center'
         }}>
-          <div style={{ display: 'inline-flex', alignItems: 'baseline', justifyContent: 'center', gap: '0.45rem' }}>
+          <div style={{ display: 'inline-flex', alignItems: 'baseline', justifyContent: 'center', gap: '0.45rem', flexWrap: 'wrap' }}>
             <div style={{ fontSize: '2.25rem', fontWeight: 900, color: tierTheme.color, lineHeight: 1, letterSpacing: '-0.03em' }}>
               {displayRate}
             </div>
@@ -188,6 +194,11 @@ export const PackageCard = ({ cat = {}, idx = 0, onSelect, forceCategory = '' })
               <div style={{ fontSize: '1.1rem', color: 'var(--color-text-muted)', textDecoration: 'line-through', fontWeight: 700 }}>
                 {displayStrikePrice}
               </div>
+            )}
+            {promoPercent > 0 && (
+              <span style={{ fontSize: '0.72rem', padding: '0.18rem 0.5rem', borderRadius: '6px', background: '#ecfdf5', color: '#047857', fontWeight: 800, border: '1px solid #a7f3d0' }}>
+                {promoPercent}% OFF
+              </span>
             )}
           </div>
           <div style={{ fontSize: '0.72rem', color: 'var(--color-text-muted)', fontWeight: 800, marginTop: '0.25rem', textTransform: 'uppercase', letterSpacing: '0.04em', textAlign: 'center' }}>

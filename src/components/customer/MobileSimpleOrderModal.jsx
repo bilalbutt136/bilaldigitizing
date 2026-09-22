@@ -32,6 +32,13 @@ import {
 } from 'lucide-react';
 import { uploadFileToCloudinaryFull } from '../../services/supabaseService';
 import { matchCategory } from '../../utils/categoryUtils';
+import { 
+  getActivePromotion, 
+  getServiceDiscountPercent, 
+  calculateOrderPricing, 
+  getServiceDisplayName, 
+  normalizeServiceKey 
+} from '../../utils/promoUtils';
 import { GoogleCustomSignInButton } from '../auth/GoogleCustomSignInButton';
 
 // Standard fallback package tiers matching website /app/pricing/page.jsx
@@ -254,6 +261,7 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
     setCheckoutSession,
     dynamicPricingTiers = [],
     refreshOrders,
+    siteSettings,
     theme
   } = useAppState();
 
@@ -269,6 +277,10 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
   // Quantity State
   const [quantity, setQuantity] = useState(1);
   const [quantityInput, setQuantityInput] = useState('1');
+
+  // Promotional Discount State
+  const [promoCodeInput, setPromoCodeInput] = useState('');
+  const [appliedPromo, setAppliedPromo] = useState(null);
 
   // Guest Authentication State
   const [guestAuthMode, setGuestAuthMode] = useState('signup');
@@ -318,15 +330,16 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
         defaultFormats: catKey === 'vector' ? ['AI', 'EPS', 'SVG', 'PDF'] : catKey === 'patch' ? ['DST', 'PDF Proof'] : ['DST', 'PES', 'EMB', 'PDF'],
         defaultWidth: '3.5',
         defaultHeight: '3.5',
-        defaultPlacement: catKey === 'vector' ? 'Vector Art Tracing' : catKey === 'patch' ? 'Custom Patch' : 'Left Chest / Polo'
+        defaultPlacement: catKey === 'patch' ? 'Custom Shape Cut' : 'Left Chest / Polo (up to 4.0")'
       }));
     }
     return coreList;
   };
 
+  // Reset and set default selections on open
   useEffect(() => {
     if (isOpen) {
-      const normService = defaultService === 'patch' || defaultService === 'patches' 
+      const normService = (defaultService === 'patch' || defaultService === 'patches' || defaultService === 'custom_patches') 
         ? 'patch' 
         : (defaultService === 'vector' || defaultService === 'vector-art' || defaultService === 'vector_art') 
           ? 'vector' 
@@ -351,8 +364,22 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
       setUploadError(null);
       setIsRush(false);
       setNotes('');
+
+      // Auto-populate active promotion
+      const livePromo = getActivePromotion(siteSettings?.promotions);
+      const initialCode = siteSettings?.announcement?.promoCode || livePromo?.promoCode || 'PROMO';
+      const hasPromo = Boolean(livePromo || (siteSettings?.service_discounts && siteSettings?.service_discounts?.enabled !== false));
+
+      if (hasPromo) {
+        setPromoCodeInput(initialCode);
+        setAppliedPromo({
+          code: initialCode.toUpperCase(),
+          isGranular: true,
+          promoObj: livePromo
+        });
+      }
     }
-  }, [isOpen, defaultService]);
+  }, [isOpen, defaultService, siteSettings?.promotions, siteSettings?.service_discounts]);
 
   if (!isOpen) return null;
 
@@ -360,19 +387,26 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
   const activePkg = selectedPackage || currentPackages[0];
 
   const unitPrice = Number(activePkg?.price || (selectedService === 'patch' ? 2.50 : 15));
-  const baseSubtotal = parseFloat((unitPrice * quantity).toFixed(2));
+  const activePromotion = getActivePromotion(siteSettings?.promotions);
 
-  let volumeDiscountPercent = 0;
-  if (selectedService !== 'patch') {
-    if (quantity >= 25) volumeDiscountPercent = 25;
-    else if (quantity >= 10) volumeDiscountPercent = 15;
-    else if (quantity >= 5) volumeDiscountPercent = 10;
-    else if (quantity >= 3) volumeDiscountPercent = 5;
-  }
+  const pricingResult = calculateOrderPricing({
+    service: selectedService,
+    unitPrice,
+    quantity,
+    isRush,
+    activePromo: appliedPromo?.promoObj || activePromotion,
+    siteSettings,
+    customPromoPercent: appliedPromo?.isCustomPercent ? appliedPromo.discountPercent : undefined
+  });
 
-  const volumeDiscountAmount = parseFloat(((baseSubtotal * volumeDiscountPercent) / 100).toFixed(2));
-  const rushFee = isRush ? (selectedService === 'patch' ? 25 : 10) : 0;
-  const totalPrice = Math.max(0, parseFloat((baseSubtotal - volumeDiscountAmount + rushFee).toFixed(2)));
+  const baseSubtotal = pricingResult.baseSubtotal;
+  const volumeDiscountPercent = pricingResult.volumeDiscountPercent;
+  const volumeDiscountAmount = pricingResult.volumeDiscountAmount;
+  const promoDiscountPercent = appliedPromo ? pricingResult.promoDiscountPercent : 0;
+  const promoDiscountAmount = appliedPromo ? pricingResult.promoDiscountAmount : 0;
+  const rushFee = pricingResult.rushFee;
+  const totalPrice = Math.max(0, parseFloat((baseSubtotal - volumeDiscountAmount - promoDiscountAmount + rushFee).toFixed(2)));
+  const serviceDisplayName = pricingResult.serviceName;
 
   const handleSelectService = (serviceId) => {
     setSelectedService(serviceId);
@@ -596,7 +630,19 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
         price: totalPrice,
         totalPrice: totalPrice,
         base_price: baseSubtotal,
-        discount_amount: volumeDiscountAmount,
+        discount_amount: parseFloat((volumeDiscountAmount + promoDiscountAmount).toFixed(2)),
+        applied_promo_code: appliedPromo?.code || null,
+        discount_breakdown: {
+          base_price: baseSubtotal,
+          volume_discount_percent: volumeDiscountPercent,
+          volume_discount_amount: volumeDiscountAmount,
+          promo_discount_percent: promoDiscountPercent,
+          promo_discount_amount: promoDiscountAmount,
+          service_key: selectedService,
+          service_name: serviceDisplayName,
+          rush_fee: rushFee,
+          final_price: totalPrice
+        },
         isRush: isRush,
         notes: notes.trim(),
         placement: placement,
@@ -670,6 +716,9 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
         amount: priceVal,
         price: priceVal,
         totalPrice: priceVal,
+        base_price: createdOrderObj.base_price || baseSubtotal,
+        discount_amount: createdOrderObj.discount_amount || parseFloat((volumeDiscountAmount + promoDiscountAmount).toFixed(2)),
+        discount_breakdown: createdOrderObj.discount_breakdown || null,
         orderId: createdOrderObj.id,
         title: createdOrderObj.title || `Order ${createdOrderObj.id}`,
         clientEmail: createdOrderObj.clientEmail || authUser?.email,
@@ -1838,14 +1887,72 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
                   </div>
                 )}
 
-                {isRush && (
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.82rem', marginBottom: '0.35rem', color: '#f59e0b' }}>
-                    <span>Express Rush Queue</span>
-                    <span>+$10.00</span>
+                {promoDiscountAmount > 0 && (
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.82rem', marginBottom: '0.35rem', color: isDark ? '#34d399' : '#059669', fontWeight: 700 }}>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                      <Tag size={12} /> Promo ({serviceDisplayName}: {promoDiscountPercent}% OFF)
+                    </span>
+                    <span>-${promoDiscountAmount.toFixed(2)}</span>
                   </div>
                 )}
 
-                <div style={{ borderTop: isDark ? '1px dashed var(--color-border, #334155)' : '1px dashed #cbd5e1', marginTop: '0.5rem', paddingTop: '0.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                {isRush && (
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.82rem', marginBottom: '0.35rem', color: '#f59e0b' }}>
+                    <span>Express Rush Queue</span>
+                    <span>+${rushFee.toFixed(2)}</span>
+                  </div>
+                )}
+
+                {/* Promo Code Input on Mobile */}
+                <div style={{ display: 'flex', gap: '0.35rem', marginTop: '0.4rem', marginBottom: '0.4rem' }}>
+                  <input
+                    type="text"
+                    value={promoCodeInput}
+                    onChange={(e) => setPromoCodeInput(e.target.value)}
+                    placeholder="Promo Code (e.g. SAVE20)"
+                    style={{
+                      flex: 1,
+                      padding: '0.4rem 0.65rem',
+                      borderRadius: '6px',
+                      border: '1px solid var(--color-border, #cbd5e1)',
+                      fontSize: '0.78rem',
+                      color: 'var(--color-text-primary, #0f172a)',
+                      background: 'var(--color-surface, #ffffff)',
+                      textTransform: 'uppercase'
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (!promoCodeInput || !promoCodeInput.trim()) return;
+                      const clean = promoCodeInput.trim().toUpperCase();
+                      const saveMatch = clean.match(/^SAVE(\d+)$/);
+                      if (saveMatch) {
+                        const pct = parseInt(saveMatch[1], 10);
+                        setAppliedPromo({ code: clean, isCustomPercent: true, discountPercent: pct });
+                        if (showToast) showToast(`Coupon ${clean} applied! (-${pct}% OFF)`, 'success');
+                      } else {
+                        setAppliedPromo({ code: clean, isGranular: true, promoObj: activePromotion });
+                        const pct = getServiceDiscountPercent(selectedService, activePromotion, siteSettings);
+                        if (showToast) showToast(`Promo ${clean} applied! (${getServiceDisplayName(selectedService)}: ${pct}% OFF)`, 'success');
+                      }
+                    }}
+                    style={{
+                      background: isDark ? 'var(--color-primary, #ea580c)' : '#0f172a',
+                      color: '#ffffff',
+                      border: 'none',
+                      borderRadius: '6px',
+                      padding: '0.4rem 0.75rem',
+                      fontSize: '0.76rem',
+                      fontWeight: 700,
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Apply
+                  </button>
+                </div>
+
+                <div style={{ borderTop: isDark ? '1px dashed var(--color-border, #334155)' : '1px dashed #cbd5e1', marginTop: '0.35rem', paddingTop: '0.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <span style={{ fontSize: '0.95rem', fontWeight: 900, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a' }}>Total Amount</span>
                   <span style={{ fontSize: '1.4rem', fontWeight: 900, color: isDark ? '#34d399' : '#047857' }}>
                     ${totalPrice.toFixed(2)}

@@ -3,9 +3,16 @@
 import React, { useState, useEffect } from 'react';
 import {
   Gift, Plus, Trash2, Calendar, Play, Pause, X, ArrowRight,
-  Sparkles, CheckCircle2, ShieldCheck, Tag
+  Sparkles, CheckCircle2, ShieldCheck, Tag, Layers, PenTool,
+  Check, Sliders, RefreshCw, AlertCircle, Percent
 } from 'lucide-react';
 import { useAppState } from '../../context/StateContext';
+import {
+  normalizeServiceKey,
+  getServiceDisplayName,
+  formatServiceDiscountsSummary,
+  DEFAULT_SERVICE_DISCOUNTS
+} from '../../utils/promoUtils';
 
 export const PromotionsManager = () => {
   const { siteSettings, updateSiteSettings, showToast, clients = [] } = useAppState();
@@ -25,13 +32,38 @@ export const PromotionsManager = () => {
   defaultEnd.setDate(defaultEnd.getDate() + 30);
   const defaultEndStr = defaultEnd.toISOString().split('T')[0];
 
+  // Granular Service Discounts State
+  const [serviceDiscounts, setServiceDiscounts] = useState({
+    embroidery: 20,
+    vector: 10,
+    patch: 5,
+    enabled: true
+  });
+  const [serviceStatus, setServiceStatus] = useState({
+    embroidery: true,
+    vector: true,
+    patch: true
+  });
+  const [isSavingServices, setIsSavingServices] = useState(false);
+
   const [promoForm, setPromoForm] = useState({
     name: '',
-    discountPercent: 10,
+    discountMode: 'granular', // 'granular' | 'uniform'
+    discountPercent: 20,
+    serviceDiscounts: {
+      embroidery: 20,
+      vector: 10,
+      patch: 5
+    },
+    serviceStatus: {
+      embroidery: true,
+      vector: true,
+      patch: true
+    },
     startDate: defaultStartStr,
     endDate: defaultEndStr,
-    servicesIncluded: 'All Studio Services',
-    maxOrdersLimit: 10
+    servicesIncluded: 'Embroidery (20%), Vector (10%), Patches (5%)',
+    maxOrdersLimit: 50
   });
 
   const [couponForm, setCouponForm] = useState({
@@ -50,13 +82,173 @@ export const PromotionsManager = () => {
 
   // Sync state from siteSettings on load
   useEffect(() => {
-    if (siteSettings && Array.isArray(siteSettings.promotions)) {
-      setPromotions(siteSettings.promotions);
+    if (siteSettings) {
+      if (Array.isArray(siteSettings.promotions)) {
+        setPromotions(siteSettings.promotions);
+        const active = siteSettings.promotions.find(p => p.status === 'active');
+        if (active && active.serviceDiscounts) {
+          setServiceDiscounts({
+            embroidery: active.serviceDiscounts.embroidery ?? 20,
+            vector: active.serviceDiscounts.vector ?? 10,
+            patch: active.serviceDiscounts.patch ?? 5,
+            enabled: true
+          });
+          if (active.serviceStatus) {
+            setServiceStatus(active.serviceStatus);
+          }
+        } else if (siteSettings.service_discounts || siteSettings.serviceDiscounts) {
+          const sd = siteSettings.service_discounts || siteSettings.serviceDiscounts;
+          setServiceDiscounts({
+            embroidery: sd.embroidery ?? 20,
+            vector: sd.vector ?? 10,
+            patch: sd.patch ?? 5,
+            enabled: sd.enabled !== false
+          });
+        }
+      }
     }
   }, [siteSettings]);
 
   // Derive active promo
   const activePromo = promotions.find(p => p.status === 'active');
+
+  // Helper to build dynamic announcement banner matching active promotion rates
+  const buildDynamicAnnouncement = (promo) => {
+    if (!promo || promo.status !== 'active') {
+      return {
+        enabled: false,
+        autoSync: true,
+        text: '',
+        discountValue: 0
+      };
+    }
+
+    const hasGranular = promo.serviceDiscounts && (
+      promo.serviceDiscounts.embroidery !== promo.serviceDiscounts.vector ||
+      promo.serviceDiscounts.vector !== promo.serviceDiscounts.patch
+    );
+
+    const maxDiscount = promo.serviceDiscounts
+      ? Math.max(
+          promo.serviceDiscounts.embroidery || 0,
+          promo.serviceDiscounts.vector || 0,
+          promo.serviceDiscounts.patch || 0,
+          promo.discountPercent || 0
+        )
+      : (promo.discountPercent || 10);
+
+    const text = hasGranular
+      ? `Special Studio Promo: ${promo.serviceDiscounts.embroidery || 20}% OFF Digitizing, ${promo.serviceDiscounts.vector || 10}% OFF Vector, ${promo.serviceDiscounts.patch || 5}% OFF Patches!`
+      : `Get ${promo.discountPercent}% OFF on All Custom Embroidery Digitizing & Vector Art Orders!`;
+
+    return {
+      enabled: true,
+      autoSync: true,
+      badge: (promo.name || 'SALE').toUpperCase(),
+      text,
+      linkText: `Claim ${maxDiscount}% Off`,
+      linkUrl: '/order',
+      promoCode: promo.promoCode || `SAVE${maxDiscount}`,
+      showCountdown: true,
+      showCodeBadge: true,
+      theme: 'orange',
+      textColor: '#ffffff',
+      discountValue: maxDiscount,
+      discountType: 'percent'
+    };
+  };
+
+  // ---------------------------------------------------------------------------
+  // SAVE LIVE SERVICE-SPECIFIC DISCOUNTS (Top Control Desk)
+  // ---------------------------------------------------------------------------
+  const handleSaveLiveServiceDiscounts = async () => {
+    setIsSavingServices(true);
+    try {
+      const emb = Math.max(0, Math.min(100, Number(serviceDiscounts.embroidery) || 0));
+      const vec = Math.max(0, Math.min(100, Number(serviceDiscounts.vector) || 0));
+      const pch = Math.max(0, Math.min(100, Number(serviceDiscounts.patch) || 0));
+      const maxDiscount = Math.max(emb, vec, pch);
+
+      const cleanedDiscounts = {
+        embroidery: emb,
+        vector: vec,
+        patch: pch,
+        enabled: serviceDiscounts.enabled !== false
+      };
+
+      let updatedPromotions = [...promotions];
+      let activeFound = false;
+
+      // Update active promotion if one exists
+      updatedPromotions = updatedPromotions.map(p => {
+        if (p.status === 'active') {
+          activeFound = true;
+          return {
+            ...p,
+            discountPercent: maxDiscount,
+            serviceDiscounts: { embroidery: emb, vector: vec, patch: pch },
+            serviceStatus: { ...serviceStatus },
+            servicesIncluded: `Embroidery (${emb}%), Vector (${vec}%), Patches (${pch}%)`
+          };
+        }
+        return p;
+      });
+
+      if (!activeFound && updatedPromotions.length > 0) {
+        // Activate the first promotion with these service rates
+        updatedPromotions[0] = {
+          ...updatedPromotions[0],
+          status: 'active',
+          discountPercent: maxDiscount,
+          serviceDiscounts: { embroidery: emb, vector: vec, patch: pch },
+          serviceStatus: { ...serviceStatus },
+          servicesIncluded: `Embroidery (${emb}%), Vector (${vec}%), Patches (${pch}%)`
+        };
+      } else if (updatedPromotions.length === 0) {
+        // Create an initial active promotion
+        const defaultPromo = {
+          id: `promo_${Date.now()}`,
+          name: 'STUDIO PROMO',
+          type: 'all_orders',
+          discountPercent: maxDiscount,
+          serviceDiscounts: { embroidery: emb, vector: vec, patch: pch },
+          serviceStatus: { ...serviceStatus },
+          startDate: defaultStartStr,
+          endDate: defaultEndStr,
+          status: 'active',
+          maxOrdersLimit: 500,
+          ordersCount: 0,
+          servicesIncluded: `Embroidery (${emb}%), Vector (${vec}%), Patches (${pch}%)`,
+          promoCode: `SAVE${maxDiscount}`,
+          createdAt: new Date().toISOString()
+        };
+        updatedPromotions = [defaultPromo];
+      }
+
+      const activeP = updatedPromotions.find(p => p.status === 'active');
+      const syncedAnnouncement = buildDynamicAnnouncement(activeP);
+
+      setPromotions(updatedPromotions);
+
+      if (updateSiteSettings) {
+        await updateSiteSettings({
+          promotions: updatedPromotions,
+          service_discounts: cleanedDiscounts,
+          serviceDiscounts: cleanedDiscounts,
+          announcement: syncedAnnouncement
+        });
+      }
+
+      if (showToast) {
+        showToast(`✓ Live Service Discounts Synced! (Embroidery: ${emb}%, Vector: ${vec}%, Patches: ${pch}%)`, 'success');
+      }
+    } catch (err) {
+      console.error('Error saving service discounts:', err);
+      if (showToast) showToast('Failed to save service discounts to Supabase', 'error');
+    } finally {
+      setIsSavingServices(false);
+    }
+  };
 
   // ---------------------------------------------------------------------------
   // CREATE PROMOTION ACTION (Simple 2-Step)
@@ -64,11 +256,18 @@ export const PromotionsManager = () => {
   const handleOpenCreatePromoModal = () => {
     setPromoForm({
       name: '',
-      discountPercent: 10,
+      discountMode: 'granular',
+      discountPercent: 20,
+      serviceDiscounts: {
+        embroidery: serviceDiscounts.embroidery || 20,
+        vector: serviceDiscounts.vector || 10,
+        patch: serviceDiscounts.patch || 5
+      },
+      serviceStatus: { ...serviceStatus },
       startDate: defaultStartStr,
       endDate: defaultEndStr,
       servicesIncluded: 'All Studio Services',
-      maxOrdersLimit: 10
+      maxOrdersLimit: 50
     });
     setPromoWizardStep(1);
     setIsPromoModalOpen(true);
@@ -77,7 +276,7 @@ export const PromotionsManager = () => {
   const handleReviewPromoDetails = (e) => {
     e?.preventDefault();
     if (!promoForm.name.trim()) {
-      if (showToast) showToast('Please enter a promotion name (up to 15 characters)', 'warning');
+      if (showToast) showToast('Please enter a promotion name (up to 20 characters)', 'warning');
       return;
     }
     setPromoWizardStep(2);
@@ -85,21 +284,35 @@ export const PromotionsManager = () => {
 
   const handleConfirmPromotion = async () => {
     const promoId = `promo_${Date.now()}`;
-    const discount = Number(promoForm.discountPercent) || 10;
+    const isGranular = promoForm.discountMode === 'granular';
+    
+    const emb = isGranular ? Number(promoForm.serviceDiscounts.embroidery) || 0 : Number(promoForm.discountPercent) || 10;
+    const vec = isGranular ? Number(promoForm.serviceDiscounts.vector) || 0 : Number(promoForm.discountPercent) || 10;
+    const pch = isGranular ? Number(promoForm.serviceDiscounts.patch) || 0 : Number(promoForm.discountPercent) || 10;
+    const maxDiscount = isGranular ? Math.max(emb, vec, pch) : Number(promoForm.discountPercent) || 10;
+
     const cleanName = promoForm.name.trim();
-    const cleanCode = `SAVE${discount}`;
+    const cleanCode = `SAVE${maxDiscount}`;
 
     const newPromo = {
       id: promoId,
       name: cleanName,
       type: 'new_buyer',
-      discountPercent: discount,
+      discountPercent: maxDiscount,
+      serviceDiscounts: {
+        embroidery: emb,
+        vector: vec,
+        patch: pch
+      },
+      serviceStatus: promoForm.serviceStatus || { embroidery: true, vector: true, patch: true },
       startDate: promoForm.startDate,
       endDate: promoForm.endDate,
       status: 'active', // starts active
-      maxOrdersLimit: Number(promoForm.maxOrdersLimit) || 10,
+      maxOrdersLimit: Number(promoForm.maxOrdersLimit) || 50,
       ordersCount: 0,
-      servicesIncluded: promoForm.servicesIncluded || 'All Studio Services',
+      servicesIncluded: isGranular 
+        ? `Embroidery: ${emb}% | Vector: ${vec}% | Patches: ${pch}%`
+        : `All Studio Services (${maxDiscount}%)`,
       promoCode: cleanCode,
       createdAt: new Date().toISOString()
     };
@@ -110,38 +323,24 @@ export const PromotionsManager = () => {
       ...promotions.map(p => ({ ...p, status: 'paused' }))
     ];
 
-    // Automatically synchronize the live banner and promotional ad for this promotion percentage
-    const syncedAnnouncement = {
-      enabled: true,
-      autoSync: true,
-      badge: cleanName.toUpperCase() || 'SALE',
-      text: `Get ${discount}% OFF on All Custom Embroidery Digitizing & Vector Art Orders!`,
-      linkText: `Claim ${discount}% Off`,
-      linkUrl: '/order',
-      promoCode: cleanCode,
-      showCountdown: true,
-      showCodeBadge: true,
-      theme: 'orange',
-      textColor: '#ffffff',
-      discountValue: discount,
-      discountType: 'percent'
-    };
-
-    const syncedPromotionalBanner = {
-      enabled: false
-    };
+    // Automatically synchronize the live banner for this promotion
+    const syncedAnnouncement = buildDynamicAnnouncement(newPromo);
+    const syncedPromotionalBanner = { enabled: false };
 
     setPromotions(updatedPromotions);
+    setServiceDiscounts({ embroidery: emb, vector: vec, patch: pch, enabled: true });
     setIsPromoModalOpen(false);
 
     if (showToast) {
-      showToast(`🎉 Promotion "${cleanName}" (${discount}% OFF) activated and live on website!`, 'success');
+      showToast(`🎉 Promotion "${cleanName}" activated! (Embroidery: ${emb}%, Vector: ${vec}%, Patches: ${pch}%)`, 'success');
     }
 
     try {
       if (updateSiteSettings) {
         await updateSiteSettings({
           promotions: updatedPromotions,
+          service_discounts: { embroidery: emb, vector: vec, patch: pch, enabled: true },
+          serviceDiscounts: { embroidery: emb, vector: vec, patch: pch, enabled: true },
           announcement: syncedAnnouncement,
           promotionalBanner: syncedPromotionalBanner
         });
@@ -167,53 +366,17 @@ export const PromotionsManager = () => {
       return p;
     });
 
-    let updatedAnnouncement = null;
+    const activePromoItem = newlyActive || updatedPromotions.find(p => p.status === 'active');
+    const updatedAnnouncement = buildDynamicAnnouncement(activePromoItem);
     const updatedBanner = { enabled: false };
 
-    if (newlyActive) {
-      // Auto-sync banners to this newly started promo
-      updatedAnnouncement = {
-        enabled: true,
-        autoSync: true,
-        badge: (newlyActive.name || 'SALE').toUpperCase(),
-        text: `Get ${newlyActive.discountPercent}% OFF on All Custom Embroidery Digitizing & Vector Art Orders!`,
-        linkText: `Claim ${newlyActive.discountPercent}% Off`,
-        linkUrl: '/order',
-        promoCode: newlyActive.promoCode || `SAVE${newlyActive.discountPercent}`,
-        showCountdown: true,
-        showCodeBadge: true,
-        theme: 'orange',
-        textColor: '#ffffff',
-        discountValue: newlyActive.discountPercent,
-        discountType: 'percent'
-      };
-    } else {
-      // If paused and another promo is still active, sync to it, otherwise hide banner
-      const otherActive = updatedPromotions.find(p => p.status === 'active');
-      if (otherActive) {
-        updatedAnnouncement = {
-          enabled: true,
-          autoSync: true,
-          badge: (otherActive.name || 'SALE').toUpperCase(),
-          text: `Get ${otherActive.discountPercent}% OFF on All Custom Embroidery Digitizing & Vector Art Orders!`,
-          linkText: `Claim ${otherActive.discountPercent}% Off`,
-          linkUrl: '/order',
-          promoCode: otherActive.promoCode || `SAVE${otherActive.discountPercent}`,
-          showCountdown: true,
-          showCodeBadge: true,
-          theme: 'orange',
-          textColor: '#ffffff',
-          discountValue: otherActive.discountPercent,
-          discountType: 'percent'
-        };
-      } else {
-        updatedAnnouncement = {
-          enabled: false,
-          autoSync: true,
-          text: '',
-          discountValue: 0
-        };
-      }
+    if (activePromoItem && activePromoItem.serviceDiscounts) {
+      setServiceDiscounts({
+        embroidery: activePromoItem.serviceDiscounts.embroidery ?? 20,
+        vector: activePromoItem.serviceDiscounts.vector ?? 10,
+        patch: activePromoItem.serviceDiscounts.patch ?? 5,
+        enabled: true
+      });
     }
 
     setPromotions(updatedPromotions);
@@ -223,7 +386,7 @@ export const PromotionsManager = () => {
 
     if (showToast) {
       showToast(
-        `Promotion "${targetPromo?.name || 'Campaign'}" is now ${isNowActive ? `ACTIVE (${targetPromo.discountPercent}% OFF live on website)` : 'PAUSED (Hidden from website)'}`,
+        `Promotion "${targetPromo?.name || 'Campaign'}" is now ${isNowActive ? 'ACTIVE (Live on website)' : 'PAUSED (Hidden from website)'}`,
         isNowActive ? 'success' : 'info'
       );
     }
@@ -233,8 +396,12 @@ export const PromotionsManager = () => {
       if (updateSiteSettings) {
         await updateSiteSettings({
           promotions: updatedPromotions,
-          ...(updatedAnnouncement ? { announcement: updatedAnnouncement } : {}),
-          ...(updatedBanner ? { promotionalBanner: updatedBanner } : {})
+          announcement: updatedAnnouncement,
+          promotionalBanner: updatedBanner,
+          ...(activePromoItem?.serviceDiscounts ? {
+            service_discounts: { ...activePromoItem.serviceDiscounts, enabled: isNowActive },
+            serviceDiscounts: { ...activePromoItem.serviceDiscounts, enabled: isNowActive }
+          } : {})
         });
       }
     } catch (err) {
@@ -251,24 +418,8 @@ export const PromotionsManager = () => {
     const updatedPromotions = promotions.filter(p => p.id !== promoId);
     
     const remainingActive = updatedPromotions.find(p => p.status === 'active');
-    const updatedAnnouncement = remainingActive ? {
-      enabled: true,
-      badge: (remainingActive.name || 'SPECIAL PROMO').toUpperCase(),
-      text: `Get ${remainingActive.discountPercent}% OFF on All Custom Embroidery Digitizing & Vector Art Orders!`,
-      linkText: `Claim ${remainingActive.discountPercent}% Off`,
-      promoCode: remainingActive.promoCode || `SAVE${remainingActive.discountPercent}`,
-      discountValue: remainingActive.discountPercent
-    } : { enabled: false };
-
-    const updatedBanner = remainingActive ? {
-      enabled: true,
-      title: `${remainingActive.name} — ${remainingActive.discountPercent}% OFF`,
-      description: `Enjoy ${remainingActive.discountPercent}% off your order on ${remainingActive.servicesIncluded || 'All Studio Services'}.`,
-      promoCode: remainingActive.promoCode || `SAVE${remainingActive.discountPercent}`,
-      ctaText: 'Claim Discount',
-      buttonText: 'Claim Discount',
-      theme: 'navy'
-    } : { enabled: false };
+    const updatedAnnouncement = buildDynamicAnnouncement(remainingActive);
+    const updatedBanner = { enabled: false };
 
     setPromotions(updatedPromotions);
     if (showToast) showToast('Promotion removed', 'info');
@@ -389,7 +540,14 @@ export const PromotionsManager = () => {
           }}>
             <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#059669' }} />
             <span style={{ fontSize: '0.85rem', fontWeight: 800, color: '#065f46' }}>
-              Active on Website: <strong>{activePromo.name} ({activePromo.discountPercent}% OFF)</strong>
+              Active on Website: <strong>{activePromo.name}</strong>{' '}
+              {activePromo.serviceDiscounts ? (
+                <span style={{ opacity: 0.9 }}>
+                  (Digitizing: {activePromo.serviceDiscounts.embroidery ?? 20}%, Vector: {activePromo.serviceDiscounts.vector ?? 10}%, Patches: {activePromo.serviceDiscounts.patch ?? 5}%)
+                </span>
+              ) : (
+                <span>({activePromo.discountPercent}% OFF)</span>
+              )}
             </span>
           </div>
         ) : (
@@ -405,6 +563,343 @@ export const PromotionsManager = () => {
             ⚪ No Promotion Currently Active
           </div>
         )}
+      </div>
+
+      {/* GRANULAR SERVICE-SPECIFIC PROMOTIONAL DISCOUNTS CONTROL CARD */}
+      <div style={{
+        background: 'var(--color-surface, #ffffff)',
+        border: '1.5px solid var(--color-border)',
+        borderRadius: '16px',
+        padding: '1.5rem',
+        boxShadow: 'var(--shadow-sm)',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '1.25rem'
+      }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
+              <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--color-primary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                Service-Specific Discounts
+              </span>
+              <span style={{ fontSize: '0.68rem', background: '#eff6ff', color: '#1d4ed8', border: '1px solid #bfdbfe', padding: '0.12rem 0.5rem', borderRadius: '9999px', fontWeight: 800, display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
+                <Percent size={12} /> Independent Core Rates
+              </span>
+            </div>
+            <h3 style={{ fontSize: '1.2rem', fontWeight: 900, color: 'var(--color-text-primary, #0f172a)', margin: 0 }}>
+              Granular Service Promotional Discounts
+            </h3>
+            <p style={{ fontSize: '0.84rem', color: 'var(--color-text-muted, #64748b)', margin: '0.25rem 0 0 0' }}>
+              Set independent discount percentages for each core service. Rates apply automatically across the entire site and at checkout.
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={handleSaveLiveServiceDiscounts}
+            disabled={isSavingServices}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.45rem',
+              background: '#00b22d',
+              color: '#ffffff',
+              border: 'none',
+              borderRadius: '8px',
+              padding: '0.6rem 1.25rem',
+              fontSize: '0.88rem',
+              fontWeight: 800,
+              cursor: isSavingServices ? 'not-allowed' : 'pointer',
+              opacity: isSavingServices ? 0.7 : 1,
+              boxShadow: '0 2px 8px rgba(0, 178, 45, 0.25)',
+              transition: 'all 0.15s ease'
+            }}
+          >
+            {isSavingServices ? (
+              <>
+                <RefreshCw size={15} className="animate-spin" /> Saving...
+              </>
+            ) : (
+              <>
+                <CheckCircle2 size={16} /> Save & Sync Live Discounts
+              </>
+            )}
+          </button>
+        </div>
+
+        {/* 3 Core Services Rate Cards */}
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+          gap: '1rem'
+        }}>
+          {/* Card 1: Embroidery Digitizing */}
+          <div style={{
+            background: 'var(--color-subtle, #f8fafc)',
+            border: '1.5px solid var(--color-border)',
+            borderRadius: '12px',
+            padding: '1.25rem',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '0.85rem'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: '#ecfdf5', color: '#059669', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Layers size={20} />
+                </div>
+                <div>
+                  <h4 style={{ margin: 0, fontSize: '0.96rem', fontWeight: 800, color: 'var(--color-text-primary, #0f172a)' }}>
+                    Embroidery Digitizing
+                  </h4>
+                  <span style={{ fontSize: '0.74rem', color: 'var(--color-text-muted, #64748b)' }}>
+                    Caps, Left Chest, Jacket Backs & 3D Puff
+                  </span>
+                </div>
+              </div>
+              <span style={{
+                fontSize: '1.15rem',
+                fontWeight: 900,
+                color: '#059669',
+                background: '#ecfdf5',
+                border: '1px solid #a7f3d0',
+                padding: '0.2rem 0.6rem',
+                borderRadius: '8px'
+              }}>
+                {serviceDiscounts.embroidery}% OFF
+              </span>
+            </div>
+
+            {/* Quick Pills */}
+            <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap' }}>
+              {[0, 5, 10, 15, 20, 25, 30].map(val => (
+                <button
+                  key={val}
+                  type="button"
+                  onClick={() => setServiceDiscounts(prev => ({ ...prev, embroidery: val }))}
+                  style={{
+                    flex: '1 0 35px',
+                    padding: '0.35rem 0.45rem',
+                    borderRadius: '6px',
+                    border: `1.5px solid ${serviceDiscounts.embroidery === val ? '#00b22d' : 'var(--color-border)'}`,
+                    background: serviceDiscounts.embroidery === val ? '#ecfdf5' : 'var(--color-surface, #ffffff)',
+                    color: serviceDiscounts.embroidery === val ? '#059669' : 'var(--color-text-primary, #0f172a)',
+                    fontSize: '0.78rem',
+                    fontWeight: 800,
+                    cursor: 'pointer'
+                  }}
+                >
+                  {val}%
+                </button>
+              ))}
+            </div>
+
+            {/* Custom Input */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--color-text-muted, #64748b)' }}>
+                Custom %:
+              </span>
+              <input
+                type="number"
+                min="0"
+                max="100"
+                value={serviceDiscounts.embroidery}
+                onChange={(e) => setServiceDiscounts(prev => ({ ...prev, embroidery: Math.max(0, Math.min(100, parseInt(e.target.value, 10) || 0)) }))}
+                style={{
+                  width: '80px',
+                  padding: '0.35rem 0.6rem',
+                  borderRadius: '6px',
+                  border: '1.5px solid var(--color-border)',
+                  background: 'var(--color-surface, #ffffff)',
+                  fontWeight: 800,
+                  fontSize: '0.85rem',
+                  color: 'var(--color-text-primary, #0f172a)'
+                }}
+              />
+              <span style={{ fontSize: '0.75rem', color: '#059669', fontWeight: 700 }}>
+                • Applied at checkout for digitizing
+              </span>
+            </div>
+          </div>
+
+          {/* Card 2: Vector Art & Tracing */}
+          <div style={{
+            background: 'var(--color-subtle, #f8fafc)',
+            border: '1.5px solid var(--color-border)',
+            borderRadius: '12px',
+            padding: '1.25rem',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '0.85rem'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: '#eff6ff', color: '#2563eb', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <PenTool size={20} />
+                </div>
+                <div>
+                  <h4 style={{ margin: 0, fontSize: '0.96rem', fontWeight: 800, color: 'var(--color-text-primary, #0f172a)' }}>
+                    Vector Art / Tracing
+                  </h4>
+                  <span style={{ fontSize: '0.74rem', color: 'var(--color-text-muted, #64748b)' }}>
+                    Raster to Vector Redraws & Color Separation
+                  </span>
+                </div>
+              </div>
+              <span style={{
+                fontSize: '1.15rem',
+                fontWeight: 900,
+                color: '#2563eb',
+                background: '#eff6ff',
+                border: '1px solid #bfdbfe',
+                padding: '0.2rem 0.6rem',
+                borderRadius: '8px'
+              }}>
+                {serviceDiscounts.vector}% OFF
+              </span>
+            </div>
+
+            {/* Quick Pills */}
+            <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap' }}>
+              {[0, 5, 10, 15, 20, 25, 30].map(val => (
+                <button
+                  key={val}
+                  type="button"
+                  onClick={() => setServiceDiscounts(prev => ({ ...prev, vector: val }))}
+                  style={{
+                    flex: '1 0 35px',
+                    padding: '0.35rem 0.45rem',
+                    borderRadius: '6px',
+                    border: `1.5px solid ${serviceDiscounts.vector === val ? '#2563eb' : 'var(--color-border)'}`,
+                    background: serviceDiscounts.vector === val ? '#eff6ff' : 'var(--color-surface, #ffffff)',
+                    color: serviceDiscounts.vector === val ? '#2563eb' : 'var(--color-text-primary, #0f172a)',
+                    fontSize: '0.78rem',
+                    fontWeight: 800,
+                    cursor: 'pointer'
+                  }}
+                >
+                  {val}%
+                </button>
+              ))}
+            </div>
+
+            {/* Custom Input */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--color-text-muted, #64748b)' }}>
+                Custom %:
+              </span>
+              <input
+                type="number"
+                min="0"
+                max="100"
+                value={serviceDiscounts.vector}
+                onChange={(e) => setServiceDiscounts(prev => ({ ...prev, vector: Math.max(0, Math.min(100, parseInt(e.target.value, 10) || 0)) }))}
+                style={{
+                  width: '80px',
+                  padding: '0.35rem 0.6rem',
+                  borderRadius: '6px',
+                  border: '1.5px solid var(--color-border)',
+                  background: 'var(--color-surface, #ffffff)',
+                  fontWeight: 800,
+                  fontSize: '0.85rem',
+                  color: 'var(--color-text-primary, #0f172a)'
+                }}
+              />
+              <span style={{ fontSize: '0.75rem', color: '#2563eb', fontWeight: 700 }}>
+                • Applied at checkout for vector art
+              </span>
+            </div>
+          </div>
+
+          {/* Card 3: Custom Patches */}
+          <div style={{
+            background: 'var(--color-subtle, #f8fafc)',
+            border: '1.5px solid var(--color-border)',
+            borderRadius: '12px',
+            padding: '1.25rem',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '0.85rem'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: '#fff7ed', color: '#ea580c', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Tag size={20} />
+                </div>
+                <div>
+                  <h4 style={{ margin: 0, fontSize: '0.96rem', fontWeight: 800, color: 'var(--color-text-primary, #0f172a)' }}>
+                    Custom Physical Patches
+                  </h4>
+                  <span style={{ fontSize: '0.74rem', color: 'var(--color-text-muted, #64748b)' }}>
+                    Embroidered, PVC, Woven & Leather Patches
+                  </span>
+                </div>
+              </div>
+              <span style={{
+                fontSize: '1.15rem',
+                fontWeight: 900,
+                color: '#ea580c',
+                background: '#fff7ed',
+                border: '1px solid #fed7aa',
+                padding: '0.2rem 0.6rem',
+                borderRadius: '8px'
+              }}>
+                {serviceDiscounts.patch}% OFF
+              </span>
+            </div>
+
+            {/* Quick Pills */}
+            <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap' }}>
+              {[0, 5, 10, 15, 20, 25, 30].map(val => (
+                <button
+                  key={val}
+                  type="button"
+                  onClick={() => setServiceDiscounts(prev => ({ ...prev, patch: val }))}
+                  style={{
+                    flex: '1 0 35px',
+                    padding: '0.35rem 0.45rem',
+                    borderRadius: '6px',
+                    border: `1.5px solid ${serviceDiscounts.patch === val ? '#ea580c' : 'var(--color-border)'}`,
+                    background: serviceDiscounts.patch === val ? '#fff7ed' : 'var(--color-surface, #ffffff)',
+                    color: serviceDiscounts.patch === val ? '#ea580c' : 'var(--color-text-primary, #0f172a)',
+                    fontSize: '0.78rem',
+                    fontWeight: 800,
+                    cursor: 'pointer'
+                  }}
+                >
+                  {val}%
+                </button>
+              ))}
+            </div>
+
+            {/* Custom Input */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--color-text-muted, #64748b)' }}>
+                Custom %:
+              </span>
+              <input
+                type="number"
+                min="0"
+                max="100"
+                value={serviceDiscounts.patch}
+                onChange={(e) => setServiceDiscounts(prev => ({ ...prev, patch: Math.max(0, Math.min(100, parseInt(e.target.value, 10) || 0)) }))}
+                style={{
+                  width: '80px',
+                  padding: '0.35rem 0.6rem',
+                  borderRadius: '6px',
+                  border: '1.5px solid var(--color-border)',
+                  background: 'var(--color-surface, #ffffff)',
+                  fontWeight: 800,
+                  fontSize: '0.85rem',
+                  color: 'var(--color-text-primary, #0f172a)'
+                }}
+              />
+              <span style={{ fontSize: '0.75rem', color: '#ea580c', fontWeight: 700 }}>
+                • Applied at checkout for custom patches
+              </span>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* DUAL PROMOTIONAL LAUNCH CARDS (Exact match of reference image 1) */}
@@ -651,18 +1146,58 @@ export const PromotionsManager = () => {
 
                       {/* Discount % */}
                       <td style={{ padding: '1rem' }}>
-                        <span style={{
-                          display: 'inline-block',
-                          background: '#ecfdf5',
-                          color: '#059669',
-                          border: '1px solid #a7f3d0',
-                          padding: '0.3rem 0.75rem',
-                          borderRadius: '8px',
-                          fontWeight: 900,
-                          fontSize: '1rem'
-                        }}>
-                          {promo.discountPercent}% OFF
-                        </span>
+                        {promo.serviceDiscounts ? (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
+                            <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap' }}>
+                              <span style={{
+                                fontSize: '0.74rem',
+                                fontWeight: 800,
+                                color: '#059669',
+                                background: '#ecfdf5',
+                                border: '1px solid #a7f3d0',
+                                padding: '0.18rem 0.45rem',
+                                borderRadius: '6px'
+                              }}>
+                                🧵 {promo.serviceDiscounts.embroidery ?? 20}% Digitizing
+                              </span>
+                              <span style={{
+                                fontSize: '0.74rem',
+                                fontWeight: 800,
+                                color: '#2563eb',
+                                background: '#eff6ff',
+                                border: '1px solid #bfdbfe',
+                                padding: '0.18rem 0.45rem',
+                                borderRadius: '6px'
+                              }}>
+                                🎨 {promo.serviceDiscounts.vector ?? 10}% Vector
+                              </span>
+                              <span style={{
+                                fontSize: '0.74rem',
+                                fontWeight: 800,
+                                color: '#ea580c',
+                                background: '#fff7ed',
+                                border: '1px solid #fed7aa',
+                                padding: '0.18rem 0.45rem',
+                                borderRadius: '6px'
+                              }}>
+                                🛡️ {promo.serviceDiscounts.patch ?? 5}% Patches
+                              </span>
+                            </div>
+                          </div>
+                        ) : (
+                          <span style={{
+                            display: 'inline-block',
+                            background: '#ecfdf5',
+                            color: '#059669',
+                            border: '1px solid #a7f3d0',
+                            padding: '0.3rem 0.75rem',
+                            borderRadius: '8px',
+                            fontWeight: 900,
+                            fontSize: '1rem'
+                          }}>
+                            {promo.discountPercent}% OFF
+                          </span>
+                        )}
                       </td>
 
                       {/* Running Dates */}
@@ -866,34 +1401,188 @@ export const PromotionsManager = () => {
                     </div>
                   </div>
 
-                  {/* Field 2: Discount */}
+                  {/* Field 2: Discount Configuration */}
                   <div>
-                    <label style={{ display: 'block', fontSize: '0.95rem', fontWeight: 800, color: 'var(--color-text-primary, #1e293b)', marginBottom: '0.45rem' }}>
-                      Discount
-                    </label>
-                    <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
-                      {[5, 10, 15, 20].map(val => (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.45rem' }}>
+                      <label style={{ fontSize: '0.95rem', fontWeight: 800, color: 'var(--color-text-primary, #1e293b)' }}>
+                        Discount Configuration
+                      </label>
+                      <div style={{ display: 'flex', background: 'var(--color-subtle, #f1f5f9)', padding: '0.15rem', borderRadius: '8px' }}>
                         <button
-                          key={val}
                           type="button"
-                          onClick={() => setPromoForm(prev => ({ ...prev, discountPercent: val }))}
+                          onClick={() => setPromoForm(prev => ({ ...prev, discountMode: 'granular' }))}
                           style={{
-                            flex: 1,
-                            minWidth: '70px',
-                            padding: '0.7rem 1rem',
-                            borderRadius: '8px',
-                            border: `1.5px solid ${promoForm.discountPercent === val ? '#00b22d' : 'var(--color-border)'}`,
-                            background: promoForm.discountPercent === val ? 'rgba(0, 178, 45, 0.06)' : 'var(--color-surface, #ffffff)',
-                            color: promoForm.discountPercent === val ? '#00b22d' : 'var(--color-text-primary, #1e293b)',
+                            border: 'none',
+                            padding: '0.25rem 0.6rem',
+                            borderRadius: '6px',
+                            fontSize: '0.75rem',
                             fontWeight: 800,
-                            fontSize: '0.95rem',
-                            cursor: 'pointer'
+                            cursor: 'pointer',
+                            background: promoForm.discountMode === 'granular' ? 'var(--color-surface, #ffffff)' : 'transparent',
+                            color: promoForm.discountMode === 'granular' ? '#00b22d' : 'var(--color-text-muted, #64748b)',
+                            boxShadow: promoForm.discountMode === 'granular' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'
                           }}
                         >
-                          {val}%
+                          Granular Services
                         </button>
-                      ))}
+                        <button
+                          type="button"
+                          onClick={() => setPromoForm(prev => ({ ...prev, discountMode: 'uniform' }))}
+                          style={{
+                            border: 'none',
+                            padding: '0.25rem 0.6rem',
+                            borderRadius: '6px',
+                            fontSize: '0.75rem',
+                            fontWeight: 800,
+                            cursor: 'pointer',
+                            background: promoForm.discountMode === 'uniform' ? 'var(--color-surface, #ffffff)' : 'transparent',
+                            color: promoForm.discountMode === 'uniform' ? '#00b22d' : 'var(--color-text-muted, #64748b)',
+                            boxShadow: promoForm.discountMode === 'uniform' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'
+                          }}
+                        >
+                          Uniform %
+                        </button>
+                      </div>
                     </div>
+
+                    {promoForm.discountMode === 'granular' ? (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                        {/* Embroidery Digitizing */}
+                        <div style={{ background: 'var(--color-subtle, #f8fafc)', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--color-border)' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.35rem' }}>
+                            <span style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--color-text-primary, #0f172a)', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                              🧵 Embroidery Digitizing
+                            </span>
+                            <span style={{ fontSize: '0.85rem', fontWeight: 900, color: '#059669' }}>
+                              {promoForm.serviceDiscounts.embroidery}% OFF
+                            </span>
+                          </div>
+                          <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap' }}>
+                            {[0, 5, 10, 15, 20, 25, 30].map(val => (
+                              <button
+                                key={val}
+                                type="button"
+                                onClick={() => setPromoForm(prev => ({
+                                  ...prev,
+                                  serviceDiscounts: { ...prev.serviceDiscounts, embroidery: val }
+                                }))}
+                                style={{
+                                  flex: '1 0 30px',
+                                  padding: '0.35rem 0.35rem',
+                                  borderRadius: '6px',
+                                  border: `1.5px solid ${promoForm.serviceDiscounts.embroidery === val ? '#00b22d' : 'var(--color-border)'}`,
+                                  background: promoForm.serviceDiscounts.embroidery === val ? '#ecfdf5' : 'var(--color-surface, #ffffff)',
+                                  color: promoForm.serviceDiscounts.embroidery === val ? '#059669' : 'var(--color-text-primary, #1e293b)',
+                                  fontWeight: 800,
+                                  fontSize: '0.78rem',
+                                  cursor: 'pointer'
+                                }}
+                              >
+                                {val}%
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Vector Art */}
+                        <div style={{ background: 'var(--color-subtle, #f8fafc)', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--color-border)' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.35rem' }}>
+                            <span style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--color-text-primary, #0f172a)', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                              🎨 Vector Art / Tracing
+                            </span>
+                            <span style={{ fontSize: '0.85rem', fontWeight: 900, color: '#2563eb' }}>
+                              {promoForm.serviceDiscounts.vector}% OFF
+                            </span>
+                          </div>
+                          <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap' }}>
+                            {[0, 5, 10, 15, 20, 25, 30].map(val => (
+                              <button
+                                key={val}
+                                type="button"
+                                onClick={() => setPromoForm(prev => ({
+                                  ...prev,
+                                  serviceDiscounts: { ...prev.serviceDiscounts, vector: val }
+                                }))}
+                                style={{
+                                  flex: '1 0 30px',
+                                  padding: '0.35rem 0.35rem',
+                                  borderRadius: '6px',
+                                  border: `1.5px solid ${promoForm.serviceDiscounts.vector === val ? '#2563eb' : 'var(--color-border)'}`,
+                                  background: promoForm.serviceDiscounts.vector === val ? '#eff6ff' : 'var(--color-surface, #ffffff)',
+                                  color: promoForm.serviceDiscounts.vector === val ? '#2563eb' : 'var(--color-text-primary, #1e293b)',
+                                  fontWeight: 800,
+                                  fontSize: '0.78rem',
+                                  cursor: 'pointer'
+                                }}
+                              >
+                                {val}%
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Custom Patches */}
+                        <div style={{ background: 'var(--color-subtle, #f8fafc)', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--color-border)' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.35rem' }}>
+                            <span style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--color-text-primary, #0f172a)', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                              🛡️ Custom Patches
+                            </span>
+                            <span style={{ fontSize: '0.85rem', fontWeight: 900, color: '#ea580c' }}>
+                              {promoForm.serviceDiscounts.patch}% OFF
+                            </span>
+                          </div>
+                          <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap' }}>
+                            {[0, 5, 10, 15, 20, 25, 30].map(val => (
+                              <button
+                                key={val}
+                                type="button"
+                                onClick={() => setPromoForm(prev => ({
+                                  ...prev,
+                                  serviceDiscounts: { ...prev.serviceDiscounts, patch: val }
+                                }))}
+                                style={{
+                                  flex: '1 0 30px',
+                                  padding: '0.35rem 0.35rem',
+                                  borderRadius: '6px',
+                                  border: `1.5px solid ${promoForm.serviceDiscounts.patch === val ? '#ea580c' : 'var(--color-border)'}`,
+                                  background: promoForm.serviceDiscounts.patch === val ? '#fff7ed' : 'var(--color-surface, #ffffff)',
+                                  color: promoForm.serviceDiscounts.patch === val ? '#ea580c' : 'var(--color-text-primary, #1e293b)',
+                                  fontWeight: 800,
+                                  fontSize: '0.78rem',
+                                  cursor: 'pointer'
+                                }}
+                              >
+                                {val}%
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+                        {[5, 10, 15, 20, 25].map(val => (
+                          <button
+                            key={val}
+                            type="button"
+                            onClick={() => setPromoForm(prev => ({ ...prev, discountPercent: val }))}
+                            style={{
+                              flex: 1,
+                              minWidth: '60px',
+                              padding: '0.7rem 0.8rem',
+                              borderRadius: '8px',
+                              border: `1.5px solid ${promoForm.discountPercent === val ? '#00b22d' : 'var(--color-border)'}`,
+                              background: promoForm.discountPercent === val ? 'rgba(0, 178, 45, 0.06)' : 'var(--color-surface, #ffffff)',
+                              color: promoForm.discountPercent === val ? '#00b22d' : 'var(--color-text-primary, #1e293b)',
+                              fontWeight: 800,
+                              fontSize: '0.92rem',
+                              cursor: 'pointer'
+                            }}
+                          >
+                            {val}%
+                          </button>
+                        ))}
+                      </div>
+                    )}
                   </div>
 
                   {/* Field 3: Promotion dates */}
@@ -1040,13 +1729,34 @@ export const PromotionsManager = () => {
                     </span>
                   </div>
 
-                  <div style={{ display: 'grid', gridTemplateColumns: '150px 1fr', gap: '0.5rem' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '150px 1fr', gap: '0.5rem', alignItems: 'flex-start' }}>
                     <span style={{ fontSize: '0.92rem', fontWeight: 700, color: 'var(--color-text-primary, #1e293b)' }}>
                       Discount
                     </span>
-                    <span style={{ fontSize: '0.92rem', color: 'var(--color-text-primary, #1e293b)', fontWeight: 600 }}>
-                      {promoForm.discountPercent}%
-                    </span>
+                    <div>
+                      {promoForm.discountMode === 'granular' ? (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                          <span style={{ fontSize: '0.92rem', color: '#00b22d', fontWeight: 700 }}>
+                            Granular Service Discounts
+                          </span>
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', marginTop: '0.2rem' }}>
+                            <span style={{ fontSize: '0.8rem', padding: '0.25rem 0.6rem', borderRadius: '6px', background: '#eff6ff', color: '#1e40af', fontWeight: 700, border: '1px solid #bfdbfe' }}>
+                              🧵 Embroidery: {promoForm.serviceDiscounts?.embroidery ?? 0}%
+                            </span>
+                            <span style={{ fontSize: '0.8rem', padding: '0.25rem 0.6rem', borderRadius: '6px', background: '#ecfdf5', color: '#047857', fontWeight: 700, border: '1px solid #a7f3d0' }}>
+                              🎨 Vector: {promoForm.serviceDiscounts?.vector ?? 0}%
+                            </span>
+                            <span style={{ fontSize: '0.8rem', padding: '0.25rem 0.6rem', borderRadius: '6px', background: '#fdf4ff', color: '#86198f', fontWeight: 700, border: '1px solid #f5d0fe' }}>
+                              🛡️ Patches: {promoForm.serviceDiscounts?.patch ?? 0}%
+                            </span>
+                          </div>
+                        </div>
+                      ) : (
+                        <span style={{ fontSize: '0.92rem', color: 'var(--color-text-primary, #1e293b)', fontWeight: 600 }}>
+                          {promoForm.discountPercent}% (Flat)
+                        </span>
+                      )}
+                    </div>
                   </div>
 
                   <div style={{ display: 'grid', gridTemplateColumns: '150px 1fr', gap: '0.5rem' }}>

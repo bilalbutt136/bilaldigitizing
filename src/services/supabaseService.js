@@ -1008,14 +1008,44 @@ export async function fetchCatalogFromSupabase() {
       siteSettings: (() => {
         const safePromotions = parsedPromotions || [];
         const currentActivePromo = safePromotions.find(p => p.status === 'active');
+        const parsedServiceDiscounts = configMap['service_discounts'] || configMap['serviceDiscounts'] || currentActivePromo?.serviceDiscounts || {
+          embroidery: 20,
+          vector: 10,
+          patch: 5,
+          enabled: true
+        };
+
+        const hasGranular = currentActivePromo?.serviceDiscounts && (
+          currentActivePromo.serviceDiscounts.embroidery !== currentActivePromo.serviceDiscounts.vector ||
+          currentActivePromo.serviceDiscounts.vector !== currentActivePromo.serviceDiscounts.patch
+        );
+
+        const promoTitleText = currentActivePromo ? (
+          hasGranular ? (
+            `Special Studio Promo: ${currentActivePromo.serviceDiscounts.embroidery || 20}% OFF Digitizing, ${currentActivePromo.serviceDiscounts.vector || 10}% OFF Vector, ${currentActivePromo.serviceDiscounts.patch || 5}% OFF Patches!`
+          ) : (
+            `Get ${currentActivePromo.discountPercent}% OFF on All Custom Embroidery Digitizing & Vector Art Orders!`
+          )
+        ) : '';
+
+        const maxPromoDiscount = currentActivePromo ? (
+          currentActivePromo.serviceDiscounts ? (
+            Math.max(
+              currentActivePromo.serviceDiscounts.embroidery || 0,
+              currentActivePromo.serviceDiscounts.vector || 0,
+              currentActivePromo.serviceDiscounts.patch || 0,
+              currentActivePromo.discountPercent || 0
+            )
+          ) : currentActivePromo.discountPercent
+        ) : 0;
 
         const dynamicAnnouncement = currentActivePromo ? {
           enabled: parsedAnnouncement?.enabled !== false,
           badge: (currentActivePromo.name || 'SALE').toUpperCase(),
-          text: `Get ${currentActivePromo.discountPercent}% OFF on All Custom Embroidery Digitizing & Vector Art Orders!`,
-          linkText: `Claim ${currentActivePromo.discountPercent}% Off`,
+          text: promoTitleText,
+          linkText: `Claim ${maxPromoDiscount}% Off`,
           linkUrl: parsedAnnouncement?.linkUrl || '/order',
-          promoCode: currentActivePromo.promoCode || `SAVE${currentActivePromo.discountPercent}`,
+          promoCode: currentActivePromo.promoCode || `SAVE${currentActivePromo.discountPercent || maxPromoDiscount}`,
           theme: (parsedAnnouncement?.theme === 'emerald' ? 'orange' : parsedAnnouncement?.theme) || 'orange',
           bgColor: (parsedAnnouncement?.bgColor && !parsedAnnouncement.bgColor.includes('065f46'))
             ? parsedAnnouncement.bgColor 
@@ -1024,7 +1054,7 @@ export async function fetchCatalogFromSupabase() {
           showCodeBadge: true,
           showCountdown: true,
           countdownHours: 24,
-          discountValue: currentActivePromo.discountPercent
+          discountValue: maxPromoDiscount
         } : (parsedAnnouncement ? {
           ...parsedAnnouncement,
           theme: (parsedAnnouncement.theme === 'emerald' ? 'orange' : parsedAnnouncement.theme) || 'orange',
@@ -1046,6 +1076,8 @@ export async function fetchCatalogFromSupabase() {
           googleAnalyticsId: rawSettings?.googleAnalyticsId || configMap['google_analytics_id'] || configMap['googleAnalyticsId'] || null,
           tiktokPixelId: rawSettings?.tiktokPixelId || configMap['tiktok_pixel_id'] || configMap['tiktokPixelId'] || null,
           promotions: safePromotions,
+          service_discounts: parsedServiceDiscounts,
+          serviceDiscounts: parsedServiceDiscounts,
           announcement: dynamicAnnouncement,
           promotionalBanner: {
             enabled: false,
