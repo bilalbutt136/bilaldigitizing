@@ -142,6 +142,28 @@ export async function POST(req) {
         targetRole: 'both'
       });
 
+      // High-urgency mobile lock-screen push notification
+      try {
+        const { dispatchOrderPush } = await import('../../../src/lib/pushService.js');
+        dispatchOrderPush({
+          orderId,
+          clientName,
+          serviceName,
+          status: 'submitted',
+          role: 'admin'
+        }).catch(() => {});
+        if (clientEmail) {
+          dispatchOrderPush({
+            orderId,
+            clientName,
+            serviceName,
+            status: 'submitted',
+            role: 'client',
+            recipientEmail: clientEmail
+          }).catch(() => {});
+        }
+      } catch (pErr) {}
+
       return NextResponse.json({
         success: result.success,
         event: 'new_order',
@@ -182,6 +204,19 @@ export async function POST(req) {
         channel,
         attachments
       });
+
+      // High-urgency mobile lock-screen push notification
+      try {
+        const { dispatchChatMessagePush } = await import('../../../src/lib/pushService.js');
+        dispatchChatMessagePush({
+          senderRole: sender,
+          senderName,
+          messageText,
+          recipientEmail: clientEmail,
+          conversationId,
+          orderId
+        }).catch(() => {});
+      } catch (pErr) {}
 
       return NextResponse.json({
         success: result?.success !== false,

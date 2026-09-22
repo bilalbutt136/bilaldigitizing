@@ -563,6 +563,21 @@ export const StateProvider = ({ children }) => {
     if (syncToBackend && isSupabaseConfigured) {
       createNotificationInSupabase(newNotif).catch(() => {});
       broadcastLiveNotification(newNotif);
+      // Trigger native lock-screen push notification
+      if (typeof fetch !== 'undefined') {
+        fetch('/api/push/send', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            title: newNotif.title,
+            message: newNotif.message,
+            url: newNotif.link || '/',
+            orderId: newNotif.order_id,
+            role: newNotif.recipient_role,
+            email: newNotif.recipient_email
+          })
+        }).catch(() => {});
+      }
     }
   };
 

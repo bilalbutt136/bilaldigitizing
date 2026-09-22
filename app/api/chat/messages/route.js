@@ -291,6 +291,21 @@ export async function POST(request) {
       }
     }
 
+    // 5. Trigger instant high-urgency mobile lock-screen push notification (WhatsApp-style)
+    try {
+      const { dispatchChatMessagePush } = await import('../../../../src/lib/pushService.js');
+      dispatchChatMessagePush({
+        senderRole: effectiveSender,
+        senderName: effectiveSenderName,
+        messageText: (text || '').trim() || (normalizedAttachments.length > 0 ? `📎 ${normalizedAttachments[0].name}` : 'New message'),
+        recipientEmail: cleanEmail,
+        conversationId,
+        orderId: (conversation_id.startsWith('ord-') || conversation_id.startsWith('order-')) ? conversation_id : null
+      }).catch(pushErr => console.warn('[Chat Push Notice]:', pushErr?.message));
+    } catch (pushImportErr) {
+      console.warn('[Chat Push Service Import Notice]:', pushImportErr?.message);
+    }
+
     return NextResponse.json({ success: true, message: insertedMsg });
   } catch (err) {
     console.error('[Chat Messages POST Error]:', err);

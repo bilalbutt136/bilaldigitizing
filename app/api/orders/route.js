@@ -374,6 +374,31 @@ export async function POST(request) {
         console.warn('[Order Email Direct Dispatch Error]:', e?.message);
       }
 
+      // High-urgency mobile lock-screen push notifications for new order
+      try {
+        const { dispatchOrderPush } = await import('../../../src/lib/pushService.js');
+        dispatchOrderPush({
+          orderId: mappedDbRow.id,
+          clientName: mappedDbRow.client_name,
+          serviceName: mappedDbRow.service_category || mappedDbRow.title,
+          status: 'submitted',
+          role: 'admin'
+        }).catch(err => console.warn('[Admin Order Push Notice]:', err?.message));
+
+        if (clientEmail) {
+          dispatchOrderPush({
+            orderId: mappedDbRow.id,
+            clientName: mappedDbRow.client_name,
+            serviceName: mappedDbRow.service_category || mappedDbRow.title,
+            status: 'submitted',
+            role: 'client',
+            recipientEmail: clientEmail
+          }).catch(err => console.warn('[Client Order Push Notice]:', err?.message));
+        }
+      } catch (pushErr) {
+        console.warn('[Order Push Service Import Notice]:', pushErr?.message);
+      }
+
       return NextResponse.json({ success: true, order: insertedOrder[0] });
     }
 
@@ -553,6 +578,19 @@ export async function POST(request) {
               created_at: nowIso,
               updated_at: nowIso
             }]);
+
+            // High-urgency mobile lock-screen push notification
+            try {
+              const { dispatchSystemNotificationPush } = await import('../../../src/lib/pushService.js');
+              dispatchSystemNotificationPush({
+                title: notif.title,
+                message: notif.message || '',
+                link: notif.link || '/client-portal',
+                orderId: resolvedOrderId,
+                recipientRole: notif.recipient_role || 'client',
+                recipientEmail: notif.recipient_email || null
+              }).catch(err => console.warn('[Status Push Notice]:', err?.message));
+            } catch (pErr) {}
           } catch (e) { console.warn('[insertNotif notice]:', e.message); }
         };
 

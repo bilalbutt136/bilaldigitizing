@@ -1,5 +1,5 @@
-// BDigitizing Studio PWA Service Worker
-const CACHE_VERSION = 'bdigi-pwa-v2.1';
+// BDigitizing Studio PWA Service Worker with Native Push & Lock-Screen Alerts
+const CACHE_VERSION = 'bdigi-pwa-v2.2';
 const STATIC_ASSETS = [
   '/favicon.svg',
   '/favicon.ico',
@@ -14,6 +14,7 @@ self.addEventListener('install', (event) => {
       });
     })
   );
+  self.skipWaiting();
 });
 
 self.addEventListener('activate', (event) => {
@@ -73,6 +74,85 @@ self.addEventListener('fetch', (event) => {
         .catch(() => cachedResponse);
 
       return cachedResponse || fetchPromise;
+    })
+  );
+});
+
+// =============================================================================
+// NATIVE MOBILE PUSH NOTIFICATIONS (WHATSAPP-STYLE LOCK SCREEN POPUPS)
+// =============================================================================
+self.addEventListener('push', (event) => {
+  let data = {
+    title: 'BDigitizing Notification',
+    body: 'You have a new message or order update.',
+    icon: '/favicon.svg',
+    badge: '/favicon.svg',
+    tag: 'bdigi-alert',
+    url: '/'
+  };
+
+  if (event.data) {
+    try {
+      const parsed = event.data.json();
+      data = { ...data, ...parsed };
+    } catch (e) {
+      try {
+        data.body = event.data.text() || data.body;
+      } catch (err) {}
+    }
+  }
+
+  const notificationOptions = {
+    body: data.body,
+    icon: data.icon || '/favicon.svg',
+    badge: data.badge || '/favicon.svg',
+    tag: data.tag || `bdigi-${Date.now()}`,
+    renotify: true,
+    requireInteraction: true, // Keeps notification active on lock screen
+    silent: false,
+    vibrate: [300, 100, 300, 100, 300], // High-intensity double pulse for waking lock screen
+    timestamp: Date.now(),
+    data: {
+      url: data.url || '/',
+      orderId: data.orderId || null,
+      conversationId: data.conversationId || null,
+      timestamp: Date.now()
+    },
+    actions: data.actions || [
+      { action: 'open', title: '💬 View Now' },
+      { action: 'dismiss', title: 'Dismiss' }
+    ]
+  };
+
+  event.waitUntil(
+    self.registration.showNotification(data.title, notificationOptions)
+  );
+});
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+
+  if (event.action === 'dismiss') {
+    return;
+  }
+
+  const targetUrl = event.notification.data?.url || '/';
+
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+      // 1. If an existing tab is open on the origin, focus and navigate it
+      for (const client of clientList) {
+        if ('focus' in client && client.url && client.url.includes(self.location.origin)) {
+          if ('navigate' in client) {
+            client.navigate(targetUrl);
+          }
+          return client.focus();
+        }
+      }
+      // 2. Otherwise open a new window
+      if (clients.openWindow) {
+        return clients.openWindow(targetUrl);
+      }
     })
   );
 });

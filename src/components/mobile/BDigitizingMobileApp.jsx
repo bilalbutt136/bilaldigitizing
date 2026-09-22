@@ -76,6 +76,7 @@ import { THEME_PRESETS } from '../../utils/themePresets';
 import { handleNotificationClick } from '../../utils/notificationRouter';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import { GoogleCustomSignInButton } from '../auth/GoogleCustomSignInButton';
+import PushNotificationBanner from '../common/PushNotificationBanner';
 
 const GOOGLE_CLIENT_ID = (process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '421520521310-7appibeh1m7cdd90iid17lsq8thlq2oc.apps.googleusercontent.com').trim();
 
@@ -1543,6 +1544,9 @@ export const BDigitizingMobileApp = () => {
             </span>
           </div>
 
+          {/* Native Mobile Lock-Screen Notification Activation Banner */}
+          <PushNotificationBanner />
+
           {/* Priority Order Action or Studio Tracker (Single clean card) */}
           {unpaidOrders.length > 0 ? (
             <div style={{
@@ -2988,7 +2992,11 @@ export const BDigitizingMobileApp = () => {
           {/* SECTION 3: APP PREFERENCES */}
           <div style={{ padding: '0.75rem 1.25rem 0.35rem' }}>
             <div style={{ fontSize: '0.72rem', fontWeight: 800, color: isDark ? 'var(--color-text-secondary, #94a3b8)' : '#64748b', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.65rem' }}>
-              App Preferences
+              Lock-Screen Notifications & Preferences
+            </div>
+
+            <div style={{ marginBottom: '0.85rem' }}>
+              <PushNotificationBanner compact={false} showTestButton={true} />
             </div>
 
             <div style={{ background: isDark ? 'var(--color-surface, #111827)' : '#ffffff', borderRadius: '16px', border: isDark ? '1px solid var(--color-border, #334155)' : '1px solid #e2e8f0', overflow: 'hidden', boxShadow: isDark ? '0 2px 8px rgba(0,0,0,0.2)' : '0 2px 8px rgba(0,0,0,0.02)' }}>
@@ -4429,6 +4437,11 @@ export const BDigitizingMobileApp = () => {
                   <X size={16} />
                 </button>
               </div>
+            </div>
+
+            {/* Lock-Screen Push Notifications Setting & Test Button */}
+            <div style={{ marginBottom: '0.75rem' }}>
+              <PushNotificationBanner compact={true} showTestButton={true} />
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
