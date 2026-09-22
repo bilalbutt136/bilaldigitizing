@@ -2,7 +2,7 @@
   "name": "BDigitizing – Embroidery & Vector Studio",
   "short_name": "BDigitizing",
   "description": "Professional Machine Embroidery Digitizing, Vector Art & Custom Patches with 4-8 Hour Express Turnaround.",
-  "start_url": "/client",
+  "start_url": "/?app=true",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait-primary",
@@ -27,21 +27,21 @@
       "name": "New Order",
       "short_name": "New Order",
       "description": "Place a new digitizing or vector order",
-      "url": "/client?tab=order",
+      "url": "/?app=true&tab=home",
       "icons": [{ "src": "/favicon.svg", "sizes": "any" }]
     },
     {
       "name": "My Orders",
       "short_name": "Orders",
       "description": "Track active and completed orders",
-      "url": "/client?tab=orders",
+      "url": "/?app=true&tab=orders",
       "icons": [{ "src": "/favicon.svg", "sizes": "any" }]
     },
     {
-      "name": "Support Desk",
-      "short_name": "Support",
-      "description": "24/7 Studio Helpdesk & Support",
-      "url": "/contact",
+      "name": "Studio Inbox",
+      "short_name": "Inbox",
+      "description": "24/7 Studio Chat & Realtime Support",
+      "url": "/?app=true&tab=inbox",
       "icons": [{ "src": "/favicon.svg", "sizes": "any" }]
     }
   ]

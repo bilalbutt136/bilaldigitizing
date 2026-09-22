@@ -88,7 +88,7 @@ self.addEventListener('push', (event) => {
     icon: '/favicon.svg',
     badge: '/favicon.svg',
     tag: 'bdigi-alert',
-    url: '/'
+    url: '/?app=true'
   };
 
   if (event.data) {
@@ -113,7 +113,7 @@ self.addEventListener('push', (event) => {
     vibrate: [300, 100, 300, 100, 300], // High-intensity double pulse for waking lock screen
     timestamp: Date.now(),
     data: {
-      url: data.url || '/',
+      url: data.url || '/?app=true',
       orderId: data.orderId || null,
       conversationId: data.conversationId || null,
       timestamp: Date.now()

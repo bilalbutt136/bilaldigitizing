@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
 import { supabase, isSupabaseConfigured } from '../lib/supabase/client';
 import {
   createOrderInSupabase,
@@ -217,22 +217,36 @@ export const StateProvider = ({ children }) => {
     showToast(`Theme updated to ${THEME_PRESETS.find(t => t.id === targetPreset)?.name || 'New Theme'} ✨`, 'success');
   };
 
-  // Mobile View Mode: 'app' (standalone PWA/installed app) | 'website' (default for desktop and mobile web browsers)
-  const [mobileMode, setMobileModeState] = useState(() => {
+  // Mobile View Mode: 'app' (standalone PWA/installed app or mobile device default) | 'website' (desktop view)
+  const getInitialMobileMode = () => {
     if (typeof window !== 'undefined') {
       try {
-        const isStandalone = window.matchMedia('(display-mode: standalone)').matches || 
-                             window.navigator.standalone === true;
         const urlParams = new URLSearchParams(window.location.search);
         const urlApp = urlParams.get('app') === 'true' || urlParams.get('mode') === 'app';
         const urlWeb = urlParams.get('web') === 'true' || urlParams.get('mode') === 'web';
-
         if (urlWeb) return 'website';
-        if (urlApp || isStandalone) return 'app';
+        if (urlApp) return 'app';
+
+        const isStandalone = window.matchMedia('(display-mode: standalone)').matches || 
+                             window.navigator.standalone === true;
+        if (isStandalone) return 'app';
+
+        const savedMode = localStorage.getItem('bdigi_mobile_mode');
+        if (savedMode === 'app' || savedMode === 'website') {
+          return savedMode;
+        }
+
+        const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent || '');
+        const isSmallScreen = window.innerWidth <= 768;
+        if (isMobileDevice || isSmallScreen) {
+          return 'app';
+        }
       } catch {}
     }
     return 'website';
-  });
+  };
+
+  const [mobileMode, setMobileModeState] = useState(getInitialMobileMode);
 
   const [isStandaloneApp, setIsStandaloneApp] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -243,6 +257,39 @@ export const StateProvider = ({ children }) => {
     return false;
   });
 
+  const [mobileActiveTab, setMobileActiveTab] = useState(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const urlParams = new URLSearchParams(window.location.search);
+        const tabParam = urlParams.get('tab');
+        if (tabParam) return tabParam;
+        const storedTab = localStorage.getItem('bdigi_mobile_active_tab');
+        if (storedTab) return storedTab;
+      } catch {}
+    }
+    return 'home';
+  });
+
+  const setMobileTab = useCallback((newTab) => {
+    setMobileActiveTab(newTab);
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('bdigi_mobile_active_tab', newTab);
+        localStorage.setItem('bdigi_mobile_mode', 'app');
+        const url = new URL(window.location.href);
+        url.searchParams.set('app', 'true');
+        url.searchParams.delete('web');
+        url.searchParams.set('tab', newTab);
+        if (newTab === 'home') {
+          window.history.replaceState({ app: true, tab: 'home' }, '', url.toString());
+        } else {
+          window.history.pushState({ app: true, tab: newTab }, '', url.toString());
+        }
+        window.dispatchEvent(new CustomEvent('bdigi_switch_tab', { detail: { tab: newTab } }));
+      } catch {}
+    }
+  }, []);
+
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const isStandalone = window.matchMedia('(display-mode: standalone)').matches || 
@@ -252,12 +299,24 @@ export const StateProvider = ({ children }) => {
       const urlParams = new URLSearchParams(window.location.search);
       const urlApp = urlParams.get('app') === 'true' || urlParams.get('mode') === 'app';
       const urlWeb = urlParams.get('web') === 'true' || urlParams.get('mode') === 'web';
+      const savedMode = localStorage.getItem('bdigi_mobile_mode');
+      const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent || '');
+      const isSmallScreen = window.innerWidth <= 768;
 
       let targetMode = 'website';
       if (urlWeb) {
         targetMode = 'website';
+        localStorage.setItem('bdigi_mobile_mode', 'website');
       } else if (urlApp || isStandalone) {
         targetMode = 'app';
+        localStorage.setItem('bdigi_mobile_mode', 'app');
+      } else if (savedMode === 'app') {
+        targetMode = 'app';
+      } else if (savedMode === 'website') {
+        targetMode = 'website';
+      } else if (isMobileDevice || isSmallScreen) {
+        targetMode = 'app';
+        localStorage.setItem('bdigi_mobile_mode', 'app');
       }
 
       setMobileModeState(targetMode);
@@ -279,9 +338,17 @@ export const StateProvider = ({ children }) => {
         if (mode === 'app') {
           document.documentElement.classList.add('mobile-app-active');
           document.documentElement.setAttribute('data-mobile-mode', 'app');
+          const url = new URL(window.location.href);
+          url.searchParams.delete('web');
+          url.searchParams.set('app', 'true');
+          window.history.replaceState({ app: true }, '', url.toString());
         } else {
           document.documentElement.classList.remove('mobile-app-active');
           document.documentElement.removeAttribute('data-mobile-mode');
+          const url = new URL(window.location.href);
+          url.searchParams.delete('app');
+          url.searchParams.set('web', 'true');
+          window.history.replaceState({ web: true }, '', url.toString());
         }
       } catch {}
     }
@@ -1571,6 +1638,42 @@ export const StateProvider = ({ children }) => {
       } catch {}
     }
 
+    // In mobile app mode, handle views natively via mobile tabs to prevent dropping users into desktop Chrome
+    if (mobileMode === 'app') {
+      if (targetView === 'public') {
+        setCurrentView('public');
+        setMobileTab('home');
+        return;
+      }
+      if (targetView === 'customer') {
+        if (isAuthed) {
+          setCurrentView('customer');
+          if (triggerOrderWizard) {
+            setMobileTab('home');
+            window.dispatchEvent(new CustomEvent('bdigi_open_mobile_order', { detail: initialData }));
+          } else {
+            setMobileTab('orders');
+          }
+        } else {
+          setMobileTab('login');
+          showToast('Please sign in or create an account to view orders', 'warning');
+        }
+        return;
+      }
+      if (targetView === 'admin') {
+        if (isAuthed && authUser?.role === 'admin') {
+          setCurrentView('admin');
+          if (typeof window !== 'undefined') {
+            window.location.href = '/admin-portal';
+          }
+        } else {
+          showToast('Access Restricted to Studio Admin.', 'warning');
+          setMobileTab('login');
+        }
+        return;
+      }
+    }
+
     if (targetView === 'public') {
       setCurrentView('public');
       if (typeof window !== 'undefined' && window.location.pathname !== '/') {
@@ -2397,7 +2500,8 @@ export const StateProvider = ({ children }) => {
       unreadOrdersCount, markOrdersAsRead, lastOrdersViewedTime,
       createOrder, updateOrderStatus, addRevisionRequest, cancelOrder,
       fetchUserWalletBalance, refreshOrders, refreshClients,
-      mobileMode, setMobileMode, isStandaloneApp
+      mobileMode, setMobileMode, isStandaloneApp,
+      mobileActiveTab, setMobileTab
     }}>
       {children}
     </StateContext.Provider>

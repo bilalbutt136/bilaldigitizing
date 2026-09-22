@@ -26,6 +26,14 @@ export function ClientPortalClient() {
   useEffect(() => {
     if (!isAuthInitialized) return;
 
+    // In mobile app mode, BDigitizingMobileApp handles its own guest & auth tabs natively
+    if (mobileMode === 'app') {
+      if (isUserLoggedIn && currentView !== 'customer') {
+        setCurrentView('customer');
+      }
+      return;
+    }
+
     if (!isUserLoggedIn) {
       if (currentView !== 'public') setCurrentView('public');
       navigate('/login?redirect=/client-portal', { replace: true });
@@ -35,7 +43,18 @@ export function ClientPortalClient() {
         document.cookie = 'bdigi_auth=true; path=/; max-age=31536000; SameSite=Lax';
       }
     }
-  }, [isAuthInitialized, isUserLoggedIn, currentView, setCurrentView, navigate]);
+  }, [isAuthInitialized, isUserLoggedIn, currentView, setCurrentView, navigate, mobileMode]);
+
+  // If in Standalone / App Mode, render the 5-tab mobile app immediately
+  if (mobileMode === 'app') {
+    return (
+      <ErrorBoundary fallback={<CustomerDashboard />}>
+        <div className="mobile-app-wrapper" style={{ width: '100%', minHeight: '100vh', background: '#ffffff' }}>
+          <BDigitizingMobileApp />
+        </div>
+      </ErrorBoundary>
+    );
+  }
 
   if (!isAuthInitialized || !isUserLoggedIn) {
     return (
@@ -56,16 +75,6 @@ export function ClientPortalClient() {
           animation: 'spin 0.8s linear infinite'
         }} />
       </div>
-    );
-  }
-
-  if (mobileMode === 'app') {
-    return (
-      <ErrorBoundary fallback={<CustomerDashboard />}>
-        <div className="mobile-app-wrapper" style={{ width: '100%', minHeight: '100vh', background: '#ffffff' }}>
-          <BDigitizingMobileApp />
-        </div>
-      </ErrorBoundary>
     );
   }
 

@@ -94,6 +94,11 @@ const nextConfig = {
   async redirects() {
     return [
       {
+        source: '/order',
+        destination: '/?app=true&tab=home',
+        permanent: false,
+      },
+      {
         source: '/embroidery-digitizing',
         destination: '/services/embroidery-digitizing',
         permanent: true,

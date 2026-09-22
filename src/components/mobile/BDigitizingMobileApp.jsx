@@ -106,6 +106,8 @@ export const BDigitizingMobileApp = () => {
     colorTheme,
     setColorTheme,
     setMobileMode,
+    mobileActiveTab,
+    setMobileTab: setGlobalMobileTab,
     dynamicPricingTiers = [],
     notifications: globalNotifications = [],
     markNotificationAsRead: markGlobalNotificationAsRead,
@@ -192,10 +194,18 @@ export const BDigitizingMobileApp = () => {
     if (newTab === 'inbox' || newTab === 'chat' || newTab === 'support') {
       setMobileChatMode('inbox');
     }
+    if (typeof setGlobalMobileTab === 'function') {
+      try {
+        setGlobalMobileTab(newTab);
+      } catch {}
+    }
     if (typeof window !== 'undefined') {
       try {
         localStorage.setItem('bdigi_mobile_active_tab', newTab);
+        localStorage.setItem('bdigi_mobile_mode', 'app');
         const url = new URL(window.location.href);
+        url.searchParams.set('app', 'true');
+        url.searchParams.delete('web');
         url.searchParams.set('tab', newTab);
         if (newTab === 'home') {
           window.history.replaceState({ app: true, tab: 'home' }, '', url.toString());
@@ -323,7 +333,12 @@ export const BDigitizingMobileApp = () => {
           setMobileTabState('home');
           try {
             localStorage.setItem('bdigi_mobile_active_tab', 'home');
-            window.history.replaceState({ app: true, tab: 'home' }, '', window.location.pathname + '?tab=home');
+            localStorage.setItem('bdigi_mobile_mode', 'app');
+            const url = new URL(window.location.href);
+            url.searchParams.set('app', 'true');
+            url.searchParams.delete('web');
+            url.searchParams.set('tab', 'home');
+            window.history.replaceState({ app: true, tab: 'home' }, '', url.toString());
           } catch {}
         } else if (tabParam && validTabs.includes(tabParam)) {
           setMobileTabState(tabParam);
@@ -461,6 +476,15 @@ export const BDigitizingMobileApp = () => {
         setIsLegalModalOpen(false);
         setIsNotifDrawerOpen(false);
         if (typeof window !== 'undefined') window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else if (targetTab === 'inbox' || targetTab === 'chat') {
+        setMobileTab('inbox');
+        if (typeof window !== 'undefined') window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else if (targetTab === 'categories') {
+        setMobileTab('categories');
+        if (typeof window !== 'undefined') window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else if (targetTab === 'login' || targetTab === 'signup' || targetTab === 'auth') {
+        setMobileTab(targetTab);
+        if (typeof window !== 'undefined') window.scrollTo({ top: 0, behavior: 'smooth' });
       } else if (targetTab === 'support') {
         setIsSupportModalOpen(true);
       } else if (targetTab === 'profile' || targetTab === 'wallet' || targetTab === 'settings' || targetTab === 'account') {
@@ -468,8 +492,17 @@ export const BDigitizingMobileApp = () => {
       }
     };
 
+    const handleOpenOrderEvent = (e) => {
+      const sType = e.detail?.type || 'embroidery';
+      handleOpenOrderConfigurator(sType);
+    };
+
     window.addEventListener('bdigi_switch_tab', handleTabSwitch);
-    return () => window.removeEventListener('bdigi_switch_tab', handleTabSwitch);
+    window.addEventListener('bdigi_open_mobile_order', handleOpenOrderEvent);
+    return () => {
+      window.removeEventListener('bdigi_switch_tab', handleTabSwitch);
+      window.removeEventListener('bdigi_open_mobile_order', handleOpenOrderEvent);
+    };
   }, []);
 
   const isAdmin = authUser?.role === 'admin' || currentUser?.role === 'admin';
