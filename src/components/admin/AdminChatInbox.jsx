@@ -1411,23 +1411,31 @@ export default function AdminChatInbox({ initialChannel = 'inbox' }) {
               </div>
             ) : (
               /* MESSAGES TAB */
-              <div className="flex-1 flex flex-col min-h-0 h-full overflow-hidden bg-slate-50/50 dark:bg-slate-900/30">
+              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, height: '100%', overflow: 'hidden', background: '#f8fafc' }}>
                 {/* MESSAGES STREAM (ONLY THIS INNER STREAM SCROLLS) */}
                 <div
                   ref={messagesContainerRef}
-                  className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-6 space-y-3 scroll-smooth"
+                  style={{
+                    flex: 1,
+                    minHeight: 0,
+                    overflowY: 'auto',
+                    padding: '1.25rem 1.5rem',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    scrollBehavior: 'smooth'
+                  }}
                 >
                   {isLoadingMessages ? (
-                    <div className="flex flex-col items-center justify-center py-16 text-slate-400">
-                      <Loader2 size={24} className="spin-icon text-orange-500 mb-2" />
-                      <span className="text-sm font-medium">Loading message history...</span>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '4rem 1rem', color: '#94a3b8' }}>
+                      <Loader2 size={24} className="spin-icon" style={{ color: '#ea580c', marginBottom: '0.5rem' }} />
+                      <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>Loading message history...</span>
                     </div>
                   ) : uniqueMessages.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center py-16 px-4 text-center text-slate-400">
-                      <p className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '4rem 1rem', textAlign: 'center', color: '#94a3b8' }}>
+                      <p style={{ fontSize: '0.9rem', fontWeight: 600, color: '#475569', margin: '0 0 0.35rem 0' }}>
                         Start of conversation with {activeConversation.client_name || activeConversation.client_email}
                       </p>
-                      <span className="text-xs text-slate-500">Send a message, design files, or create a custom offer below.</span>
+                      <span style={{ fontSize: '0.8rem' }}>Send a message, design files, or create a custom offer below.</span>
                     </div>
                   ) : (
                     uniqueMessages.map((msg, index) => {
@@ -1455,27 +1463,52 @@ export default function AdminChatInbox({ initialChannel = 'inbox' }) {
                         <React.Fragment key={msg.id || index}>
                           {/* Calendar Day Separator */}
                           {showDateHeader && (
-                            <div className="flex items-center justify-center my-4 select-none">
-                              <div className="h-px bg-slate-200 dark:bg-slate-700/60 flex-1" />
-                              <span className="px-3 py-1 text-[11px] font-semibold text-slate-500 dark:text-slate-400 bg-white dark:bg-slate-800 rounded-full border border-slate-200 dark:border-slate-700 mx-3 shadow-2xs">
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '1rem 0 0.5rem 0', userSelect: 'none' }}>
+                              <div style={{ height: '1px', background: '#e2e8f0', flex: 1 }} />
+                              <span style={{
+                                padding: '0.2rem 0.75rem',
+                                fontSize: '0.7rem',
+                                fontWeight: 700,
+                                color: '#64748b',
+                                background: '#ffffff',
+                                borderRadius: '16px',
+                                border: '1px solid #e2e8f0',
+                                margin: '0 0.75rem',
+                                boxShadow: '0 1px 2px rgba(0,0,0,0.03)'
+                              }}>
                                 {formatChatDateHeader(msg.created_at)}
                               </span>
-                              <div className="h-px bg-slate-200 dark:bg-slate-700/60 flex-1" />
+                              <div style={{ height: '1px', background: '#e2e8f0', flex: 1 }} />
                             </div>
                           )}
 
-                          {/* Message Row with Correct Flex Alignment */}
-                          <div className={`w-full flex flex-col ${isAdminMsg ? 'items-end' : 'items-start'} ${isFirstInGroup ? 'mt-2.5' : 'mt-1'}`}>
-                            {/* Sender Label: Show for client if first in group */}
+                          {/* Message Row with Correct Flex Alignment & Spacing */}
+                          <div
+                            style={{
+                              width: '100%',
+                              display: 'flex',
+                              flexDirection: 'column',
+                              alignItems: isAdminMsg ? 'flex-end' : 'flex-start',
+                              marginTop: showDateHeader ? '0.35rem' : isFirstInGroup ? '0.75rem' : '0.25rem'
+                            }}
+                          >
+                            {/* Sender Label: Show for customer if first in group */}
                             {!isAdminMsg && isFirstInGroup && (
-                              <span className="text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1 px-1">
+                              <div style={{
+                                fontSize: '0.72rem',
+                                fontWeight: 700,
+                                color: '#64748b',
+                                marginBottom: '0.25rem',
+                                paddingLeft: '0.35rem',
+                                userSelect: 'none'
+                              }}>
                                 {msg.sender_name || activeConversation?.client_name || 'Client'}
-                              </span>
+                              </div>
                             )}
 
                             {/* Custom Offer Card Rendering */}
                             {isOffer ? (
-                              <div className="max-w-[90%] sm:max-w-[420px]">
+                              <div style={{ maxWidth: '90%', width: '420px' }}>
                                 <OfferCardMessage
                                   offer={msg.offer_data || { id: msg.offer_id, title: 'Custom Digitizing Offer' }}
                                   isCustomerView={false}
@@ -1483,24 +1516,34 @@ export default function AdminChatInbox({ initialChannel = 'inbox' }) {
                                 />
                               </div>
                             ) : (
-                              /* Message Bubble Container */
+                              /* Standard Clean Chat Bubble */
                               <div
-                                className={`relative max-w-[85%] sm:max-w-[75%] px-4 py-2.5 shadow-xs text-[13.5px] leading-relaxed break-words ${
-                                  isAdminMsg
-                                    ? `bg-slate-900 text-white ${isLastInGroup ? 'rounded-2xl rounded-br-xs' : 'rounded-2xl'}`
-                                    : `bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 border border-slate-200/80 dark:border-slate-700 ${isLastInGroup ? 'rounded-2xl rounded-bl-xs' : 'rounded-2xl'}`
-                                }`}
+                                style={{
+                                  maxWidth: '75%',
+                                  background: isAdminMsg ? '#0f172a' : '#ffffff',
+                                  color: isAdminMsg ? '#ffffff' : '#0f172a',
+                                  padding: '0.75rem 1rem',
+                                  borderRadius: isAdminMsg ? '16px 16px 4px 16px' : '16px 16px 16px 4px',
+                                  boxShadow: isAdminMsg
+                                    ? '0 2px 6px rgba(15, 23, 42, 0.12)'
+                                    : '0 1px 4px rgba(0, 0, 0, 0.05)',
+                                  border: isAdminMsg ? '1px solid #1e293b' : '1px solid #e2e8f0',
+                                  wordBreak: 'break-word',
+                                  fontSize: '0.88rem',
+                                  lineHeight: 1.5,
+                                  position: 'relative'
+                                }}
                               >
                                 {/* Message Text */}
                                 {msg.text && (
-                                  <div className="whitespace-pre-line select-text">
+                                  <div style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word', userSelect: 'text' }}>
                                     {msg.text}
                                   </div>
                                 )}
 
                                 {/* Attachments inside bubble */}
                                 {Array.isArray(msg.attachments) && msg.attachments.length > 0 && (
-                                  <div className={`${msg.text ? 'mt-2.5' : ''} flex flex-col gap-2`}>
+                                  <div style={{ marginTop: msg.text ? '0.65rem' : 0, display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
                                     {msg.attachments.map((att, aIdx) => {
                                       const isImg = isImageAttachment(att.name, att.url);
                                       const isDownloading = downloadingFileUrl === att.url;
@@ -1509,54 +1552,81 @@ export default function AdminChatInbox({ initialChannel = 'inbox' }) {
                                         return (
                                           <div
                                             key={aIdx}
-                                            className={`rounded-xl overflow-hidden ${
-                                              isAdminMsg
-                                                ? 'border border-white/20 bg-black/25'
-                                                : 'border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50'
-                                            } max-w-[340px] shadow-xs`}
+                                            style={{
+                                              borderRadius: '12px',
+                                              overflow: 'hidden',
+                                              border: isAdminMsg ? '1px solid rgba(255,255,255,0.2)' : '1px solid #e2e8f0',
+                                              background: isAdminMsg ? 'rgba(0,0,0,0.25)' : '#f8fafc',
+                                              maxWidth: '340px',
+                                              boxShadow: '0 2px 6px rgba(0,0,0,0.05)'
+                                            }}
                                           >
                                             <a
                                               href={att.url}
                                               target="_blank"
                                               rel="noopener noreferrer"
                                               title="Click to open full photo directly"
-                                              className="block bg-black/5"
+                                              style={{ display: 'block', background: 'rgba(0,0,0,0.04)', textDecoration: 'none' }}
                                             >
                                               <img
                                                 src={att.url}
                                                 alt={att.name || 'Photo'}
                                                 loading="lazy"
-                                                className="block w-full max-h-[260px] object-contain cursor-pointer rounded-t-lg"
+                                                style={{
+                                                  display: 'block',
+                                                  width: '100%',
+                                                  maxHeight: '260px',
+                                                  objectFit: 'contain',
+                                                  cursor: 'pointer',
+                                                  borderRadius: '8px 8px 0 0'
+                                                }}
                                               />
                                             </a>
-                                            <div className={`flex items-center justify-between p-2 text-xs gap-2 border-t ${
-                                              isAdminMsg ? 'border-white/10' : 'border-slate-100 dark:border-slate-700'
-                                            }`}>
-                                              <div className="min-w-0 flex-1">
-                                                <div className={`font-semibold truncate text-[12px] ${
-                                                  isAdminMsg ? 'text-slate-200' : 'text-slate-700 dark:text-slate-200'
-                                                }`}>
+                                            <div style={{
+                                              display: 'flex',
+                                              alignItems: 'center',
+                                              justifyContent: 'space-between',
+                                              padding: '0.45rem 0.65rem',
+                                              fontSize: '0.72rem',
+                                              gap: '0.5rem',
+                                              borderTop: isAdminMsg ? '1px solid rgba(255,255,255,0.12)' : '1px solid #e2e8f0',
+                                              background: isAdminMsg ? 'rgba(0,0,0,0.18)' : '#ffffff'
+                                            }}>
+                                              <div style={{ minWidth: 0, flex: 1 }}>
+                                                <div style={{
+                                                  fontWeight: 600,
+                                                  overflow: 'hidden',
+                                                  textOverflow: 'ellipsis',
+                                                  whiteSpace: 'nowrap',
+                                                  fontSize: '0.78rem',
+                                                  color: isAdminMsg ? '#f1f5f9' : '#1e293b'
+                                                }}>
                                                   {att.name}
                                                 </div>
                                                 {att.size && (
-                                                  <div className={`text-[10px] opacity-75 ${
-                                                    isAdminMsg ? 'text-slate-400' : 'text-slate-500'
-                                                  }`}>
+                                                  <div style={{ fontSize: '0.65rem', opacity: 0.75, color: isAdminMsg ? '#94a3b8' : '#64748b' }}>
                                                     {att.size}
                                                   </div>
                                                 )}
                                               </div>
 
-                                              <div className="flex items-center gap-1.5 shrink-0">
+                                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', flexShrink: 0 }}>
                                                 <a
                                                   href={att.url}
                                                   target="_blank"
                                                   rel="noopener noreferrer"
-                                                  className={`inline-flex items-center gap-1 text-[11px] font-bold px-2 py-1 rounded-md transition-colors ${
-                                                    isAdminMsg
-                                                      ? 'text-white bg-white/15 hover:bg-white/25'
-                                                      : 'text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200'
-                                                  }`}
+                                                  style={{
+                                                    display: 'inline-flex',
+                                                    alignItems: 'center',
+                                                    gap: '0.25rem',
+                                                    fontSize: '0.68rem',
+                                                    fontWeight: 700,
+                                                    padding: '0.25rem 0.5rem',
+                                                    borderRadius: '5px',
+                                                    textDecoration: 'none',
+                                                    color: isAdminMsg ? '#ffffff' : '#334155',
+                                                    background: isAdminMsg ? 'rgba(255,255,255,0.15)' : '#f1f5f9'
+                                                  }}
                                                   title="Open image directly in new tab"
                                                 >
                                                   <ExternalLink size={11} /> Open
@@ -1566,7 +1636,20 @@ export default function AdminChatInbox({ initialChannel = 'inbox' }) {
                                                   type="button"
                                                   onClick={(e) => handleDownloadFile(att, e)}
                                                   disabled={isDownloading}
-                                                  className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-md text-white bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 shadow-xs transition-all disabled:opacity-75"
+                                                  style={{
+                                                    display: 'inline-flex',
+                                                    alignItems: 'center',
+                                                    gap: '0.25rem',
+                                                    fontSize: '0.68rem',
+                                                    fontWeight: 700,
+                                                    padding: '0.25rem 0.55rem',
+                                                    borderRadius: '5px',
+                                                    border: 'none',
+                                                    color: '#ffffff',
+                                                    background: 'linear-gradient(135deg, #ff7a00 0%, #ea580c 100%)',
+                                                    cursor: isDownloading ? 'wait' : 'pointer',
+                                                    boxShadow: '0 1px 2px rgba(234, 88, 12, 0.25)'
+                                                  }}
                                                   title="Download image directly to device"
                                                 >
                                                   {isDownloading ? <Loader2 size={11} className="spin-icon" /> : <Download size={11} />}
@@ -1583,42 +1666,69 @@ export default function AdminChatInbox({ initialChannel = 'inbox' }) {
                                       return (
                                         <div
                                           key={aIdx}
-                                          className={`flex items-center justify-between gap-2.5 p-2 rounded-lg text-xs max-w-[350px] shadow-xs ${
-                                            isAdminMsg
-                                              ? 'bg-white/10 text-white border border-white/15'
-                                              : 'bg-slate-50 dark:bg-slate-900/60 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700'
-                                          }`}
+                                          style={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'space-between',
+                                            gap: '0.65rem',
+                                            padding: '0.55rem 0.75rem',
+                                            borderRadius: '8px',
+                                            fontSize: '0.75rem',
+                                            maxWidth: '350px',
+                                            background: isAdminMsg ? 'rgba(255,255,255,0.08)' : '#f8fafc',
+                                            border: isAdminMsg ? '1px solid rgba(255,255,255,0.15)' : '1px solid #e2e8f0',
+                                            boxShadow: '0 1px 3px rgba(0,0,0,0.03)'
+                                          }}
                                         >
-                                          <div className="flex items-center gap-2 min-w-0 flex-1">
-                                            <span className={`px-1.5 py-0.5 rounded text-[10px] font-black tracking-wider shrink-0 ${
-                                              isAdminMsg ? 'bg-white/20 text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-200'
-                                            }`}>
+                                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', minWidth: 0, flex: 1 }}>
+                                            <span style={{
+                                              padding: '0.2rem 0.4rem',
+                                              borderRadius: '4px',
+                                              fontSize: '0.62rem',
+                                              fontWeight: 800,
+                                              letterSpacing: '0.04em',
+                                              flexShrink: 0,
+                                              background: isAdminMsg ? 'rgba(255,255,255,0.2)' : '#e2e8f0',
+                                              color: isAdminMsg ? '#ffffff' : '#334155'
+                                            }}>
                                               {ext}
                                             </span>
-                                            <div className="min-w-0 flex-1">
-                                              <div className="font-semibold truncate text-[12px]" title={att.name}>
+                                            <div style={{ minWidth: 0, flex: 1 }}>
+                                              <div style={{
+                                                fontWeight: 600,
+                                                overflow: 'hidden',
+                                                textOverflow: 'ellipsis',
+                                                whiteSpace: 'nowrap',
+                                                fontSize: '0.78rem',
+                                                color: isAdminMsg ? '#f1f5f9' : '#0f172a'
+                                              }} title={att.name}>
                                                 {att.name}
                                               </div>
                                               {att.size && (
-                                                <div className={`text-[10px] opacity-75 ${
-                                                  isAdminMsg ? 'text-slate-400' : 'text-slate-500'
-                                                }`}>
+                                                <div style={{ fontSize: '0.65rem', opacity: 0.75, color: isAdminMsg ? '#94a3b8' : '#64748b' }}>
                                                   {att.size}
                                                 </div>
                                               )}
                                             </div>
                                           </div>
 
-                                          <div className="flex items-center gap-1.5 shrink-0">
+                                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', flexShrink: 0 }}>
                                             <a
                                               href={att.url}
                                               target="_blank"
                                               rel="noopener noreferrer"
-                                              className={`inline-flex items-center gap-1 text-[11px] font-bold px-2 py-1 rounded-md transition-colors ${
-                                                isAdminMsg
-                                                  ? 'text-white bg-white/15 hover:bg-white/25'
-                                                  : 'text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200'
-                                              }`}
+                                              style={{
+                                                display: 'inline-flex',
+                                                alignItems: 'center',
+                                                gap: '0.25rem',
+                                                fontSize: '0.68rem',
+                                                fontWeight: 700,
+                                                padding: '0.25rem 0.5rem',
+                                                borderRadius: '5px',
+                                                textDecoration: 'none',
+                                                color: isAdminMsg ? '#ffffff' : '#334155',
+                                                background: isAdminMsg ? 'rgba(255,255,255,0.15)' : '#f1f5f9'
+                                              }}
                                               title="Open file directly in new tab"
                                             >
                                               <ExternalLink size={11} /> Open
@@ -1628,7 +1738,20 @@ export default function AdminChatInbox({ initialChannel = 'inbox' }) {
                                               type="button"
                                               onClick={(e) => handleDownloadFile(att, e)}
                                               disabled={isDownloading}
-                                              className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-md text-white bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 shadow-xs transition-all disabled:opacity-75"
+                                              style={{
+                                                display: 'inline-flex',
+                                                alignItems: 'center',
+                                                gap: '0.25rem',
+                                                fontSize: '0.68rem',
+                                                fontWeight: 700,
+                                                padding: '0.25rem 0.55rem',
+                                                borderRadius: '5px',
+                                                border: 'none',
+                                                color: '#ffffff',
+                                                background: 'linear-gradient(135deg, #ff7a00 0%, #ea580c 100%)',
+                                                cursor: isDownloading ? 'wait' : 'pointer',
+                                                boxShadow: '0 1px 2px rgba(234, 88, 12, 0.25)'
+                                              }}
                                               title="Download file directly to device"
                                             >
                                               {isDownloading ? <Loader2 size={11} className="spin-icon" /> : <Download size={11} />}
@@ -1642,10 +1765,19 @@ export default function AdminChatInbox({ initialChannel = 'inbox' }) {
                                 )}
 
                                 {/* Bubble Footer: Timestamp & Read Receipts */}
-                                <div className={`flex items-center gap-1 mt-1 select-none text-[10px] ${isAdminMsg ? 'justify-end text-slate-300/80' : 'justify-start text-slate-400'}`}>
+                                <div style={{
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: isAdminMsg ? 'flex-end' : 'flex-start',
+                                  gap: '0.3rem',
+                                  marginTop: '0.35rem',
+                                  fontSize: '0.68rem',
+                                  color: isAdminMsg ? 'rgba(255, 255, 255, 0.65)' : '#94a3b8',
+                                  userSelect: 'none'
+                                }}>
                                   <span>{timeString}</span>
                                   {isAdminMsg && (
-                                    <CheckCheck size={13} className="text-emerald-400 shrink-0" />
+                                    <CheckCheck size={13} style={{ color: '#34d399', flexShrink: 0 }} />
                                   )}
                                 </div>
                               </div>
@@ -1658,13 +1790,21 @@ export default function AdminChatInbox({ initialChannel = 'inbox' }) {
 
                   {/* TYPING INDICATOR */}
                   {isClientTyping && (
-                    <div className="flex items-center gap-2 text-slate-500 text-xs italic py-1 px-2">
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem',
+                      color: '#64748b',
+                      fontSize: '0.78rem',
+                      fontStyle: 'italic',
+                      padding: '0.25rem 0.5rem'
+                    }}>
                       <span className="dot-typing" />
                       <span>{activeConversation.client_name || 'Client'} is typing...</span>
                     </div>
                   )}
 
-                  <div ref={messagesEndRef} className="h-1 flex-shrink-0" />
+                  <div ref={messagesEndRef} style={{ height: '4px', flexShrink: 0 }} />
                 </div>
 
                 {/* ============================================================ */}
