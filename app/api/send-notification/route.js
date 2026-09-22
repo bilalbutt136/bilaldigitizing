@@ -142,19 +142,6 @@ export async function POST(req) {
         targetRole: 'both'
       });
 
-      // Dual push notification
-      try {
-        const { sendPushToRecipient, formatOrderPush } = await import('../../../src/lib/pushService.js');
-        const adminPush = formatOrderPush({ orderId, clientName, serviceName, status: 'Received', targetRole: 'admin' });
-        await sendPushToRecipient({ role: 'admin', payload: adminPush });
-        if (clientEmail) {
-          const clientPush = formatOrderPush({ orderId, clientName, serviceName, status: 'Confirmed', targetRole: 'client' });
-          await sendPushToRecipient({ userEmail: clientEmail, payload: clientPush });
-        }
-      } catch (pushErr) {
-        console.warn('[Webhook Order Push Notice]:', pushErr?.message);
-      }
-
       return NextResponse.json({
         success: result.success,
         event: 'new_order',
@@ -195,20 +182,6 @@ export async function POST(req) {
         channel,
         attachments
       });
-
-      // Dual push notification
-      try {
-        const { sendPushToRecipient, formatChatMessagePush } = await import('../../../src/lib/pushService.js');
-        if (sender === 'admin') {
-          const clientPush = formatChatMessagePush({ senderName, messageText, conversationId, targetRole: 'client' });
-          await sendPushToRecipient({ userEmail: clientEmail, payload: clientPush });
-        } else {
-          const adminPush = formatChatMessagePush({ senderName, messageText, conversationId, targetRole: 'admin' });
-          await sendPushToRecipient({ role: 'admin', payload: adminPush });
-        }
-      } catch (pushErr) {
-        console.warn('[Webhook Chat Push Notice]:', pushErr?.message);
-      }
 
       return NextResponse.json({
         success: result?.success !== false,

@@ -4,7 +4,6 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useAppState } from '../../context/StateContext';
 import { createClient } from '../../lib/supabase/client';
 import OfferCardMessage from '../common/OfferCardMessage';
-import PushNotificationPrompt from '../common/PushNotificationPrompt';
 import { downloadFileDirectly, openFileInNewTab } from '../../utils/fileDownloader';
 import { playMessageChime, unlockAudioContext } from '../../utils/audioNotification';
 import {
@@ -824,9 +823,6 @@ export default function CustomerSupportChat({
           WebkitOverflowScrolling: 'touch'
         }}
       >
-        {/* NATIVE MOBILE PUSH NOTIFICATION PROMPT */}
-        <PushNotificationPrompt userEmail={userEmail} role="client" variant="banner" />
-
         {isLoading ? (
           <div style={{ textAlign: 'center', padding: '3rem 1rem', color: '#94a3b8', margin: 'auto' }}>
             <Loader2 size={24} className="spin-icon" style={{ margin: '0 auto 0.5rem', color: '#ea580c' }} />

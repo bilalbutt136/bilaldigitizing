@@ -374,34 +374,6 @@ export async function POST(request) {
         console.warn('[Order Email Direct Dispatch Error]:', e?.message);
       }
 
-      // Native Mobile Web Push notifications for new order
-      try {
-        const { sendPushToRecipient, formatOrderPush } = await import('../../../src/lib/pushService.js');
-        // Push alert to all subscribed Admin devices
-        const adminPushPayload = formatOrderPush({
-          orderId: mappedDbRow.id,
-          clientName: mappedDbRow.client_name,
-          serviceName: mappedDbRow.service_category || mappedDbRow.title,
-          status: 'Received',
-          targetRole: 'admin'
-        });
-        await sendPushToRecipient({ role: 'admin', payload: adminPushPayload });
-
-        // Push confirmation to ordering Client's devices
-        if (clientEmail) {
-          const clientPushPayload = formatOrderPush({
-            orderId: mappedDbRow.id,
-            clientName: mappedDbRow.client_name,
-            serviceName: mappedDbRow.service_category || mappedDbRow.title,
-            status: 'Confirmed',
-            targetRole: 'client'
-          });
-          await sendPushToRecipient({ userEmail: clientEmail, payload: clientPushPayload });
-        }
-      } catch (pushErr) {
-        console.warn('[Order Push Notification Notice]:', pushErr?.message);
-      }
-
       return NextResponse.json({ success: true, order: insertedOrder[0] });
     }
 

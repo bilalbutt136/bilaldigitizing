@@ -291,34 +291,6 @@ export async function POST(request) {
       }
     }
 
-    // 5. Trigger Native Mobile Web Push Notifications (WhatsApp / TikTok Style)
-    try {
-      const { sendPushToRecipient, formatChatMessagePush } = await import('../../../../src/lib/pushService.js');
-      if (effectiveSender === 'client') {
-        // Dispatch to all subscribed admin devices
-        const pushPayload = formatChatMessagePush({
-          senderName: effectiveSenderName,
-          messageText: (text || '').trim(),
-          conversationId,
-          isSupport: isSupportThread,
-          targetRole: 'admin'
-        });
-        await sendPushToRecipient({ role: 'admin', payload: pushPayload });
-      } else {
-        // Dispatch to target customer device
-        const pushPayload = formatChatMessagePush({
-          senderName: effectiveSenderName || 'Bilal Digitizing Support',
-          messageText: (text || '').trim(),
-          conversationId,
-          isSupport: isSupportThread,
-          targetRole: 'client'
-        });
-        await sendPushToRecipient({ userEmail: cleanEmail, payload: pushPayload });
-      }
-    } catch (pushErr) {
-      console.warn('[Chat Message Push Dispatch Notice]:', pushErr?.message);
-    }
-
     return NextResponse.json({ success: true, message: insertedMsg });
   } catch (err) {
     console.error('[Chat Messages POST Error]:', err);

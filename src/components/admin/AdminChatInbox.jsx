@@ -5,7 +5,6 @@ import { useAppState } from '../../context/StateContext';
 import { createClient } from '../../lib/supabase/client';
 import OfferCardMessage from '../common/OfferCardMessage';
 import AdminCreateOfferModal from './AdminCreateOfferModal';
-import PushNotificationPrompt from '../common/PushNotificationPrompt';
 import { downloadFileDirectly, openFileInNewTab } from '../../utils/fileDownloader';
 import { playMessageChime, unlockAudioContext } from '../../utils/audioNotification';
 import {
@@ -857,17 +856,8 @@ export default function AdminChatInbox({ initialChannel = 'inbox' }) {
             )}
           </div>
 
-          {/* Admin Alerts & Controls */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
-            <PushNotificationPrompt role="admin" userEmail={authUser?.email} variant="inline" />
-            <button
-              type="button"
-              onClick={handleToggleSound}
-              style={{ background: 'none', border: 'none', cursor: 'pointer', color: isAudioEnabled ? '#ea580c' : '#94a3b8', padding: '4px' }}
-              title={isAudioEnabled ? "Audio alerts enabled (Click to test chime or mute)" : "Audio alerts muted (Click to enable)"}
-            >
-              {isAudioEnabled ? <Volume2 size={17} /> : <VolumeX size={17} />}
-            </button>
+          {/* Search Icon / Bar Toggle */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
             <button
               type="button"
               onClick={() => fetchConversations(activeFilter, searchQuery)}
