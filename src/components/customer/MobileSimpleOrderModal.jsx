@@ -402,8 +402,8 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
   const baseSubtotal = pricingResult.baseSubtotal;
   const volumeDiscountPercent = pricingResult.volumeDiscountPercent;
   const volumeDiscountAmount = pricingResult.volumeDiscountAmount;
-  const promoDiscountPercent = appliedPromo ? pricingResult.promoDiscountPercent : 0;
-  const promoDiscountAmount = appliedPromo ? pricingResult.promoDiscountAmount : 0;
+  const promoDiscountPercent = pricingResult.promoDiscountPercent;
+  const promoDiscountAmount = pricingResult.promoDiscountAmount;
   const rushFee = pricingResult.rushFee;
   const totalPrice = Math.max(0, parseFloat((baseSubtotal - volumeDiscountAmount - promoDiscountAmount + rushFee).toFixed(2)));
   const serviceDisplayName = pricingResult.serviceName;
@@ -876,196 +876,306 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
 
               {/* The 3 Core Services Cards */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.9rem' }}>
-                
-                {/* 1. Embroidery Digitizing */}
-                <div
-                  onClick={() => {
-                    handleSelectService('embroidery');
-                    setStep(2);
-                  }}
-                  style={{
-                    border: selectedService === 'embroidery' ? '2.5px solid #059669' : (isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid #cbd5e1'),
-                    background: selectedService === 'embroidery' ? (isDark ? 'rgba(5, 150, 105, 0.15)' : '#f0fdf4') : (isDark ? 'var(--color-subtle, #1e293b)' : '#ffffff'),
-                    borderRadius: '18px',
-                    padding: '1.15rem',
-                    cursor: 'pointer',
-                    boxShadow: selectedService === 'embroidery' ? '0 4px 20px rgba(5, 150, 105, 0.18)' : '0 2px 8px rgba(0, 0, 0, 0.03)',
-                    display: 'flex',
-                    gap: '0.95rem',
-                    alignItems: 'center',
-                    transition: 'all 0.15s ease',
-                    position: 'relative'
-                  }}
-                >
-                  <div style={{
-                    width: '56px',
-                    height: '56px',
-                    borderRadius: '16px',
-                    background: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
-                    color: '#ffffff',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    flexShrink: 0,
-                    boxShadow: '0 4px 14px rgba(5, 150, 105, 0.35)'
-                  }}>
-                    <Layers size={30} strokeWidth={2.2} />
-                  </div>
+                {(() => {
+                  const embPromoDiscount = getServiceDiscountPercent('embroidery', appliedPromo?.promoObj || activePromotion, siteSettings);
+                  const vecPromoDiscount = getServiceDiscountPercent('vector', appliedPromo?.promoObj || activePromotion, siteSettings);
+                  const patchPromoDiscount = getServiceDiscountPercent('patch', appliedPromo?.promoObj || activePromotion, siteSettings);
 
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <h4 style={{ margin: 0, fontSize: '1.08rem', fontWeight: 900, color: selectedService === 'embroidery' ? (isDark ? '#34d399' : '#064e3b') : (isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a'), letterSpacing: '-0.01em' }}>
-                        Embroidery Digitizing
-                      </h4>
-                      <span style={{ fontSize: '0.95rem', fontWeight: 900, color: isDark ? '#34d399' : '#047857', background: isDark ? 'rgba(5, 150, 105, 0.2)' : '#ecfdf5', padding: '0.15rem 0.5rem', borderRadius: '6px', border: isDark ? '1px solid rgba(5, 150, 105, 0.4)' : '1px solid #86efac' }}>
-                        From $10.00
-                      </span>
-                    </div>
+                  return (
+                    <>
+                      {/* 1. Embroidery Digitizing */}
+                      <div
+                        onClick={() => {
+                          handleSelectService('embroidery');
+                          setStep(2);
+                        }}
+                        style={{
+                          border: selectedService === 'embroidery' ? '2.5px solid #059669' : (isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid #cbd5e1'),
+                          background: selectedService === 'embroidery' ? (isDark ? 'rgba(5, 150, 105, 0.15)' : '#f0fdf4') : (isDark ? 'var(--color-subtle, #1e293b)' : '#ffffff'),
+                          borderRadius: '18px',
+                          padding: '1.15rem',
+                          cursor: 'pointer',
+                          boxShadow: selectedService === 'embroidery' ? '0 4px 20px rgba(5, 150, 105, 0.18)' : '0 2px 8px rgba(0, 0, 0, 0.03)',
+                          display: 'flex',
+                          gap: '0.95rem',
+                          alignItems: 'center',
+                          transition: 'all 0.15s ease',
+                          position: 'relative'
+                        }}
+                      >
+                        {embPromoDiscount > 0 && (
+                          <div style={{
+                            position: 'absolute',
+                            top: '10px',
+                            right: '10px',
+                            background: '#059669',
+                            color: '#ffffff',
+                            fontSize: '0.66rem',
+                            fontWeight: 900,
+                            padding: '0.15rem 0.45rem',
+                            borderRadius: '999px',
+                            boxShadow: '0 2px 6px rgba(5, 150, 105, 0.35)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.2rem',
+                            letterSpacing: '0.02em'
+                          }}>
+                            🏷️ -{embPromoDiscount}% OFF
+                          </div>
+                        )}
 
-                    <p style={{ margin: '0.25rem 0 0', fontSize: '0.78rem', color: isDark ? 'var(--color-text-secondary, #cbd5e1)' : '#475569', lineHeight: 1.35, fontWeight: 500 }}>
-                      Commercial stitch files for Left Chest, Caps, 3D Puff Foam & Jacket Backs (.DST, .PES, .EMB)
-                    </p>
+                        <div style={{
+                          width: '56px',
+                          height: '56px',
+                          borderRadius: '16px',
+                          background: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
+                          color: '#ffffff',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          flexShrink: 0,
+                          boxShadow: '0 4px 14px rgba(5, 150, 105, 0.35)'
+                        }}>
+                          <Layers size={30} strokeWidth={2.2} />
+                        </div>
 
-                    <div style={{ display: 'flex', gap: '0.4rem', marginTop: '0.45rem', alignItems: 'center' }}>
-                      <span style={{ fontSize: '0.68rem', fontWeight: 900, color: isDark ? '#34d399' : '#047857', background: isDark ? 'rgba(5, 150, 105, 0.2)' : '#ecfdf5', padding: '0.12rem 0.45rem', borderRadius: '4px', border: isDark ? '1px solid rgba(5, 150, 105, 0.4)' : '1px solid #86efac' }}>
-                        ⚡ 4–12H Delivery
-                      </span>
-                      <span style={{ fontSize: '0.68rem', color: isDark ? '#a7f3d0' : '#065f46', fontWeight: 700 }}>
-                        Machine Tested
-                      </span>
-                      <span style={{ fontSize: '0.78rem', color: isDark ? '#34d399' : '#047857', fontWeight: 900, marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '0.15rem' }}>
-                        {selectedService === 'embroidery' ? '✓ Selected' : 'Select'} <ArrowRight size={14} />
-                      </span>
-                    </div>
-                  </div>
-                </div>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <h4 style={{ margin: 0, fontSize: '1.08rem', fontWeight: 900, color: selectedService === 'embroidery' ? (isDark ? '#34d399' : '#064e3b') : (isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a'), letterSpacing: '-0.01em' }}>
+                              Embroidery Digitizing
+                            </h4>
+                            <div style={{ textAlign: 'right' }}>
+                              {embPromoDiscount > 0 ? (
+                                <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.25rem', justifyContent: 'flex-end' }}>
+                                  <span style={{ fontSize: '0.72rem', color: isDark ? 'var(--color-text-muted, #94a3b8)' : '#94a3b8', textDecoration: 'line-through', fontWeight: 600 }}>
+                                    $10.00
+                                  </span>
+                                  <span style={{ fontSize: '0.95rem', fontWeight: 900, color: isDark ? '#34d399' : '#047857', background: isDark ? 'rgba(5, 150, 105, 0.2)' : '#ecfdf5', padding: '0.15rem 0.5rem', borderRadius: '6px', border: isDark ? '1px solid rgba(5, 150, 105, 0.4)' : '1px solid #86efac' }}>
+                                    From ${(10 * (1 - embPromoDiscount / 100)).toFixed(2)}
+                                  </span>
+                                </div>
+                              ) : (
+                                <span style={{ fontSize: '0.95rem', fontWeight: 900, color: isDark ? '#34d399' : '#047857', background: isDark ? 'rgba(5, 150, 105, 0.2)' : '#ecfdf5', padding: '0.15rem 0.5rem', borderRadius: '6px', border: isDark ? '1px solid rgba(5, 150, 105, 0.4)' : '1px solid #86efac' }}>
+                                  From $10.00
+                                </span>
+                              )}
+                            </div>
+                          </div>
 
-                {/* 2. Vector Art Tracing */}
-                <div
-                  onClick={() => {
-                    handleSelectService('vector');
-                    setStep(2);
-                  }}
-                  style={{
-                    border: selectedService === 'vector' ? '2.5px solid #ea580c' : (isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid #cbd5e1'),
-                    background: selectedService === 'vector' ? (isDark ? 'rgba(234, 88, 12, 0.15)' : '#fff7ed') : (isDark ? 'var(--color-subtle, #1e293b)' : '#ffffff'),
-                    borderRadius: '18px',
-                    padding: '1.15rem',
-                    cursor: 'pointer',
-                    boxShadow: selectedService === 'vector' ? '0 4px 20px rgba(234, 88, 12, 0.18)' : '0 2px 8px rgba(0, 0, 0, 0.03)',
-                    display: 'flex',
-                    gap: '0.95rem',
-                    alignItems: 'center',
-                    transition: 'all 0.15s ease',
-                    position: 'relative'
-                  }}
-                >
-                  <div style={{
-                    width: '56px',
-                    height: '56px',
-                    borderRadius: '16px',
-                    background: 'linear-gradient(135deg, #ea580c 0%, #c2410c 100%)',
-                    color: '#ffffff',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    flexShrink: 0,
-                    boxShadow: '0 4px 14px rgba(234, 88, 12, 0.35)'
-                  }}>
-                    <PenTool size={30} strokeWidth={2.2} />
-                  </div>
+                          <p style={{ margin: '0.25rem 0 0', fontSize: '0.78rem', color: isDark ? 'var(--color-text-secondary, #cbd5e1)' : '#475569', lineHeight: 1.35, fontWeight: 500 }}>
+                            Commercial stitch files for Left Chest, Caps, 3D Puff Foam & Jacket Backs (.DST, .PES, .EMB)
+                          </p>
 
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <h4 style={{ margin: 0, fontSize: '1.08rem', fontWeight: 900, color: selectedService === 'vector' ? (isDark ? '#fb923c' : '#7c2d12') : (isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a'), letterSpacing: '-0.01em' }}>
-                        Vector Art Tracing
-                      </h4>
-                      <span style={{ fontSize: '0.95rem', fontWeight: 900, color: isDark ? '#fb923c' : '#ea580c', background: isDark ? 'rgba(234, 88, 12, 0.2)' : '#fff7ed', padding: '0.15rem 0.5rem', borderRadius: '6px', border: isDark ? '1px solid rgba(234, 88, 12, 0.4)' : '1px solid #fdba74' }}>
-                        From $15.00
-                      </span>
-                    </div>
+                          <div style={{ display: 'flex', gap: '0.4rem', marginTop: '0.45rem', alignItems: 'center' }}>
+                            <span style={{ fontSize: '0.68rem', fontWeight: 900, color: isDark ? '#34d399' : '#047857', background: isDark ? 'rgba(5, 150, 105, 0.2)' : '#ecfdf5', padding: '0.12rem 0.45rem', borderRadius: '4px', border: isDark ? '1px solid rgba(5, 150, 105, 0.4)' : '1px solid #86efac' }}>
+                              ⚡ 4–12H Delivery
+                            </span>
+                            <span style={{ fontSize: '0.68rem', color: isDark ? '#a7f3d0' : '#065f46', fontWeight: 700 }}>
+                              Machine Tested
+                            </span>
+                            <span style={{ fontSize: '0.78rem', color: isDark ? '#34d399' : '#047857', fontWeight: 900, marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '0.15rem' }}>
+                              {selectedService === 'embroidery' ? '✓ Selected' : 'Select'} <ArrowRight size={14} />
+                            </span>
+                          </div>
+                        </div>
+                      </div>
 
-                    <p style={{ margin: '0.25rem 0 0', fontSize: '0.78rem', color: isDark ? 'var(--color-text-secondary, #cbd5e1)' : '#475569', lineHeight: 1.35, fontWeight: 500 }}>
-                      Logo Redraw, Screen Print Color Separation & Raster-to-Vector (.AI, .EPS, .SVG, .PDF)
-                    </p>
+                      {/* 2. Vector Art Tracing */}
+                      <div
+                        onClick={() => {
+                          handleSelectService('vector');
+                          setStep(2);
+                        }}
+                        style={{
+                          border: selectedService === 'vector' ? '2.5px solid #ea580c' : (isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid #cbd5e1'),
+                          background: selectedService === 'vector' ? (isDark ? 'rgba(234, 88, 12, 0.15)' : '#fff7ed') : (isDark ? 'var(--color-subtle, #1e293b)' : '#ffffff'),
+                          borderRadius: '18px',
+                          padding: '1.15rem',
+                          cursor: 'pointer',
+                          boxShadow: selectedService === 'vector' ? '0 4px 20px rgba(234, 88, 12, 0.18)' : '0 2px 8px rgba(0, 0, 0, 0.03)',
+                          display: 'flex',
+                          gap: '0.95rem',
+                          alignItems: 'center',
+                          transition: 'all 0.15s ease',
+                          position: 'relative'
+                        }}
+                      >
+                        {vecPromoDiscount > 0 && (
+                          <div style={{
+                            position: 'absolute',
+                            top: '10px',
+                            right: '10px',
+                            background: '#ea580c',
+                            color: '#ffffff',
+                            fontSize: '0.66rem',
+                            fontWeight: 900,
+                            padding: '0.15rem 0.45rem',
+                            borderRadius: '999px',
+                            boxShadow: '0 2px 6px rgba(234, 88, 12, 0.35)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.2rem',
+                            letterSpacing: '0.02em'
+                          }}>
+                            🏷️ -{vecPromoDiscount}% OFF
+                          </div>
+                        )}
 
-                    <div style={{ display: 'flex', gap: '0.4rem', marginTop: '0.45rem', alignItems: 'center' }}>
-                      <span style={{ fontSize: '0.68rem', fontWeight: 900, color: isDark ? '#fb923c' : '#c2410c', background: isDark ? 'rgba(234, 88, 12, 0.2)' : '#fff7ed', padding: '0.12rem 0.45rem', borderRadius: '4px', border: isDark ? '1px solid rgba(234, 88, 12, 0.4)' : '1px solid #fdba74' }}>
-                        ⚡ 6–12H Delivery
-                      </span>
-                      <span style={{ fontSize: '0.68rem', color: isDark ? '#fed7aa' : '#9a3412', fontWeight: 700 }}>
-                        Pantone PMS Match
-                      </span>
-                      <span style={{ fontSize: '0.78rem', color: isDark ? '#fb923c' : '#ea580c', fontWeight: 900, marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '0.15rem' }}>
-                        {selectedService === 'vector' ? '✓ Selected' : 'Select'} <ArrowRight size={14} />
-                      </span>
-                    </div>
-                  </div>
-                </div>
+                        <div style={{
+                          width: '56px',
+                          height: '56px',
+                          borderRadius: '16px',
+                          background: 'linear-gradient(135deg, #ea580c 0%, #c2410c 100%)',
+                          color: '#ffffff',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          flexShrink: 0,
+                          boxShadow: '0 4px 14px rgba(234, 88, 12, 0.35)'
+                        }}>
+                          <PenTool size={30} strokeWidth={2.2} />
+                        </div>
 
-                {/* 3. Custom Physical Patches */}
-                <div
-                  onClick={() => {
-                    handleSelectService('patch');
-                    setStep(2);
-                  }}
-                  style={{
-                    border: selectedService === 'patch' ? '2.5px solid #0284c7' : (isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid #cbd5e1'),
-                    background: selectedService === 'patch' ? (isDark ? 'rgba(2, 132, 199, 0.15)' : '#f0f9ff') : (isDark ? 'var(--color-subtle, #1e293b)' : '#ffffff'),
-                    borderRadius: '18px',
-                    padding: '1.15rem',
-                    cursor: 'pointer',
-                    boxShadow: selectedService === 'patch' ? '0 4px 20px rgba(2, 132, 199, 0.18)' : '0 2px 8px rgba(0, 0, 0, 0.03)',
-                    display: 'flex',
-                    gap: '0.95rem',
-                    alignItems: 'center',
-                    transition: 'all 0.15s ease',
-                    position: 'relative'
-                  }}
-                >
-                  <div style={{
-                    width: '56px',
-                    height: '56px',
-                    borderRadius: '16px',
-                    background: 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)',
-                    color: '#ffffff',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    flexShrink: 0,
-                    boxShadow: '0 4px 14px rgba(2, 132, 199, 0.35)'
-                  }}>
-                    <Package size={30} strokeWidth={2.2} />
-                  </div>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <h4 style={{ margin: 0, fontSize: '1.08rem', fontWeight: 900, color: selectedService === 'vector' ? (isDark ? '#fb923c' : '#7c2d12') : (isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a'), letterSpacing: '-0.01em' }}>
+                              Vector Art Tracing
+                            </h4>
+                            <div style={{ textAlign: 'right' }}>
+                              {vecPromoDiscount > 0 ? (
+                                <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.25rem', justifyContent: 'flex-end' }}>
+                                  <span style={{ fontSize: '0.72rem', color: isDark ? 'var(--color-text-muted, #94a3b8)' : '#94a3b8', textDecoration: 'line-through', fontWeight: 600 }}>
+                                    $15.00
+                                  </span>
+                                  <span style={{ fontSize: '0.95rem', fontWeight: 900, color: isDark ? '#fb923c' : '#ea580c', background: isDark ? 'rgba(234, 88, 12, 0.2)' : '#fff7ed', padding: '0.15rem 0.5rem', borderRadius: '6px', border: isDark ? '1px solid rgba(234, 88, 12, 0.4)' : '1px solid #fdba74' }}>
+                                    From ${(15 * (1 - vecPromoDiscount / 100)).toFixed(2)}
+                                  </span>
+                                </div>
+                              ) : (
+                                <span style={{ fontSize: '0.95rem', fontWeight: 900, color: isDark ? '#fb923c' : '#ea580c', background: isDark ? 'rgba(234, 88, 12, 0.2)' : '#fff7ed', padding: '0.15rem 0.5rem', borderRadius: '6px', border: isDark ? '1px solid rgba(234, 88, 12, 0.4)' : '1px solid #fdba74' }}>
+                                  From $15.00
+                                </span>
+                              )}
+                            </div>
+                          </div>
 
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <h4 style={{ margin: 0, fontSize: '1.08rem', fontWeight: 900, color: selectedService === 'patch' ? (isDark ? '#38bdf8' : '#0c4a6e') : (isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a'), letterSpacing: '-0.01em' }}>
-                        Custom Patches
-                      </h4>
-                      <span style={{ fontSize: '0.85rem', fontWeight: 900, color: isDark ? '#38bdf8' : '#0284c7', background: isDark ? 'rgba(2, 132, 199, 0.2)' : '#f0f9ff', padding: '0.15rem 0.5rem', borderRadius: '6px', border: isDark ? '1px solid rgba(2, 132, 199, 0.4)' : '1px solid #7dd3fc' }}>
-                        Starts $3.50 / pc
-                      </span>
-                    </div>
+                          <p style={{ margin: '0.25rem 0 0', fontSize: '0.78rem', color: isDark ? 'var(--color-text-secondary, #cbd5e1)' : '#475569', lineHeight: 1.35, fontWeight: 500 }}>
+                            Logo Redraw, Screen Print Color Separation & Raster-to-Vector (.AI, .EPS, .SVG, .PDF)
+                          </p>
 
-                    <p style={{ margin: '0.25rem 0 0', fontSize: '0.78rem', color: isDark ? 'var(--color-text-secondary, #cbd5e1)' : '#475569', lineHeight: 1.35, fontWeight: 500 }}>
-                      Embroidered, 3D Molded PVC Rubber, Woven & Leather Patches with physical shipment
-                    </p>
+                          <div style={{ display: 'flex', gap: '0.4rem', marginTop: '0.45rem', alignItems: 'center' }}>
+                            <span style={{ fontSize: '0.68rem', fontWeight: 900, color: isDark ? '#fb923c' : '#c2410c', background: isDark ? 'rgba(234, 88, 12, 0.2)' : '#fff7ed', padding: '0.12rem 0.45rem', borderRadius: '4px', border: isDark ? '1px solid rgba(234, 88, 12, 0.4)' : '1px solid #fdba74' }}>
+                              ⚡ 6–12H Delivery
+                            </span>
+                            <span style={{ fontSize: '0.68rem', color: isDark ? '#fed7aa' : '#9a3412', fontWeight: 700 }}>
+                              Pantone PMS Match
+                            </span>
+                            <span style={{ fontSize: '0.78rem', color: isDark ? '#fb923c' : '#ea580c', fontWeight: 900, marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '0.15rem' }}>
+                              {selectedService === 'vector' ? '✓ Selected' : 'Select'} <ArrowRight size={14} />
+                            </span>
+                          </div>
+                        </div>
+                      </div>
 
-                    <div style={{ display: 'flex', gap: '0.4rem', marginTop: '0.45rem', alignItems: 'center' }}>
-                      <span style={{ fontSize: '0.68rem', fontWeight: 900, color: isDark ? '#38bdf8' : '#0369a1', background: isDark ? 'rgba(2, 132, 199, 0.2)' : '#f0f9ff', padding: '0.12rem 0.45rem', borderRadius: '4px', border: isDark ? '1px solid rgba(2, 132, 199, 0.4)' : '1px solid #7dd3fc' }}>
-                        📦 3–7 Days Delivery
-                      </span>
-                      <span style={{ fontSize: '0.68rem', color: isDark ? '#bae6fd' : '#075985', fontWeight: 700 }}>
-                        50 Pcs Min • Starts $3.50 / pc
-                      </span>
-                      <span style={{ fontSize: '0.78rem', color: isDark ? '#38bdf8' : '#0284c7', fontWeight: 900, marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '0.15rem' }}>
-                        {selectedService === 'patch' ? '✓ Selected' : 'Select'} <ArrowRight size={14} />
-                      </span>
-                    </div>
-                  </div>
-                </div>
+                      {/* 3. Custom Physical Patches */}
+                      <div
+                        onClick={() => {
+                          handleSelectService('patch');
+                          setStep(2);
+                        }}
+                        style={{
+                          border: selectedService === 'patch' ? '2.5px solid #0284c7' : (isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid #cbd5e1'),
+                          background: selectedService === 'patch' ? (isDark ? 'rgba(2, 132, 199, 0.15)' : '#f0f9ff') : (isDark ? 'var(--color-subtle, #1e293b)' : '#ffffff'),
+                          borderRadius: '18px',
+                          padding: '1.15rem',
+                          cursor: 'pointer',
+                          boxShadow: selectedService === 'patch' ? '0 4px 20px rgba(2, 132, 199, 0.18)' : '0 2px 8px rgba(0, 0, 0, 0.03)',
+                          display: 'flex',
+                          gap: '0.95rem',
+                          alignItems: 'center',
+                          transition: 'all 0.15s ease',
+                          position: 'relative'
+                        }}
+                      >
+                        {patchPromoDiscount > 0 && (
+                          <div style={{
+                            position: 'absolute',
+                            top: '10px',
+                            right: '10px',
+                            background: '#0284c7',
+                            color: '#ffffff',
+                            fontSize: '0.66rem',
+                            fontWeight: 900,
+                            padding: '0.15rem 0.45rem',
+                            borderRadius: '999px',
+                            boxShadow: '0 2px 6px rgba(2, 132, 199, 0.35)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.2rem',
+                            letterSpacing: '0.02em'
+                          }}>
+                            🏷️ -{patchPromoDiscount}% OFF
+                          </div>
+                        )}
 
+                        <div style={{
+                          width: '56px',
+                          height: '56px',
+                          borderRadius: '16px',
+                          background: 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)',
+                          color: '#ffffff',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          flexShrink: 0,
+                          boxShadow: '0 4px 14px rgba(2, 132, 199, 0.35)'
+                        }}>
+                          <Package size={30} strokeWidth={2.2} />
+                        </div>
+
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <h4 style={{ margin: 0, fontSize: '1.08rem', fontWeight: 900, color: selectedService === 'patch' ? (isDark ? '#38bdf8' : '#0c4a6e') : (isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a'), letterSpacing: '-0.01em' }}>
+                              Custom Patches
+                            </h4>
+                            <div style={{ textAlign: 'right' }}>
+                              {patchPromoDiscount > 0 ? (
+                                <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.25rem', justifyContent: 'flex-end' }}>
+                                  <span style={{ fontSize: '0.72rem', color: isDark ? 'var(--color-text-muted, #94a3b8)' : '#94a3b8', textDecoration: 'line-through', fontWeight: 600 }}>
+                                    $3.50
+                                  </span>
+                                  <span style={{ fontSize: '0.85rem', fontWeight: 900, color: isDark ? '#38bdf8' : '#0284c7', background: isDark ? 'rgba(2, 132, 199, 0.2)' : '#f0f9ff', padding: '0.15rem 0.5rem', borderRadius: '6px', border: isDark ? '1px solid rgba(2, 132, 199, 0.4)' : '1px solid #7dd3fc' }}>
+                                    Starts ${(3.50 * (1 - patchPromoDiscount / 100)).toFixed(2)} / pc
+                                  </span>
+                                </div>
+                              ) : (
+                                <span style={{ fontSize: '0.85rem', fontWeight: 900, color: isDark ? '#38bdf8' : '#0284c7', background: isDark ? 'rgba(2, 132, 199, 0.2)' : '#f0f9ff', padding: '0.15rem 0.5rem', borderRadius: '6px', border: isDark ? '1px solid rgba(2, 132, 199, 0.4)' : '1px solid #7dd3fc' }}>
+                                  Starts $3.50 / pc
+                                </span>
+                              )}
+                            </div>
+                          </div>
+
+                          <p style={{ margin: '0.25rem 0 0', fontSize: '0.78rem', color: isDark ? 'var(--color-text-secondary, #cbd5e1)' : '#475569', lineHeight: 1.35, fontWeight: 500 }}>
+                            Embroidered, 3D Molded PVC Rubber, Woven & Leather Patches with physical shipment
+                          </p>
+
+                          <div style={{ display: 'flex', gap: '0.4rem', marginTop: '0.45rem', alignItems: 'center' }}>
+                            <span style={{ fontSize: '0.68rem', fontWeight: 900, color: isDark ? '#38bdf8' : '#0369a1', background: isDark ? 'rgba(2, 132, 199, 0.2)' : '#f0f9ff', padding: '0.12rem 0.45rem', borderRadius: '4px', border: isDark ? '1px solid rgba(2, 132, 199, 0.4)' : '1px solid #7dd3fc' }}>
+                              📦 3–7 Days Delivery
+                            </span>
+                            <span style={{ fontSize: '0.68rem', color: isDark ? '#bae6fd' : '#075985', fontWeight: 700 }}>
+                              50 Pcs Min • Starts $3.50 / pc
+                            </span>
+                            <span style={{ fontSize: '0.78rem', color: isDark ? '#38bdf8' : '#0284c7', fontWeight: 900, marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '0.15rem' }}>
+                              {selectedService === 'patch' ? '✓ Selected' : 'Select'} <ArrowRight size={14} />
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </>
+                  );
+                })()}
               </div>
             </div>
           )}
@@ -1237,26 +1347,44 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
 
                 {/* Real-time Dynamic Price Breakdown Banner */}
                 <div style={{
-                  background: isDark ? 'var(--color-surface, #111827)' : '#ffffff',
+                  background: (volumeDiscountAmount + promoDiscountAmount) > 0 
+                    ? (isDark ? 'rgba(5, 150, 105, 0.12)' : '#f0fdf4')
+                    : (isDark ? 'var(--color-surface, #111827)' : '#ffffff'),
                   borderRadius: '10px',
-                  border: isDark ? '1px solid var(--color-border, #334155)' : '1px solid #e2e8f0',
-                  padding: '0.55rem 0.75rem',
+                  border: (volumeDiscountAmount + promoDiscountAmount) > 0
+                    ? (isDark ? '1.5px solid rgba(5, 150, 105, 0.45)' : '1.5px solid #a7f3d0')
+                    : (isDark ? '1px solid var(--color-border, #334155)' : '1px solid #e2e8f0'),
+                  padding: '0.6rem 0.85rem',
                   display: 'flex',
                   justifyContent: 'space-between',
                   alignItems: 'center',
-                  fontSize: '0.78rem'
+                  fontSize: '0.78rem',
+                  flexWrap: 'wrap',
+                  gap: '0.4rem'
                 }}>
-                  <div>
+                  <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '0.35rem' }}>
                     <span style={{ color: isDark ? 'var(--color-text-muted, #94a3b8)' : '#64748b' }}>Rate: </span>
                     <strong style={{ color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a' }}>${unitPrice.toFixed(2)}</strong> × <strong style={{ color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a' }}>{quantity} {selectedService === 'patch' ? 'pcs' : 'qty'}</strong>
                     {volumeDiscountPercent > 0 && (
-                      <span style={{ marginLeft: '0.4rem', color: isDark ? '#34d399' : '#059669', fontWeight: 900, background: isDark ? 'rgba(5, 150, 105, 0.2)' : '#ecfdf5', padding: '0.05rem 0.35rem', borderRadius: '4px' }}>
-                        -{volumeDiscountPercent}% Vol Discount
+                      <span style={{ color: isDark ? '#34d399' : '#059669', fontWeight: 900, background: isDark ? 'rgba(5, 150, 105, 0.2)' : '#ecfdf5', padding: '0.08rem 0.35rem', borderRadius: '4px', border: isDark ? '1px solid rgba(5, 150, 105, 0.35)' : '1px solid #86efac', fontSize: '0.72rem' }}>
+                        -{volumeDiscountPercent}% Vol (-${volumeDiscountAmount.toFixed(2)})
+                      </span>
+                    )}
+                    {promoDiscountPercent > 0 && (
+                      <span style={{ color: isDark ? '#34d399' : '#047857', fontWeight: 900, background: isDark ? 'rgba(5, 150, 105, 0.22)' : '#dcfce7', padding: '0.08rem 0.35rem', borderRadius: '4px', border: isDark ? '1px solid rgba(5, 150, 105, 0.45)' : '1px solid #86efac', fontSize: '0.72rem', display: 'inline-flex', alignItems: 'center', gap: '0.2rem' }}>
+                        🏷️ -{promoDiscountPercent}% Promo (-${promoDiscountAmount.toFixed(2)})
                       </span>
                     )}
                   </div>
-                  <div style={{ fontSize: '1rem', fontWeight: 900, color: isDark ? '#34d399' : '#047857' }}>
-                    Total: ${totalPrice.toFixed(2)}
+                  <div style={{ textAlign: 'right', display: 'flex', alignItems: 'baseline', gap: '0.35rem' }}>
+                    {(volumeDiscountAmount + promoDiscountAmount) > 0 && (
+                      <span style={{ fontSize: '0.78rem', color: isDark ? 'var(--color-text-muted, #94a3b8)' : '#94a3b8', textDecoration: 'line-through', fontWeight: 600 }}>
+                        ${baseSubtotal.toFixed(2)}
+                      </span>
+                    )}
+                    <span style={{ fontSize: '1.05rem', fontWeight: 900, color: isDark ? '#34d399' : '#047857' }}>
+                      Subtotal: ${totalPrice.toFixed(2)}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -1269,6 +1397,12 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
 
                 {currentPackages.map((pkg, idx) => {
                   const isSelected = selectedPackage?.id === pkg.id || (!selectedPackage && idx === 0);
+                  const pkgOriginalPrice = Number(pkg.price);
+                  const hasPromoDiscount = promoDiscountPercent > 0;
+                  const pkgDiscountedPrice = hasPromoDiscount 
+                    ? parseFloat((pkgOriginalPrice * (1 - promoDiscountPercent / 100)).toFixed(2)) 
+                    : pkgOriginalPrice;
+
                   return (
                     <div
                       key={pkg.id || idx}
@@ -1300,14 +1434,31 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
                         </div>
 
                         <div style={{ textAlign: 'right' }}>
-                          <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.3rem', justifyContent: 'flex-end' }}>
-                            {pkg.original_price && (
-                              <span style={{ fontSize: '0.78rem', color: isDark ? 'var(--color-text-muted, #94a3b8)' : '#94a3b8', textDecoration: 'line-through' }}>
-                                ${Number(pkg.original_price).toFixed(2)}
+                          {hasPromoDiscount && (
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '0.25rem', marginBottom: '0.1rem' }}>
+                              <span style={{
+                                fontSize: '0.62rem',
+                                fontWeight: 900,
+                                color: '#ffffff',
+                                background: '#059669',
+                                padding: '0.06rem 0.3rem',
+                                borderRadius: '4px'
+                              }}>
+                                -{promoDiscountPercent}% OFF
                               </span>
-                            )}
+                              <span style={{ 
+                                fontSize: '0.75rem', 
+                                color: isDark ? 'var(--color-text-muted, #94a3b8)' : '#94a3b8', 
+                                textDecoration: 'line-through',
+                                fontWeight: 600
+                              }}>
+                                ${pkgOriginalPrice.toFixed(pkgOriginalPrice % 1 === 0 ? 0 : 2)}
+                              </span>
+                            </div>
+                          )}
+                          <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.3rem', justifyContent: 'flex-end' }}>
                             <span style={{ fontSize: '1.2rem', fontWeight: 900, color: isDark ? '#34d399' : '#047857' }}>
-                              ${Number(pkg.price).toFixed(pkg.price % 1 === 0 ? 0 : 2)}
+                              ${pkgDiscountedPrice.toFixed(pkgDiscountedPrice % 1 === 0 ? 0 : 2)}
                             </span>
                           </div>
                           <span style={{ fontSize: '0.65rem', fontWeight: 700, color: isDark ? 'var(--color-text-muted, #94a3b8)' : '#64748b', display: 'block' }}>
@@ -1953,10 +2104,24 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
                 </div>
 
                 <div style={{ borderTop: isDark ? '1px dashed var(--color-border, #334155)' : '1px dashed #cbd5e1', marginTop: '0.35rem', paddingTop: '0.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: '0.95rem', fontWeight: 900, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a' }}>Total Amount</span>
-                  <span style={{ fontSize: '1.4rem', fontWeight: 900, color: isDark ? '#34d399' : '#047857' }}>
-                    ${totalPrice.toFixed(2)}
-                  </span>
+                  <div>
+                    <span style={{ fontSize: '0.95rem', fontWeight: 900, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a' }}>Total Amount</span>
+                    {(volumeDiscountAmount + promoDiscountAmount) > 0 && (
+                      <div style={{ fontSize: '0.72rem', color: isDark ? '#34d399' : '#059669', fontWeight: 800, marginTop: '0.1rem' }}>
+                        Total Savings: ${(volumeDiscountAmount + promoDiscountAmount).toFixed(2)}
+                      </div>
+                    )}
+                  </div>
+                  <div style={{ textAlign: 'right', display: 'flex', alignItems: 'baseline', gap: '0.35rem' }}>
+                    {(volumeDiscountAmount + promoDiscountAmount) > 0 && (
+                      <span style={{ fontSize: '0.85rem', color: isDark ? 'var(--color-text-muted, #94a3b8)' : '#94a3b8', textDecoration: 'line-through', fontWeight: 600 }}>
+                        ${(baseSubtotal + rushFee).toFixed(2)}
+                      </span>
+                    )}
+                    <span style={{ fontSize: '1.35rem', fontWeight: 900, color: isDark ? '#34d399' : '#047857' }}>
+                      ${totalPrice.toFixed(2)}
+                    </span>
+                  </div>
                 </div>
               </div>
 
@@ -2210,19 +2375,54 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
                   background: isDark ? 'var(--color-subtle, #1e293b)' : '#f8fafc',
                   border: isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid #cbd5e1',
                   borderRadius: '10px',
-                  padding: '0.65rem 1rem',
+                  padding: '0.65rem 0.85rem',
                   fontSize: '0.82rem',
                   fontWeight: 800,
                   color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a',
                   display: 'flex',
                   alignItems: 'center',
                   gap: '0.35rem',
-                  cursor: 'pointer'
+                  cursor: 'pointer',
+                  flexShrink: 0
                 }}
               >
                 <ArrowLeft size={16} /> Back
               </button>
             ) : <div />}
+
+            <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', justifyContent: 'center', marginLeft: 'auto', marginRight: '0.35rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '0.3rem' }}>
+                <span style={{ fontSize: '0.65rem', color: isDark ? 'var(--color-text-muted, #94a3b8)' : '#64748b', fontWeight: 700 }}>Total</span>
+                {(volumeDiscountAmount + promoDiscountAmount) > 0 && (
+                  <span style={{ 
+                    fontSize: '0.62rem', 
+                    fontWeight: 900, 
+                    color: isDark ? '#34d399' : '#059669',
+                    background: isDark ? 'rgba(5, 150, 105, 0.2)' : '#ecfdf5',
+                    padding: '0.05rem 0.32rem',
+                    borderRadius: '4px',
+                    border: isDark ? '1px solid rgba(5, 150, 105, 0.35)' : '1px solid #a7f3d0'
+                  }}>
+                    Save ${(volumeDiscountAmount + promoDiscountAmount).toFixed(2)}
+                  </span>
+                )}
+              </div>
+              <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'flex-end', gap: '0.3rem' }}>
+                {(volumeDiscountAmount + promoDiscountAmount) > 0 && (
+                  <span style={{ 
+                    fontSize: '0.78rem', 
+                    color: isDark ? 'var(--color-text-muted, #94a3b8)' : '#94a3b8', 
+                    textDecoration: 'line-through',
+                    fontWeight: 600
+                  }}>
+                    ${(baseSubtotal + rushFee).toFixed(2)}
+                  </span>
+                )}
+                <span style={{ fontSize: '1.15rem', fontWeight: 900, color: isDark ? '#34d399' : '#047857' }}>
+                  ${totalPrice.toFixed(2)}
+                </span>
+              </div>
+            </div>
 
             <button
               type="button"
@@ -2257,7 +2457,7 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
                 color: '#ffffff',
                 border: 'none',
                 borderRadius: '10px',
-                padding: '0.65rem 1.25rem',
+                padding: '0.65rem 1.15rem',
                 fontSize: '0.85rem',
                 fontWeight: 900,
                 display: 'flex',
@@ -2265,7 +2465,7 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
                 gap: '0.45rem',
                 cursor: isSubmitting ? 'not-allowed' : 'pointer',
                 boxShadow: '0 4px 14px rgba(5, 150, 105, 0.3)',
-                marginLeft: 'auto'
+                flexShrink: 0
               }}
             >
               {isSubmitting ? (

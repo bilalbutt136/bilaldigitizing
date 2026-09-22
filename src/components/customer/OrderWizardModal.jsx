@@ -373,16 +373,32 @@ export const OrderWizardModal = () => {
     return coreList;
   };
 
-  const getServiceStartingPrice = (opt) => {
+  const getServiceStartingPrice = (opt, discountPct = 0) => {
     const pkgs = getPackagesForCategory(opt.id);
     if (pkgs && pkgs.length > 0) {
       const validPrices = pkgs.map(p => Number(p.price)).filter(p => !isNaN(p) && p > 0);
       if (validPrices.length > 0) {
         const minP = Math.min(...validPrices);
-        return opt.id === 'patch' ? `From $${minP.toFixed(2)} / pc` : `From $${minP.toFixed(2)}`;
+        if (discountPct > 0) {
+          const discMinP = parseFloat((minP * (1 - discountPct / 100)).toFixed(2));
+          return {
+            originalText: opt.id === 'patch' ? `$${minP.toFixed(2)}` : `$${minP.toFixed(2)}`,
+            discountedText: opt.id === 'patch' ? `From $${discMinP.toFixed(2)} / pc` : `From $${discMinP.toFixed(2)}`,
+            hasDiscount: true
+          };
+        }
+        return {
+          originalText: null,
+          discountedText: opt.id === 'patch' ? `From $${minP.toFixed(2)} / pc` : `From $${minP.toFixed(2)}`,
+          hasDiscount: false
+        };
       }
     }
-    return opt.priceText;
+    return {
+      originalText: null,
+      discountedText: opt.priceText,
+      hasDiscount: false
+    };
   };
 
   // Reset and populate on modal open
@@ -469,8 +485,8 @@ export const OrderWizardModal = () => {
   const baseSubtotal = pricingResult.baseSubtotal;
   const volumeDiscountPercent = pricingResult.volumeDiscountPercent;
   const volumeDiscountAmount = pricingResult.volumeDiscountAmount;
-  const promoDiscountPercent = appliedPromo ? pricingResult.promoDiscountPercent : 0;
-  const promoDiscountAmount = appliedPromo ? pricingResult.promoDiscountAmount : 0;
+  const promoDiscountPercent = pricingResult.promoDiscountPercent;
+  const promoDiscountAmount = pricingResult.promoDiscountAmount;
   const rushFee = pricingResult.rushFee;
   const totalPrice = Math.max(0, parseFloat((baseSubtotal - volumeDiscountAmount - promoDiscountAmount + rushFee).toFixed(2)));
   const serviceDisplayName = pricingResult.serviceName;
@@ -1049,6 +1065,8 @@ export const OrderWizardModal = () => {
                   {SERVICE_OPTIONS.map(opt => {
                     const isSelected = selectedService === opt.id;
                     const IconC = opt.icon;
+                    const servicePromoPct = getServiceDiscountPercent(opt.id, appliedPromo?.promoObj || activePromotion, siteSettings);
+                    const startPriceInfo = getServiceStartingPrice(opt, servicePromoPct);
 
                     return (
                       <div
@@ -1074,6 +1092,27 @@ export const OrderWizardModal = () => {
                           position: 'relative'
                         }}
                       >
+                        {servicePromoPct > 0 && (
+                          <div style={{
+                            position: 'absolute',
+                            top: '10px',
+                            right: '10px',
+                            background: '#059669',
+                            color: '#ffffff',
+                            fontSize: '0.66rem',
+                            fontWeight: 900,
+                            padding: '0.18rem 0.5rem',
+                            borderRadius: '999px',
+                            boxShadow: '0 2px 6px rgba(5, 150, 105, 0.35)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.2rem',
+                            letterSpacing: '0.02em'
+                          }}>
+                            🏷️ -{servicePromoPct}% OFF
+                          </div>
+                        )}
+
                         <div style={{
                           width: '54px',
                           height: '54px',
@@ -1093,18 +1132,38 @@ export const OrderWizardModal = () => {
                           {opt.title}
                         </h4>
 
-                        <div style={{ display: 'flex', gap: '0.35rem', marginBottom: '0.65rem' }}>
-                          <span style={{ 
-                            fontSize: '0.72rem', 
-                            fontWeight: 900, 
-                            color: opt.color, 
-                            background: isDark ? 'rgba(255, 255, 255, 0.08)' : opt.bgColor, 
-                            border: `1px solid ${opt.borderColor}`, 
-                            padding: '0.12rem 0.5rem', 
-                            borderRadius: '5px' 
-                          }}>
-                            {getServiceStartingPrice(opt)}
-                          </span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', marginBottom: '0.65rem', flexWrap: 'wrap', justifyContent: 'center' }}>
+                          {startPriceInfo.hasDiscount ? (
+                            <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.3rem' }}>
+                              <span style={{ fontSize: '0.72rem', color: 'var(--color-text-muted, #94a3b8)', textDecoration: 'line-through', fontWeight: 600 }}>
+                                {startPriceInfo.originalText}
+                              </span>
+                              <span style={{ 
+                                fontSize: '0.74rem', 
+                                fontWeight: 900, 
+                                color: opt.color, 
+                                background: isDark ? 'rgba(255, 255, 255, 0.08)' : opt.bgColor, 
+                                border: `1px solid ${opt.borderColor}`, 
+                                padding: '0.12rem 0.5rem', 
+                                borderRadius: '5px' 
+                              }}>
+                                {startPriceInfo.discountedText}
+                              </span>
+                            </div>
+                          ) : (
+                            <span style={{ 
+                              fontSize: '0.72rem', 
+                              fontWeight: 900, 
+                              color: opt.color, 
+                              background: isDark ? 'rgba(255, 255, 255, 0.08)' : opt.bgColor, 
+                              border: `1px solid ${opt.borderColor}`, 
+                              padding: '0.12rem 0.5rem', 
+                              borderRadius: '5px' 
+                            }}>
+                              {startPriceInfo.discountedText}
+                            </span>
+                          )}
+
                           <span style={{ 
                             fontSize: '0.72rem', 
                             fontWeight: 800, 
@@ -1346,33 +1405,68 @@ export const OrderWizardModal = () => {
 
                   {/* Live Calculation Banner */}
                   <div style={{
-                    background: 'var(--color-surface, #ffffff)',
-                    borderRadius: '8px',
-                    border: '1px solid var(--color-border, #e2e8f0)',
-                    padding: '0.55rem 0.85rem',
+                    background: (volumeDiscountAmount + promoDiscountAmount) > 0 
+                      ? (isDark ? 'rgba(5, 150, 105, 0.12)' : '#f0fdf4')
+                      : 'var(--color-surface, #ffffff)',
+                    borderRadius: '10px',
+                    border: (volumeDiscountAmount + promoDiscountAmount) > 0
+                      ? (isDark ? '1.5px solid rgba(5, 150, 105, 0.45)' : '1.5px solid #a7f3d0')
+                      : '1px solid var(--color-border, #e2e8f0)',
+                    padding: '0.65rem 0.95rem',
                     display: 'flex',
                     justifyContent: 'space-between',
                     alignItems: 'center',
-                    fontSize: '0.82rem'
+                    fontSize: '0.82rem',
+                    flexWrap: 'wrap',
+                    gap: '0.5rem'
                   }}>
-                    <div>
+                    <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '0.45rem' }}>
                       <span style={{ color: 'var(--color-text-muted, #64748b)' }}>Rate: </span>
                       <strong style={{ color: 'var(--color-text-primary, #0f172a)' }}>${unitPrice.toFixed(2)}</strong> × <strong style={{ color: 'var(--color-text-primary, #0f172a)' }}>{quantity} {selectedService === 'patch' ? 'pcs' : 'designs'}</strong>
                       {volumeDiscountPercent > 0 && (
                         <span style={{ 
-                          marginLeft: '0.45rem', 
                           color: isDark ? '#34d399' : '#059669', 
                           fontWeight: 900, 
-                          background: isDark ? 'rgba(5, 150, 105, 0.2)' : '#ecfdf5', 
-                          padding: '0.1rem 0.4rem', 
-                          borderRadius: '4px' 
+                          background: isDark ? 'rgba(5, 150, 105, 0.25)' : '#ecfdf5', 
+                          padding: '0.12rem 0.45rem', 
+                          borderRadius: '5px',
+                          border: isDark ? '1px solid rgba(5, 150, 105, 0.4)' : '1px solid #86efac',
+                          fontSize: '0.74rem'
                         }}>
-                          -{volumeDiscountPercent}% Volume Savings
+                          -{volumeDiscountPercent}% Volume (-${volumeDiscountAmount.toFixed(2)})
+                        </span>
+                      )}
+                      {promoDiscountPercent > 0 && (
+                        <span style={{ 
+                          color: isDark ? '#34d399' : '#047857', 
+                          fontWeight: 900, 
+                          background: isDark ? 'rgba(5, 150, 105, 0.25)' : '#dcfce7', 
+                          padding: '0.12rem 0.45rem', 
+                          borderRadius: '5px',
+                          border: isDark ? '1px solid rgba(5, 150, 105, 0.45)' : '1px solid #86efac',
+                          fontSize: '0.74rem',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '0.2rem'
+                        }}>
+                          🏷️ -{promoDiscountPercent}% Promo (-${promoDiscountAmount.toFixed(2)})
                         </span>
                       )}
                     </div>
-                    <div style={{ fontSize: '1.08rem', fontWeight: 900, color: isDark ? '#34d399' : '#047857' }}>
-                      Subtotal: ${totalPrice.toFixed(2)}
+                    <div style={{ textAlign: 'right', display: 'flex', alignItems: 'baseline', gap: '0.45rem' }}>
+                      {(volumeDiscountAmount + promoDiscountAmount) > 0 && (
+                        <span style={{ 
+                          fontSize: '0.85rem', 
+                          color: 'var(--color-text-muted, #94a3b8)', 
+                          textDecoration: 'line-through',
+                          fontWeight: 600
+                        }}>
+                          ${baseSubtotal.toFixed(2)}
+                        </span>
+                      )}
+                      <span style={{ fontSize: '1.12rem', fontWeight: 900, color: isDark ? '#34d399' : '#047857' }}>
+                        Subtotal: ${totalPrice.toFixed(2)}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -1381,6 +1475,11 @@ export const OrderWizardModal = () => {
                 <div className="order-wizard-packages-grid">
                   {currentPackages.map((pkg, idx) => {
                     const isSelected = selectedPackage?.id === pkg.id || (!selectedPackage && idx === 0);
+                    const pkgOriginalPrice = Number(pkg.price);
+                    const hasPromoDiscount = promoDiscountPercent > 0;
+                    const pkgDiscountedPrice = hasPromoDiscount 
+                      ? parseFloat((pkgOriginalPrice * (1 - promoDiscountPercent / 100)).toFixed(2)) 
+                      : pkgOriginalPrice;
 
                     return (
                       <div
@@ -1431,8 +1530,31 @@ export const OrderWizardModal = () => {
                           </div>
 
                           <div style={{ textAlign: 'right' }}>
+                            {hasPromoDiscount && (
+                              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '0.3rem', marginBottom: '0.15rem' }}>
+                                <span style={{
+                                  fontSize: '0.62rem',
+                                  fontWeight: 900,
+                                  color: '#ffffff',
+                                  background: '#059669',
+                                  padding: '0.08rem 0.35rem',
+                                  borderRadius: '4px',
+                                  letterSpacing: '0.02em'
+                                }}>
+                                  -{promoDiscountPercent}% OFF
+                                </span>
+                                <span style={{ 
+                                  fontSize: '0.78rem', 
+                                  color: 'var(--color-text-muted, #94a3b8)', 
+                                  textDecoration: 'line-through',
+                                  fontWeight: 600
+                                }}>
+                                  ${pkgOriginalPrice.toFixed(pkgOriginalPrice % 1 === 0 ? 0 : 2)}
+                                </span>
+                              </div>
+                            )}
                             <span style={{ fontSize: '1.25rem', fontWeight: 900, color: isDark ? '#34d399' : '#047857' }}>
-                              ${Number(pkg.price).toFixed(pkg.price % 1 === 0 ? 0 : 2)}
+                              ${pkgDiscountedPrice.toFixed(pkgDiscountedPrice % 1 === 0 ? 0 : 2)}
                             </span>
                             <span style={{ fontSize: '0.65rem', color: 'var(--color-text-muted, #64748b)', display: 'block', fontWeight: 700 }}>
                               {selectedService === 'patch' ? '/ pc' : 'flat rate'}
@@ -2023,6 +2145,23 @@ export const OrderWizardModal = () => {
                     </div>
 
                     <div style={{ textAlign: 'right' }}>
+                      {(volumeDiscountAmount + promoDiscountAmount) > 0 && (
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '0.35rem', marginBottom: '0.15rem' }}>
+                          <span style={{
+                            fontSize: '0.66rem',
+                            fontWeight: 900,
+                            color: isDark ? '#34d399' : '#059669',
+                            background: isDark ? 'rgba(5, 150, 105, 0.2)' : '#ecfdf5',
+                            padding: '0.1rem 0.4rem',
+                            borderRadius: '4px'
+                          }}>
+                            Save ${(volumeDiscountAmount + promoDiscountAmount).toFixed(2)}
+                          </span>
+                          <span style={{ fontSize: '0.88rem', color: 'var(--color-text-muted, #94a3b8)', textDecoration: 'line-through', fontWeight: 600 }}>
+                            ${(baseSubtotal + rushFee).toFixed(2)}
+                          </span>
+                        </div>
+                      )}
                       <div style={{ fontSize: '1.45rem', fontWeight: 900, color: isDark ? '#34d399' : '#047857' }}>
                         ${totalPrice.toFixed(2)}
                       </div>
@@ -2140,14 +2279,33 @@ export const OrderWizardModal = () => {
                       justifyContent: 'space-between',
                       alignItems: 'center',
                       borderTop: '1px solid var(--color-border, #e2e8f0)',
-                      paddingTop: '0.5rem',
+                      paddingTop: '0.55rem',
                       marginTop: '0.2rem',
                       fontWeight: 900,
                       fontSize: '0.92rem',
                       color: 'var(--color-text-primary, #0f172a)'
                     }}>
-                      <span>Total Due</span>
-                      <span style={{ color: isDark ? '#34d399' : '#047857', fontSize: '1.1rem' }}>${totalPrice.toFixed(2)}</span>
+                      <div>
+                        <span>Total Due</span>
+                        {(volumeDiscountAmount + promoDiscountAmount) > 0 && (
+                          <div style={{ fontSize: '0.72rem', color: isDark ? '#34d399' : '#059669', fontWeight: 800, marginTop: '0.1rem' }}>
+                            Total Savings: ${(volumeDiscountAmount + promoDiscountAmount).toFixed(2)}
+                          </div>
+                        )}
+                      </div>
+                      <div style={{ textAlign: 'right', display: 'flex', alignItems: 'baseline', gap: '0.45rem' }}>
+                        {(volumeDiscountAmount + promoDiscountAmount) > 0 && (
+                          <span style={{ 
+                            fontSize: '0.88rem', 
+                            color: 'var(--color-text-muted, #94a3b8)', 
+                            textDecoration: 'line-through',
+                            fontWeight: 600
+                          }}>
+                            ${(baseSubtotal + rushFee).toFixed(2)}
+                          </span>
+                        )}
+                        <span style={{ color: isDark ? '#34d399' : '#047857', fontSize: '1.2rem' }}>${totalPrice.toFixed(2)}</span>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -2331,10 +2489,37 @@ export const OrderWizardModal = () => {
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
               <div style={{ textAlign: 'right' }}>
-                <span style={{ fontSize: '0.7rem', color: 'var(--color-text-muted, #64748b)', fontWeight: 700, display: 'block' }}>Total</span>
-                <span style={{ fontSize: '1.25rem', fontWeight: 900, color: isDark ? '#34d399' : '#047857' }}>
-                  ${totalPrice.toFixed(2)}
-                </span>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '0.35rem' }}>
+                  <span style={{ fontSize: '0.7rem', color: 'var(--color-text-muted, #64748b)', fontWeight: 700 }}>Total</span>
+                  {(volumeDiscountAmount + promoDiscountAmount) > 0 && (
+                    <span style={{ 
+                      fontSize: '0.65rem', 
+                      fontWeight: 900, 
+                      color: isDark ? '#34d399' : '#059669',
+                      background: isDark ? 'rgba(5, 150, 105, 0.2)' : '#ecfdf5',
+                      padding: '0.08rem 0.38rem',
+                      borderRadius: '4px',
+                      border: isDark ? '1px solid rgba(5, 150, 105, 0.35)' : '1px solid #a7f3d0'
+                    }}>
+                      Save ${(volumeDiscountAmount + promoDiscountAmount).toFixed(2)}
+                    </span>
+                  )}
+                </div>
+                <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'flex-end', gap: '0.4rem' }}>
+                  {(volumeDiscountAmount + promoDiscountAmount) > 0 && (
+                    <span style={{ 
+                      fontSize: '0.88rem', 
+                      color: 'var(--color-text-muted, #94a3b8)', 
+                      textDecoration: 'line-through',
+                      fontWeight: 600
+                    }}>
+                      ${(baseSubtotal + rushFee).toFixed(2)}
+                    </span>
+                  )}
+                  <span style={{ fontSize: '1.25rem', fontWeight: 900, color: isDark ? '#34d399' : '#047857' }}>
+                    ${totalPrice.toFixed(2)}
+                  </span>
+                </div>
               </div>
 
               <button
