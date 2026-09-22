@@ -37,6 +37,22 @@ import {
 
 const COMMON_EMOJIS = ['👋', '✅', '🧵', '✨', '👌', '🙏', '📁', '👕', '🧢', '🔥', '🚀', '💯'];
 
+const formatChatDateHeader = (dateStr) => {
+  if (!dateStr) return '';
+  const d = new Date(dateStr);
+  const today = new Date();
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+
+  if (d.toDateString() === today.toDateString()) {
+    return 'Today';
+  } else if (d.toDateString() === yesterday.toDateString()) {
+    return 'Yesterday';
+  } else {
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: d.getFullYear() !== today.getFullYear() ? 'numeric' : undefined });
+  }
+};
+
 export default function AdminChatInbox({ initialChannel = 'inbox' }) {
   const { authUser, orders = [] } = useAppState();
 
@@ -115,6 +131,7 @@ export default function AdminChatInbox({ initialChannel = 'inbox' }) {
     }
   };
 
+  const messagesContainerRef = useRef(null);
   const messagesEndRef = useRef(null);
   const fileInputRef = useRef(null);
   const textareaRef = useRef(null);
@@ -398,11 +415,38 @@ export default function AdminChatInbox({ initialChannel = 'inbox' }) {
     };
   }, [activeConversationId, activeChannel, activeFilter, searchQuery, fetchChannelUnreadCounts]);
 
-  const scrollToBottom = () => {
+  const scrollToBottom = (behavior = 'smooth') => {
     setTimeout(() => {
-      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }, 80);
+      if (messagesContainerRef.current) {
+        messagesContainerRef.current.scrollTo({
+          top: messagesContainerRef.current.scrollHeight,
+          behavior
+        });
+      } else {
+        messagesEndRef.current?.scrollIntoView({ behavior, block: 'end' });
+      }
+    }, 50);
   };
+
+  // Auto-scroll whenever messages change or load finishes
+  useEffect(() => {
+    if (!isLoadingMessages && messages.length > 0) {
+      scrollToBottom('smooth');
+    }
+  }, [messages.length, isLoadingMessages]);
+
+  // Guaranteed deduplication of messages by unique ID
+  const uniqueMessages = useMemo(() => {
+    const seen = new Set();
+    const result = [];
+    for (const msg of messages) {
+      if (msg && msg.id && !seen.has(msg.id)) {
+        seen.add(msg.id);
+        result.push(msg);
+      }
+    }
+    return result;
+  }, [messages]);
 
   // Active conversation details
   const activeConversation = useMemo(() => {
@@ -601,7 +645,10 @@ export default function AdminChatInbox({ initialChannel = 'inbox' }) {
 
       const data = await res.json();
       if (data?.message) {
-        setMessages(prev => [...prev, data.message]);
+        setMessages(prev => {
+          if (prev.some(m => m.id === data.message.id)) return prev;
+          return [...prev, data.message];
+        });
         scrollToBottom();
 
         // Update thread snippet in left sidebar
@@ -1364,323 +1411,260 @@ export default function AdminChatInbox({ initialChannel = 'inbox' }) {
               </div>
             ) : (
               /* MESSAGES TAB */
-              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, height: '100%', overflow: 'hidden' }}>
+              <div className="flex-1 flex flex-col min-h-0 h-full overflow-hidden bg-slate-50/50 dark:bg-slate-900/30">
                 {/* MESSAGES STREAM (ONLY THIS INNER STREAM SCROLLS) */}
-                <div style={{
-                  flex: 1,
-                  minHeight: 0,
-                  overflowY: 'auto',
-                  padding: '1.25rem 1.5rem',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '0.85rem'
-                }}>
+                <div
+                  ref={messagesContainerRef}
+                  className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-6 space-y-3 scroll-smooth"
+                >
                   {isLoadingMessages ? (
-                    <div style={{ textAlign: 'center', padding: '2rem', color: '#94a3b8' }}>
-                      <Loader2 size={24} className="spin-icon" style={{ margin: '0 auto 0.5rem', color: '#ea580c' }} />
-                      Loading message history...
+                    <div className="flex flex-col items-center justify-center py-16 text-slate-400">
+                      <Loader2 size={24} className="spin-icon text-orange-500 mb-2" />
+                      <span className="text-sm font-medium">Loading message history...</span>
                     </div>
-                  ) : messages.length === 0 ? (
-                    <div style={{ textAlign: 'center', padding: '3rem 1rem', color: '#94a3b8' }}>
-                      <p style={{ fontSize: '0.9rem', fontWeight: 600, color: '#475569', margin: '0 0 0.35rem 0' }}>
+                  ) : uniqueMessages.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-16 px-4 text-center text-slate-400">
+                      <p className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">
                         Start of conversation with {activeConversation.client_name || activeConversation.client_email}
                       </p>
-                      <span style={{ fontSize: '0.8rem' }}>Send a message, design files, or create a custom offer below.</span>
+                      <span className="text-xs text-slate-500">Send a message, design files, or create a custom offer below.</span>
                     </div>
                   ) : (
-                    messages.map((msg) => {
+                    uniqueMessages.map((msg, index) => {
                       const isAdminMsg = msg.sender === 'admin';
                       const isOffer = msg.type === 'custom_offer' || Boolean(msg.offer_id);
 
+                      const prevMsg = uniqueMessages[index - 1];
+                      const nextMsg = uniqueMessages[index + 1];
+
+                      // Date header logic
+                      const currDate = new Date(msg.created_at).toDateString();
+                      const prevDate = prevMsg ? new Date(prevMsg.created_at).toDateString() : null;
+                      const showDateHeader = currDate !== prevDate;
+
+                      // Grouping logic: same sender and sent within 5 minutes
+                      const isFirstInGroup = !prevMsg || prevMsg.sender !== msg.sender || showDateHeader ||
+                        (new Date(msg.created_at) - new Date(prevMsg.created_at) > 5 * 60 * 1000);
+                      const isLastInGroup = !nextMsg || nextMsg.sender !== msg.sender ||
+                        (new Date(nextMsg.created_at).toDateString() !== currDate) ||
+                        (new Date(nextMsg.created_at) - new Date(msg.created_at) > 5 * 60 * 1000);
+
+                      const timeString = new Date(msg.created_at).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+
                       return (
-                        <div
-                          key={msg.id}
-                          style={{
-                            display: 'flex',
-                            flexDirection: 'column',
-                            alignItems: isAdminMsg ? 'flex-end' : 'flex-start',
-                            maxWidth: '100%'
-                          }}
-                        >
-                          {/* SENDER LABEL & TIME */}
-                          <div style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '0.4rem',
-                            marginBottom: '0.25rem',
-                            fontSize: '0.72rem',
-                            color: '#94a3b8'
-                          }}>
-                            <span style={{ fontWeight: 700, color: isAdminMsg ? '#0f172a' : '#475569' }}>
-                              {isAdminMsg ? 'Me' : (msg.sender_name || 'Client')}
-                            </span>
-                            <span>•</span>
-                            <span>{new Date(msg.created_at).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}</span>
-                          </div>
-
-                          {/* CUSTOM OFFER CARD RENDERING */}
-                          {isOffer ? (
-                            <OfferCardMessage
-                              offer={msg.offer_data || { id: msg.offer_id, title: 'Custom Digitizing Offer' }}
-                              isCustomerView={false}
-                              showToast={showToast}
-                            />
-                          ) : (
-                            /* STANDARD CHAT BUBBLE */
-                            <div style={{
-                              maxWidth: '75%',
-                              background: isAdminMsg ? '#0f172a' : '#f1f5f9',
-                              color: isAdminMsg ? '#ffffff' : '#0f172a',
-                              padding: '0.75rem 1rem',
-                              borderRadius: isAdminMsg ? '16px 16px 4px 16px' : '16px 16px 16px 4px',
-                              boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
-                              wordBreak: 'break-word',
-                              fontSize: '0.88rem',
-                              lineHeight: 1.5
-                            }}>
-                              {msg.text && (
-                                <div style={{ whiteSpace: 'pre-line' }}>
-                                  {msg.text}
-                                </div>
-                              )}
-
-                              {/* ATTACHMENTS INSIDE BUBBLE */}
-                              {Array.isArray(msg.attachments) && msg.attachments.length > 0 && (
-                                <div style={{ marginTop: msg.text ? '0.65rem' : 0, display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
-                                   {msg.attachments.map((att, aIdx) => {
-                                     const isImg = isImageAttachment(att.name, att.url);
-                                     const isDownloading = downloadingFileUrl === att.url;
-
-                                     if (isImg) {
-                                       return (
-                                         <div
-                                           key={aIdx}
-                                           style={{
-                                             borderRadius: '12px',
-                                             overflow: 'hidden',
-                                             border: isAdminMsg ? '1px solid rgba(255,255,255,0.2)' : '1px solid #e2e8f0',
-                                             background: isAdminMsg ? 'rgba(0,0,0,0.25)' : '#ffffff',
-                                             maxWidth: '340px',
-                                             boxShadow: '0 2px 8px rgba(0,0,0,0.06)'
-                                           }}
-                                         >
-                                           <a
-                                             href={att.url}
-                                             target="_blank"
-                                             rel="noopener noreferrer"
-                                             title="Click to open full photo directly"
-                                             style={{ display: 'block', background: '#00000008', textDecoration: 'none' }}
-                                           >
-                                             <img
-                                               src={att.url}
-                                               alt={att.name || 'Photo'}
-                                               loading="lazy"
-                                               style={{
-                                                 display: 'block',
-                                                 width: '100%',
-                                                 maxHeight: '260px',
-                                                 objectFit: 'contain',
-                                                 cursor: 'pointer',
-                                                 borderRadius: '8px 8px 0 0'
-                                               }}
-                                             />
-                                           </a>
-                                           <div style={{
-                                             display: 'flex',
-                                             alignItems: 'center',
-                                             justifyContent: 'space-between',
-                                             padding: '0.4rem 0.65rem',
-                                             fontSize: '0.72rem',
-                                             gap: '0.5rem',
-                                             borderTop: isAdminMsg ? '1px solid rgba(255,255,255,0.1)' : '1px solid #f1f5f9'
-                                           }}>
-                                             <div style={{ minWidth: 0, flex: 1 }}>
-                                               <div style={{
-                                                 fontWeight: 600,
-                                                 overflow: 'hidden',
-                                                 textOverflow: 'ellipsis',
-                                                 whiteSpace: 'nowrap',
-                                                 color: isAdminMsg ? '#e2e8f0' : '#475569'
-                                               }}>
-                                                 {att.name}
-                                               </div>
-                                               {att.size && (
-                                                 <div style={{ fontSize: '0.62rem', opacity: 0.75, color: isAdminMsg ? '#94a3b8' : '#64748b' }}>
-                                                   {att.size}
-                                                 </div>
-                                               )}
-                                             </div>
-
-                                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', flexShrink: 0 }}>
-                                               <a
-                                                 href={att.url}
-                                                 target="_blank"
-                                                 rel="noopener noreferrer"
-                                                 style={{
-                                                   color: isAdminMsg ? '#ffffff' : '#475569',
-                                                   display: 'inline-flex',
-                                                   alignItems: 'center',
-                                                   gap: '0.2rem',
-                                                   textDecoration: 'none',
-                                                   fontWeight: 700,
-                                                   fontSize: '0.68rem',
-                                                   padding: '0.22rem 0.45rem',
-                                                   borderRadius: '5px',
-                                                   background: isAdminMsg ? 'rgba(255,255,255,0.15)' : '#f1f5f9'
-                                                 }}
-                                                 title="Open image directly in new tab"
-                                               >
-                                                 <ExternalLink size={11} /> Open
-                                               </a>
-
-                                               <button
-                                                 type="button"
-                                                 onClick={(e) => handleDownloadFile(att, e)}
-                                                 disabled={isDownloading}
-                                                 style={{
-                                                   color: '#ffffff',
-                                                   display: 'inline-flex',
-                                                   alignItems: 'center',
-                                                   gap: '0.25rem',
-                                                   fontWeight: 800,
-                                                   fontSize: '0.68rem',
-                                                   padding: '0.22rem 0.55rem',
-                                                   borderRadius: '5px',
-                                                   border: 'none',
-                                                   cursor: isDownloading ? 'wait' : 'pointer',
-                                                   background: 'linear-gradient(135deg, #ff7a00 0%, #ea580c 100%)',
-                                                   boxShadow: '0 2px 6px rgba(234, 88, 12, 0.25)',
-                                                   transition: 'all 0.15s ease'
-                                                 }}
-                                                 title="Download image directly to device"
-                                               >
-                                                 {isDownloading ? <Loader2 size={11} className="spin-icon" /> : <Download size={11} />}
-                                                 {isDownloading ? 'Saving...' : 'Download'}
-                                               </button>
-                                             </div>
-                                           </div>
-                                         </div>
-                                       );
-                                     }
-
-                                     const ext = (att.name || '').split('.').pop()?.toUpperCase() || 'FILE';
-
-                                     return (
-                                       <div
-                                         key={aIdx}
-                                         style={{
-                                           display: 'flex',
-                                           alignItems: 'center',
-                                           justifyContent: 'space-between',
-                                           gap: '0.55rem',
-                                           padding: '0.5rem 0.75rem',
-                                           borderRadius: '8px',
-                                           background: isAdminMsg ? 'rgba(255,255,255,0.12)' : '#ffffff',
-                                           color: isAdminMsg ? '#ffffff' : '#0f172a',
-                                           border: isAdminMsg ? '1px solid rgba(255,255,255,0.15)' : '1px solid #e2e8f0',
-                                           boxShadow: '0 1px 3px rgba(0,0,0,0.02)',
-                                           maxWidth: '350px'
-                                         }}
-                                       >
-                                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', minWidth: 0, flex: 1 }}>
-                                           <div style={{
-                                             padding: '0.15rem 0.38rem',
-                                             borderRadius: '4px',
-                                             background: isAdminMsg ? 'rgba(255,255,255,0.2)' : '#e2e8f0',
-                                             color: isAdminMsg ? '#ffffff' : '#0f172a',
-                                             fontSize: '0.62rem',
-                                             fontWeight: 900,
-                                             letterSpacing: '0.03em',
-                                             flexShrink: 0
-                                           }}>
-                                             {ext}
-                                           </div>
-                                           <div style={{ minWidth: 0, flex: 1 }}>
-                                             <div style={{
-                                               fontWeight: 600,
-                                               overflow: 'hidden',
-                                               textOverflow: 'ellipsis',
-                                               whiteSpace: 'nowrap',
-                                               fontSize: '0.78rem'
-                                             }} title={att.name}>
-                                               {att.name}
-                                             </div>
-                                             {att.size && (
-                                               <div style={{ fontSize: '0.64rem', opacity: 0.75, color: isAdminMsg ? '#94a3b8' : '#64748b' }}>
-                                                 {att.size}
-                                               </div>
-                                             )}
-                                           </div>
-                                         </div>
-
-                                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', flexShrink: 0 }}>
-                                           <a
-                                             href={att.url}
-                                             target="_blank"
-                                             rel="noopener noreferrer"
-                                             style={{
-                                               color: isAdminMsg ? '#ffffff' : '#475569',
-                                               display: 'inline-flex',
-                                               alignItems: 'center',
-                                               gap: '0.2rem',
-                                               textDecoration: 'none',
-                                               fontWeight: 700,
-                                               fontSize: '0.68rem',
-                                               padding: '0.22rem 0.45rem',
-                                               borderRadius: '5px',
-                                               background: isAdminMsg ? 'rgba(255,255,255,0.15)' : '#f1f5f9'
-                                             }}
-                                             title="Open file directly in new tab"
-                                           >
-                                             <ExternalLink size={11} /> Open
-                                           </a>
-
-                                           <button
-                                             type="button"
-                                             onClick={(e) => handleDownloadFile(att, e)}
-                                             disabled={isDownloading}
-                                             style={{
-                                               color: '#ffffff',
-                                               display: 'inline-flex',
-                                               alignItems: 'center',
-                                               gap: '0.25rem',
-                                               fontWeight: 800,
-                                               fontSize: '0.68rem',
-                                               padding: '0.22rem 0.55rem',
-                                               borderRadius: '5px',
-                                               border: 'none',
-                                               cursor: isDownloading ? 'wait' : 'pointer',
-                                               background: 'linear-gradient(135deg, #ff7a00 0%, #ea580c 100%)',
-                                               boxShadow: '0 2px 6px rgba(234, 88, 12, 0.25)',
-                                               transition: 'all 0.15s ease'
-                                             }}
-                                             title="Download file directly to device"
-                                           >
-                                             {isDownloading ? <Loader2 size={11} className="spin-icon" /> : <Download size={11} />}
-                                             {isDownloading ? 'Saving...' : 'Download'}
-                                           </button>
-                                         </div>
-                                       </div>
-                                     );
-                                   })}
-                                </div>
-                              )}
+                        <React.Fragment key={msg.id || index}>
+                          {/* Calendar Day Separator */}
+                          {showDateHeader && (
+                            <div className="flex items-center justify-center my-4 select-none">
+                              <div className="h-px bg-slate-200 dark:bg-slate-700/60 flex-1" />
+                              <span className="px-3 py-1 text-[11px] font-semibold text-slate-500 dark:text-slate-400 bg-white dark:bg-slate-800 rounded-full border border-slate-200 dark:border-slate-700 mx-3 shadow-2xs">
+                                {formatChatDateHeader(msg.created_at)}
+                              </span>
+                              <div className="h-px bg-slate-200 dark:bg-slate-700/60 flex-1" />
                             </div>
                           )}
-                        </div>
+
+                          {/* Message Row with Correct Flex Alignment */}
+                          <div className={`w-full flex flex-col ${isAdminMsg ? 'items-end' : 'items-start'} ${isFirstInGroup ? 'mt-2.5' : 'mt-1'}`}>
+                            {/* Sender Label: Show for client if first in group */}
+                            {!isAdminMsg && isFirstInGroup && (
+                              <span className="text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1 px-1">
+                                {msg.sender_name || activeConversation?.client_name || 'Client'}
+                              </span>
+                            )}
+
+                            {/* Custom Offer Card Rendering */}
+                            {isOffer ? (
+                              <div className="max-w-[90%] sm:max-w-[420px]">
+                                <OfferCardMessage
+                                  offer={msg.offer_data || { id: msg.offer_id, title: 'Custom Digitizing Offer' }}
+                                  isCustomerView={false}
+                                  showToast={showToast}
+                                />
+                              </div>
+                            ) : (
+                              /* Message Bubble Container */
+                              <div
+                                className={`relative max-w-[85%] sm:max-w-[75%] px-4 py-2.5 shadow-xs text-[13.5px] leading-relaxed break-words ${
+                                  isAdminMsg
+                                    ? `bg-slate-900 text-white ${isLastInGroup ? 'rounded-2xl rounded-br-xs' : 'rounded-2xl'}`
+                                    : `bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 border border-slate-200/80 dark:border-slate-700 ${isLastInGroup ? 'rounded-2xl rounded-bl-xs' : 'rounded-2xl'}`
+                                }`}
+                              >
+                                {/* Message Text */}
+                                {msg.text && (
+                                  <div className="whitespace-pre-line select-text">
+                                    {msg.text}
+                                  </div>
+                                )}
+
+                                {/* Attachments inside bubble */}
+                                {Array.isArray(msg.attachments) && msg.attachments.length > 0 && (
+                                  <div className={`${msg.text ? 'mt-2.5' : ''} flex flex-col gap-2`}>
+                                    {msg.attachments.map((att, aIdx) => {
+                                      const isImg = isImageAttachment(att.name, att.url);
+                                      const isDownloading = downloadingFileUrl === att.url;
+
+                                      if (isImg) {
+                                        return (
+                                          <div
+                                            key={aIdx}
+                                            className={`rounded-xl overflow-hidden ${
+                                              isAdminMsg
+                                                ? 'border border-white/20 bg-black/25'
+                                                : 'border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50'
+                                            } max-w-[340px] shadow-xs`}
+                                          >
+                                            <a
+                                              href={att.url}
+                                              target="_blank"
+                                              rel="noopener noreferrer"
+                                              title="Click to open full photo directly"
+                                              className="block bg-black/5"
+                                            >
+                                              <img
+                                                src={att.url}
+                                                alt={att.name || 'Photo'}
+                                                loading="lazy"
+                                                className="block w-full max-h-[260px] object-contain cursor-pointer rounded-t-lg"
+                                              />
+                                            </a>
+                                            <div className={`flex items-center justify-between p-2 text-xs gap-2 border-t ${
+                                              isAdminMsg ? 'border-white/10' : 'border-slate-100 dark:border-slate-700'
+                                            }`}>
+                                              <div className="min-w-0 flex-1">
+                                                <div className={`font-semibold truncate text-[12px] ${
+                                                  isAdminMsg ? 'text-slate-200' : 'text-slate-700 dark:text-slate-200'
+                                                }`}>
+                                                  {att.name}
+                                                </div>
+                                                {att.size && (
+                                                  <div className={`text-[10px] opacity-75 ${
+                                                    isAdminMsg ? 'text-slate-400' : 'text-slate-500'
+                                                  }`}>
+                                                    {att.size}
+                                                  </div>
+                                                )}
+                                              </div>
+
+                                              <div className="flex items-center gap-1.5 shrink-0">
+                                                <a
+                                                  href={att.url}
+                                                  target="_blank"
+                                                  rel="noopener noreferrer"
+                                                  className={`inline-flex items-center gap-1 text-[11px] font-bold px-2 py-1 rounded-md transition-colors ${
+                                                    isAdminMsg
+                                                      ? 'text-white bg-white/15 hover:bg-white/25'
+                                                      : 'text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200'
+                                                  }`}
+                                                  title="Open image directly in new tab"
+                                                >
+                                                  <ExternalLink size={11} /> Open
+                                                </a>
+
+                                                <button
+                                                  type="button"
+                                                  onClick={(e) => handleDownloadFile(att, e)}
+                                                  disabled={isDownloading}
+                                                  className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-md text-white bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 shadow-xs transition-all disabled:opacity-75"
+                                                  title="Download image directly to device"
+                                                >
+                                                  {isDownloading ? <Loader2 size={11} className="spin-icon" /> : <Download size={11} />}
+                                                  {isDownloading ? 'Saving...' : 'Download'}
+                                                </button>
+                                              </div>
+                                            </div>
+                                          </div>
+                                        );
+                                      }
+
+                                      const ext = (att.name || '').split('.').pop()?.toUpperCase() || 'FILE';
+
+                                      return (
+                                        <div
+                                          key={aIdx}
+                                          className={`flex items-center justify-between gap-2.5 p-2 rounded-lg text-xs max-w-[350px] shadow-xs ${
+                                            isAdminMsg
+                                              ? 'bg-white/10 text-white border border-white/15'
+                                              : 'bg-slate-50 dark:bg-slate-900/60 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700'
+                                          }`}
+                                        >
+                                          <div className="flex items-center gap-2 min-w-0 flex-1">
+                                            <span className={`px-1.5 py-0.5 rounded text-[10px] font-black tracking-wider shrink-0 ${
+                                              isAdminMsg ? 'bg-white/20 text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-200'
+                                            }`}>
+                                              {ext}
+                                            </span>
+                                            <div className="min-w-0 flex-1">
+                                              <div className="font-semibold truncate text-[12px]" title={att.name}>
+                                                {att.name}
+                                              </div>
+                                              {att.size && (
+                                                <div className={`text-[10px] opacity-75 ${
+                                                  isAdminMsg ? 'text-slate-400' : 'text-slate-500'
+                                                }`}>
+                                                  {att.size}
+                                                </div>
+                                              )}
+                                            </div>
+                                          </div>
+
+                                          <div className="flex items-center gap-1.5 shrink-0">
+                                            <a
+                                              href={att.url}
+                                              target="_blank"
+                                              rel="noopener noreferrer"
+                                              className={`inline-flex items-center gap-1 text-[11px] font-bold px-2 py-1 rounded-md transition-colors ${
+                                                isAdminMsg
+                                                  ? 'text-white bg-white/15 hover:bg-white/25'
+                                                  : 'text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200'
+                                              }`}
+                                              title="Open file directly in new tab"
+                                            >
+                                              <ExternalLink size={11} /> Open
+                                            </a>
+
+                                            <button
+                                              type="button"
+                                              onClick={(e) => handleDownloadFile(att, e)}
+                                              disabled={isDownloading}
+                                              className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-md text-white bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 shadow-xs transition-all disabled:opacity-75"
+                                              title="Download file directly to device"
+                                            >
+                                              {isDownloading ? <Loader2 size={11} className="spin-icon" /> : <Download size={11} />}
+                                              {isDownloading ? 'Saving...' : 'Download'}
+                                            </button>
+                                          </div>
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                )}
+
+                                {/* Bubble Footer: Timestamp & Read Receipts */}
+                                <div className={`flex items-center gap-1 mt-1 select-none text-[10px] ${isAdminMsg ? 'justify-end text-slate-300/80' : 'justify-start text-slate-400'}`}>
+                                  <span>{timeString}</span>
+                                  {isAdminMsg && (
+                                    <CheckCheck size={13} className="text-emerald-400 shrink-0" />
+                                  )}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </React.Fragment>
                       );
                     })
                   )}
 
                   {/* TYPING INDICATOR */}
                   {isClientTyping && (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#64748b', fontSize: '0.8rem', fontStyle: 'italic' }}>
+                    <div className="flex items-center gap-2 text-slate-500 text-xs italic py-1 px-2">
                       <span className="dot-typing" />
-                      {activeConversation.client_name || 'Client'} is typing...
+                      <span>{activeConversation.client_name || 'Client'} is typing...</span>
                     </div>
                   )}
 
-                  <div ref={messagesEndRef} />
+                  <div ref={messagesEndRef} className="h-1 flex-shrink-0" />
                 </div>
 
                 {/* ============================================================ */}
