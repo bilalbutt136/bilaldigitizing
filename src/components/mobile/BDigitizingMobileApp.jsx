@@ -721,8 +721,8 @@ export const BDigitizingMobileApp = () => {
       id: 'patch',
       category: 'patches',
       title: 'Custom Physical Patches',
-      subtitle: 'Sample Batch $4.50/pc (50–100 Pcs) • Wholesale Bulk $1.50/pc',
-      startingPrice: 'Starts $4.50 / pc',
+      subtitle: 'Sample Batch $3.50/pc (50+ Pcs) • Production Batch $4.50/pc',
+      startingPrice: 'Starts $3.50 / pc',
       eta: '3–7 Days',
       icon: Package,
       color: '#0284c7',
@@ -1816,10 +1816,10 @@ export const BDigitizingMobileApp = () => {
                     Custom Patches
                   </div>
                   <span style={{ fontSize: '0.8rem', color: isDark ? '#38bdf8' : '#0284c7', fontWeight: 900, display: 'block', marginTop: '0.3rem' }}>
-                    Starts $4.50 / pc
+                    Starts $3.50 / pc
                   </span>
                   <span style={{ fontSize: '0.66rem', color: isDark ? '#94a3b8' : '#64748b', fontWeight: 700, display: 'block', marginTop: '0.1rem' }}>
-                    50 Pcs Min • Bulk $1.50
+                    50 Pcs Min • Starts $3.50 / pc
                   </span>
                 </div>
               </div>

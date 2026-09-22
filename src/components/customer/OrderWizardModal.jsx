@@ -207,8 +207,8 @@ const CORE_PACKAGES = {
       is_popular: true,
       title: 'Production Batch (100–500 Pcs)',
       subtitle: 'Ideal for uniform programs, merchandise drops & motorcycle clubs.',
-      price: 2.50,
-      original_price: 4.00,
+      price: 4.50,
+      original_price: 6.00,
       turnaround: '5–7 Days',
       features: [
         'Precision Laser-Cut or Merrowed Border',
@@ -228,8 +228,8 @@ const CORE_PACKAGES = {
       is_popular: false,
       title: 'Wholesale Bulk (500+ Pcs)',
       subtitle: 'Maximum volume discount for apparel brands, military & distributors.',
-      price: 1.50,
-      original_price: 2.50,
+      price: 5.50,
+      original_price: 7.50,
       turnaround: '7–10 Days',
       features: [
         'Maximum Factory Direct Wholesale Savings',
@@ -272,7 +272,7 @@ const SERVICE_OPTIONS = [
     id: 'patch',
     title: 'Custom Physical Patches',
     badge: '5–7 Days Delivery',
-    priceText: 'From $1.50 / pc',
+    priceText: 'From $3.50 / pc',
     icon: Package,
     color: '#0284c7',
     bgColor: '#f0f9ff',
@@ -373,6 +373,18 @@ export const OrderWizardModal = () => {
     return coreList;
   };
 
+  const getServiceStartingPrice = (opt) => {
+    const pkgs = getPackagesForCategory(opt.id);
+    if (pkgs && pkgs.length > 0) {
+      const validPrices = pkgs.map(p => Number(p.price)).filter(p => !isNaN(p) && p > 0);
+      if (validPrices.length > 0) {
+        const minP = Math.min(...validPrices);
+        return opt.id === 'patch' ? `From $${minP.toFixed(2)} / pc` : `From $${minP.toFixed(2)}`;
+      }
+    }
+    return opt.priceText;
+  };
+
   // Reset and populate on modal open
   useEffect(() => {
     if (isOrderWizardOpen) {
@@ -440,7 +452,7 @@ export const OrderWizardModal = () => {
   const currentPackages = getPackagesForCategory(selectedService);
   const activePkg = selectedPackage || currentPackages[0];
 
-  const unitPrice = Number(activePkg?.price || (selectedService === 'patch' ? 2.50 : 15));
+  const unitPrice = Number(activePkg?.price || (selectedService === 'patch' ? 3.50 : 15));
   const activePromotion = getActivePromotion(siteSettings?.promotions);
 
   // Compute pricing via centralized promotional discount engine
@@ -1091,7 +1103,7 @@ export const OrderWizardModal = () => {
                             padding: '0.12rem 0.5rem', 
                             borderRadius: '5px' 
                           }}>
-                            {opt.priceText}
+                            {getServiceStartingPrice(opt)}
                           </span>
                           <span style={{ 
                             fontSize: '0.72rem', 

@@ -288,7 +288,7 @@ export const ServicesGrid = () => {
 
               <div style={{ background: 'var(--color-subtle, var(--bg-subtle))', padding: '0.75rem 1rem', borderRadius: '10px', border: '1px solid var(--color-border)', marginBottom: '1.5rem', fontSize: '0.875rem' }}>
                 <strong style={{ color: 'var(--color-text-primary)', display: 'block', marginBottom: '0.25rem' }}>Bulk Tiered Rates:</strong>
-                <span style={{ color: 'var(--color-primary)', fontWeight: 800 }}>From $1.50 / patch</span>
+                <span style={{ color: 'var(--color-primary)', fontWeight: 800 }}>From $3.50 / patch</span>
                 <span style={{ color: 'var(--color-text-secondary)', marginLeft: '0.5rem' }}>(Volume Tier Pricing Available)</span>
               </div>
             </div>

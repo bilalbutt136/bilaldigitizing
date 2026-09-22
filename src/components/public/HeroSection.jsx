@@ -44,7 +44,7 @@ const DEFAULT_SERVICE_DATA = {
     features: [
       'Embroidery Digitizing: Starts $10.00 Flat · 100% Hand Pathing · 0 Thread Breaks',
       'Vector Art Redraw: Starts $15.00 Flat · Pantone Spot Colors · Master AI/EPS/SVG',
-      'Custom Physical Patches: Starts $1.50 / Piece · Velcro & Iron-On · Doorstep Delivery'
+      'Custom Physical Patches: Starts $3.50 / Piece · Velcro & Iron-On · Doorstep Delivery'
     ],
     stats: [
       { value: '3,900+', label: 'Clients', icon: 'Star' },

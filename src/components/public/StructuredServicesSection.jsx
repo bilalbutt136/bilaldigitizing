@@ -237,7 +237,7 @@ export const StructuredServicesSection = () => {
                     SECTION 2 — PHYSICAL PRODUCTS
                   </span>
                   <div style={{ fontSize: '0.85rem', fontWeight: 800, color: '#047857', marginTop: '0.2rem' }}>
-                    {patHero.badge || 'STARTS $1.50 / PATCH'}
+                    {patHero.badge || 'STARTS $3.50 / PATCH'}
                   </div>
                 </div>
               </div>

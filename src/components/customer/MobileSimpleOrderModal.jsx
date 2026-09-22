@@ -181,8 +181,8 @@ const CORE_PACKAGES = {
       is_popular: false,
       title: 'Sample Batch (50–100 Pcs)',
       subtitle: 'Minimum run perfect for small brands, clubs, prototypes & events.',
-      price: 4.50,
-      original_price: 6.50,
+      price: 3.50,
+      original_price: 5.00,
       turnaround: '3–5 Days',
       features: [
         '50 Pieces Minimum Order',
@@ -202,8 +202,8 @@ const CORE_PACKAGES = {
       is_popular: true,
       title: 'Production Batch (100–500 Pcs)',
       subtitle: 'Ideal for uniform programs, merchandise drops & motorcycle clubs.',
-      price: 2.50,
-      original_price: 4.00,
+      price: 4.50,
+      original_price: 6.00,
       turnaround: '5–7 Days',
       features: [
         'Precision Laser-Cut or Merrowed Border',
@@ -223,8 +223,8 @@ const CORE_PACKAGES = {
       is_popular: false,
       title: 'Wholesale Bulk (500+ Pcs)',
       subtitle: 'Maximum volume discount for apparel brands, military & distributors.',
-      price: 1.50,
-      original_price: 2.50,
+      price: 5.50,
+      original_price: 7.50,
       turnaround: '7–10 Days',
       features: [
         'Maximum Factory Direct Wholesale Savings',
@@ -1044,7 +1044,7 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
                         Custom Patches
                       </h4>
                       <span style={{ fontSize: '0.85rem', fontWeight: 900, color: isDark ? '#38bdf8' : '#0284c7', background: isDark ? 'rgba(2, 132, 199, 0.2)' : '#f0f9ff', padding: '0.15rem 0.5rem', borderRadius: '6px', border: isDark ? '1px solid rgba(2, 132, 199, 0.4)' : '1px solid #7dd3fc' }}>
-                        Starts $4.50 / pc (Bulk $1.50)
+                        Starts $3.50 / pc
                       </span>
                     </div>
 
@@ -1057,7 +1057,7 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
                         📦 3–7 Days Delivery
                       </span>
                       <span style={{ fontSize: '0.68rem', color: isDark ? '#bae6fd' : '#075985', fontWeight: 700 }}>
-                        50 Pcs Min ($4.50/pc) • Bulk $1.50
+                        50 Pcs Min • Starts $3.50 / pc
                       </span>
                       <span style={{ fontSize: '0.78rem', color: isDark ? '#38bdf8' : '#0284c7', fontWeight: 900, marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '0.15rem' }}>
                         {selectedService === 'patch' ? '✓ Selected' : 'Select'} <ArrowRight size={14} />

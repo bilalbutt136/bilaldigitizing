@@ -3139,7 +3139,7 @@ export const CustomerDashboard = () => {
                       Physical Shipping
                     </span>
                     <span style={{ fontSize: '0.72rem', fontWeight: 800, background: 'var(--bg-subtle, #f1f5f9)', color: 'var(--color-text-primary, #0f172a)', padding: '0.15rem 0.55rem', borderRadius: '5px' }}>
-                      Starts $1.50 / pc
+                      Starts $3.50 / pc
                     </span>
                   </div>
                 </div>

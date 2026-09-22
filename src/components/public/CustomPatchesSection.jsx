@@ -39,10 +39,10 @@ export const CustomPatchesSection = ({ hideTabs = false, hideHero = false }) => 
       subTitle: 'Minimum run perfect for small brands, clubs, prototypes & event samples',
       icon: Zap,
       discountTag: 'SAMPLE RUN',
-      rate: '$4.50',
+      rate: '$3.50',
       unit: '/ piece',
       delivery: '3–5 Days',
-      btnText: 'Order Sample Run ($4.50)',
+      btnText: 'Order Sample Run ($3.50)',
       badge: 'SAMPLE RUN',
       popular: false,
       features: [
@@ -61,10 +61,10 @@ export const CustomPatchesSection = ({ hideTabs = false, hideHero = false }) => 
       subTitle: 'Standard volume for company uniforms, tactical gear, martial arts & apparel brands',
       icon: Trophy,
       discountTag: 'MOST POPULAR',
-      rate: '$2.50',
+      rate: '$4.50',
       unit: '/ piece',
       delivery: '4–7 Days',
-      btnText: 'Order Production Run ($2.50)',
+      btnText: 'Order Production Run ($4.50)',
       badge: 'MOST POPULAR',
       popular: true,
       features: [
@@ -83,14 +83,14 @@ export const CustomPatchesSection = ({ hideTabs = false, hideHero = false }) => 
       subTitle: 'Factory-direct wholesale pricing with volume discounts & priority factory line',
       icon: Sparkles,
       discountTag: 'WHOLESALE',
-      rate: '$1.50',
+      rate: '$5.50',
       unit: '/ piece',
       delivery: '7–10 Days',
-      btnText: 'Order Bulk Wholesale ($1.50)',
+      btnText: 'Order Wholesale Bulk ($5.50)',
       badge: 'WHOLESALE',
       popular: false,
       features: [
-        'Factory Direct Wholesale Rate ($1.50/pc)',
+        'Factory Direct Wholesale Rate ($5.50/pc)',
         'Priority Dedicated Manufacturing Line',
         'Custom Retail Backer Cards Available',
         'Express Air Doorstep Global Delivery',
@@ -136,7 +136,7 @@ export const CustomPatchesSection = ({ hideTabs = false, hideHero = false }) => 
   const handleStartOrder = (tierKey = 'standard', cardObj = null) => {
     setSelectedTier(tierKey);
     const targetTitle = cardObj?.title || (tierKey === 'basic' ? 'Micro Woven Patches' : tierKey === 'premium' ? '3D PVC & Leather Patches' : 'Embroidered Patches');
-    const targetRate = cardObj?.rate || (tierKey === 'basic' ? '$1.50' : tierKey === 'premium' ? '$3.50' : '$2.50');
+    const targetRate = cardObj?.rate || (tierKey === 'basic' ? '$3.50' : tierKey === 'premium' ? '$5.50' : '$4.50');
 
     if (openOrderWizard) {
       openOrderWizard({

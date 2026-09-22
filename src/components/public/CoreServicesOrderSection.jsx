@@ -57,18 +57,18 @@ export const CoreServicesOrderSection = ({ defaultService = 'digitizing', hideTa
     }
 
     // 3. Fallback standard craft rates
-    if (clean.includes('woven')) return 1.50;
+    if (clean.includes('woven')) return 3.50;
     if (clean.includes('printed') || clean.includes('sublimat')) return 2.00;
     if (clean.includes('pvc') || clean.includes('rubber')) return 3.50;
     if (clean.includes('leather')) return 3.50;
     if (clean.includes('chenille')) return 4.00;
     if (clean.includes('bullion')) return 8.00;
-    return parseFloat(pricing?.patchBaseRate) || 2.50;
+    return parseFloat(pricing?.patchBaseRate) || 3.50;
   };
 
   const dynamicPatchStyles = [
     { id: 'Embroidered', label: 'Embroidered Patch', icon: '🧵', defaultRate: 2.50 },
-    { id: 'Woven', label: 'Micro Woven Patch', icon: '🌐', defaultRate: 1.50 },
+    { id: 'Woven', label: 'Micro Woven Patch', icon: '🌐', defaultRate: 3.50 },
     { id: 'PVC', label: '3D Rubber PVC Patch', icon: '⚡', defaultRate: 3.50 },
     { id: 'Leather', label: 'Debossed Leather Patch', icon: '🪵', defaultRate: 3.50 },
     { id: 'Chenille', label: 'Varsity Chenille Patch', icon: '🏆', defaultRate: 4.00 },
