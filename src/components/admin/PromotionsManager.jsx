@@ -179,31 +179,44 @@ export const PromotionsManager = () => {
       let updatedPromotions = [...promotions];
       let activeFound = false;
 
-      // Update active promotion if one exists
+      // Update active promotion if one exists, ensuring strictly only one active promo
       updatedPromotions = updatedPromotions.map(p => {
-        if (p.status === 'active') {
+        if (p.status === 'active' && !activeFound) {
           activeFound = true;
           return {
             ...p,
             discountPercent: maxDiscount,
             serviceDiscounts: { embroidery: emb, vector: vec, patch: pch },
             serviceStatus: { ...serviceStatus },
-            servicesIncluded: `Embroidery (${emb}%), Vector (${vec}%), Patches (${pch}%)`
+            servicesIncluded: `Embroidery (${emb}%), Vector (${vec}%), Patches (${pch}%)`,
+            promoCode: `SAVE${maxDiscount}`,
+            endDate: (p.endDate && p.endDate >= defaultStartStr) ? p.endDate : defaultEndStr
           };
+        }
+        if (p.status === 'active' && activeFound) {
+          // Pause any duplicate active promo
+          return { ...p, status: 'paused' };
         }
         return p;
       });
 
       if (!activeFound && updatedPromotions.length > 0) {
-        // Activate the first promotion with these service rates
-        updatedPromotions[0] = {
-          ...updatedPromotions[0],
-          status: 'active',
-          discountPercent: maxDiscount,
-          serviceDiscounts: { embroidery: emb, vector: vec, patch: pch },
-          serviceStatus: { ...serviceStatus },
-          servicesIncluded: `Embroidery (${emb}%), Vector (${vec}%), Patches (${pch}%)`
-        };
+        // Activate the first promotion with these service rates, pausing the rest
+        updatedPromotions = updatedPromotions.map((p, idx) => {
+          if (idx === 0) {
+            return {
+              ...p,
+              status: 'active',
+              discountPercent: maxDiscount,
+              serviceDiscounts: { embroidery: emb, vector: vec, patch: pch },
+              serviceStatus: { ...serviceStatus },
+              servicesIncluded: `Embroidery (${emb}%), Vector (${vec}%), Patches (${pch}%)`,
+              promoCode: `SAVE${maxDiscount}`,
+              endDate: (p.endDate && p.endDate >= defaultStartStr) ? p.endDate : defaultEndStr
+            };
+          }
+          return { ...p, status: 'paused' };
+        });
       } else if (updatedPromotions.length === 0) {
         // Create an initial active promotion
         const defaultPromo = {
@@ -356,12 +369,18 @@ export const PromotionsManager = () => {
   const handleTogglePromoStatus = async (promoId) => {
     let newlyActive = null;
 
+    const currentTarget = promotions.find(p => p.id === promoId);
+    const targetStatus = currentTarget?.status === 'active' ? 'paused' : 'active';
+
     const updatedPromotions = promotions.map(p => {
       if (p.id === promoId) {
-        const nextStatus = p.status === 'active' ? 'paused' : 'active';
-        const updated = { ...p, status: nextStatus };
-        if (nextStatus === 'active') newlyActive = updated;
+        const updated = { ...p, status: targetStatus };
+        if (targetStatus === 'active') newlyActive = updated;
         return updated;
+      }
+      // If activating this promo, ensure all other campaigns are paused (strictly single active promo)
+      if (targetStatus === 'active') {
+        return { ...p, status: 'paused' };
       }
       return p;
     });

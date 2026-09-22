@@ -144,7 +144,9 @@ export function calculateOrderPricing({
 
   // Promotional discount resolution
   let promoDiscountPercent = 0;
-  if (customPromoPercent !== null && customPromoPercent !== undefined && !isNaN(customPromoPercent)) {
+  const hasGranularRates = activePromo && activePromo.status === 'active' && activePromo.serviceDiscounts && typeof activePromo.serviceDiscounts[serviceKey] === 'number';
+
+  if (customPromoPercent !== null && customPromoPercent !== undefined && !isNaN(customPromoPercent) && !hasGranularRates) {
     promoDiscountPercent = Math.max(0, Math.min(100, Number(customPromoPercent)));
   } else {
     promoDiscountPercent = getServiceDiscountPercent(serviceKey, activePromo, siteSettings);

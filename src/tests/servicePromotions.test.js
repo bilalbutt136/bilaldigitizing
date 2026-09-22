@@ -212,6 +212,44 @@ describe('Granular Service-Specific Promotional Discounts Engine', () => {
       assert.equal(pricing.totalPrice, 225.62);
     });
 
+    test('calculates accurate pricing for 50 custom patches @ $4.50 with 5% promo strictly preventing 15% override', () => {
+      const adminPromo = {
+        id: 'promo_live_admin',
+        name: 'Sale',
+        status: 'active',
+        discountPercent: 10,
+        promoCode: 'SAVE15',
+        serviceDiscounts: {
+          embroidery: 10,
+          vector: 10,
+          patch: 5
+        }
+      };
+
+      // Even if a caller passes customPromoPercent: 15 (e.g. from SAVE15 code regex),
+      // the engine strictly preserves the admin-configured 5% patch discount.
+      const pricing = calculateOrderPricing({
+        service: 'patch',
+        unitPrice: 4.50,
+        quantity: 50,
+        isRush: false,
+        activePromo: adminPromo,
+        customPromoPercent: 15 // Attempted override from SAVE15
+      });
+
+      // Base subtotal = 50 * 4.50 = 225.00
+      assert.equal(pricing.baseSubtotal, 225.00);
+      // Under 100 patches has 0 volume tier
+      assert.equal(pricing.volumeDiscountAmount, 0.00);
+      // Strictly 5% patch promo discount, NOT 15%
+      assert.equal(pricing.promoDiscountPercent, 5);
+      // 5% of 225 = $11.25 (NOT $33.75)
+      assert.equal(pricing.promoDiscountAmount, 11.25);
+      // Final total = 225.00 - 11.25 = $213.75 (NOT $191.25)
+      assert.equal(pricing.totalPrice, 213.75);
+      assert.equal(pricing.totalDiscount, 11.25);
+    });
+
     test('formats service discount summary accurately', () => {
       const summary = formatServiceDiscountsSummary({
         embroidery: 20,

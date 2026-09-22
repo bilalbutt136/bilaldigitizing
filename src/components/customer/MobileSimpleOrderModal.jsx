@@ -386,17 +386,23 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
   const currentPackages = getPackagesForCategory(selectedService);
   const activePkg = selectedPackage || currentPackages[0];
 
-  const unitPrice = Number(activePkg?.price || (selectedService === 'patch' ? 2.50 : 15));
   const activePromotion = getActivePromotion(siteSettings?.promotions);
+  const effectivePromo = appliedPromo?.promoObj || activePromotion;
+
+  // Granular service discounts defined on active promo or siteSettings
+  const hasGranularRates = Boolean(
+    (effectivePromo && effectivePromo.serviceDiscounts && Object.keys(effectivePromo.serviceDiscounts).length > 0) ||
+    (siteSettings?.service_discounts && siteSettings?.service_discounts?.enabled !== false)
+  );
 
   const pricingResult = calculateOrderPricing({
     service: selectedService,
     unitPrice,
     quantity,
     isRush,
-    activePromo: appliedPromo?.promoObj || activePromotion,
+    activePromo: effectivePromo,
     siteSettings,
-    customPromoPercent: appliedPromo?.isCustomPercent ? appliedPromo.discountPercent : undefined
+    customPromoPercent: (appliedPromo?.isCustomPercent && !hasGranularRates) ? appliedPromo.discountPercent : undefined
   });
 
   const baseSubtotal = pricingResult.baseSubtotal;
@@ -432,6 +438,76 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
     if (pkg.defaultWidth) setWidthInches(pkg.defaultWidth);
     if (pkg.defaultHeight) setHeightInches(pkg.defaultHeight);
     if (pkg.defaultPlacement) setPlacement(pkg.defaultPlacement);
+  };
+
+  const handleApplyPromo = () => {
+    if (!promoCodeInput || !promoCodeInput.trim()) return;
+    const clean = promoCodeInput.trim().toUpperCase();
+
+    // 1. Identify active promotion from admin portal
+    const livePromo = getActivePromotion(siteSettings?.promotions);
+    const activeCode = (livePromo?.promoCode || siteSettings?.announcement?.promoCode || '').toUpperCase();
+
+    // 2. Check if active campaign defines granular service discounts
+    const hasGranular = Boolean(
+      (livePromo && livePromo.serviceDiscounts && Object.keys(livePromo.serviceDiscounts).length > 0) ||
+      (siteSettings?.service_discounts && siteSettings?.service_discounts?.enabled !== false)
+    );
+
+    // 3. Match active campaign code, announcement code, or studio keywords
+    const isMatchingPromo = clean === activeCode || 
+      clean === 'PROMO' || 
+      clean === 'SALE' || 
+      clean === 'WELCOME' || 
+      clean === 'SPECIAL' || 
+      clean === 'DISCOUNT' ||
+      (livePromo && clean === `SAVE${livePromo.discountPercent}`) ||
+      (hasGranular && clean.startsWith('SAVE'));
+
+    if (isMatchingPromo || hasGranular) {
+      setAppliedPromo({
+        code: clean,
+        isGranular: true,
+        promoObj: livePromo
+      });
+      const pct = getServiceDiscountPercent(selectedService, livePromo, siteSettings);
+      if (showToast) {
+        showToast(`Promo "${clean}" applied! (${getServiceDisplayName(selectedService)}: ${pct}% OFF)`, 'success');
+      }
+      return;
+    }
+
+    // 4. Match explicit campaign from siteSettings.promotions
+    const matchedPromo = Array.isArray(siteSettings?.promotions)
+      ? siteSettings.promotions.find(p => p.status === 'active' && (p.promoCode?.toUpperCase() === clean || p.id === clean || p.name?.toUpperCase() === clean))
+      : null;
+
+    if (matchedPromo) {
+      setAppliedPromo({
+        code: clean,
+        isGranular: true,
+        promoObj: matchedPromo
+      });
+      const pct = getServiceDiscountPercent(selectedService, matchedPromo, siteSettings);
+      if (showToast) {
+        showToast(`Promo "${matchedPromo.name || clean}" applied! (${getServiceDisplayName(selectedService)}: ${pct}% OFF)`, 'success');
+      }
+      return;
+    }
+
+    // 5. Standalone custom percentage only if NO active granular campaign
+    const saveMatch = clean.match(/^SAVE(\d+)$/);
+    if (saveMatch && !hasGranular) {
+      const pct = parseInt(saveMatch[1], 10);
+      setAppliedPromo({ code: clean, isCustomPercent: true, discountPercent: pct });
+      if (showToast) showToast(`Coupon ${clean} applied! (-${pct}% OFF)`, 'success');
+      return;
+    }
+
+    // Fallback: apply active promo rates
+    setAppliedPromo({ code: clean, isGranular: true, promoObj: livePromo });
+    const pct = getServiceDiscountPercent(selectedService, livePromo, siteSettings);
+    if (showToast) showToast(`Promo ${clean} applied! (${getServiceDisplayName(selectedService)}: ${pct}% OFF)`, 'success');
   };
 
   const handleQuantityChange = (delta) => {
@@ -2074,20 +2150,7 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
                   />
                   <button
                     type="button"
-                    onClick={() => {
-                      if (!promoCodeInput || !promoCodeInput.trim()) return;
-                      const clean = promoCodeInput.trim().toUpperCase();
-                      const saveMatch = clean.match(/^SAVE(\d+)$/);
-                      if (saveMatch) {
-                        const pct = parseInt(saveMatch[1], 10);
-                        setAppliedPromo({ code: clean, isCustomPercent: true, discountPercent: pct });
-                        if (showToast) showToast(`Coupon ${clean} applied! (-${pct}% OFF)`, 'success');
-                      } else {
-                        setAppliedPromo({ code: clean, isGranular: true, promoObj: activePromotion });
-                        const pct = getServiceDiscountPercent(selectedService, activePromotion, siteSettings);
-                        if (showToast) showToast(`Promo ${clean} applied! (${getServiceDisplayName(selectedService)}: ${pct}% OFF)`, 'success');
-                      }
-                    }}
+                    onClick={handleApplyPromo}
                     style={{
                       background: isDark ? 'var(--color-primary, #ea580c)' : '#0f172a',
                       color: '#ffffff',

@@ -59,13 +59,15 @@ import {
   AlertCircle,
   Loader2,
   Building,
-  Headphones
+  Headphones,
+  CheckCheck
 } from 'lucide-react';
 import CustomerSupportChat from '../customer/CustomerSupportChat';
 import { playMessageChime, unlockAudioContext } from '../../utils/audioNotification';
 import { 
   fetchNotificationsFromSupabase, 
-  markNotificationAsReadInSupabase, 
+  markNotificationAsReadInSupabase,
+  markAllNotificationsAsReadInSupabase, 
   upsertClientInSupabase,
   createNotificationInSupabase
 } from '../../services/supabaseService';
@@ -107,6 +109,7 @@ export const BDigitizingMobileApp = () => {
     dynamicPricingTiers = [],
     notifications: globalNotifications = [],
     markNotificationAsRead: markGlobalNotificationAsRead,
+    markAllNotificationsAsRead: markAllGlobalNotificationsAsRead,
     refreshOrders,
     unreadOrdersCount = 0,
     markOrdersAsRead,
@@ -590,6 +593,19 @@ export const BDigitizingMobileApp = () => {
       isMounted = false;
     };
   }, [userEmail]);
+
+  const handleMarkAllNotificationsAsRead = async () => {
+    try {
+      setNotifications(prev => (Array.isArray(prev) ? prev.map(n => ({ ...n, is_read: true, read: true })) : []));
+      if (markAllGlobalNotificationsAsRead) {
+        markAllGlobalNotificationsAsRead();
+      }
+      await markAllNotificationsAsReadInSupabase(userEmail);
+      if (showToast) showToast('All notifications marked as read', 'success');
+    } catch (err) {
+      console.warn('Error marking all notifications as read:', err);
+    }
+  };
 
   const handleOpenOrderConfigurator = (serviceType = 'embroidery') => {
     setOrderDefaultService(serviceType);
@@ -4793,14 +4809,44 @@ export const BDigitizingMobileApp = () => {
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
                 <Bell size={18} style={{ color: '#059669' }} />
                 <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 900, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a' }}>Notifications</h3>
+                {unreadNotifCount > 0 && (
+                  <span style={{ fontSize: '0.7rem', fontWeight: 800, padding: '0.12rem 0.45rem', borderRadius: '999px', background: '#059669', color: '#ffffff' }}>
+                    {unreadNotifCount}
+                  </span>
+                )}
               </div>
-              <button
-                type="button"
-                onClick={() => setIsNotifDrawerOpen(false)}
-                style={{ background: isDark ? 'var(--color-subtle, #1e293b)' : '#f1f5f9', color: isDark ? '#ffffff' : '#0f172a', border: 'none', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
-              >
-                <X size={16} />
-              </button>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                {unreadNotifCount > 0 && (
+                  <button
+                    type="button"
+                    onClick={handleMarkAllNotificationsAsRead}
+                    title="Mark all notifications as read"
+                    style={{
+                      background: isDark ? 'rgba(5, 150, 105, 0.2)' : '#ecfdf5',
+                      color: '#059669',
+                      border: isDark ? '1px solid rgba(5, 150, 105, 0.4)' : '1px solid #a7f3d0',
+                      borderRadius: '8px',
+                      padding: '0.3rem 0.6rem',
+                      fontSize: '0.75rem',
+                      fontWeight: 800,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.3rem',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    <CheckCheck size={14} />
+                    <span>Read All</span>
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={() => setIsNotifDrawerOpen(false)}
+                  style={{ background: isDark ? 'var(--color-subtle, #1e293b)' : '#f1f5f9', color: isDark ? '#ffffff' : '#0f172a', border: 'none', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+                >
+                  <X size={16} />
+                </button>
+              </div>
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
@@ -4817,6 +4863,7 @@ export const BDigitizingMobileApp = () => {
                       setIsNotifDrawerOpen(false);
                       handleNotificationClick(n, {
                         markNotificationAsRead: (id) => {
+                          setNotifications(prev => (Array.isArray(prev) ? prev.map(item => String(item.id) === String(id) ? { ...item, is_read: true, read: true } : item) : []));
                           if (markGlobalNotificationAsRead) markGlobalNotificationAsRead(id);
                           markNotificationAsReadInSupabase(id);
                         },
