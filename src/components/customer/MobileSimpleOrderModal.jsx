@@ -386,6 +386,7 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
   const currentPackages = getPackagesForCategory(selectedService);
   const activePkg = selectedPackage || currentPackages[0];
 
+  const unitPrice = Number(activePkg?.price || (selectedService === 'patch' ? 3.50 : 15));
   const activePromotion = getActivePromotion(siteSettings?.promotions);
   const effectivePromo = appliedPromo?.promoObj || activePromotion;
 
@@ -692,8 +693,8 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
         ? `${patchStyle} Patches (${quantity} Pcs)`
         : `${firstFileName} - ${cleanService} (Qty: ${quantity})`;
 
-      const clientEmail = authUser?.email || currentUser?.email || 'guest@bdigitizing.pro';
-      const clientName = authUser?.user_metadata?.full_name || authUser?.name || currentUser?.name || 'Studio Client';
+      const finalClientEmail = clientEmail || authUser?.email || currentUser?.email || 'guest@bdigitizing.pro';
+      const finalClientName = clientName || authUser?.user_metadata?.full_name || authUser?.name || currentUser?.name || 'Studio Client';
       const primaryArtworkUrl = uploadedFiles[0]?.url || null;
 
       const orderPayload = {
@@ -744,9 +745,9 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
             files: uploadedFiles
           }
         ],
-        client_email: clientEmail,
-        clientEmail: clientEmail,
-        clientName: clientName,
+        client_email: finalClientEmail,
+        clientEmail: finalClientEmail,
+        clientName: finalClientName,
         status: 'pending_payment',
         payment_status: 'unpaid'
       };
