@@ -187,6 +187,26 @@ export async function POST(request) {
             }
           }
         }
+
+        // Client Notification 2: Payment Confirmed
+        if (email) {
+          try {
+            const nowIso = new Date().toISOString();
+            await supabaseAdmin.from('notifications').upsert([{
+              id: `ord-paid-${cleanId}`,
+              recipient_role: 'client',
+              recipient_email: email.toLowerCase().trim(),
+              title: `💳 Payment Confirmed - Order Active!`,
+              message: `Wallet payment confirmed for Order #${cleanId}. Production is underway.`,
+              type: 'success',
+              order_id: cleanId,
+              link: `/client-portal?tab=orders&trackOrder=${cleanId}`,
+              read: false,
+              created_at: nowIso,
+              updated_at: nowIso
+            }], { onConflict: 'id' });
+          } catch {}
+        }
       }
     } else if (action === 'deposit') {
       // Manual Admin deposit

@@ -193,6 +193,25 @@ export async function POST(req) {
           }]);
         } catch {}
 
+        // 8. Client Notification 2: Payment Confirmed
+        if (targetEmail) {
+          try {
+            await supabase.from('notifications').upsert([{
+              id: `ord-paid-${generatedOrderId}`,
+              recipient_role: 'client',
+              recipient_email: targetEmail.toLowerCase().trim(),
+              title: `💳 Payment Confirmed - Order Active!`,
+              message: `Payment confirmed for offer "${offerTitle}". Order #${generatedOrderId} is in production.`,
+              type: 'success',
+              order_id: generatedOrderId,
+              link: `/client-portal?tab=orders&trackOrder=${generatedOrderId}`,
+              read: false,
+              created_at: nowIso,
+              updated_at: nowIso
+            }], { onConflict: 'id' });
+          } catch {}
+        }
+
         console.log(`[Stripe Webhook] Successfully processed custom offer payment for ${offerId} -> Order ${generatedOrderId}`);
       } else if (orderId && type !== 'deposit') {
         // Update Order Status to Paid
@@ -218,6 +237,26 @@ export async function POST(req) {
           payment_method: 'Stripe Card',
           description: `Stripe Direct Order Payment for Order #${String(orderId).slice(0, 8)} ($${amountInDollars.toFixed(2)})`
         }]);
+
+        // Client Notification 2: Payment Confirmed
+        if (targetEmail) {
+          try {
+            const nowIso = new Date().toISOString();
+            await supabase.from('notifications').upsert([{
+              id: `ord-paid-${orderId}`,
+              recipient_role: 'client',
+              recipient_email: targetEmail.toLowerCase().trim(),
+              title: `💳 Payment Confirmed - Order Active!`,
+              message: `Payment confirmed for your order #${String(orderId).slice(0, 8)}. Production is underway.`,
+              type: 'success',
+              order_id: orderId,
+              link: `/client-portal?tab=orders&trackOrder=${orderId}`,
+              read: false,
+              created_at: nowIso,
+              updated_at: nowIso
+            }], { onConflict: 'id' });
+          } catch {}
+        }
         
         console.log(`[Stripe Webhook] Successfully marked order ${orderId} as Paid.`);
       } else if (type === 'deposit' && targetEmail && amountInDollars > 0) {

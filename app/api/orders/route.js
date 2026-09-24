@@ -316,10 +316,10 @@ export async function POST(request) {
         console.warn('Auto-create conversation notice:', convErr.message);
       }
 
-      // Automatically create notifications in public.notifications
+      // Automatically create notifications in public.notifications (Order Placed - Notification 1)
       try {
         const nowIso = new Date().toISOString();
-        await supabase.from('notifications').insert([
+        await supabase.from('notifications').upsert([
           {
             id: `notif-ord-${mappedDbRow.id}-admin`,
             user_id: user?.id || null,
@@ -335,7 +335,7 @@ export async function POST(request) {
             updated_at: nowIso
           },
           {
-            id: `notif-ord-${mappedDbRow.id}-client`,
+            id: `ord-created-${mappedDbRow.id}`,
             user_id: user?.id || null,
             recipient_role: 'client',
             recipient_email: clientEmail,
@@ -348,7 +348,7 @@ export async function POST(request) {
             created_at: nowIso,
             updated_at: nowIso
           }
-        ]);
+        ], { onConflict: 'id' });
       } catch (notifErr) {
         console.warn('Auto notification insert notice:', notifErr.message);
       }
@@ -595,27 +595,19 @@ export async function POST(request) {
         };
 
         if (newStatus === 'in_progress') {
+          // Notification 2: Payment Confirmed
           await insertNotif({
-            id: `notif-paid-${resolvedOrderId}-admin-${Date.now()}`,
+            id: `notif-paid-${resolvedOrderId}-admin`,
             recipient_role: 'admin',
             title: `💳 Payment Confirmed: ${ordTitle}`,
             message: `Order from ${clientName} (${clientEmail}) is now paid and in production.`,
             type: 'success', link: `/admin-portal?tab=orders&trackOrder=${resolvedOrderId}`
           });
           await insertNotif({
-            id: `notif-paid-${resolvedOrderId}-client-${Date.now()}`,
+            id: `ord-paid-${resolvedOrderId}`,
             recipient_role: 'client', recipient_email: clientEmail,
-            title: `✅ Payment Confirmed — Production Started!`,
-            message: `Your order "${ordTitle}" is now in production. We'll notify you when files are ready.`,
-            type: 'success', link: `/client-portal?tab=orders&trackOrder=${resolvedOrderId}`
-          });
-
-        } else if (newStatus === 'delivered') {
-          await insertNotif({
-            id: `notif-deliv-${resolvedOrderId}-client-${Date.now()}`,
-            recipient_role: 'client', recipient_email: clientEmail,
-            title: `📦 Files Ready: ${ordTitle}`,
-            message: `Your production files are ready! Review and approve, or request modifications.`,
+            title: `💳 Payment Confirmed - Order Active!`,
+            message: `Payment confirmed for "${ordTitle}". Production is underway.`,
             type: 'success', link: `/client-portal?tab=orders&trackOrder=${resolvedOrderId}`
           });
 
@@ -627,13 +619,6 @@ export async function POST(request) {
             message: `${clientName} has requested modifications. Please review.`,
             type: 'warning', link: `/admin-portal?tab=orders&trackOrder=${resolvedOrderId}`
           });
-          await insertNotif({
-            id: `notif-rev-${resolvedOrderId}-client-${Date.now()}`,
-            recipient_role: 'client', recipient_email: clientEmail,
-            title: `🔄 Modification Request Submitted`,
-            message: `Your modification request for "${ordTitle}" has been sent to our team.`,
-            type: 'info', link: `/client-portal?tab=orders&trackOrder=${resolvedOrderId}`
-          });
 
         } else if (newStatus === 'completed') {
           await insertNotif({
@@ -642,22 +627,6 @@ export async function POST(request) {
             title: `✅ Order Completed: ${ordTitle}`,
             message: `${clientName} approved the delivery. Order is now complete.`,
             type: 'success', link: `/admin-portal?tab=orders&trackOrder=${resolvedOrderId}`
-          });
-          await insertNotif({
-            id: `notif-comp-${resolvedOrderId}-client-${Date.now()}`,
-            recipient_role: 'client', recipient_email: clientEmail,
-            title: `🎉 Order Complete — Thank You!`,
-            message: `Your order "${ordTitle}" is complete. Download your files anytime from your portal.`,
-            type: 'success', link: `/client-portal?tab=orders&trackOrder=${resolvedOrderId}`
-          });
-
-        } else if (newStatus === 'cancelled') {
-          await insertNotif({
-            id: `notif-cancel-${resolvedOrderId}-client-${Date.now()}`,
-            recipient_role: 'client', recipient_email: clientEmail,
-            title: `❌ Order Cancelled: ${ordTitle}`,
-            message: `Your order has been cancelled. Contact support if you have questions.`,
-            type: 'error', link: `/client-portal?tab=orders&trackOrder=${resolvedOrderId}`
           });
         }
       } catch (notifErr) {
@@ -760,26 +729,6 @@ export async function POST(request) {
         }]);
       } catch (notifErr) {
         console.warn('Revision admin notification notice:', notifErr.message);
-      }
-
-      // Client: submission confirmation
-      try {
-        await supabase.from('notifications').insert([{
-          id: `notif-rev-${orderId}-client-${Date.now()}`,
-          user_id: user?.id || null,
-          recipient_role: 'client',
-          recipient_email: clientEmail,
-          title: `🔄 Modification Request Submitted`,
-          message: `Your modification request for "${ordTitle}" has been sent to our digitizer team.`,
-          type: 'info',
-          link: `/client-portal?tab=orders&trackOrder=${orderId}`,
-          order_id: orderId,
-          read: false,
-          created_at: nowIso,
-          updated_at: nowIso
-        }]);
-      } catch (notifErr) {
-        console.warn('Revision client notification notice:', notifErr.message);
       }
 
       return NextResponse.json({ success: true });
@@ -1115,22 +1064,9 @@ export async function POST(request) {
           }
         }
 
-        // Notify client that files are ready & worker that upload is approved
+        // Notify worker that upload is approved
         try {
           await supabase.from('notifications').insert([
-            {
-              id: `notif-deliv-${orderId}-client-${Date.now()}`,
-              recipient_role: 'client',
-              recipient_email: targetOrder.client_email,
-              title: `📦 Files Ready: ${targetOrder.title || orderId}`,
-              message: `Your production files are ready! Review and download your digitized files.`,
-              type: 'success',
-              link: `/client-portal?tab=orders&trackOrder=${orderId}`,
-              order_id: orderId,
-              read: false,
-              created_at: nowIso,
-              updated_at: nowIso
-            },
             {
               id: `notif-appr-${orderId}-worker-${Date.now()}`,
               user_id: targetOrder.worker_id,

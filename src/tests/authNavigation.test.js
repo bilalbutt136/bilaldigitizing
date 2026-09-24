@@ -18,7 +18,7 @@ describe('Auth Navigation & Single Popup Architecture', () => {
     assert.equal(isDedicatedAuthRoute('/services/embroidery-digitizing'), false);
   });
 
-  test('2. Header "Client Login" triggers modal in-place without triggering navigate()', () => {
+  test('2. Header "Login" triggers modal in-place without triggering navigate()', () => {
     let modalMode = null;
     let isModalOpen = false;
     let navigatedTo = null;
@@ -27,12 +27,12 @@ describe('Auth Navigation & Single Popup Architecture', () => {
     const setIsAuthModalOpen = (open) => { isModalOpen = open; };
     const navigate = (to) => { navigatedTo = to; };
 
-    const handleDesktopClientLogin = () => {
+    const handleDesktopLogin = () => {
       setAuthModalMode('login');
       setIsAuthModalOpen(true);
     };
 
-    handleDesktopClientLogin();
+    handleDesktopLogin();
 
     assert.equal(modalMode, 'login', 'Modal mode must be set to login');
     assert.equal(isModalOpen, true, 'Modal open state must be set to true');

@@ -717,9 +717,9 @@ export async function POST(request) {
 
       // 5. Create Order Paid notifications for Admin and Client
       try {
-        await supabase.from('notifications').insert([
+        await supabase.from('notifications').upsert([
           {
-            id: `notif-paid-admin-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+            id: `notif-paid-admin-${targetOrderId}`,
             recipient_role: 'admin',
             title: `💰 Payment Received: Order #${targetOrderId}`,
             message: `Custom offer "${offer.title || 'Custom Design'}" ($${parseFloat(offer.final_price || offer.price || 0).toFixed(2)}) was paid. Order #${targetOrderId} is now in production.`,
@@ -727,21 +727,23 @@ export async function POST(request) {
             order_id: targetOrderId,
             link: `/admin-portal?tab=orders&trackOrder=${targetOrderId}`,
             read: false,
-            created_at: nowIso
+            created_at: nowIso,
+            updated_at: nowIso
           },
           {
-            id: `notif-paid-client-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+            id: `ord-paid-${targetOrderId}`,
             recipient_role: 'client',
             recipient_email: cleanEmail,
-            title: `🎉 Order #${targetOrderId} in Production!`,
+            title: `💳 Payment Confirmed - Order Active!`,
             message: `Payment confirmed for "${offer.title || 'Custom Design'}". Our digitizing team has begun production.`,
             type: 'success',
             order_id: targetOrderId,
             link: `/client-portal?tab=orders&trackOrder=${targetOrderId}`,
             read: false,
-            created_at: nowIso
+            created_at: nowIso,
+            updated_at: nowIso
           }
-        ]);
+        ], { onConflict: 'id' });
       } catch (notifErr) {
         console.warn('Order paid notifications insert notice:', notifErr.message);
       }

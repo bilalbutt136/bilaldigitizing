@@ -48,6 +48,11 @@ import {
 import { playNotificationSound } from '../utils/audioNotification';
 import { THEME_PRESETS, applyThemePresetToDOM } from '../utils/themePresets';
 import { formatOrderId, formatDimensions, formatFabric } from '../utils/formatters';
+import { 
+  filterAndSanitizeNotifications, 
+  isOrderPlacedNotification, 
+  isOrderPaymentConfirmedNotification 
+} from '../utils/notificationRouter';
 
 export { formatOrderId, formatDimensions, formatFabric };
 
@@ -505,82 +510,71 @@ export const StateProvider = ({ children }) => {
   const [selectedOrderForDrawer, setSelectedOrderForDrawer] = useState(null);
   const [isPricingSettingsOpen, setIsPricingSettingsOpen] = useState(false);
 
-  // Global Order Notification System State with localStorage Persistence & Live Sync
+  const getNotificationStorageKey = (email) => {
+    const clean = (email || '').toLowerCase().trim();
+    return clean ? `bdigi_notifications_${clean}` : null;
+  };
+
+  // Global Order Notification System State with Per-User Persistence & Live Sync
   const [notifications, setNotifications] = useState(() => {
     try {
       if (typeof window !== 'undefined') {
-        const saved = localStorage.getItem('bdigi_notifications');
-        if (saved) {
-          const parsed = JSON.parse(saved);
-          return Array.isArray(parsed) ? parsed.filter(n => !String(n.id || '').startsWith('msg-')) : [];
+        const savedUserStr = localStorage.getItem('bdigi_auth_user');
+        if (savedUserStr) {
+          const parsedUser = JSON.parse(savedUserStr);
+          const email = (parsedUser?.email || '').toLowerCase().trim();
+          const role = parsedUser?.role || 'customer';
+          const key = getNotificationStorageKey(email);
+          if (key) {
+            const saved = localStorage.getItem(key);
+            if (saved) {
+              const parsed = JSON.parse(saved);
+              return filterAndSanitizeNotifications(parsed, { currentUserEmail: email, isAdmin: role === 'admin' });
+            }
+          }
         }
+        try { localStorage.removeItem('bdigi_notifications'); } catch {}
       }
     } catch {}
     return [];
   });
 
-  const saveNotificationsToStorage = (updatedList) => {
+  const saveNotificationsToStorage = (updatedList, targetEmail = null) => {
     try {
       if (typeof window !== 'undefined') {
-        localStorage.setItem('bdigi_notifications', JSON.stringify(updatedList.slice(0, 60)));
+        const email = (targetEmail || authUser?.email || '').toLowerCase().trim();
+        const key = getNotificationStorageKey(email);
+        if (key) {
+          localStorage.setItem(key, JSON.stringify(updatedList.slice(0, 60)));
+        }
       }
     } catch {}
   };
 
-  const refreshNotifications = React.useCallback(async () => {
+  const refreshNotifications = React.useCallback(async (forcedEmail = null, forcedIsAdmin = null) => {
     try {
-      const freshNotifs = await fetchNotificationsFromSupabase();
+      const emailToUse = (forcedEmail || authUser?.email || '').toLowerCase().trim();
+      const isAdminToUse = forcedIsAdmin !== null ? forcedIsAdmin : (authUser?.role === 'admin' || currentView === 'admin');
+
+      // Unauthenticated sessions should never fetch or show notifications
+      if (!emailToUse && !isAdminToUse) {
+        setNotifications([]);
+        return;
+      }
+
+      const freshNotifs = await fetchNotificationsFromSupabase(emailToUse, isAdminToUse);
       if (Array.isArray(freshNotifs)) {
-        setNotifications(prev => {
-          const safePrev = Array.isArray(prev) ? prev : [];
-          const map = new Map();
-          
-          freshNotifs.forEach(n => {
-            if (n && n.id) {
-              const nType = (n.type || '').toLowerCase();
-              const nTitle = (n.title || '').toLowerCase();
-              // Item 3: Exclude message notifications (only order placed, delivered, or order-related)
-              if (nType === 'chat' || nType === 'message' || nTitle.includes('new message')) {
-                return;
-              }
-              map.set(n.id, {
-                id: n.id,
-                title: n.title || 'Notification',
-                message: n.message || n.description || '',
-                type: n.type || 'info',
-                link: n.link || null,
-                order_id: n.order_id || n.orderId || null,
-                orderId: n.order_id || n.orderId || null,
-                recipient_role: n.recipient_role || 'client',
-                recipient_email: n.recipient_email || null,
-                read: n.read === true || n.is_read === true,
-                is_read: n.read === true || n.is_read === true,
-                timestamp: n.created_at || n.timestamp || new Date().toISOString(),
-                created_at: n.created_at || n.timestamp || new Date().toISOString()
-              });
-            }
-          });
-
-          safePrev.forEach(n => {
-            if (n && n.id && !map.has(n.id)) {
-              map.set(n.id, n);
-            }
-          });
-
-          const merged = Array.from(map.values()).sort((a, b) => {
-            const timeA = new Date(a.created_at || a.timestamp || 0).getTime();
-            const timeB = new Date(b.created_at || b.timestamp || 0).getTime();
-            return timeB - timeA;
-          });
-
-          saveNotificationsToStorage(merged);
-          return merged;
+        const sanitized = filterAndSanitizeNotifications(freshNotifs, {
+          currentUserEmail: emailToUse,
+          isAdmin: isAdminToUse
         });
+        setNotifications(sanitized);
+        saveNotificationsToStorage(sanitized, emailToUse);
       }
     } catch (err) {
       console.warn('refreshNotifications notice:', err);
     }
-  }, []);
+  }, [authUser?.email, authUser?.role, currentView]);
 
   const addNotification = (notif, syncToBackend = true) => {
     if (!notif) return;
@@ -605,9 +599,14 @@ export const StateProvider = ({ children }) => {
     setNotifications(prev => {
       const safePrev = Array.isArray(prev) ? prev : [];
       const filtered = safePrev.filter(n => n.id !== newNotif.id);
-      const nextList = [newNotif, ...filtered];
-      saveNotificationsToStorage(nextList);
-      return nextList;
+      const emailToUse = (authUser?.email || newNotif.recipient_email || '').toLowerCase().trim();
+      const isAdminToUse = authUser?.role === 'admin' || currentView === 'admin';
+      const sanitized = filterAndSanitizeNotifications([newNotif, ...filtered], {
+        currentUserEmail: emailToUse,
+        isAdmin: isAdminToUse
+      });
+      saveNotificationsToStorage(sanitized, emailToUse);
+      return sanitized;
     });
 
     if (notif.playSound === true) {
@@ -1241,15 +1240,37 @@ export const StateProvider = ({ children }) => {
           }
         } catch {}
 
-        const notifRole = notif.recipient_role || notif.recipientRole || 'all';
-        const notifEmail = (notif.recipient_email || notif.recipientEmail || '').toLowerCase().trim();
+        // Strict privacy protection: unauthenticated visitors receive zero notifications
+        if (!currentUserEmail && currentRole !== 'admin') return;
 
-        const isForMe = 
-          notifRole === 'all' ||
-          (currentRole === 'admin' && notifRole === 'admin') ||
-          (currentRole !== 'admin' && (notifRole === 'client' || (notifEmail && notifEmail === currentUserEmail)));
+        const notifRole = (notif.recipient_role || notif.recipientRole || 'all').toLowerCase();
+        const notifEmail = (notif.recipient_email || notif.recipientEmail || notif.client_email || '').toLowerCase().trim();
+
+        let isForMe = false;
+        if (currentRole === 'admin') {
+          isForMe = (notifRole === 'admin' || notifRole === 'all');
+        } else {
+          // Regular client: NEVER allow admin or worker notifications
+          if (notifRole === 'admin' || notifRole === 'worker') {
+            isForMe = false;
+          } else if (notifEmail) {
+            isForMe = (notifEmail === currentUserEmail);
+          } else {
+            isForMe = (notifRole === 'all');
+          }
+        }
 
         if (isForMe) {
+          // For customers: only Placed and Payment Confirmed are allowed for orders
+          if (currentRole !== 'admin') {
+            const isOrdPlaced = isOrderPlacedNotification(notif);
+            const isOrdPaid = isOrderPaymentConfirmedNotification(notif);
+            const isOrderRelated = Boolean(notif.order_id || notif.orderId || isOrdPlaced || isOrdPaid);
+            if (isOrderRelated && !isOrdPlaced && !isOrdPaid) {
+              return; // Ignore other order status notifications (delivered, revisions, etc.)
+            }
+          }
+
           addNotification({
             id: notif.id,
             title: notif.title,
@@ -1258,6 +1279,8 @@ export const StateProvider = ({ children }) => {
             link: notif.link,
             order_id: notif.order_id || notif.orderId,
             orderId: notif.order_id || notif.orderId,
+            recipient_role: notif.recipient_role,
+            recipient_email: notif.recipient_email,
             timestamp: notif.created_at || notif.timestamp || new Date().toISOString(),
             read: notif.read || false
           }, false);
@@ -1332,12 +1355,14 @@ export const StateProvider = ({ children }) => {
             setCurrentView('public');
             setWalletBalance(0);
             setOrders([]); // Wipe orders state immediately on sign out
+            setNotifications([]); // Wipe notifications state immediately on sign out
             try {
               if (typeof window !== 'undefined') {
                 localStorage.removeItem('bdigi_auth_user');
                 localStorage.removeItem('bdigi_current_view');
                 localStorage.removeItem('bdigi_my_order_ids');
                 localStorage.removeItem('bdigi_user_email');
+                localStorage.removeItem('bdigi_notifications');
                 if (typeof document !== 'undefined') {
                   document.cookie = 'bdigi_auth=; path=/; max-age=0; SameSite=Lax';
                   document.cookie = 'bdigi_user_email=; path=/; max-age=0; SameSite=Lax';
@@ -1375,30 +1400,14 @@ export const StateProvider = ({ children }) => {
               if (!cancelled && freshOrders) setOrders(freshOrders);
             });
 
-            fetchNotificationsFromSupabase().then(freshNotifs => {
-              if (!cancelled && Array.isArray(freshNotifs) && freshNotifs.length > 0) {
-                setNotifications(prev => {
-                  const safePrev = Array.isArray(prev) ? prev : [];
-                  const idSet = new Set(safePrev.map(n => n.id));
-                  const merged = [...safePrev];
-                  for (const fn of freshNotifs) {
-                    if (!idSet.has(fn.id)) {
-                      merged.push({
-                        id: fn.id,
-                        title: fn.title,
-                        message: fn.message,
-                        type: fn.type || 'info',
-                        link: fn.link,
-                        order_id: fn.order_id,
-                        orderId: fn.order_id,
-                        timestamp: fn.created_at || fn.timestamp,
-                        read: fn.read || false
-                      });
-                    }
-                  }
-                  saveNotificationsToStorage(merged);
-                  return merged;
+            fetchNotificationsFromSupabase(session.user.email, role === 'admin').then(freshNotifs => {
+              if (!cancelled && Array.isArray(freshNotifs)) {
+                const sanitized = filterAndSanitizeNotifications(freshNotifs, {
+                  currentUserEmail: session.user.email,
+                  isAdmin: role === 'admin'
                 });
+                setNotifications(sanitized);
+                saveNotificationsToStorage(sanitized, session.user.email);
               }
             });
 
@@ -1480,11 +1489,14 @@ export const StateProvider = ({ children }) => {
     setIsAuthModalOpen(false);
     setCurrentView('public');
     setWalletBalance(0);
+    setOrders([]);
+    setNotifications([]);
 
     try {
       sessionStorage.clear();
       localStorage.removeItem('bdigi_auth_user');
       localStorage.removeItem('bdigi_current_view');
+      localStorage.removeItem('bdigi_notifications');
       if (typeof document !== 'undefined') {
         document.cookie = 'bdigi_auth=; path=/; max-age=0; SameSite=Lax';
         document.cookie = 'bdigi_user_email=; path=/; max-age=0; SameSite=Lax';
@@ -1773,7 +1785,8 @@ export const StateProvider = ({ children }) => {
         await createOrderInSupabase(fullOrderPayload);
         setOrders(prev => [fullOrderPayload, ...prev]);
         showToast(`Order ${formatOrderId(localId)} created successfully!`, 'success');
-        // Client notification (for customer's own bell & mobile notification drawer)
+        
+        // Client Notification 1: Order Placed (Local state only; DB already populated by /api/orders)
         addNotification({
           id: `ord-created-${localId}`,
           title: `🎉 Order ${formatOrderId(localId)} Placed!`,
@@ -1786,7 +1799,23 @@ export const StateProvider = ({ children }) => {
           orderId: localId,
           recipient_role: 'client',
           recipient_email: (fullOrderPayload.clientEmail || '').toLowerCase().trim()
-        });
+        }, false);
+
+        // Client Notification 2: Payment Confirmed (if paid immediately at creation)
+        if (isAlreadyPaid) {
+          addNotification({
+            id: `ord-paid-${localId}`,
+            title: `💳 Payment Confirmed - Order Active!`,
+            message: `Payment confirmed for Order ${formatOrderId(localId)}. Production is underway.`,
+            type: 'success',
+            link: '/client-portal',
+            order_id: localId,
+            orderId: localId,
+            recipient_role: 'client',
+            recipient_email: (fullOrderPayload.clientEmail || '').toLowerCase().trim()
+          }, false);
+        }
+
         // Broadcast admin notification in real-time so admin portal gets it immediately
         const adminNotif = {
           id: `notif-ord-${localId}-admin`,
@@ -1906,45 +1935,29 @@ export const StateProvider = ({ children }) => {
 
     showToast(`Order ${formatOrderId(orderId)} status updated to ${newStatus.toUpperCase()}`, 'success');
 
-    // In-app Notification + Email trigger based on new status
-    if (newStatus === 'delivered') {
+    // Client Notification 2: Payment Confirmed (Only when transitioning to paid)
+    const wasAlreadyPaid = String(targetOrder?.payment_status || targetOrder?.paymentStatus || '').toLowerCase() === 'paid';
+    const isNowPaid = safeExtraData.paymentStatus === 'paid' || safeExtraData.payment_status === 'paid' || newStatus === 'in_progress';
+
+    if (!wasAlreadyPaid && isNowPaid) {
       addNotification({
-        id: `ord-deliv-${orderId}`,
-        title: `📦 Order ${formatOrderId(orderId)} Files Delivered!`,
-        message: `Your digitized production files are ready for inspection and download.`,
+        id: `ord-paid-${cleanTargetId}`,
+        title: `💳 Payment Confirmed - Order Active!`,
+        message: `Payment confirmed for Order ${formatOrderId(orderId)}. Production is underway.`,
         type: 'success',
-        order_id: orderId,
-        orderId: orderId,
-        link: `/client-portal?tab=orders&trackOrder=${orderId}`,
+        order_id: cleanTargetId,
+        orderId: cleanTargetId,
+        link: `/client-portal?tab=orders&trackOrder=${cleanTargetId}`,
         recipient_role: 'client',
         recipient_email: targetOrder?.clientEmail || null
-      });
+      }, false);
+    }
+
+    // Email triggers based on new status
+    if (newStatus === 'delivered') {
       triggerEmailNotification('ORDER_DELIVERED', { ...(targetOrder || {}), id: orderId, ...safeExtraData });
     } else if (newStatus === 'completed') {
-      addNotification({
-        id: `ord-comp-${orderId}`,
-        title: `✅ Order ${formatOrderId(orderId)} Accepted & Completed`,
-        message: `Deliverables confirmed and archived in your studio portfolio.`,
-        type: 'success',
-        order_id: orderId,
-        orderId: orderId,
-        link: authUser?.role === 'admin' ? `/admin-portal?tab=orders&trackOrder=${orderId}` : `/client-portal?tab=orders&trackOrder=${orderId}`,
-        recipient_role: 'client',
-        recipient_email: targetOrder?.clientEmail || null
-      });
       triggerEmailNotification('ORDER_COMPLETED', { ...(targetOrder || {}), id: orderId, ...safeExtraData });
-    } else {
-      addNotification({
-        id: `ord-stat-${orderId}-${newStatus}`,
-        title: `🔔 Order ${formatOrderId(orderId)}: ${newStatus.toUpperCase()}`,
-        message: `Order status is now updated to ${newStatus.toUpperCase()}.`,
-        type: 'info',
-        order_id: orderId,
-        orderId: orderId,
-        link: authUser?.role === 'admin' ? `/admin-portal?tab=orders&trackOrder=${orderId}` : `/client-portal?tab=orders&trackOrder=${orderId}`,
-        recipient_role: authUser?.role === 'admin' ? 'client' : 'admin',
-        recipient_email: targetOrder?.clientEmail || null
-      });
     }
   };
 
@@ -2002,16 +2015,6 @@ export const StateProvider = ({ children }) => {
     }));
 
     showToast(`Modification request sent for Order ${formatOrderId(orderId)}`, 'info');
-    addNotification({
-      id: `rev-${orderId}-${Date.now()}`,
-      title: `🔄 Modification Request Submitted`,
-      message: revisionNote ? `"${revisionNote.slice(0, 60)}"` : 'Your modification request has been sent to the digitizer team.',
-      type: 'info',
-      order_id: orderId,
-      orderId: orderId,
-      link: `/client-portal?tab=orders&trackOrder=${orderId}`,
-      showToast: false
-    });
 
     const targetOrder = orders.find(o => o.id === orderId);
     triggerEmailNotification('ORDER_REVISION', { 

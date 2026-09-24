@@ -281,3 +281,168 @@ export function handleNotificationClick(notif, context = {}) {
     if (typeof navigate === 'function') navigate('/client-portal');
   }
 }
+
+/**
+ * Detects if a notification represents an "Order Placed" event.
+ */
+export function isOrderPlacedNotification(notif) {
+  if (!notif) return false;
+  const id = String(notif.id || '').toLowerCase();
+  const title = String(notif.title || '').toLowerCase();
+
+  if (id.startsWith('ord-created-') || id.includes('notif-ord-') || id.startsWith('notif-created-')) {
+    return true;
+  }
+  if (
+    title.includes('order placed') || 
+    title.includes('order received') || 
+    title.includes('order submitted') || 
+    title.includes('placed successfully') || 
+    title.includes('placed!')
+  ) {
+    return true;
+  }
+  return false;
+}
+
+/**
+ * Detects if a notification represents a "Payment Confirmed" event.
+ */
+export function isOrderPaymentConfirmedNotification(notif) {
+  if (!notif) return false;
+  const id = String(notif.id || '').toLowerCase();
+  const title = String(notif.title || '').toLowerCase();
+  const message = String(notif.message || notif.body || '').toLowerCase();
+
+  if (id.startsWith('ord-paid-') || id.includes('notif-paid-')) {
+    return true;
+  }
+  if (
+    title.includes('payment confirmed') || 
+    title.includes('payment received') || 
+    title.includes('offer paid') || 
+    title.includes('in production!')
+  ) {
+    return true;
+  }
+  if (
+    message.includes('payment confirmed') || 
+    message.includes('payment has been received') || 
+    message.includes('payment received')
+  ) {
+    return true;
+  }
+  return false;
+}
+
+/**
+ * Filters and sanitizes notifications:
+ * 1. Privacy Isolation: Guests see 0 notifications. Clients strictly see only notifications matching their email.
+ * 2. Message Suppression: Excludes chat/message notifications (which have their own dedicated chat badge).
+ * 3. Two-notifications-per-order rule: For any single order, at most 2 notifications are shown to clients:
+ *    - Exactly 1 Order Placed notification
+ *    - Exactly 1 Payment Confirmed notification
+ */
+export function filterAndSanitizeNotifications(notifications, { currentUserEmail = '', isAdmin = false } = {}) {
+  if (!Array.isArray(notifications) || notifications.length === 0) return [];
+
+  const cleanUserEmail = (currentUserEmail || '').toLowerCase().trim();
+
+  // If unauthenticated (no email and not admin), strictly return empty array
+  if (!cleanUserEmail && !isAdmin) {
+    return [];
+  }
+
+  // Maps to enforce at most 1 Placed and 1 Paid notification per order for customers
+  const orderPlacedMap = new Map(); // orderId -> notification
+  const orderPaidMap = new Map();   // orderId -> notification
+  const otherNotifications = [];
+
+  for (const notif of notifications) {
+    if (!notif || !notif.id) continue;
+
+    const notifType = String(notif.type || '').toLowerCase();
+    const notifTitle = String(notif.title || '').toLowerCase();
+
+    // 1. Exclude chat / direct messages
+    if (notifType === 'chat' || notifType === 'message' || notifTitle.includes('new message')) {
+      continue;
+    }
+
+    // 2. Strict Recipient & Privacy Isolation
+    const notifRole = String(notif.recipient_role || notif.recipientRole || '').toLowerCase().trim();
+    const notifEmail = String(notif.recipient_email || notif.recipientEmail || notif.client_email || '').toLowerCase().trim();
+
+    if (isAdmin) {
+      // Admin sees admin notifications and broadcasts
+      const isForAdmin = notifRole === 'admin' || notifRole === 'all' || notifTitle.startsWith('🚨') || notifTitle.includes('new order:');
+      if (!isForAdmin) continue;
+    } else {
+      // Customer: NEVER allow admin or worker notifications
+      if (notifRole === 'admin' || notifRole === 'worker') {
+        continue;
+      }
+      if (notifEmail) {
+        if (notifEmail !== cleanUserEmail) {
+          continue; // Strict privacy: belongs to another client
+        }
+      } else {
+        // If no recipient email, ONLY allowed if explicitly broadcast to 'all'
+        if (notifRole !== 'all') {
+          continue;
+        }
+      }
+    }
+
+    // If admin, preserve all admin notifications
+    if (isAdmin) {
+      otherNotifications.push(notif);
+      continue;
+    }
+
+    // 3. For Customers: Check if notification is tied to an order
+    let orderId = notif.order_id || notif.orderId || null;
+    if (!orderId) {
+      const parsed = parseNotificationTarget(notif);
+      orderId = parsed.orderId;
+    }
+
+    if (orderId) {
+      const cleanOrderId = String(orderId).trim().replace(/^#+/, '');
+      const isPlaced = isOrderPlacedNotification(notif);
+      const isPaid = isOrderPaymentConfirmedNotification(notif);
+
+      if (isPlaced) {
+        // Keep only 1 placed notification per order (prefer latest)
+        if (!orderPlacedMap.has(cleanOrderId)) {
+          orderPlacedMap.set(cleanOrderId, notif);
+        }
+      } else if (isPaid) {
+        // Keep only 1 paid notification per order (prefer latest)
+        if (!orderPaidMap.has(cleanOrderId)) {
+          orderPaidMap.set(cleanOrderId, notif);
+        }
+      }
+      // Any other order notification (revision, delivered, status update) is dropped per user rule:
+      // "make sure kro k one order pr just two notification ho important sa, ak jab place ho or ak tab jub payment confirm ho."
+    } else {
+      // Non-order notification (e.g. system broadcast or custom offer received)
+      otherNotifications.push(notif);
+    }
+  }
+
+  const combined = [
+    ...Array.from(orderPlacedMap.values()),
+    ...Array.from(orderPaidMap.values()),
+    ...otherNotifications
+  ];
+
+  // Sort descending by timestamp / created_at
+  combined.sort((a, b) => {
+    const timeA = new Date(a.created_at || a.timestamp || 0).getTime();
+    const timeB = new Date(b.created_at || b.timestamp || 0).getTime();
+    return timeB - timeA;
+  });
+
+  return combined;
+}

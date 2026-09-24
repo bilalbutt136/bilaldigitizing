@@ -36,7 +36,7 @@ import {
 } from 'lucide-react';
 import { UserMenuDropdown } from './common/UserMenuDropdown';
 import { ThemeToggle } from './common/ThemeToggle';
-import { handleNotificationClick } from '../utils/notificationRouter';
+import { handleNotificationClick, filterAndSanitizeNotifications } from '../utils/notificationRouter';
 
 export const HeaderNav = () => {
   const navigate = useNavigate();
@@ -85,6 +85,18 @@ export const HeaderNav = () => {
   const currentPath = mounted ? (location?.pathname || '') : '';
   const isAdmin = mounted && (safeAuthUser?.role === 'admin' || currentPath.includes('admin') || safeCurrentView === 'admin');
   const isClient = mounted && safeIsAuthenticated && !isAdmin;
+
+  const displayNotifications = React.useMemo(() => {
+    if (!mounted || !safeIsAuthenticated) return [];
+    return filterAndSanitizeNotifications(notifications, {
+      currentUserEmail: safeAuthUser?.email || '',
+      isAdmin
+    });
+  }, [mounted, safeIsAuthenticated, notifications, safeAuthUser?.email, isAdmin]);
+
+  const displayUnreadNotifsCount = React.useMemo(() => {
+    return displayNotifications.filter(n => !n.read && !n.is_read).length;
+  }, [displayNotifications]);
 
   const [isServicesOpen, setIsServicesOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -677,7 +689,7 @@ export const HeaderNav = () => {
                   setIsAuthModalOpen(true);
                 }}
               >
-                <User size={14} /> Client Login
+                <User size={14} /> Login
               </button>
             ) : (
               <>
@@ -824,7 +836,7 @@ export const HeaderNav = () => {
                       title="Notifications"
                     >
                       <Bell size={17} />
-                      {unreadNotificationsCount > 0 && (
+                      {displayUnreadNotifsCount > 0 && (
                         <span style={{
                           position: 'absolute',
                           top: '2px',
@@ -841,7 +853,7 @@ export const HeaderNav = () => {
                           justifyContent: 'center',
                           border: '1.5px solid var(--color-surface, #ffffff)'
                         }}>
-                          {unreadNotificationsCount}
+                          {displayUnreadNotifsCount}
                         </span>
                       )}
                     </button>
@@ -864,9 +876,9 @@ export const HeaderNav = () => {
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem', borderBottom: '1px solid var(--color-border)', paddingBottom: '0.65rem' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
                             <span style={{ fontSize: '0.92rem', fontWeight: 800, color: 'var(--color-text-primary, var(--navy-900))' }}>Notifications</span>
-                            {unreadNotificationsCount > 0 && (
+                            {displayUnreadNotifsCount > 0 && (
                               <span style={{ fontSize: '0.72rem', background: 'var(--color-primary-light)', color: 'var(--color-primary)', border: '1px solid var(--color-primary)', padding: '0.1rem 0.45rem', borderRadius: '10px', fontWeight: 800 }}>
-                                {unreadNotificationsCount} unread
+                                {displayUnreadNotifsCount} unread
                               </span>
                             )}
                           </div>
@@ -880,12 +892,12 @@ export const HeaderNav = () => {
                         </div>
 
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', maxHeight: '300px', overflowY: 'auto' }}>
-                          {notifications.length === 0 ? (
+                          {displayNotifications.length === 0 ? (
                             <div style={{ padding: '1.5rem 1rem', textAlign: 'center', color: 'var(--color-text-muted)', fontSize: '0.85rem' }}>
                               No notifications yet.
                             </div>
                           ) : (
-                            notifications.map((item) => (
+                            displayNotifications.map((item) => (
                               <div 
                                 key={item.id} 
                                 onClick={() => {

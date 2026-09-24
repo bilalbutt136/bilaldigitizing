@@ -21,7 +21,7 @@ import {
 } from 'lucide-react';
 import { useAppState } from '../../context/StateContext';
 import { useNavigate } from '../../utils/navigation';
-import { handleNotificationClick, parseNotificationTarget } from '../../utils/notificationRouter';
+import { handleNotificationClick, parseNotificationTarget, filterAndSanitizeNotifications } from '../../utils/notificationRouter';
 
 export const ClientNotificationsView = ({ onNavigateToOrder, userEmail, isAdmin = false }) => {
   const navigate = useNavigate();
@@ -133,19 +133,21 @@ export const ClientNotificationsView = ({ onNavigateToOrder, userEmail, isAdmin 
     return { bg: 'var(--color-primary-light)', border: 'var(--color-primary)', icon: 'var(--color-primary-light)' };
   };
 
-  const filteredNotifs = notifications.filter(n => {
-    const nType = (n.type || '').toLowerCase();
-    const nTitle = (n.title || '').toLowerCase();
-    // Item 3: Exclude message notifications
-    if (nType === 'chat' || nType === 'message' || nTitle.includes('new message')) {
-      return false;
-    }
+  const userEmailToUse = (userEmail || authUser?.email || '').toLowerCase().trim();
+  const isAdminToUse = Boolean(isAdmin || authUser?.role === 'admin');
+
+  const sanitizedNotifs = filterAndSanitizeNotifications(notifications, {
+    currentUserEmail: userEmailToUse,
+    isAdmin: isAdminToUse
+  });
+
+  const filteredNotifs = sanitizedNotifs.filter(n => {
     const isUnread = !n.is_read && !n.read;
     if (filter === 'unread') return isUnread;
     return true;
   });
 
-  const unreadCount = unreadNotificationsCount;
+  const unreadCount = sanitizedNotifs.filter(n => !n.is_read && !n.read).length;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', width: '100%', maxWidth: '800px', margin: '0 auto' }}>

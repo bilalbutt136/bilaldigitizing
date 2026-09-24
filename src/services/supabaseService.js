@@ -1,5 +1,6 @@
 import { supabase, isSupabaseConfigured } from '../lib/supabase/client';
 import { getSiteUrl } from '../utils/siteUrl';
+import { filterAndSanitizeNotifications } from '../utils/notificationRouter';
 
 export { isSupabaseConfigured };
 
@@ -1649,17 +1650,26 @@ export function subscribeToOrders(onOrderChange) {
   };
 }
 
-export async function fetchNotificationsFromSupabase(userEmail = '') {
+export async function fetchNotificationsFromSupabase(userEmail = '', isAdmin = false) {
   try {
     if (!isSupabaseConfigured || !supabase) return [];
     const cleanEmail = (userEmail || '').toLowerCase().trim();
+
+    // STRICT PRIVACY PROTECTION:
+    // If not admin and no email provided, unauthenticated visitors get zero notifications.
+    if (!isAdmin && !cleanEmail) {
+      return [];
+    }
+
     let query = supabase
       .from('notifications')
       .select('*')
       .order('created_at', { ascending: false })
       .limit(100);
 
-    if (cleanEmail) {
+    if (isAdmin) {
+      query = query.or('recipient_role.eq.admin,recipient_role.eq.all');
+    } else {
       query = query.or(`recipient_email.ilike.${cleanEmail},recipient_role.eq.all`);
     }
 
@@ -1668,7 +1678,11 @@ export async function fetchNotificationsFromSupabase(userEmail = '') {
       console.warn('Supabase fetch notifications error:', error.message);
       return [];
     }
-    return data || [];
+
+    return filterAndSanitizeNotifications(data || [], {
+      currentUserEmail: cleanEmail,
+      isAdmin
+    });
   } catch { return []; }
 }
 
@@ -1677,11 +1691,16 @@ export async function fetchNotificationsFromSupabase(userEmail = '') {
  * Calls onNewNotification(payload) on both INSERT and UPDATE events.
  * Returns an unsubscribe cleanup function.
  */
-export function subscribeToNotifications({ onNewNotification, onNotificationUpdate, userEmail, isAdmin = false } = {}) {
+export function subscribeToNotifications({ onNewNotification, onNotificationUpdate, userEmail = '', isAdmin = false } = {}) {
+  const cleanEmail = (userEmail || '').toLowerCase().trim();
+
   const handler = (payload) => {
     if (!payload) return;
     const notif = payload.new || payload.record || payload;
     if (!notif) return;
+
+    // Strict privacy protection: Unauthenticated sessions receive zero live notifications
+    if (!isAdmin && !cleanEmail) return;
 
     // Verify recipient permissions strictly
     if (isAdmin) {
@@ -1690,16 +1709,18 @@ export function subscribeToNotifications({ onNewNotification, onNotificationUpda
       }
     } else {
       const recipientEmail = (notif.recipient_email || notif.client_email || notif.clientEmail || '').toLowerCase().trim();
-      const thisEmail = (userEmail || '').toLowerCase().trim();
       
-      // If notification is explicitly for admin only, do not show to client
-      if (notif.recipient_role === 'admin') return;
+      // If notification is explicitly for admin or worker, do not show to client
+      if (notif.recipient_role === 'admin' || notif.recipient_role === 'worker') return;
 
       // If notification has a specific recipient email, it MUST match this client's email
-      if (recipientEmail && thisEmail && recipientEmail !== thisEmail) return;
+      if (recipientEmail && recipientEmail !== cleanEmail) return;
 
       // If notification is role-specific to client, require email match if email is present
-      if (notif.recipient_role === 'client' && recipientEmail && recipientEmail !== thisEmail) return;
+      if (notif.recipient_role === 'client' && recipientEmail && recipientEmail !== cleanEmail) return;
+
+      // If notification has no email, only allow if recipient_role === 'all'
+      if (!recipientEmail && notif.recipient_role !== 'all') return;
     }
 
     if (payload.eventType === 'UPDATE') {

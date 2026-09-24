@@ -54,25 +54,6 @@ async function logNotificationToDb({
     if (error && error.code !== 'PGRST205') {
       console.warn('[logNotificationToDb] email_notification_logs insert warning:', error.message);
     }
-
-    if (status === 'sent' || status === 'rate_limited') {
-      try {
-        await supabase.from('notifications').insert([
-          {
-            id: `notif-email-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
-            recipient_email: recipientEmail,
-            recipient_role: eventType.includes('admin') ? 'admin' : 'client',
-            title: subject || `Notification: ${eventType}`,
-            message: payload?.messageSnippet || payload?.instructions || `System notification dispatched to ${recipientEmail}`,
-            type: status === 'sent' ? 'info' : 'warning',
-            order_id: payload?.orderId || null,
-            read: false,
-            created_at: now,
-            updated_at: now
-          }
-        ]);
-      } catch {}
-    }
   } catch (err) {
     console.warn('[logNotificationToDb] Audit log error notice:', err?.message);
   }

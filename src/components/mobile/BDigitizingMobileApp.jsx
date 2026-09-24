@@ -73,7 +73,7 @@ import {
 } from '../../services/supabaseService';
 import MobileSimpleOrderModal from '../customer/MobileSimpleOrderModal';
 import { THEME_PRESETS } from '../../utils/themePresets';
-import { handleNotificationClick } from '../../utils/notificationRouter';
+import { handleNotificationClick, filterAndSanitizeNotifications } from '../../utils/notificationRouter';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import { GoogleCustomSignInButton } from '../auth/GoogleCustomSignInButton';
 
@@ -609,11 +609,15 @@ export const BDigitizingMobileApp = () => {
   };
 
   // Combine global in-memory notifications with Supabase live notifications
-  const combinedNotifications = [
+  const rawCombinedNotifications = [
     ...(Array.isArray(notifications) ? notifications : []),
     ...(Array.isArray(globalNotifications) ? globalNotifications : [])
-  ].filter((n, idx, arr) => arr.findIndex(item => String(item.id) === String(n.id)) === idx)
-   .sort((a, b) => new Date(b.created_at || b.timestamp || 0) - new Date(a.created_at || a.timestamp || 0));
+  ].filter((n, idx, arr) => arr.findIndex(item => String(item.id) === String(n.id)) === idx);
+
+  const combinedNotifications = filterAndSanitizeNotifications(rawCombinedNotifications, {
+    currentUserEmail: userEmail,
+    isAdmin: authUser?.role === 'admin'
+  });
 
   const unreadNotifCount = combinedNotifications.filter(n => !n.is_read && !n.read).length;
 
