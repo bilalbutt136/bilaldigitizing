@@ -197,9 +197,17 @@ export function handleNotificationClick(notif, context = {}) {
     return;
   }
 
-  // 4. Standalone Mobile App Mode
-  if (mobileMode === 'app') {
-    if (target.type === 'order' || target.type === 'offer') {
+  const isMobile = mobileMode === 'app' || (typeof window !== 'undefined' && (
+    window.innerWidth <= 768 ||
+    /Android|iPhone|iPad|iPod|Opera Mini|IEMobile|WPDesktop/i.test(navigator.userAgent || '') ||
+    window.matchMedia?.('(display-mode: standalone)').matches
+  ));
+
+  // 4. Standalone Mobile App Mode / Mobile Viewport
+  if (isMobile) {
+    if (target.type === 'chat' || target.type === 'inbox') {
+      if (typeof setMobileTab === 'function') setMobileTab('inbox');
+    } else if (target.type === 'order' || target.type === 'offer') {
       if (typeof setMobileTab === 'function') setMobileTab('orders');
       if (target.orderId) {
         if (typeof openOrderTrackerDrawer === 'function') {

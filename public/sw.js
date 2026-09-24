@@ -136,7 +136,8 @@ self.addEventListener('notificationclick', (event) => {
     return;
   }
 
-  const targetUrl = event.notification.data?.url || '/';
+  const rawUrl = event.notification.data?.url || '/?app=true';
+  const targetUrl = (rawUrl === '/' || !rawUrl) ? '/?app=true' : rawUrl;
 
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {

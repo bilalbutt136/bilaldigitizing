@@ -140,6 +140,7 @@ export const CheckoutModal = () => {
     currentUser,
     refreshOrders,
     protectedNavigate,
+    mobileMode,
     theme
   } = useAppState();
 
@@ -308,7 +309,8 @@ export const CheckoutModal = () => {
             orderId: checkoutSession?.orderId || null,
             offerId: checkoutSession?.offerId || null,
             conversationId: checkoutSession?.conversationId || null,
-            title: checkoutSession?.title || checkoutSession?.orderTitle || 'Custom Design Order'
+            title: checkoutSession?.title || checkoutSession?.orderTitle || 'Custom Design Order',
+            isApp: mobileMode === 'app' || (typeof window !== 'undefined' && (window.innerWidth <= 768 || /Android|iPhone|iPad|iPod|Opera Mini|IEMobile|WPDesktop/i.test(navigator.userAgent || '')))
           })
         });
         const stripeData = await stripeRes.json();

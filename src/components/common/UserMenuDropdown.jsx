@@ -258,6 +258,9 @@ export const UserMenuDropdown = () => {
                 if (typeof window !== 'undefined') {
                   if (window.location.pathname.includes('client-portal')) {
                     if (setIsDepositModalOpen) setIsDepositModalOpen(true);
+                  } else if (protectedNavigate) {
+                    protectedNavigate('customer', false, 'wallet');
+                    if (setIsDepositModalOpen) setIsDepositModalOpen(true);
                   } else {
                     window.location.href = '/client-portal?tab=wallet';
                   }

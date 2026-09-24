@@ -231,15 +231,15 @@ export const StateProvider = ({ children }) => {
                              window.navigator.standalone === true;
         if (isStandalone) return 'app';
 
-        const savedMode = localStorage.getItem('bdigi_mobile_mode');
-        if (savedMode === 'app' || savedMode === 'website') {
-          return savedMode;
-        }
-
         const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent || '');
         const isSmallScreen = window.innerWidth <= 768;
         if (isMobileDevice || isSmallScreen) {
           return 'app';
+        }
+
+        const savedMode = localStorage.getItem('bdigi_mobile_mode');
+        if (savedMode === 'app' || savedMode === 'website') {
+          return savedMode;
         }
       } catch {}
     }
@@ -271,7 +271,7 @@ export const StateProvider = ({ children }) => {
   });
 
   const setMobileTab = useCallback((newTab) => {
-    setMobileActiveTab(newTab);
+    setMobileActiveTab(prev => (prev === newTab ? prev : newTab));
     if (typeof window !== 'undefined') {
       try {
         localStorage.setItem('bdigi_mobile_active_tab', newTab);
@@ -285,7 +285,6 @@ export const StateProvider = ({ children }) => {
         } else {
           window.history.pushState({ app: true, tab: newTab }, '', url.toString());
         }
-        window.dispatchEvent(new CustomEvent('bdigi_switch_tab', { detail: { tab: newTab } }));
       } catch {}
     }
   }, []);
@@ -310,13 +309,13 @@ export const StateProvider = ({ children }) => {
       } else if (urlApp || isStandalone) {
         targetMode = 'app';
         localStorage.setItem('bdigi_mobile_mode', 'app');
+      } else if (isMobileDevice || isSmallScreen) {
+        targetMode = 'app';
+        localStorage.setItem('bdigi_mobile_mode', 'app');
       } else if (savedMode === 'app') {
         targetMode = 'app';
       } else if (savedMode === 'website') {
         targetMode = 'website';
-      } else if (isMobileDevice || isSmallScreen) {
-        targetMode = 'app';
-        localStorage.setItem('bdigi_mobile_mode', 'app');
       }
 
       setMobileModeState(targetMode);
@@ -1638,8 +1637,14 @@ export const StateProvider = ({ children }) => {
       } catch {}
     }
 
-    // In mobile app mode, handle views natively via mobile tabs to prevent dropping users into desktop Chrome
-    if (mobileMode === 'app') {
+    // In mobile app mode (or on mobile screens/devices), handle views natively via mobile tabs to prevent dropping users into desktop Chrome
+    const isMobileDeviceOrSmallScreen = typeof window !== 'undefined' && (
+      /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent || '') || 
+      window.innerWidth <= 768 || 
+      window.matchMedia('(display-mode: standalone)').matches || 
+      window.navigator.standalone === true
+    );
+    if (mobileMode === 'app' || isMobileDeviceOrSmallScreen) {
       if (targetView === 'public') {
         setCurrentView('public');
         setMobileTab('home');
@@ -2144,6 +2149,29 @@ export const StateProvider = ({ children }) => {
 
 
   const openOrderWizard = (initialData = null) => {
+    const isMobileDeviceOrSmallScreen = typeof window !== 'undefined' && (
+      /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent || '') || 
+      window.innerWidth <= 768 || 
+      window.matchMedia('(display-mode: standalone)').matches || 
+      window.navigator.standalone === true
+    );
+
+    if (mobileMode === 'app' || isMobileDeviceOrSmallScreen) {
+      setMobileModeState('app');
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem('bdigi_mobile_mode', 'app');
+          document.documentElement.classList.add('mobile-app-active');
+          document.documentElement.setAttribute('data-mobile-mode', 'app');
+        } catch {}
+      }
+      setMobileTab('home');
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('bdigi_open_mobile_order', { detail: initialData }));
+      }
+      return;
+    }
+
     if (initialData !== undefined && initialData !== null) {
       setOrderWizardInitialData(initialData);
     }

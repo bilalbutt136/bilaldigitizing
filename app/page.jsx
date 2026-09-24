@@ -22,8 +22,14 @@ export default function HomePage() {
     }
   }, [currentView, setCurrentView]);
 
-  // If in Standalone App mode (or user toggled App Mode), render the 5-tab Fiverr-style mobile app
-  if (mobileMode === 'app') {
+  const isMobile = mobileMode === 'app' || (typeof window !== 'undefined' && (
+    window.innerWidth <= 768 ||
+    /Android|iPhone|iPad|iPod|Opera Mini|IEMobile|WPDesktop/i.test(navigator.userAgent || '') ||
+    window.matchMedia?.('(display-mode: standalone)').matches
+  ));
+
+  // If in Standalone App mode or on mobile screen/device, render the 5-tab mobile app
+  if (isMobile && mobileMode !== 'website') {
     return (
       <div className="mobile-app-wrapper" style={{ width: '100%', minHeight: '100vh', background: '#ffffff' }}>
         <BDigitizingMobileApp />

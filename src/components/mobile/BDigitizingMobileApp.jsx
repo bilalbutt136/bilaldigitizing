@@ -189,7 +189,8 @@ export const BDigitizingMobileApp = () => {
     }
   }, [mobileTab]);
 
-  const setMobileTab = (newTab) => {
+  const setMobileTab = (newTab, force = false) => {
+    if (newTab === mobileTab && !force) return;
     setMobileTabState(newTab);
     if (newTab === 'inbox' || newTab === 'chat' || newTab === 'support') {
       setMobileChatMode('inbox');
@@ -458,37 +459,33 @@ export const BDigitizingMobileApp = () => {
   useEffect(() => {
     const handleTabSwitch = (e) => {
       const targetTab = e.detail?.tab;
-      if (targetTab === 'dashboard' || targetTab === 'home') {
-        setMobileTab('home');
-        setIsPreferencesModalOpen(false);
-        setIsAccountModalOpen(false);
-        setIsSupportModalOpen(false);
-        setIsFeedbackModalOpen(false);
-        setIsLegalModalOpen(false);
-        setIsNotifDrawerOpen(false);
-        if (typeof window !== 'undefined') window.scrollTo({ top: 0, behavior: 'smooth' });
-      } else if (targetTab === 'orders') {
-        setMobileTab('orders');
-        setIsPreferencesModalOpen(false);
-        setIsAccountModalOpen(false);
-        setIsSupportModalOpen(false);
-        setIsFeedbackModalOpen(false);
-        setIsLegalModalOpen(false);
-        setIsNotifDrawerOpen(false);
-        if (typeof window !== 'undefined') window.scrollTo({ top: 0, behavior: 'smooth' });
-      } else if (targetTab === 'inbox' || targetTab === 'chat') {
-        setMobileTab('inbox');
-        if (typeof window !== 'undefined') window.scrollTo({ top: 0, behavior: 'smooth' });
-      } else if (targetTab === 'categories') {
-        setMobileTab('categories');
-        if (typeof window !== 'undefined') window.scrollTo({ top: 0, behavior: 'smooth' });
-      } else if (targetTab === 'login' || targetTab === 'signup' || targetTab === 'auth') {
-        setMobileTab(targetTab);
-        if (typeof window !== 'undefined') window.scrollTo({ top: 0, behavior: 'smooth' });
-      } else if (targetTab === 'support') {
+      if (!targetTab) return;
+      
+      const cleanTab = targetTab === 'dashboard' ? 'home' : (['chat', 'support'].includes(targetTab) ? 'inbox' : targetTab);
+      setMobileTabState(cleanTab);
+      setIsPreferencesModalOpen(false);
+      setIsAccountModalOpen(false);
+      setIsFeedbackModalOpen(false);
+      setIsLegalModalOpen(false);
+      setIsNotifDrawerOpen(false);
+      
+      if (cleanTab === 'support') {
         setIsSupportModalOpen(true);
-      } else if (targetTab === 'profile' || targetTab === 'wallet' || targetTab === 'settings' || targetTab === 'account') {
-        setMobileTab('profile');
+      } else {
+        setIsSupportModalOpen(false);
+      }
+
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem('bdigi_mobile_active_tab', cleanTab);
+          localStorage.setItem('bdigi_mobile_mode', 'app');
+          const url = new URL(window.location.href);
+          url.searchParams.set('app', 'true');
+          url.searchParams.delete('web');
+          url.searchParams.set('tab', cleanTab);
+          window.history.replaceState({ app: true, tab: cleanTab }, '', url.toString());
+        } catch {}
+        window.scrollTo({ top: 0, behavior: 'smooth' });
       }
     };
 
@@ -496,6 +493,32 @@ export const BDigitizingMobileApp = () => {
       const sType = e.detail?.type || 'embroidery';
       handleOpenOrderConfigurator(sType);
     };
+
+    // Check if user returned from Stripe or external payment gateway
+    if (typeof window !== 'undefined') {
+      try {
+        const urlParams = new URLSearchParams(window.location.search);
+        const paymentParam = urlParams.get('payment');
+        if (paymentParam === 'success') {
+          setMobileTabState('orders');
+          if (showToast) showToast('Payment verified successfully! Your order has begun production. 🚀', 'success');
+          if (typeof refreshOrders === 'function') {
+            refreshOrders().catch(() => {});
+          }
+          const cleanUrl = new URL(window.location.href);
+          cleanUrl.searchParams.delete('payment');
+          cleanUrl.searchParams.delete('session_id');
+          cleanUrl.searchParams.delete('offerId');
+          window.history.replaceState({ app: true, tab: 'orders' }, '', cleanUrl.toString());
+        } else if (paymentParam === 'canceled') {
+          setMobileTabState('orders');
+          if (showToast) showToast('Payment session canceled. You can complete payment at any time.', 'info');
+          const cleanUrl = new URL(window.location.href);
+          cleanUrl.searchParams.delete('payment');
+          window.history.replaceState({ app: true, tab: 'orders' }, '', cleanUrl.toString());
+        }
+      } catch {}
+    }
 
     window.addEventListener('bdigi_switch_tab', handleTabSwitch);
     window.addEventListener('bdigi_open_mobile_order', handleOpenOrderEvent);

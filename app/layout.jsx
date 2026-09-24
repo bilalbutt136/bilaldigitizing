@@ -141,12 +141,14 @@ export default function RootLayout({ children }) {
               (function() {
                 try {
                   var isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+                  var isMobileDevice = /Android|iPhone|iPad|iPod|Opera Mini|IEMobile|WPDesktop/i.test(navigator.userAgent || '');
+                  var isSmallScreen = window.innerWidth <= 768;
                   var params = new URLSearchParams(window.location.search);
                   var urlApp = params.get('app') === 'true' || params.get('mode') === 'app';
                   var urlWeb = params.get('web') === 'true' || params.get('mode') === 'web';
                   var saved = localStorage.getItem('bdigi_mobile_mode');
                   
-                  if (!urlWeb && (urlApp || isStandalone || saved === 'app')) {
+                  if (!urlWeb && (urlApp || isStandalone || isMobileDevice || isSmallScreen || saved === 'app')) {
                     document.documentElement.classList.add('mobile-app-active');
                     document.documentElement.setAttribute('data-mobile-mode', 'app');
                   }

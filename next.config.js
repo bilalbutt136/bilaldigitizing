@@ -99,6 +99,26 @@ const nextConfig = {
         permanent: false,
       },
       {
+        source: '/orders',
+        destination: '/?app=true&tab=orders',
+        permanent: false,
+      },
+      {
+        source: '/chat',
+        destination: '/?app=true&tab=inbox',
+        permanent: false,
+      },
+      {
+        source: '/inbox',
+        destination: '/?app=true&tab=inbox',
+        permanent: false,
+      },
+      {
+        source: '/messages',
+        destination: '/?app=true&tab=inbox',
+        permanent: false,
+      },
+      {
         source: '/embroidery-digitizing',
         destination: '/services/embroidery-digitizing',
         permanent: true,

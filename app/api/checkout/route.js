@@ -25,7 +25,7 @@ export async function POST(req) {
 
     const { user } = await getServerAuthUser(req);
     const body = await req.json().catch(() => ({}));
-    const { amount, clientEmail, type, orderId, offerId, conversationId, title } = body;
+    const { amount, clientEmail, type, orderId, offerId, conversationId, title, isApp } = body;
 
     const parsedAmount = parseFloat(amount);
     if (isNaN(parsedAmount) || parsedAmount <= 0) {
@@ -50,13 +50,16 @@ export async function POST(req) {
       productName = `Bilal Digitizing - Custom Offer: ${title || 'Custom Design Order'}`;
     }
 
+    const basePath = isApp ? `${siteUrl}/?app=true` : `${siteUrl}/client-portal`;
+    const paramPrefix = isApp ? '&' : '?';
+
     const successUrl = type === 'custom_offer'
-      ? `${siteUrl}/client-portal?tab=inbox&chatId=${conversationId || ''}&payment=success&offerId=${offerId || ''}&session_id={CHECKOUT_SESSION_ID}`
-      : `${siteUrl}/client-portal?success=true&session_id={CHECKOUT_SESSION_ID}`;
+      ? `${basePath}${paramPrefix}tab=inbox&chatId=${conversationId || ''}&payment=success&offerId=${offerId || ''}&session_id={CHECKOUT_SESSION_ID}`
+      : `${basePath}${paramPrefix}tab=orders&payment=success&orderId=${orderId || ''}&session_id={CHECKOUT_SESSION_ID}`;
 
     const cancelUrl = type === 'custom_offer'
-      ? `${siteUrl}/client-portal?tab=inbox&chatId=${conversationId || ''}&payment=canceled`
-      : `${siteUrl}/client-portal?canceled=true`;
+      ? `${basePath}${paramPrefix}tab=inbox&chatId=${conversationId || ''}&payment=canceled`
+      : `${basePath}${paramPrefix}tab=orders&payment=canceled`;
 
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
