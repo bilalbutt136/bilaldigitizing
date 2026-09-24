@@ -18,6 +18,7 @@ import { MetaPixelTracker } from '../common/MetaPixelTracker';
 import { PWAInstallBanner } from '../common/PWAInstallBanner';
 import { PWARegistrar } from '../common/PWARegistrar';
 import { WhatsAppMessagePopup } from '../common/WhatsAppMessagePopup';
+import { DynamicFavicon } from './DynamicFavicon';
 
 export const ClientLayoutShell = ({ children }) => {
   const { mobileMode } = useAppState();
@@ -30,6 +31,7 @@ export const ClientLayoutShell = ({ children }) => {
   if (isWorkerPortal) {
     return (
       <div className="stealth-worker-portal min-h-screen bg-slate-950 text-slate-100 font-sans antialiased">
+        <DynamicFavicon />
         <main style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
           <Suspense fallback={
             <div style={{ padding: '3rem 1.5rem', maxWidth: '800px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '1rem', alignItems: 'center' }}>
@@ -47,6 +49,9 @@ export const ClientLayoutShell = ({ children }) => {
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+      {/* Dynamic favicon — overrides static server-rendered icon link on every page load */}
+      <DynamicFavicon />
+
       {/* Website Top Header (Hidden in Standalone 5-Tab App Mode) */}
       {!isAppMode && (
         <div className="website-header-zone">
