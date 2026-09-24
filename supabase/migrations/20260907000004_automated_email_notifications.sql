@@ -78,7 +78,7 @@ CREATE TABLE IF NOT EXISTS public.site_config (
 INSERT INTO public.site_config (key, value, updated_at)
 VALUES 
     ('notification_webhook_secret', '"bd_sec_live_notification_trigger_9831"', timezone('utc'::text, now())),
-    ('notification_webhook_url', '"https://bilaldigitizing.vercel.app/api/send-notification"', timezone('utc'::text, now()))
+    ('notification_webhook_url', '"https://bdigitizing.com/api/send-notification"', timezone('utc'::text, now()))
 ON CONFLICT (key) DO NOTHING;
 
 -- 4. FUNCTION: Trigger Email Notification on New Message
@@ -88,7 +88,7 @@ DECLARE
     v_recipient_email text;
     v_recipient_name text := 'Customer';
     v_sender_name text;
-    v_endpoint_url text := 'https://bilaldigitizing.vercel.app/api/send-notification';
+    v_endpoint_url text := 'https://bdigitizing.com/api/send-notification';
     v_webhook_secret text := 'bd_sec_live_notification_trigger_9831';
     v_payload jsonb;
     v_admin_email text := 'shahidbutt59191@gmail.com';
@@ -200,7 +200,7 @@ EXECUTE FUNCTION public.fn_notify_new_message();
 CREATE OR REPLACE FUNCTION public.fn_notify_new_order()
 RETURNS TRIGGER AS $$
 DECLARE
-    v_endpoint_url text := 'https://bilaldigitizing.vercel.app/api/send-notification';
+    v_endpoint_url text := 'https://bdigitizing.com/api/send-notification';
     v_webhook_secret text := 'bd_sec_live_notification_trigger_9831';
     v_admin_email text := 'shahidbutt59191@gmail.com';
     v_payload jsonb;

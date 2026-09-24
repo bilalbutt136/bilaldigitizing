@@ -263,13 +263,13 @@ export const CustomerInvoiceModal = ({
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem', borderBottom: '1px solid #e2e8f0', paddingBottom: '1.25rem', marginBottom: '1.5rem' }}>
             <div>
               <h1 style={{ margin: 0, fontSize: '1.6rem', fontWeight: 900, color: '#0f172a', letterSpacing: '-0.02em' }}>
-                BILAL DIGITIZING
+                BDIGITIZING
               </h1>
               <p style={{ margin: '0.15rem 0 0', fontSize: '0.82rem', color: '#64748b' }}>
                 Commercial Embroidery Digitizing & Vector Art
               </p>
               <p style={{ margin: '0.1rem 0 0', fontSize: '0.78rem', color: '#94a3b8' }}>
-                billing@bilaldigitizing.com • www.bilaldigitizing.com
+                billing@bdigitizing.com • www.bdigitizing.com
               </p>
             </div>
 
@@ -428,7 +428,7 @@ export const CustomerInvoiceModal = ({
           {/* Footer */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.7rem', color: '#94a3b8', borderTop: '1px solid #f1f5f9', paddingTop: '0.65rem' }}>
             <span>Record ID: {invoiceNumber}</span>
-            <span>Bilal Digitizing Commercial Studio</span>
+            <span>BDigitizing Commercial Studio</span>
           </div>
 
         </div>

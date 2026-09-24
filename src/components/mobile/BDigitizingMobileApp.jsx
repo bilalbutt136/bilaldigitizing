@@ -275,7 +275,7 @@ export const BDigitizingMobileApp = () => {
       const res = await register(authSignupName, authSignupEmail, authSignupPassword, authSignupCompany);
       setIsAuthLoading(false);
       if (res && res.success) {
-        showToast(`Account created! Welcome to Bilal Digitizing, ${authSignupName}! 🎉`, 'success');
+        showToast(`Account created! Welcome to BDigitizing, ${authSignupName}! 🎉`, 'success');
         setMobileTab('home');
         setAuthSignupPassword('');
       } else {
@@ -3133,7 +3133,7 @@ export const BDigitizingMobileApp = () => {
           {/* App Version Tag + Sign Out */}
           <div style={{ padding: '1rem 1.25rem 0', textAlign: 'center' }}>
             <span style={{ fontSize: '0.72rem', color: '#94a3b8', display: 'block', marginBottom: '0.85rem' }}>
-              v4.5.0 • Bilal Digitizing Pro Studio
+              v4.5.0 • BDigitizing Studio
             </span>
 
             {isAuthenticated ? (
@@ -3996,7 +3996,7 @@ export const BDigitizingMobileApp = () => {
 
             {/* Action 2: Email Helpdesk */}
             <a
-              href={`mailto:${mobileEmail || 'support@bilaldigitizing.com'}?subject=Support%20Request%20-%20BDigitizing`}
+              href={`mailto:${mobileEmail || 'support@bdigitizing.com'}?subject=Support%20Request%20-%20BDigitizing`}
               style={{
                 padding: '0.95rem 1rem',
                 borderRadius: '14px',

@@ -4,7 +4,7 @@ import { createAdminClient } from './supabase/admin.js';
 // Pre-configured permanent VAPID keypair (works out of the box on live Vercel deployments)
 export const DEFAULT_VAPID_PUBLIC_KEY = 'BLpbdzESZqfA4Coj36smEyG1UMD13BekGtVOKBOWvha9puENh5eXHg3-SLXCMWo-VbFkqPA2X-gSiMnM-_20qNM';
 export const DEFAULT_VAPID_PRIVATE_KEY = 'QJkDk8tJ43PqLVBlYQFYYsMX-L8Gw7SHavd-4V8WpFI';
-export const DEFAULT_VAPID_SUBJECT = 'mailto:support@bilaldigitizing.com';
+export const DEFAULT_VAPID_SUBJECT = 'mailto:support@bdigitizing.com';
 
 let isVapidConfigured = false;
 
@@ -309,7 +309,7 @@ export async function dispatchChatMessagePush({
   const isFromAdmin = senderRole === 'admin';
 
   const title = isFromAdmin 
-    ? '💬 Bilal Digitizing Support' 
+    ? '💬 BDigitizing Support' 
     : `💬 New Message from ${senderName || 'Customer'}`;
 
   const body = snippet;

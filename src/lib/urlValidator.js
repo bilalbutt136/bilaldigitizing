@@ -21,6 +21,8 @@ const BLOCKED_HOST_PATTERNS = [
 
 // Whitelist of trusted file/storage hosts and CDNs
 const TRUSTED_DOMAINS = [
+  'bdigitizing.com',
+  'www.bdigitizing.com',
   'supabase.co',
   'supabase.in',
   'supabase.net',
@@ -38,11 +40,11 @@ const TRUSTED_DOMAINS = [
 ];
 
 /**
- * Returns a guaranteed absolute origin with protocol (e.g. https://bilaldigitizing.vercel.app)
+ * Returns a guaranteed absolute origin with protocol (e.g. https://bdigitizing.com)
  */
 function getBaseSiteOrigin() {
-  let site = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_SITE_URL || 'https://bilaldigitizing.vercel.app';
-  site = String(site || 'https://bilaldigitizing.vercel.app').trim();
+  let site = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_SITE_URL || 'https://bdigitizing.com';
+  site = String(site || 'https://bdigitizing.com').trim();
   if (!site.startsWith('http://') && !site.startsWith('https://')) {
     site = `https://${site}`;
   }

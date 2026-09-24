@@ -46,11 +46,11 @@ const getResendClient = (): Resend | null => {
 };
 
 const getFromAddress = (): string => {
-  return process.env.RESEND_FROM_ADDRESS || 'Bilal Digitizing <onboarding@resend.dev>';
+  return process.env.RESEND_FROM_ADDRESS || 'BDigitizing <orders@bdigitizing.com>';
 };
 
 const getSiteUrl = (): string => {
-  return process.env.NEXT_PUBLIC_SITE_URL || 'https://bilaldigitizing.vercel.app';
+  return process.env.NEXT_PUBLIC_SITE_URL || 'https://bdigitizing.com';
 };
 
 // ==============================================================================
@@ -179,13 +179,13 @@ async function sendMailWithRetry({
 
       // If domain verification failed on custom domain, immediately retry with verified Resend onboarding domain
       if (
-        configuredFrom !== 'Bilal Digitizing <onboarding@resend.dev>' &&
+        configuredFrom !== 'BDigitizing <onboarding@resend.dev>' &&
         (err?.message?.includes('domain') || err?.message?.includes('from'))
       ) {
         try {
           console.warn('[sendMailWithRetry] Retrying with verified Resend onboarding address fallback...');
           const fallbackResult = await resend.emails.send({
-            from: 'Bilal Digitizing <onboarding@resend.dev>',
+            from: 'BDigitizing <onboarding@resend.dev>',
             to: cleanTo,
             subject,
             html
@@ -243,7 +243,7 @@ const renderEmailShell = ({
         <!-- HEADER -->
         <div style="background: #090d16; padding: 26px 24px; text-align: center; border-bottom: 3px solid ${badgeColor};">
           <div style="color: #ffffff; font-size: 22px; font-weight: 900; letter-spacing: -0.5px; font-family: 'Segoe UI', Arial, sans-serif;">
-            BILAL <span style="color: ${badgeColor};">DIGITIZING</span>
+            BDIGITIZING <span style="color: ${badgeColor};">STUDIO</span>
           </div>
           <div style="display: inline-block; background: rgba(255, 255, 255, 0.12); color: #f8fafc; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 1.2px; padding: 5px 12px; border-radius: 9999px; margin-top: 10px;">
             ${badge}
@@ -269,9 +269,9 @@ const renderEmailShell = ({
 
         <!-- FOOTER -->
         <div style="background-color: #f8fafc; padding: 20px 24px; border-top: 1px solid #e2e8f0; text-align: center; font-size: 12px; color: #64748b; line-height: 1.5;">
-          <p style="margin: 0 0 4px 0; font-weight: 600; color: #334155;">Bilal Digitizing Studio — Embroidery Digitizing & Vector Laboratory</p>
+          <p style="margin: 0 0 4px 0; font-weight: 600; color: #334155;">BDigitizing Studio — Embroidery Digitizing & Vector Laboratory</p>
           <p style="margin: 0 0 6px 0;">24/7 Production Support • High-Density Stitch Accuracy • Rapid Client Desk</p>
-          <p style="margin: 0; font-size: 11px; color: #94a3b8;">You received this automated notification because your email is registered on bilaldigitizing.vercel.app.</p>
+          <p style="margin: 0; font-size: 11px; color: #94a3b8;">You received this automated notification because your email is registered on bdigitizing.com.</p>
         </div>
 
       </div>
@@ -304,7 +304,7 @@ export async function sendOrderNotification(
   const formattedPrice = typeof amount === 'number' ? `$${amount.toFixed(2)}` : (String(amount).startsWith('$') ? amount : `$${amount}`);
 
   // Fetch admin notification email & settings from site_config
-  let adminRecipient = explicitAdmin || process.env.MASTER_ADMIN_EMAIL || process.env.ADMIN_EMAIL || process.env.NEXT_PUBLIC_ADMIN_EMAIL || 'orders@bdigitizing-pro.com';
+  let adminRecipient = explicitAdmin || process.env.MASTER_ADMIN_EMAIL || process.env.ADMIN_EMAIL || process.env.NEXT_PUBLIC_ADMIN_EMAIL || 'orders@bdigitizing.com';
   let orderAlertsEnabled = true;
 
   try {
@@ -414,13 +414,13 @@ export async function sendOrderNotification(
 
   // 2. DISPATCH TO CLIENT
   if ((targetRole === 'client' || targetRole === 'both') && clientEmail && EMAIL_REGEX.test(clientEmail.trim())) {
-    const clientSubject = `🌟 Order Confirmation #${orderId} — Bilal Digitizing`;
+    const clientSubject = `🌟 Order Confirmation #${orderId} — BDigitizing`;
     const clientUrl = `${siteUrl}/client-portal?tab=orders&trackOrder=${encodeURIComponent(orderId)}`;
 
     const clientHtmlContent = `
       <p style="margin-top: 0; font-size: 15px;">Hi <strong>${clientName}</strong>,</p>
       <p style="color: #475569; font-size: 14.5px;">
-        Thank you for ordering with <strong>Bilal Digitizing Studio</strong>! Our master digitizers are reviewing your artwork and preparing production pathing with zero thread breaks.
+        Thank you for ordering with <strong>BDigitizing Studio</strong>! Our master digitizers are reviewing your artwork and preparing production pathing with zero thread breaks.
       </p>
 
       <div style="background-color: #f8fafc; border-radius: 8px; padding: 18px; margin: 20px 0; border: 1px solid #e2e8f0;">

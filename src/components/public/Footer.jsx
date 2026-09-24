@@ -32,7 +32,7 @@ export const Footer = () => {
 
   const ci = siteSettings.contactInfo || {};
   const phone = (ci.phone !== undefined ? ci.phone : (siteSettings.contactPhone || siteSettings.supportPhone || '')).trim();
-  const email = (ci.email !== undefined ? ci.email : (siteSettings.supportEmail || siteSettings.contactEmail || 'orders@bdigitizing-pro.com')).trim();
+  const email = (ci.email !== undefined ? ci.email : (siteSettings.supportEmail || siteSettings.contactEmail || 'support@bdigitizing.com')).trim();
   const whatsapp = (ci.whatsapp !== undefined ? ci.whatsapp : (siteSettings.whatsapp || '')).trim();
   const address = (ci.address !== undefined ? ci.address : (siteSettings.studioAddress || '')).trim();
   const businessHours = (ci.businessHours !== undefined ? ci.businessHours : (siteSettings.businessHours || '')).trim();
@@ -156,7 +156,7 @@ export const Footer = () => {
                 <Scissors size={22} />
               </div>
               <span style={{ fontFamily: 'var(--font-heading)', fontWeight: 900, fontSize: '1.4rem', letterSpacing: '-0.02em' }}>
-                BILAL<span style={{ color: 'var(--orange-500)' }}>DIGITIZING</span>
+                BDIGITIZING<span style={{ color: 'var(--orange-500)' }}>.COM</span>
               </span>
             </div>
             <p style={{ fontSize: '0.875rem', lineHeight: 1.7, marginBottom: '1.25rem', color: '#cbd5e1' }}>
@@ -480,7 +480,7 @@ export const Footer = () => {
           color: '#64748b'
         }}>
           <div>
-            © {currentYear} Bilal Digitizing. All rights reserved. 11+ Years Master Studio.
+            © {currentYear} BDigitizing. All rights reserved. 11+ Years Master Studio.
           </div>
 
           <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'center' }}>

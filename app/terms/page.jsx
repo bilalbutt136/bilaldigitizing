@@ -4,7 +4,7 @@ import { createAdminClient } from '../../src/lib/supabase/admin';
 export const dynamic = 'force-dynamic'; // Fetch live DB content on every request, never pre-render statically
 
 export const metadata = {
-  title: 'Terms and Conditions | Bilal Digitizing',
+  title: 'Terms and Conditions | BDigitizing',
   description: 'Terms and Conditions for embroidery digitizing, vector art conversion, and custom patch manufacturing services.',
 };
 
@@ -56,7 +56,7 @@ export default async function TermsAndConditionsPage() {
               <section style={{ marginBottom: '2.5rem' }}>
                 <h2 style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--color-text-primary)', marginBottom: '1rem' }}>1. Introduction</h2>
                 <p style={{ marginBottom: '1rem' }}>
-                  Welcome to Bilal Digitizing ("we," "our," or "us"). By accessing our website, purchasing our digital services (embroidery digitizing, vector art conversion), or physical products (custom patches), you agree to comply with and be bound by the following terms and conditions. These terms are required for legal compliance and payment gateway processing.
+                  Welcome to BDigitizing ("we," "our," or "us"). By accessing our website, purchasing our digital services (embroidery digitizing, vector art conversion), or physical products (custom patches), you agree to comply with and be bound by the following terms and conditions. These terms are required for legal compliance and payment gateway processing.
                 </p>
               </section>
 
@@ -101,14 +101,14 @@ export default async function TermsAndConditionsPage() {
               <section style={{ marginBottom: '2.5rem' }}>
                 <h2 style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--navy-900)', marginBottom: '1rem' }}>6. User Responsibilities & Copyright</h2>
                 <p style={{ marginBottom: '1rem' }}>
-                  By submitting artwork to Bilal Digitizing, you warrant that you own the copyright or possess the necessary licenses to reproduce the design. You agree to indemnify and hold harmless Bilal Digitizing against any claims, damages, or legal fees arising from copyright or trademark infringement related to your submitted artwork.
+                  By submitting artwork to BDigitizing, you warrant that you own the copyright or possess the necessary licenses to reproduce the design. You agree to indemnify and hold harmless BDigitizing against any claims, damages, or legal fees arising from copyright or trademark infringement related to your submitted artwork.
                 </p>
               </section>
 
               <section style={{ marginBottom: '2.5rem' }}>
                 <h2 style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--navy-900)', marginBottom: '1rem' }}>7. Limitation of Liability</h2>
                 <p style={{ marginBottom: '1rem' }}>
-                  To the fullest extent permitted by law, Bilal Digitizing shall not be liable for any indirect, incidental, or consequential damages (including lost profits or damaged garments) arising from the use of our digital files or physical products. We highly recommend running a test sew-out on scrap fabric before embroidering on expensive production garments.
+                  To the fullest extent permitted by law, BDigitizing shall not be liable for any indirect, incidental, or consequential damages (including lost profits or damaged garments) arising from the use of our digital files or physical products. We highly recommend running a test sew-out on scrap fabric before embroidering on expensive production garments.
                 </p>
               </section>
 
@@ -118,7 +118,7 @@ export default async function TermsAndConditionsPage() {
                   If you have any questions or concerns regarding these Terms and Conditions, please contact us at:
                 </p>
                 <ul style={{ paddingLeft: '1.5rem', listStyleType: 'none', marginLeft: '-1.5rem' }}>
-                  <li style={{ marginBottom: '0.25rem' }}><strong>Email:</strong> orders@bdigitizing-pro.com</li>
+                  <li style={{ marginBottom: '0.25rem' }}><strong>Email:</strong> support@bdigitizing.com</li>
                   <li style={{ marginBottom: '0.25rem' }}><strong>Direct Support:</strong> 24/7 Live Desk in Client Portal</li>
                 </ul>
               </section>

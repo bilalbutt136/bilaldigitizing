@@ -276,7 +276,7 @@ export async function POST(request) {
       if (workerEmail) {
         try {
           const { sendWorkerAccountApprovedEmail } = await import('../../../../src/lib/workerPortalEmails');
-          const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://bilaldigitizing.vercel.app';
+          const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://bdigitizing.com';
           await sendWorkerAccountApprovedEmail({
             to: workerEmail,
             name: workerName,
@@ -354,7 +354,7 @@ export async function POST(request) {
         return NextResponse.json({ error: 'Valid email address is required.' }, { status: 400 });
       }
 
-      const origin = request.headers.get('origin') || process.env.NEXT_PUBLIC_SITE_URL || 'https://bilaldigitizing.vercel.app';
+      const origin = request.headers.get('origin') || process.env.NEXT_PUBLIC_SITE_URL || 'https://bdigitizing.com';
       const redirectUrl = `${origin}/worker/reset-password`;
 
       const { error: resetErr } = await adminClient.auth.resetPasswordForEmail(cleanEmail, {

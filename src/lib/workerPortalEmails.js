@@ -135,7 +135,7 @@ export async function sendWorkerAccountApprovedEmail({ to, name, loginUrl }) {
 
   const resend = getResendClient();
   const recipientName = (name || '').trim() || 'Digitizer';
-  const targetLoginUrl = loginUrl || `${process.env.NEXT_PUBLIC_SITE_URL || 'https://bilaldigitizing.vercel.app'}/portal/login`;
+  const targetLoginUrl = loginUrl || `${process.env.NEXT_PUBLIC_SITE_URL || 'https://bdigitizing.com'}/portal/login`;
   const from = getFromAddress();
 
   const html = `

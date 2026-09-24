@@ -1,5 +1,5 @@
 export default function robots() {
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://bilaldigitizing.vercel.app';
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://bdigitizing.com';
   
   return {
     rules: [

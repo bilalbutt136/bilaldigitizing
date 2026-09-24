@@ -100,8 +100,8 @@ export async function GET(request) {
               conversation_id: targetConvId,
               client_email: off.client_email || clientEmail,
               sender: 'admin',
-              sender_name: 'Bilal Digitizing Support',
-              sender_email: off.created_by || 'support@bilaldigitizing.com',
+              sender_name: 'BDigitizing Support',
+              sender_email: off.created_by || 'support@bdigitizing.com',
               text: `Custom Offer: ${off.title}`,
               type: 'custom_offer',
               offer_id: off.id,
@@ -169,8 +169,8 @@ export async function POST(request) {
 
     // Role enforcement
     const effectiveSender = isAdmin ? (sender || 'admin') : 'client';
-    const effectiveSenderName = sender_name || (effectiveSender === 'admin' ? 'Bilal Digitizing Support' : (user?.name || cleanEmail.split('@')[0] || 'Client'));
-    const effectiveSenderEmail = sender_email || user?.email || (effectiveSender === 'admin' ? 'support@bilaldigitizing.com' : cleanEmail);
+    const effectiveSenderName = sender_name || (effectiveSender === 'admin' ? 'BDigitizing Support' : (user?.name || cleanEmail.split('@')[0] || 'Client'));
+    const effectiveSenderEmail = sender_email || user?.email || (effectiveSender === 'admin' ? 'support@bdigitizing.com' : cleanEmail);
 
     const supabase = createAdminClient();
     const nowIso = new Date().toISOString();

@@ -13,7 +13,7 @@ const getMetadataBase = () => {
       return new URL(valid);
     } catch {}
   }
-  return new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://bilaldigitizing.vercel.app');
+  return new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://bdigitizing.com');
 };
 
 export const metadata = {
@@ -33,8 +33,8 @@ export const metadata = {
     title: 'BDigitizing'
   },
   title: {
-    default: 'B Digitizing & Vector Studio | Custom Embroidery & Vector Art',
-    template: '%s | B Digitizing Studio'
+    default: 'BDigitizing | Premier Machine Embroidery Digitizing & Vector Art Lab',
+    template: '%s | BDigitizing Studio'
   },
   description: 'Commercial Machine Embroidery Digitizing, Vector Art Tracing, & Custom Physical Patches with 4-8 Hour Express Turnaround.',
   keywords: [
@@ -49,19 +49,19 @@ export const metadata = {
     '3D Puff Embroidery',
     'Cap Embroidery'
   ],
-  authors: [{ name: 'B Digitizing Studio', url: '/' }],
-  creator: 'B Digitizing Studio',
-  publisher: 'B Digitizing Studio',
+  authors: [{ name: 'BDigitizing Studio', url: '/' }],
+  creator: 'BDigitizing Studio',
+  publisher: 'BDigitizing Studio',
   formatDetection: {
     email: false,
     address: false,
     telephone: false
   },
   openGraph: {
-    title: 'B Digitizing & Vector Studio | Custom Embroidery & Vector Art',
+    title: 'BDigitizing | Premier Machine Embroidery Digitizing & Vector Art Lab',
     description: 'Commercial Machine Embroidery Digitizing, Vector Art Tracing, & Custom Physical Patches with 4-8 Hour Express Turnaround.',
     url: '/',
-    siteName: 'B Digitizing Studio',
+    siteName: 'BDigitizing Studio',
     locale: 'en_US',
     type: 'website',
     images: [
@@ -69,13 +69,13 @@ export const metadata = {
         url: '/icon.svg',
         width: 512,
         height: 512,
-        alt: 'B Digitizing Studio Logo',
+        alt: 'BDigitizing Studio Logo',
       }
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'B Digitizing & Vector Studio | Custom Embroidery & Vector Art',
+    title: 'BDigitizing | Premier Machine Embroidery Digitizing & Vector Art Lab',
     description: 'Commercial Machine Embroidery Digitizing, Vector Art Tracing, & Custom Physical Patches with 4-8 Hour Express Turnaround.',
     images: ['/icon.svg'],
   },
@@ -121,9 +121,9 @@ export default function RootLayout({ children }) {
             __html: JSON.stringify({
               "@context": "https://schema.org",
               "@type": "Organization",
-              "name": "B Digitizing Studio",
-              "url": process.env.NEXT_PUBLIC_SITE_URL || "https://bilaldigitizing.vercel.app",
-              "logo": `${process.env.NEXT_PUBLIC_SITE_URL || 'https://bilaldigitizing.vercel.app'}/logo.png`,
+              "name": "BDigitizing Studio",
+              "url": process.env.NEXT_PUBLIC_SITE_URL || "https://bdigitizing.com",
+              "logo": `${process.env.NEXT_PUBLIC_SITE_URL || 'https://bdigitizing.com'}/logo.png`,
               "description": "Premium Commercial Machine Embroidery Digitizing, Vector Art Tracing, & Custom Physical Patches.",
               "contactPoint": {
                 "@type": "ContactPoint",

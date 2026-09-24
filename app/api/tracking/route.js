@@ -82,7 +82,7 @@ export async function POST(request) {
               event_name: eventName,
               event_time: Math.floor(Date.now() / 1000),
               event_id: fullTelemetry.eventId || payload.eventId,
-              event_source_url: fullTelemetry.pageUrl || `https://bilaldigitizing.vercel.app${pagePath}`,
+              event_source_url: fullTelemetry.pageUrl || `https://bdigitizing.com${pagePath}`,
               action_source: 'website',
               user_data: {
                 client_ip_address: clientIp !== 'Unknown IP' ? clientIp : undefined,

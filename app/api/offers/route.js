@@ -137,7 +137,7 @@ export async function POST(request) {
 
       // Auto-resolve client email from conversation_id or orders if missing/generic
       let cleanClientEmail = (client_email || payload.customer_email || '').toLowerCase().trim();
-      if (!cleanClientEmail || cleanClientEmail === 'client@studio.com' || cleanClientEmail.includes('guest@bdigitizing.pro')) {
+      if (!cleanClientEmail || cleanClientEmail === 'client@studio.com' || cleanClientEmail.includes('guest@bdigitizing')) {
         const cLower = String(conversation_id || '').toLowerCase().trim();
         if (cLower.startsWith('inbox-') && !cLower.startsWith('inbox-guest')) {
           cleanClientEmail = cLower.replace('inbox-', '').trim();
@@ -162,7 +162,7 @@ export async function POST(request) {
 
       let cleanClientName = (client_name || payload.customer_name || '').trim();
       if (!cleanClientName || cleanClientName === 'Valued Client' || cleanClientName === 'Customer') {
-        if (cleanClientEmail && cleanClientEmail !== 'client@studio.com' && !cleanClientEmail.includes('guest@bdigitizing.pro')) {
+        if (cleanClientEmail && cleanClientEmail !== 'client@studio.com' && !cleanClientEmail.includes('guest@bdigitizing')) {
           cleanClientName = cleanClientEmail.split('@')[0].replace(/[._-]/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
         } else {
           cleanClientName = 'Valued Client';
@@ -301,8 +301,8 @@ export async function POST(request) {
         conversation_id: conversation_id,
         client_email: cleanClientEmail || 'client@studio.com',
         sender: 'admin',
-        sender_name: 'Bilal Digitizing Support',
-        sender_email: user?.email || 'support@bilaldigitizing.com',
+        sender_name: 'BDigitizing Support',
+        sender_email: user?.email || 'support@bdigitizing.com',
         text: `Custom Offer: ${offerDbRow.title}`,
         type: 'custom_offer',
         offer_id: offerId,
@@ -705,7 +705,7 @@ export async function POST(request) {
             thread_id: conversationId,
             client_email: cleanEmail,
             sender: 'admin',
-            sender_name: 'Bilal Digitizing System',
+            sender_name: 'BDigitizing System',
             text: `🎉 Custom Offer Accepted & Paid! Order #${targetOrderId} has been placed and sent to active production.`,
             type: 'text',
             created_at: nowIso

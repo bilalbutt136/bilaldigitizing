@@ -99,8 +99,8 @@ export async function sendNotificationEmail(params = {}) {
     
     const targetAdminEmail = (explicitAdminEmail || dynamicAdminEmail || RESEND_VERIFIED_FALLBACK_EMAIL).toLowerCase().trim();
     const targetClientEmail = (clientEmail || recipientEmail || '').toLowerCase().trim();
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://bilaldigitizing.vercel.app';
-    const configuredFrom = process.env.RESEND_FROM_ADDRESS || 'Bilal Digitizing <onboarding@resend.dev>';
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://bdigitizing.com';
+    const configuredFrom = process.env.RESEND_FROM_ADDRESS || 'BDigitizing <orders@bdigitizing.com>';
 
   // Shared send wrapper with automatic fallback if recipient is rejected by sandbox domain restriction
   const executeSend = async ({ to, subject, html }) => {
@@ -139,7 +139,7 @@ export async function sendNotificationEmail(params = {}) {
 
         try {
           const fallbackRes = await resend.emails.send({
-            from: 'Bilal Digitizing <onboarding@resend.dev>',
+            from: 'BDigitizing <onboarding@resend.dev>',
             to: RESEND_VERIFIED_FALLBACK_EMAIL,
             subject: `[STUDIO ALERT] ${subject}`,
             html: fallbackNote + html
@@ -164,7 +164,7 @@ export async function sendNotificationEmail(params = {}) {
   const emailHeader = (titleBadge, titleText, color = '#ea580c') => `
     <div style="background: #090d16; padding: 24px; border-radius: 12px 12px 0 0; text-align: center; border-bottom: 3px solid ${color};">
       <h1 style="color: #ffffff; margin: 0 0 6px 0; font-size: 22px; font-weight: 800; letter-spacing: -0.5px; font-family: 'Segoe UI', Arial, sans-serif;">
-        BILAL <span style="color: ${color};">DIGITIZING</span>
+        BDIGITIZING <span style="color: ${color};">STUDIO</span>
       </h1>
       <div style="display: inline-block; background: rgba(255,255,255,0.1); color: #e2e8f0; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; padding: 4px 10px; border-radius: 9999px;">
         ${titleBadge}
@@ -177,7 +177,7 @@ export async function sendNotificationEmail(params = {}) {
 
   const emailFooter = `
     <div style="background: #f8fafc; padding: 18px 24px; border-radius: 0 0 12px 12px; border-top: 1px solid #e2e8f0; text-align: center; font-family: 'Segoe UI', Arial, sans-serif; font-size: 12px; color: #64748b;">
-      <p style="margin: 0 0 6px 0; font-weight: 600; color: #334155;">Bilal Digitizing Studio — Premier Commercial Embroidery Digitizing & Vector Lab</p>
+      <p style="margin: 0 0 6px 0; font-weight: 600; color: #334155;">BDigitizing Studio — Premier Commercial Embroidery Digitizing & Vector Lab</p>
       <p style="margin: 0;">24/7 Production Support • High-Precision Stitch Art • Master Craftsmanship</p>
     </div>
   `;
@@ -315,7 +315,7 @@ export async function sendNotificationEmail(params = {}) {
         try {
           dispatchResults.clientOrder = await executeSend({
             to: targetClientEmail,
-            subject: `🌟 Order Confirmation: #${orderId || 'Your Order'} — Bilal Digitizing`,
+            subject: `🌟 Order Confirmation: #${orderId || 'Your Order'} — BDigitizing`,
             html: `
               <div style="max-width: 600px; margin: 0 auto; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 12px; font-family: 'Segoe UI', Arial, sans-serif; box-shadow: 0 4px 12px rgba(0,0,0,0.05); overflow: hidden;">
                 ${emailHeader('ORDER CONFIRMED', `Thank You for Your Order!`, '#ea580c')}
@@ -382,14 +382,14 @@ export async function sendNotificationEmail(params = {}) {
   else if (type === 'TEST_EMAIL') {
     dispatchResults.testEmail = await executeSend({
       to: targetAdminEmail,
-      subject: `⚡ Test Notification: Bilal Digitizing System Alerts`,
+      subject: `⚡ Test Notification: BDigitizing System Alerts`,
       html: `
         <div style="max-width: 600px; margin: 0 auto; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 12px; font-family: 'Segoe UI', Arial, sans-serif; box-shadow: 0 4px 12px rgba(0,0,0,0.05); overflow: hidden;">
           ${emailHeader('SYSTEM TEST', 'Notification Alert Routing Verified', '#3b82f6')}
           <div style="padding: 24px 28px; color: #1e293b; line-height: 1.6;">
             <p style="font-size: 15px; margin-top: 0;">Hello Administrator,</p>
             <p style="font-size: 14px; color: #475569;">
-              This test confirms that your <strong>Bilal Digitizing Studio</strong> notifications are fully operational and delivering directly to your inbox.
+              This test confirms that your <strong>BDigitizing Studio</strong> notifications are fully operational and delivering directly to your inbox.
             </p>
             
             <div style="background: #f1f5f9; border-radius: 8px; padding: 16px; margin: 20px 0; border-left: 4px solid #3b82f6;">

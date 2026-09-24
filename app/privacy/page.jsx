@@ -4,8 +4,8 @@ import { createAdminClient } from '../../src/lib/supabase/admin';
 export const dynamic = 'force-dynamic'; // Fetch live DB content on every request, never pre-render statically
 
 export const metadata = {
-  title: 'Privacy Policy | Bilal Digitizing',
-  description: 'Privacy Policy for Bilal Digitizing regarding data collection, payment processing, and user information.',
+  title: 'Privacy Policy | BDigitizing',
+  description: 'Privacy Policy for BDigitizing regarding data collection, payment processing, and user information.',
 };
 
 export default async function PrivacyPolicyPage() {
@@ -56,7 +56,7 @@ export default async function PrivacyPolicyPage() {
               <section style={{ marginBottom: '2.5rem' }}>
                 <h2 style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--color-text-primary)', marginBottom: '1rem' }}>1. Introduction</h2>
                 <p style={{ marginBottom: '1rem' }}>
-                  At Bilal Digitizing ("we," "our," or "us"), we are committed to protecting your privacy and ensuring the security of your personal information. This Privacy Policy outlines how we collect, use, disclose, and safeguard your information when you visit our website, use our services, or interact with our platform. 
+                  At BDigitizing ("we," "our," or "us"), we are committed to protecting your privacy and ensuring the security of your personal information. This Privacy Policy outlines how we collect, use, disclose, and safeguard your information when you visit our website, use our services, or interact with our platform. 
                 </p>
                 <p style={{ marginBottom: '1rem' }}>
                   By accessing or using our website and services, you consent to the data practices described in this Privacy Policy.
@@ -139,7 +139,7 @@ export default async function PrivacyPolicyPage() {
                   If you have any questions or concerns regarding this Privacy Policy or our data practices, please contact us at:
                 </p>
                 <ul style={{ paddingLeft: '1.5rem', listStyleType: 'none', marginLeft: '-1.5rem' }}>
-                  <li style={{ marginBottom: '0.25rem' }}><strong>Email:</strong> orders@bdigitizing-pro.com</li>
+                  <li style={{ marginBottom: '0.25rem' }}><strong>Email:</strong> support@bdigitizing.com</li>
                   <li style={{ marginBottom: '0.25rem' }}><strong>Phone:</strong> +1 (347) 915-4498</li>
                   <li style={{ marginBottom: '0.25rem' }}><strong>Support Hours:</strong> 24/7 Operations</li>
                 </ul>

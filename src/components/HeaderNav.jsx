@@ -221,7 +221,7 @@ export const HeaderNav = () => {
               localStorage.setItem('bdigi_pwa_installed', 'true');
             }
             window.deferredPWAInstallPrompt = null;
-            if (showToast) showToast('Bilal Digitizing App installed successfully!', 'success');
+            if (showToast) showToast('BDigitizing App installed successfully!', 'success');
           }
           return;
         } catch (err) {
@@ -288,7 +288,7 @@ export const HeaderNav = () => {
           </div>
           <div>
             <div style={{ fontFamily: 'var(--font-heading)', fontWeight: 800, fontSize: '1.15rem', color: 'var(--text-main)', letterSpacing: '-0.02em', lineHeight: 1, whiteSpace: 'nowrap' }}>
-              BILAL DIGITIZING<span style={{ color: 'var(--orange-500)' }}>.PRO</span>
+              BDIGITIZING<span style={{ color: 'var(--orange-500)' }}>.COM</span>
             </div>
             <div className="desktop-only" style={{ fontSize: '0.68rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
               Embroidery & Vector Studio
@@ -1079,7 +1079,7 @@ export const HeaderNav = () => {
                   <Scissors size={18} style={{ color: 'var(--color-primary)' }} />
                 </div>
                 <span style={{ fontFamily: 'var(--font-heading)', fontSize: '1.05rem', fontWeight: 900, color: isDark ? '#f8fafc' : '#0f172a', letterSpacing: '-0.02em' }}>
-                  BILAL DIGITIZING<span style={{ color: 'var(--color-primary)' }}>.PRO</span>
+                  BDIGITIZING<span style={{ color: 'var(--color-primary)' }}>.COM</span>
                 </span>
               </div>
 

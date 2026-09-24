@@ -474,7 +474,7 @@ export const AuthModal = ({ isStandalonePage = false, initialMode = null }) => {
                 <>
                   <h4 style={{ fontSize: '0.9rem', fontWeight: 800, color: 'var(--navy-900)', marginTop: '0.5rem', marginBottom: '0.25rem' }}>1. Services & Operational Scope</h4>
                   <p style={{ marginBottom: '0.85rem', color: 'var(--text-muted)' }}>
-                    BILAL DIGITIZING.PRO provides custom embroidery digitizing, vector redraws, and custom patch manufacturing. Account registration establishes an agreement to abide by studio dispatch protocols and commercial production guidelines.
+                    BDIGITIZING.COM provides custom embroidery digitizing, vector redraws, and custom patch manufacturing. Account registration establishes an agreement to abide by studio dispatch protocols and commercial production guidelines.
                   </p>
 
                   <h4 style={{ fontSize: '0.9rem', fontWeight: 800, color: 'var(--navy-900)', marginTop: '0.5rem', marginBottom: '0.25rem' }}>2. Full Client IP & Ownership Rights</h4>
@@ -584,7 +584,7 @@ export const AuthModal = ({ isStandalonePage = false, initialMode = null }) => {
               marginBottom: '1rem',
               letterSpacing: '0.03em'
             }}>
-              ★ BILAL DIGITIZING.PRO STUDIO
+              ★ BDIGITIZING.COM STUDIO
             </span>
           </div>
 

@@ -173,13 +173,13 @@ export async function generateCustomerTaxInvoicePdf({
   doc.setTextColor(...primaryNavy);
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(22);
-  doc.text('BILAL DIGITIZING', 16, 20);
+  doc.text('BDIGITIZING', 16, 20);
 
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(8.5);
   doc.setTextColor(...textMuted);
   doc.text('Commercial Embroidery Digitizing & Vector Art', 16, 26);
-  doc.text('billing@bilaldigitizing.com • www.bilaldigitizing.com', 16, 31);
+  doc.text('billing@bdigitizing.com • www.bdigitizing.com', 16, 31);
 
   // Header Right: Invoice Title & Status
   doc.setFont('helvetica', 'bold');
@@ -369,7 +369,7 @@ export async function generateCustomerTaxInvoicePdf({
   doc.setFontSize(7.5);
   doc.setTextColor(...textMuted);
   doc.text(`Record ID: ${invoiceNumber} • Thank you for your business!`, 16, 285);
-  doc.text('Bilal Digitizing Commercial Studio', 210 - 16, 285, { align: 'right' });
+  doc.text('BDigitizing Commercial Studio', 210 - 16, 285, { align: 'right' });
 
   // Generate Blob and Filename
   const blob = doc.output('blob');

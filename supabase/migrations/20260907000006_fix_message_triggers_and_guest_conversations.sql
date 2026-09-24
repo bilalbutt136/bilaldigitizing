@@ -11,7 +11,7 @@ DECLARE
     v_recipient_email text;
     v_recipient_name text := 'Customer';
     v_sender_name text;
-    v_endpoint_url text := 'https://bilaldigitizing.vercel.app/api/send-notification';
+    v_endpoint_url text := 'https://bdigitizing.com/api/send-notification';
     v_webhook_secret text := 'bd_sec_live_notification_trigger_9831';
     v_payload jsonb;
     v_admin_email text := 'shahidbutt59191@gmail.com';
@@ -108,7 +108,7 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 CREATE OR REPLACE FUNCTION public.fn_notify_new_order()
 RETURNS TRIGGER AS $$
 DECLARE
-    v_endpoint_url text := 'https://bilaldigitizing.vercel.app/api/send-notification';
+    v_endpoint_url text := 'https://bdigitizing.com/api/send-notification';
     v_webhook_secret text := 'bd_sec_live_notification_trigger_9831';
     v_payload jsonb;
     v_admin_email text := 'shahidbutt59191@gmail.com';

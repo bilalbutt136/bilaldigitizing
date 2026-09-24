@@ -28,7 +28,7 @@ export default function PortalForgotPasswordPage() {
         throw new Error('Database connection unavailable.');
       }
 
-      const origin = typeof window !== 'undefined' ? window.location.origin : (process.env.NEXT_PUBLIC_SITE_URL || 'https://bilaldigitizing.vercel.app');
+      const origin = typeof window !== 'undefined' ? window.location.origin : (process.env.NEXT_PUBLIC_SITE_URL || 'https://bdigitizing.com');
       const redirectToUrl = `${origin}/auth/callback?next=/portal/reset-password`;
 
       const { error } = await supabaseClient.auth.resetPasswordForEmail(cleanEmail, {

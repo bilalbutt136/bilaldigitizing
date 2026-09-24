@@ -41,13 +41,13 @@ export async function POST(req) {
       apiVersion: '2023-10-16',
     });
 
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://bilaldigitizing.vercel.app';
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://bdigitizing.com';
 
-    let productName = `Bilal Digitizing - Order Payment ${orderId ? `(#${orderId})` : ''}`;
+    let productName = `BDigitizing - Order Payment ${orderId ? `(#${orderId})` : ''}`;
     if (type === 'deposit') {
-      productName = 'Bilal Digitizing - Studio Wallet Top-up';
+      productName = 'BDigitizing - Studio Wallet Top-up';
     } else if (type === 'custom_offer') {
-      productName = `Bilal Digitizing - Custom Offer: ${title || 'Custom Design Order'}`;
+      productName = `BDigitizing - Custom Offer: ${title || 'Custom Design Order'}`;
     }
 
     const basePath = isApp ? `${siteUrl}/?app=true` : `${siteUrl}/client-portal`;

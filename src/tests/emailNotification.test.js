@@ -5,7 +5,7 @@ describe('Admin Email Notification & Routing Engine', () => {
   const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
   test('validates RFC 5322 standard email formats', () => {
-    assert.equal(EMAIL_REGEX.test('admin@bilaldigitizing.com'), true);
+    assert.equal(EMAIL_REGEX.test('admin@bdigitizing.com'), true);
     assert.equal(EMAIL_REGEX.test('shahidbutt59191@gmail.com'), true);
     assert.equal(EMAIL_REGEX.test('support+orders@studio.co.uk'), true);
     assert.equal(EMAIL_REGEX.test('invalid-email'), false);

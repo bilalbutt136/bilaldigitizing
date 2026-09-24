@@ -14,7 +14,7 @@ describe('Meta Pixel & Visitor Telemetry Engine', () => {
 
   describe('Traffic Attribution & Referrer Parsing', () => {
     test('identifies direct traffic when referrer is empty', () => {
-      const res = parseReferrerInfo('', 'bilaldigitizing.vercel.app');
+      const res = parseReferrerInfo('', 'bdigitizing.com');
       assert.equal(res.trafficChannel, 'Direct');
       assert.equal(res.trafficSource, 'Direct');
       assert.equal(res.searchEngine, null);
@@ -22,43 +22,43 @@ describe('Meta Pixel & Visitor Telemetry Engine', () => {
     });
 
     test('identifies Google organic search', () => {
-      const res = parseReferrerInfo('https://www.google.com/search?q=embroidery+digitizing', 'bilaldigitizing.vercel.app');
+      const res = parseReferrerInfo('https://www.google.com/search?q=embroidery+digitizing', 'bdigitizing.com');
       assert.equal(res.trafficChannel, 'Organic Search');
       assert.equal(res.searchEngine, 'Google');
       assert.equal(res.trafficSource, 'www.google.com');
     });
 
     test('identifies Bing organic search', () => {
-      const res = parseReferrerInfo('https://www.bing.com/search?q=vector+art', 'bilaldigitizing.vercel.app');
+      const res = parseReferrerInfo('https://www.bing.com/search?q=vector+art', 'bdigitizing.com');
       assert.equal(res.trafficChannel, 'Organic Search');
       assert.equal(res.searchEngine, 'Bing');
     });
 
     test('identifies Facebook social referrer and l.facebook.com link shim', () => {
-      const res = parseReferrerInfo('https://l.facebook.com/l.php?u=https%3A%2F%2Fbilaldigitizing.vercel.app', 'bilaldigitizing.vercel.app');
+      const res = parseReferrerInfo('https://l.facebook.com/l.php?u=https%3A%2F%2Fbdigitizing.com', 'bdigitizing.com');
       assert.equal(res.trafficChannel, 'Social Media');
       assert.equal(res.socialNetwork, 'Facebook');
     });
 
     test('identifies Instagram social referrer', () => {
-      const res = parseReferrerInfo('https://www.instagram.com/', 'bilaldigitizing.vercel.app');
+      const res = parseReferrerInfo('https://www.instagram.com/', 'bdigitizing.com');
       assert.equal(res.trafficChannel, 'Social Media');
       assert.equal(res.socialNetwork, 'Instagram');
     });
 
     test('identifies TikTok social referrer', () => {
-      const res = parseReferrerInfo('https://www.tiktok.com/', 'bilaldigitizing.vercel.app');
+      const res = parseReferrerInfo('https://www.tiktok.com/', 'bdigitizing.com');
       assert.equal(res.trafficChannel, 'Social Media');
       assert.equal(res.socialNetwork, 'TikTok');
     });
 
     test('identifies internal navigation', () => {
-      const res = parseReferrerInfo('https://bilaldigitizing.vercel.app/services', 'bilaldigitizing.vercel.app');
+      const res = parseReferrerInfo('https://bdigitizing.com/services', 'bdigitizing.com');
       assert.equal(res.trafficChannel, 'Direct / Internal');
     });
 
     test('identifies third-party referral domains', () => {
-      const res = parseReferrerInfo('https://embroideryforum.com/threads/best-digitizer', 'bilaldigitizing.vercel.app');
+      const res = parseReferrerInfo('https://embroideryforum.com/threads/best-digitizer', 'bdigitizing.com');
       assert.equal(res.trafficChannel, 'Referral');
       assert.equal(res.trafficSource, 'embroideryforum.com');
     });
@@ -122,11 +122,11 @@ describe('Meta Pixel & Visitor Telemetry Engine', () => {
 
     test('resolves platform admin with email', () => {
       const admin = {
-        email: 'admin@bilaldigitizing.com',
+        email: 'admin@bdigitizing.com',
         role: 'admin'
       };
       const identity = resolveUserIdentity(admin);
-      assert.equal(identity, 'Platform Admin (admin@bilaldigitizing.com)');
+      assert.equal(identity, 'Platform Admin (admin@bdigitizing.com)');
     });
 
     test('respects custom override role', () => {

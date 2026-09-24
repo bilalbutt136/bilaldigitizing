@@ -28,7 +28,7 @@ export default function WorkerForgotPasswordPage() {
         throw new Error('Database connection unavailable.');
       }
 
-      const origin = typeof window !== 'undefined' ? window.location.origin : 'https://bilaldigitizing.vercel.app';
+      const origin = typeof window !== 'undefined' ? window.location.origin : 'https://bdigitizing.com';
       const redirectToUrl = `${origin}/auth/callback?next=/worker/reset-password`;
 
       const { error } = await supabaseClient.auth.resetPasswordForEmail(cleanEmail, {
