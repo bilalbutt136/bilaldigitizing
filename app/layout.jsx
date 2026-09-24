@@ -140,17 +140,20 @@ export default function RootLayout({ children }) {
             __html: `
               (function() {
                 try {
-                  var isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
-                  var isMobileDevice = /Android|iPhone|iPad|iPod|Opera Mini|IEMobile|WPDesktop/i.test(navigator.userAgent || '');
-                  var isSmallScreen = window.innerWidth <= 768;
+                  var isStandalone = window.matchMedia('(display-mode: standalone)').matches || 
+                                     window.navigator.standalone === true || 
+                                     (document.referrer && document.referrer.indexOf('android-app://') !== -1);
                   var params = new URLSearchParams(window.location.search);
                   var urlApp = params.get('app') === 'true' || params.get('mode') === 'app';
                   var urlWeb = params.get('web') === 'true' || params.get('mode') === 'web';
-                  var saved = localStorage.getItem('bdigi_mobile_mode');
                   
-                  if (!urlWeb && (urlApp || isStandalone || isMobileDevice || isSmallScreen || saved === 'app')) {
+                  // Only standalone/installed app or explicit app URL opens app mode. Mobile browsers show the responsive website.
+                  if (!urlWeb && (isStandalone || urlApp)) {
                     document.documentElement.classList.add('mobile-app-active');
                     document.documentElement.setAttribute('data-mobile-mode', 'app');
+                  } else {
+                    document.documentElement.classList.remove('mobile-app-active');
+                    document.documentElement.removeAttribute('data-mobile-mode');
                   }
                 } catch(e) {}
               })();

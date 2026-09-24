@@ -22,14 +22,9 @@ export default function HomePage() {
     }
   }, [currentView, setCurrentView]);
 
-  const isMobile = mobileMode === 'app' || (typeof window !== 'undefined' && (
-    window.innerWidth <= 768 ||
-    /Android|iPhone|iPad|iPod|Opera Mini|IEMobile|WPDesktop/i.test(navigator.userAgent || '') ||
-    window.matchMedia?.('(display-mode: standalone)').matches
-  ));
-
-  // If in Standalone App mode or on mobile screen/device, render the 5-tab mobile app
-  if (isMobile && mobileMode !== 'website') {
+  // Only in Standalone / Installed App mode, render the 5-tab mobile app
+  // Mobile browsers (Chrome, Safari, etc.) always render the full responsive website
+  if (mobileMode === 'app') {
     return (
       <div className="mobile-app-wrapper" style={{ width: '100%', minHeight: '100vh', background: '#ffffff' }}>
         <BDigitizingMobileApp />

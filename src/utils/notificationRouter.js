@@ -197,11 +197,7 @@ export function handleNotificationClick(notif, context = {}) {
     return;
   }
 
-  const isMobile = mobileMode === 'app' || (typeof window !== 'undefined' && (
-    window.innerWidth <= 768 ||
-    /Android|iPhone|iPad|iPod|Opera Mini|IEMobile|WPDesktop/i.test(navigator.userAgent || '') ||
-    window.matchMedia?.('(display-mode: standalone)').matches
-  ));
+  const isMobile = mobileMode === 'app';
 
   // 4. Standalone Mobile App Mode / Mobile Viewport
   if (isMobile) {

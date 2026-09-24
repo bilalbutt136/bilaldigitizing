@@ -310,7 +310,7 @@ export const CheckoutModal = () => {
             offerId: checkoutSession?.offerId || null,
             conversationId: checkoutSession?.conversationId || null,
             title: checkoutSession?.title || checkoutSession?.orderTitle || 'Custom Design Order',
-            isApp: mobileMode === 'app' || (typeof window !== 'undefined' && (window.innerWidth <= 768 || /Android|iPhone|iPad|iPod|Opera Mini|IEMobile|WPDesktop/i.test(navigator.userAgent || '')))
+            isApp: mobileMode === 'app'
           })
         });
         const stripeData = await stripeRes.json();

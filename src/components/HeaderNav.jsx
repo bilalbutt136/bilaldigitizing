@@ -92,6 +92,23 @@ export const HeaderNav = () => {
   const [isNotificationDropdownOpen, setIsNotificationDropdownOpen] = useState(false);
   const [isSupportDropdownOpen, setIsSupportDropdownOpen] = useState(false);
   const [unreadChatCount, setUnreadChatCount] = useState(0);
+  const [isAppInstalled, setIsAppInstalled] = useState(false);
+
+  useEffect(() => {
+    if (typeof navigator !== 'undefined' && 'getInstalledRelatedApps' in navigator) {
+      navigator.getInstalledRelatedApps().then(apps => {
+        if (Array.isArray(apps) && apps.length > 0) {
+          setIsAppInstalled(true);
+        }
+      }).catch(() => {});
+    }
+    if (typeof localStorage !== 'undefined' && localStorage.getItem('bdigi_pwa_installed') === 'true') {
+      setIsAppInstalled(true);
+    }
+    const handleAppInstalled = () => setIsAppInstalled(true);
+    window.addEventListener('appinstalled', handleAppInstalled);
+    return () => window.removeEventListener('appinstalled', handleAppInstalled);
+  }, []);
 
   // Sync unread chat count for top header inbox button
   useEffect(() => {
@@ -189,12 +206,20 @@ export const HeaderNav = () => {
 
   const handleInstallMobileApp = async () => {
     setIsMobileMenuOpen(false);
+    if (isAppInstalled) {
+      window.location.href = '/?app=true';
+      return;
+    }
     if (typeof window !== 'undefined') {
       if (window.deferredPWAInstallPrompt) {
         try {
           window.deferredPWAInstallPrompt.prompt();
           const { outcome } = await window.deferredPWAInstallPrompt.userChoice;
           if (outcome === 'accepted') {
+            setIsAppInstalled(true);
+            if (typeof localStorage !== 'undefined') {
+              localStorage.setItem('bdigi_pwa_installed', 'true');
+            }
             window.deferredPWAInstallPrompt = null;
             if (showToast) showToast('Bilal Digitizing App installed successfully!', 'success');
           }
@@ -1593,7 +1618,7 @@ export const HeaderNav = () => {
                 <ArrowRight size={15} />
               </button>
 
-              {/* Install Mobile App Compact Banner/Button */}
+              {/* Install / Open Mobile App Compact Banner/Button */}
               <button
                 type="button"
                 onClick={handleInstallMobileApp}
@@ -1615,8 +1640,8 @@ export const HeaderNav = () => {
                 }}
               >
                 <Smartphone size={15} />
-                <span>Install Mobile App (1-Tap Access)</span>
-                <Download size={13} />
+                <span>{isAppInstalled ? 'Open Mobile App (1-Tap Access)' : 'Install Mobile App (1-Tap Access)'}</span>
+                {isAppInstalled ? <ArrowRight size={13} /> : <Download size={13} />}
               </button>
             </div>
           </aside>

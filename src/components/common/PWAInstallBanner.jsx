@@ -12,17 +12,43 @@ export const PWAInstallBanner = () => {
   const [isStandalone, setIsStandalone] = useState(false);
   const [showIOSInstructions, setShowIOSInstructions] = useState(false);
 
+  const [isAppInstalled, setIsAppInstalled] = useState(false);
+
   useEffect(() => {
-    // Check if already in standalone PWA mode
+    // Check if already running in standalone PWA mode
     const isApp = window.matchMedia('(display-mode: standalone)').matches || 
-                  window.navigator.standalone === true;
+                  window.navigator.standalone === true ||
+                  (document.referrer && document.referrer.includes('android-app://'));
     setIsStandalone(isApp);
     if (isApp) return;
+
+    // Check if user has already installed the app on their device
+    if (typeof navigator !== 'undefined' && 'getInstalledRelatedApps' in navigator) {
+      navigator.getInstalledRelatedApps().then(apps => {
+        if (Array.isArray(apps) && apps.length > 0) {
+          setIsAppInstalled(true);
+        }
+      }).catch(() => {});
+    }
+    if (typeof localStorage !== 'undefined' && localStorage.getItem('bdigi_pwa_installed') === 'true') {
+      setIsAppInstalled(true);
+    }
+
+    const handleAppInstalled = () => {
+      setIsAppInstalled(true);
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem('bdigi_pwa_installed', 'true');
+      }
+      setShowBanner(false);
+    };
+    window.addEventListener('appinstalled', handleAppInstalled);
 
     // Check if user dismissed prompt recently (14-day frequency cap)
     const dismissedUntil = localStorage.getItem('bdigi_pwa_dismissed_until');
     if (dismissedUntil && Number(dismissedUntil) > Date.now()) {
-      return;
+      return () => {
+        window.removeEventListener('appinstalled', handleAppInstalled);
+      };
     }
 
     // Detect iOS
@@ -37,7 +63,6 @@ export const PWAInstallBanner = () => {
       if (typeof window !== 'undefined') {
         window.deferredPWAInstallPrompt = e;
       }
-      // Wait 3 seconds before showing banner to ensure smooth initial load
       setTimeout(() => {
         setShowBanner(true);
       }, 3000);
@@ -52,9 +77,21 @@ export const PWAInstallBanner = () => {
         const iosTimer = setTimeout(() => {
           setShowBanner(true);
         }, 4000);
-        return () => clearTimeout(iosTimer);
+        return () => {
+          clearTimeout(iosTimer);
+          window.removeEventListener('appinstalled', handleAppInstalled);
+          window.removeEventListener('beforeinstallprompt', handleBeforeInstall);
+        };
       }
     }
+
+    // If already installed, show banner after 2 seconds to offer "Open App"
+    const installedCheckTimer = setTimeout(() => {
+      if (typeof localStorage !== 'undefined' && localStorage.getItem('bdigi_pwa_installed') === 'true') {
+        setIsAppInstalled(true);
+        setShowBanner(true);
+      }
+    }, 2000);
 
     // Allow manual triggers from profile / settings
     const handleManualTrigger = () => {
@@ -70,6 +107,8 @@ export const PWAInstallBanner = () => {
     window.addEventListener('bdigi_trigger_pwa_install', handleManualTrigger);
 
     return () => {
+      clearTimeout(installedCheckTimer);
+      window.removeEventListener('appinstalled', handleAppInstalled);
       window.removeEventListener('beforeinstallprompt', handleBeforeInstall);
       window.removeEventListener('bdigi_trigger_pwa_install', handleManualTrigger);
     };
@@ -80,6 +119,10 @@ export const PWAInstallBanner = () => {
       deferredPrompt.prompt();
       const { outcome } = await deferredPrompt.userChoice;
       if (outcome === 'accepted') {
+        setIsAppInstalled(true);
+        if (typeof localStorage !== 'undefined') {
+          localStorage.setItem('bdigi_pwa_installed', 'true');
+        }
         setShowBanner(false);
       }
       setDeferredPrompt(null);
@@ -88,6 +131,10 @@ export const PWAInstallBanner = () => {
     } else {
       setShowBanner(false);
     }
+  };
+
+  const handleOpenApp = () => {
+    window.location.href = '/?app=true';
   };
 
   const handleDismiss = () => {
@@ -101,7 +148,7 @@ export const PWAInstallBanner = () => {
 
   return (
     <>
-      {/* Smart Mobile Install Banner */}
+      {/* Smart Mobile App / Install Banner */}
       <div 
         style={{
           position: 'fixed',
@@ -144,64 +191,64 @@ export const PWAInstallBanner = () => {
           <div style={{ minWidth: 0 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
               <h5 style={{ margin: 0, fontSize: '0.88rem', fontWeight: 800, color: '#ffffff', whiteSpace: 'nowrap' }}>
-                Get the BDigitizing App
+                {isAppInstalled ? 'BDigitizing App Installed' : 'Get the BDigitizing App'}
               </h5>
               <Sparkles size={13} style={{ color: '#fbbf24' }} />
             </div>
             <p style={{ margin: '0.1rem 0 0', fontSize: '0.72rem', color: '#94a3b8', lineHeight: 1.25, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-              Fast ordering, live chat & instant file tracking.
+              {isAppInstalled ? 'Fast 1-tap ordering, push notifications & chat' : 'Fast ordering, live chat & instant file tracking'}
             </p>
           </div>
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexShrink: 0 }}>
-          <button
-            type="button"
-            onClick={handleInstallClick}
-            style={{
-              background: 'linear-gradient(135deg, var(--color-secondary) 0%, var(--color-primary) 100%)',
-              color: 'var(--color-text-on-primary, #ffffff)',
-              border: 'none',
-              borderRadius: '10px',
-              padding: '0.45rem 0.85rem',
-              fontSize: '0.78rem',
-              fontWeight: 800,
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.3rem',
-              boxShadow: '0 4px 10px var(--color-primary-glow)',
-              whiteSpace: 'nowrap'
-            }}
-          >
-            <Download size={13} />
-            <span>Install App</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => {
-              if (setMobileMode) setMobileMode('app');
-              setShowBanner(false);
-            }}
-            style={{
-              background: 'rgba(255, 255, 255, 0.15)',
-              color: '#ffffff',
-              border: '1px solid rgba(255, 255, 255, 0.25)',
-              borderRadius: '10px',
-              padding: '0.45rem 0.65rem',
-              fontSize: '0.75rem',
-              fontWeight: 700,
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.25rem',
-              whiteSpace: 'nowrap'
-            }}
-          >
-            <Smartphone size={12} />
-            <span>App Mode</span>
-          </button>
+          {isAppInstalled ? (
+            <button
+              type="button"
+              onClick={handleOpenApp}
+              style={{
+                background: 'linear-gradient(135deg, var(--color-secondary) 0%, var(--color-primary) 100%)',
+                color: 'var(--color-text-on-primary, #ffffff)',
+                border: 'none',
+                borderRadius: '10px',
+                padding: '0.45rem 0.85rem',
+                fontSize: '0.78rem',
+                fontWeight: 800,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.3rem',
+                boxShadow: '0 4px 10px var(--color-primary-glow)',
+                whiteSpace: 'nowrap'
+              }}
+            >
+              <Smartphone size={13} />
+              <span>Open App</span>
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={handleInstallClick}
+              style={{
+                background: 'linear-gradient(135deg, var(--color-secondary) 0%, var(--color-primary) 100%)',
+                color: 'var(--color-text-on-primary, #ffffff)',
+                border: 'none',
+                borderRadius: '10px',
+                padding: '0.45rem 0.85rem',
+                fontSize: '0.78rem',
+                fontWeight: 800,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.3rem',
+                boxShadow: '0 4px 10px var(--color-primary-glow)',
+                whiteSpace: 'nowrap'
+              }}
+            >
+              <Download size={13} />
+              <span>Install App</span>
+            </button>
+          )}
 
           <button
             type="button"

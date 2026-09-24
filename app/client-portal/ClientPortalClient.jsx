@@ -19,17 +19,7 @@ export function ClientPortalClient() {
     setCurrentView
   } = useAppState();
 
-  const isMobile = mobileMode === 'app' || (typeof window !== 'undefined' && (
-    window.innerWidth <= 768 ||
-    /Android|iPhone|iPad|iPod|Opera Mini|IEMobile|WPDesktop/i.test(navigator.userAgent || '') ||
-    window.matchMedia?.('(display-mode: standalone)').matches
-  ));
-
-  useEffect(() => {
-    if (isMobile && mobileMode !== 'app' && setMobileMode) {
-      setMobileMode('app');
-    }
-  }, [isMobile, mobileMode, setMobileMode]);
+  const isApp = mobileMode === 'app';
 
   // Once backend auth resolves, strictly enforce authenticated backend session (Rule 3: Auth Enforcement)
   const isUserLoggedIn = isAuthInitialized
@@ -39,8 +29,8 @@ export function ClientPortalClient() {
   useEffect(() => {
     if (!isAuthInitialized) return;
 
-    // In mobile app mode, BDigitizingMobileApp handles its own guest & auth tabs natively
-    if (isMobile) {
+    // In mobile app mode (standalone installed app), BDigitizingMobileApp handles its own guest & auth tabs natively
+    if (isApp) {
       if (isUserLoggedIn && currentView !== 'customer') {
         setCurrentView('customer');
       }
@@ -56,10 +46,10 @@ export function ClientPortalClient() {
         document.cookie = 'bdigi_auth=true; path=/; max-age=31536000; SameSite=Lax';
       }
     }
-  }, [isAuthInitialized, isUserLoggedIn, currentView, setCurrentView, navigate, isMobile]);
+  }, [isAuthInitialized, isUserLoggedIn, currentView, setCurrentView, navigate, isApp]);
 
-  // If in Standalone / App Mode or on mobile device/screen, render the 5-tab mobile app immediately
-  if (isMobile) {
+  // If in Standalone Installed App Mode, render the 5-tab mobile app
+  if (isApp) {
     return (
       <ErrorBoundary fallback={<CustomerDashboard />}>
         <div className="mobile-app-wrapper" style={{ width: '100%', minHeight: '100vh', background: '#ffffff' }}>

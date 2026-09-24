@@ -217,7 +217,7 @@ export const StateProvider = ({ children }) => {
     showToast(`Theme updated to ${THEME_PRESETS.find(t => t.id === targetPreset)?.name || 'New Theme'} ✨`, 'success');
   };
 
-  // Mobile View Mode: 'app' (standalone PWA/installed app or mobile device default) | 'website' (desktop view)
+  // Mobile View Mode: 'app' (standalone PWA/installed app) | 'website' (responsive website for mobile & desktop browsers)
   const getInitialMobileMode = () => {
     if (typeof window !== 'undefined') {
       try {
@@ -228,19 +228,12 @@ export const StateProvider = ({ children }) => {
         if (urlApp) return 'app';
 
         const isStandalone = window.matchMedia('(display-mode: standalone)').matches || 
-                             window.navigator.standalone === true;
+                             window.navigator.standalone === true ||
+                             (document.referrer && document.referrer.includes('android-app://'));
         if (isStandalone) return 'app';
 
-        const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent || '');
-        const isSmallScreen = window.innerWidth <= 768;
-        if (isMobileDevice || isSmallScreen) {
-          return 'app';
-        }
-
-        const savedMode = localStorage.getItem('bdigi_mobile_mode');
-        if (savedMode === 'app' || savedMode === 'website') {
-          return savedMode;
-        }
+        // When opened in mobile Chrome, Safari, or any browser, always default to responsive website
+        return 'website';
       } catch {}
     }
     return 'website';
@@ -251,7 +244,9 @@ export const StateProvider = ({ children }) => {
   const [isStandaloneApp, setIsStandaloneApp] = useState(() => {
     if (typeof window !== 'undefined') {
       try {
-        return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+        return window.matchMedia('(display-mode: standalone)').matches || 
+               window.navigator.standalone === true ||
+               (document.referrer && document.referrer.includes('android-app://'));
       } catch {}
     }
     return false;
@@ -275,15 +270,19 @@ export const StateProvider = ({ children }) => {
     if (typeof window !== 'undefined') {
       try {
         localStorage.setItem('bdigi_mobile_active_tab', newTab);
-        localStorage.setItem('bdigi_mobile_mode', 'app');
         const url = new URL(window.location.href);
-        url.searchParams.set('app', 'true');
-        url.searchParams.delete('web');
-        url.searchParams.set('tab', newTab);
-        if (newTab === 'home') {
-          window.history.replaceState({ app: true, tab: 'home' }, '', url.toString());
-        } else {
-          window.history.pushState({ app: true, tab: newTab }, '', url.toString());
+        const isApp = url.searchParams.get('app') === 'true' || 
+                      window.matchMedia('(display-mode: standalone)').matches || 
+                      window.navigator.standalone === true;
+        if (isApp) {
+          url.searchParams.set('app', 'true');
+          url.searchParams.delete('web');
+          url.searchParams.set('tab', newTab);
+          if (newTab === 'home') {
+            window.history.replaceState({ app: true, tab: 'home' }, '', url.toString());
+          } else {
+            window.history.pushState({ app: true, tab: newTab }, '', url.toString());
+          }
         }
       } catch {}
     }
@@ -292,15 +291,13 @@ export const StateProvider = ({ children }) => {
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const isStandalone = window.matchMedia('(display-mode: standalone)').matches || 
-                           window.navigator.standalone === true;
+                           window.navigator.standalone === true ||
+                           (document.referrer && document.referrer.includes('android-app://'));
       setIsStandaloneApp(isStandalone);
       
       const urlParams = new URLSearchParams(window.location.search);
       const urlApp = urlParams.get('app') === 'true' || urlParams.get('mode') === 'app';
       const urlWeb = urlParams.get('web') === 'true' || urlParams.get('mode') === 'web';
-      const savedMode = localStorage.getItem('bdigi_mobile_mode');
-      const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent || '');
-      const isSmallScreen = window.innerWidth <= 768;
 
       let targetMode = 'website';
       if (urlWeb) {
@@ -309,13 +306,10 @@ export const StateProvider = ({ children }) => {
       } else if (urlApp || isStandalone) {
         targetMode = 'app';
         localStorage.setItem('bdigi_mobile_mode', 'app');
-      } else if (isMobileDevice || isSmallScreen) {
-        targetMode = 'app';
-        localStorage.setItem('bdigi_mobile_mode', 'app');
-      } else if (savedMode === 'app') {
-        targetMode = 'app';
-      } else if (savedMode === 'website') {
+      } else {
+        // Standard mobile Chrome, Safari, etc. -> always responsive website
         targetMode = 'website';
+        localStorage.setItem('bdigi_mobile_mode', 'website');
       }
 
       setMobileModeState(targetMode);
@@ -1637,14 +1631,8 @@ export const StateProvider = ({ children }) => {
       } catch {}
     }
 
-    // In mobile app mode (or on mobile screens/devices), handle views natively via mobile tabs to prevent dropping users into desktop Chrome
-    const isMobileDeviceOrSmallScreen = typeof window !== 'undefined' && (
-      /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent || '') || 
-      window.innerWidth <= 768 || 
-      window.matchMedia('(display-mode: standalone)').matches || 
-      window.navigator.standalone === true
-    );
-    if (mobileMode === 'app' || isMobileDeviceOrSmallScreen) {
+    // In mobile app mode (standalone installed app), handle views natively via mobile tabs
+    if (mobileMode === 'app') {
       if (targetView === 'public') {
         setCurrentView('public');
         setMobileTab('home');
@@ -2149,22 +2137,8 @@ export const StateProvider = ({ children }) => {
 
 
   const openOrderWizard = (initialData = null) => {
-    const isMobileDeviceOrSmallScreen = typeof window !== 'undefined' && (
-      /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent || '') || 
-      window.innerWidth <= 768 || 
-      window.matchMedia('(display-mode: standalone)').matches || 
-      window.navigator.standalone === true
-    );
-
-    if (mobileMode === 'app' || isMobileDeviceOrSmallScreen) {
-      setMobileModeState('app');
-      if (typeof window !== 'undefined') {
-        try {
-          localStorage.setItem('bdigi_mobile_mode', 'app');
-          document.documentElement.classList.add('mobile-app-active');
-          document.documentElement.setAttribute('data-mobile-mode', 'app');
-        } catch {}
-      }
+    // Only in standalone installed mobile app mode, trigger the mobile app order sheet
+    if (mobileMode === 'app') {
       setMobileTab('home');
       if (typeof window !== 'undefined') {
         window.dispatchEvent(new CustomEvent('bdigi_open_mobile_order', { detail: initialData }));
@@ -2172,6 +2146,7 @@ export const StateProvider = ({ children }) => {
       return;
     }
 
+    // In responsive website (mobile browser & desktop), open standard responsive OrderWizardModal
     if (initialData !== undefined && initialData !== null) {
       setOrderWizardInitialData(initialData);
     }
