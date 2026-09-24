@@ -369,18 +369,31 @@ export const StateProvider = ({ children }) => {
   const [isCheckoutModalOpen, setIsCheckoutModalOpen] = useState(false);
   const [checkoutSession, setCheckoutSession] = useState(null);
 
-  // Core Data Arrays (seeded from the database catalog on load)
+  const readCachedArray = (key) => {
+    if (typeof window !== 'undefined') {
+      try {
+        const saved = localStorage.getItem(key);
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        }
+      } catch {}
+    }
+    return [];
+  };
+
+  // Core Data Arrays (seeded from cached storage immediately, updated live from DB)
   const [orders, setOrders] = useState([]);
   const [clients, setClients] = useState([]);
   const [pricing, setPricing] = useState({});
-  const [pricingCards, setPricingCards] = useState([]);
-  const [dynamicPricingTiers, setDynamicPricingTiers] = useState([]);
-  const [portfolioSamples, setPortfolioSamples] = useState([]);
-  const [sewOuts, setSewOuts] = useState([]);
-  const [patchCards, setPatchCards] = useState([]);
-  const [storeProducts, setStoreProducts] = useState([]);
-  const [servicesList, setServicesList] = useState([]);
-  const [heroSlides, setHeroSlides] = useState([]);
+  const [pricingCards, setPricingCards] = useState(() => readCachedArray('bdigi_pricing_cards'));
+  const [dynamicPricingTiers, setDynamicPricingTiers] = useState(() => readCachedArray('bdigi_dynamic_pricing_tiers'));
+  const [portfolioSamples, setPortfolioSamples] = useState(() => readCachedArray('portfolio_samples_live'));
+  const [sewOuts, setSewOuts] = useState(() => readCachedArray('bdigi_sew_outs'));
+  const [patchCards, setPatchCards] = useState(() => readCachedArray('bdigi_patch_cards'));
+  const [storeProducts, setStoreProducts] = useState(() => readCachedArray('bdigi_store_products'));
+  const [servicesList, setServicesList] = useState(() => readCachedArray('bdigi_services_list'));
+  const [heroSlides, setHeroSlides] = useState(() => readCachedArray('bdigi_hero_slides'));
   const [heroGlobalSettings, setHeroGlobalSettings] = useState({
     title: 'Premium Embroidery, Vector Art & Patches',
     rotatingTexts: 'Commercial Embroidery, Scalable Vector Art, Custom Physical Patches'
@@ -400,9 +413,7 @@ export const StateProvider = ({ children }) => {
                 parsed.announcement.bgColor = 'linear-gradient(90deg, #ea580c 0%, #f97316 50%, #ea580c 100%)';
               }
             }
-            if (Array.isArray(parsed.promotions) && parsed.promotions.length > 0) {
-              return parsed;
-            }
+            return parsed;
           }
         }
       } catch {}
@@ -1066,12 +1077,46 @@ export const StateProvider = ({ children }) => {
 
     validateImmediateSession();
 
+    const persistLiveCatalogToStorage = (cat) => {
+      if (typeof window === 'undefined' || !cat) return;
+      try {
+        if (cat.siteSettings) {
+          localStorage.setItem('site_settings_live', JSON.stringify(cat.siteSettings));
+        }
+        if (Array.isArray(cat.portfolioSamples) && cat.portfolioSamples.length > 0) {
+          localStorage.setItem('portfolio_samples_live', JSON.stringify(cat.portfolioSamples));
+        }
+        if (Array.isArray(cat.heroSlides) && cat.heroSlides.length > 0) {
+          localStorage.setItem('bdigi_hero_slides', JSON.stringify(cat.heroSlides));
+        }
+        if (Array.isArray(cat.dynamicPricingTiers) && cat.dynamicPricingTiers.length > 0) {
+          localStorage.setItem('bdigi_dynamic_pricing_tiers', JSON.stringify(cat.dynamicPricingTiers));
+        }
+        if (Array.isArray(cat.storeProducts) && cat.storeProducts.length > 0) {
+          localStorage.setItem('bdigi_store_products', JSON.stringify(cat.storeProducts));
+        }
+        if (Array.isArray(cat.patchCards) && cat.patchCards.length > 0) {
+          localStorage.setItem('bdigi_patch_cards', JSON.stringify(cat.patchCards));
+        }
+        if (Array.isArray(cat.pricingCards) && cat.pricingCards.length > 0) {
+          localStorage.setItem('bdigi_pricing_cards', JSON.stringify(cat.pricingCards));
+        }
+        if (Array.isArray(cat.servicesList) && cat.servicesList.length > 0) {
+          localStorage.setItem('bdigi_services_list', JSON.stringify(cat.servicesList));
+        }
+        if (Array.isArray(cat.sewOuts) && cat.sewOuts.length > 0) {
+          localStorage.setItem('bdigi_sew_outs', JSON.stringify(cat.sewOuts));
+        }
+      } catch {}
+    };
+
     const loadInitialData = async () => {
       // 2. Fetch catalog & DB clients if Supabase is configured
       if (isSupabaseConfigured && supabase) {
         try {
           const catalog = await fetchCatalogFromSupabase();
           if (!cancelled && catalog) {
+            persistLiveCatalogToStorage(catalog);
             if (catalog.servicesList) setServicesList(catalog.servicesList);
             if (catalog.pricingCards) setPricingCards(catalog.pricingCards);
             if (catalog.dynamicPricingTiers) setDynamicPricingTiers(catalog.dynamicPricingTiers);
@@ -1150,6 +1195,7 @@ export const StateProvider = ({ children }) => {
           try {
             const catalog = await fetchCatalogFromSupabase();
             if (catalog) {
+              persistLiveCatalogToStorage(catalog);
               if (catalog.servicesList) setServicesList(catalog.servicesList);
               if (catalog.pricingCards) setPricingCards(catalog.pricingCards);
               if (catalog.dynamicPricingTiers) setDynamicPricingTiers(catalog.dynamicPricingTiers);

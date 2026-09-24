@@ -37,6 +37,16 @@ export const ThemeBrandingSettings = () => {
   const logoInputRef = useRef(null);
   const faviconInputRef = useRef(null);
 
+  // Sync with live database settings when loaded
+  React.useEffect(() => {
+    if (siteSettings?.logoUrl !== undefined) {
+      setLogoUrl(siteSettings.logoUrl || '');
+    }
+    if (siteSettings?.faviconUrl !== undefined) {
+      setFaviconUrl(siteSettings.faviconUrl || '');
+    }
+  }, [siteSettings?.logoUrl, siteSettings?.faviconUrl]);
+
   const handleSaveCustomBrand = async (e) => {
     e?.preventDefault?.();
     setIsSaving(true);

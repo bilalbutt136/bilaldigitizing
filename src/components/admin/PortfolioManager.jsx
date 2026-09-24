@@ -203,14 +203,6 @@ export const PortfolioManager = () => {
           window.dispatchEvent(new CustomEvent('portfolio_updated', { detail: savedItem }));
         }
         setIsModalOpen(false);
-
-        // Fetch fresh catalog from DB in background to guarantee 100% sync
-        try {
-          const fresh = await fetchCatalogFromSupabase();
-          if (fresh?.portfolioSamples && setPortfolioSamples) {
-            setPortfolioSamples(fresh.portfolioSamples);
-          }
-        } catch {}
       } else {
         showToast('Failed to save portfolio item: ' + (result.error || 'Unknown error'), 'error');
       }
@@ -239,12 +231,6 @@ export const PortfolioManager = () => {
           return list;
         });
       }
-      try {
-        const fresh = await fetchCatalogFromSupabase();
-        if (fresh?.portfolioSamples && setPortfolioSamples) {
-          setPortfolioSamples(fresh.portfolioSamples);
-        }
-      } catch {}
     }
   };
 
@@ -267,12 +253,6 @@ export const PortfolioManager = () => {
             return list;
           });
         }
-        try {
-          const fresh = await fetchCatalogFromSupabase();
-          if (fresh?.portfolioSamples && setPortfolioSamples) {
-            setPortfolioSamples(fresh.portfolioSamples);
-          }
-        } catch {}
       } else {
         showToast('Failed to delete: ' + (result.error || 'Unknown error'), 'error');
       }

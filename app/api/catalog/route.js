@@ -70,7 +70,9 @@ export async function GET(request) {
         portfolio, sew_outs, hero_slides, digitizers, site_config, faqs, testimonials
       }, {
         headers: {
-          'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate'
+          'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0',
+          'Pragma': 'no-cache',
+          'Expires': '0'
         }
       });
     }

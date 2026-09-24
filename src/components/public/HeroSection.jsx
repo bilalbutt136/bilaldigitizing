@@ -138,65 +138,12 @@ export const HeroSection = () => {
     activeHomeServiceTab = 'all', 
     setActiveHomeServiceTab,
     heroSlides = [],
-    portfolioSamples = [],
-    setPortfolioSamples
+    portfolioSamples = []
   } = useAppState();
 
-  const [livePortfolio, setLivePortfolio] = useState(portfolioSamples || []);
   const [currentSlideIdx, setCurrentSlideIdx] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
   const [isFading, setIsFading] = useState(false);
-
-  // Synchronize with state context
-  useEffect(() => {
-    if (portfolioSamples && portfolioSamples.length > 0) {
-      setLivePortfolio(portfolioSamples);
-    }
-  }, [portfolioSamples]);
-
-  // Real-time Database Fetch & Live Sync
-  useEffect(() => {
-    let isMounted = true;
-    const fetchFreshPortfolio = async () => {
-      try {
-        if (supabase) {
-          const { data, error } = await supabase
-            .from('portfolio')
-            .select('*')
-            .eq('is_active', true)
-            .order('sort_order', { ascending: true });
-          if (!error && data && data.length > 0 && isMounted) {
-            setLivePortfolio(data);
-            if (setPortfolioSamples) setPortfolioSamples(data);
-            return;
-          }
-        }
-        const res = await fetch(`/api/catalog?action=fetchAll&_t=${Date.now()}`, { cache: 'no-store' });
-        const json = await res.json();
-        if (json?.portfolio && isMounted) {
-          setLivePortfolio(json.portfolio);
-          if (setPortfolioSamples) setPortfolioSamples(json.portfolio);
-        }
-      } catch (err) {
-        console.warn('Hero showcase live sync notice:', err);
-      }
-    };
-
-    fetchFreshPortfolio();
-
-    const handlePortfolioUpdate = () => {
-      fetchFreshPortfolio();
-    };
-
-    window.addEventListener('portfolio_updated', handlePortfolioUpdate);
-    window.addEventListener('storage', handlePortfolioUpdate);
-
-    return () => {
-      isMounted = false;
-      window.removeEventListener('portfolio_updated', handlePortfolioUpdate);
-      window.removeEventListener('storage', handlePortfolioUpdate);
-    };
-  }, [setPortfolioSamples]);
 
   const activeTab = normalizeCategory(activeHomeServiceTab || 'all');
   const defaultContent = DEFAULT_SERVICE_DATA[activeTab] || DEFAULT_SERVICE_DATA.all;
@@ -230,7 +177,7 @@ export const HeroSection = () => {
 
   // Dynamic Live Showcase items strictly from the live database
   const activeShowcaseImages = React.useMemo(() => {
-    const portfolioSource = livePortfolio && livePortfolio.length > 0 ? livePortfolio : portfolioSamples;
+    const portfolioSource = portfolioSamples;
 
     // 1. Filter live database portfolio items by active tab category
     const categoryMatches = (portfolioSource || []).filter(item => {
@@ -294,7 +241,7 @@ export const HeroSection = () => {
     }
 
     return [];
-  }, [livePortfolio, portfolioSamples, activeTab, matchedSlide]);
+  }, [portfolioSamples, activeTab, matchedSlide]);
 
   // Reset slide index when activeTab changes
   useEffect(() => {

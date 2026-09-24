@@ -939,7 +939,11 @@ export async function updateHomePageSettingsInSupabase(payloadArray) {
 export async function fetchCatalogFromSupabase() {
   try {
     const res = await fetch(`/api/catalog?action=fetchAll&_t=${Date.now()}`, {
-      cache: 'no-store'
+      cache: 'no-store',
+      headers: {
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache'
+      }
     });
     const data = await res.json();
     
