@@ -7,7 +7,10 @@ import {
   getOrderFormatsString, 
   getOrderTurnaroundTier, 
   getOrderPriceNumeric, 
-  isOrderPaidStatus 
+  isOrderPaidStatus,
+  formatFabricSpec,
+  formatDimensionsSpec,
+  generateCustomerTaxInvoicePdf
 } from '../utils/customerInvoicePdfGenerator.js';
 
 describe('Customer Tax Invoice Generator & Legal Compliance', () => {
@@ -78,5 +81,65 @@ describe('Customer Tax Invoice Generator & Legal Compliance', () => {
     assert.equal(isOrderPaidStatus({ isPaid: true }), true);
     assert.equal(isOrderPaidStatus({ status: 'delivered' }), true);
     assert.equal(isOrderPaidStatus({ status: 'submitted', payment_status: 'pending' }), false);
+  });
+
+  test('formatFabricSpec and formatDimensionsSpec format order parameters correctly', () => {
+    assert.equal(formatFabricSpec('Pique Cotton'), 'Pique Cotton');
+    assert.equal(formatFabricSpec({ name: 'Fleece Twill' }), 'Fleece Twill');
+    assert.equal(formatFabricSpec(null), '');
+
+    assert.equal(formatDimensionsSpec('3.5 x 2.5 in'), '3.5 x 2.5 in');
+    assert.equal(formatDimensionsSpec(4), '4"');
+    assert.equal(formatDimensionsSpec({ width: '3.5', height: '2.5', unit: 'in' }), '3.5" x 2.5" in');
+    assert.equal(formatDimensionsSpec(null), '');
+  });
+
+  test('generateCustomerTaxInvoicePdf produces complete, valid commercial invoice PDF', async () => {
+    const fullOrder = {
+      id: 'ORD-PROD8899',
+      title: 'Monogram Crest Embroidery',
+      price: 28.50,
+      discount_amount: 5.00,
+      rush_fee: 10.00,
+      isPaid: true,
+      paid_at: '2026-09-25T08:30:00Z',
+      createdAt: '2026-09-25T07:15:00Z',
+      fabric: 'Pique Cotton Polo',
+      dimensions: '3.5" x 2.5"',
+      placement: 'Left Chest',
+      requestedFormats: ['dst', 'pes', 'emb'],
+      notes: 'Please apply dense underlay stitching for pique stretch resistance.',
+      payment_method: 'Stripe Corporate Card'
+    };
+
+    const client = {
+      name: 'Robert Vance',
+      company: 'Vance Refrigeration Apparel',
+      email: 'robert@vanceapparel.com',
+      phone: '+1 (555) 234-5678',
+      address: 'Scranton, PA, USA'
+    };
+
+    const result = await generateCustomerTaxInvoicePdf({ order: fullOrder, client });
+
+    assert.ok(result);
+    assert.equal(result.invoiceNumber, 'INV-BD-2026-PROD8899');
+    assert.equal(result.filename, 'INV-BD-2026-PROD8899_Invoice.pdf');
+    assert.ok(result.blob);
+    assert.ok(result.blob.size > 2000, `Expected PDF blob size > 2000 bytes, got ${result.blob.size}`);
+    assert.equal(typeof result.downloadPdf, 'function');
+  });
+
+  test('generateCustomerTaxInvoicePdf handles unauthenticated or minimal order safely', async () => {
+    const minimalOrder = {
+      id: 'ORD-MINIMAL1',
+      price: 15.00,
+      status: 'awaiting_payment'
+    };
+
+    const result = await generateCustomerTaxInvoicePdf({ order: minimalOrder, client: null });
+    assert.ok(result);
+    assert.equal(result.invoiceNumber, 'INV-BD-2026-MINIMAL1');
+    assert.ok(result.blob.size > 1000);
   });
 });

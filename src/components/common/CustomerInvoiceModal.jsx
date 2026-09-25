@@ -10,7 +10,8 @@ import {
   Clock, 
   Copy, 
   Check, 
-  ShieldCheck
+  ShieldCheck,
+  Sparkles
 } from 'lucide-react';
 import { 
   generateCustomerTaxInvoicePdf, 
@@ -18,8 +19,11 @@ import {
   formatOrderId, 
   getOrderServiceTitle, 
   getOrderFormatsString, 
+  getOrderTurnaroundTier,
   getOrderPriceNumeric, 
-  isOrderPaidStatus 
+  isOrderPaidStatus,
+  formatFabricSpec,
+  formatDimensionsSpec
 } from '../../utils/customerInvoicePdfGenerator';
 
 export const CustomerInvoiceModal = ({
@@ -54,10 +58,13 @@ export const CustomerInvoiceModal = ({
   const price = getOrderPriceNumeric(order);
   const serviceTitle = getOrderServiceTitle(order);
   const formatsString = getOrderFormatsString(order);
+  const turnaroundTier = getOrderTurnaroundTier(order);
 
   const clientName = client?.name || order?.client_name || order?.clientName || 'Valued Client';
   const clientCompany = client?.company || order?.client_company || order?.company || '';
   const clientEmail = client?.email || order?.client_email || order?.clientEmail || '';
+  const clientPhone = client?.phone || order?.client_phone || order?.clientPhone || order?.phone || '';
+  const clientAddress = client?.address || order?.client_address || order?.clientAddress || order?.address || '';
 
   const orderDateRaw = order?.createdAt || order?.created_at || new Date();
   const issueDateFormatted = new Date(orderDateRaw).toLocaleDateString('en-US', {
@@ -71,6 +78,25 @@ export const CustomerInvoiceModal = ({
     day: 'numeric',
     year: 'numeric'
   }) : issueDateFormatted;
+
+  const paymentMethod = order?.payment_method || order?.paymentMethod || (isPaid ? 'Credit Card / Electronic Gateway' : 'Awaiting Settlement');
+  const fabric = formatFabricSpec(order?.fabric || order?.fabricType || order?.fabric_type);
+  const dimensions = formatDimensionsSpec(order?.dimensions || order?.size);
+  const placement = order?.placement || order?.placementType || order?.placement_type || '';
+  const quantity = Math.max(1, parseInt(order?.quantity || order?.qty || 1, 10) || 1);
+  const unitPrice = quantity > 1 ? parseFloat((price / quantity).toFixed(2)) : price;
+  const discountAmount = Math.max(0, parseFloat(order?.discount_amount || order?.discountAmount || 0));
+  const rushFee = Math.max(0, parseFloat(order?.rush_fee || order?.rushFee || 0));
+  const subtotal = discountAmount > 0 ? (price + discountAmount - rushFee) : price;
+  const designTitle = order?.title || order?.design_name || order?.name || '';
+  const customerNotes = typeof order?.notes === 'string' && order.notes.trim() !== '[object Object]' 
+    ? order.notes.trim() 
+    : (order?.special_instructions || order?.customer_notes || '');
+
+  const specsParts = [];
+  if (fabric) specsParts.push(`Fabric: ${fabric}`);
+  if (placement) specsParts.push(`Placement: ${placement}`);
+  if (dimensions) specsParts.push(`Dimensions: ${dimensions}`);
 
   const handleDownloadPdf = async () => {
     try {
@@ -86,7 +112,83 @@ export const CustomerInvoiceModal = ({
   };
 
   const handlePrint = () => {
-    window.print();
+    try {
+      const printSheet = document.getElementById('customer-invoice-print-content');
+      if (!printSheet) {
+        window.print();
+        return;
+      }
+
+      // Create an isolated hidden iframe containing ONLY the invoice document
+      const iframe = document.createElement('iframe');
+      iframe.setAttribute('style', 'position:fixed;top:-10000px;left:-10000px;width:820px;height:1100px;border:none;');
+      document.body.appendChild(iframe);
+
+      const doc = iframe.contentWindow.document;
+      doc.open();
+      doc.write(`
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <title>Invoice_${invoiceNumber}</title>
+            <meta charset="utf-8" />
+            <style>
+              @page {
+                size: A4 portrait;
+                margin: 12mm 15mm;
+              }
+              * {
+                box-sizing: border-box;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+              }
+              body {
+                margin: 0;
+                padding: 0;
+                background: #ffffff;
+                color: #0f172a;
+                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+                font-size: 13px;
+                line-height: 1.5;
+              }
+              .no-print {
+                display: none !important;
+              }
+              table {
+                width: 100%;
+                border-collapse: collapse;
+              }
+              th, td {
+                padding: 8px 10px;
+              }
+            </style>
+          </head>
+          <body>
+            ${printSheet.innerHTML}
+          </body>
+        </html>
+      `);
+      doc.close();
+
+      setTimeout(() => {
+        try {
+          iframe.contentWindow.focus();
+          iframe.contentWindow.print();
+        } catch (e) {
+          console.warn('Iframe print error, falling back to window.print():', e);
+          window.print();
+        } finally {
+          setTimeout(() => {
+            if (document.body.contains(iframe)) {
+              document.body.removeChild(iframe);
+            }
+          }, 2000);
+        }
+      }, 300);
+    } catch (err) {
+      console.warn('Print initialization error:', err);
+      window.print();
+    }
   };
 
   const handleCopyInvoiceNumber = () => {
@@ -114,6 +216,53 @@ export const CustomerInvoiceModal = ({
         boxSizing: 'border-box'
       }}
     >
+      {/* Print isolation styles for native Ctrl+P triggers */}
+      <style>{`
+        @media print {
+          body * {
+            visibility: hidden !important;
+          }
+          #customer-invoice-print-content,
+          #customer-invoice-print-content * {
+            visibility: visible !important;
+          }
+          .customer-invoice-overlay {
+            position: absolute !important;
+            inset: 0 !important;
+            background: #ffffff !important;
+            backdrop-filter: none !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            z-index: 99999999 !important;
+            display: block !important;
+          }
+          .customer-invoice-container {
+            position: static !important;
+            max-width: 100% !important;
+            max-height: none !important;
+            box-shadow: none !important;
+            border: none !important;
+            border-radius: 0 !important;
+            overflow: visible !important;
+            width: 100% !important;
+            background: #ffffff !important;
+          }
+          .no-print,
+          .customer-invoice-action-bar {
+            display: none !important;
+          }
+          #customer-invoice-print-content {
+            position: absolute !important;
+            left: 0 !important;
+            top: 0 !important;
+            width: 100% !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            overflow: visible !important;
+          }
+        }
+      `}</style>
+
       <div 
         className="modal-content customer-invoice-container"
         onClick={(e) => e.stopPropagation()}
@@ -130,16 +279,19 @@ export const CustomerInvoiceModal = ({
           overflow: 'hidden'
         }}
       >
-        {/* TOP ACTION BAR */}
-        <div style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          padding: '0.8rem 1.4rem',
-          background: '#f8fafc',
-          borderBottom: '1px solid #e2e8f0',
-          flexShrink: 0
-        }}>
+        {/* TOP ACTION BAR (Hidden from print) */}
+        <div 
+          className="customer-invoice-action-bar no-print"
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            padding: '0.8rem 1.4rem',
+            background: '#f8fafc',
+            borderBottom: '1px solid #e2e8f0',
+            flexShrink: 0
+          }}
+        >
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
             <div style={{
               width: '30px',
@@ -167,7 +319,7 @@ export const CustomerInvoiceModal = ({
             <button
               type="button"
               onClick={handleCopyInvoiceNumber}
-              className="btn btn-outline btn-sm"
+              className="btn btn-outline btn-sm no-print"
               style={{
                 fontSize: '0.76rem',
                 fontWeight: 700,
@@ -186,7 +338,7 @@ export const CustomerInvoiceModal = ({
             <button
               type="button"
               onClick={handlePrint}
-              className="btn btn-outline btn-sm"
+              className="btn btn-outline btn-sm no-print"
               style={{
                 fontSize: '0.76rem',
                 fontWeight: 700,
@@ -205,7 +357,7 @@ export const CustomerInvoiceModal = ({
               type="button"
               onClick={handleDownloadPdf}
               disabled={isGeneratingPdf}
-              className="btn btn-primary-orange btn-sm"
+              className="btn btn-primary-orange btn-sm no-print"
               style={{
                 fontSize: '0.78rem',
                 fontWeight: 800,
@@ -223,6 +375,7 @@ export const CustomerInvoiceModal = ({
             <button
               type="button"
               onClick={onClose}
+              className="no-print"
               style={{
                 background: 'none',
                 border: 'none',
@@ -244,6 +397,7 @@ export const CustomerInvoiceModal = ({
 
         {/* INVOICE CONTENT (Clean Executive Sheet) */}
         <div 
+          id="customer-invoice-print-content"
           className="printable-tax-invoice-sheet"
           style={{
             flex: 1,
@@ -297,14 +451,14 @@ export const CustomerInvoiceModal = ({
                   gap: '0.25rem'
                 }}>
                   {isPaid ? <CheckCircle2 size={12} /> : <Clock size={12} />}
-                  {isPaid ? 'PAID' : 'PAYMENT DUE'}
+                  {isPaid ? `PAID (${paymentDateFormatted})` : 'PAYMENT DUE'}
                 </span>
               </div>
             </div>
           </div>
 
           {/* Billed To & Order Details (Clean 2-Column Text) */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.5rem', marginBottom: '1.75rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.5rem', marginBottom: '1.5rem' }}>
             
             {/* Left: Billed To */}
             <div>
@@ -324,6 +478,16 @@ export const CustomerInvoiceModal = ({
                   {clientEmail}
                 </div>
               )}
+              {clientPhone && (
+                <div style={{ fontSize: '0.78rem', color: '#64748b', marginTop: '0.1rem' }}>
+                  Tel: {clientPhone}
+                </div>
+              )}
+              {clientAddress && (
+                <div style={{ fontSize: '0.78rem', color: '#64748b', marginTop: '0.1rem' }}>
+                  {clientAddress}
+                </div>
+              )}
             </div>
 
             {/* Right: Order Details */}
@@ -331,13 +495,23 @@ export const CustomerInvoiceModal = ({
               <div style={{ fontSize: '0.72rem', fontWeight: 800, color: '#ea580c', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '0.35rem' }}>
                 Order Details
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '95px 1fr', rowGap: '0.25rem', fontSize: '0.82rem' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '105px 1fr', rowGap: '0.25rem', fontSize: '0.82rem' }}>
                 <span style={{ color: '#64748b' }}>Order ID:</span>
                 <span style={{ fontWeight: 800, color: '#0f172a' }}>{formatOrderId(order?.id)}</span>
 
                 <span style={{ color: '#64748b' }}>Payment:</span>
                 <span style={{ fontWeight: 700, color: isPaid ? '#10b981' : '#ea580c' }}>
                   {isPaid ? `Paid in Full (${paymentDateFormatted})` : 'Awaiting Payment'}
+                </span>
+
+                <span style={{ color: '#64748b' }}>Method:</span>
+                <span style={{ fontWeight: 600, color: '#334155' }}>
+                  {paymentMethod}
+                </span>
+
+                <span style={{ color: '#64748b' }}>Turnaround:</span>
+                <span style={{ fontWeight: 600, color: '#334155' }}>
+                  {turnaroundTier}
                 </span>
 
                 <span style={{ color: '#64748b' }}>Currency:</span>
@@ -347,16 +521,38 @@ export const CustomerInvoiceModal = ({
 
           </div>
 
+          {/* Optional Production Specs Strip */}
+          {specsParts.length > 0 && (
+            <div style={{
+              background: '#f8fafc',
+              border: '1px solid #e2e8f0',
+              borderRadius: '7px',
+              padding: '0.55rem 0.85rem',
+              marginBottom: '1.25rem',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              fontSize: '0.78rem',
+              color: '#334155',
+              flexWrap: 'wrap'
+            }}>
+              <span style={{ fontWeight: 800, color: '#ea580c', fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.03em' }}>
+                Production Specs:
+              </span>
+              <span>{specsParts.join('  •  ')}</span>
+            </div>
+          )}
+
           {/* Simple Clean Table */}
           <div style={{ border: '1px solid #e2e8f0', borderRadius: '8px', overflow: 'hidden', marginBottom: '1.5rem' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.825rem' }}>
               <thead>
                 <tr style={{ background: '#f8fafc', color: '#475569', fontSize: '0.74rem', fontWeight: 800, textTransform: 'uppercase', borderBottom: '1px solid #e2e8f0' }}>
                   <th style={{ padding: '0.65rem 0.85rem', width: '5%' }}>#</th>
-                  <th style={{ padding: '0.65rem 0.85rem', width: '55%' }}>Description</th>
+                  <th style={{ padding: '0.65rem 0.85rem', width: '50%' }}>Description</th>
                   <th style={{ padding: '0.65rem 0.85rem', width: '20%' }}>Formats</th>
                   <th style={{ padding: '0.65rem 0.85rem', width: '8%', textAlign: 'center' }}>Qty</th>
-                  <th style={{ padding: '0.65rem 0.85rem', width: '12%', textAlign: 'right' }}>Total</th>
+                  <th style={{ padding: '0.65rem 0.85rem', width: '17%', textAlign: 'right' }}>Total</th>
                 </tr>
               </thead>
               <tbody>
@@ -366,9 +562,14 @@ export const CustomerInvoiceModal = ({
                     <div style={{ fontWeight: 800, color: '#0f172a' }}>
                       {serviceTitle}
                     </div>
-                    {order?.title && (
-                      <div style={{ fontSize: '0.78rem', color: '#64748b', marginTop: '0.1rem' }}>
-                        Design: {order.title}
+                    {designTitle && (
+                      <div style={{ fontSize: '0.78rem', color: '#64748b', marginTop: '0.15rem' }}>
+                        Design: {designTitle}
+                      </div>
+                    )}
+                    {specsParts.length > 0 && (
+                      <div style={{ fontSize: '0.72rem', color: '#94a3b8', marginTop: '0.15rem' }}>
+                        Specs: {specsParts.join(', ')}
                       </div>
                     )}
                   </td>
@@ -376,7 +577,7 @@ export const CustomerInvoiceModal = ({
                     {formatsString}
                   </td>
                   <td style={{ padding: '0.75rem 0.85rem', verticalAlign: 'top', textAlign: 'center', fontWeight: 700 }}>
-                    1
+                    {quantity}
                   </td>
                   <td style={{ padding: '0.75rem 0.85rem', verticalAlign: 'top', textAlign: 'right', fontWeight: 800, color: '#0f172a' }}>
                     ${price.toFixed(2)}
@@ -387,14 +588,26 @@ export const CustomerInvoiceModal = ({
           </div>
 
           {/* Simple Right-Aligned Summary */}
-          <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1.75rem' }}>
-            <div style={{ width: '220px' }}>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1.5rem' }}>
+            <div style={{ width: '250px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.82rem', color: '#64748b', marginBottom: '0.35rem' }}>
                 <span>Subtotal:</span>
-                <span style={{ fontWeight: 700, color: '#0f172a' }}>${price.toFixed(2)}</span>
+                <span style={{ fontWeight: 700, color: '#0f172a' }}>${subtotal.toFixed(2)}</span>
               </div>
+              {discountAmount > 0 && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.82rem', color: '#10b981', marginBottom: '0.35rem' }}>
+                  <span>Discount Applied:</span>
+                  <span style={{ fontWeight: 700 }}>-${discountAmount.toFixed(2)}</span>
+                </div>
+              )}
+              {rushFee > 0 && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.82rem', color: '#ea580c', marginBottom: '0.35rem' }}>
+                  <span>Rush Surcharge:</span>
+                  <span style={{ fontWeight: 700 }}>+${rushFee.toFixed(2)}</span>
+                </div>
+              )}
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.82rem', color: '#64748b', marginBottom: '0.45rem' }}>
-                <span>Tax (0%):</span>
+                <span>Tax (0% Export/B2B):</span>
                 <span>$0.00</span>
               </div>
               <div style={{ height: '1px', background: '#e2e8f0', marginBottom: '0.45rem' }} />
@@ -408,6 +621,24 @@ export const CustomerInvoiceModal = ({
               </div>
             </div>
           </div>
+
+          {/* Optional Customer Instructions & Notes */}
+          {customerNotes && (
+            <div style={{
+              background: '#f8fafc',
+              border: '1px solid #e2e8f0',
+              borderRadius: '8px',
+              padding: '0.65rem 0.95rem',
+              marginBottom: '1.25rem'
+            }}>
+              <div style={{ fontSize: '0.72rem', fontWeight: 800, color: '#ea580c', marginBottom: '0.2rem', textTransform: 'uppercase', letterSpacing: '0.03em' }}>
+                📝 Customer Notes & Instructions:
+              </div>
+              <div style={{ fontSize: '0.76rem', color: '#334155', lineHeight: 1.45, whiteSpace: 'pre-wrap' }}>
+                {customerNotes}
+              </div>
+            </div>
+          )}
 
           {/* Concise 1-Sentence System Generated International Note */}
           <div style={{
