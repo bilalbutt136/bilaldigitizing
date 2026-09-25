@@ -190,10 +190,11 @@ export async function POST(request) {
           client_email: cleanEmail,
           client_name: effectiveSender === 'client' ? effectiveSenderName : cleanEmail.split('@')[0],
           order_title: isSupportThread ? '24/7 Customer Support Desk' : 'Direct Studio Communication & Offers',
-          status: 'online',
+          status: effectiveSender === 'client' ? 'online' : 'offline',
           tags: isSupportThread ? ['support'] : ['inbox'],
           last_message: text || (attachments.length > 0 ? `Sent ${attachments.length} attachment(s)` : 'New message'),
           last_message_at: nowIso,
+          last_seen_at: nowIso,
           unread_admin_count: effectiveSender === 'client' ? 1 : 0,
           unread_client_count: effectiveSender === 'admin' ? 1 : 0,
           is_starred: false,
@@ -259,6 +260,9 @@ export async function POST(request) {
       };
 
       if (effectiveSender === 'client') {
+        // Client is actively messaging right now
+        updatePayload.status = 'online';
+        updatePayload.last_seen_at = nowIso;
         // Increment unread count for admin
         const { data: cData } = await supabase.from('conversations').select('unread_admin_count').eq('id', conversation_id).maybeSingle();
         updatePayload.unread_admin_count = (cData?.unread_admin_count || 0) + 1;

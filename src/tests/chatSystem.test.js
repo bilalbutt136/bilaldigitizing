@@ -661,6 +661,70 @@ test('Chat System & Fiverr-Style Inbox Architecture', async (t) => {
     assert.equal(deduplicated[0].id, 'msg-confirmed-101', 'Confirmed message must be preferred over optimistic');
   });
 
+  await t.test('26. Online status indicator isolates live present users and never shows green dot for offline users', () => {
+    // Simulated active presence set from Supabase Presence
+    const onlineEmails = new Set(['active_alice@studio.com']);
+
+    const isClientOnline = (conv) => {
+      if (!conv) return false;
+      const email = (conv.client_email || '').toLowerCase().trim();
+      if (email && onlineEmails.has(email)) return true;
+      if (conv.status === 'online' || conv.is_online === true) {
+        const lastActive = conv.last_seen_at || conv.last_message_at || conv.updated_at;
+        if (lastActive) {
+          const diffMs = Date.now() - new Date(lastActive).getTime();
+          if (diffMs < 2.5 * 60 * 1000) return true;
+        }
+      }
+      return false;
+    };
+
+    const aliceOnline = { id: 'conv-1', client_email: 'active_alice@studio.com', status: 'offline' };
+    const bobOffline = { id: 'conv-2', client_email: 'offline_bob@studio.com', status: 'offline', last_seen_at: '2026-09-20T10:00:00Z' };
+    const charlieStaleOnline = { id: 'conv-3', client_email: 'charlie@studio.com', status: 'online', last_seen_at: '2026-09-14T08:00:00Z' };
+    const davidRecentActive = { id: 'conv-4', client_email: 'david@studio.com', status: 'online', last_seen_at: new Date(Date.now() - 30000).toISOString() };
+
+    // Alice is in live presence -> MUST be online (green dot shown)
+    assert.equal(isClientOnline(aliceOnline), true, 'Alice is in live presence and must show green dot');
+
+    // Bob is not present and offline -> MUST be false (zero green dot)
+    assert.equal(isClientOnline(bobOffline), false, 'Bob is offline and must never show green dot');
+
+    // Charlie has stale DB status from 11 days ago -> MUST be false (zero green dot)
+    assert.equal(isClientOnline(charlieStaleOnline), false, 'Charlie has stale status and must never show green dot');
+
+    // David was active 30s ago -> MUST be true
+    assert.equal(isClientOnline(davidRecentActive), true, 'David was active 30s ago and is online');
+  });
+
+  await t.test('27. formatLastSeen correctly calculates human-friendly activity timestamps', () => {
+    const formatLastSeen = (dateStr) => {
+      if (!dateStr) return 'Offline';
+      const d = new Date(dateStr);
+      const diffMs = Date.now() - d.getTime();
+      if (isNaN(diffMs) || diffMs < 0) return 'Offline';
+
+      const diffSec = Math.floor(diffMs / 1000);
+      const diffMin = Math.floor(diffSec / 60);
+      const diffHr = Math.floor(diffMin / 60);
+      const diffDay = Math.floor(diffHr / 24);
+
+      if (diffSec < 90) return 'Active just now';
+      if (diffMin < 60) return `Active ${diffMin}m ago`;
+      if (diffHr < 24) return `Active ${diffHr}h ago`;
+      if (diffDay === 1) return 'Active yesterday';
+      if (diffDay < 7) return `Active ${diffDay}d ago`;
+      return `Active ${d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
+    };
+
+    const now = Date.now();
+    assert.equal(formatLastSeen(new Date(now - 30000).toISOString()), 'Active just now');
+    assert.equal(formatLastSeen(new Date(now - 15 * 60000).toISOString()), 'Active 15m ago');
+    assert.equal(formatLastSeen(new Date(now - 4 * 3600000).toISOString()), 'Active 4h ago');
+    assert.equal(formatLastSeen(new Date(now - 25 * 3600000).toISOString()), 'Active yesterday');
+    assert.equal(formatLastSeen(null), 'Offline');
+  });
+
 });
 
 

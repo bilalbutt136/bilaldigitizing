@@ -41,7 +41,7 @@ BEGIN
     SET 
       chat_type = 'inbox',
       is_support = false,
-      tags = array_append(array_remove(coalesce(tags, 'support'), 'support'), 'inbox')
+      tags = array_append(array_remove(coalesce(tags, '{}'), 'support'), 'inbox')
     WHERE 
       id LIKE 'inbox-%'
       OR id LIKE 'conv-%'

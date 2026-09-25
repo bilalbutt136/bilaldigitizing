@@ -417,6 +417,53 @@ export default function CustomerSupportChat({
     };
   }, [conversationId]);
 
+  // Real-time client presence tracking while chat session is open
+  useEffect(() => {
+    if (!userEmail) return;
+    const cleanEmail = userEmail.toLowerCase().trim();
+    const supabase = createClient();
+    if (!supabase) return;
+
+    const presenceChannel = supabase.channel('bdigitizing-live-presence', {
+      config: { presence: { key: cleanEmail } }
+    });
+
+    presenceChannel.subscribe(async (status) => {
+      if (status === 'SUBSCRIBED') {
+        try {
+          await presenceChannel.track({
+            email: cleanEmail,
+            name: userName,
+            role: 'client',
+            conversation_id: conversationId,
+            online_at: new Date().toISOString()
+          });
+        } catch {}
+      }
+    });
+
+    const sendHeartbeat = (onlineStatus = 'online') => {
+      try {
+        fetch('/api/chat/presence', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: cleanEmail, status: onlineStatus, role: 'client' })
+        }).catch(() => {});
+      } catch {}
+    };
+
+    sendHeartbeat('online');
+    const interval = setInterval(() => sendHeartbeat('online'), 45000);
+
+    return () => {
+      clearInterval(interval);
+      sendHeartbeat('offline');
+      if (supabase && presenceChannel) {
+        supabase.removeChannel(presenceChannel);
+      }
+    };
+  }, [userEmail, userName, conversationId]);
+
   // Broadcast typing helper with immediate WebSocket dispatch & API backup
   const broadcastTyping = useCallback((isTyping) => {
     if (!conversationId) return;

@@ -304,7 +304,7 @@ export async function POST(request) {
             client_email: clientEmail,
             client_name: mappedDbRow.client_name,
             client_company: 'Studio Client',
-            status: 'online',
+            status: 'offline',
             unread_count: 1,
             admin_unread_count: 1,
             client_unread_count: 0,
@@ -553,7 +553,7 @@ export async function POST(request) {
             client_email: clientEmail,
             client_name: clientName,
             client_company: 'Studio Client',
-            status: 'online',
+            status: 'offline',
             unread_count: 0,
             admin_unread_count: 0,
             client_unread_count: 0,
@@ -702,7 +702,7 @@ export async function POST(request) {
         await supabase.from('conversations').insert([{
           id: convId, order_id: orderId, order_title: ordTitle,
           client_email: clientEmail, client_name: clientName,
-          client_company: 'Studio Client', status: 'online',
+          client_company: 'Studio Client', status: 'offline',
           unread_count: 1, admin_unread_count: 1, client_unread_count: 0,
           created_at: nowIso, updated_at: nowIso
         }]).catch(() => {});

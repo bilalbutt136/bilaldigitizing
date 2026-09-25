@@ -1506,6 +1506,66 @@ export const StateProvider = ({ children }) => {
     };
   }, []);
 
+  // Real-time Presence tracking across the entire website for active authenticated users
+  useEffect(() => {
+    if (!authUser?.email || !isSupabaseConfigured || !supabase) return;
+    const cleanEmail = authUser.email.toLowerCase().trim();
+
+    // 1. Join Supabase Realtime presence channel
+    const presenceChannel = supabase.channel('bdigitizing-live-presence', {
+      config: { presence: { key: cleanEmail } }
+    });
+
+    presenceChannel.subscribe(async (status) => {
+      if (status === 'SUBSCRIBED') {
+        try {
+          await presenceChannel.track({
+            email: cleanEmail,
+            name: authUser.name || '',
+            role: authUser.role || 'client',
+            online_at: new Date().toISOString()
+          });
+        } catch {}
+      }
+    });
+
+    // 2. Heartbeat to REST presence endpoint
+    const sendHeartbeat = (onlineStatus = 'online') => {
+      try {
+        fetch('/api/chat/presence', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: cleanEmail, status: onlineStatus, role: authUser.role || 'client' })
+        }).catch(() => {});
+      } catch {}
+    };
+
+    sendHeartbeat('online');
+    const interval = setInterval(() => {
+      sendHeartbeat('online');
+    }, 60000);
+
+    const handleUnload = () => {
+      try {
+        if (navigator.sendBeacon) {
+          const payload = JSON.stringify({ email: cleanEmail, status: 'offline' });
+          navigator.sendBeacon('/api/chat/presence', payload);
+        }
+      } catch {}
+    };
+
+    window.addEventListener('beforeunload', handleUnload);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('beforeunload', handleUnload);
+      sendHeartbeat('offline');
+      if (supabase && presenceChannel) {
+        supabase.removeChannel(presenceChannel);
+      }
+    };
+  }, [authUser?.email, authUser?.name, authUser?.role]);
+
   const persistAuth = (uData, view) => {
     setAuthUser(uData);
     setIsAuthenticated(true);

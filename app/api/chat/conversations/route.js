@@ -74,7 +74,7 @@ export async function GET(request) {
               client_company: ord.client_company || '',
               order_id: ord.id ? String(ord.id) : null,
               order_title: ord.service_name || 'Embroidery Digitizing Project',
-              status: 'online',
+              status: 'offline',
               tags: ['inbox'],
               last_message: `Order #${String(ord.id).replace(/^#+/, '')} placed for ${ord.service_name || 'Embroidery Services'}.`,
               last_message_at: ord.created_at || new Date().toISOString(),
@@ -82,6 +82,7 @@ export async function GET(request) {
               unread_client_count: 0,
               is_starred: false,
               created_at: ord.created_at || new Date().toISOString(),
+              last_seen_at: ord.created_at || new Date().toISOString(),
               updated_at: new Date().toISOString()
             });
           }
@@ -148,7 +149,24 @@ export async function GET(request) {
       );
     }
 
-    return NextResponse.json({ conversations: results });
+    // Prune stale online statuses so offline clients never appear online
+    const nowMs = Date.now();
+    const sanitizedResults = results.map(c => {
+      let isOnline = c.status === 'online';
+      if (isOnline) {
+        const lastActiveTime = c.last_seen_at || c.last_message_at || c.updated_at;
+        if (!lastActiveTime || (nowMs - new Date(lastActiveTime).getTime() > 2.5 * 60 * 1000)) {
+          isOnline = false;
+        }
+      }
+      return {
+        ...c,
+        status: isOnline ? 'online' : 'offline',
+        is_online: isOnline
+      };
+    });
+
+    return NextResponse.json({ conversations: sanitizedResults });
   } catch (err) {
     console.error('[Chat Conversations API Error]:', err);
     return NextResponse.json({ error: err.message }, { status: 500 });
@@ -243,7 +261,7 @@ export async function POST(request) {
         client_company: clientCompany || '',
         order_id: orderId || null,
         order_title: orderTitle || (isSupport ? '24/7 Customer Support Desk' : 'Direct Studio Communication & Offers'),
-        status: 'online',
+        status: 'offline',
         tags: isSupport ? ['support'] : ['inbox'],
         last_message: isSupport 
           ? 'Customer support request initiated with BDigitizing 24/7 Desk.'

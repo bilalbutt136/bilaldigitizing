@@ -100,6 +100,50 @@ export default function AdminChatInbox({ initialChannel = 'inbox' }) {
   const clientTypingDismissRef = useRef(null);
   const channelRef = useRef(null);
 
+  // Live Online Presence State (Set of active client emails)
+  const [onlineEmails, setOnlineEmails] = useState(new Set());
+
+  // Evaluates whether a conversation client is currently online
+  const isClientOnline = useCallback((conv) => {
+    if (!conv) return false;
+    const email = (conv.client_email || '').toLowerCase().trim();
+    if (email && onlineEmails.has(email)) return true;
+
+    // Fallback: check database status column with strict 2.5 minute window
+    if (conv.status === 'online' || conv.is_online === true) {
+      const lastActive = conv.last_seen_at || conv.last_message_at || conv.updated_at;
+      if (lastActive) {
+        const diffMs = Date.now() - new Date(lastActive).getTime();
+        if (diffMs < 2.5 * 60 * 1000) return true;
+      }
+    }
+    return false;
+  }, [onlineEmails]);
+
+  // Formats human-friendly last seen timestamp for offline clients
+  const formatLastSeen = useCallback((dateStr) => {
+    if (!dateStr) return 'Offline';
+    try {
+      const d = new Date(dateStr);
+      const diffMs = Date.now() - d.getTime();
+      if (isNaN(diffMs) || diffMs < 0) return 'Offline';
+
+      const diffSec = Math.floor(diffMs / 1000);
+      const diffMin = Math.floor(diffSec / 60);
+      const diffHr = Math.floor(diffMin / 60);
+      const diffDay = Math.floor(diffHr / 24);
+
+      if (diffSec < 90) return 'Active just now';
+      if (diffMin < 60) return `Active ${diffMin}m ago`;
+      if (diffHr < 24) return `Active ${diffHr}h ago`;
+      if (diffDay === 1) return 'Active yesterday';
+      if (diffDay < 7) return `Active ${diffDay}d ago`;
+      return `Active ${d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
+    } catch {
+      return 'Offline';
+    }
+  }, []);
+
   // Emoji picker toggle
   const [isEmojiPickerOpen, setIsEmojiPickerOpen] = useState(false);
 
@@ -414,6 +458,63 @@ export default function AdminChatInbox({ initialChannel = 'inbox' }) {
       supabase.removeChannel(globalSub);
     };
   }, [activeConversationId, activeChannel, activeFilter, searchQuery, fetchChannelUnreadCounts]);
+
+  // Dedicated Presence Subscription & Periodic REST Heartbeat Sync
+  useEffect(() => {
+    const supabase = createClient();
+    if (!supabase) return;
+
+    // 1. Subscribe to real-time presence channel
+    const presenceChannel = supabase.channel('bdigitizing-live-presence');
+
+    const updatePresenceFromState = () => {
+      const state = presenceChannel.presenceState();
+      const onlineSet = new Set();
+      Object.entries(state).forEach(([key, presences]) => {
+        if (key && key !== 'guest') onlineSet.add(key.toLowerCase().trim());
+        if (Array.isArray(presences)) {
+          presences.forEach(p => {
+            const em = (p?.email || p?.key || '').toLowerCase().trim();
+            if (em) onlineSet.add(em);
+          });
+        }
+      });
+      setOnlineEmails(onlineSet);
+    };
+
+    presenceChannel
+      .on('presence', { event: 'sync' }, updatePresenceFromState)
+      .on('presence', { event: 'join' }, updatePresenceFromState)
+      .on('presence', { event: 'leave' }, updatePresenceFromState)
+      .subscribe();
+
+    // 2. Fallback REST poll for resilient presence across networks
+    const syncPresenceFromApi = async () => {
+      try {
+        const res = await fetch('/api/chat/presence');
+        const data = await res.json();
+        if (Array.isArray(data?.onlineUsers)) {
+          setOnlineEmails(prev => {
+            const merged = new Set(prev);
+            data.onlineUsers.forEach(em => {
+              if (em) merged.add(em.toLowerCase().trim());
+            });
+            return merged;
+          });
+        }
+      } catch {}
+    };
+
+    syncPresenceFromApi();
+    const interval = setInterval(syncPresenceFromApi, 15000);
+
+    return () => {
+      clearInterval(interval);
+      if (supabase && presenceChannel) {
+        supabase.removeChannel(presenceChannel);
+      }
+    };
+  }, []);
 
   const scrollToBottom = (behavior = 'smooth') => {
     setTimeout(() => {
@@ -1069,6 +1170,7 @@ export default function AdminChatInbox({ initialChannel = 'inbox' }) {
               const isSelected = conv.id === activeConversationId;
               const hasUnread = (conv.unread_admin_count || 0) > 0;
               const lastTime = formatThreadTime(conv.last_message_at || conv.updated_at);
+              const isOnline = isClientOnline(conv);
 
               return (
                 <div
@@ -1104,17 +1206,23 @@ export default function AdminChatInbox({ initialChannel = 'inbox' }) {
                     }}>
                       {(conv.client_name || conv.client_email || 'C')[0].toUpperCase()}
                     </div>
-                    {/* Active Status Dot */}
-                    <span style={{
-                      position: 'absolute',
-                      bottom: '1px',
-                      right: '1px',
-                      width: '10px',
-                      height: '10px',
-                      borderRadius: '50%',
-                      background: '#22c55e',
-                      border: '2px solid #ffffff'
-                    }} />
+                    {/* Active Status Dot - ONLY when client is online */}
+                    {isOnline && (
+                      <span
+                        title="Online now"
+                        style={{
+                          position: 'absolute',
+                          bottom: '1px',
+                          right: '1px',
+                          width: '10px',
+                          height: '10px',
+                          borderRadius: '50%',
+                          background: '#22c55e',
+                          border: '2px solid #ffffff',
+                          boxShadow: '0 0 4px rgba(34, 197, 94, 0.6)'
+                        }}
+                      />
+                    )}
                   </div>
 
                   {/* THREAD DETAILS */}
@@ -1227,16 +1335,22 @@ export default function AdminChatInbox({ initialChannel = 'inbox' }) {
                   }}>
                     {(activeConversation.client_name || activeConversation.client_email || 'C')[0].toUpperCase()}
                   </div>
-                  <span style={{
-                    position: 'absolute',
-                    bottom: '1px',
-                    right: '1px',
-                    width: '11px',
-                    height: '11px',
-                    borderRadius: '50%',
-                    background: '#22c55e',
-                    border: '2px solid #ffffff'
-                  }} />
+                  {isClientOnline(activeConversation) && (
+                    <span
+                      title="Online now"
+                      style={{
+                        position: 'absolute',
+                        bottom: '1px',
+                        right: '1px',
+                        width: '11px',
+                        height: '11px',
+                        borderRadius: '50%',
+                        background: '#22c55e',
+                        border: '2px solid #ffffff',
+                        boxShadow: '0 0 5px rgba(34, 197, 94, 0.6)'
+                      }}
+                    />
+                  )}
                 </div>
 
                 <div>
@@ -1244,7 +1358,16 @@ export default function AdminChatInbox({ initialChannel = 'inbox' }) {
                     {activeConversation.client_name || activeConversation.client_email?.split('@')[0]}
                   </h3>
                   <div style={{ fontSize: '0.78rem', color: '#64748b' }}>
-                    {activeConversation.client_email} • <span style={{ color: '#22c55e', fontWeight: 600 }}>Active in Studio</span>
+                    {activeConversation.client_email} • {isClientOnline(activeConversation) ? (
+                      <span style={{ color: '#22c55e', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                        <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#22c55e', display: 'inline-block' }} />
+                        Online now
+                      </span>
+                    ) : (
+                      <span style={{ color: '#94a3b8', fontWeight: 500 }}>
+                        {formatLastSeen(activeConversation.last_seen_at || activeConversation.last_message_at || activeConversation.updated_at)}
+                      </span>
+                    )}
                   </div>
                 </div>
               </div>
