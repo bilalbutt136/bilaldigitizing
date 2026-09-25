@@ -20,8 +20,13 @@ import {
   Zap
 } from 'lucide-react';
 import { useAppState } from '../../context/StateContext';
-import { useNavigate } from '../../utils/navigation';
-import { handleNotificationClick, parseNotificationTarget, filterAndSanitizeNotifications } from '../../utils/notificationRouter';
+import { 
+  handleNotificationClick, 
+  parseNotificationTarget, 
+  filterAndSanitizeNotifications,
+  formatNotificationExactTime,
+  getNotificationFullDateTime
+} from '../../utils/notificationRouter';
 
 export const ClientNotificationsView = ({ onNavigateToOrder, userEmail, isAdmin = false }) => {
   const navigate = useNavigate();
@@ -274,17 +279,7 @@ export const ClientNotificationsView = ({ onNavigateToOrder, userEmail, isAdmin 
           filteredNotifs.map(notif => {
             const isUnread = !notif.is_read && !notif.read;
             const colors = getNotifBgColor(notif);
-            const timeStr = notif.created_at || notif.timestamp
-              ? (() => {
-                  try {
-                    const d = new Date(notif.created_at || notif.timestamp);
-                    const isToday = new Date().toDateString() === d.toDateString();
-                    return isToday
-                      ? d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-                      : d.toLocaleDateString([], { month: 'short', day: 'numeric' }) + ' ' + d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                  } catch { return 'Recent'; }
-                })()
-              : 'Recent';
+            const timeStr = formatNotificationExactTime(notif, orders);
 
             return (
               <div
@@ -332,7 +327,10 @@ export const ClientNotificationsView = ({ onNavigateToOrder, userEmail, isAdmin 
                     }}>
                       {notif.title || 'Studio Notification'}
                     </h5>
-                    <span style={{ fontSize: '0.68rem', color: 'var(--color-text-muted, #94a3b8)', flexShrink: 0, marginLeft: '0.5rem' }}>
+                    <span 
+                      style={{ fontSize: '0.68rem', color: 'var(--color-text-muted, #94a3b8)', flexShrink: 0, marginLeft: '0.5rem', fontWeight: 600 }}
+                      title={getNotificationFullDateTime(notif, orders)}
+                    >
                       {timeStr}
                     </span>
                   </div>

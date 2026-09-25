@@ -3,7 +3,10 @@ import assert from 'node:assert/strict';
 import { 
   filterAndSanitizeNotifications, 
   isOrderPlacedNotification, 
-  isOrderPaymentConfirmedNotification 
+  isOrderPaymentConfirmedNotification,
+  resolveNotificationDate,
+  formatNotificationExactTime,
+  getNotificationFullDateTime
 } from '../utils/notificationRouter.js';
 
 describe('Notification Privacy Isolation & Two-Notifications-Per-Order Enforcement', () => {
@@ -265,5 +268,46 @@ describe('Notification Privacy Isolation & Two-Notifications-Per-Order Enforceme
     assert.equal(isOrderPaymentConfirmedNotification({ id: 'ord-paid-555' }), true);
     assert.equal(isOrderPaymentConfirmedNotification({ title: 'Offer Paid via Stripe!' }), true);
     assert.equal(isOrderPaymentConfirmedNotification({ title: 'Order Delivered' }), false);
+  });
+
+  test('9. resolveNotificationDate accurately resolves date from created_at, timestamp, or linked orders', () => {
+    // Direct created_at from Postgres
+    const d1 = resolveNotificationDate({ created_at: '2026-09-24T14:32:00.000Z' });
+    assert.equal(d1.toISOString(), '2026-09-24T14:32:00.000Z');
+
+    // Direct timestamp
+    const d2 = resolveNotificationDate({ timestamp: '2026-09-25T08:15:00.000Z' });
+    assert.equal(d2.toISOString(), '2026-09-25T08:15:00.000Z');
+
+    // Missing direct time, fallback to linked order in orders array
+    const orders = [
+      { id: 'ORD-7788', created_at: '2026-09-24T09:00:00.000Z' }
+    ];
+    const d3 = resolveNotificationDate({ order_id: 'ORD-7788' }, orders);
+    assert.equal(d3.toISOString(), '2026-09-24T09:00:00.000Z');
+
+    // From notification ID containing timestamp
+    const d4 = resolveNotificationDate({ id: 'notif-1727244983000-xyz' });
+    assert.ok(d4 instanceof Date);
+    assert.equal(isNaN(d4.getTime()), false);
+  });
+
+  test('10. formatNotificationExactTime displays exact dates and times instead of defaulting to "Just now"', () => {
+    // 1. Order from September 24 (past date) MUST show exact date and time, NEVER "Just now"
+    const pastNotif = { created_at: '2026-09-24T15:30:00.000Z' };
+    const formattedPast = formatNotificationExactTime(pastNotif);
+    assert.notEqual(formattedPast, 'Just now');
+    assert.ok(formattedPast.includes('Sep 24') || formattedPast.includes('Yesterday') || formattedPast.includes(':'));
+
+    // 2. Notification from linked order MUST format accurately
+    const orders = [{ id: '000251296', created_at: '2026-09-24T10:00:00.000Z' }];
+    const orderNotif = { id: 'notif-000251296', order_id: '000251296' };
+    const formattedOrder = formatNotificationExactTime(orderNotif, orders);
+    assert.notEqual(formattedOrder, 'Just now');
+    assert.ok(formattedOrder.includes(':'));
+
+    // 3. Tooltip provides complete full date-time
+    const fullTime = getNotificationFullDateTime(pastNotif);
+    assert.ok(fullTime.length > 5);
   });
 });

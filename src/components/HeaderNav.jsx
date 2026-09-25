@@ -36,7 +36,12 @@ import {
 } from 'lucide-react';
 import { UserMenuDropdown } from './common/UserMenuDropdown';
 import { ThemeToggle } from './common/ThemeToggle';
-import { handleNotificationClick, filterAndSanitizeNotifications } from '../utils/notificationRouter';
+import { 
+  handleNotificationClick, 
+  filterAndSanitizeNotifications,
+  formatNotificationExactTime,
+  getNotificationFullDateTime
+} from '../utils/notificationRouter';
 
 export const HeaderNav = () => {
   const navigate = useNavigate();
@@ -91,9 +96,10 @@ export const HeaderNav = () => {
     if (!mounted || !safeIsAuthenticated) return [];
     return filterAndSanitizeNotifications(notifications, {
       currentUserEmail: safeAuthUser?.email || '',
-      isAdmin
+      isAdmin,
+      orders
     });
-  }, [mounted, safeIsAuthenticated, notifications, safeAuthUser?.email, isAdmin]);
+  }, [mounted, safeIsAuthenticated, notifications, safeAuthUser?.email, isAdmin, orders]);
 
   const displayUnreadNotifsCount = React.useMemo(() => {
     return displayNotifications.filter(n => !n.read && !n.is_read).length;
@@ -942,8 +948,11 @@ export const HeaderNav = () => {
                               >
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem' }}>
                                   <div style={{ fontSize: '0.82rem', fontWeight: 800, color: 'var(--color-text-primary, var(--navy-900))' }}>{item.title}</div>
-                                  <span style={{ fontSize: '0.65rem', color: 'var(--color-text-muted)', whiteSpace: 'nowrap' }}>
-                                    {item.timestamp ? (item.timestamp.includes('T') ? new Date(item.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : item.timestamp) : 'Just now'}
+                                  <span 
+                                    style={{ fontSize: '0.66rem', color: 'var(--color-text-muted)', whiteSpace: 'nowrap', fontWeight: 600 }}
+                                    title={getNotificationFullDateTime(item, orders)}
+                                  >
+                                    {formatNotificationExactTime(item, orders)}
                                   </span>
                                 </div>
                                 <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginTop: '0.2rem', lineHeight: 1.4 }}>{item.message}</div>

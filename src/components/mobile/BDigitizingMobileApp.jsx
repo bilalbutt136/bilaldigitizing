@@ -73,7 +73,12 @@ import {
 } from '../../services/supabaseService';
 import MobileSimpleOrderModal from '../customer/MobileSimpleOrderModal';
 import { THEME_PRESETS } from '../../utils/themePresets';
-import { handleNotificationClick, filterAndSanitizeNotifications } from '../../utils/notificationRouter';
+import { 
+  handleNotificationClick, 
+  filterAndSanitizeNotifications,
+  formatNotificationExactTime,
+  getNotificationFullDateTime
+} from '../../utils/notificationRouter';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import { GoogleCustomSignInButton } from '../auth/GoogleCustomSignInButton';
 
@@ -616,7 +621,8 @@ export const BDigitizingMobileApp = () => {
 
   const combinedNotifications = filterAndSanitizeNotifications(rawCombinedNotifications, {
     currentUserEmail: userEmail,
-    isAdmin: authUser?.role === 'admin'
+    isAdmin: authUser?.role === 'admin',
+    orders
   });
 
   const unreadNotifCount = combinedNotifications.filter(n => !n.is_read && !n.read).length;
@@ -4531,9 +4537,17 @@ export const BDigitizingMobileApp = () => {
                       boxShadow: (n.is_read || n.read) ? 'none' : '0 2px 8px rgba(234, 88, 12, 0.12)'
                     }}
                   >
-                    <h5 style={{ margin: 0, fontSize: '0.88rem', fontWeight: 800, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a' }}>
-                      {n.title || 'Studio Notification'}
-                    </h5>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.4rem', marginBottom: '0.2rem' }}>
+                      <h5 style={{ margin: 0, fontSize: '0.88rem', fontWeight: 800, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a' }}>
+                        {n.title || 'Studio Notification'}
+                      </h5>
+                      <span 
+                        style={{ fontSize: '0.68rem', color: isDark ? '#94a3b8' : '#64748b', whiteSpace: 'nowrap', fontWeight: 600, flexShrink: 0 }}
+                        title={getNotificationFullDateTime(n, orders)}
+                      >
+                        {formatNotificationExactTime(n, orders)}
+                      </span>
+                    </div>
                     <p style={{ margin: '0.2rem 0 0', fontSize: '0.78rem', color: isDark ? 'var(--color-text-secondary, #94a3b8)' : '#475569' }}>
                       {n.message || n.body}
                     </p>

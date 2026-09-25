@@ -343,7 +343,7 @@ export function isOrderPaymentConfirmedNotification(notif) {
  *    - Exactly 1 Order Placed notification
  *    - Exactly 1 Payment Confirmed notification
  */
-export function filterAndSanitizeNotifications(notifications, { currentUserEmail = '', isAdmin = false } = {}) {
+export function filterAndSanitizeNotifications(notifications, { currentUserEmail = '', isAdmin = false, orders = [] } = {}) {
   if (!Array.isArray(notifications) || notifications.length === 0) return [];
 
   const cleanUserEmail = (currentUserEmail || '').toLowerCase().trim();
@@ -353,13 +353,24 @@ export function filterAndSanitizeNotifications(notifications, { currentUserEmail
     return [];
   }
 
+  const normalizeItem = (notif) => {
+    const dateObj = resolveNotificationDate(notif, orders);
+    const iso = dateObj ? dateObj.toISOString() : (notif.created_at || notif.timestamp || new Date().toISOString());
+    return {
+      ...notif,
+      created_at: notif.created_at || iso,
+      timestamp: notif.timestamp || iso || notif.created_at
+    };
+  };
+
   // Maps to enforce at most 1 Placed and 1 Paid notification per order for customers
   const orderPlacedMap = new Map(); // orderId -> notification
   const orderPaidMap = new Map();   // orderId -> notification
   const otherNotifications = [];
 
-  for (const notif of notifications) {
-    if (!notif || !notif.id) continue;
+  for (const rawNotif of notifications) {
+    if (!rawNotif || !rawNotif.id) continue;
+    const notif = normalizeItem(rawNotif);
 
     const notifType = String(notif.type || '').toLowerCase();
     const notifTitle = String(notif.title || '').toLowerCase();
@@ -423,8 +434,7 @@ export function filterAndSanitizeNotifications(notifications, { currentUserEmail
           orderPaidMap.set(cleanOrderId, notif);
         }
       }
-      // Any other order notification (revision, delivered, status update) is dropped per user rule:
-      // "make sure kro k one order pr just two notification ho important sa, ak jab place ho or ak tab jub payment confirm ho."
+      // Any other order notification (revision, delivered, status update) is dropped per user rule
     } else {
       // Non-order notification (e.g. system broadcast or custom offer received)
       otherNotifications.push(notif);
@@ -437,12 +447,151 @@ export function filterAndSanitizeNotifications(notifications, { currentUserEmail
     ...otherNotifications
   ];
 
-  // Sort descending by timestamp / created_at
+  // Sort descending by resolved exact date
   combined.sort((a, b) => {
-    const timeA = new Date(a.created_at || a.timestamp || 0).getTime();
-    const timeB = new Date(b.created_at || b.timestamp || 0).getTime();
+    const timeA = (resolveNotificationDate(a, orders) || new Date(0)).getTime();
+    const timeB = (resolveNotificationDate(b, orders) || new Date(0)).getTime();
     return timeB - timeA;
   });
 
   return combined;
 }
+
+/**
+ * Resolves the real Date object for a notification from direct fields or linked order
+ */
+export function resolveNotificationDate(notif, orders = []) {
+  if (!notif) return null;
+  if (notif instanceof Date) return isNaN(notif.getTime()) ? null : notif;
+  if (typeof notif === 'number') {
+    const d = new Date(notif);
+    return isNaN(d.getTime()) ? null : d;
+  }
+  if (typeof notif === 'string') {
+    const trimmed = notif.trim();
+    if (/^\d{11,14}$/.test(trimmed)) {
+      const d = new Date(parseInt(trimmed, 10));
+      return isNaN(d.getTime()) ? null : d;
+    }
+    const d = new Date(trimmed);
+    return isNaN(d.getTime()) ? null : d;
+  }
+
+  // Object lookup
+  let raw = notif.created_at || notif.timestamp || notif.createdAt || notif.date || notif.time || notif.order_date || notif.updated_at;
+
+  // If missing directly, check linked order in orders array
+  if (!raw && orders && Array.isArray(orders) && orders.length > 0) {
+    let orderId = notif.order_id || notif.orderId || null;
+    if (!orderId && notif.id) {
+      const match = String(notif.id).match(/^(?:ord-deliv-|notif-ord-|ord-stat-|notif-paid-|notif-rev-|notif-comp-|notif-cancel-|ord-created-|rev-)(.+?)(?:-(?:admin|client|\d+))?$/i);
+      if (match && match[1]) orderId = match[1];
+    }
+    if (!orderId && notif.title) {
+      const ordMatch = (notif.title || '').match(/(?:Order|Job)\s*#?([a-zA-Z0-9_-]+)/i);
+      if (ordMatch && ordMatch[1]) orderId = ordMatch[1];
+    }
+    if (orderId) {
+      const cleanTarget = String(orderId).trim().replace(/^#+/, '').toLowerCase();
+      const matched = orders.find(o => {
+        const oId = String(o.id || o.order_id || '').trim().replace(/^#+/, '').toLowerCase();
+        return oId === cleanTarget || oId.endsWith(cleanTarget) || cleanTarget.endsWith(oId);
+      });
+      if (matched) {
+        raw = matched.created_at || matched.createdAt || matched.timestamp || matched.order_date || matched.date;
+      }
+    }
+  }
+
+  // Fallback: check if notif.id contains unix timestamp (e.g. notif-1727244983000-abcd)
+  if (!raw && notif.id) {
+    const tsMatch = String(notif.id).match(/(\d{12,14})/);
+    if (tsMatch && tsMatch[1]) {
+      const parsedNum = parseInt(tsMatch[1], 10);
+      const testDate = new Date(parsedNum);
+      if (!isNaN(testDate.getTime()) && testDate.getFullYear() >= 2024 && testDate.getFullYear() <= 2030) {
+        return testDate;
+      }
+    }
+  }
+
+  if (!raw) return null;
+  if (raw instanceof Date) return isNaN(raw.getTime()) ? null : raw;
+  if (typeof raw === 'number') {
+    const d = new Date(raw);
+    return isNaN(d.getTime()) ? null : d;
+  }
+  if (typeof raw === 'string') {
+    const trimmed = raw.trim();
+    if (/^\d{11,14}$/.test(trimmed)) {
+      const d = new Date(parseInt(trimmed, 10));
+      return isNaN(d.getTime()) ? null : d;
+    }
+    const d = new Date(trimmed);
+    return isNaN(d.getTime()) ? null : d;
+  }
+
+  return null;
+}
+
+/**
+ * Formats notification exact time for UI pills (e.g. "Today, 10:15 AM", "Yesterday, 4:30 PM", "Sep 24, 3:15 PM")
+ */
+export function formatNotificationExactTime(notif, orders = []) {
+  const dateObj = resolveNotificationDate(notif, orders);
+  if (!dateObj) return 'Recent';
+
+  const now = new Date();
+  const diffMs = now.getTime() - dateObj.getTime();
+
+  const timeStr = dateObj.toLocaleTimeString([], { 
+    hour: 'numeric', 
+    minute: '2-digit', 
+    hour12: true 
+  });
+
+  const isToday = now.toDateString() === dateObj.toDateString();
+
+  const yesterday = new Date(now);
+  yesterday.setDate(yesterday.getDate() - 1);
+  const isYesterday = yesterday.toDateString() === dateObj.toDateString();
+
+  if (isToday) {
+    if (diffMs >= 0 && diffMs < 60000) {
+      return `Just now (${timeStr})`;
+    }
+    return `Today, ${timeStr}`;
+  }
+
+  if (isYesterday) {
+    return `Yesterday, ${timeStr}`;
+  }
+
+  const isCurrentYear = now.getFullYear() === dateObj.getFullYear();
+  const datePart = dateObj.toLocaleDateString([], {
+    month: 'short',
+    day: 'numeric',
+    ...(isCurrentYear ? {} : { year: 'numeric' })
+  });
+
+  return `${datePart}, ${timeStr}`;
+}
+
+/**
+ * Full exact localized date-time for tooltips (title attribute)
+ */
+export function getNotificationFullDateTime(notif, orders = []) {
+  const dateObj = resolveNotificationDate(notif, orders);
+  if (!dateObj) return '';
+  return dateObj.toLocaleString([], {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: true
+  });
+}
+
