@@ -46,7 +46,7 @@ import {
 } from '../services/supabaseService';
 import { trackUserPresence, untrackUserPresence } from '../services/presenceService';
 
-import { playNotificationSound, configureAudioNotification, playMessageChime } from '../utils/audioNotification';
+import { playNotificationSound, configureAudioNotification, playMessageChime, playMessageChimeForMessage, stopNotificationSound } from '../utils/audioNotification';
 import { THEME_PRESETS, applyThemePresetToDOM } from '../utils/themePresets';
 import { formatOrderId, formatDimensions, formatFabric } from '../utils/formatters';
 import { 
@@ -642,7 +642,7 @@ export const StateProvider = ({ children }) => {
 
     if (notif.playSound !== false) {
       try {
-        playNotificationSound(notif.soundType || 'notification');
+        playNotificationSound(notif.soundType || 'notification', false, newNotif.id);
       } catch {}
     }
 
@@ -672,6 +672,7 @@ export const StateProvider = ({ children }) => {
   };
 
   const markNotificationAsRead = (id) => {
+    stopNotificationSound();
     setNotifications(prev => {
       const safePrev = Array.isArray(prev) ? prev : [];
       const nextList = safePrev.map(n => n.id === id ? { ...n, read: true, is_read: true } : n);
@@ -684,6 +685,7 @@ export const StateProvider = ({ children }) => {
   };
 
   const markAllNotificationsAsRead = () => {
+    stopNotificationSound();
     setNotifications(prev => {
       const safePrev = Array.isArray(prev) ? prev : [];
       const nextList = safePrev.map(n => ({ ...n, read: true, is_read: true }));
@@ -1548,7 +1550,7 @@ export const StateProvider = ({ children }) => {
       if (currentRole === 'admin' || currentView === 'admin') {
         const isFromClient = msg.sender === 'client' || msg.sender_role === 'client' || msg.role === 'client';
         if (isFromClient) {
-          playMessageChime();
+          playMessageChimeForMessage(msg.id || `${msg.conversation_id}-${msg.created_at}`);
         }
       }
     };
@@ -2660,6 +2662,7 @@ export const StateProvider = ({ children }) => {
       colorTheme, setColorTheme, availableThemes: THEME_PRESETS,
       customBrandColors, setCustomBrandColors,
       notifications, addNotification, markNotificationAsRead, markAllNotificationsAsRead, unreadNotificationsCount, refreshNotifications,
+      stopNotificationSound,
       unreadOrdersCount, markOrdersAsRead, lastOrdersViewedTime,
       createOrder, updateOrderStatus, addRevisionRequest, cancelOrder,
       fetchUserWalletBalance, refreshOrders, refreshClients,

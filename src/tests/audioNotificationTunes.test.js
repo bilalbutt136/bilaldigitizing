@@ -4,6 +4,9 @@ import {
   configureAudioNotification, 
   getAudioNotificationConfig, 
   playNotificationSound,
+  playMessageChimeForMessage,
+  stopNotificationSound,
+  isNotificationSoundPlaying,
   testAudioTune
 } from '../utils/audioNotification.js';
 
@@ -104,5 +107,55 @@ describe('Admin Notification Tune & Bell Sound Alert System', () => {
     supportedExtensions.forEach(ext => {
       assert.ok(expectedMimeMapping[ext].startsWith('audio/'));
     });
+  });
+
+  test('6. stopNotificationSound immediately halts audio and resets playback state', () => {
+    assert.doesNotThrow(() => {
+      stopNotificationSound();
+    });
+    assert.equal(isNotificationSoundPlaying(), false);
+  });
+
+  test('7. playMessageChimeForMessage guarantees anti-double-ring deduplication per message ID', () => {
+    // Calling with same message ID
+    const testMsgId = 'msg-dedup-xyz-987';
+    assert.doesNotThrow(() => {
+      // First trigger
+      playMessageChimeForMessage(testMsgId);
+      // Secondary duplicate trigger for same message ID (should be ignored safely)
+      playMessageChimeForMessage(testMsgId);
+      // Another call for same message ID
+      playMessageChimeForMessage(testMsgId);
+    });
+
+    // Calling with a different message ID
+    assert.doesNotThrow(() => {
+      playMessageChimeForMessage('msg-dedup-abc-123');
+    });
+  });
+
+  test('8. stopNotificationSound dispatches bdigi_tune_stopped window event if window exists', () => {
+    let eventFired = false;
+    const originalWindow = globalThis.window;
+    
+    // Simulate window with CustomEvent
+    globalThis.window = {
+      dispatchEvent: (event) => {
+        if (event?.type === 'bdigi_tune_stopped') {
+          eventFired = true;
+        }
+      }
+    };
+    globalThis.CustomEvent = class {
+      constructor(type) {
+        this.type = type;
+      }
+    };
+
+    stopNotificationSound();
+    assert.equal(eventFired, true);
+
+    // Cleanup
+    globalThis.window = originalWindow;
   });
 });

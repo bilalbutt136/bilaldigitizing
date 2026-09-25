@@ -1546,10 +1546,27 @@ export function getSharedChatChannel() {
       }
     });
 
-    // 3. Instant WhatsApp-style Chat Message Realtime Dispatch
+    // 3. Instant WhatsApp-style Chat Message Realtime Dispatch (Guaranteed Single-Dispatch)
+    const seenMessageDispatches = new Set();
+    const dispatchUniqueChatMessage = (msg) => {
+      if (!msg || typeof window === 'undefined') return;
+      const msgId = msg.id || `${msg.conversation_id}-${msg.created_at || ''}`;
+      if (msgId && seenMessageDispatches.has(msgId)) {
+        return; // Dropped duplicate dispatch
+      }
+      if (msgId) {
+        seenMessageDispatches.add(msgId);
+        if (seenMessageDispatches.size > 200) {
+          const [first] = seenMessageDispatches;
+          seenMessageDispatches.delete(first);
+        }
+      }
+      window.dispatchEvent(new CustomEvent('bdigi_new_chat_message', { detail: msg }));
+    };
+
     globalChatChannel.on('broadcast', { event: 'new_chat_message' }, (event) => {
-      if (event.payload && typeof window !== 'undefined') {
-        window.dispatchEvent(new CustomEvent('bdigi_new_chat_message', { detail: event.payload }));
+      if (event.payload) {
+        dispatchUniqueChatMessage(event.payload);
       }
     });
 
@@ -1558,8 +1575,8 @@ export function getSharedChatChannel() {
       { event: 'INSERT', schema: 'public', table: 'messages' },
       (payload) => {
         const msg = payload.new || payload.record;
-        if (msg && typeof window !== 'undefined') {
-          window.dispatchEvent(new CustomEvent('bdigi_new_chat_message', { detail: msg }));
+        if (msg) {
+          dispatchUniqueChatMessage(msg);
         }
       }
     );

@@ -5,14 +5,22 @@
  * 1. Supports custom uploaded audio tunes (MP3, WAV, OGG, M4A, AAC) from Cloudinary / Supabase.
  * 2. High-clarity Web Audio API harmonic bell synthesizer fallback (zero external dependencies).
  * 3. Preloads active audio tunes for instantaneous zero-latency playback.
- * 4. Strict debouncing to guarantee sounds only play ONCE per notification event.
- * 5. Robust volume control and automatic browser interaction audio unlocking.
+ * 4. Strict debouncing & message ID deduplication to guarantee sounds only play ONCE per message event.
+ * 5. Instant stopNotificationSound() when messages are read or threads opened.
+ * 6. Robust volume control and automatic browser interaction audio unlocking.
  */
 
 let audioContextInstance = null;
 let hasUserInteracted = false;
 let lastSoundPlayedTime = 0;
-const SOUND_DEBOUNCE_MS = 350; // Prevent duplicate rapid ringing while allowing immediate responses
+const SOUND_DEBOUNCE_MS = 1800; // Prevent duplicate rapid ringing while allowing clean alerts
+
+// Active audio tracking for instantaneous cancellation when read
+let currentPlayingAudio = null;
+
+// Registry of message IDs that have already played their tune (Anti-Double-Ring Guarantee)
+const playedMessageIds = new Set();
+const MAX_PLAYED_HISTORY = 300;
 
 // In-memory cache for fast, synchronized access
 let cachedCustomAudioUrl = null;
@@ -103,6 +111,30 @@ export const getAudioNotificationConfig = () => {
     preset: cachedAudioPreset,
     isMuted
   };
+};
+
+/**
+ * Stops any currently playing notification sound or tune immediately.
+ * Called when a message is read, when a conversation is opened, or when acknowledged.
+ */
+export const stopNotificationSound = () => {
+  if (currentPlayingAudio) {
+    try {
+      currentPlayingAudio.pause();
+      currentPlayingAudio.currentTime = 0;
+    } catch {}
+    currentPlayingAudio = null;
+  }
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('bdigi_tune_stopped'));
+  }
+};
+
+/**
+ * Checks whether an audio tune is currently playing.
+ */
+export const isNotificationSoundPlaying = () => {
+  return Boolean(currentPlayingAudio && !currentPlayingAudio.paused && !currentPlayingAudio.ended);
 };
 
 /**
@@ -297,6 +329,7 @@ const playSynthesizedChime = (type = 'notification', volume = 1.0) => {
 /**
  * Primary sound alert player.
  * Checks for custom uploaded audio first, falling back to crystal bell chime synthesizer.
+ * Strictly debounces and guarantees only ONE ring per event.
  */
 export const playNotificationSound = (type = 'chat', force = false) => {
   try {
@@ -316,6 +349,7 @@ export const playNotificationSound = (type = 'chat', force = false) => {
     lastSoundPlayedTime = nowMs;
 
     unlockAudioContext();
+    stopNotificationSound(); // Halt any existing playback cleanly before starting new alert
 
     // 1. If custom audio tune is configured, active, and selected as tune
     const activeUrl = cachedCustomAudioUrl || (typeof localStorage !== 'undefined' ? localStorage.getItem('bdigi_custom_audio_url') : null);
@@ -326,20 +360,30 @@ export const playNotificationSound = (type = 'chat', force = false) => {
     // Play custom uploaded tune if available and active in browser
     if (activeUrl && isCustomActive && (activePreset === 'custom' || !activePreset) && typeof Audio !== 'undefined') {
       try {
-        const audio = preloadedAudioElement && preloadedAudioElement.src === activeUrl
-          ? preloadedAudioElement.cloneNode()
-          : new Audio(activeUrl);
-        
+        const audio = new Audio(activeUrl);
         audio.volume = Math.max(0, Math.min(1, activeVol));
+        currentPlayingAudio = audio;
+
+        audio.onended = () => {
+          if (currentPlayingAudio === audio) currentPlayingAudio = null;
+        };
+
+        audio.onerror = () => {
+          if (currentPlayingAudio === audio) currentPlayingAudio = null;
+          playSynthesizedChime(type, activeVol);
+        };
+
         const playPromise = audio.play();
         if (playPromise !== undefined) {
           playPromise.catch((err) => {
+            if (currentPlayingAudio === audio) currentPlayingAudio = null;
             console.warn('[AudioNotification] Custom audio play notice, playing synthesized bell:', err?.message);
             playSynthesizedChime(type, activeVol);
           });
         }
         return;
       } catch (err) {
+        currentPlayingAudio = null;
         console.warn('[AudioNotification] Custom audio play exception, falling back to synth:', err?.message);
       }
     }
@@ -361,19 +405,55 @@ export const playMessageChime = (force = false) => {
 };
 
 /**
+ * Anti-Double-Ring Deduplication Player:
+ * Guarantees that for any specific message ID, the tune will ring ONLY ONCE!
+ */
+export const playMessageChimeForMessage = (messageId, force = false) => {
+  if (messageId) {
+    const strId = String(messageId).trim();
+    if (playedMessageIds.has(strId)) {
+      // Already played for this message — strictly prevent secondary ring!
+      return;
+    }
+    playedMessageIds.add(strId);
+    if (playedMessageIds.size > MAX_PLAYED_HISTORY) {
+      const [first] = playedMessageIds;
+      playedMessageIds.delete(first);
+    }
+  }
+  playMessageChime(force);
+};
+
+/**
  * Dedicated sound tester for Admin Portal preview & validation.
  * Plays the specified tune directly and returns the audio play promise or true.
  */
 export const testAudioTune = (customUrl, volume = 1.0, preset = 'custom') => {
   unlockAudioContext();
+  stopNotificationSound();
+
   const safeVol = Math.max(0, Math.min(1, Number(volume) || 1.0));
 
   if (customUrl && (preset === 'custom' || !preset) && typeof Audio !== 'undefined') {
     try {
       const audio = new Audio(customUrl);
       audio.volume = safeVol;
-      return audio.play();
+      currentPlayingAudio = audio;
+
+      audio.onended = () => {
+        if (currentPlayingAudio === audio) currentPlayingAudio = null;
+      };
+
+      const playPromise = audio.play();
+      if (playPromise !== undefined) {
+        playPromise.catch(() => {
+          if (currentPlayingAudio === audio) currentPlayingAudio = null;
+          playSynthesizedChime('bell', safeVol);
+        });
+      }
+      return playPromise;
     } catch (err) {
+      currentPlayingAudio = null;
       playSynthesizedChime('bell', safeVol);
       return Promise.resolve(true);
     }

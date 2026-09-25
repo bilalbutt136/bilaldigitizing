@@ -14,7 +14,7 @@ import { PromotionsManager } from './PromotionsManager';
 import { ContactInfoManager } from './ContactInfoManager';
 import { PortfolioManager } from './PortfolioManager';
 import { isSupabaseConfigured } from '../../lib/supabase/client';
-import { playMessageChime } from '../../utils/audioNotification';
+import { stopNotificationSound } from '../../utils/audioNotification';
 import { 
   LayoutDashboard, 
   ClipboardList, 
@@ -86,10 +86,6 @@ export const AdminDashboard = () => {
 
         setUnreadChatCount(inboxTotal);
         setUnreadSupportCount(supportTotal);
-
-        if (prevUnreadTotalRef.current !== null && currentTotal > prevUnreadTotalRef.current) {
-          playMessageChime();
-        }
         prevUnreadTotalRef.current = currentTotal;
       } catch {}
     };
@@ -119,6 +115,7 @@ export const AdminDashboard = () => {
 
   const activeTab = activeTabState;
   const setActiveTab = (tab) => {
+    stopNotificationSound();
     setActiveTabState(tab);
     if (setActiveAdminTab) setActiveAdminTab(tab);
   };

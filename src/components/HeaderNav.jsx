@@ -77,6 +77,7 @@ export const HeaderNav = () => {
     markNotificationAsRead,
     markAllNotificationsAsRead,
     unreadNotificationsCount = 0,
+    stopNotificationSound,
     setMobileMode,
     mobileMode,
     logout,
@@ -831,6 +832,7 @@ export const HeaderNav = () => {
                       type="button"
                       onClick={(e) => {
                         e.stopPropagation();
+                        if (stopNotificationSound) stopNotificationSound();
                         setIsNotificationDropdownOpen(!isNotificationDropdownOpen);
                       }}
                       style={{

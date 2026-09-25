@@ -6,7 +6,7 @@ import { createClient } from '../../lib/supabase/client';
 import OfferCardMessage from '../common/OfferCardMessage';
 import AdminCreateOfferModal from './AdminCreateOfferModal';
 import { downloadFileDirectly, openFileInNewTab } from '../../utils/fileDownloader';
-import { playMessageChime, unlockAudioContext } from '../../utils/audioNotification';
+import { playMessageChime, playMessageChimeForMessage, stopNotificationSound, unlockAudioContext } from '../../utils/audioNotification';
 import { subscribeToPresence, syncPresenceFromRest } from '../../services/presenceService';
 import {
   Search,
@@ -283,7 +283,8 @@ export default function AdminChatInbox({ initialChannel = 'inbox' }) {
         scrollToBottom();
       }
 
-      // Mark conversation as read for admin
+      // Mark conversation as read for admin and stop any ringing notification tune
+      stopNotificationSound();
       await fetch('/api/chat/conversations', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -347,12 +348,6 @@ export default function AdminChatInbox({ initialChannel = 'inbox' }) {
           const mRes = await fetch(`/api/chat/messages?conversationId=${encodeURIComponent(activeConversationId)}`);
           const mData = await mRes.json();
           if (mData?.messages && mData.messages.length !== messages.length) {
-            if (mData.messages.length > messages.length) {
-              const arrivals = mData.messages.slice(messages.length);
-              if (arrivals.some(m => m.sender === 'client')) {
-                playMessageChime();
-              }
-            }
             setMessages(mData.messages);
             scrollToBottom();
           }
@@ -397,9 +392,8 @@ export default function AdminChatInbox({ initialChannel = 'inbox' }) {
           filter: `conversation_id=eq.${activeConversationId}`
         }, (payload) => {
           if (payload.new) {
-            if (payload.new.sender === 'client') {
-              playMessageChime();
-            }
+            // When message arrives in the currently active conversation, stop any ringing tune
+            stopNotificationSound();
             setMessages(prev => {
               if (prev.some(m => m.id === payload.new.id)) return prev;
               return [...prev, payload.new];
@@ -424,8 +418,8 @@ export default function AdminChatInbox({ initialChannel = 'inbox' }) {
       channelRef.current = activeChannelSub;
     }
 
-    // 2. Global listener across ALL messages & conversations so incoming messages in Support or Inbox
-    // immediately play the audio chime and refresh sidebar threads without missing anything!
+    // 2. Global listener across ALL messages & conversations
+    // Strictly plays ONLY ONE chime per message and stops immediately if active thread is viewed
     const globalSub = supabase
       .channel('admin-global-chat-monitor')
       .on('postgres_changes', {
@@ -434,8 +428,18 @@ export default function AdminChatInbox({ initialChannel = 'inbox' }) {
         table: 'messages'
       }, (payload) => {
         if (payload.new && payload.new.sender === 'client') {
-          // Play loud chime alert
-          playMessageChime();
+          // If this message belongs to the conversation currently open in front of admin:
+          if (payload.new.conversation_id === activeConversationId) {
+            stopNotificationSound();
+            fetch('/api/chat/conversations', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ action: 'markRead', conversationId: activeConversationId })
+            }).catch(() => {});
+          } else {
+            // Customer messaged a different thread: ring exactly ONCE with message ID deduplication!
+            playMessageChimeForMessage(payload.new.id);
+          }
 
           // Refresh conversations and unread badges immediately
           fetchConversations(activeFilter, searchQuery, activeChannel, true);
@@ -715,6 +719,7 @@ export default function AdminChatInbox({ initialChannel = 'inbox' }) {
     const messageText = inputText.trim();
     const attachmentsToSend = [...pendingAttachments];
 
+    stopNotificationSound();
     setIsSendingMessage(true);
     setInputText('');
     setPendingAttachments([]);
@@ -812,6 +817,7 @@ export default function AdminChatInbox({ initialChannel = 'inbox' }) {
   const formatRelativeTime = formatThreadTime;
 
   const handleSelectConversation = (convId) => {
+    stopNotificationSound();
     setActiveConversationId(convId);
   };
 
@@ -2004,6 +2010,8 @@ export default function AdminChatInbox({ initialChannel = 'inbox' }) {
                       placeholder="Type a message..."
                       value={inputText}
                       onChange={handleInputChange}
+                      onFocus={stopNotificationSound}
+                      onClick={stopNotificationSound}
                       onKeyDown={(e) => {
                         if (e.key === 'Enter' && !e.shiftKey) {
                           e.preventDefault();

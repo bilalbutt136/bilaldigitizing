@@ -5,7 +5,7 @@ import { useAppState } from '../../context/StateContext';
 import { createClient } from '../../lib/supabase/client';
 import OfferCardMessage from '../common/OfferCardMessage';
 import { downloadFileDirectly, openFileInNewTab } from '../../utils/fileDownloader';
-import { playMessageChime, unlockAudioContext } from '../../utils/audioNotification';
+import { playMessageChime, playMessageChimeForMessage, stopNotificationSound, unlockAudioContext } from '../../utils/audioNotification';
 import { trackUserPresence, untrackUserPresence } from '../../services/presenceService';
 import {
   Send,
@@ -154,6 +154,7 @@ export default function CustomerSupportChat({
   };
 
   const handleInputFocus = () => {
+    stopNotificationSound();
     scrollToBottom();
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new CustomEvent('bdigi_chat_focus', { detail: { focused: true } }));
@@ -235,6 +236,7 @@ export default function CustomerSupportChat({
       }
 
       // Mark messages as read for client
+      stopNotificationSound();
       await fetch('/api/chat/conversations', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -338,9 +340,11 @@ export default function CustomerSupportChat({
 
             if (mData.messages.length > nonPendingPrev.length) {
               const newArrivals = mData.messages.slice(nonPendingPrev.length);
-              if (newArrivals.some(m => m.sender !== 'client')) {
-                playMessageChime();
-              }
+              newArrivals.forEach(m => {
+                if (m.sender !== 'client') {
+                  playMessageChimeForMessage(m.id);
+                }
+              });
             }
 
             return [...mData.messages, ...pendingMessages];
@@ -371,7 +375,7 @@ export default function CustomerSupportChat({
       }, (payload) => {
         if (payload.new) {
           if (payload.new.sender !== 'client') {
-            playMessageChime();
+            playMessageChimeForMessage(payload.new.id);
           }
           setMessages(prev => {
             // 1. If already present by real DB id, do nothing
@@ -578,6 +582,7 @@ export default function CustomerSupportChat({
     const messageText = inputText.trim();
     const attachmentsToSend = [...pendingAttachments];
 
+    stopNotificationSound();
     setIsSending(true);
     setInputText('');
     setPendingAttachments([]);
