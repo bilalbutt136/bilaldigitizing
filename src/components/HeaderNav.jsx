@@ -289,40 +289,38 @@ export const HeaderNav = () => {
       }}>
         {/* Brand Logo */}
         <div 
-          style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', flexShrink: 0 }}
+          style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', cursor: 'pointer', flexShrink: 0 }}
           onClick={handleGoHome}
         >
           {siteSettings?.logoUrl ? (
             <img
               src={siteSettings.logoUrl}
               alt="BDigitizing Logo"
-              style={{ height: '36px', maxWidth: '160px', objectFit: 'contain', display: 'block' }}
+              style={{ height: '36px', width: 'auto', maxHeight: '42px', objectFit: 'contain', display: 'block', flexShrink: 0 }}
             />
           ) : (
-            <>
-              <div style={{
-                background: 'linear-gradient(135deg, var(--color-surface-elevated, #090d16), var(--color-primary))',
-                color: 'var(--color-text-on-primary, #ffffff)',
-                padding: '0.45rem',
-                borderRadius: 'var(--radius-md)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                boxShadow: '0 4px 12px var(--color-primary-glow)',
-                flexShrink: 0
-              }}>
-                <Scissors size={20} style={{ color: 'var(--color-primary)' }} />
-              </div>
-              <div>
-                <div style={{ fontFamily: 'var(--font-heading)', fontWeight: 800, fontSize: '1.15rem', color: 'var(--text-main)', letterSpacing: '-0.02em', lineHeight: 1, whiteSpace: 'nowrap' }}>
-                  BDIGITIZING<span style={{ color: 'var(--orange-500)' }}>.COM</span>
-                </div>
-                <div className="desktop-only" style={{ fontSize: '0.68rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-                  Embroidery &amp; Vector Studio
-                </div>
-              </div>
-            </>
+            <div style={{
+              background: 'linear-gradient(135deg, var(--color-surface-elevated, #090d16), var(--color-primary))',
+              color: 'var(--color-text-on-primary, #ffffff)',
+              padding: '0.45rem',
+              borderRadius: 'var(--radius-md)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: '0 4px 12px var(--color-primary-glow)',
+              flexShrink: 0
+            }}>
+              <Scissors size={20} style={{ color: 'var(--color-primary)' }} />
+            </div>
           )}
+          <div>
+            <div style={{ fontFamily: 'var(--font-heading)', fontWeight: 800, fontSize: '1.15rem', color: 'var(--text-main)', letterSpacing: '-0.02em', lineHeight: 1, whiteSpace: 'nowrap' }}>
+              BDIGITIZING<span style={{ color: 'var(--orange-500)' }}>.COM</span>
+            </div>
+            <div className="desktop-only" style={{ fontSize: '0.68rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', marginTop: '2px' }}>
+              Embroidery &amp; Vector Studio
+            </div>
+          </div>
         </div>
 
         {/* Public Navigation Links (Desktop) */}
@@ -1096,33 +1094,37 @@ export const HeaderNav = () => {
             }}>
               <div 
                 onClick={() => { handleGoHome(); setIsMobileMenuOpen(false); }}
-                style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.6rem' }}
               >
                 {siteSettings?.logoUrl ? (
                   <img
                     src={siteSettings.logoUrl}
                     alt="BDigitizing Logo"
-                    style={{ height: '30px', maxWidth: '140px', objectFit: 'contain', display: 'block' }}
+                    style={{ height: '32px', width: 'auto', maxHeight: '36px', objectFit: 'contain', display: 'block', flexShrink: 0 }}
                   />
                 ) : (
-                  <>
-                    <div style={{
-                      background: 'linear-gradient(135deg, #090d16, var(--color-primary))',
-                      color: '#ffffff',
-                      padding: '0.4rem',
-                      borderRadius: '8px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      boxShadow: '0 2px 8px var(--color-primary-glow)'
-                    }}>
-                      <Scissors size={18} style={{ color: 'var(--color-primary)' }} />
-                    </div>
-                    <span style={{ fontFamily: 'var(--font-heading)', fontSize: '1.05rem', fontWeight: 900, color: isDark ? '#f8fafc' : '#0f172a', letterSpacing: '-0.02em' }}>
-                      BDIGITIZING<span style={{ color: 'var(--color-primary)' }}>.COM</span>
-                    </span>
-                  </>
+                  <div style={{
+                    background: 'linear-gradient(135deg, #090d16, var(--color-primary))',
+                    color: '#ffffff',
+                    padding: '0.4rem',
+                    borderRadius: '8px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    boxShadow: '0 2px 8px var(--color-primary-glow)',
+                    flexShrink: 0
+                  }}>
+                    <Scissors size={18} style={{ color: 'var(--color-primary)' }} />
+                  </div>
                 )}
+                <div>
+                  <div style={{ fontFamily: 'var(--font-heading)', fontSize: '1.05rem', fontWeight: 900, color: isDark ? '#f8fafc' : '#0f172a', letterSpacing: '-0.02em', lineHeight: 1, whiteSpace: 'nowrap' }}>
+                    BDIGITIZING<span style={{ color: 'var(--orange-500)' }}>.COM</span>
+                  </div>
+                  <div style={{ fontSize: '0.62rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', marginTop: '2px' }}>
+                    Embroidery &amp; Vector Studio
+                  </div>
+                </div>
               </div>
 
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>

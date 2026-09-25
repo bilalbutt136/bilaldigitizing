@@ -146,15 +146,24 @@ export const Footer = () => {
           {/* Column 1: Brand Info & Social Channels */}
           <div style={{ maxWidth: '300px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.25rem', color: '#ffffff' }}>
-              <div style={{
-                background: 'var(--orange-500)',
-                color: '#ffffff',
-                padding: '0.5rem',
-                borderRadius: '8px',
-                boxShadow: '0 4px 12px rgba(249, 115, 22, 0.35)'
-              }}>
-                <Scissors size={22} />
-              </div>
+              {siteSettings?.logoUrl ? (
+                <img
+                  src={siteSettings.logoUrl}
+                  alt="BDigitizing Logo"
+                  style={{ height: '38px', width: 'auto', maxHeight: '42px', objectFit: 'contain', display: 'block', flexShrink: 0 }}
+                />
+              ) : (
+                <div style={{
+                  background: 'var(--orange-500)',
+                  color: '#ffffff',
+                  padding: '0.5rem',
+                  borderRadius: '8px',
+                  boxShadow: '0 4px 12px rgba(249, 115, 22, 0.35)',
+                  flexShrink: 0
+                }}>
+                  <Scissors size={22} />
+                </div>
+              )}
               <span style={{ fontFamily: 'var(--font-heading)', fontWeight: 900, fontSize: '1.4rem', letterSpacing: '-0.02em' }}>
                 BDIGITIZING<span style={{ color: 'var(--orange-500)' }}>.COM</span>
               </span>
