@@ -1,6 +1,6 @@
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
-import { formatOrderId, formatDimensions, formatFabric } from '../utils/formatters.js';
+import { formatOrderId, formatDimensions, formatFabric, formatDesignTitle } from '../utils/formatters.js';
 
 describe('Data & UI Formatters', () => {
   test('formatOrderId handles prefixes and numbers correctly', () => {
@@ -26,5 +26,15 @@ describe('Data & UI Formatters', () => {
     assert.equal(formatFabric('Leather / Vinyl'), 'Leather / Vinyl');
     assert.equal(formatFabric({ name: 'Ripstop Nylon' }), 'Ripstop Nylon');
     assert.equal(formatFabric({ label: 'Pique Knit Polo' }), 'Pique Knit Polo');
+  });
+
+  test('formatDesignTitle strips redundant service types and clean artwork titles', () => {
+    assert.equal(formatDesignTitle(null), 'Artwork Design');
+    assert.equal(formatDesignTitle(''), 'Artwork Design');
+    assert.equal(formatDesignTitle('IMG-20260924-WA0002 - Embroidery Digitizing (Qty: 1)'), 'IMG-20260924-WA0002');
+    assert.equal(formatDesignTitle('1000251296 - Embroidery Digitizing (Qty: 1)'), '1000251296');
+    assert.equal(formatDesignTitle('BrandLogo.png - Vector Tracing (Qty: 2)'), 'BrandLogo');
+    assert.equal(formatDesignTitle('FireDept - Custom Patches (Qty: 50)'), 'FireDept');
+    assert.equal(formatDesignTitle('Embroidery Digitizing'), 'Embroidery Digitizing');
   });
 });

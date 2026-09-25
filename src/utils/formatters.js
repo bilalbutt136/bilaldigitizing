@@ -32,3 +32,25 @@ export const formatFabric = (fab) => {
   }
   return String(fab);
 };
+
+export const formatDesignTitle = (rawTitle) => {
+  if (!rawTitle || typeof rawTitle !== 'string') return 'Artwork Design';
+  let clean = rawTitle.trim();
+
+  // Strip redundant trailing " - Service Name (Qty: X)" or " - Service Name"
+  clean = clean
+    .replace(/\s*[-–—]\s*(Embroidery Digitizing|Vector Tracing|Vector Art|Custom Patches|Digitizing|Vector|Patch)(\s*\(Qty:\s*\d+\))?/i, '')
+    .replace(/\s*\(Qty:\s*\d+\)/i, '')
+    .trim();
+
+  // If the result became empty, fall back safely
+  if (!clean) {
+    clean = rawTitle.replace(/\s*\(Qty:\s*\d+\)/i, '').trim() || 'Artwork Design';
+  }
+
+  // Remove common file extension if present at the end
+  clean = clean.replace(/\.(png|jpg|jpeg|webp|svg|pdf|ai|eps|dst|pes|emb)$/i, '');
+
+  return clean;
+};
+

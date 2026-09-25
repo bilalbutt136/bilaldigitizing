@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useAppState, formatOrderId } from '../../context/StateContext';
+import { useAppState, formatOrderId, formatDesignTitle } from '../../context/StateContext';
 import { ArtworkLightboxModal } from '../common/ArtworkLightboxModal';
 import { AssignWorkerModal } from './AssignWorkerModal';
 import { ReviewWorkerUploadModal } from './ReviewWorkerUploadModal';
@@ -644,8 +644,8 @@ export const OrderManagementTable = () => {
                     {/* 1. ORDER */}
                     <td style={{ padding: '0.5rem 0.75rem' }}>
                       <div style={{ fontWeight: 800, color: 'var(--navy-900)', fontSize: '0.84rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                        <span>{ord.title || 'Untitled Order'}</span>
-                        {ord.isRush && <span className="badge badge-rush" style={{ fontSize: '0.6rem', padding: '0.05rem 0.35rem' }}>RUSH</span>}
+                        <span title={ord.title}>{formatDesignTitle(ord.title)}</span>
+                        {ord.isRush && <span className="badge badge-rush" style={{ fontSize: '0.6rem', padding: '0.05rem 0.3rem' }}>RUSH</span>}
                       </div>
                       <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '1px', display: 'flex', alignItems: 'center', gap: '0.35rem', flexWrap: 'wrap' }}>
                         <span style={{ fontWeight: 800, color: 'var(--orange-600)', background: '#fff7ed', padding: '0.05rem 0.35rem', borderRadius: '4px', border: '1px solid #ffedd5' }}>
@@ -674,9 +674,6 @@ export const OrderManagementTable = () => {
                     <td style={{ padding: '0.5rem 0.75rem' }}>
                       <div style={{ fontWeight: 700, color: 'var(--navy-900)', fontSize: '0.8rem' }}>
                         {ord.serviceCategory || ord.type || 'Embroidery Digitizing'}
-                      </div>
-                      <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '1px' }}>
-                        {ord.fabricType || (ord.requestedFormats ? ord.requestedFormats.slice(0, 3).join(', ').toUpperCase() : 'Standard DST/PES')}
                       </div>
                     </td>
 

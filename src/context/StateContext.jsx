@@ -48,14 +48,14 @@ import { trackUserPresence, untrackUserPresence } from '../services/presenceServ
 
 import { playNotificationSound, configureAudioNotification, playMessageChime, playMessageChimeForMessage, stopNotificationSound } from '../utils/audioNotification';
 import { THEME_PRESETS, applyThemePresetToDOM } from '../utils/themePresets';
-import { formatOrderId, formatDimensions, formatFabric } from '../utils/formatters';
+import { formatOrderId, formatDimensions, formatFabric, formatDesignTitle } from '../utils/formatters';
 import { 
   filterAndSanitizeNotifications, 
   isOrderPlacedNotification, 
   isOrderPaymentConfirmedNotification 
 } from '../utils/notificationRouter';
 
-export { formatOrderId, formatDimensions, formatFabric };
+export { formatOrderId, formatDimensions, formatFabric, formatDesignTitle };
 
 const StateContext = createContext();
 

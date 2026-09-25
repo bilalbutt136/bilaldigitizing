@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useNavigate } from '../../utils/navigation';
-import { useAppState, formatOrderId } from '../../context/StateContext';
+import { useAppState, formatOrderId, formatDesignTitle } from '../../context/StateContext';
 import { ArtworkLightboxModal } from '../common/ArtworkLightboxModal';
 import { 
   PlusCircle, 
@@ -1721,11 +1721,11 @@ export const CustomerDashboard = () => {
 
                                       <div>
                                         <div style={{ fontWeight: 700, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.84rem' }}>
-                                          {ord?.title || 'Embroidery Digitizing Order'}
+                                          <span title={ord?.title}>{formatDesignTitle(ord?.title)}</span>
                                           {ord?.isRush && <span className="badge badge-rush" style={{ fontSize: '0.6rem', padding: '0.05rem 0.3rem' }}>RUSH</span>}
                                         </div>
                                         <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '0.1rem' }}>
-                                          ID: <strong>{formatOrderId(ord?.id)}</strong>{ord?.dimensions?.width && ord?.dimensions?.height ? ` • ${ord.dimensions.width}"x${ord.dimensions.height}"` : ''}
+                                          ID: <strong>{formatOrderId(ord?.id)}</strong>
                                         </div>
                                       </div>
                                     </div>
@@ -1735,9 +1735,6 @@ export const CustomerDashboard = () => {
                                   <td style={{ padding: '0.5rem 0.75rem' }}>
                                     <div style={{ fontWeight: 700, color: 'var(--text-main)', fontSize: '0.82rem' }}>
                                       {ord?.serviceCategory || (ord?.type === 'vector' ? 'Vector Art' : (ord?.type === 'patch' || ord?.type === 'patches' ? 'Custom Patches' : 'Embroidery Digitizing'))}
-                                    </div>
-                                    <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '0.1rem' }}>
-                                      {ord?.fabricType || ord?.placement || (ord?.requestedFormats ? ord.requestedFormats.slice(0, 3).join(', ').toUpperCase() : (ord?.type === 'vector' ? 'Vector (.AI, .EPS)' : 'DST, PES, EMB'))}
                                     </div>
                                   </td>
 
