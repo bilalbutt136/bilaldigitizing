@@ -8,9 +8,10 @@ export async function POST(request) {
       return NextResponse.json({ success: false, error: 'Server misconfiguration' }, { status: 500 });
     }
 
-    // Fetch webhook secret from env or site_config
+    // Fetch bolt config
+    let apiKey = process.env.BOLTPAYOUTS_API_KEY || process.env.BOLT_API_KEY || null;
     let webhookSecret = process.env.BOLTPAYOUTS_WEBHOOK_SECRET || process.env.BOLT_WEBHOOK_SECRET || null;
-    if (!webhookSecret) {
+    if (!webhookSecret || !apiKey) {
       const { data: configRow } = await supabaseAdmin
         .from('site_config')
         .select('value')
@@ -25,30 +26,43 @@ export async function POST(request) {
           boltConfig = { webhookSecret: boltConfig };
         }
       }
-      webhookSecret = boltConfig?.webhookSecret || boltConfig?.webhook_secret || boltConfig?.secret || null;
+      if (!webhookSecret) webhookSecret = boltConfig?.webhookSecret || boltConfig?.webhook_secret || boltConfig?.secret || null;
+      if (!apiKey) apiKey = boltConfig?.apiKey || boltConfig?.api_key || boltConfig?.key || null;
     }
 
-    if (!webhookSecret) {
-      return NextResponse.json({ success: false, error: 'Webhook secret not configured' }, { status: 503 });
-    }
-
-    const sig = request.headers.get('x-boltpayouts-signature') || '';
     const raw = await request.text();
-    
-    if (!sig) {
-      return NextResponse.json({ success: false, error: 'Missing signature' }, { status: 401 });
+    const sig = request.headers.get('x-boltpayouts-signature') || 
+                request.headers.get('x-signature') || 
+                request.headers.get('signature') || 
+                request.headers.get('x-bolt-signature') || '';
+    const apiKeyHeader = request.headers.get('x-api-key') || '';
+
+    let isAuthorized = false;
+
+    // Check 1: API key authentication
+    if (apiKeyHeader && apiKey && apiKeyHeader.trim() === apiKey.trim()) {
+      isAuthorized = true;
     }
 
-    const expected = crypto
-      .createHmac('sha256', webhookSecret)
-      .update(raw)
-      .digest('hex');
+    // Check 2: HMAC signature authentication
+    if (!isAuthorized && sig && webhookSecret) {
+      try {
+        const expected = crypto
+          .createHmac('sha256', webhookSecret)
+          .update(raw)
+          .digest('hex');
 
-    const sigBuffer = Buffer.from(sig, 'utf8');
-    const expectedBuffer = Buffer.from(expected, 'utf8');
+        const sigBuffer = Buffer.from(sig, 'utf8');
+        const expectedBuffer = Buffer.from(expected, 'utf8');
 
-    if (sigBuffer.length !== expectedBuffer.length || !crypto.timingSafeEqual(sigBuffer, expectedBuffer)) {
-      return NextResponse.json({ success: false, error: 'Invalid signature' }, { status: 403 });
+        if (sigBuffer.length === expectedBuffer.length && crypto.timingSafeEqual(sigBuffer, expectedBuffer)) {
+          isAuthorized = true;
+        }
+      } catch {}
+    }
+
+    if (!isAuthorized) {
+      return NextResponse.json({ success: false, error: 'Unauthorized webhook request' }, { status: 401 });
     }
 
     let payload;
@@ -165,11 +179,22 @@ export async function POST(request) {
           const withHash = `#${cleanOrdId}`;
           const candidateOrdIds = Array.from(new Set([rawOrdId, cleanOrdId, withHash])).filter(Boolean);
 
+          const { data: currentOrd } = await supabaseAdmin
+            .from('orders')
+            .select('id, status, payment_status, paid_at')
+            .in('id', candidateOrdIds)
+            .maybeSingle();
+
+          const targetStatus = (currentOrd?.status === 'delivered' || currentOrd?.status === 'completed')
+            ? currentOrd.status
+            : 'in_progress';
+
           await supabaseAdmin
             .from('orders')
             .update({ 
-              status: 'in_progress', 
+              status: targetStatus, 
               payment_status: 'paid',
+              paid_at: currentOrd?.paid_at || new Date().toISOString(),
               updated_at: new Date().toISOString()
             })
             .in('id', candidateOrdIds);

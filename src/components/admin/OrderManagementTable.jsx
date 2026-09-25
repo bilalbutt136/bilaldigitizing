@@ -215,6 +215,23 @@ export const OrderManagementTable = () => {
     return (
       <span 
         className="badge" 
+        onClick={async (e) => {
+          e.stopPropagation();
+          const cleanId = String(ord.id).trim().replace(/^#+/, '');
+          if (showToast) showToast(`Checking live gateway payment for #${cleanId}...`, 'info');
+          try {
+            const res = await fetch(`/api/boltpayouts/status?orderId=${encodeURIComponent(cleanId)}`);
+            const data = await res.json();
+            if (data.success && (data.status === 'paid' || data.status === 'completed')) {
+              if (showToast) showToast(`✓ Order #${cleanId} payment confirmed & marked PAID!`, 'success');
+              if (refreshOrders) refreshOrders();
+            } else {
+              if (showToast) showToast(`Order #${cleanId} is still pending on gateway.`, 'warning');
+            }
+          } catch {
+            if (showToast) showToast('Could not verify gateway payment status.', 'error');
+          }
+        }}
         style={{ 
           background: '#fff7ed', 
           color: '#c2410c', 
@@ -226,9 +243,10 @@ export const OrderManagementTable = () => {
           display: 'inline-flex',
           alignItems: 'center',
           gap: '0.3rem',
-          whiteSpace: 'nowrap'
+          whiteSpace: 'nowrap',
+          cursor: 'pointer'
         }}
-        title="Payment Unpaid / Pending Checkout"
+        title="Payment Unpaid — Click to check live BoltPayouts status"
       >
         <Clock size={12} style={{ color: 'var(--color-warning, #ea580c)' }} /> PENDING
       </span>

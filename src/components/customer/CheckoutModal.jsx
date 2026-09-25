@@ -403,11 +403,14 @@ export const CheckoutModal = () => {
   useEffect(() => {
     let intervalId;
     
-    if (isCheckoutModalOpen && checkoutSession?.invoiceId && !isPaid) {
+    if (isCheckoutModalOpen && (checkoutSession?.invoiceId || checkoutSession?.orderId) && !isPaid) {
       intervalId = setInterval(async () => {
         try {
           const headers = await getAuthHeaders();
-          const res = await fetch(`/api/boltpayouts/status?invoiceId=${checkoutSession.invoiceId}`, { headers });
+          const invParam = checkoutSession.invoiceId ? `invoiceId=${encodeURIComponent(checkoutSession.invoiceId)}` : '';
+          const ordParam = checkoutSession.orderId ? `orderId=${encodeURIComponent(checkoutSession.orderId)}` : '';
+          const queryStr = [invParam, ordParam].filter(Boolean).join('&');
+          const res = await fetch(`/api/boltpayouts/status?${queryStr}`, { headers });
           const data = await res.json();
           if (data.success && (data.status === 'paid' || data.status === 'completed')) {
             setIsPaid(true);

@@ -75,6 +75,7 @@ export const OrderTrackerDrawer = () => {
     setIsCheckoutModalOpen,
     setCheckoutSession,
     mobileMode,
+    refreshOrders,
     theme
   } = useAppState();
 
@@ -181,6 +182,31 @@ export const OrderTrackerDrawer = () => {
   };
 
   const isPaid = isOrderPaid(ord);
+
+  // If order appears unpaid in the drawer, automatically verify live gateway / BoltPayouts status
+  useEffect(() => {
+    if (!ord?.id || isPaid) return;
+    let isSubscribed = true;
+
+    const checkLivePaymentStatus = async () => {
+      try {
+        const cleanId = String(ord.id).trim().replace(/^#+/, '');
+        const res = await fetch(`/api/boltpayouts/status?orderId=${encodeURIComponent(cleanId)}`);
+        const data = await res.json();
+        if (isSubscribed && data.success && (data.status === 'paid' || data.status === 'completed')) {
+          if (typeof refreshOrders === 'function') {
+            refreshOrders().catch(() => {});
+          }
+        }
+      } catch (err) {
+        // Non-blocking background verification
+      }
+    };
+
+    checkLivePaymentStatus();
+    return () => { isSubscribed = false; };
+  }, [ord?.id, isPaid, refreshOrders]);
+
   const orderPrice = getOrderPrice(ord);
   const formattedPrice = `$${orderPrice.toFixed(2)}`;
 
