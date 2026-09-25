@@ -1,5 +1,7 @@
 'use client';
 
+import { stopNotificationSound, markNotificationSoundPlayed } from './audioNotification.js';
+
 /**
  * Parses notification data and determines target order, chat, tab, and destination URL.
  */
@@ -175,7 +177,13 @@ export function handleNotificationClick(notif, context = {}) {
     currentView
   } = context;
 
-  // 1. Mark as read
+  // 1. Immediately silence any active bell tune and register notification as opened/played
+  try {
+    stopNotificationSound();
+    if (notif.id) markNotificationSoundPlayed(notif.id);
+  } catch {}
+
+  // 2. Mark as read
   if (notif.id) {
     if (typeof markNotificationAsRead === 'function') markNotificationAsRead(notif.id);
     if (typeof markGlobalNotificationAsRead === 'function') markGlobalNotificationAsRead(notif.id);

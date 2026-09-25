@@ -20,7 +20,20 @@ let currentPlayingAudio = null;
 
 // Registry of message IDs that have already played their tune (Anti-Double-Ring Guarantee)
 const playedMessageIds = new Set();
+// Registry of notification IDs that have already played their chime (Anti-Open-Ring Guarantee)
+const playedNotificationIds = new Set();
 const MAX_PLAYED_HISTORY = 300;
+
+export const markNotificationSoundPlayed = (notifId) => {
+  if (notifId) {
+    const strId = String(notifId).trim();
+    playedNotificationIds.add(strId);
+    if (playedNotificationIds.size > MAX_PLAYED_HISTORY) {
+      const [first] = playedNotificationIds;
+      playedNotificationIds.delete(first);
+    }
+  }
+};
 
 // ── Admin Audio Cache ────────────────────────────────────────────────────────
 let cachedCustomAudioUrl = null;
@@ -657,6 +670,13 @@ export const playAdminNotificationSound = (type = 'notification', force = false,
       if (isMuted && !force) return;
     }
 
+    const notifId = options?.messageId || options?.id || options?.notifId;
+    if (notifId && !force) {
+      const strId = String(notifId).trim();
+      if (playedNotificationIds.has(strId)) return;
+      markNotificationSoundPlayed(strId);
+    }
+
     const nowMs = Date.now();
     if (!force && nowMs - lastSoundPlayedTime < SOUND_DEBOUNCE_MS) return;
     lastSoundPlayedTime = nowMs;
@@ -720,6 +740,13 @@ export const playCustomerNotificationSound = (type = 'chat', force = false, opti
     if (typeof localStorage !== 'undefined') {
       const isMuted = localStorage.getItem('bdigi_audio_enabled') === 'false';
       if (isMuted && !force) return;
+    }
+
+    const notifId = options?.messageId || options?.id || options?.notifId;
+    if (notifId && !force) {
+      const strId = String(notifId).trim();
+      if (playedNotificationIds.has(strId)) return;
+      markNotificationSoundPlayed(strId);
     }
 
     const nowMs = Date.now();

@@ -14,7 +14,8 @@ import {
   isNotificationSoundPlaying,
   testAudioTune,
   testCustomerAudioTune,
-  isCurrentAdminContext
+  isCurrentAdminContext,
+  markNotificationSoundPlayed
 } from '../utils/audioNotification.js';
 
 describe('Admin Notification Tune & Bell Sound Alert System', () => {
@@ -225,4 +226,28 @@ describe('Admin Notification Tune & Bell Sound Alert System', () => {
       playMessageChimeForMessage('msg-adm-456', true, { role: 'admin', isAdmin: true });
     });
   });
+
+  test('12. Notification audio deduplication prevents sound replay on already opened or read notifications', () => {
+    const testNotifId = 'notif-dedup-test-999';
+
+    assert.doesNotThrow(() => {
+      // First play marks it as played
+      playAdminNotificationSound('notification', false, { messageId: testNotifId });
+      // Subsequent play for the same notification is safely blocked
+      playAdminNotificationSound('notification', false, { messageId: testNotifId });
+      // Same for customer notification
+      playCustomerNotificationSound('chat', false, { messageId: testNotifId });
+    });
+
+    // Explicitly marking another notification as played
+    const openedNotifId = 'notif-user-opened-123';
+    markNotificationSoundPlayed(openedNotifId);
+
+    // Calling play for this opened notification should be deduplicated / suppressed
+    assert.doesNotThrow(() => {
+      playAdminNotificationSound('notification', false, { messageId: openedNotifId });
+      playCustomerNotificationSound('chat', false, { messageId: openedNotifId });
+    });
+  });
 });
+

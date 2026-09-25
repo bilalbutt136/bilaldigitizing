@@ -55,14 +55,16 @@ import {
   playMessageChimeForMessage, 
   playCustomerChime, 
   playAdminChime, 
-  stopNotificationSound 
+  stopNotificationSound,
+  markNotificationSoundPlayed
 } from '../utils/audioNotification';
 import { THEME_PRESETS, applyThemePresetToDOM } from '../utils/themePresets';
 import { formatOrderId, formatDimensions, formatFabric, formatDesignTitle } from '../utils/formatters';
 import { 
   filterAndSanitizeNotifications, 
   isOrderPlacedNotification, 
-  isOrderPaymentConfirmedNotification 
+  isOrderPaymentConfirmedNotification,
+  isOrderDeliveredNotification
 } from '../utils/notificationRouter';
 
 export { formatOrderId, formatDimensions, formatFabric, formatDesignTitle };
@@ -625,12 +627,13 @@ export const StateProvider = ({ children }) => {
   const addNotification = (notif, syncToBackend = true) => {
     if (!notif) return;
     const nowIso = new Date().toISOString();
+    const isAlreadyRead = Boolean(notif.read || notif.is_read);
     const newNotif = {
       id: notif.id || `notif-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
       timestamp: notif.timestamp || notif.created_at || nowIso,
       created_at: notif.created_at || notif.timestamp || nowIso,
-      read: notif.read || notif.is_read || false,
-      is_read: notif.read || notif.is_read || false,
+      read: isAlreadyRead,
+      is_read: isAlreadyRead,
       title: notif.title || 'Notification',
       message: notif.message || notif.description || '',
       type: notif.type || 'info',
@@ -639,12 +642,17 @@ export const StateProvider = ({ children }) => {
       orderId: notif.order_id || notif.orderId || null,
       recipient_role: notif.recipient_role || notif.recipientRole || 'client',
       recipient_email: notif.recipient_email || notif.recipientEmail || null,
-      ...notif
+      ...notif,
+      read: isAlreadyRead,
+      is_read: isAlreadyRead
     };
+
+    // Check whether this notification already exists in the current list
+    const alreadyExists = Array.isArray(notifications) && notifications.some(n => String(n.id) === String(newNotif.id));
     
     setNotifications(prev => {
       const safePrev = Array.isArray(prev) ? prev : [];
-      const filtered = safePrev.filter(n => n.id !== newNotif.id);
+      const filtered = safePrev.filter(n => String(n.id) !== String(newNotif.id));
       const emailToUse = (authUser?.email || newNotif.recipient_email || '').toLowerCase().trim();
       const isAdminToUse = authUser?.role === 'admin' || currentView === 'admin';
       const sanitized = filterAndSanitizeNotifications([newNotif, ...filtered], {
@@ -655,7 +663,10 @@ export const StateProvider = ({ children }) => {
       return sanitized;
     });
 
-    if (notif.playSound !== false) {
+    // Sound should ONLY play for genuinely new, unread notifications
+    const shouldPlaySound = notif.playSound !== false && !isAlreadyRead && !alreadyExists;
+
+    if (shouldPlaySound) {
       try {
         const isForAdmin = newNotif.recipient_role === 'admin' || authUser?.role === 'admin' || currentView === 'admin';
         if (isForAdmin) {
@@ -664,9 +675,11 @@ export const StateProvider = ({ children }) => {
           playCustomerNotificationSound(notif.soundType || 'chat', false, { messageId: newNotif.id, role: 'customer', isAdmin: false });
         }
       } catch {}
+    } else if (isAlreadyRead && newNotif.id) {
+      markNotificationSoundPlayed(newNotif.id);
     }
 
-    if (notif.showToast !== false && notif.title) {
+    if (notif.showToast !== false && !isAlreadyRead && !alreadyExists && notif.title) {
       showToast(`${notif.title}${notif.message ? `: ${notif.message}` : ''}`, notif.type || 'info');
     }
 
@@ -693,9 +706,10 @@ export const StateProvider = ({ children }) => {
 
   const markNotificationAsRead = (id) => {
     stopNotificationSound();
+    if (id) markNotificationSoundPlayed(id);
     setNotifications(prev => {
       const safePrev = Array.isArray(prev) ? prev : [];
-      const nextList = safePrev.map(n => n.id === id ? { ...n, read: true, is_read: true } : n);
+      const nextList = safePrev.map(n => String(n.id) === String(id) ? { ...n, read: true, is_read: true } : n);
       saveNotificationsToStorage(nextList);
       return nextList;
     });
@@ -708,6 +722,9 @@ export const StateProvider = ({ children }) => {
     stopNotificationSound();
     setNotifications(prev => {
       const safePrev = Array.isArray(prev) ? prev : [];
+      safePrev.forEach(n => {
+        if (n?.id) markNotificationSoundPlayed(n.id);
+      });
       const nextList = safePrev.map(n => ({ ...n, read: true, is_read: true }));
       saveNotificationsToStorage(nextList);
       return nextList;
@@ -1349,15 +1366,19 @@ export const StateProvider = ({ children }) => {
         }
 
         if (isForMe) {
-          // For customers: only Placed and Payment Confirmed are allowed for orders
+          // For customers: only Placed, Payment Confirmed, and Delivered are allowed for orders
           if (currentRole !== 'admin') {
             const isOrdPlaced = isOrderPlacedNotification(notif);
             const isOrdPaid = isOrderPaymentConfirmedNotification(notif);
-            const isOrderRelated = Boolean(notif.order_id || notif.orderId || isOrdPlaced || isOrdPaid);
-            if (isOrderRelated && !isOrdPlaced && !isOrdPaid) {
-              return; // Ignore other order status notifications (delivered, revisions, etc.)
+            const isOrdDelivered = isOrderDeliveredNotification(notif);
+            const isOrderRelated = Boolean(notif.order_id || notif.orderId || isOrdPlaced || isOrdPaid || isOrdDelivered);
+            if (isOrderRelated && !isOrdPlaced && !isOrdPaid && !isOrdDelivered) {
+              return; // Ignore other order status notifications (internal revisions, etc.)
             }
           }
+
+          const isInsert = payload?.eventType === 'INSERT';
+          const isUnread = !notif.read && !notif.is_read;
 
           addNotification({
             id: notif.id,
@@ -1370,7 +1391,10 @@ export const StateProvider = ({ children }) => {
             recipient_role: notif.recipient_role,
             recipient_email: notif.recipient_email,
             timestamp: notif.created_at || notif.timestamp || new Date().toISOString(),
-            read: notif.read || false
+            read: notif.read || notif.is_read || false,
+            is_read: notif.read || notif.is_read || false,
+            playSound: isInsert && isUnread,
+            showToast: isInsert && isUnread
           }, false);
         }
       });
