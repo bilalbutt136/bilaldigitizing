@@ -100,7 +100,7 @@ export async function sendNotificationEmail(params = {}) {
     const targetAdminEmail = (explicitAdminEmail || dynamicAdminEmail || RESEND_VERIFIED_FALLBACK_EMAIL).toLowerCase().trim();
     const targetClientEmail = (clientEmail || recipientEmail || '').toLowerCase().trim();
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://bdigitizing.com';
-    const configuredFrom = process.env.RESEND_FROM_ADDRESS || 'BDigitizing <orders@bdigitizing.com>';
+    const configuredFrom = process.env.RESEND_FROM_ADDRESS || 'BDigitizing <support@bdigitizing.com>';
 
   // Shared send wrapper with automatic fallback if recipient is rejected by sandbox domain restriction
   const executeSend = async ({ to, subject, html }) => {

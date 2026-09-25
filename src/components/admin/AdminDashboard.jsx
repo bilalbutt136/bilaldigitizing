@@ -8,6 +8,7 @@ import { StudioServicesManager } from './StudioServicesManager';
 import { SystemSettingsManager } from './SystemSettingsManager';
 import { WorkerManagementDesk } from './WorkerManagementDesk';
 import AdminChatInbox from './AdminChatInbox';
+import AdminEmailCampaigns from './AdminEmailCampaigns';
 
 import { AdminExecutiveDashboard } from './AdminExecutiveDashboard';
 import { PromotionsManager } from './PromotionsManager';
@@ -320,6 +321,7 @@ export const AdminDashboard = () => {
       items: [
         { id: 'portfolio', label: 'Portfolio Gallery', icon: Image, badge: safePortfolio.length },
         { id: 'promotions', label: 'Promotions', icon: TrendingUp },
+        { id: 'email-campaigns', label: 'Email Campaigns', icon: Mail },
         { id: 'contact', label: 'Contact Info', icon: Phone }
       ]
     },
@@ -838,6 +840,7 @@ export const AdminDashboard = () => {
         {activeTab === 'portfolio' && <PortfolioManager />}
         {activeTab === 'clients' && <ClientDirectory />}
         {activeTab === 'promotions' && <PromotionsManager />}
+        {activeTab === 'email-campaigns' && <AdminEmailCampaigns />}
         {activeTab === 'contact' && <ContactInfoManager />}
         {activeTab === 'settings' && <SystemSettingsManager activeSubTab="theme" />}
         {activeTab === 'settings-theme' && <SystemSettingsManager activeSubTab="theme" />}
