@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useAppState } from '../../context/StateContext';
-import { Palette, Megaphone, ShieldCheck, Building2, Settings, Mail } from 'lucide-react';
+import { Palette, Megaphone, ShieldCheck, Building2, Settings, Mail, Bell } from 'lucide-react';
 import { ThemeBrandingSettings } from './settings/ThemeBrandingSettings';
 import { MetaSeoTrackingSettings } from './settings/MetaSeoTrackingSettings';
 import { AdminSecuritySettings } from './settings/AdminSecuritySettings';
@@ -22,7 +22,7 @@ export const SystemSettingsManager = ({ activeSubTab = 'theme' }) => {
     { id: 'theme', label: 'Theme & Brand Engine', icon: Palette, badge: 'Design' },
     { id: 'meta', label: 'Meta Pixel & SEO Tracking', icon: Megaphone, badge: 'Analytics' },
     { id: 'security', label: 'Admin Team & Security', icon: ShieldCheck, badge: 'Access' },
-    { id: 'notifications', label: 'Email & Alert Routing', icon: Mail, badge: 'Alerts' },
+    { id: 'notifications', label: 'Notifications & Audio Tunes', icon: Bell, badge: 'Alerts' },
     { id: 'general', label: 'Studio Profile & Defaults', icon: Building2, badge: 'General' }
   ];
 

@@ -46,7 +46,7 @@ import {
 } from '../services/supabaseService';
 import { trackUserPresence, untrackUserPresence } from '../services/presenceService';
 
-import { playNotificationSound } from '../utils/audioNotification';
+import { playNotificationSound, configureAudioNotification, playMessageChime } from '../utils/audioNotification';
 import { THEME_PRESETS, applyThemePresetToDOM } from '../utils/themePresets';
 import { formatOrderId, formatDimensions, formatFabric } from '../utils/formatters';
 import { 
@@ -640,7 +640,7 @@ export const StateProvider = ({ children }) => {
       return sanitized;
     });
 
-    if (notif.playSound === true) {
+    if (notif.playSound !== false) {
       try {
         playNotificationSound(notif.soundType || 'notification');
       } catch {}
@@ -1506,6 +1506,58 @@ export const StateProvider = ({ children }) => {
       }
     };
   }, []);
+
+  // Synchronize custom notification audio configuration from siteSettings
+  useEffect(() => {
+    if (siteSettings) {
+      const soundUrl = siteSettings.notificationSoundUrl || siteSettings.notification_sound_url || null;
+      const soundName = siteSettings.notificationSoundName || siteSettings.notification_sound_name || null;
+      const soundActive = siteSettings.notificationSoundActive !== false && siteSettings.notification_sound_active !== false;
+      const soundVolume = siteSettings.notificationSoundVolume !== undefined 
+        ? siteSettings.notificationSoundVolume 
+        : (siteSettings.notification_sound_volume !== undefined ? siteSettings.notification_sound_volume : 1.0);
+      const soundPreset = siteSettings.notificationSoundPreset || siteSettings.notification_sound_preset || 'custom';
+
+      configureAudioNotification({
+        url: soundUrl,
+        name: soundName,
+        active: soundActive,
+        volume: soundVolume,
+        preset: soundPreset
+      });
+    }
+  }, [siteSettings]);
+
+  // Global incoming customer chat chime listener for admin portal
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const handleGlobalChatMessage = (e) => {
+      const msg = e.detail;
+      if (!msg) return;
+
+      let currentRole = authUser?.role;
+      if (!currentRole) {
+        try {
+          const saved = localStorage.getItem('bdigi_auth_user');
+          if (saved) currentRole = JSON.parse(saved)?.role;
+        } catch {}
+      }
+
+      // If viewing admin portal or logged in as admin
+      if (currentRole === 'admin' || currentView === 'admin') {
+        const isFromClient = msg.sender === 'client' || msg.sender_role === 'client' || msg.role === 'client';
+        if (isFromClient) {
+          playMessageChime();
+        }
+      }
+    };
+
+    window.addEventListener('bdigi_new_chat_message', handleGlobalChatMessage);
+    return () => {
+      window.removeEventListener('bdigi_new_chat_message', handleGlobalChatMessage);
+    };
+  }, [authUser?.role, currentView]);
 
   // Real-time Presence tracking across the entire website for active authenticated users
   useEffect(() => {
@@ -2392,6 +2444,13 @@ export const StateProvider = ({ children }) => {
     }
     if (newSettings.notification_settings) {
       await saveCmsConfigToSupabase('notification_settings', newSettings.notification_settings);
+    }
+    if (newSettings.notification_sound_settings !== undefined) {
+      await saveCmsConfigToSupabase('notification_sound_settings', newSettings.notification_sound_settings);
+    }
+    if (newSettings.notificationSoundUrl !== undefined || newSettings.notification_sound_url !== undefined) {
+      const urlToSave = newSettings.notificationSoundUrl || newSettings.notification_sound_url;
+      await saveCmsConfigToSupabase('notification_sound_url', urlToSave);
     }
   };
 

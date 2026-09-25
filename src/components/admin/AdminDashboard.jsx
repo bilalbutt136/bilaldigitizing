@@ -14,6 +14,7 @@ import { PromotionsManager } from './PromotionsManager';
 import { ContactInfoManager } from './ContactInfoManager';
 import { PortfolioManager } from './PortfolioManager';
 import { isSupabaseConfigured } from '../../lib/supabase/client';
+import { playMessageChime } from '../../utils/audioNotification';
 import { 
   LayoutDashboard, 
   ClipboardList, 
@@ -68,7 +69,8 @@ export const AdminDashboard = () => {
   const [unreadChatCount, setUnreadChatCount] = useState(0);
   const [unreadSupportCount, setUnreadSupportCount] = useState(0);
 
-  // Sync unread chat & support desk messages for admin badges
+  // Sync unread chat & support desk messages for admin badges and play alert chime
+  const prevUnreadTotalRef = React.useRef(null);
   React.useEffect(() => {
     const fetchUnreadChats = async () => {
       try {
@@ -78,14 +80,17 @@ export const AdminDashboard = () => {
         ]);
         const [inboxData, supportData] = await Promise.all([inboxRes.json(), supportRes.json()]);
 
-        if (inboxData?.conversations) {
-          const inboxTotal = inboxData.conversations.reduce((sum, c) => sum + (c.unread_admin_count || 0), 0);
-          setUnreadChatCount(inboxTotal);
+        const inboxTotal = (inboxData?.conversations || []).reduce((sum, c) => sum + (c.unread_admin_count || 0), 0);
+        const supportTotal = (supportData?.conversations || []).reduce((sum, c) => sum + (c.unread_admin_count || 0), 0);
+        const currentTotal = inboxTotal + supportTotal;
+
+        setUnreadChatCount(inboxTotal);
+        setUnreadSupportCount(supportTotal);
+
+        if (prevUnreadTotalRef.current !== null && currentTotal > prevUnreadTotalRef.current) {
+          playMessageChime();
         }
-        if (supportData?.conversations) {
-          const supportTotal = supportData.conversations.reduce((sum, c) => sum + (c.unread_admin_count || 0), 0);
-          setUnreadSupportCount(supportTotal);
-        }
+        prevUnreadTotalRef.current = currentTotal;
       } catch {}
     };
 

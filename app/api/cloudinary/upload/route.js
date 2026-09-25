@@ -44,7 +44,14 @@ const MIME_MAP = {
   xls: 'application/vnd.ms-excel',
   xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
   ppt: 'application/vnd.ms-powerpoint',
-  pptx: 'application/vnd.openxmlformats-officedocument.presentationml.presentation'
+  pptx: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+  mp3: 'audio/mpeg',
+  wav: 'audio/wav',
+  ogg: 'audio/ogg',
+  m4a: 'audio/mp4',
+  aac: 'audio/aac',
+  weba: 'audio/webm',
+  flac: 'audio/flac'
 };
 
 const BLOCKED_EXTENSIONS = new Set([
