@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useAppState } from '../../context/StateContext';
 import { createClient } from '../../lib/supabase/client';
 import OfferCardMessage from '../common/OfferCardMessage';
@@ -313,19 +313,37 @@ export default function CustomerSupportChat({
         }
       } catch {}
 
-      // Refresh messages quietly
+      // Refresh messages quietly without clearing pending messages or flashing duplicates
       try {
         const mRes = await fetch(`/api/chat/messages?conversationId=${encodeURIComponent(conversationId)}&clientEmail=${encodeURIComponent(userEmail)}`);
         const mData = await mRes.json();
-        if (mData?.messages && mData.messages.length !== messages.length) {
-          if (mData.messages.length > messages.length) {
-            const newArrivals = mData.messages.slice(messages.length);
-            if (newArrivals.some(m => m.sender !== 'client')) {
-              playMessageChime();
+        if (Array.isArray(mData?.messages)) {
+          setMessages(prev => {
+            // Keep any pending optimistic messages that the server hasn't saved yet
+            const pendingMessages = prev.filter(m => 
+              (m.isPending || String(m.id).startsWith('temp-')) &&
+              !mData.messages.some(sm => 
+                sm.id === m.id || 
+                (sm.sender === m.sender && (sm.text || '').trim() === (m.text || '').trim())
+              )
+            );
+
+            const nonPendingPrev = prev.filter(m => !m.isPending && !String(m.id).startsWith('temp-'));
+            const isUnchanged = nonPendingPrev.length === mData.messages.length &&
+              mData.messages.every((sm, i) => nonPendingPrev[i]?.id === sm.id) &&
+              pendingMessages.length === (prev.length - nonPendingPrev.length);
+
+            if (isUnchanged) return prev;
+
+            if (mData.messages.length > nonPendingPrev.length) {
+              const newArrivals = mData.messages.slice(nonPendingPrev.length);
+              if (newArrivals.some(m => m.sender !== 'client')) {
+                playMessageChime();
+              }
             }
-          }
-          setMessages(mData.messages);
-          scrollToBottom();
+
+            return [...mData.messages, ...pendingMessages];
+          });
         }
       } catch {}
     }, 3500);
@@ -355,7 +373,22 @@ export default function CustomerSupportChat({
             playMessageChime();
           }
           setMessages(prev => {
+            // 1. If already present by real DB id, do nothing
             if (prev.some(m => m.id === payload.new.id)) return prev;
+
+            // 2. If this is a client message, check if there is an optimistic pending message to reconcile
+            if (payload.new.sender === 'client') {
+              const pendingIdx = prev.findIndex(m => 
+                (m.isPending || String(m.id).startsWith('temp-')) &&
+                (m.text || '').trim() === (payload.new.text || '').trim()
+              );
+              if (pendingIdx !== -1) {
+                const next = [...prev];
+                next[pendingIdx] = payload.new;
+                return next;
+              }
+            }
+
             return [...prev, payload.new];
           });
           scrollToBottom();
@@ -562,7 +595,16 @@ export default function CustomerSupportChat({
 
       const data = await res.json();
       if (data?.message) {
-        setMessages(prev => prev.map(m => m.id === tempId ? data.message : m));
+        setMessages(prev => {
+          // If Realtime already added or reconciled the message with data.message.id:
+          const alreadyExists = prev.some(m => m.id === data.message.id);
+          if (alreadyExists) {
+            // Remove the temporary optimistic placeholder so no duplicate remains
+            return prev.filter(m => m.id !== tempId);
+          }
+          // Otherwise, replace the temp message with the real one
+          return prev.map(m => m.id === tempId ? data.message : m);
+        });
         scrollToBottom();
       } else {
         throw new Error(data?.error || 'Failed to dispatch message.');
@@ -577,6 +619,56 @@ export default function CustomerSupportChat({
       setIsSending(false);
     }
   };
+
+  // Guaranteed deduplication of messages by unique ID and content fingerprint (order-independent)
+  const uniqueMessages = useMemo(() => {
+    const confirmedIds = new Set();
+    const confirmedFingerprints = new Set();
+
+    // Pass 1: Catalog all confirmed non-temporary messages
+    for (const msg of messages) {
+      if (!msg) continue;
+      const isTemp = Boolean(msg.isPending || String(msg.id || '').startsWith('temp-'));
+      if (!isTemp) {
+        if (msg.id) confirmedIds.add(msg.id);
+        const textKey = (msg.text || '').trim();
+        const contentFingerprint = `${msg.sender || ''}:::${textKey}:::${(msg.attachments || []).length}`;
+        if (textKey || (msg.attachments && msg.attachments.length > 0)) {
+          confirmedFingerprints.add(contentFingerprint);
+        }
+      }
+    }
+
+    // Pass 2: Filter duplicates, ensuring optimistic messages never duplicate confirmed ones
+    const result = [];
+    const seenFinalIds = new Set();
+    const seenTempFingerprints = new Set();
+
+    for (const msg of messages) {
+      if (!msg) continue;
+      const isTemp = Boolean(msg.isPending || String(msg.id || '').startsWith('temp-'));
+      const textKey = (msg.text || '').trim();
+      const contentFingerprint = `${msg.sender || ''}:::${textKey}:::${(msg.attachments || []).length}`;
+
+      if (!isTemp) {
+        if (msg.id && seenFinalIds.has(msg.id)) continue;
+        if (msg.id) seenFinalIds.add(msg.id);
+        result.push(msg);
+      } else {
+        // If confirmed message with same content already exists anywhere in the thread, discard the optimistic duplicate!
+        if (confirmedFingerprints.has(contentFingerprint)) {
+          continue;
+        }
+        if (seenTempFingerprints.has(contentFingerprint)) {
+          continue;
+        }
+        seenTempFingerprints.add(contentFingerprint);
+        if (msg.id) seenFinalIds.add(msg.id);
+        result.push(msg);
+      }
+    }
+    return result;
+  }, [messages]);
 
   return (
     <div className="customer-chat-root">
@@ -828,7 +920,7 @@ export default function CustomerSupportChat({
             <Loader2 size={24} className="spin-icon" style={{ margin: '0 auto 0.5rem', color: '#ea580c' }} />
             Connecting to Studio Digitizing Desk...
           </div>
-        ) : messages.length === 0 ? (
+        ) : uniqueMessages.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '2.5rem 1rem', color: '#64748b', margin: 'auto' }}>
             <div style={{
               width: '52px',
@@ -890,10 +982,10 @@ export default function CustomerSupportChat({
             </div>
           </div>
         ) : (
-          messages.map((msg, index) => {
+          uniqueMessages.map((msg, index) => {
             const isClient = msg.sender === 'client';
             const isOffer = msg.type === 'custom_offer' || Boolean(msg.offer_id);
-            const prevMsg = index > 0 ? messages[index - 1] : null;
+            const prevMsg = index > 0 ? uniqueMessages[index - 1] : null;
             const isSameSender = prevMsg && prevMsg.sender === msg.sender && !msg.offer_id && !prevMsg.offer_id;
             const timeDiff = prevMsg ? Math.abs(new Date(msg.created_at) - new Date(prevMsg.created_at)) : Infinity;
             const isGrouped = isSameSender && timeDiff < 3 * 60 * 1000;

@@ -518,6 +518,150 @@ test('Chat System & Fiverr-Style Inbox Architecture', async (t) => {
     assert.equal(isTimestampActive(null), false, 'Null heartbeat is not active');
   });
 
+  await t.test('22. Optimistic message reconciliation and Realtime deduplication strictly prevents double bubbles', () => {
+    // Simulate initial conversation with 1 greeting message
+    let messages = [
+      { id: 'msg-init-1', sender: 'admin', text: 'Hello! How can we help?', isPending: false }
+    ];
+
+    // Deduplication function matching CustomerSupportChat.jsx & AdminChatInbox.jsx
+    const deduplicateMessages = (rawMessages) => {
+      const confirmedIds = new Set();
+      const confirmedFingerprints = new Set();
+
+      for (const msg of rawMessages) {
+        if (!msg) continue;
+        const isTemp = Boolean(msg.isPending || String(msg.id || '').startsWith('temp-'));
+        if (!isTemp) {
+          if (msg.id) confirmedIds.add(msg.id);
+          const textKey = (msg.text || '').trim();
+          const contentFingerprint = `${msg.sender || ''}:::${textKey}:::${(msg.attachments || []).length}`;
+          if (textKey || (msg.attachments && msg.attachments.length > 0)) {
+            confirmedFingerprints.add(contentFingerprint);
+          }
+        }
+      }
+
+      const result = [];
+      const seenFinalIds = new Set();
+      const seenTempFingerprints = new Set();
+
+      for (const msg of rawMessages) {
+        if (!msg) continue;
+        const isTemp = Boolean(msg.isPending || String(msg.id || '').startsWith('temp-'));
+        const textKey = (msg.text || '').trim();
+        const contentFingerprint = `${msg.sender || ''}:::${textKey}:::${(msg.attachments || []).length}`;
+
+        if (!isTemp) {
+          if (msg.id && seenFinalIds.has(msg.id)) continue;
+          if (msg.id) seenFinalIds.add(msg.id);
+          result.push(msg);
+        } else {
+          if (confirmedFingerprints.has(contentFingerprint)) {
+            continue;
+          }
+          if (seenTempFingerprints.has(contentFingerprint)) {
+            continue;
+          }
+          seenTempFingerprints.add(contentFingerprint);
+          if (msg.id) seenFinalIds.add(msg.id);
+          result.push(msg);
+        }
+      }
+      return result;
+    };
+
+    // Step 1: User sends message -> optimistic message is added
+    const tempId = `temp-${Date.now()}`;
+    const optimisticMessage = {
+      id: tempId,
+      sender: 'client',
+      text: 'Helo',
+      attachments: [],
+      isPending: true
+    };
+    messages = [...messages, optimisticMessage];
+
+    // Assert: User sees their message immediately (total 2 messages)
+    assert.equal(messages.length, 2);
+    assert.equal(deduplicateMessages(messages).length, 2);
+    assert.equal(messages[1].id, tempId);
+
+    // Step 2: Supabase Realtime event arrives BEFORE fetch finishes
+    const realtimePayload = {
+      new: {
+        id: 'msg-confirmed-101',
+        sender: 'client',
+        text: 'Helo',
+        attachments: [],
+        created_at: new Date().toISOString()
+      }
+    };
+
+    // Realtime handler with pending reconciliation
+    const handleRealtimeInsert = (payload, currentMessages) => {
+      if (!payload?.new) return currentMessages;
+      if (currentMessages.some(m => m.id === payload.new.id)) return currentMessages;
+
+      if (payload.new.sender === 'client') {
+        const pendingIdx = currentMessages.findIndex(m => 
+          (m.isPending || String(m.id).startsWith('temp-')) &&
+          (m.text || '').trim() === (payload.new.text || '').trim()
+        );
+        if (pendingIdx !== -1) {
+          const next = [...currentMessages];
+          next[pendingIdx] = payload.new;
+          return next;
+        }
+      }
+
+      return [...currentMessages, payload.new];
+    };
+
+    messages = handleRealtimeInsert(realtimePayload, messages);
+
+    // Assert: Realtime replaced temp message instead of creating a second bubble!
+    assert.equal(messages.length, 2, 'Message count must remain 2, not double to 3');
+    assert.equal(messages[1].id, 'msg-confirmed-101', 'Optimistic message was seamlessly upgraded to confirmed DB ID');
+    assert.equal(deduplicateMessages(messages).length, 2);
+
+    // Step 3: Fetch POST finishes later and returns confirmed message
+    const fetchResponseData = {
+      message: {
+        id: 'msg-confirmed-101',
+        sender: 'client',
+        text: 'Helo',
+        attachments: [],
+        created_at: new Date().toISOString()
+      }
+    };
+
+    // handleSend callback
+    const handleFetchResolved = (data, currentMessages, tempMsgId) => {
+      const alreadyExists = currentMessages.some(m => m.id === data.message.id);
+      if (alreadyExists) {
+        return currentMessages.filter(m => m.id !== tempMsgId);
+      }
+      return currentMessages.map(m => m.id === tempMsgId ? data.message : m);
+    };
+
+    messages = handleFetchResolved(fetchResponseData, messages, tempId);
+
+    // Assert: Still exactly 2 messages
+    assert.equal(messages.length, 2, 'Post-fetch reconciliation must never create duplicate message');
+    assert.equal(deduplicateMessages(messages).length, 2);
+
+    // Step 4: Verify fallback deduplication if a raw race occurred
+    const corruptedStateWithBoth = [
+      { id: 'temp-999', sender: 'client', text: 'Helo', attachments: [], isPending: true },
+      { id: 'msg-confirmed-101', sender: 'client', text: 'Helo', attachments: [], isPending: false }
+    ];
+    const deduplicated = deduplicateMessages(corruptedStateWithBoth);
+    assert.equal(deduplicated.length, 1, 'Fingerprint deduplicator must strictly suppress duplicate optimistic bubble');
+    assert.equal(deduplicated[0].id, 'msg-confirmed-101', 'Confirmed message must be preferred over optimistic');
+  });
+
 });
+
 
 

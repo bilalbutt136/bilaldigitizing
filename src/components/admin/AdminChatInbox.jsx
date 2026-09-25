@@ -435,13 +435,49 @@ export default function AdminChatInbox({ initialChannel = 'inbox' }) {
     }
   }, [messages.length, isLoadingMessages]);
 
-  // Guaranteed deduplication of messages by unique ID
+  // Guaranteed deduplication of messages by unique ID and content fingerprint (order-independent)
   const uniqueMessages = useMemo(() => {
-    const seen = new Set();
-    const result = [];
+    const confirmedIds = new Set();
+    const confirmedFingerprints = new Set();
+
+    // Pass 1: Catalog all confirmed non-temporary messages
     for (const msg of messages) {
-      if (msg && msg.id && !seen.has(msg.id)) {
-        seen.add(msg.id);
+      if (!msg) continue;
+      const isTemp = Boolean(msg.isPending || String(msg.id || '').startsWith('temp-'));
+      if (!isTemp) {
+        if (msg.id) confirmedIds.add(msg.id);
+        const textKey = (msg.text || '').trim();
+        const contentFingerprint = `${msg.sender || ''}:::${textKey}:::${(msg.attachments || []).length}`;
+        if (textKey || (msg.attachments && msg.attachments.length > 0)) {
+          confirmedFingerprints.add(contentFingerprint);
+        }
+      }
+    }
+
+    // Pass 2: Filter duplicates, ensuring optimistic messages never duplicate confirmed ones
+    const result = [];
+    const seenFinalIds = new Set();
+    const seenTempFingerprints = new Set();
+
+    for (const msg of messages) {
+      if (!msg) continue;
+      const isTemp = Boolean(msg.isPending || String(msg.id || '').startsWith('temp-'));
+      const textKey = (msg.text || '').trim();
+      const contentFingerprint = `${msg.sender || ''}:::${textKey}:::${(msg.attachments || []).length}`;
+
+      if (!isTemp) {
+        if (msg.id && seenFinalIds.has(msg.id)) continue;
+        if (msg.id) seenFinalIds.add(msg.id);
+        result.push(msg);
+      } else {
+        if (confirmedFingerprints.has(contentFingerprint)) {
+          continue;
+        }
+        if (seenTempFingerprints.has(contentFingerprint)) {
+          continue;
+        }
+        seenTempFingerprints.add(contentFingerprint);
+        if (msg.id) seenFinalIds.add(msg.id);
         result.push(msg);
       }
     }
