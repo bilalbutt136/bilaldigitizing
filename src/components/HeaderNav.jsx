@@ -196,6 +196,7 @@ export const HeaderNav = () => {
 
   const servicesDropdownRef = useRef(null);
   const notificationDropdownRef = useRef(null);
+  const mobileNotificationDropdownRef = useRef(null);
   const supportDropdownRef = useRef(null);
 
   useEffect(() => {
@@ -203,7 +204,10 @@ export const HeaderNav = () => {
       if (servicesDropdownRef.current && !servicesDropdownRef.current.contains(e.target)) {
         setIsServicesOpen(false);
       }
-      if (notificationDropdownRef.current && !notificationDropdownRef.current.contains(e.target)) {
+      const clickedInsideNotification = 
+        (notificationDropdownRef.current && notificationDropdownRef.current.contains(e.target)) ||
+        (mobileNotificationDropdownRef.current && mobileNotificationDropdownRef.current.contains(e.target));
+      if (!clickedInsideNotification) {
         setIsNotificationDropdownOpen(false);
       }
       if (supportDropdownRef.current && !supportDropdownRef.current.contains(e.target)) {
@@ -610,8 +614,8 @@ export const HeaderNav = () => {
             </button>
           )}
 
-          {/* Mobile Right Action Area (Inbox & Clean Three-Lines Hamburger Menu) */}
-          <div className="mobile-only" style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', flexShrink: 0 }}>
+          {/* Mobile Right Action Area (Inbox, Notifications Bell & Clean Three-Lines Menu) */}
+          <div className="mobile-only-flex" style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', flexShrink: 0 }}>
             {/* Mobile Inbox Icon */}
             <button
               type="button"
@@ -658,6 +662,193 @@ export const HeaderNav = () => {
                 </span>
               )}
             </button>
+
+            {/* Mobile Notifications Bell (Order Delivery & Updation Alerts) */}
+            <div ref={mobileNotificationDropdownRef} style={{ position: 'relative' }}>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (stopNotificationSound) stopNotificationSound();
+                  setIsNotificationDropdownOpen(!isNotificationDropdownOpen);
+                }}
+                style={{
+                  position: 'relative',
+                  background: isNotificationDropdownOpen ? 'rgba(255, 122, 0, 0.12)' : 'transparent',
+                  border: isNotificationDropdownOpen ? '1.5px solid var(--orange-500)' : '1px solid var(--border-color)',
+                  color: isNotificationDropdownOpen ? 'var(--orange-500)' : 'var(--text-main)',
+                  width: '38px',
+                  height: '38px',
+                  minWidth: '38px',
+                  minHeight: '38px',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0,
+                  transition: 'all 0.2s ease'
+                }}
+                aria-label="Order Delivery & Notifications"
+                title="Order Delivery & Notifications"
+              >
+                <Bell size={18} />
+                {displayUnreadNotifsCount > 0 && (
+                  <span style={{
+                    position: 'absolute',
+                    top: '2px',
+                    right: '2px',
+                    background: 'var(--color-primary, #ff7a00)',
+                    color: 'var(--color-text-on-primary, #ffffff)',
+                    fontSize: '0.6rem',
+                    fontWeight: 900,
+                    width: '15px',
+                    height: '15px',
+                    borderRadius: '50%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    border: '1.5px solid var(--color-surface, #ffffff)'
+                  }}>
+                    {displayUnreadNotifsCount > 99 ? '99+' : displayUnreadNotifsCount}
+                  </span>
+                )}
+              </button>
+
+              {/* Mobile Notification Popover Dropdown */}
+              {isNotificationDropdownOpen && (
+                <div style={{
+                  position: 'fixed',
+                  top: '56px',
+                  left: '10px',
+                  right: '10px',
+                  maxWidth: '380px',
+                  margin: '0 auto',
+                  background: isDark ? 'var(--color-surface, #0f172a)' : '#ffffff',
+                  border: isDark ? '1.5px solid rgba(255, 255, 255, 0.15)' : '1.5px solid var(--color-border)',
+                  borderRadius: '16px',
+                  boxShadow: '0 16px 40px rgba(15, 23, 42, 0.25)',
+                  padding: '1rem',
+                  zIndex: 9999,
+                  animation: 'fadeIn 0.15s ease-out'
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem', borderBottom: '1px solid var(--color-border)', paddingBottom: '0.65rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                      <span style={{ fontSize: '0.92rem', fontWeight: 800, color: 'var(--color-text-primary, var(--navy-900))' }}>Notifications & Updates</span>
+                      {displayUnreadNotifsCount > 0 && (
+                        <span style={{ fontSize: '0.72rem', background: 'var(--color-primary-light)', color: 'var(--color-primary)', border: '1px solid var(--color-primary)', padding: '0.1rem 0.45rem', borderRadius: '10px', fontWeight: 800 }}>
+                          {displayUnreadNotifsCount} new
+                        </span>
+                      )}
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      {displayUnreadNotifsCount > 0 && (
+                        <button 
+                          type="button" 
+                          onClick={() => { if (markAllNotificationsAsRead) markAllNotificationsAsRead(); }}
+                          style={{ background: 'none', border: 'none', color: 'var(--color-primary)', fontSize: '0.75rem', fontWeight: 800, cursor: 'pointer' }}
+                        >
+                          Mark read
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => setIsNotificationDropdownOpen(false)}
+                        style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: '2px', display: 'flex' }}
+                        aria-label="Close"
+                      >
+                        <X size={16} />
+                      </button>
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', maxHeight: '320px', overflowY: 'auto' }}>
+                    {displayNotifications.length === 0 ? (
+                      <div style={{ padding: '1.75rem 1rem', textAlign: 'center', color: 'var(--color-text-muted)', fontSize: '0.85rem' }}>
+                        <Bell size={24} style={{ opacity: 0.4, margin: '0 auto 0.5rem', display: 'block' }} />
+                        No notifications yet. You will receive live alerts when orders are delivered, quoted, or updated.
+                      </div>
+                    ) : (
+                      displayNotifications.map((item) => (
+                        <div 
+                          key={item.id} 
+                          onClick={() => {
+                            setIsNotificationDropdownOpen(false);
+                            handleNotificationClick(item, {
+                              markNotificationAsRead,
+                              markGlobalNotificationAsRead: markNotificationAsRead,
+                              authUser: safeAuthUser,
+                              isAuthenticated: safeIsAuthenticated,
+                              setIsAuthModalOpen,
+                              setAuthModalMode,
+                              orders,
+                              openOrderTrackerDrawer,
+                              setSelectedOrderForDrawer,
+                              setActiveAdminTab,
+                              setActiveCustomerTab,
+                              navigate,
+                              protectedNavigate,
+                              currentView: safeCurrentView,
+                              mobileMode
+                            });
+                          }}
+                          style={{ 
+                            padding: '0.65rem 0.75rem', 
+                            background: item.read ? 'var(--bg-subtle, #f8fafc)' : 'var(--color-primary-light)', 
+                            borderRadius: '10px', 
+                            borderLeft: item.read ? '3.5px solid var(--color-border)' : '3.5px solid var(--color-primary)',
+                            cursor: 'pointer',
+                            transition: 'all 0.15s ease'
+                          }}
+                        >
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem' }}>
+                            <div style={{ fontSize: '0.82rem', fontWeight: 800, color: 'var(--color-text-primary, var(--navy-900))' }}>{item.title}</div>
+                            <span 
+                              style={{ fontSize: '0.66rem', color: 'var(--color-text-muted)', whiteSpace: 'nowrap', fontWeight: 600 }}
+                              title={getNotificationFullDateTime(item, orders)}
+                            >
+                              {formatNotificationExactTime(item, orders)}
+                            </span>
+                          </div>
+                          <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginTop: '0.2rem', lineHeight: 1.4 }}>{item.message}</div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+
+                  {safeIsAuthenticated && (
+                    <div style={{ marginTop: '0.75rem', paddingTop: '0.65rem', borderTop: '1px solid var(--color-border)', textAlign: 'center' }}>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsNotificationDropdownOpen(false);
+                          if (isAdmin) {
+                            if (setActiveAdminTab) setActiveAdminTab('orders');
+                            protectedNavigate('admin');
+                          } else {
+                            if (setActiveCustomerTab) setActiveCustomerTab('notifications');
+                            navigate('/client-portal?tab=notifications');
+                          }
+                        }}
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          color: 'var(--color-primary)',
+                          fontWeight: 800,
+                          fontSize: '0.78rem',
+                          cursor: 'pointer',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '0.35rem'
+                        }}
+                      >
+                        Open Full Notifications Hub <ArrowRight size={13} />
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
 
             {/* Mobile Three-Lines Menu Toggle Button */}
             <button
@@ -1264,6 +1455,81 @@ export const HeaderNav = () => {
                       }}
                     >
                       <LogOut size={13} /> Sign Out
+                    </button>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.4rem', marginTop: '0.4rem' }}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsMobileMenuOpen(false);
+                        if (isAdmin) {
+                          if (setActiveAdminTab) setActiveAdminTab('orders');
+                          protectedNavigate('admin');
+                        } else {
+                          if (setActiveCustomerTab) setActiveCustomerTab('orders');
+                          navigate('/client-portal?tab=orders');
+                        }
+                      }}
+                      style={{
+                        background: isDark ? 'rgba(255,255,255,0.06)' : '#f1f5f9',
+                        color: isDark ? '#f8fafc' : '#1e293b',
+                        border: '1px solid var(--border-color)',
+                        padding: '0.5rem 0.65rem',
+                        borderRadius: '8px',
+                        fontWeight: 800,
+                        fontSize: '0.78rem',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '0.35rem',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      <Package size={13} style={{ color: 'var(--color-primary)' }} /> My Orders
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsMobileMenuOpen(false);
+                        if (isAdmin) {
+                          if (setActiveAdminTab) setActiveAdminTab('orders');
+                          protectedNavigate('admin');
+                        } else {
+                          if (setActiveCustomerTab) setActiveCustomerTab('notifications');
+                          navigate('/client-portal?tab=notifications');
+                        }
+                      }}
+                      style={{
+                        background: isDark ? 'rgba(255,255,255,0.06)' : '#f1f5f9',
+                        color: isDark ? '#f8fafc' : '#1e293b',
+                        border: '1px solid var(--border-color)',
+                        padding: '0.5rem 0.65rem',
+                        borderRadius: '8px',
+                        fontWeight: 800,
+                        fontSize: '0.78rem',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '0.35rem',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      <Bell size={13} style={{ color: 'var(--color-primary)' }} />
+                      <span>Notifications</span>
+                      {displayUnreadNotifsCount > 0 && (
+                        <span style={{
+                          background: 'var(--color-primary)',
+                          color: '#ffffff',
+                          fontSize: '0.62rem',
+                          fontWeight: 900,
+                          borderRadius: '9999px',
+                          padding: '0.05rem 0.35rem',
+                          marginLeft: '0.15rem'
+                        }}>
+                          {displayUnreadNotifsCount}
+                        </span>
+                      )}
                     </button>
                   </div>
                 </div>

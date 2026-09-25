@@ -2231,95 +2231,191 @@ export const CustomerDashboard = () => {
             {/* TAB: MY ORDERS (Clean, high-performance order management) */}
             {activeTab === 'orders' && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                {/* Header & Controls */}
-                <div style={{
-                  background: 'var(--bg-card)',
-                  border: '1px solid var(--border-color)',
-                  borderRadius: 'var(--radius-md)',
-                  padding: '0.65rem 1.25rem',
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  flexWrap: 'wrap',
-                  gap: '0.75rem',
-                  boxShadow: 'var(--shadow-sm)'
-                }}>
-                  <div>
-                    <h2 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 900, color: 'var(--navy-950)' }}>
-                      My Orders
-                    </h2>
-                    <p style={{ margin: '0.1rem 0 0', fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-                      Track artwork production, machine files, quotes & revisions
-                    </p>
-                  </div>
+                {/* Header & Controls (Responsive Desktop & Mobile Chrome layout) */}
+                {(() => {
+                  const activeOrdersCount = myOrders.filter(o => {
+                    const s = String(o?.status || '').toLowerCase().trim();
+                    return s !== 'completed' && s !== 'delivered' && s !== 'cancelled';
+                  }).length;
 
-                  <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                    <div style={{ display: 'flex', background: 'var(--bg-subtle, #f1f5f9)', padding: '3px', borderRadius: '10px' }}>
-                      <button
-                        type="button"
-                        onClick={() => setOrderFilterTab('active')}
-                        style={{
-                          padding: '0.4rem 0.85rem',
-                          borderRadius: '8px',
-                          border: 'none',
-                          background: orderFilterTab === 'active' ? '#ffffff' : 'transparent',
-                          color: orderFilterTab === 'active' ? '#ea580c' : 'var(--text-muted)',
-                          fontWeight: orderFilterTab === 'active' ? 900 : 700,
-                          fontSize: '0.8rem',
-                          cursor: 'pointer',
-                          boxShadow: orderFilterTab === 'active' ? '0 2px 6px rgba(0,0,0,0.06)' : 'none'
-                        }}
-                      >
-                        Active ({activeOrders.length})
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setOrderFilterTab('completed')}
-                        style={{
-                          padding: '0.4rem 0.85rem',
-                          borderRadius: '8px',
-                          border: 'none',
-                          background: orderFilterTab === 'completed' ? '#ffffff' : 'transparent',
-                          color: orderFilterTab === 'completed' ? '#16a34a' : 'var(--text-muted)',
-                          fontWeight: orderFilterTab === 'completed' ? 900 : 700,
-                          fontSize: '0.8rem',
-                          cursor: 'pointer',
-                          boxShadow: orderFilterTab === 'completed' ? '0 2px 6px rgba(0,0,0,0.06)' : 'none'
-                        }}
-                      >
-                        Completed ({completedOrders.length})
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setOrderFilterTab('all')}
-                        style={{
-                          padding: '0.4rem 0.85rem',
-                          borderRadius: '8px',
-                          border: 'none',
-                          background: orderFilterTab === 'all' ? '#ffffff' : 'transparent',
-                          color: orderFilterTab === 'all' ? 'var(--navy-900)' : 'var(--text-muted)',
-                          fontWeight: orderFilterTab === 'all' ? 900 : 700,
-                          fontSize: '0.8rem',
-                          cursor: 'pointer',
-                          boxShadow: orderFilterTab === 'all' ? '0 2px 6px rgba(0,0,0,0.06)' : 'none'
-                        }}
-                      >
-                        All ({myOrders.length})
-                      </button>
-                    </div>
+                  const completedOrdersCount = myOrders.filter(o => {
+                    const s = String(o?.status || '').toLowerCase().trim();
+                    return s === 'completed' || s === 'delivered';
+                  }).length;
 
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setIsServiceSelectorOpen(true);
-                      }}
-                      className="btn btn-primary-orange"
-                      style={{ padding: '0.45rem 1rem', fontSize: '0.85rem', fontWeight: 800, borderRadius: '10px' }}
-                    >
-                      <PlusCircle size={16} /> + New Order
-                    </button>
-                  </div>
-                </div>
+                  const deliveredOrdersList = myOrders.filter(o => {
+                    const s = String(o?.status || '').toLowerCase().trim();
+                    return s === 'completed' || s === 'delivered';
+                  });
+
+                  return (
+                    <>
+                      <div className="orders-management-header">
+                        {/* Top Bar on mobile / Left side on desktop */}
+                        <div className="orders-management-top-bar">
+                          <div>
+                            <h2 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 900, color: 'var(--navy-950)' }}>
+                              My Orders
+                            </h2>
+                            <p className="desktop-only" style={{ margin: '0.1rem 0 0', fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                              Track artwork production, machine files, quotes & revisions
+                            </p>
+                          </div>
+
+                          {/* Mobile-only + New Order button placed in top row so it never overflows */}
+                          <div className="mobile-only">
+                            <button
+                              type="button"
+                              onClick={() => setIsServiceSelectorOpen(true)}
+                              className="btn btn-primary-orange"
+                              style={{
+                                padding: '0.45rem 0.85rem',
+                                fontSize: '0.82rem',
+                                fontWeight: 800,
+                                borderRadius: '10px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '0.35rem',
+                                whiteSpace: 'nowrap',
+                                minHeight: '36px'
+                              }}
+                            >
+                              <PlusCircle size={15} /> + New Order
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Actions & Filters */}
+                        <div className="orders-header-actions-group">
+                          <div className="orders-segmented-filter-bar">
+                            <button
+                              type="button"
+                              onClick={() => setOrderFilterTab('active')}
+                              className="orders-segmented-filter-btn"
+                              style={{
+                                background: orderFilterTab === 'active' ? (isDark ? '#1e293b' : '#ffffff') : 'transparent',
+                                color: orderFilterTab === 'active' ? '#ea580c' : 'var(--text-muted)',
+                                fontWeight: orderFilterTab === 'active' ? 900 : 700,
+                                boxShadow: orderFilterTab === 'active' ? '0 2px 6px rgba(0,0,0,0.06)' : 'none'
+                              }}
+                            >
+                              Active ({activeOrdersCount})
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setOrderFilterTab('completed')}
+                              className="orders-segmented-filter-btn"
+                              style={{
+                                background: orderFilterTab === 'completed' ? (isDark ? '#1e293b' : '#ffffff') : 'transparent',
+                                color: orderFilterTab === 'completed' ? '#16a34a' : 'var(--text-muted)',
+                                fontWeight: orderFilterTab === 'completed' ? 900 : 700,
+                                boxShadow: orderFilterTab === 'completed' ? '0 2px 6px rgba(0,0,0,0.06)' : 'none'
+                              }}
+                            >
+                              Completed ({completedOrdersCount})
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setOrderFilterTab('all')}
+                              className="orders-segmented-filter-btn"
+                              style={{
+                                background: orderFilterTab === 'all' ? (isDark ? '#1e293b' : '#ffffff') : 'transparent',
+                                color: orderFilterTab === 'all' ? (isDark ? '#f8fafc' : 'var(--navy-900)') : 'var(--text-muted)',
+                                fontWeight: orderFilterTab === 'all' ? 900 : 700,
+                                boxShadow: orderFilterTab === 'all' ? '0 2px 6px rgba(0,0,0,0.06)' : 'none'
+                              }}
+                            >
+                              All ({myOrders.length})
+                            </button>
+                          </div>
+
+                          {/* Desktop-only + New Order button placed side-by-side with filters */}
+                          <div className="desktop-only">
+                            <button
+                              type="button"
+                              onClick={() => setIsServiceSelectorOpen(true)}
+                              className="btn btn-primary-orange"
+                              style={{
+                                padding: '0.45rem 1rem',
+                                fontSize: '0.85rem',
+                                fontWeight: 800,
+                                borderRadius: '10px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '0.35rem',
+                                whiteSpace: 'nowrap'
+                              }}
+                            >
+                              <PlusCircle size={16} /> + New Order
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* DELIVERED PRODUCTION FILES READY ALERT BANNER */}
+                      {deliveredOrdersList.length > 0 && orderFilterTab !== 'completed' && (
+                        <div style={{
+                          background: isDark ? 'rgba(22, 163, 74, 0.12)' : 'linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)',
+                          border: '1.5px solid #86efac',
+                          borderRadius: '14px',
+                          padding: '0.75rem 1rem',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          gap: '0.75rem',
+                          flexWrap: 'wrap',
+                          boxShadow: '0 2px 8px rgba(22, 163, 74, 0.08)'
+                        }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                            <div style={{
+                              background: '#16a34a',
+                              color: '#ffffff',
+                              width: '34px',
+                              height: '34px',
+                              borderRadius: '50%',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              flexShrink: 0,
+                              boxShadow: '0 2px 6px rgba(22, 163, 74, 0.3)'
+                            }}>
+                              <Download size={16} />
+                            </div>
+                            <div>
+                              <div style={{ fontSize: '0.85rem', fontWeight: 900, color: isDark ? '#4ade80' : '#14532d' }}>
+                                🎉 {deliveredOrdersList.length} Order{deliveredOrdersList.length > 1 ? 's' : ''} Ready for Download!
+                              </div>
+                              <div style={{ fontSize: '0.74rem', color: isDark ? '#cbd5e1' : '#166534' }}>
+                                Production machine files (DST, PES, EMB, Vector) are ready.
+                              </div>
+                            </div>
+                          </div>
+
+                          <button
+                            type="button"
+                            onClick={() => setOrderFilterTab('completed')}
+                            style={{
+                              background: '#16a34a',
+                              color: '#ffffff',
+                              border: 'none',
+                              borderRadius: '8px',
+                              padding: '0.45rem 0.85rem',
+                              fontSize: '0.78rem',
+                              fontWeight: 800,
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '0.35rem',
+                              whiteSpace: 'nowrap'
+                            }}
+                          >
+                            View Delivered Files <ArrowRight size={14} />
+                          </button>
+                        </div>
+                      )}
+                    </>
+                  );
+                })()}
 
                 {/* Orders List / Cards */}
                 {(() => {
@@ -2412,15 +2508,49 @@ export const CustomerDashboard = () => {
                               </span>
                             </div>
 
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
+                            <div style={{ display: 'grid', gridTemplateColumns: isDelivered ? '1fr 1fr' : '1fr', gap: '0.5rem' }}>
                               <button
                                 type="button"
                                 onClick={() => setSelectedOrderForDrawer(ord)}
                                 className="btn btn-outline"
-                                style={{ padding: '0.45rem', fontSize: '0.78rem', fontWeight: 800, borderRadius: '8px', justifyContent: 'center' }}
+                                style={{
+                                  padding: '0.5rem',
+                                  fontSize: '0.78rem',
+                                  fontWeight: 800,
+                                  borderRadius: '8px',
+                                  justifyContent: 'center',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '0.35rem'
+                                }}
                               >
                                 {isDelivered ? 'Files & Details' : 'Track Order'}
                               </button>
+
+                              {isDelivered && (
+                                <button
+                                  type="button"
+                                  onClick={() => setSelectedOrderForDrawer(ord)}
+                                  className="btn"
+                                  style={{
+                                    background: '#16a34a',
+                                    color: '#ffffff',
+                                    border: 'none',
+                                    padding: '0.5rem',
+                                    fontSize: '0.78rem',
+                                    fontWeight: 800,
+                                    borderRadius: '8px',
+                                    justifyContent: 'center',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '0.35rem',
+                                    boxShadow: '0 2px 6px rgba(22, 163, 74, 0.25)',
+                                    cursor: 'pointer'
+                                  }}
+                                >
+                                  <Download size={14} /> Download
+                                </button>
+                              )}
                             </div>
                           </div>
                         );

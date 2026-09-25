@@ -1338,6 +1338,7 @@ button, input, select, textarea, a {
 
 .desktop-only { display: flex !important; }
 .mobile-only { display: none !important; }
+.mobile-only-flex { display: none !important; }
 
 .table-responsive {
   display: block;
@@ -1396,6 +1397,7 @@ button, input, select, textarea, a {
 @media (max-width: 768px) {
   .desktop-only { display: none !important; }
   .mobile-only { display: block !important; }
+  .mobile-only-flex { display: flex !important; }
   .mobile-bottom-nav { display: grid !important; }
   
   h1, .hero-title { font-size: clamp(1.75rem, 5.5vw, 2.4rem) !important; line-height: 1.18 !important; }
@@ -1721,6 +1723,88 @@ html[data-mobile-mode="app"] .mobile-app-wrapper {
   }
   .customer-stat-cards-grid {
     grid-template-columns: 1fr !important;
+  }
+}
+
+/* Responsive Orders Management Header Architecture */
+.orders-management-header {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 0.75rem 0.95rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  box-shadow: var(--shadow-sm);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.orders-management-top-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  gap: 0.5rem;
+}
+
+.orders-header-actions-group {
+  display: flex;
+  width: 100%;
+}
+
+.orders-segmented-filter-bar {
+  display: flex;
+  background: var(--bg-subtle, #f1f5f9);
+  padding: 3px;
+  border-radius: 10px;
+  width: 100%;
+  box-sizing: border-box;
+  gap: 2px;
+}
+
+.orders-segmented-filter-btn {
+  flex: 1;
+  padding: 0.45rem 0.35rem;
+  border-radius: 8px;
+  border: none;
+  font-size: 0.78rem;
+  cursor: pointer;
+  white-space: nowrap;
+  text-align: center;
+  transition: all 0.15s ease;
+  min-height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@media (min-width: 769px) {
+  .orders-management-header {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.65rem 1.25rem;
+  }
+
+  .orders-management-top-bar {
+    width: auto;
+  }
+
+  .orders-header-actions-group {
+    width: auto;
+    align-items: center;
+    gap: 0.65rem;
+  }
+
+  .orders-segmented-filter-bar {
+    width: auto;
+  }
+
+  .orders-segmented-filter-btn {
+    flex: initial;
+    padding: 0.4rem 0.85rem;
+    font-size: 0.8rem;
   }
 }
 
