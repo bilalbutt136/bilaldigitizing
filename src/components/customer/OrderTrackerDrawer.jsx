@@ -154,15 +154,14 @@ export const OrderTrackerDrawer = () => {
     };
   }, [selectedOrderForDrawer]);
 
-  if (!selectedOrderForDrawer) return null;
-
+  // ── Derive order data BEFORE any early return so hook count stays constant ──
   // Always resolve live reactive order state from global orders array
   const cleanSelId = String(selectedOrderForDrawer?.id || '').trim().replace(/^#+/, '');
   const selWithHash = `#${cleanSelId}`;
   const ord = orders.find(o => {
     const oClean = String(o?.id || '').trim().replace(/^#+/, '');
     return oClean === cleanSelId || o?.id === selectedOrderForDrawer?.id || o?.id === selWithHash;
-  }) || selectedOrderForDrawer;
+  }) || selectedOrderForDrawer || {};
 
   const isOrderPaid = (o) => {
     const pStatus = String(o?.payment_status || o?.paymentStatus || '').toLowerCase().trim();
@@ -183,9 +182,11 @@ export const OrderTrackerDrawer = () => {
 
   const isPaid = isOrderPaid(ord);
 
+  // ── MUST be declared before any early return — React Rules of Hooks ─────────
   // If order appears unpaid in the drawer, automatically verify live gateway / BoltPayouts status
   useEffect(() => {
-    if (!ord?.id || isPaid) return;
+    // Guard inside effect — safe because hook call order is always consistent
+    if (!selectedOrderForDrawer || !ord?.id || isPaid) return;
     let isSubscribed = true;
 
     const checkLivePaymentStatus = async () => {
@@ -205,7 +206,10 @@ export const OrderTrackerDrawer = () => {
 
     checkLivePaymentStatus();
     return () => { isSubscribed = false; };
-  }, [ord?.id, isPaid, refreshOrders]);
+  }, [selectedOrderForDrawer, ord?.id, isPaid, refreshOrders]);
+
+  // ── Early return AFTER all hooks have been declared ───────────────────────
+  if (!selectedOrderForDrawer) return null;
 
   const orderPrice = getOrderPrice(ord);
   const formattedPrice = `$${orderPrice.toFixed(2)}`;
