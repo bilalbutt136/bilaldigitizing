@@ -63,7 +63,7 @@ import {
   CheckCheck
 } from 'lucide-react';
 import CustomerSupportChat from '../customer/CustomerSupportChat';
-import { playMessageChime, unlockAudioContext } from '../../utils/audioNotification';
+import { playMessageChime, playAdminChime, playCustomerChime, unlockAudioContext } from '../../utils/audioNotification';
 import { 
   fetchNotificationsFromSupabase, 
   markNotificationAsReadInSupabase,
@@ -722,8 +722,13 @@ export const BDigitizingMobileApp = () => {
     }
     if (nextVal) {
       unlockAudioContext();
-      playMessageChime(true);
-      showToast('🔊 Audio alert chime active & tested loud and clear!', 'success');
+      if (isAdmin) {
+        playAdminChime(true);
+        showToast('🔊 Admin audio alert tune active & tested!', 'success');
+      } else {
+        playCustomerChime(true);
+        showToast('🔔 Gentle message chime active & tested!', 'success');
+      }
     } else {
       showToast('🔕 Audio alerts muted.', 'info');
     }
@@ -731,8 +736,13 @@ export const BDigitizingMobileApp = () => {
 
   const handleTestSound = () => {
     unlockAudioContext();
-    playMessageChime(true);
-    showToast('🔔 Chime tested loud and clear!', 'success');
+    if (isAdmin) {
+      playAdminChime(true);
+      showToast('🔊 Admin tune tested loud and clear!', 'success');
+    } else {
+      playCustomerChime(true);
+      showToast('🔔 Gentle chime tested!', 'success');
+    }
   };
 
   const handleSubmitFeedback = async (e) => {

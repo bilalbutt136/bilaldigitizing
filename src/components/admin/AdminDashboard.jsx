@@ -14,7 +14,7 @@ import { PromotionsManager } from './PromotionsManager';
 import { ContactInfoManager } from './ContactInfoManager';
 import { PortfolioManager } from './PortfolioManager';
 import { isSupabaseConfigured, supabase } from '../../lib/supabase/client';
-import { stopNotificationSound, playMessageChime, playMessageChimeForMessage } from '../../utils/audioNotification';
+import { stopNotificationSound, playMessageChime, playMessageChimeForMessage, playAdminChime } from '../../utils/audioNotification';
 import { 
   LayoutDashboard, 
   ClipboardList, 
@@ -84,9 +84,9 @@ export const AdminDashboard = () => {
         const supportTotal = (supportData?.conversations || []).reduce((sum, c) => sum + (c.unread_admin_count || 0), 0);
         const currentTotal = inboxTotal + supportTotal;
 
-        // If unread messages count increased, ring chime if not already rung
+        // If unread messages count increased, ring admin chime if not already rung
         if (prevUnreadTotalRef.current !== null && currentTotal > prevUnreadTotalRef.current) {
-          playMessageChime();
+          playAdminChime();
         }
 
         setUnreadChatCount(inboxTotal);
@@ -110,7 +110,7 @@ export const AdminDashboard = () => {
             table: 'messages'
           }, (payload) => {
             if (payload.new && payload.new.sender === 'client') {
-              playMessageChimeForMessage(payload.new.id);
+              playMessageChimeForMessage(payload.new.id, false, { role: 'admin', isAdmin: true });
               fetchUnreadChats();
             }
           })

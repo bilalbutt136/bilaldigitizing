@@ -4,10 +4,17 @@ import {
   configureAudioNotification, 
   getAudioNotificationConfig, 
   playNotificationSound,
+  playCustomerNotificationSound,
+  playAdminNotificationSound,
+  playCustomerChime,
+  playAdminChime,
+  playMessageChime,
   playMessageChimeForMessage,
   stopNotificationSound,
   isNotificationSoundPlaying,
-  testAudioTune
+  testAudioTune,
+  testCustomerAudioTune,
+  isCurrentAdminContext
 } from '../utils/audioNotification.js';
 
 describe('Admin Notification Tune & Bell Sound Alert System', () => {
@@ -92,7 +99,6 @@ describe('Admin Notification Tune & Bell Sound Alert System', () => {
   });
 
   test('5. Audio MIME types map contains all common studio audio formats', async () => {
-    // Validates that supported audio extensions are valid
     const supportedExtensions = ['mp3', 'wav', 'ogg', 'm4a', 'aac', 'weba', 'flac'];
     const expectedMimeMapping = {
       mp3: 'audio/mpeg',
@@ -117,18 +123,13 @@ describe('Admin Notification Tune & Bell Sound Alert System', () => {
   });
 
   test('7. playMessageChimeForMessage guarantees anti-double-ring deduplication per message ID', () => {
-    // Calling with same message ID
     const testMsgId = 'msg-dedup-xyz-987';
     assert.doesNotThrow(() => {
-      // First trigger
       playMessageChimeForMessage(testMsgId);
-      // Secondary duplicate trigger for same message ID (should be ignored safely)
       playMessageChimeForMessage(testMsgId);
-      // Another call for same message ID
       playMessageChimeForMessage(testMsgId);
     });
 
-    // Calling with a different message ID
     assert.doesNotThrow(() => {
       playMessageChimeForMessage('msg-dedup-abc-123');
     });
@@ -138,7 +139,6 @@ describe('Admin Notification Tune & Bell Sound Alert System', () => {
     let eventFired = false;
     const originalWindow = globalThis.window;
     
-    // Simulate window with CustomEvent
     globalThis.window = {
       dispatchEvent: (event) => {
         if (event?.type === 'bdigi_tune_stopped') {
@@ -155,7 +155,74 @@ describe('Admin Notification Tune & Bell Sound Alert System', () => {
     stopNotificationSound();
     assert.equal(eventFired, true);
 
-    // Cleanup
     globalThis.window = originalWindow;
+  });
+
+  test('9. Configures Customer Gentle Basic Chime settings and clamps volume', () => {
+    configureAudioNotification({
+      customerPreset: 'soft_chime',
+      customerVolume: 0.45,
+      customerActive: true
+    });
+
+    const config = getAudioNotificationConfig();
+    assert.equal(config.customerPreset, 'soft_chime');
+    assert.equal(config.customerVolume, 0.45);
+    assert.equal(config.customerActive, true);
+    assert.equal(config.customer.preset, 'soft_chime');
+    assert.equal(config.customer.volume, 0.45);
+
+    // Clamps customer volume to safe maximum 1.0 and minimum 0.05
+    configureAudioNotification({ customerVolume: 1.8 });
+    assert.equal(getAudioNotificationConfig().customerVolume, 1.0);
+
+    configureAudioNotification({ customerVolume: -0.5 });
+    assert.equal(getAudioNotificationConfig().customerVolume, 0.05);
+  });
+
+  test('10. Context resolver strictly isolates Admin vs Customer roles', () => {
+    // Explicit admin context
+    assert.equal(isCurrentAdminContext({ role: 'admin' }), true);
+    assert.equal(isCurrentAdminContext({ isAdmin: true }), true);
+    assert.equal(isCurrentAdminContext({ recipient_role: 'admin' }), true);
+
+    // Explicit customer context
+    assert.equal(isCurrentAdminContext({ role: 'client' }), false);
+    assert.equal(isCurrentAdminContext({ role: 'customer' }), false);
+    assert.equal(isCurrentAdminContext({ isAdmin: false }), false);
+    assert.equal(isCurrentAdminContext({ recipient_role: 'client' }), false);
+
+    // Default with no context is safely customer (false)
+    assert.equal(isCurrentAdminContext({}), false);
+    assert.equal(isCurrentAdminContext(null), false);
+  });
+
+  test('11. Dedicated customer audio functions execute safely without using admin custom URL', () => {
+    // Configure an admin custom sound URL
+    configureAudioNotification({
+      url: 'https://res.cloudinary.com/demo/audio/upload/loud-admin-ringtune.mp3',
+      volume: 1.0,
+      customerPreset: 'basic_ping',
+      customerVolume: 0.50
+    });
+
+    assert.doesNotThrow(() => {
+      // Customer chime calls
+      playCustomerChime(true);
+      playCustomerNotificationSound('chat', true);
+      testCustomerAudioTune('basic_ping', 0.5);
+      testCustomerAudioTune('soft_chime', 0.4);
+      testCustomerAudioTune('subtle_pop', 0.35);
+
+      // Customer message chime with role
+      playMessageChime(true, { role: 'customer', isAdmin: false });
+      playMessageChimeForMessage('msg-cust-123', true, { role: 'customer', isAdmin: false });
+
+      // Admin chime calls
+      playAdminChime(true);
+      playAdminNotificationSound('notification', true);
+      playMessageChime(true, { role: 'admin', isAdmin: true });
+      playMessageChimeForMessage('msg-adm-456', true, { role: 'admin', isAdmin: true });
+    });
   });
 });

@@ -5,7 +5,7 @@ import { useAppState } from '../../context/StateContext';
 import { createClient } from '../../lib/supabase/client';
 import OfferCardMessage from '../common/OfferCardMessage';
 import { downloadFileDirectly, openFileInNewTab } from '../../utils/fileDownloader';
-import { playMessageChime, playMessageChimeForMessage, stopNotificationSound, unlockAudioContext } from '../../utils/audioNotification';
+import { playMessageChime, playMessageChimeForMessage, playCustomerChime, stopNotificationSound, unlockAudioContext } from '../../utils/audioNotification';
 import { trackUserPresence, untrackUserPresence } from '../../services/presenceService';
 import {
   Send,
@@ -106,8 +106,8 @@ export default function CustomerSupportChat({
     }
     if (nextVal) {
       unlockAudioContext();
-      playMessageChime(true);
-      showToast('🔔 Message chime active & tested loud and clear!', 'success');
+      playCustomerChime(true);
+      showToast('🔔 Gentle message chime active & tested!', 'success');
     } else {
       showToast('🔕 Message chime muted.', 'info');
     }
@@ -342,7 +342,7 @@ export default function CustomerSupportChat({
               const newArrivals = mData.messages.slice(nonPendingPrev.length);
               newArrivals.forEach(m => {
                 if (m.sender !== 'client') {
-                  playMessageChimeForMessage(m.id);
+                  playMessageChimeForMessage(m.id, false, { role: 'customer', isAdmin: false });
                 }
               });
             }
@@ -375,7 +375,7 @@ export default function CustomerSupportChat({
       }, (payload) => {
         if (payload.new) {
           if (payload.new.sender !== 'client') {
-            playMessageChimeForMessage(payload.new.id);
+            playMessageChimeForMessage(payload.new.id, false, { role: 'customer', isAdmin: false });
           }
           setMessages(prev => {
             // 1. If already present by real DB id, do nothing

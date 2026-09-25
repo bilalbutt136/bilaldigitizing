@@ -6,7 +6,7 @@ import { createClient } from '../../lib/supabase/client';
 import OfferCardMessage from '../common/OfferCardMessage';
 import AdminCreateOfferModal from './AdminCreateOfferModal';
 import { downloadFileDirectly, openFileInNewTab } from '../../utils/fileDownloader';
-import { playMessageChime, playMessageChimeForMessage, stopNotificationSound, unlockAudioContext } from '../../utils/audioNotification';
+import { playMessageChime, playMessageChimeForMessage, playAdminChime, stopNotificationSound, unlockAudioContext } from '../../utils/audioNotification';
 import { subscribeToPresence, syncPresenceFromRest } from '../../services/presenceService';
 import {
   Search,
@@ -210,7 +210,7 @@ export default function AdminChatInbox({ initialChannel = 'inbox' }) {
     }
     if (nextVal) {
       unlockAudioContext();
-      playMessageChime(true);
+      playAdminChime(true);
       showToast('🔔 Admin audio alerts active & chime tested loud and clear!', 'success');
     } else {
       showToast('🔕 Admin audio alerts muted.', 'info');
@@ -351,7 +351,7 @@ export default function AdminChatInbox({ initialChannel = 'inbox' }) {
             const newArrivals = mData.messages.slice(messages.length);
             const clientMsg = newArrivals.find(m => m.sender === 'client');
             if (clientMsg) {
-              playMessageChimeForMessage(clientMsg.id);
+              playMessageChimeForMessage(clientMsg.id, false, { role: 'admin', isAdmin: true });
             }
             setMessages(mData.messages);
             scrollToBottom();
@@ -401,7 +401,7 @@ export default function AdminChatInbox({ initialChannel = 'inbox' }) {
         }, (payload) => {
           if (payload.new) {
             if (payload.new.sender === 'client') {
-              playMessageChimeForMessage(payload.new.id);
+              playMessageChimeForMessage(payload.new.id, false, { role: 'admin', isAdmin: true });
             }
             setMessages(prev => {
               if (prev.some(m => m.id === payload.new.id)) return prev;
@@ -437,8 +437,8 @@ export default function AdminChatInbox({ initialChannel = 'inbox' }) {
         table: 'messages'
       }, (payload) => {
         if (payload.new && payload.new.sender === 'client') {
-          // Always ring for incoming customer message
-          playMessageChimeForMessage(payload.new.id);
+          // Always ring for incoming customer message (admin high alert)
+          playMessageChimeForMessage(payload.new.id, false, { role: 'admin', isAdmin: true });
 
           if (payload.new.conversation_id === activeConversationId) {
             fetch('/api/chat/conversations', {

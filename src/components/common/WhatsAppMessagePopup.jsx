@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { MessageSquare, X, ArrowRight, Bell } from 'lucide-react';
 import { useAppState } from '../../context/StateContext';
-import { playNotificationSound } from '../../utils/audioNotification';
+import { playNotificationSound, playAdminChime, playCustomerChime } from '../../utils/audioNotification';
 import { useRouter } from 'next/navigation';
 
 export const WhatsAppMessagePopup = () => {
@@ -48,9 +48,13 @@ export const WhatsAppMessagePopup = () => {
       }
     }
 
-    // Play message chime
+    // Play message chime (segregated: admin gets high alert, customer gets gentle basic chime)
     try {
-      playNotificationSound('chat', true);
+      if (isAdmin) {
+        playAdminChime(true);
+      } else {
+        playCustomerChime(true);
+      }
     } catch {}
 
     // Phone vibration if supported

@@ -46,7 +46,17 @@ import {
 } from '../services/supabaseService';
 import { trackUserPresence, untrackUserPresence } from '../services/presenceService';
 
-import { playNotificationSound, configureAudioNotification, playMessageChime, playMessageChimeForMessage, stopNotificationSound } from '../utils/audioNotification';
+import { 
+  playNotificationSound, 
+  playCustomerNotificationSound, 
+  playAdminNotificationSound, 
+  configureAudioNotification, 
+  playMessageChime, 
+  playMessageChimeForMessage, 
+  playCustomerChime, 
+  playAdminChime, 
+  stopNotificationSound 
+} from '../utils/audioNotification';
 import { THEME_PRESETS, applyThemePresetToDOM } from '../utils/themePresets';
 import { formatOrderId, formatDimensions, formatFabric, formatDesignTitle } from '../utils/formatters';
 import { 
@@ -98,7 +108,12 @@ export const StateProvider = ({ children }) => {
     setToast({ message, type, id: Date.now() });
     if (playSound) {
       try {
-        playNotificationSound('notification');
+        const isAdminUser = authUser?.role === 'admin' || currentView === 'admin';
+        if (isAdminUser) {
+          playAdminNotificationSound('notification', false, { role: 'admin', isAdmin: true });
+        } else {
+          playCustomerNotificationSound('chat', false, { role: 'customer', isAdmin: false });
+        }
       } catch {}
     }
     setTimeout(() => {
@@ -642,7 +657,12 @@ export const StateProvider = ({ children }) => {
 
     if (notif.playSound !== false) {
       try {
-        playNotificationSound(notif.soundType || 'notification', false, newNotif.id);
+        const isForAdmin = newNotif.recipient_role === 'admin' || authUser?.role === 'admin' || currentView === 'admin';
+        if (isForAdmin) {
+          playAdminNotificationSound(notif.soundType || 'notification', false, { messageId: newNotif.id, role: 'admin', isAdmin: true });
+        } else {
+          playCustomerNotificationSound(notif.soundType || 'chat', false, { messageId: newNotif.id, role: 'customer', isAdmin: false });
+        }
       } catch {}
     }
 
@@ -1509,9 +1529,10 @@ export const StateProvider = ({ children }) => {
     };
   }, []);
 
-  // Synchronize custom notification audio configuration from siteSettings
+  // Synchronize notification audio configuration from siteSettings (Admin & Customer)
   useEffect(() => {
     if (siteSettings) {
+      // Admin sound configuration
       const soundUrl = siteSettings.notificationSoundUrl || siteSettings.notification_sound_url || siteSettings.notification_sound_settings?.url || null;
       const soundName = siteSettings.notificationSoundName || siteSettings.notification_sound_name || siteSettings.notification_sound_settings?.name || null;
       const soundActive = siteSettings.notificationSoundActive !== false && 
@@ -1526,12 +1547,26 @@ export const StateProvider = ({ children }) => {
             : (siteSettings.notification_sound_settings?.volume ?? 1.0));
       const soundPreset = siteSettings.notificationSoundPreset || siteSettings.notification_sound_preset || siteSettings.notification_sound_settings?.preset || 'custom';
 
+      // Customer gentle sound configuration
+      const custPreset = siteSettings.customerSoundPreset || siteSettings.customer_sound_preset || siteSettings.notification_sound_settings?.customerPreset || 'basic_ping';
+      const custVol = siteSettings.customerSoundVolume !== undefined 
+        ? siteSettings.customerSoundVolume 
+        : (siteSettings.customer_sound_volume !== undefined 
+            ? siteSettings.customer_sound_volume 
+            : (siteSettings.notification_sound_settings?.customerVolume ?? 0.50));
+      const custActive = siteSettings.customerSoundEnabled !== false && 
+        siteSettings.customer_sound_enabled !== false && 
+        siteSettings.notification_sound_settings?.customerEnabled !== false;
+
       configureAudioNotification({
         url: soundUrl,
         name: soundName,
         active: soundActive,
         volume: soundVolume,
-        preset: soundPreset
+        preset: soundPreset,
+        customerPreset: custPreset,
+        customerVolume: custVol,
+        customerActive: custActive
       });
     }
   }, [siteSettings]);
@@ -1556,7 +1591,7 @@ export const StateProvider = ({ children }) => {
       if (currentRole === 'admin' || currentView === 'admin') {
         const isFromClient = msg.sender === 'client' || msg.sender_role === 'client' || msg.role === 'client';
         if (isFromClient) {
-          playMessageChimeForMessage(msg.id || `${msg.conversation_id}-${msg.created_at}`);
+          playMessageChimeForMessage(msg.id || `${msg.conversation_id}-${msg.created_at}`, false, { role: 'admin', isAdmin: true });
         }
       }
     };

@@ -27,10 +27,19 @@ import {
   Music,
   Check,
   FileAudio,
-  Radio
+  Radio,
+  Headphones
 } from 'lucide-react';
 import { uploadFileToCloudinaryFull } from '../../../services/supabaseService';
-import { testAudioTune, configureAudioNotification, playMessageChime, playNotificationSound } from '../../../utils/audioNotification';
+import { 
+  testAudioTune, 
+  testCustomerAudioTune, 
+  configureAudioNotification, 
+  playMessageChime, 
+  playNotificationSound,
+  playAdminChime,
+  playCustomerChime
+} from '../../../utils/audioNotification';
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -43,13 +52,19 @@ export const AdminNotificationSettings = () => {
   const [revisionAlerts, setRevisionAlerts] = useState(true);
   const [deliveryAlerts, setDeliveryAlerts] = useState(true);
 
-  // Audio Notification Tune states
+  // Admin Audio Notification Tune states (High / Prominent Ringtune)
   const [audioEnabled, setAudioEnabled] = useState(true);
   const [soundUrl, setSoundUrl] = useState('');
   const [soundName, setSoundName] = useState('');
   const [soundSize, setSoundSize] = useState('');
   const [soundVolume, setSoundVolume] = useState(1.0);
   const [soundPreset, setSoundPreset] = useState('custom');
+
+  // Customer Audio Chime states (Basic Gentle Ringtune)
+  const [customerAudioEnabled, setCustomerAudioEnabled] = useState(true);
+  const [customerSoundPreset, setCustomerSoundPreset] = useState('basic_ping');
+  const [customerSoundVolume, setCustomerSoundVolume] = useState(0.50);
+  const [isPlayingCustomerPreview, setIsPlayingCustomerPreview] = useState(false);
 
   const [isUploadingAudio, setIsUploadingAudio] = useState(false);
   const [isPlayingPreview, setIsPlayingPreview] = useState(false);
@@ -103,6 +118,23 @@ export const AdminNotificationSettings = () => {
       setSoundVolume(Number(sVol) !== undefined && !isNaN(Number(sVol)) ? Number(sVol) : 1.0);
       setSoundPreset(sPreset);
       setAudioEnabled(Boolean(sEnabled));
+
+      // Customer audio settings
+      const cPreset = siteSettings?.customerSoundPreset || siteSettings?.customer_sound_preset || siteSettings?.notification_sound_settings?.customerPreset || 'basic_ping';
+      const cVol = siteSettings?.customerSoundVolume !== undefined 
+        ? siteSettings?.customerSoundVolume 
+        : (siteSettings?.customer_sound_volume !== undefined 
+            ? siteSettings?.customer_sound_volume 
+            : (siteSettings?.notification_sound_settings?.customerVolume ?? 0.50));
+      const cEnabled = siteSettings?.customerSoundEnabled !== undefined 
+        ? siteSettings?.customerSoundEnabled 
+        : (siteSettings?.customer_sound_enabled !== undefined 
+            ? siteSettings?.customer_sound_enabled 
+            : (siteSettings?.notification_sound_settings?.customerEnabled ?? true));
+
+      setCustomerSoundPreset(cPreset);
+      setCustomerSoundVolume(Number(cVol) !== undefined && !isNaN(Number(cVol)) ? Number(cVol) : 0.50);
+      setCustomerAudioEnabled(Boolean(cEnabled));
     }
   }, [siteSettings, authUser]);
 
@@ -323,6 +355,7 @@ export const AdminNotificationSettings = () => {
     setIsSavingAudio(true);
     try {
       const audioPayload = {
+        // Admin High / Prominent Alert Tune
         notificationSoundUrl: soundUrl.trim(),
         notification_sound_url: soundUrl.trim(),
         notificationSoundName: soundName,
@@ -337,6 +370,15 @@ export const AdminNotificationSettings = () => {
         notification_sound_preset: soundPreset,
         notificationSoundActive: Boolean(audioEnabled && (soundUrl.trim() || soundPreset !== 'custom')),
         notification_sound_active: Boolean(audioEnabled && (soundUrl.trim() || soundPreset !== 'custom')),
+
+        // Customer Basic Gentle Ring Tune (Never uses admin custom upload)
+        customerSoundPreset: customerSoundPreset,
+        customer_sound_preset: customerSoundPreset,
+        customerSoundVolume: customerSoundVolume,
+        customer_sound_volume: customerSoundVolume,
+        customerSoundEnabled: customerAudioEnabled,
+        customer_sound_enabled: customerAudioEnabled,
+
         notification_sound_settings: {
           url: soundUrl.trim(),
           name: soundName,
@@ -344,6 +386,9 @@ export const AdminNotificationSettings = () => {
           enabled: audioEnabled,
           volume: soundVolume,
           preset: soundPreset,
+          customerPreset: customerSoundPreset,
+          customerVolume: customerSoundVolume,
+          customerEnabled: customerAudioEnabled,
           updatedAt: new Date().toISOString()
         }
       };
@@ -355,11 +400,14 @@ export const AdminNotificationSettings = () => {
         name: soundName,
         active: audioEnabled,
         volume: soundVolume,
-        preset: soundPreset
+        preset: soundPreset,
+        customerPreset: customerSoundPreset,
+        customerVolume: customerSoundVolume,
+        customerActive: customerAudioEnabled
       });
       localStorage.setItem('bdigi_audio_enabled', String(audioEnabled));
 
-      showToast('🔔 Notification tune saved & activated for all inbox messages & alerts!', 'success');
+      showToast('🔔 Notification tunes saved: Admin High Ringtune & Customer Basic Chime activated!', 'success');
     } catch (err) {
       console.error('Save audio settings error:', err);
       showToast('Failed to save audio tune settings.', 'error');
@@ -369,12 +417,21 @@ export const AdminNotificationSettings = () => {
   };
 
   const handleTestChatMessageAlert = () => {
-    showToast('💬 Testing Customer Chat Message Alert Tune...', 'info');
+    showToast('💬 Testing Admin Incoming Chat Alert Tune...', 'info');
     if (soundUrl && soundPreset === 'custom') {
       handlePlayPreview(soundUrl, 'custom', soundVolume);
     } else {
-      playMessageChime(true);
+      testAudioTune(null, soundVolume, soundPreset || 'bell');
     }
+  };
+
+  const handleTestCustomerChime = () => {
+    setIsPlayingCustomerPreview(true);
+    showToast('🎵 Testing Customer Basic Gentle Chime (Hear what clients hear)...', 'info');
+    testCustomerAudioTune(customerSoundPreset, customerSoundVolume);
+    setTimeout(() => {
+      setIsPlayingCustomerPreview(false);
+    }, 600);
   };
 
   const handleTestOrderNotificationAlert = () => {
@@ -1311,45 +1368,198 @@ export const AdminNotificationSettings = () => {
 
             </div>
 
-            {/* Save Audio Tune Settings Button */}
-            <button
-              type="button"
-              onClick={handleSaveAudioSettings}
-              disabled={isSavingAudio || isUploadingAudio}
-              style={{
-                width: '100%',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '0.5rem',
-                padding: '0.85rem 1.25rem',
-                borderRadius: '12px',
-                border: 'none',
-                background: 'linear-gradient(135deg, var(--orange-500) 0%, #c2410c 100%)',
-                color: '#ffffff',
-                fontSize: '0.9rem',
-                fontWeight: 800,
-                cursor: isSavingAudio ? 'wait' : 'pointer',
-                boxShadow: '0 4px 14px rgba(234, 88, 12, 0.3)',
-                transition: 'all 0.2s ease'
-              }}
-            >
-              {isSavingAudio ? (
-                <>
-                  <RefreshCw size={16} className="spin-icon" />
-                  <span>Saving Audio Tune...</span>
-                </>
-              ) : (
-                <>
-                  <Save size={16} />
-                  <span>Save Notification Audio Tune Settings</span>
-                </>
-              )}
-            </button>
-
           </div>
 
         </div>
+
+        {/* ── Customer Portal Notification Chime Panel (Strictly Isolated & Gentle) ── */}
+        <div style={{
+          background: 'var(--bg-main)',
+          border: '1.5px solid rgba(59, 130, 246, 0.3)',
+          borderRadius: '14px',
+          padding: '1.25rem 1.5rem',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '1.15rem',
+          boxShadow: '0 2px 8px rgba(59, 130, 246, 0.06)'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.75rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <div style={{
+                width: '38px',
+                height: '38px',
+                borderRadius: '10px',
+                background: 'rgba(59, 130, 246, 0.12)',
+                color: '#3b82f6',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0
+              }}>
+                <Headphones size={20} />
+              </div>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                  <h4 style={{ fontSize: '0.95rem', fontWeight: 800, color: 'var(--text-main)', margin: 0 }}>
+                    Customer Portal Notification Chime (Basic &amp; Gentle Ringtune)
+                  </h4>
+                  <span style={{
+                    fontSize: '0.68rem',
+                    fontWeight: 800,
+                    padding: '0.15rem 0.55rem',
+                    borderRadius: '9999px',
+                    background: 'rgba(34, 197, 94, 0.12)',
+                    color: '#16a34a',
+                    border: '1px solid rgba(34, 197, 94, 0.25)'
+                  }}>
+                    ✓ Strictly Isolated from Admin Tune
+                  </span>
+                </div>
+                <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: '0.2rem 0 0' }}>
+                  Customers will <strong>only hear this subtle, pleasant ringtune</strong> when receiving chat replies or status updates. Your custom high admin tune is strictly isolated to your Admin Portal so customers will never be disturbed.
+                </p>
+              </div>
+            </div>
+
+            {/* Test Customer Sound Button */}
+            <button
+              type="button"
+              onClick={handleTestCustomerChime}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.4rem',
+                padding: '0.55rem 1.05rem',
+                borderRadius: '10px',
+                border: '1px solid rgba(59, 130, 246, 0.4)',
+                background: isPlayingCustomerPreview ? '#3b82f6' : 'rgba(59, 130, 246, 0.08)',
+                color: isPlayingCustomerPreview ? '#ffffff' : '#2563eb',
+                fontSize: '0.8rem',
+                fontWeight: 700,
+                cursor: 'pointer',
+                transition: 'all 0.15s ease'
+              }}
+            >
+              <Play size={14} />
+              <span>{isPlayingCustomerPreview ? 'Playing...' : 'Test Customer Sound'}</span>
+            </button>
+          </div>
+
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 300px), 1fr))',
+            gap: '1.25rem',
+            alignItems: 'center'
+          }}>
+            {/* Customer Preset Selection */}
+            <div>
+              <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-main)', marginBottom: '0.45rem' }}>
+                Customer Basic Chime Tone:
+              </label>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.5rem' }}>
+                {[
+                  { id: 'basic_ping', label: 'Melodic Ping', desc: 'Soft & Pleasant (Default)' },
+                  { id: 'soft_chime', label: 'Soft Chime', desc: 'Gentle Two-Tone' },
+                  { id: 'subtle_pop', label: 'Subtle Pop', desc: 'Light Chat Bubble' }
+                ].map((item) => {
+                  const isSel = customerSoundPreset === item.id;
+                  return (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => {
+                        setCustomerSoundPreset(item.id);
+                        testCustomerAudioTune(item.id, customerSoundVolume);
+                      }}
+                      style={{
+                        padding: '0.6rem 0.5rem',
+                        borderRadius: '10px',
+                        border: isSel ? '1.5px solid #3b82f6' : '1px solid var(--border-color)',
+                        background: isSel ? 'rgba(59, 130, 246, 0.10)' : 'var(--bg-card)',
+                        color: isSel ? '#2563eb' : 'var(--text-main)',
+                        fontSize: '0.75rem',
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                        textAlign: 'center',
+                        transition: 'all 0.15s'
+                      }}
+                    >
+                      <div>{item.label}</div>
+                      <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', fontWeight: 500, marginTop: '2px' }}>{item.desc}</div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Customer Volume Slider */}
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.45rem' }}>
+                <label style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-main)' }}>
+                  Customer Chime Volume (Gentle &amp; Non-Intrusive)
+                </label>
+                <span style={{ fontSize: '0.78rem', fontWeight: 800, color: '#3b82f6' }}>
+                  {Math.round(customerSoundVolume * 100)}%
+                </span>
+              </div>
+              <input
+                type="range"
+                min="0.05"
+                max="0.70"
+                step="0.05"
+                value={customerSoundVolume}
+                onChange={(e) => {
+                  const val = parseFloat(e.target.value);
+                  setCustomerSoundVolume(val);
+                }}
+                style={{
+                  width: '100%',
+                  accentColor: '#3b82f6',
+                  cursor: 'pointer'
+                }}
+              />
+              <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
+                Capped at 70% maximum to guarantee customers are never startled.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Save Audio Tune Settings Button (Full Width) */}
+        <button
+          type="button"
+          onClick={handleSaveAudioSettings}
+          disabled={isSavingAudio || isUploadingAudio}
+          style={{
+            width: '100%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '0.5rem',
+            padding: '0.9rem 1.25rem',
+            borderRadius: '12px',
+            border: 'none',
+            background: 'linear-gradient(135deg, var(--orange-500) 0%, #c2410c 100%)',
+            color: '#ffffff',
+            fontSize: '0.925rem',
+            fontWeight: 800,
+            cursor: isSavingAudio ? 'wait' : 'pointer',
+            boxShadow: '0 4px 14px rgba(234, 88, 12, 0.3)',
+            transition: 'all 0.2s ease'
+          }}
+        >
+          {isSavingAudio ? (
+            <>
+              <RefreshCw size={16} className="spin-icon" />
+              <span>Saving Audio Tune...</span>
+            </>
+          ) : (
+            <>
+              <Save size={16} />
+              <span>Save Notification Audio Tune Settings (Admin &amp; Customer)</span>
+            </>
+          )}
+        </button>
 
       </div>
 
