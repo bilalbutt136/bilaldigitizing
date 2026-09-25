@@ -171,7 +171,7 @@ export function usePushNotifications(userContext = {}) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          title: '💬 Bilal Digitizing Studio',
+          title: '💬 BDigitizing Studio',
           message: '🌟 Lock Screen Alert: Your mobile notifications are 100% active and working!',
           url: '/client-portal?tab=inbox',
           delaySeconds,

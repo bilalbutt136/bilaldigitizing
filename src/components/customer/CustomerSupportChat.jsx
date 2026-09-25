@@ -846,7 +846,7 @@ export default function CustomerSupportChat({
               {chatType === 'support' ? <Headphones size={26} /> : <MessageSquare size={26} />}
             </div>
             <h4 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#0f172a', margin: '0 0 0.35rem 0' }}>
-              {chatType === 'support' ? '24/7 Studio Customer Support' : 'Bilal Digitizing Live Chat'}
+              {chatType === 'support' ? '24/7 Studio Customer Support' : 'BDigitizing Live Chat'}
             </h4>
             <p style={{ fontSize: '0.82rem', margin: '0 0 1.25rem', maxWidth: '380px', marginInline: 'auto', color: '#64748b', lineHeight: 1.5 }}>
               {chatType === 'support'
@@ -940,7 +940,7 @@ export default function CustomerSupportChat({
                       color: '#94a3b8'
                     }}>
                       <span style={{ fontWeight: 700, color: isClient ? '#ea580c' : '#334155' }}>
-                        {isClient ? 'You' : 'Bilal Digitizing'}
+                        {isClient ? 'You' : 'BDigitizing'}
                       </span>
                     </div>
                   )}

@@ -406,6 +406,19 @@ export const StateProvider = ({ children }) => {
         if (saved) {
           const parsed = JSON.parse(saved);
           if (parsed && typeof parsed === 'object') {
+            // Sanitize: eliminate any obsolete brand strings from local storage cache
+            if (parsed.studioName && /bilal\s*digitizing/i.test(parsed.studioName)) {
+              parsed.studioName = parsed.studioName.replace(/bilal\s*digitizing/gi, 'BDigitizing');
+            }
+            if (parsed.metaTitle && /bilal\s*digitizing/i.test(parsed.metaTitle)) {
+              parsed.metaTitle = parsed.metaTitle.replace(/bilal\s*digitizing/gi, 'BDigitizing');
+            }
+            if (parsed.invoiceFooterNote && /bilal\s*digitizing/i.test(parsed.invoiceFooterNote)) {
+              parsed.invoiceFooterNote = parsed.invoiceFooterNote.replace(/bilal\s*digitizing/gi, 'BDigitizing');
+            }
+            if (parsed.supportEmail && /bilaldigitizing\.com/i.test(parsed.supportEmail)) {
+              parsed.supportEmail = 'support@bdigitizing.com';
+            }
             // Sanitize: eliminate any obsolete emerald/green gradient or 20% cached announcement
             if (parsed.announcement) {
               if (parsed.announcement.theme === 'emerald' || (parsed.announcement.bgColor && parsed.announcement.bgColor.includes('065f46'))) {
@@ -419,6 +432,12 @@ export const StateProvider = ({ children }) => {
       } catch {}
     }
     return {
+      studioName: 'BDigitizing Studio',
+      studioTagline: 'Premier Commercial Embroidery Digitizing & Vector Art Lab',
+      metaTitle: 'BDigitizing | Premier Commercial Embroidery Digitizing & Vector Art Lab',
+      canonicalUrl: 'https://bdigitizing.com',
+      supportEmail: 'support@bdigitizing.com',
+      invoiceFooterNote: 'Thank you for your business with BDigitizing. For any technical sew-out questions, contact support 24/7.',
       promotions: [
         {
           id: 'promo-sale-granular',

@@ -35,10 +35,10 @@ export const MetaSeoTrackingSettings = () => {
   const [enableAutoTracking, setEnableAutoTracking] = useState(siteSettings?.enableAutoTracking !== false);
 
   // SEO & Social Graph Metadata Local State
-  const [metaTitle, setMetaTitle] = useState(siteSettings?.metaTitle || 'Bilal Digitizing | Premier Commercial Embroidery Digitizing & Vector Art Lab');
+  const [metaTitle, setMetaTitle] = useState(siteSettings?.metaTitle || 'BDigitizing | Premier Commercial Embroidery Digitizing & Vector Art Lab');
   const [metaDescription, setMetaDescription] = useState(siteSettings?.metaDescription || 'Precision machine embroidery digitizing and vector conversion services backed by 11+ years master craftsmanship. 8-12 hour express turnaround.');
   const [metaKeywords, setMetaKeywords] = useState(siteSettings?.metaKeywords || 'embroidery digitizing, vector art conversion, custom patches, 3d puff embroidery, left chest logo digitizing, machine stitch files');
-  const [canonicalUrl, setCanonicalUrl] = useState(siteSettings?.canonicalUrl || 'https://bdigitizing-pro.com');
+  const [canonicalUrl, setCanonicalUrl] = useState(siteSettings?.canonicalUrl || 'https://bdigitizing.com');
   const [ogImageUrl, setOgImageUrl] = useState(siteSettings?.ogImageUrl || 'https://qkgvgrscjlijajuzouke.supabase.co/storage/v1/object/public/portfolio-images/portfolio-gallery/9e3dcdd7-e3b4-4886-9f18-a94361029147.png');
 
   // Event Logs State

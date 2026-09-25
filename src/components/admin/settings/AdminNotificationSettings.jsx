@@ -117,7 +117,7 @@ export const AdminNotificationSettings = () => {
       if (testType === 'NEW_MESSAGE') {
         payload.senderName = 'Alex Mercer (Client)';
         payload.clientEmail = 'alex.mercer@example.com';
-        payload.messageText = 'Hello Bilal! Could you please check if this vector logo can be digitized for a left chest cap embroidery?';
+        payload.messageText = 'Hello BDigitizing Team! Could you please check if this vector logo can be digitized for a left chest cap embroidery?';
         payload.channel = 'Inbox (#ORD-PREVIEW)';
         payload.orderId = 'ORD-PREVIEW-101';
       } else if (testType === 'NEW_ORDER') {
@@ -348,7 +348,7 @@ export const AdminNotificationSettings = () => {
                 type="email"
                 value={adminEmail}
                 onChange={(e) => setAdminEmail(e.target.value)}
-                placeholder="admin@bilaldigitizing.com"
+                placeholder="admin@bdigitizing.com"
                 style={{
                   width: '100%',
                   padding: '0.75rem 2.75rem 0.75rem 1rem',

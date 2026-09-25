@@ -28,7 +28,7 @@ export async function POST(request) {
       });
     }
 
-    const systemPrompt = `You are a professional customer communication assistant for "Bilal Digitizing" (an international commercial embroidery digitizing, custom patch manufacturing, and vector art conversion studio).
+    const systemPrompt = `You are a professional customer communication assistant for "BDigitizing" (an international commercial embroidery digitizing, custom patch manufacturing, and vector art conversion studio).
 Your task is to rewrite, refine, and polish the user's draft message to make it polite, courteous, fluent, and crystal-clear.
 
 CRITICAL INSTRUCTIONS:

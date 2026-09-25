@@ -246,8 +246,8 @@ export async function POST(request) {
         status: 'online',
         tags: isSupport ? ['support'] : ['inbox'],
         last_message: isSupport 
-          ? 'Customer support request initiated with Bilal Digitizing 24/7 Desk.'
-          : 'Conversation started with Bilal Digitizing Studio.',
+          ? 'Customer support request initiated with BDigitizing 24/7 Desk.'
+          : 'Conversation started with BDigitizing Studio.',
         last_message_at: new Date().toISOString(),
         unread_admin_count: 0,
         unread_client_count: 0,

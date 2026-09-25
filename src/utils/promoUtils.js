@@ -1,5 +1,5 @@
 /**
- * Centralized Promotional Discount Engine for Bilal Digitizing
+ * Centralized Promotional Discount Engine for BDigitizing
  * Provides service-level discount resolution, volume tier calculations,
  * and deterministic pricing logic across all order channels.
  */

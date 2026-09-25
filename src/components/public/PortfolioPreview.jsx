@@ -11,21 +11,14 @@ import { supabase } from '../../lib/supabase/client';
 export const PortfolioPreview = () => {
   const { portfolioSamples = [], setPortfolioSamples, activeHomeServiceTab, homePageConfig = {} } = useAppState();
   
-  const [localItems, setLocalItems] = useState(portfolioSamples);
   const dbSettings = homePageConfig?.settings || {};
   const badgeText = dbSettings.portfolio_badge || 'Our Work';
   const titleText = dbSettings.portfolio_title || 'Crafted with Precision';
   const subText = dbSettings.portfolio_sub || 'Explore a curated selection of our finest embroidery digitizing, vector art conversions, and custom patch creations.';
-  
+
   const navigate = useNavigate();
   const [activeCategory, setActiveCategory] = useState('All');
   const [hoveredId, setHoveredId] = useState(null);
-
-  useEffect(() => {
-    if (portfolioSamples && portfolioSamples.length > 0) {
-      setLocalItems(portfolioSamples);
-    }
-  }, [portfolioSamples]);
 
   useEffect(() => {
     let isMounted = true;
@@ -37,7 +30,6 @@ export const PortfolioPreview = () => {
             .select('*')
             .order('sort_order', { ascending: true });
           if (!error && data && data.length > 0 && isMounted) {
-            setLocalItems(data);
             if (setPortfolioSamples) setPortfolioSamples(data);
             return;
           }
@@ -45,7 +37,6 @@ export const PortfolioPreview = () => {
         const res = await fetch(`/api/catalog?action=fetchAll&_t=${Date.now()}`, { cache: 'no-store' });
         const json = await res.json();
         if (json?.portfolio && isMounted) {
-          setLocalItems(json.portfolio);
           if (setPortfolioSamples) setPortfolioSamples(json.portfolio);
         }
       } catch {}
@@ -72,7 +63,7 @@ export const PortfolioPreview = () => {
     else setActiveCategory('All');
   }, [activeHomeServiceTab]);
 
-  const activePortfolioSource = localItems && localItems.length > 0 ? localItems : portfolioSamples;
+  const activePortfolioSource = portfolioSamples;
   const combinedItems = (activePortfolioSource || [])
     .filter(item => item.is_active !== false)
     .map(item => ({

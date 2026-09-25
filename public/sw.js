@@ -1,11 +1,6 @@
 // BDigitizing Studio PWA Service Worker with Native Push & Lock-Screen Alerts
-const CACHE_VERSION = 'bdigi-pwa-v2.3';
+const CACHE_VERSION = 'bdigi-pwa-v3.0';
 const STATIC_ASSETS = [
-  '/favicon.svg',
-  '/favicon.ico',
-  '/favicon.png',
-  '/icon-192.png',
-  '/apple-touch-icon.png',
   '/manifest.json'
 ];
 
@@ -47,6 +42,20 @@ self.addEventListener('fetch', (event) => {
     event.request.url.includes('/api/') ||
     event.request.url.includes('/_next/')
   ) {
+    return;
+  }
+
+  // Favicons, uploaded images, and dynamic assets: always fetch network-first to reflect updates immediately
+  if (
+    event.request.url.includes('favicon') ||
+    event.request.url.includes('apple-touch-icon') ||
+    event.request.url.includes('icon-') ||
+    event.request.url.includes('cloudinary') ||
+    event.request.url.includes('supabase.co')
+  ) {
+    event.respondWith(
+      fetch(event.request).catch(() => caches.match(event.request))
+    );
     return;
   }
 

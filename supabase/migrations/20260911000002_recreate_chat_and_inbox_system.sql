@@ -103,7 +103,7 @@ CREATE TABLE IF NOT EXISTS public.saved_replies (
 -- Seed default quick responses if table empty
 INSERT INTO public.saved_replies (id, title, content, shortcut, category)
 VALUES
-    ('reply-welcome', 'Order Inquiry Received', 'Hello! Thank you for contacting Bilal Digitizing Studio. We have received your design inquiry and our digitizers are reviewing your artwork specifications now.', '/welcome', 'general'),
+    ('reply-welcome', 'Order Inquiry Received', 'Hello! Thank you for contacting BDigitizing Studio. We have received your design inquiry and our digitizers are reviewing your artwork specifications now.', '/welcome', 'general'),
     ('reply-emb-ready', 'Embroidery Files Tested & Ready', 'Great news! Your embroidery design has been digitized and test-stitched. The production-ready files (DST, PES, EMB) and visual production worksheet are attached.', '/embdone', 'deliveries'),
     ('reply-vec-ready', 'Vector Artwork Ready', 'Your artwork has been converted into crisp, high-resolution vector format. The print-ready master files (AI, EPS, SVG, and 300 DPI PDF) are attached.', '/vecdone', 'deliveries'),
     ('reply-custom-offer', 'Custom Offer Sent', 'We have prepared a custom offer tailored specifically to your project requirements. You can review the deliverables, turnaround time, and price in the offer card above.', '/offer', 'offers'),

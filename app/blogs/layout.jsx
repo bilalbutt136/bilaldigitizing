@@ -1,5 +1,5 @@
 export const metadata = {
-  title: 'Blog & Resources | Bilal Digitizing',
+  title: 'Blog & Resources | BDigitizing',
   description: 'Learn everything about embroidery digitizing, vector art conversion, and custom patches.',
 };
 

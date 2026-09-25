@@ -35,6 +35,7 @@ const TRUSTED_DOMAINS = [
   'firebasestorage.googleapis.com',
   'images.unsplash.com',
   'api.cloudinary.com',
+  'bdigitizing.vercel.app',
   'bilaldigitizing.vercel.app',
   'vercel.app',
 ];

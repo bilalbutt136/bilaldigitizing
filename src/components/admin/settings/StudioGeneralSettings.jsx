@@ -22,7 +22,7 @@ export const StudioGeneralSettings = () => {
   const [isSaving, setIsSaving] = useState(false);
 
   // Business Identity
-  const [studioName, setStudioName] = useState(siteSettings?.studioName || 'Bilal Digitizing Studio');
+  const [studioName, setStudioName] = useState(siteSettings?.studioName || 'BDigitizing Studio');
   const [studioTagline, setStudioTagline] = useState(siteSettings?.studioTagline || 'Premier Commercial Embroidery Digitizing & Vector Art Lab');
   const [supportPhone, setSupportPhone] = useState(siteSettings?.contactInfo?.phone !== undefined ? siteSettings.contactInfo.phone : (siteSettings?.contactPhone || siteSettings?.supportPhone || ''));
   const [supportEmail, setSupportEmail] = useState(siteSettings?.contactInfo?.email !== undefined ? siteSettings.contactInfo.email : (siteSettings?.supportEmail || siteSettings?.contactEmail || ''));
@@ -36,7 +36,7 @@ export const StudioGeneralSettings = () => {
   const [standardTurnaround, setStandardTurnaround] = useState(siteSettings?.standardTurnaround || '8 - 12 Hours');
   const [rushTurnaround, setRushTurnaround] = useState(siteSettings?.rushTurnaround || '2 - 4 Hours Express');
   const [maxUploadSize, setMaxUploadSize] = useState(siteSettings?.maxUploadSize || '100 MB');
-  const [invoiceFooterNote, setInvoiceFooterNote] = useState(siteSettings?.invoiceFooterNote || 'Thank you for your business with Bilal Digitizing. For any technical sew-out questions, contact support 24/7.');
+  const [invoiceFooterNote, setInvoiceFooterNote] = useState(siteSettings?.invoiceFooterNote || 'Thank you for your business with BDigitizing. For any technical sew-out questions, contact support 24/7.');
 
   useEffect(() => {
     if (siteSettings) {

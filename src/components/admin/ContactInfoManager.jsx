@@ -147,7 +147,7 @@ export const ContactInfoManager = () => {
 
   // Clean WhatsApp phone number for link
   const cleanWaNumber = (formData.whatsapp || '').replace(/[^0-9]/g, '');
-  const waTestUrl = cleanWaNumber ? `https://wa.me/${cleanWaNumber}?text=Hello%20Bilal%20Digitizing%20Studio` : '';
+  const waTestUrl = cleanWaNumber ? `https://wa.me/${cleanWaNumber}?text=Hello%20BDigitizing%20Studio` : '';
 
   return (
     <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: '2rem', maxWidth: '1240px', margin: '0 auto', width: '100%' }}>

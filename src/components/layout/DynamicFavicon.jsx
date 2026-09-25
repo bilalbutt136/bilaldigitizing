@@ -15,30 +15,36 @@ export const DynamicFavicon = () => {
   const faviconUrl = siteSettings?.faviconUrl;
 
   useEffect(() => {
-    if (!faviconUrl) return;
-
+    const targetUrl = faviconUrl || '/favicon.ico';
     const apply = () => {
-      const url = faviconUrl + (faviconUrl.includes('?') ? '&' : '?') + 'v=' + encodeURIComponent(faviconUrl.slice(-8));
-
-      // Update every existing icon link in the head
+      // Remove all previous icon links completely to bypass Chrome/Safari icon caching
       const existing = document.querySelectorAll(
-        'link[rel="icon"], link[rel="shortcut icon"], link[rel="alternate icon"]'
+        'link[rel="icon"], link[rel="shortcut icon"], link[rel="alternate icon"], link[rel="apple-touch-icon"]'
       );
       existing.forEach((el) => {
-        el.setAttribute('href', url);
-        el.removeAttribute('type'); // remove svg/png type so browser re-evaluates
+        try { el.parentNode?.removeChild(el); } catch {}
       });
 
-      // If no icon link exists yet, create one
-      if (existing.length === 0) {
-        const link = document.createElement('link');
-        link.rel = 'icon';
-        link.href = url;
-        document.head.appendChild(link);
-      }
+      const cacheBustUrl = targetUrl + (targetUrl.includes('?') ? '&' : '?') + 't=' + (faviconUrl ? encodeURIComponent(faviconUrl.slice(-10)) : 'v3');
+
+      // Create fresh link tags
+      const link1 = document.createElement('link');
+      link1.rel = 'icon';
+      link1.href = cacheBustUrl;
+
+      const link2 = document.createElement('link');
+      link2.rel = 'shortcut icon';
+      link2.href = cacheBustUrl;
+
+      const link3 = document.createElement('link');
+      link3.rel = 'apple-touch-icon';
+      link3.href = cacheBustUrl;
+
+      document.head.appendChild(link1);
+      document.head.appendChild(link2);
+      document.head.appendChild(link3);
     };
 
-    // Apply immediately and once DOM is guaranteed ready
     apply();
   }, [faviconUrl]);
 

@@ -106,7 +106,7 @@ export const WhatsAppMessagePopup = () => {
   if (!activeMessage || !isVisible) return null;
 
   const senderDisplayName = activeMessage.sender === 'admin'
-    ? 'Bilal Digitizing Support'
+    ? 'BDigitizing Support'
     : (activeMessage.sender_name || activeMessage.client_email?.split('@')[0] || 'Customer');
 
   const textPreview = activeMessage.text 

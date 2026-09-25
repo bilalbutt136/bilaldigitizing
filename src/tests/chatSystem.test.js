@@ -87,8 +87,8 @@ test('Chat System & Fiverr-Style Inbox Architecture', async (t) => {
     const rawDraft = 'hi sir i done you logo dst pes file check it and tell me if any changes needed thank you';
 
     // Verify system rules template
-    const requiredKeywords = ['DST', 'PES', 'EMB', 'Bilal Digitizing', 'courteous', 'professional'];
-    const mockSystemPrompt = `You are a professional assistant for "Bilal Digitizing". Polish this message into courteous, professional studio English while preserving technical digitizing details (DST, PES, EMB): ${rawDraft}`;
+    const requiredKeywords = ['DST', 'PES', 'EMB', 'BDigitizing', 'courteous', 'professional'];
+    const mockSystemPrompt = `You are a professional assistant for "BDigitizing". Polish this message into courteous, professional studio English while preserving technical digitizing details (DST, PES, EMB): ${rawDraft}`;
 
     for (const kw of requiredKeywords) {
       assert.ok(mockSystemPrompt.includes(kw), `Prompt missing expected instruction: ${kw}`);

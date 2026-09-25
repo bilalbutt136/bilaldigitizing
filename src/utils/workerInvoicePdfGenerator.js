@@ -80,7 +80,7 @@ export async function generateWorkerPayoutInvoicePdf({
   const isPaid = String(payout?.status || '').toLowerCase() === 'paid' || String(payout?.status || '').toLowerCase() === 'settled';
   const payoutNumber = payout?.payout_number || `PAY-PKR-${Date.now().toString().slice(-6)}`;
   const workerName = worker?.name || payout?.worker_name || 'Digitizer Worker';
-  const workerEmail = worker?.email || payout?.worker_email || (stealthMode ? 'digitizer@internal.station' : 'worker@bilaldigitizing.com');
+  const workerEmail = worker?.email || payout?.worker_email || (stealthMode ? 'digitizer@internal.station' : 'worker@bdigitizing.com');
   const workerRole = worker?.specialty || worker?.worker_role || 'Embroidery Digitizer';
   const paymentMethod = payout?.payment_method || 'Bank Transfer / Mobile Wallet';
   const referenceNote = payout?.reference_note || (isPaid ? 'Direct off-platform settlement' : 'Awaiting settlement authorization');
@@ -104,13 +104,13 @@ export async function generateWorkerPayoutInvoicePdf({
   doc.setTextColor(...primaryColor);
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(20);
-  doc.text(stealthMode ? 'DIGITIZING TASK PORTAL' : 'BILAL DIGITIZING', 14, 22);
+  doc.text(stealthMode ? 'DIGITIZING TASK PORTAL' : 'BDIGITIZING', 14, 22);
 
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(9);
   doc.setTextColor(...grayText);
   doc.text(stealthMode ? 'Production Task & Digitizer Settlement Desk' : 'Commercial Embroidery Digitizing & Vector Art Agency', 14, 28);
-  doc.text(stealthMode ? 'Production Billing & Operations Desk' : 'Lahore, Pakistan • support@bilaldigitizing.com • www.bilaldigitizing.com', 14, 33);
+  doc.text(stealthMode ? 'Production Billing & Operations Desk' : 'Lahore, Pakistan • support@bdigitizing.com • www.bdigitizing.com', 14, 33);
 
   // Top Right: Invoice Title & Badge
   doc.setFont('helvetica', 'bold');
@@ -300,14 +300,14 @@ export async function generateWorkerPayoutInvoicePdf({
   doc.setFontSize(7.5);
   doc.text(isPaid ? '1. This electronic receipt verifies full settlement of digitizing services rendered.' : '1. This electronic invoice details pending settlement for completed digitizing tasks.', 14, finalY + 12);
   doc.text(isPaid ? '2. All listed orders have been verified and permanently marked as Paid.' : '2. Listed orders are awaiting admin verification and final payment authorization.', 14, finalY + 16);
-  doc.text(stealthMode ? '3. Authorized by Production Operations Desk.' : '3. Authorized by Bilal Digitizing Studio Management Desk.', 14, finalY + 20);
+  doc.text(stealthMode ? '3. Authorized by Production Operations Desk.' : '3. Authorized by BDigitizing Studio Management Desk.', 14, finalY + 20);
 
   // Footer
   doc.setFont('helvetica', 'italic');
   doc.setFontSize(7.5);
   doc.setTextColor(...grayText);
   doc.text(`Generated on ${new Date().toLocaleString('en-US')} • Document ID: ${payoutNumber}`, 14, 285);
-  doc.text(stealthMode ? 'Digitizing Task Portal — Production Operations Desk' : 'Bilal Digitizing — Pakistan Production Operations Desk', 210 - 14, 285, { align: 'right' });
+  doc.text(stealthMode ? 'Digitizing Task Portal — Production Operations Desk' : 'BDigitizing — Pakistan Production Operations Desk', 210 - 14, 285, { align: 'right' });
 
   // Generate Blob and Filename
   const blob = doc.output('blob');

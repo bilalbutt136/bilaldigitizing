@@ -635,8 +635,8 @@ export default function AdminChatInbox({ initialChannel = 'inbox' }) {
           conversation_id: activeConversationId,
           client_email: activeConversation?.client_email || 'client@studio.com',
           sender: 'admin',
-          sender_name: 'Bilal Digitizing Support',
-          sender_email: authUser?.email || 'admin@bilaldigitizing.com',
+          sender_name: 'BDigitizing Support',
+          sender_email: authUser?.email || 'admin@bdigitizing.com',
           text: messageText,
           type: attachmentsToSend.length > 0 && !messageText ? 'attachment' : 'text',
           attachments: attachmentsToSend

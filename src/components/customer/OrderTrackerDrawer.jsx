@@ -546,7 +546,7 @@ export const OrderTrackerDrawer = () => {
     if (setSelectedOrderForDrawer) {
       setSelectedOrderForDrawer(prev => prev ? { ...prev, status: 'completed' } : prev);
     }
-    showToast('🎉 Delivery approved! Thank you for choosing Bilal Digitizing.', 'success');
+    showToast('🎉 Delivery approved! Thank you for choosing BDigitizing.', 'success');
   };
 
   const getStatusBadge = () => {
