@@ -248,13 +248,13 @@ export async function generateCustomerTaxInvoicePdf({
 
   // Paid / Unpaid Status Badge Pill
   if (isPaid) {
-    const badgeText = `✓ PAID (${paymentDateFormatted})`;
+    const badgeText = `PAID (${paymentDateFormatted})`;
     doc.setFillColor(...paidGreen);
-    doc.roundedRect(210 - 16 - 48, 35, 48, 6, 1.5, 1.5, 'F');
+    doc.roundedRect(210 - 16 - 44, 35, 44, 6, 1.5, 1.5, 'F');
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(7.5);
     doc.setTextColor(255, 255, 255);
-    doc.text(badgeText, 210 - 16 - 24, 39.2, { align: 'center' });
+    doc.text(badgeText, 210 - 16 - 22, 39.2, { align: 'center' });
   } else {
     doc.setFillColor(...brandOrange);
     doc.roundedRect(210 - 16 - 32, 35, 32, 6, 1.5, 1.5, 'F');
@@ -571,22 +571,18 @@ export async function generateCustomerTaxInvoicePdf({
     noteBoxY += 16;
   }
 
-  // 9. Minimalist International Legal Validity Notice
+  // 9. Minimalist System-Generated Notice (No signature required)
+  const noteBoxH = 8;
   doc.setFillColor(248, 250, 252);
-  doc.roundedRect(16, noteBoxY, 210 - 32, 16, 2, 2, 'F');
+  doc.roundedRect(16, noteBoxY, 210 - 32, noteBoxH, 1.5, 1.5, 'F');
   doc.setDrawColor(...borderLight);
   doc.setLineWidth(0.3);
-  doc.roundedRect(16, noteBoxY, 210 - 32, 16, 2, 2, 'S');
-
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(7.5);
-  doc.setTextColor(...primaryNavy);
-  doc.text('✓ SYSTEM-GENERATED INVOICE — NO PHYSICAL SIGNATURE OR STAMP REQUIRED', 20, noteBoxY + 6);
+  doc.roundedRect(16, noteBoxY, 210 - 32, noteBoxH, 1.5, 1.5, 'S');
 
   doc.setFont('helvetica', 'normal');
-  doc.setFontSize(7);
+  doc.setFontSize(8);
   doc.setTextColor(...textMuted);
-  doc.text('This electronic invoice is legally valid worldwide for business expense deductions and tax accounting (compliant with US E-SIGN Act, EU eIDAS & international commercial standards).', 20, noteBoxY + 11.5);
+  doc.text('This is a system-generated invoice. No signature required.', 105, noteBoxY + 5.2, { align: 'center' });
 
   // 10. Footer
   doc.setFont('helvetica', 'normal');

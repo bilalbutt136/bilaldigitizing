@@ -640,20 +640,23 @@ export const CustomerInvoiceModal = ({
             </div>
           )}
 
-          {/* Concise 1-Sentence System Generated International Note */}
+          {/* System Generated Invoice - No signature required */}
           <div style={{
             background: '#f8fafc',
             border: '1px solid #e2e8f0',
             borderRadius: '8px',
-            padding: '0.75rem 1rem',
-            marginBottom: '1.25rem'
+            padding: '0.6rem 0.9rem',
+            marginBottom: '1.25rem',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '0.4rem',
+            fontSize: '0.78rem',
+            fontWeight: 600,
+            color: '#64748b'
           }}>
-            <div style={{ fontSize: '0.74rem', fontWeight: 800, color: '#0f172a', display: 'flex', alignItems: 'center', gap: '0.35rem', marginBottom: '0.2rem' }}>
-              <ShieldCheck size={14} style={{ color: '#10b981' }} /> System-Generated Invoice — No Signature Required
-            </div>
-            <div style={{ fontSize: '0.72rem', color: '#64748b', lineHeight: 1.4 }}>
-              This electronic invoice is legally valid worldwide for business expense deductions and tax accounting without a physical signature or stamp (compliant with US E-SIGN Act, EU eIDAS & international commercial standards).
-            </div>
+            <ShieldCheck size={14} style={{ color: '#10b981' }} />
+            <span>This is a system-generated invoice. No signature required.</span>
           </div>
 
           {/* Footer */}
