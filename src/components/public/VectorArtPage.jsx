@@ -52,6 +52,7 @@ export const VectorArtPage = ({ hideHero = false }) => {
   const [colorMode, setColorMode] = useState('Spot Colors (Pantone/Solid)');
   const [requestedFormats, setRequestedFormats] = useState(['ai', 'eps', 'svg', 'pdf']);
   const [isRush, setIsRush] = useState(false);
+  const [title, setTitle] = useState('');
   const [paymentOption, setPaymentOption] = useState('bolt'); // 'bolt' | 'wallet'
   const [isOrderViewOpen, setIsOrderViewOpen] = useState(false);
 
@@ -253,10 +254,8 @@ export const VectorArtPage = ({ hideHero = false }) => {
       return;
     }
 
-    if (!title.trim()) {
-      alert('Please enter an Order Title for your vector conversion project.');
-      return;
-    }
+    const firstItemName = vectorItems[0]?.name || 'Vector Art Order';
+    const orderTitle = (title || '').trim() || `${firstItemName}${vectorItems.length > 1 ? ` (+${vectorItems.length - 1} more)` : ''}`;
 
     const allFiles = vectorItems.flatMap(item => item.files || []);
     if (allFiles.length === 0) {
@@ -272,9 +271,6 @@ export const VectorArtPage = ({ hideHero = false }) => {
     setIsSubmitting(true);
 
     try {
-      const firstItemName = vectorItems[0]?.name || 'Vector Art Order';
-      const orderTitle = title.trim() || `${firstItemName}${vectorItems.length > 1 ? ` (+${vectorItems.length - 1} more)` : ''}`;
-
       // 1. Process and upload files per vector item
       const updatedVectorItems = [];
       const allUploadedFiles = [];

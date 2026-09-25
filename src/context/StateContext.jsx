@@ -2260,8 +2260,8 @@ export const StateProvider = ({ children }) => {
   const refreshOrders = async () => {
     try {
       const isAdminUser = authUser?.role === 'admin';
-      const email = isAdminUser ? null : (authUser?.email || currentUser?.email || null);
-      const userId = isAdminUser ? null : (authUser?.id || currentUser?.id || null);
+      const email = isAdminUser ? null : (authUser?.email || null);
+      const userId = isAdminUser ? null : (authUser?.id || null);
       const freshOrders = await fetchOrdersFromSupabase(email, null, userId);
       if (freshOrders && Array.isArray(freshOrders)) {
         setOrders(freshOrders);

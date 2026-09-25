@@ -20,6 +20,7 @@ import {
   Zap
 } from 'lucide-react';
 import { useAppState } from '../../context/StateContext';
+import { useNavigate } from '../../utils/navigation';
 import { 
   handleNotificationClick, 
   parseNotificationTarget, 

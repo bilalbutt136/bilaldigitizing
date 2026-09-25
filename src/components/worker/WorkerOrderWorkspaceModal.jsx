@@ -27,6 +27,7 @@ import {
 } from 'lucide-react';
 import { uploadFileToCloudinaryFull } from '../../services/supabaseService';
 import { downloadFileDirectly, openFileInNewTab } from '../../utils/fileDownloader';
+import { formatOrderId } from '../../utils/formatters';
 
 const ACCEPTED_EXTENSIONS = [
   '.dst', '.pes', '.emb', '.exp', '.jef', '.zip', '.rar',

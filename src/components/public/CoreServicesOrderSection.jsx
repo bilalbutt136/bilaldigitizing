@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from '../../utils/navigation';
 import { useAppState } from '../../context/StateContext';
+import { matchCategory } from '../../utils/categoryUtils';
 import { 
   Layers, 
   PenTool, 
@@ -1659,21 +1660,23 @@ export const CoreServicesOrderSection = ({ defaultService = 'digitizing', hideTa
                     <div style={{ display: 'flex', justifyContent: 'space-between', color: '#cbd5e1' }}>
                       <span>Selected Tier:</span>
                       <strong style={{ color: '#ffffff', textTransform: 'capitalize' }}>
-                        {vectorComplexity === 'simple' ? 'Simple Redraw ($15.00/art)' : 'Complex Redraw ($25.00/art)'}
+                        {placementItems[0]?.packageTier === 'premium' || placementItems[0]?.packageTier === 'complex'
+                          ? `Complex Redraw ($${parseFloat(pricing?.vectorComplexRate || 25).toFixed(2)}/art)`
+                          : `Simple Redraw ($${parseFloat(pricing?.vectorSimpleRate || 15).toFixed(2)}/art)`}
                       </strong>
                     </div>
 
                     <div style={{ display: 'flex', justifyContent: 'space-between', color: '#cbd5e1' }}>
                       <span>Total Artworks:</span>
                       <span style={{ color: '#ffffff', fontWeight: 700 }}>
-                        {vectorQuantity} {vectorQuantity === 1 ? 'Artwork' : 'Artworks'}
+                        {totalPlacementQuantity} {totalPlacementQuantity === 1 ? 'Artwork' : 'Artworks'}
                       </span>
                     </div>
 
                     <div style={{ display: 'flex', justifyContent: 'space-between', color: '#cbd5e1' }}>
                       <span>Output Formats:</span>
                       <span style={{ color: 'var(--orange-400)', fontWeight: 700 }}>
-                        {targetFormats.length} Formats Selected
+                        {vectorFormats.length} Formats Selected
                       </span>
                     </div>
                   </>
@@ -1684,14 +1687,14 @@ export const CoreServicesOrderSection = ({ defaultService = 'digitizing', hideTa
                     <div style={{ display: 'flex', justifyContent: 'space-between', color: '#cbd5e1' }}>
                       <span>Selected Style:</span>
                       <strong style={{ color: '#ffffff' }}>
-                        {patchStyle} Patch ({patchBacking})
+                        {patchItems[0]?.patchStyle || 'Embroidered'} Patch ({patchItems[0]?.patchBacking || 'Iron-On'})
                       </strong>
                     </div>
 
                     <div style={{ display: 'flex', justifyContent: 'space-between', color: '#cbd5e1' }}>
                       <span>Total Quantity:</span>
                       <span style={{ color: 'var(--orange-400)', fontWeight: 800 }}>
-                        {patchQuantity} Pcs
+                        {patchItems.reduce((acc, p) => acc + (parseInt(p.quantity, 10) || 0), 0)} Pcs
                       </span>
                     </div>
                   </>

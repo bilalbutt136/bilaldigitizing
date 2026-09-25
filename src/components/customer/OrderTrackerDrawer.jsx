@@ -1532,7 +1532,7 @@ export const OrderTrackerDrawer = () => {
                 <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
                   <button
                     type="button"
-                    onClick={() => handleDownloadAllDeliveryFiles(activeDeliveryFiles)}
+                    onClick={handleDownloadAll}
                     className="btn btn-sm"
                     style={{ background: '#059669', color: '#ffffff', fontWeight: 800, border: 'none', padding: '0.5rem 1.15rem', borderRadius: '8px', gap: '0.35rem', cursor: 'pointer' }}
                   >
@@ -2042,7 +2042,7 @@ export const OrderTrackerDrawer = () => {
             ) : isCompleted && !isAdmin ? (
               <button
                 type="button"
-                onClick={() => handleDownloadAllDeliveryFiles(activeDeliveryFiles)}
+                onClick={handleDownloadAll}
                 className="btn btn-sm"
                 style={{ background: '#059669', color: '#ffffff', fontWeight: 800, border: 'none', padding: '0.5rem 1.15rem', borderRadius: '8px', gap: '0.35rem', cursor: 'pointer' }}
               >

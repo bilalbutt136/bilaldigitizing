@@ -303,7 +303,7 @@ export async function POST(request) {
         senderName: effectiveSenderName,
         messageText: (text || '').trim() || (normalizedAttachments.length > 0 ? `📎 ${normalizedAttachments[0].name}` : 'New message'),
         recipientEmail: cleanEmail,
-        conversationId,
+        conversationId: conversation_id,
         orderId: (conversation_id.startsWith('ord-') || conversation_id.startsWith('order-')) ? conversation_id : null
       }).catch(pushErr => console.warn('[Chat Push Notice]:', pushErr?.message));
     } catch (pushImportErr) {
