@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useAppState, formatOrderId, formatDimensions, formatFabric } from '../../context/StateContext';
 import { ArtworkLightboxModal } from '../common/ArtworkLightboxModal';
 import { ProductionWorksheetModal } from '../common/ProductionWorksheetModal';
