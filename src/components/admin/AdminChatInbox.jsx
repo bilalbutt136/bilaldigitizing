@@ -7,6 +7,7 @@ import OfferCardMessage from '../common/OfferCardMessage';
 import AdminCreateOfferModal from './AdminCreateOfferModal';
 import { downloadFileDirectly, openFileInNewTab } from '../../utils/fileDownloader';
 import { playMessageChime, unlockAudioContext } from '../../utils/audioNotification';
+import { subscribeToPresence, syncPresenceFromRest } from '../../services/presenceService';
 import {
   Search,
   ChevronDown,
@@ -459,60 +460,18 @@ export default function AdminChatInbox({ initialChannel = 'inbox' }) {
     };
   }, [activeConversationId, activeChannel, activeFilter, searchQuery, fetchChannelUnreadCounts]);
 
-  // Dedicated Presence Subscription & Periodic REST Heartbeat Sync
+  // Dedicated Presence Subscription via shared presenceService (crash-proof)
   useEffect(() => {
-    const supabase = createClient();
-    if (!supabase) return;
-
-    // 1. Subscribe to real-time presence channel
-    const presenceChannel = supabase.channel('bdigitizing-live-presence');
-
-    const updatePresenceFromState = () => {
-      const state = presenceChannel.presenceState();
-      const onlineSet = new Set();
-      Object.entries(state).forEach(([key, presences]) => {
-        if (key && key !== 'guest') onlineSet.add(key.toLowerCase().trim());
-        if (Array.isArray(presences)) {
-          presences.forEach(p => {
-            const em = (p?.email || p?.key || '').toLowerCase().trim();
-            if (em) onlineSet.add(em);
-          });
-        }
-      });
+    const unsubscribePresence = subscribeToPresence((onlineSet) => {
       setOnlineEmails(onlineSet);
-    };
+    });
 
-    presenceChannel
-      .on('presence', { event: 'sync' }, updatePresenceFromState)
-      .on('presence', { event: 'join' }, updatePresenceFromState)
-      .on('presence', { event: 'leave' }, updatePresenceFromState)
-      .subscribe();
-
-    // 2. Fallback REST poll for resilient presence across networks
-    const syncPresenceFromApi = async () => {
-      try {
-        const res = await fetch('/api/chat/presence');
-        const data = await res.json();
-        if (Array.isArray(data?.onlineUsers)) {
-          setOnlineEmails(prev => {
-            const merged = new Set(prev);
-            data.onlineUsers.forEach(em => {
-              if (em) merged.add(em.toLowerCase().trim());
-            });
-            return merged;
-          });
-        }
-      } catch {}
-    };
-
-    syncPresenceFromApi();
-    const interval = setInterval(syncPresenceFromApi, 15000);
+    syncPresenceFromRest();
+    const interval = setInterval(syncPresenceFromRest, 15000);
 
     return () => {
+      unsubscribePresence();
       clearInterval(interval);
-      if (supabase && presenceChannel) {
-        supabase.removeChannel(presenceChannel);
-      }
     };
   }, []);
 

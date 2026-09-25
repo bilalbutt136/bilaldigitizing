@@ -44,6 +44,7 @@ import {
   ORDER_STATUSES,
   validateStatusTransition
 } from '../services/supabaseService';
+import { trackUserPresence, untrackUserPresence } from '../services/presenceService';
 
 import { playNotificationSound } from '../utils/audioNotification';
 import { THEME_PRESETS, applyThemePresetToDOM } from '../utils/themePresets';
@@ -1508,50 +1509,25 @@ export const StateProvider = ({ children }) => {
 
   // Real-time Presence tracking across the entire website for active authenticated users
   useEffect(() => {
-    if (!authUser?.email || !isSupabaseConfigured || !supabase) return;
+    if (!authUser?.email) return;
     const cleanEmail = authUser.email.toLowerCase().trim();
 
-    // 1. Join Supabase Realtime presence channel
-    const presenceChannel = supabase.channel('bdigitizing-live-presence', {
-      config: { presence: { key: cleanEmail } }
+    trackUserPresence({
+      email: cleanEmail,
+      name: authUser.name || '',
+      role: authUser.role || 'client'
     });
 
-    presenceChannel.subscribe(async (status) => {
-      if (status === 'SUBSCRIBED') {
-        try {
-          await presenceChannel.track({
-            email: cleanEmail,
-            name: authUser.name || '',
-            role: authUser.role || 'client',
-            online_at: new Date().toISOString()
-          });
-        } catch {}
-      }
-    });
-
-    // 2. Heartbeat to REST presence endpoint
-    const sendHeartbeat = (onlineStatus = 'online') => {
-      try {
-        fetch('/api/chat/presence', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: cleanEmail, status: onlineStatus, role: authUser.role || 'client' })
-        }).catch(() => {});
-      } catch {}
-    };
-
-    sendHeartbeat('online');
     const interval = setInterval(() => {
-      sendHeartbeat('online');
+      trackUserPresence({
+        email: cleanEmail,
+        name: authUser.name || '',
+        role: authUser.role || 'client'
+      });
     }, 60000);
 
     const handleUnload = () => {
-      try {
-        if (navigator.sendBeacon) {
-          const payload = JSON.stringify({ email: cleanEmail, status: 'offline' });
-          navigator.sendBeacon('/api/chat/presence', payload);
-        }
-      } catch {}
+      untrackUserPresence(cleanEmail);
     };
 
     window.addEventListener('beforeunload', handleUnload);
@@ -1559,10 +1535,7 @@ export const StateProvider = ({ children }) => {
     return () => {
       clearInterval(interval);
       window.removeEventListener('beforeunload', handleUnload);
-      sendHeartbeat('offline');
-      if (supabase && presenceChannel) {
-        supabase.removeChannel(presenceChannel);
-      }
+      untrackUserPresence(cleanEmail);
     };
   }, [authUser?.email, authUser?.name, authUser?.role]);
 
