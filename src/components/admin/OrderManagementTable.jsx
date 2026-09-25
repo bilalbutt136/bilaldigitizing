@@ -20,7 +20,9 @@ import {
   Scissors,
   FileCheck,
   UserCheck,
-  Receipt
+  Receipt,
+  Mail,
+  Bell
 } from 'lucide-react';
 import { CustomerInvoiceModal } from '../common/CustomerInvoiceModal';
 
@@ -236,21 +238,21 @@ export const OrderManagementTable = () => {
   const getStatusBadge = (status) => {
     switch (status) {
       case 'submitted':
-        return <span className="badge badge-submitted">🔴 New / Pending</span>;
+        return <span className="badge badge-submitted">Pending</span>;
       case 'assigned':
       case 'digitizing':
-        return <span className="badge badge-digitizing">⚡ In Progress</span>;
+        return <span className="badge badge-digitizing">In Progress</span>;
       case 'revision':
-        return <span className="badge badge-revision">🔄 In Revision</span>;
+        return <span className="badge badge-revision">In Revision</span>;
       case 'delivered':
       case 'qc':
-        return <span className="badge badge-qc">📦 Delivered</span>;
+        return <span className="badge badge-qc">Delivered</span>;
       case 'completed':
-        return <span className="badge badge-completed">✅ Completed</span>;
+        return <span className="badge badge-completed">Completed</span>;
       case 'cancelled':
-        return <span className="badge badge-rush">❌ Cancelled</span>;
+        return <span className="badge badge-rush">Cancelled</span>;
       default:
-        return <span className="badge">{status}</span>;
+        return <span className="badge">{statusLabels[status] || status}</span>;
     }
   };
 
@@ -267,7 +269,7 @@ export const OrderManagementTable = () => {
   const getDeliveryCountdown = (ord) => {
     const status = String(ord?.status || '').toLowerCase();
     if (status === 'cancelled') {
-      return <span style={{ color: '#dc2626', fontWeight: 700, fontSize: '0.725rem' }}>❌ Cancelled</span>;
+      return <span style={{ color: '#dc2626', fontWeight: 700, fontSize: '0.725rem' }}>Cancelled</span>;
     }
     if (status === 'completed' || status === 'delivered' || status === 'qc') {
       return (
@@ -286,7 +288,7 @@ export const OrderManagementTable = () => {
     if (!createdTime || isNaN(createdTime)) {
       return (
         <span style={{ color: 'var(--orange-600)', fontWeight: 800, fontSize: '0.725rem', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
-          <Clock size={12} /> {isRush ? '⚡ Rush (2–4h)' : '⏱️ Standard (8–12h)'}
+          <Clock size={12} /> {isRush ? 'Rush (2–4h)' : 'Standard (8–12h)'}
         </span>
       );
     }
@@ -300,7 +302,7 @@ export const OrderManagementTable = () => {
       const mins = overdueMins % 60;
       return (
         <span style={{ color: '#ef4444', fontWeight: 800, fontSize: '0.725rem', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
-          ⚠️ Overdue by {hrs > 0 ? `${hrs}h ` : ''}{mins}m
+          Overdue by {hrs > 0 ? `${hrs}h ` : ''}{mins}m
         </span>
       );
     }
@@ -310,7 +312,7 @@ export const OrderManagementTable = () => {
     const mins = totalMins % 60;
     return (
       <span style={{ color: isRush ? '#ea580c' : '#2563eb', fontWeight: 800, fontSize: '0.725rem', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
-        <Clock size={12} /> {isRush ? '⚡ Rush ' : ''}{hrs}h {mins}m left
+        <Clock size={12} /> {isRush ? 'Rush: ' : ''}{hrs}h {mins}m left
       </span>
     );
   };
@@ -371,7 +373,7 @@ export const OrderManagementTable = () => {
               borderColor: filterStatus === 'rush' ? '#dc2626' : (orders.some(o => o.is_rush || o.isRush || o.turnaround === 'rush' || o.turnaround === '2-4 hours' || String(o.notes || '').toLowerCase().includes('rush') || String(o.title || '').toLowerCase().includes('rush')) ? '#fecaca' : undefined)
             }}
           >
-            🔥 Rush ({orders.filter(o => o.is_rush || o.isRush || o.turnaround === 'rush' || o.turnaround === '2-4 hours' || String(o.notes || '').toLowerCase().includes('rush') || String(o.title || '').toLowerCase().includes('rush')).length})
+            Rush ({orders.filter(o => o.is_rush || o.isRush || o.turnaround === 'rush' || o.turnaround === '2-4 hours' || String(o.notes || '').toLowerCase().includes('rush') || String(o.title || '').toLowerCase().includes('rush')).length})
           </button>
 
           <button 
@@ -379,7 +381,7 @@ export const OrderManagementTable = () => {
             onClick={() => setFilterStatus('submitted')}
             style={{ fontWeight: 800, fontSize: '0.76rem', padding: '0.3rem 0.6rem', borderRadius: '6px' }}
           >
-            🔴 New ({orders.filter(o => o.status === 'submitted' || !o.status).length})
+            New ({orders.filter(o => o.status === 'submitted' || !o.status).length})
           </button>
 
           <button 
@@ -395,7 +397,7 @@ export const OrderManagementTable = () => {
               borderColor: orders.some(o => o.worker_status === 'Review Pending' || o.workerStatus === 'Review Pending') ? '#93c5fd' : undefined
             }}
           >
-            👷 Worker Reviews ({orders.filter(o => o.worker_status === 'Review Pending' || o.workerStatus === 'Review Pending').length})
+            Worker Reviews ({orders.filter(o => o.worker_status === 'Review Pending' || o.workerStatus === 'Review Pending').length})
           </button>
 
           <button 
@@ -403,7 +405,7 @@ export const OrderManagementTable = () => {
             onClick={() => setFilterStatus('digitizing')}
             style={{ fontWeight: 800, fontSize: '0.76rem', padding: '0.3rem 0.6rem', borderRadius: '6px' }}
           >
-            ⚡ In Progress ({orders.filter(o => o.status === 'digitizing' || o.status === 'assigned').length})
+            In Progress ({orders.filter(o => o.status === 'digitizing' || o.status === 'assigned').length})
           </button>
 
           <button 
@@ -411,7 +413,7 @@ export const OrderManagementTable = () => {
             onClick={() => setFilterStatus('revision')}
             style={{ fontWeight: 800, fontSize: '0.76rem', padding: '0.3rem 0.6rem', borderRadius: '6px' }}
           >
-            🔄 In Revision ({orders.filter(o => o.status === 'revision').length})
+            In Revision ({orders.filter(o => o.status === 'revision').length})
           </button>
 
           <button 
@@ -419,7 +421,7 @@ export const OrderManagementTable = () => {
             onClick={() => setFilterStatus('delivered')}
             style={{ fontWeight: 800, fontSize: '0.76rem', padding: '0.3rem 0.6rem', borderRadius: '6px' }}
           >
-            📦 Delivered ({orders.filter(o => o.status === 'delivered' || o.status === 'qc').length})
+            Delivered ({orders.filter(o => o.status === 'delivered' || o.status === 'qc').length})
           </button>
 
           <button 
@@ -427,7 +429,7 @@ export const OrderManagementTable = () => {
             onClick={() => setFilterStatus('completed')}
             style={{ fontWeight: 800, fontSize: '0.76rem', padding: '0.3rem 0.6rem', borderRadius: '6px' }}
           >
-            ✅ Completed ({orders.filter(o => o.status === 'completed').length})
+            Completed ({orders.filter(o => o.status === 'completed').length})
           </button>
 
           <button 
@@ -435,7 +437,7 @@ export const OrderManagementTable = () => {
             onClick={() => setFilterStatus('cancelled')}
             style={{ fontWeight: 800, fontSize: '0.76rem', padding: '0.3rem 0.6rem', borderRadius: '6px' }}
           >
-            ❌ Cancelled ({orders.filter(o => o.status === 'cancelled').length})
+            Cancelled ({orders.filter(o => o.status === 'cancelled').length})
           </button>
         </div>
 
@@ -465,10 +467,10 @@ export const OrderManagementTable = () => {
               borderRadius: '6px'
             }}
           >
-            <option value="all">📂 All Categories</option>
-            <option value="embroidery">🧵 Embroidery</option>
-            <option value="vector">📐 Vector Tracing</option>
-            <option value="patch">📦 Custom Patches</option>
+            <option value="all">All Categories</option>
+            <option value="embroidery">Embroidery</option>
+            <option value="vector">Vector Tracing</option>
+            <option value="patch">Custom Patches</option>
           </select>
 
           {/* Payment Filter */}
@@ -489,9 +491,9 @@ export const OrderManagementTable = () => {
               borderRadius: '6px'
             }}
           >
-            <option value="all">💳 All Payments</option>
-            <option value="paid">✅ Paid Only</option>
-            <option value="pending">🕒 Pending Only</option>
+            <option value="all">All Payments</option>
+            <option value="paid">Paid Only</option>
+            <option value="pending">Pending Only</option>
           </select>
 
           {/* Search Input */}
@@ -625,14 +627,14 @@ export const OrderManagementTable = () => {
                     <td style={{ padding: '0.5rem 0.75rem' }}>
                       <div style={{ fontWeight: 800, color: 'var(--navy-900)', fontSize: '0.84rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
                         <span>{ord.title || 'Untitled Order'}</span>
-                        {ord.isRush && <span className="badge badge-rush" style={{ fontSize: '0.6rem', padding: '0.05rem 0.35rem' }}>⚡ RUSH</span>}
+                        {ord.isRush && <span className="badge badge-rush" style={{ fontSize: '0.6rem', padding: '0.05rem 0.35rem' }}>RUSH</span>}
                       </div>
                       <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '1px', display: 'flex', alignItems: 'center', gap: '0.35rem', flexWrap: 'wrap' }}>
                         <span style={{ fontWeight: 800, color: 'var(--orange-600)', background: '#fff7ed', padding: '0.05rem 0.35rem', borderRadius: '4px', border: '1px solid #ffedd5' }}>
                           {formatOrderId(ord.id)}
                         </span>
                         <span>•</span>
-                        <span>📅 {formatPlacementTime(ord.createdAt || ord.created_at || ord.timestamp || ord.order_date)}</span>
+                        <span>{formatPlacementTime(ord.createdAt || ord.created_at || ord.timestamp || ord.order_date)}</span>
                       </div>
                       <div style={{ marginTop: '0.15rem' }}>
                         {getDeliveryCountdown(ord)}
@@ -644,8 +646,9 @@ export const OrderManagementTable = () => {
                       <div style={{ fontWeight: 800, color: 'var(--navy-900)', fontSize: '0.82rem' }}>
                         {ord.clientName || 'Client Account'}
                       </div>
-                      <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '1px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '160px' }}>
-                        ✉️ {ord.clientEmail || 'client@bdigitizing.pro'}
+                      <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '1px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '160px', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                        <Mail size={11} style={{ flexShrink: 0, opacity: 0.7 }} />
+                        <span>{ord.clientEmail || 'client@bdigitizing.pro'}</span>
                       </div>
                     </td>
 
@@ -674,9 +677,6 @@ export const OrderManagementTable = () => {
                     {/* 6. STATUS */}
                     <td style={{ padding: '0.5rem 0.75rem' }}>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                        <div style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--navy-900)' }}>
-                          {statusLabels[ord.status] || ord.status || 'Submitted'}
-                        </div>
                         <div>
                           {getStatusBadge(ord.status)}
                         </div>
@@ -693,7 +693,7 @@ export const OrderManagementTable = () => {
                             fontSize: '0.68rem',
                             fontWeight: 800
                           }}>
-                            🔔 REVIEW NEEDED
+                            <Bell size={11} /> REVIEW NEEDED
                           </div>
                         )}
                       </div>

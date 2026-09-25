@@ -47,10 +47,10 @@ const DEFAULT_SERVICE_DATA = {
       'Custom Physical Patches: Starts $3.50 / Piece · Velcro & Iron-On · Doorstep Delivery'
     ],
     stats: [
-      { value: '3,900+', label: 'Clients', icon: 'Star' },
-      { value: '45+', label: 'Countries', icon: 'Globe' },
-      { value: '4-Hr', label: 'Express', icon: 'Clock' },
-      { value: '100%', label: 'Guaranteed', icon: 'ShieldCheck' }
+      { value: '4–12h', label: 'Turnaround', icon: 'Clock' },
+      { value: '100%', label: 'Manual Pathing', icon: 'Zap' },
+      { value: 'All Formats', label: 'DST, PES, EMB & AI', icon: 'Layers' },
+      { value: 'Unlimited', label: 'Free Revisions', icon: 'ShieldCheck' }
     ],
     primary_cta: 'Get Started Now',
     primary_btn_action: '/order',
@@ -70,10 +70,10 @@ const DEFAULT_SERVICE_DATA = {
       'Guaranteed Zero Thread Breaks & Free Unlimited Production Edits'
     ],
     stats: [
-      { value: '100k+', label: 'Sew-Outs', icon: 'Star' },
+      { value: '100%', label: 'Manual Digitizing', icon: 'Star' },
       { value: '0', label: 'Thread Breaks', icon: 'Zap' },
-      { value: '4-12 Hr', label: 'Delivery', icon: 'Clock' },
-      { value: '100%', label: 'Guaranteed', icon: 'ShieldCheck' }
+      { value: '4–12 Hr', label: 'Delivery', icon: 'Clock' },
+      { value: 'Wilcom & Tajima', label: 'Industry Standard', icon: 'ShieldCheck' }
     ],
     primary_cta: 'Order Embroidery Digitizing',
     primary_btn_action: '/order',
@@ -93,10 +93,10 @@ const DEFAULT_SERVICE_DATA = {
       'Master Source Suite: .AI, .EPS, .SVG & High-Res 300+ DPI PDF'
     ],
     stats: [
-      { value: '50k+', label: 'Vectors', icon: 'Star' },
+      { value: 'Pantone', label: 'Spot Separation', icon: 'Star' },
       { value: 'Sharp', label: 'Cut Paths', icon: 'Zap' },
-      { value: '6-12 Hr', label: 'Delivery', icon: 'Clock' },
-      { value: '100%', label: 'Scale-Free', icon: 'ShieldCheck' }
+      { value: '6–12 Hr', label: 'Delivery', icon: 'Clock' },
+      { value: 'Master Suite', label: 'AI, EPS, SVG & PDF', icon: 'ShieldCheck' }
     ],
     primary_cta: 'Order Vector Art Conversion',
     primary_btn_action: '/order',
@@ -116,10 +116,10 @@ const DEFAULT_SERVICE_DATA = {
       'Free 12-Hour Digital Proof & Doorstep Worldwide Shipping'
     ],
     stats: [
-      { value: '50 Pcs', label: 'Min MOQ', icon: 'Star' },
-      { value: '12-Hr', label: 'Free Proof', icon: 'Zap' },
-      { value: '3-5 Day', label: 'Production', icon: 'Clock' },
-      { value: 'Global', label: 'Doorstep Delivery', icon: 'Globe' }
+      { value: '50 Pcs', label: 'Low Minimum', icon: 'Star' },
+      { value: '12-Hr', label: 'Free Digital Proof', icon: 'Zap' },
+      { value: 'Velcro & Iron-On', label: 'Backing Options', icon: 'ShieldCheck' },
+      { value: 'Worldwide', label: 'Doorstep Shipping', icon: 'Globe' }
     ],
     primary_cta: 'Order Custom Patches',
     primary_btn_action: '/order',

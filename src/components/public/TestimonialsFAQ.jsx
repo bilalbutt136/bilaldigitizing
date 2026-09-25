@@ -12,7 +12,7 @@ export const TestimonialsFAQ = () => {
   const activeTab = normalizeCategory(activeHomeServiceTab || 'all');
 
   const dbSettings = homePageConfig?.settings || {};
-  const testTitle = dbSettings.testimonials_title || 'Trusted by 3,900+ Apparel Decorators & Brands';
+  const testTitle = dbSettings.testimonials_title || 'Trusted by Commercial Embroiderers & Apparel Brands';
   const testSub = dbSettings.testimonials_sub || 'From complex 3D puff embroidery to meticulous vector conversions and premium physical patches, our clients rely on us for production-ready quality.';
 
   const mappedTestimonials = (appState.testimonials || []).map(t => ({
@@ -46,7 +46,7 @@ export const TestimonialsFAQ = () => {
             </div>
             <h2 style={{ fontSize: 'clamp(2rem, 3.5vw, 2.75rem)', color: 'var(--navy-950)', marginBottom: '1rem', fontWeight: 900, letterSpacing: '-0.02em', lineHeight: 1.2 }}>
               {testTitle.includes('3,900+') || testTitle.includes('1,200+') ? (
-                <>Trusted by <span className="text-gradient-orange">3,900+</span> Apparel Decorators & Brands</>
+                <>Trusted by <span className="text-gradient-orange">Commercial Embroiderers</span> & Apparel Brands</>
               ) : (
                 testTitle
               )}

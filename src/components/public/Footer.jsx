@@ -185,7 +185,7 @@ export const Footer = () => {
               marginBottom: socialLinks.length > 0 ? '1.25rem' : '0'
             }}>
               <ShieldCheck size={16} style={{ color: 'var(--orange-400)' }} /> 
-              11+ Years Experience • 3,900+ Clients
+              11+ Years Master Craftsmanship • 100% Quality Guarantee
             </div>
 
             {/* Dynamic Social Media Links (Only Renders Active Links With Clean Layout Adjustment) */}

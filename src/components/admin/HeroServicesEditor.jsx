@@ -39,10 +39,10 @@ const DEFAULT_SERVICES = {
       'Custom Physical Patches: Starts $3.50 / Piece · Velcro & Iron-On · Doorstep Delivery'
     ],
     stats: [
-      { value: '3,900+', label: 'Clients' },
-      { value: '45+', label: 'Countries' },
-      { value: '4-Hr', label: 'Express' },
-      { value: '100%', label: 'Guaranteed' }
+      { value: '4–12h', label: 'Turnaround' },
+      { value: '100%', label: 'Manual Pathing' },
+      { value: 'Free', label: 'Revisions' },
+      { value: 'Wilcom', label: 'Industry Standard' }
     ],
     primary_cta: 'Get Started Now',
     primary_btn_action: '#pricing',
@@ -65,10 +65,10 @@ const DEFAULT_SERVICES = {
       'Guaranteed Zero Thread Breaks & Free Unlimited Production Edits'
     ],
     stats: [
-      { value: '100k+', label: 'Sew-Outs' },
+      { value: '4–12h', label: 'Turnaround' },
       { value: '0', label: 'Thread Breaks' },
-      { value: '4-12 Hr', label: 'Delivery' },
-      { value: '100%', label: 'Guaranteed' }
+      { value: 'DST, PES', label: 'All Formats' },
+      { value: '100%', label: 'Manual Pathing' }
     ],
     primary_cta: 'Order Embroidery Digitizing',
     primary_btn_action: '/order',
@@ -91,10 +91,10 @@ const DEFAULT_SERVICES = {
       'Master Source Suite: .AI, .EPS, .SVG & High-Res 300+ DPI PDF'
     ],
     stats: [
-      { value: '50k+', label: 'Vectors' },
-      { value: 'Sharp', label: 'Cut Paths' },
-      { value: '6-12 Hr', label: 'Delivery' },
-      { value: '100%', label: 'Scale-Free' }
+      { value: '4–12h', label: 'Delivery' },
+      { value: 'Pantone', label: 'Spot Color' },
+      { value: 'AI, EPS', label: 'Vector Files' },
+      { value: '100%', label: 'Manual Redraw' }
     ],
     primary_cta: 'Order Vector Art Conversion',
     primary_btn_action: '/order',

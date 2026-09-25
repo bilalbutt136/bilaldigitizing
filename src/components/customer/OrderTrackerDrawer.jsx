@@ -573,12 +573,12 @@ export const OrderTrackerDrawer = () => {
         </span>
       );
     }
-    if (s === 'completed') return <span style={{ background: '#dcfce7', color: '#166534', border: '1px solid #bbf7d0', padding: '0.2rem 0.65rem', borderRadius: '9999px', fontSize: '0.75rem', fontWeight: 800 }}>✅ Completed</span>;
-    if (s === 'delivered') return <span style={{ background: '#dcfce7', color: '#15803d', border: '1px solid #86efac', padding: '0.2rem 0.65rem', borderRadius: '9999px', fontSize: '0.75rem', fontWeight: 800 }}>📦 Delivered</span>;
-    if (s === 'revision' || s === 'revision_requested') return <span style={{ background: '#fff1f2', color: '#e11d48', border: '1px solid #fecdd3', padding: '0.2rem 0.65rem', borderRadius: '9999px', fontSize: '0.75rem', fontWeight: 800 }}>🔄 Modification Requested</span>;
-    if (s === 'qc' || s === 'quality_check') return <span style={{ background: '#e0e7ff', color: '#4338ca', border: '1px solid #c7d2fe', padding: '0.2rem 0.65rem', borderRadius: '9999px', fontSize: '0.75rem', fontWeight: 800 }}>🔍 Quality Check</span>;
-    if (s === 'in_progress' || s === 'digitizing' || s === 'assigned') return <span style={{ background: '#e0f2fe', color: '#0369a1', border: '1px solid #bae6fd', padding: '0.2rem 0.65rem', borderRadius: '9999px', fontSize: '0.75rem', fontWeight: 800 }}>⚡ In Production</span>;
-    return <span style={{ background: '#fef3c7', color: '#b45309', border: '1px solid #fde68a', padding: '0.2rem 0.65rem', borderRadius: '9999px', fontSize: '0.75rem', fontWeight: 800 }}>🔴 Submitted</span>;
+    if (s === 'completed') return <span style={{ background: '#dcfce7', color: '#166534', border: '1px solid #bbf7d0', padding: '0.2rem 0.65rem', borderRadius: '9999px', fontSize: '0.75rem', fontWeight: 800 }}>Completed</span>;
+    if (s === 'delivered') return <span style={{ background: '#dcfce7', color: '#15803d', border: '1px solid #86efac', padding: '0.2rem 0.65rem', borderRadius: '9999px', fontSize: '0.75rem', fontWeight: 800 }}>Delivered</span>;
+    if (s === 'revision' || s === 'revision_requested') return <span style={{ background: '#fff1f2', color: '#e11d48', border: '1px solid #fecdd3', padding: '0.2rem 0.65rem', borderRadius: '9999px', fontSize: '0.75rem', fontWeight: 800 }}>Modification Requested</span>;
+    if (s === 'qc' || s === 'quality_check') return <span style={{ background: '#e0e7ff', color: '#4338ca', border: '1px solid #c7d2fe', padding: '0.2rem 0.65rem', borderRadius: '9999px', fontSize: '0.75rem', fontWeight: 800 }}>Quality Check</span>;
+    if (s === 'in_progress' || s === 'digitizing' || s === 'assigned') return <span style={{ background: '#e0f2fe', color: '#0369a1', border: '1px solid #bae6fd', padding: '0.2rem 0.65rem', borderRadius: '9999px', fontSize: '0.75rem', fontWeight: 800 }}>In Production</span>;
+    return <span style={{ background: '#fef3c7', color: '#b45309', border: '1px solid #fde68a', padding: '0.2rem 0.65rem', borderRadius: '9999px', fontSize: '0.75rem', fontWeight: 800 }}>Submitted</span>;
   };
 
   return (

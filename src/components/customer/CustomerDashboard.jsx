@@ -547,7 +547,7 @@ export const CustomerDashboard = () => {
           boxShadow: '0 2px 6px rgba(234, 88, 12, 0.15)',
           whiteSpace: 'nowrap'
         }}>
-          ⏳ Waiting for Payment to Start
+          Waiting for Payment
         </span>
       );
     }
@@ -573,33 +573,28 @@ export const CustomerDashboard = () => {
           gap: '0.3rem',
           whiteSpace: 'nowrap'
         }}>
-          ✅ Completed
+          Completed
         </span>
       );
     }
 
     if (isDelivered) {
       return (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem', alignItems: 'flex-start' }}>
-          <span style={{
-            background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-            color: '#ffffff',
-            padding: '0.25rem 0.65rem',
-            borderRadius: '9999px',
-            fontSize: '0.74rem',
-            fontWeight: 800,
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '0.3rem',
-            boxShadow: '0 2px 8px rgba(16, 185, 129, 0.35)',
-            whiteSpace: 'nowrap'
-          }}>
-            📦 Delivered (Files Ready)
-          </span>
-          <span style={{ fontSize: '0.7rem', color: '#047857', fontWeight: 700 }}>
-            Click to Download & Review
-          </span>
-        </div>
+        <span style={{
+          background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+          color: '#ffffff',
+          padding: '0.25rem 0.65rem',
+          borderRadius: '9999px',
+          fontSize: '0.74rem',
+          fontWeight: 800,
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: '0.3rem',
+          boxShadow: '0 2px 8px rgba(16, 185, 129, 0.35)',
+          whiteSpace: 'nowrap'
+        }}>
+          Delivered
+        </span>
       );
     }
 
@@ -618,7 +613,7 @@ export const CustomerDashboard = () => {
           gap: '0.3rem',
           whiteSpace: 'nowrap'
         }}>
-          🔄 Modification in Progress
+          In Revision
         </span>
       );
     }
@@ -638,7 +633,7 @@ export const CustomerDashboard = () => {
           gap: '0.3rem',
           whiteSpace: 'nowrap'
         }}>
-          🔍 Quality Check
+          Quality Check
         </span>
       );
     }
@@ -658,7 +653,7 @@ export const CustomerDashboard = () => {
           gap: '0.3rem',
           whiteSpace: 'nowrap'
         }}>
-          ⚡ In Production
+          In Production
         </span>
       );
     }
@@ -677,7 +672,7 @@ export const CustomerDashboard = () => {
         gap: '0.3rem',
         whiteSpace: 'nowrap'
       }}>
-        📋 Placed & Reviewing
+        Submitted
       </span>
     );
   };
@@ -1570,7 +1565,7 @@ export const CustomerDashboard = () => {
                           whiteSpace: 'nowrap'
                         }}
                       >
-                        📦 Delivered ({deliveredOrders.length})
+                        Delivered ({deliveredOrders.length})
                       </button>
 
                       <button 
@@ -1591,7 +1586,7 @@ export const CustomerDashboard = () => {
                           whiteSpace: 'nowrap'
                         }}
                       >
-                        🔄 In Revision ({revisionOrders.length})
+                        In Revision ({revisionOrders.length})
                       </button>
 
                       <button 
@@ -1612,7 +1607,7 @@ export const CustomerDashboard = () => {
                           whiteSpace: 'nowrap'
                         }}
                       >
-                        ✅ Completed ({completedOrders.length})
+                        Completed ({completedOrders.length})
                       </button>
                     </div>
 
@@ -1738,11 +1733,11 @@ export const CustomerDashboard = () => {
 
                                   {/* Service Type */}
                                   <td style={{ padding: '0.5rem 0.75rem' }}>
-                                    <div style={{ fontWeight: 700, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.8rem' }}>
-                                      {ord?.type === 'vector' ? '✒️ Vector Art' : (ord?.type === 'patch' || ord?.type === 'patches' ? '🏷️ Custom Patches' : '🧵 Embroidery Digitizing')}
+                                    <div style={{ fontWeight: 700, color: 'var(--text-main)', fontSize: '0.82rem' }}>
+                                      {ord?.serviceCategory || (ord?.type === 'vector' ? 'Vector Art' : (ord?.type === 'patch' || ord?.type === 'patches' ? 'Custom Patches' : 'Embroidery Digitizing'))}
                                     </div>
                                     <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '0.1rem' }}>
-                                      {ord?.serviceCategory || (ord?.type === 'vector' ? 'Vector Art Conversion' : (ord?.type === 'patch' || ord?.type === 'patches' ? 'Custom Physical Patches' : 'Embroidery Digitizing'))}
+                                      {ord?.fabricType || ord?.placement || (ord?.requestedFormats ? ord.requestedFormats.slice(0, 3).join(', ').toUpperCase() : (ord?.type === 'vector' ? 'Vector (.AI, .EPS)' : 'DST, PES, EMB'))}
                                     </div>
                                   </td>
 
@@ -1964,7 +1959,7 @@ export const CustomerDashboard = () => {
                                   </div>
 
                                   <div style={{ fontSize: '0.73rem', color: '#64748b', marginTop: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.35rem', flexWrap: 'wrap' }}>
-                                    <span>{ord?.type === 'vector' ? '✒️ Vector Art' : (ord?.type === 'patch' ? '🏷️ Custom Patches' : '🧵 Embroidery')}</span>
+                                    <span>{ord?.type === 'vector' ? 'Vector Art' : (ord?.type === 'patch' ? 'Custom Patches' : 'Embroidery')}</span>
                                     <span>•</span>
                                     <span>{ord?.createdAt || ord?.created_at ? `${new Date(ord.createdAt || ord.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} • ${new Date(ord.createdAt || ord.created_at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}` : 'Recent'}</span>
                                   </div>
@@ -2014,7 +2009,7 @@ export const CustomerDashboard = () => {
                                       alignItems: 'center',
                                       gap: '0.25rem'
                                     }}>
-                                      🔄 Modification Sent
+                                      Modification Sent
                                     </span>
                                   ) : isDelivered ? (
                                     <button
@@ -2416,7 +2411,7 @@ export const CustomerDashboard = () => {
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid #f1f5f9', paddingTop: '0.65rem', fontSize: '0.78rem' }}>
                               <span style={{ color: 'var(--text-muted)' }}>Amount: <strong style={{ color: 'var(--navy-950)' }}>${Number(ord.totalPrice || ord.price || 0).toFixed(2)}</strong></span>
                               <span style={{ color: ord.isRush ? '#ea580c' : '#64748b', fontWeight: 700 }}>
-                                {ord.isRush ? '⚡ Express 4-8h' : '⏱️ Standard 12-24h'}
+                                {ord.isRush ? 'Express (4–8h)' : 'Standard (12–24h)'}
                               </span>
                             </div>
 
@@ -2427,7 +2422,7 @@ export const CustomerDashboard = () => {
                                 className="btn btn-outline"
                                 style={{ padding: '0.45rem', fontSize: '0.78rem', fontWeight: 800, borderRadius: '8px', justifyContent: 'center' }}
                               >
-                                {isDelivered ? '📥 Files & Details' : '🔍 Track Order'}
+                                {isDelivered ? 'Files & Details' : 'Track Order'}
                               </button>
                             </div>
                           </div>

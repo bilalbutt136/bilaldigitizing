@@ -1995,9 +1995,9 @@ export const BDigitizingMobileApp = () => {
           <div style={{ display: 'flex', gap: '0.4rem', overflowX: 'auto', paddingBottom: '0.2rem' }}>
             {[
               { id: 'all', label: 'All Services' },
-              { id: 'embroidery', label: '🧵 Embroidery' },
-              { id: 'vector', label: '📐 Vector Art' },
-              { id: 'patches', label: '📦 Patches' }
+              { id: 'embroidery', label: 'Embroidery' },
+              { id: 'vector', label: 'Vector Art' },
+              { id: 'patches', label: 'Patches' }
             ].map(f => (
               <button
                 key={f.id}
@@ -2224,10 +2224,10 @@ export const BDigitizingMobileApp = () => {
           <div style={{ padding: '0.45rem 0.75rem 0.2rem', display: 'flex', gap: '0.4rem', overflowX: 'auto', WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none' }}>
             {[
               { id: 'all', label: `All (${myOrders.length})` },
-              { id: 'awaiting_payment', label: `⏳ Waiting (${unpaidOrders.length})`, highlight: unpaidOrders.length > 0, unpaid: true },
-              { id: 'active', label: `⚡ Active (${activeOrders.length})` },
-              { id: 'delivered', label: `📦 Delivered (${deliveredOrders.length})`, highlight: deliveredOrders.length > 0 },
-              { id: 'completed', label: `✓ Done (${completedOrders.length})` }
+              { id: 'awaiting_payment', label: `Waiting (${unpaidOrders.length})`, highlight: unpaidOrders.length > 0, unpaid: true },
+              { id: 'active', label: `Active (${activeOrders.length})` },
+              { id: 'delivered', label: `Delivered (${deliveredOrders.length})`, highlight: deliveredOrders.length > 0 },
+              { id: 'completed', label: `Completed (${completedOrders.length})` }
             ].map(f => {
               const isSelected = orderFilter === f.id;
               let bg = isDark ? 'var(--color-surface, #111827)' : '#ffffff';
@@ -2443,28 +2443,28 @@ export const BDigitizingMobileApp = () => {
                 };
                 if (isUnpaid) {
                   badgeInfo = { 
-                    label: '⏳ WAITING FOR PAYMENT', 
+                    label: 'WAITING FOR PAYMENT', 
                     bg: isDark ? 'rgba(234, 88, 12, 0.15)' : '#fff7ed', 
                     border: isDark ? 'rgba(234, 88, 12, 0.4)' : '#fdba74', 
                     color: isDark ? '#fb923c' : '#c2410c' 
                   };
                 } else if (isDelivered) {
                   badgeInfo = { 
-                    label: '📦 DELIVERED', 
+                    label: 'DELIVERED', 
                     bg: isDark ? 'rgba(16, 185, 129, 0.15)' : '#ecfdf5', 
                     border: isDark ? 'rgba(16, 185, 129, 0.4)' : '#86efac', 
                     color: isDark ? '#34d399' : '#047857' 
                   };
                 } else if (isCompleted) {
                   badgeInfo = { 
-                    label: '✓ COMPLETED', 
+                    label: 'COMPLETED', 
                     bg: isDark ? 'var(--color-subtle, #1e293b)' : '#f1f5f9', 
                     border: isDark ? 'var(--color-border, #334155)' : '#cbd5e1', 
                     color: isDark ? '#94a3b8' : '#334155' 
                   };
                 } else if (isRevision) {
                   badgeInfo = { 
-                    label: '🔄 REVISION', 
+                    label: 'REVISION', 
                     bg: isDark ? 'rgba(234, 88, 12, 0.15)' : '#fff7ed', 
                     border: isDark ? 'rgba(234, 88, 12, 0.4)' : '#fdba74', 
                     color: isDark ? '#fb923c' : '#ea580c' 
@@ -2638,7 +2638,7 @@ export const BDigitizingMobileApp = () => {
                         fontWeight: 800,
                         color: isDark ? '#34d399' : '#047857'
                       }}>
-                        <span>📦 Files Ready for Download</span>
+                        <span>Files Ready for Download</span>
                         <span style={{ textDecoration: 'underline' }}>Review & Download →</span>
                       </div>
                     )}
@@ -3656,7 +3656,7 @@ export const BDigitizingMobileApp = () => {
                   }}
                   title="Test Sound"
                 >
-                  🔊 Test
+                  <Volume2 size={13} style={{ marginRight: '4px', verticalAlign: 'middle' }} /> Test
                 </button>
               </div>
             </div>

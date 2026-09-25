@@ -191,12 +191,12 @@ export const AdminExecutiveDashboard = ({
   const getCategoryBadgeStyle = (serviceCategory, type) => {
     const combined = String(serviceCategory || type || '').toLowerCase();
     if (combined.includes('vector') || combined.includes('trace')) {
-      return { label: 'Vector Tracing', icon: '✒️', bg: '#eff6ff', color: '#2563eb', border: '#bfdbfe' };
+      return { label: 'Vector Tracing', icon: '', bg: '#eff6ff', color: '#2563eb', border: '#bfdbfe' };
     }
     if (combined.includes('patch')) {
-      return { label: 'Custom Patches', icon: '🏷️', bg: '#faf5ff', color: '#9333ea', border: '#e9d5ff' };
+      return { label: 'Custom Patches', icon: '', bg: '#faf5ff', color: '#9333ea', border: '#e9d5ff' };
     }
-    return { label: 'Embroidery Digitizing', icon: '🧵', bg: '#fff7ed', color: '#ea580c', border: '#fed7aa' };
+    return { label: 'Embroidery Digitizing', icon: '', bg: '#fff7ed', color: '#ea580c', border: '#fed7aa' };
   };
 
   return (
@@ -669,7 +669,7 @@ export const AdminExecutiveDashboard = ({
                   alignItems: 'center',
                   gap: '0.35rem'
                 }}>
-                  🔥 Rush Orders Only ({filteredQueue.length})
+                  Rush Orders Only ({filteredQueue.length})
                   <button
                     type="button"
                     onClick={() => setSelectedStatus('all')}
@@ -709,7 +709,7 @@ export const AdminExecutiveDashboard = ({
                   alignItems: 'center',
                   gap: '0.35rem'
                 }}>
-                  ⏳ Pending Review Only ({filteredQueue.length})
+                  Pending Review Only ({filteredQueue.length})
                   <button
                     type="button"
                     onClick={() => setSelectedStatus('all')}
@@ -816,7 +816,7 @@ export const AdminExecutiveDashboard = ({
                     gap: '0.25rem'
                   }}
                 >
-                  🔥 Rush ({rushJobs.length})
+                  Rush ({rushJobs.length})
                 </button>
               )}
 
@@ -834,7 +834,7 @@ export const AdminExecutiveDashboard = ({
                   cursor: 'pointer'
                 }}
               >
-                🧵 Embroidery ({categoryStats.embroidery.count})
+                Embroidery ({categoryStats.embroidery.count})
               </button>
 
               <button
@@ -851,7 +851,7 @@ export const AdminExecutiveDashboard = ({
                   cursor: 'pointer'
                 }}
               >
-                ✒️ Vector ({categoryStats.vector.count})
+                Vector ({categoryStats.vector.count})
               </button>
 
               <button
@@ -868,7 +868,7 @@ export const AdminExecutiveDashboard = ({
                   cursor: 'pointer'
                 }}
               >
-                🏷️ Patches ({categoryStats.patches.count})
+                Patches ({categoryStats.patches.count})
               </button>
             </div>
           </div>

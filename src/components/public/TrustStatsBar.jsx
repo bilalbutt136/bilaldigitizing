@@ -103,10 +103,10 @@ export const TrustStatsBar = () => {
 
   if (displayStats.length === 0) {
     displayStats = [
-      { id: '1', icon: <FileCheck size={24} color="var(--orange-500)" />, value: '15000', suffix: '+', label: 'Orders Completed', isStatic: false, staticText: '15000' },
-      { id: '2', icon: <Users size={24} color="var(--orange-500)" />, value: '3900', suffix: '+', label: 'Happy Clients', isStatic: false, staticText: '3900' },
-      { id: '3', icon: <ShieldCheck size={24} color="var(--orange-500)" />, value: '100', suffix: '%', label: 'Success Rate', isStatic: false, staticText: '100' },
-      { id: '4', icon: <Zap size={24} color="var(--orange-500)" />, value: '12h', suffix: '', label: 'Avg Turnaround', isStatic: true, staticText: '12h' }
+      { id: '1', icon: <Zap size={24} color="var(--orange-500)" />, value: '4–12h', suffix: '', label: 'Average Turnaround', isStatic: true, staticText: '4–12h' },
+      { id: '2', icon: <ShieldCheck size={24} color="var(--orange-500)" />, value: '100%', suffix: '', label: 'Manual Pathing Guarantee', isStatic: true, staticText: '100%' },
+      { id: '3', icon: <FileCheck size={24} color="var(--orange-500)" />, value: 'Zero', suffix: '', label: 'Thread Breaks Policy', isStatic: true, staticText: 'Zero' },
+      { id: '4', icon: <Award size={24} color="var(--orange-500)" />, value: 'Free', suffix: '', label: 'Unlimited Revisions', isStatic: true, staticText: 'Free' }
     ];
   }
 
