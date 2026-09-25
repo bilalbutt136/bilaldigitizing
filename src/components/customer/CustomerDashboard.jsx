@@ -31,7 +31,8 @@ import {
   Sparkles,
   ArrowRight,
   Receipt,
-  MessageSquare
+  MessageSquare,
+  Download
 } from 'lucide-react';
 import { ClientSidebar } from './ClientSidebar';
 import { MobileSimpleOrderModal } from './MobileSimpleOrderModal';
