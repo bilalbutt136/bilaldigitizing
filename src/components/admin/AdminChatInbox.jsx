@@ -347,7 +347,15 @@ export default function AdminChatInbox({ initialChannel = 'inbox' }) {
         try {
           const mRes = await fetch(`/api/chat/messages?conversationId=${encodeURIComponent(activeConversationId)}`);
           const mData = await mRes.json();
-          if (mData?.messages && mData.messages.length !== messages.length) {
+          if (mData?.messages && mData.messages.length > messages.length) {
+            const newArrivals = mData.messages.slice(messages.length);
+            const clientMsg = newArrivals.find(m => m.sender === 'client');
+            if (clientMsg) {
+              playMessageChimeForMessage(clientMsg.id);
+            }
+            setMessages(mData.messages);
+            scrollToBottom();
+          } else if (mData?.messages && mData.messages.length !== messages.length) {
             setMessages(mData.messages);
             scrollToBottom();
           }
@@ -392,8 +400,9 @@ export default function AdminChatInbox({ initialChannel = 'inbox' }) {
           filter: `conversation_id=eq.${activeConversationId}`
         }, (payload) => {
           if (payload.new) {
-            // When message arrives in the currently active conversation, stop any ringing tune
-            stopNotificationSound();
+            if (payload.new.sender === 'client') {
+              playMessageChimeForMessage(payload.new.id);
+            }
             setMessages(prev => {
               if (prev.some(m => m.id === payload.new.id)) return prev;
               return [...prev, payload.new];
@@ -428,17 +437,15 @@ export default function AdminChatInbox({ initialChannel = 'inbox' }) {
         table: 'messages'
       }, (payload) => {
         if (payload.new && payload.new.sender === 'client') {
-          // If this message belongs to the conversation currently open in front of admin:
+          // Always ring for incoming customer message
+          playMessageChimeForMessage(payload.new.id);
+
           if (payload.new.conversation_id === activeConversationId) {
-            stopNotificationSound();
             fetch('/api/chat/conversations', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ action: 'markRead', conversationId: activeConversationId })
             }).catch(() => {});
-          } else {
-            // Customer messaged a different thread: ring exactly ONCE with message ID deduplication!
-            playMessageChimeForMessage(payload.new.id);
           }
 
           // Refresh conversations and unread badges immediately

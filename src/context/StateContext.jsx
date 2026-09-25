@@ -1512,13 +1512,19 @@ export const StateProvider = ({ children }) => {
   // Synchronize custom notification audio configuration from siteSettings
   useEffect(() => {
     if (siteSettings) {
-      const soundUrl = siteSettings.notificationSoundUrl || siteSettings.notification_sound_url || null;
-      const soundName = siteSettings.notificationSoundName || siteSettings.notification_sound_name || null;
-      const soundActive = siteSettings.notificationSoundActive !== false && siteSettings.notification_sound_active !== false;
+      const soundUrl = siteSettings.notificationSoundUrl || siteSettings.notification_sound_url || siteSettings.notification_sound_settings?.url || null;
+      const soundName = siteSettings.notificationSoundName || siteSettings.notification_sound_name || siteSettings.notification_sound_settings?.name || null;
+      const soundActive = siteSettings.notificationSoundActive !== false && 
+        siteSettings.notification_sound_active !== false && 
+        siteSettings.notificationSoundEnabled !== false &&
+        siteSettings.notification_sound_enabled !== false &&
+        siteSettings.notification_sound_settings?.enabled !== false;
       const soundVolume = siteSettings.notificationSoundVolume !== undefined 
         ? siteSettings.notificationSoundVolume 
-        : (siteSettings.notification_sound_volume !== undefined ? siteSettings.notification_sound_volume : 1.0);
-      const soundPreset = siteSettings.notificationSoundPreset || siteSettings.notification_sound_preset || 'custom';
+        : (siteSettings.notification_sound_volume !== undefined 
+            ? siteSettings.notification_sound_volume 
+            : (siteSettings.notification_sound_settings?.volume ?? 1.0));
+      const soundPreset = siteSettings.notificationSoundPreset || siteSettings.notification_sound_preset || siteSettings.notification_sound_settings?.preset || 'custom';
 
       configureAudioNotification({
         url: soundUrl,

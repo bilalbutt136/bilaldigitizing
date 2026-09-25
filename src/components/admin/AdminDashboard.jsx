@@ -13,8 +13,8 @@ import { AdminExecutiveDashboard } from './AdminExecutiveDashboard';
 import { PromotionsManager } from './PromotionsManager';
 import { ContactInfoManager } from './ContactInfoManager';
 import { PortfolioManager } from './PortfolioManager';
-import { isSupabaseConfigured } from '../../lib/supabase/client';
-import { stopNotificationSound } from '../../utils/audioNotification';
+import { isSupabaseConfigured, supabase } from '../../lib/supabase/client';
+import { stopNotificationSound, playMessageChime, playMessageChimeForMessage } from '../../utils/audioNotification';
 import { 
   LayoutDashboard, 
   ClipboardList, 
@@ -84,6 +84,11 @@ export const AdminDashboard = () => {
         const supportTotal = (supportData?.conversations || []).reduce((sum, c) => sum + (c.unread_admin_count || 0), 0);
         const currentTotal = inboxTotal + supportTotal;
 
+        // If unread messages count increased, ring chime if not already rung
+        if (prevUnreadTotalRef.current !== null && currentTotal > prevUnreadTotalRef.current) {
+          playMessageChime();
+        }
+
         setUnreadChatCount(inboxTotal);
         setUnreadSupportCount(supportTotal);
         prevUnreadTotalRef.current = currentTotal;
@@ -92,7 +97,35 @@ export const AdminDashboard = () => {
 
     fetchUnreadChats();
     const interval = setInterval(fetchUnreadChats, 8000);
-    return () => clearInterval(interval);
+
+    // Global Realtime listener so message chime rings INSTANTLY across any Admin Dashboard tab
+    let channel = null;
+    try {
+      if (supabase) {
+        channel = supabase
+          .channel('admin-dashboard-global-chime')
+          .on('postgres_changes', {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'messages'
+          }, (payload) => {
+            if (payload.new && payload.new.sender === 'client') {
+              playMessageChimeForMessage(payload.new.id);
+              fetchUnreadChats();
+            }
+          })
+          .subscribe();
+      }
+    } catch {}
+
+    return () => {
+      clearInterval(interval);
+      if (channel && supabase) {
+        try {
+          supabase.removeChannel(channel);
+        } catch {}
+      }
+    };
   }, []);
 
   React.useEffect(() => {
