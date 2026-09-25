@@ -274,7 +274,7 @@ export default function WorkerRegisterPage() {
             marginBottom: '1rem',
             boxShadow: '0 8px 24px rgba(249, 115, 22, 0.35)'
           }}>
-            <Scissors size={34} />
+            <img src="/favicon.png" alt="BDigitizing" style={{ width: '32px', height: '36px', objectFit: 'contain' }} />
           </div>
 
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', background: 'rgba(249, 115, 22, 0.15)', color: '#fb923c', border: '1px solid rgba(249, 115, 22, 0.3)', padding: '0.2rem 0.65rem', borderRadius: '9999px', fontSize: '0.75rem', fontWeight: 800, marginBottom: '0.65rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>

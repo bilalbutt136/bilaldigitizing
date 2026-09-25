@@ -860,16 +860,21 @@ export const BDigitizingMobileApp = () => {
         fontFamily: "'Inter', system-ui, -apple-system, sans-serif"
       }}>
         <div style={{
-          width: '68px',
-          height: '68px',
+          width: '72px',
+          height: '72px',
           borderRadius: '20px',
-          background: 'linear-gradient(135deg, #047857 0%, #10b981 100%)',
+          background: 'linear-gradient(135deg, #0f172a, #1e293b)',
+          border: '1.5px solid rgba(16, 185, 129, 0.4)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          boxShadow: '0 10px 28px rgba(4, 120, 87, 0.3)'
+          boxShadow: '0 10px 28px rgba(16, 185, 129, 0.25)'
         }}>
-          <span style={{ fontSize: '2rem', fontWeight: 900, color: '#ffffff' }}>B</span>
+          <img 
+            src="/favicon.png" 
+            alt="BDigitizing" 
+            style={{ width: '42px', height: '48px', objectFit: 'contain', display: 'block' }} 
+          />
         </div>
         <div style={{ textAlign: 'center' }}>
           <div style={{ fontSize: '1.35rem', fontWeight: 900, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a', letterSpacing: '-0.02em' }}>
@@ -945,8 +950,11 @@ export const BDigitizingMobileApp = () => {
               <ArrowLeft size={16} /> Back
             </button>
 
-            <div style={{ fontSize: '1.15rem', fontWeight: 900, color: '#047857', letterSpacing: '-0.02em' }}>
-              bdigitizing<span style={{ color: '#10b981' }}>.</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+              <img src="/favicon.png" alt="BDigitizing" style={{ width: '18px', height: '22px', objectFit: 'contain' }} />
+              <div style={{ fontSize: '1.15rem', fontWeight: 900, color: '#047857', letterSpacing: '-0.02em' }}>
+                bdigitizing<span style={{ color: '#10b981' }}>.</span>
+              </div>
             </div>
 
             <button
@@ -1529,6 +1537,7 @@ export const BDigitizingMobileApp = () => {
           {/* Top Brand Header */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: isDark ? 'var(--color-surface, #111827)' : '#ffffff', padding: '0.75rem 1rem', borderRadius: '16px', border: isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid #cbd5e1', boxShadow: '0 2px 8px rgba(0,0,0,0.02)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+              <img src="/favicon.png" alt="BDigitizing" style={{ width: '22px', height: '26px', objectFit: 'contain' }} />
               <span style={{ fontSize: '1.45rem', fontWeight: 900, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a', letterSpacing: '-0.03em' }}>
                 bdigitizing<span style={{ color: '#ea580c' }}>.</span>
               </span>

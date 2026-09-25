@@ -154,14 +154,24 @@ export const Footer = () => {
                 />
               ) : (
                 <div style={{
-                  background: 'var(--orange-500)',
-                  color: '#ffffff',
-                  padding: '0.5rem',
-                  borderRadius: '8px',
-                  boxShadow: '0 4px 12px rgba(249, 115, 22, 0.35)',
-                  flexShrink: 0
+                  background: 'linear-gradient(135deg, #0f172a, #1e293b)',
+                  border: '1.5px solid rgba(249, 115, 22, 0.4)',
+                  padding: '0.4rem',
+                  borderRadius: '10px',
+                  boxShadow: '0 4px 12px rgba(249, 115, 22, 0.25)',
+                  flexShrink: 0,
+                  width: '40px',
+                  height: '40px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxSizing: 'border-box'
                 }}>
-                  <Scissors size={22} />
+                  <img
+                    src="/favicon.png"
+                    alt="BDigitizing Logo"
+                    style={{ width: '26px', height: '30px', objectFit: 'contain', display: 'block' }}
+                  />
                 </div>
               )}
               <span style={{ fontFamily: 'var(--font-heading)', fontWeight: 900, fontSize: '1.4rem', letterSpacing: '-0.02em' }}>

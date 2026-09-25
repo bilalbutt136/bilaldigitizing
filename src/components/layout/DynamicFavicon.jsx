@@ -25,7 +25,7 @@ export const DynamicFavicon = () => {
         try { el.parentNode?.removeChild(el); } catch {}
       });
 
-      const cacheBustUrl = targetUrl + (targetUrl.includes('?') ? '&' : '?') + 't=' + (faviconUrl ? encodeURIComponent(faviconUrl.slice(-10)) : 'v3');
+      const cacheBustUrl = targetUrl + (targetUrl.includes('?') ? '&' : '?') + 't=' + (faviconUrl ? encodeURIComponent(faviconUrl.slice(-10)) : 'v4');
 
       // Create fresh link tags
       const link1 = document.createElement('link');

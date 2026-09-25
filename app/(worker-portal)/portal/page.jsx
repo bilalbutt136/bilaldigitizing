@@ -168,7 +168,7 @@ export default function WorkerPortalDashboardPage() {
             marginBottom: '1.5rem',
             boxShadow: '0 8px 24px rgba(249, 115, 22, 0.35)'
           }}>
-            <Scissors size={30} color="#ffffff" />
+            <img src="/favicon.png" alt="BDigitizing" style={{ width: '32px', height: '36px', objectFit: 'contain' }} />
           </div>
           
           <div style={{

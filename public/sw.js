@@ -1,5 +1,5 @@
 // BDigitizing Studio PWA Service Worker with Native Push & Lock-Screen Alerts
-const CACHE_VERSION = 'bdigi-pwa-v3.0';
+const CACHE_VERSION = 'bdigi-pwa-v4.0';
 const STATIC_ASSETS = [
   '/manifest.json'
 ];
@@ -97,8 +97,8 @@ self.addEventListener('push', (event) => {
   let data = {
     title: 'BDigitizing Notification',
     body: 'You have a new message or order update.',
-    icon: '/favicon.svg',
-    badge: '/favicon.svg',
+    icon: '/icon-192.png',
+    badge: '/favicon.png',
     tag: 'bdigi-alert',
     url: '/?app=true'
   };
@@ -116,8 +116,8 @@ self.addEventListener('push', (event) => {
 
   const notificationOptions = {
     body: data.body,
-    icon: data.icon || '/favicon.svg',
-    badge: data.badge || '/favicon.svg',
+    icon: (data.icon && !data.icon.endsWith('.svg')) ? data.icon : '/icon-192.png',
+    badge: (data.badge && !data.badge.endsWith('.svg')) ? data.badge : '/favicon.png',
     tag: data.tag || `bdigi-${Date.now()}`,
     renotify: true,
     requireInteraction: true, // Keeps notification active on lock screen

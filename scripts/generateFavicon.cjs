@@ -2,7 +2,8 @@ const sharp = require('sharp');
 const fs = require('fs');
 const path = require('path');
 
-const srcPath = 'C:/Users/Latitude 7400 2in1/.gemini/antigravity/brain/eac5f6e2-c599-4d02-9399-f6e519816927/.user_uploaded/media_1790247741277.png';
+const srcPath = 'C:/Users/Latitude 7400 2in1/.gemini/antigravity/brain/eac5f6e2-c599-4d02-9399-f6e519816927/.user_uploaded/media_1790347476844.png';
+const largeSrcPath = 'C:/Users/Latitude 7400 2in1/.gemini/antigravity/brain/eac5f6e2-c599-4d02-9399-f6e519816927/.user_uploaded/media_1790347476927.jpg';
 
 async function createBmpIco(sizes, src) {
   const images = [];
@@ -86,13 +87,16 @@ async function createBmpIco(sizes, src) {
 }
 
 async function main() {
-  console.log('Reading source image:', srcPath);
-  const originalRaw = fs.readFileSync(srcPath);
-  const base64Data = originalRaw.toString('base64');
+  console.log('Reading source images:');
+  console.log('  Small logo (icon):', srcPath);
+  console.log('  Large logo (brand):', largeSrcPath);
 
-  // 1. Generate SVG with base64 data URL
+  const smallRaw = fs.readFileSync(srcPath);
+  const smallBase64 = smallRaw.toString('base64');
+
+  // 1. Generate SVG with base64 data URL from the embroidered B icon
   const svgContent = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48">
-  <image href="data:image/png;base64,${base64Data}" x="4" y="0" width="40" height="48" />
+  <image href="data:image/png;base64,${smallBase64}" x="4" y="0" width="40" height="48" />
 </svg>
 `;
 
@@ -100,58 +104,55 @@ async function main() {
   fs.writeFileSync(path.join(__dirname, '../app/icon.svg'), svgContent, 'utf8');
   console.log('Updated public/favicon.svg and app/icon.svg');
 
-  // 2. Generate ICO with 16, 32, 48 sizes
+  // 2. Generate ICO with 16, 32, 48 sizes from embroidered B icon
   const icoBuf = await createBmpIco([16, 32, 48], srcPath);
   fs.writeFileSync(path.join(__dirname, '../public/favicon.ico'), icoBuf);
   fs.writeFileSync(path.join(__dirname, '../app/favicon.ico'), icoBuf);
   console.log('Updated public/favicon.ico and app/favicon.ico');
 
-  // 3. Generate square PNG icons
+  // 3. Generate small square PNG icons (48x48)
   const p48 = await sharp(srcPath)
     .resize(48, 48, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } })
     .png()
     .toBuffer();
   fs.writeFileSync(path.join(__dirname, '../public/favicon.png'), p48);
   fs.writeFileSync(path.join(__dirname, '../app/icon.png'), p48);
-  console.log('Updated public/favicon.png and app/icon.png');
+  fs.writeFileSync(path.join(__dirname, '../public/logo-icon.png'), p48);
+  fs.writeFileSync(path.join(__dirname, '../public/logo-small.png'), p48);
+  console.log('Updated public/favicon.png, app/icon.png, logo-icon.png, logo-small.png');
 
-  const p192 = await sharp(srcPath)
-    .resize(192, 192, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } })
+  // 4. Generate high-resolution PWA & push notification icons from large brand logo
+  const p192 = await sharp(largeSrcPath)
+    .resize(192, 192, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 1 } })
     .png()
     .toBuffer();
   fs.writeFileSync(path.join(__dirname, '../public/icon-192.png'), p192);
   console.log('Updated public/icon-192.png');
 
-  const p512 = await sharp(srcPath)
-    .resize(512, 512, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } })
+  const p512 = await sharp(largeSrcPath)
+    .resize(512, 512, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 1 } })
     .png()
     .toBuffer();
   fs.writeFileSync(path.join(__dirname, '../public/icon-512.png'), p512);
   console.log('Updated public/icon-512.png');
 
-  // Apple touch icon: 180x180, centered on #0f172a background for crisp native display
-  const innerB = await sharp(srcPath)
-    .resize(120, 144, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } })
+  // 5. Apple touch icon: 180x180 from large brand logo
+  const pApple = await sharp(largeSrcPath)
+    .resize(180, 180, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 1 } })
     .png()
     .toBuffer();
-
-  const pApple = await sharp({
-    create: {
-      width: 180,
-      height: 180,
-      channels: 4,
-      background: { r: 15, g: 23, b: 42, alpha: 1 } // #0f172a
-    }
-  })
-    .composite([{ input: innerB, top: 18, left: 30 }])
-    .png()
-    .toBuffer();
-
   fs.writeFileSync(path.join(__dirname, '../public/apple-touch-icon.png'), pApple);
   fs.writeFileSync(path.join(__dirname, '../app/apple-icon.png'), pApple);
   console.log('Updated public/apple-touch-icon.png and app/apple-icon.png');
 
-  console.log('All favicon and icon assets generated successfully!');
+  // 6. Generate crisp high-resolution public/logo.png from large logo
+  const pLogo = await sharp(largeSrcPath)
+    .png()
+    .toBuffer();
+  fs.writeFileSync(path.join(__dirname, '../public/logo.png'), pLogo);
+  console.log('Updated public/logo.png (high resolution)');
+
+  console.log('All favicon, PWA, notification, and brand logo assets generated successfully!');
 }
 
 main().catch(err => {

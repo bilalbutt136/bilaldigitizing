@@ -320,8 +320,8 @@ export async function dispatchChatMessagePush({
   const payload = {
     title,
     body,
-    icon: '/favicon.svg',
-    badge: '/favicon.svg',
+    icon: '/icon-192.png',
+    badge: '/favicon.png',
     tag: `chat-${conversationId || Date.now()}`,
     url,
     conversationId,
@@ -368,13 +368,13 @@ export async function dispatchOrderPush({
       title = `✅ Order #${cleanId} Confirmed`;
       body = `Thank you! Your order for ${serviceName} is now in queue.`;
     }
-    return await dispatchPushToDevices({ email: recipientEmail, payload: { title, body, url, orderId: cleanId, tag: `order-${cleanId}`, icon: '/favicon.svg' } });
+    return await dispatchPushToDevices({ email: recipientEmail, payload: { title, body, url, orderId: cleanId, tag: `order-${cleanId}`, icon: '/icon-192.png', badge: '/favicon.png' } });
   } else {
     // Admin Alert
     url = `/admin-portal?tab=orders&trackOrder=${encodeURIComponent(cleanId)}`;
     title = `🎉 New Order #${cleanId}`;
     body = `${clientName} placed an order for ${serviceName}.`;
-    return await dispatchPushToDevices({ role: 'admin', payload: { title, body, url, orderId: cleanId, tag: `order-${cleanId}`, icon: '/favicon.svg' } });
+    return await dispatchPushToDevices({ role: 'admin', payload: { title, body, url, orderId: cleanId, tag: `order-${cleanId}`, icon: '/icon-192.png', badge: '/favicon.png' } });
   }
 }
 
@@ -392,8 +392,8 @@ export async function dispatchSystemNotificationPush({
   const payload = {
     title,
     body: message,
-    icon: '/favicon.svg',
-    badge: '/favicon.svg',
+    icon: '/icon-192.png',
+    badge: '/favicon.png',
     tag: orderId ? `order-${orderId}` : `notif-${Date.now()}`,
     url: link || '/',
     orderId,

@@ -301,17 +301,24 @@ export const HeaderNav = () => {
             />
           ) : (
             <div style={{
-              background: 'linear-gradient(135deg, var(--color-surface-elevated, #090d16), var(--color-primary))',
-              color: 'var(--color-text-on-primary, #ffffff)',
-              padding: '0.45rem',
+              background: 'linear-gradient(135deg, var(--color-surface-elevated, #090d16), rgba(249, 115, 22, 0.12))',
+              border: '1.5px solid rgba(249, 115, 22, 0.35)',
+              padding: '0.35rem',
               borderRadius: 'var(--radius-md)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               boxShadow: '0 4px 12px var(--color-primary-glow)',
-              flexShrink: 0
+              flexShrink: 0,
+              width: '38px',
+              height: '38px',
+              boxSizing: 'border-box'
             }}>
-              <Scissors size={20} style={{ color: 'var(--color-primary)' }} />
+              <img
+                src="/favicon.png"
+                alt="BDigitizing Logo"
+                style={{ width: '24px', height: '28px', objectFit: 'contain', display: 'block' }}
+              />
             </div>
           )}
           <div>
@@ -1106,17 +1113,24 @@ export const HeaderNav = () => {
                   />
                 ) : (
                   <div style={{
-                    background: 'linear-gradient(135deg, #090d16, var(--color-primary))',
-                    color: '#ffffff',
-                    padding: '0.4rem',
+                    background: 'linear-gradient(135deg, #090d16, rgba(249, 115, 22, 0.12))',
+                    border: '1.5px solid rgba(249, 115, 22, 0.35)',
+                    padding: '0.3rem',
                     borderRadius: '8px',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     boxShadow: '0 2px 8px var(--color-primary-glow)',
-                    flexShrink: 0
+                    flexShrink: 0,
+                    width: '34px',
+                    height: '34px',
+                    boxSizing: 'border-box'
                   }}>
-                    <Scissors size={18} style={{ color: 'var(--color-primary)' }} />
+                    <img
+                      src="/favicon.png"
+                      alt="BDigitizing Logo"
+                      style={{ width: '22px', height: '26px', objectFit: 'contain', display: 'block' }}
+                    />
                   </div>
                 )}
                 <div>

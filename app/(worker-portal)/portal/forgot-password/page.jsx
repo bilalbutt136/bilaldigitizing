@@ -80,7 +80,7 @@ export default function PortalForgotPasswordPage() {
             marginBottom: '1rem',
             boxShadow: '0 8px 24px rgba(249, 115, 22, 0.35)'
           }}>
-            <Scissors size={28} />
+            <img src="/favicon.png" alt="BDigitizing" style={{ width: '28px', height: '32px', objectFit: 'contain' }} />
           </div>
 
           <h2 style={{ fontSize: '1.5rem', fontWeight: 800, color: '#ffffff', marginBottom: '0.4rem', letterSpacing: '-0.02em' }}>

@@ -104,7 +104,7 @@ export const ArtworkLightboxModal = ({ order, onClose }) => {
           alignItems: 'center'
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            <Scissors size={20} style={{ color: 'var(--orange-500)' }} />
+            <img src="/favicon.png" alt="BDigitizing" style={{ width: '20px', height: '24px', objectFit: 'contain' }} />
             <div>
               <h3 style={{ fontSize: '1.2rem', color: 'var(--color-text-primary)', marginBottom: '0.1rem', fontWeight: 800 }}>
                 Artwork Source Inspection: {order.title || 'Design Artwork'}

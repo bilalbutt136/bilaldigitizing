@@ -69,7 +69,7 @@ export const metadata = {
     type: 'website',
     images: [
       {
-        url: '/icon.svg',
+        url: '/icon-512.png',
         width: 512,
         height: 512,
         alt: 'BDigitizing Studio Logo',
@@ -80,7 +80,7 @@ export const metadata = {
     card: 'summary_large_image',
     title: 'BDigitizing | Premier Machine Embroidery Digitizing & Vector Art Lab',
     description: 'Commercial Machine Embroidery Digitizing, Vector Art Tracing, & Custom Physical Patches with 4-8 Hour Express Turnaround.',
-    images: ['/icon.svg'],
+    images: ['/icon-512.png'],
   },
   robots: {
     index: true,

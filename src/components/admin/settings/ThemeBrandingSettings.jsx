@@ -29,8 +29,8 @@ export const ThemeBrandingSettings = () => {
   const [isSaving, setIsSaving] = useState(false);
 
   // Logo & Favicon state
-  const [logoUrl, setLogoUrl] = useState(siteSettings?.logoUrl || '');
-  const [faviconUrl, setFaviconUrl] = useState(siteSettings?.faviconUrl || '');
+  const [logoUrl, setLogoUrl] = useState(siteSettings?.logoUrl || '/logo.png');
+  const [faviconUrl, setFaviconUrl] = useState(siteSettings?.faviconUrl || '/favicon.ico');
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
   const [isUploadingFavicon, setIsUploadingFavicon] = useState(false);
   const [isSavingBranding, setIsSavingBranding] = useState(false);
@@ -40,10 +40,10 @@ export const ThemeBrandingSettings = () => {
   // Sync with live database settings when loaded
   React.useEffect(() => {
     if (siteSettings?.logoUrl !== undefined) {
-      setLogoUrl(siteSettings.logoUrl || '');
+      setLogoUrl(siteSettings.logoUrl || '/logo.png');
     }
     if (siteSettings?.faviconUrl !== undefined) {
-      setFaviconUrl(siteSettings.faviconUrl || '');
+      setFaviconUrl(siteSettings.faviconUrl || '/favicon.ico');
     }
   }, [siteSettings?.logoUrl, siteSettings?.faviconUrl]);
 

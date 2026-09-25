@@ -42,21 +42,21 @@
       "short_name": "New Order",
       "description": "Place a new digitizing or vector order",
       "url": "/?app=true&tab=home",
-      "icons": [{ "src": "/favicon.svg", "sizes": "any" }]
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
     },
     {
       "name": "My Orders",
       "short_name": "Orders",
       "description": "Track active and completed orders",
       "url": "/?app=true&tab=orders",
-      "icons": [{ "src": "/favicon.svg", "sizes": "any" }]
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
     },
     {
       "name": "Studio Inbox",
       "short_name": "Inbox",
       "description": "24/7 Studio Chat & Realtime Support",
       "url": "/?app=true&tab=inbox",
-      "icons": [{ "src": "/favicon.svg", "sizes": "any" }]
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
     }
   ]
 }

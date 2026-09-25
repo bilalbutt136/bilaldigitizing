@@ -29,8 +29,8 @@ export async function POST(req) {
     const payload = {
       title,
       body: customBody || message,
-      icon: '/favicon.svg',
-      badge: '/favicon.svg',
+      icon: '/icon-192.png',
+      badge: '/favicon.png',
       tag: `bdigi-alert-${Date.now()}`,
       url: url || '/',
       orderId,
