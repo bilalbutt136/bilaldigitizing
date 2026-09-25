@@ -620,6 +620,34 @@ export async function POST(request) {
             type: 'warning', link: `/admin-portal?tab=orders&trackOrder=${resolvedOrderId}`
           });
 
+        } else if (newStatus === 'delivered') {
+          // Client Order Delivered Notification
+          await insertNotif({
+            id: `ord-deliv-${resolvedOrderId}`,
+            recipient_role: 'client',
+            recipient_email: clientEmail,
+            title: `📦 Order Files Ready: ${ordTitle}`,
+            message: `Your production stitch files and preview documents are ready for inspection and download!`,
+            type: 'success',
+            link: `/client-portal?tab=orders&trackOrder=${resolvedOrderId}`
+          });
+
+          // Email trigger to client
+          try {
+            const { sendNotificationEmail } = await import('../../../src/lib/emailService.js');
+            sendNotificationEmail({
+              type: 'ORDER_DELIVERED',
+              orderId: resolvedOrderId,
+              clientEmail,
+              clientName,
+              serviceName: targetOrder?.service || targetOrder?.title || 'Custom Digitizing',
+              deliveryMessage: extraData?.deliveryNotes || extraData?.deliveryMessage || 'Your production stitch files and preview documents are ready for download.',
+              outputFileUrl: extraData?.outputFileUrl || targetOrder?.output_file_url || ''
+            }).catch(e => console.warn('[Delivery Email Notice]:', e?.message));
+          } catch (emErr) {
+            console.warn('[Delivery Email Import Notice]:', emErr?.message);
+          }
+
         } else if (newStatus === 'completed') {
           await insertNotif({
             id: `notif-comp-${resolvedOrderId}-admin-${Date.now()}`,
@@ -1083,6 +1111,56 @@ export async function POST(request) {
           ]);
         } catch (notifErr) {
           console.warn('Approval notifications notice:', notifErr.message);
+        }
+
+        // Notify client that order is delivered and production files are ready
+        try {
+          const clientEmail = (targetOrder.client_email || '').toLowerCase().trim();
+          const clientName = targetOrder.client_name || 'Client';
+          const ordTitle = targetOrder.title || `Order #${orderId}`;
+
+          await supabase.from('notifications').insert([{
+            id: `ord-deliv-${orderId}`,
+            recipient_role: 'client',
+            recipient_email: clientEmail,
+            title: `📦 Order Files Ready: ${ordTitle}`,
+            message: `Your production stitch files are ready for inspection and download!`,
+            type: 'success',
+            link: `/client-portal?tab=orders&trackOrder=${orderId}`,
+            order_id: orderId,
+            read: false,
+            created_at: nowIso,
+            updated_at: nowIso
+          }]);
+
+          // Push notification to client mobile / web
+          try {
+            const { dispatchSystemNotificationPush } = await import('../../../src/lib/pushService.js');
+            dispatchSystemNotificationPush({
+              title: `📦 Order Files Ready: ${ordTitle}`,
+              message: `Your production stitch files are ready for download.`,
+              link: `/client-portal?tab=orders&trackOrder=${orderId}`,
+              orderId,
+              recipientRole: 'client',
+              recipientEmail: clientEmail
+            }).catch(() => {});
+          } catch {}
+
+          // Delivery Email to client
+          try {
+            const { sendNotificationEmail } = await import('../../../src/lib/emailService.js');
+            sendNotificationEmail({
+              type: 'ORDER_DELIVERED',
+              orderId,
+              clientEmail,
+              clientName,
+              serviceName: targetOrder.service || targetOrder.title || 'Custom Digitizing',
+              deliveryMessage: 'Your production stitch files are ready for inspection and download.',
+              outputFileUrl: targetOrder.worker_file_url || ''
+            }).catch(() => {});
+          } catch {}
+        } catch (clientNotifErr) {
+          console.warn('[adminReviewWorker client notif error]:', clientNotifErr.message);
         }
 
         return NextResponse.json({ success: true, worker_status: 'Completed', status: 'delivered' });

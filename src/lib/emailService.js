@@ -378,7 +378,52 @@ export async function sendNotificationEmail(params = {}) {
     }
   }
 
-  // 4. TEST EMAIL (Diagnostics)
+  // 4. ORDER DELIVERED / PRODUCTION FILES READY (Client Notification)
+  else if (type === 'ORDER_DELIVERED') {
+    const deliveryNoteText = deliveryMessage || revisionNotes || 'Your production stitch files and preview documents are ready for download.';
+    const resolvedOrderTitle = serviceName || orderDetails?.title || `Order #${orderId}`;
+    const cleanOrderId = String(orderId || '').replace(/^#+/, '');
+
+    if (targetClientEmail && EMAIL_REGEX.test(targetClientEmail)) {
+      dispatchResults.clientDelivery = await executeSend({
+        to: targetClientEmail,
+        subject: `📦 Production Files Ready: #${cleanOrderId} (${resolvedOrderTitle}) — BDigitizing`,
+        html: `
+          <div style="max-width: 600px; margin: 0 auto; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 12px; font-family: 'Segoe UI', Arial, sans-serif; box-shadow: 0 4px 12px rgba(0,0,0,0.05); overflow: hidden;">
+            ${emailHeader('FILES READY FOR DOWNLOAD', `Order #${cleanOrderId} Delivered`, '#16a34a')}
+            <div style="padding: 24px 28px; color: #1e293b; line-height: 1.6;">
+              <p style="font-size: 15px; margin-top: 0;">Hi <strong>${clientName || 'there'}</strong>,</p>
+              <p style="font-size: 14px; color: #475569;">
+                Great news! Our master digitizers have completed your production stitch files for <strong>${resolvedOrderTitle}</strong>. Your deliverables are now ready for inspection and immediate download.
+              </p>
+
+              <div style="background: #f0fdf4; border-left: 4px solid #16a34a; border-radius: 6px; padding: 16px 18px; margin: 20px 0;">
+                <div style="font-size: 11px; font-weight: 800; color: #166534; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;">
+                  DELIVERY MESSAGE / PRODUCTION NOTES
+                </div>
+                <div style="font-size: 14px; color: #14532d; font-style: italic;">
+                  "${deliveryNoteText}"
+                </div>
+              </div>
+
+              <div style="text-align: center; margin: 28px 0 14px 0;">
+                <a href="${siteUrl}/client-portal?tab=orders&trackOrder=${cleanOrderId}" style="background: #16a34a; color: #ffffff; padding: 13px 32px; text-decoration: none; border-radius: 8px; font-weight: 800; font-size: 15px; display: inline-block; box-shadow: 0 4px 14px rgba(22, 163, 74, 0.35);">
+                  Download Production Files
+                </a>
+              </div>
+
+              <p style="font-size: 12px; color: #64748b; text-align: center; margin-top: 18px;">
+                Need any adjustments? You can request free modifications anytime directly in your order workspace.
+              </p>
+            </div>
+            ${emailFooter}
+          </div>
+        `
+      });
+    }
+  }
+
+  // 5. TEST EMAIL (Diagnostics)
   else if (type === 'TEST_EMAIL') {
     dispatchResults.testEmail = await executeSend({
       to: targetAdminEmail,

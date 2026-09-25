@@ -4,6 +4,7 @@ import {
   filterAndSanitizeNotifications, 
   isOrderPlacedNotification, 
   isOrderPaymentConfirmedNotification,
+  isOrderDeliveredNotification,
   resolveNotificationDate,
   formatNotificationExactTime,
   getNotificationFullDateTime
@@ -152,7 +153,7 @@ describe('Notification Privacy Isolation & Two-Notifications-Per-Order Enforceme
     assert.equal(upperAliceResult.length, aliceResult.length, 'Email matching must be case-insensitive');
   });
 
-  test('3. Exactly TWO notifications per order rule: Order #1001 only shows Placed and Paid', () => {
+  test('3. Clean order lifecycle notifications: Order #1001 shows Placed, Paid, and Delivered', () => {
     const aliceResult = filterAndSanitizeNotifications(sampleNotifications, {
       currentUserEmail: 'alice@studio.com',
       isAdmin: false
@@ -161,23 +162,23 @@ describe('Notification Privacy Isolation & Two-Notifications-Per-Order Enforceme
     // Extract Order #1001 notifications
     const order1001Notifs = aliceResult.filter(n => String(n.order_id) === '1001');
     
-    // Must be exactly 2
-    assert.equal(order1001Notifs.length, 2, 'Order #1001 must have exactly 2 notifications (Placed and Paid)');
+    // Exactly 3 clean lifecycle notifications (Placed, Paid, and Delivered)
+    assert.equal(order1001Notifs.length, 3, 'Order #1001 must have 3 clean notifications (Placed, Paid, and Delivered)');
 
     const hasPlaced = order1001Notifs.some(n => isOrderPlacedNotification(n));
     const hasPaid = order1001Notifs.some(n => isOrderPaymentConfirmedNotification(n));
+    const hasDeliv = order1001Notifs.some(n => isOrderDeliveredNotification(n));
 
     assert.equal(hasPlaced, true, 'Order #1001 must include the Order Placed notification');
     assert.equal(hasPaid, true, 'Order #1001 must include the Payment Confirmed notification');
+    assert.equal(hasDeliv, true, 'Order #1001 must include the Order Delivered notification');
 
-    // Ensure intermediate notifications (status update, files delivered, revision) were excluded
-    const hasDeliv = order1001Notifs.some(n => n.id.includes('deliv'));
+    // Ensure noisy intermediate internal notifications (raw status updates, revision internal logs) were excluded
     const hasRev = order1001Notifs.some(n => n.id.includes('rev'));
     const hasStat = order1001Notifs.some(n => n.id.includes('stat'));
 
-    assert.equal(hasDeliv, false, 'Files delivered notification must be suppressed from order feed');
-    assert.equal(hasRev, false, 'Revision notification must be suppressed from order feed');
-    assert.equal(hasStat, false, 'Status update notification must be suppressed from order feed');
+    assert.equal(hasRev, false, 'Internal revision log must be suppressed from customer order feed');
+    assert.equal(hasStat, false, 'Raw status update notification must be suppressed from customer order feed');
   });
 
   test('4. Order #1002 (unpaid) only shows Placed notification (at most 1 notification so far)', () => {

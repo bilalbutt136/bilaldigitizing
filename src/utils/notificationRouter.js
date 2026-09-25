@@ -336,12 +336,44 @@ export function isOrderPaymentConfirmedNotification(notif) {
 }
 
 /**
+ * Detects if a notification represents an "Order Delivered / Files Ready" event.
+ */
+export function isOrderDeliveredNotification(notif) {
+  if (!notif) return false;
+  const id = String(notif.id || '').toLowerCase();
+  const title = String(notif.title || '').toLowerCase();
+  const message = String(notif.message || notif.body || '').toLowerCase();
+
+  if (id.startsWith('ord-deliv-') || id.includes('notif-deliv-')) {
+    return true;
+  }
+  if (
+    title.includes('delivered') || 
+    title.includes('files ready') || 
+    title.includes('files are ready') || 
+    title.includes('order files ready') || 
+    title.includes('order delivered')
+  ) {
+    return true;
+  }
+  if (
+    message.includes('files are ready for download') || 
+    message.includes('files delivered') || 
+    message.includes('ready for inspection and download')
+  ) {
+    return true;
+  }
+  return false;
+}
+
+/**
  * Filters and sanitizes notifications:
  * 1. Privacy Isolation: Guests see 0 notifications. Clients strictly see only notifications matching their email.
  * 2. Message Suppression: Excludes chat/message notifications (which have their own dedicated chat badge).
- * 3. Two-notifications-per-order rule: For any single order, at most 2 notifications are shown to clients:
+ * 3. Essential order lifecycle rule: For any single order, clean deduplicated notifications are shown:
  *    - Exactly 1 Order Placed notification
  *    - Exactly 1 Payment Confirmed notification
+ *    - Exactly 1 Order Delivered notification (files ready for download)
  */
 export function filterAndSanitizeNotifications(notifications, { currentUserEmail = '', isAdmin = false, orders = [] } = {}) {
   if (!Array.isArray(notifications) || notifications.length === 0) return [];
@@ -363,9 +395,10 @@ export function filterAndSanitizeNotifications(notifications, { currentUserEmail
     };
   };
 
-  // Maps to enforce at most 1 Placed and 1 Paid notification per order for customers
+  // Maps to enforce at most 1 Placed, 1 Paid, and 1 Delivered notification per order for customers
   const orderPlacedMap = new Map(); // orderId -> notification
   const orderPaidMap = new Map();   // orderId -> notification
+  const orderDeliveredMap = new Map(); // orderId -> notification
   const otherNotifications = [];
 
   for (const rawNotif of notifications) {
@@ -422,6 +455,7 @@ export function filterAndSanitizeNotifications(notifications, { currentUserEmail
       const cleanOrderId = String(orderId).trim().replace(/^#+/, '');
       const isPlaced = isOrderPlacedNotification(notif);
       const isPaid = isOrderPaymentConfirmedNotification(notif);
+      const isDelivered = isOrderDeliveredNotification(notif);
 
       if (isPlaced) {
         // Keep only 1 placed notification per order (prefer latest)
@@ -433,8 +467,13 @@ export function filterAndSanitizeNotifications(notifications, { currentUserEmail
         if (!orderPaidMap.has(cleanOrderId)) {
           orderPaidMap.set(cleanOrderId, notif);
         }
+      } else if (isDelivered) {
+        // Keep only 1 delivered notification per order (cleanly deduplicated)
+        if (!orderDeliveredMap.has(cleanOrderId)) {
+          orderDeliveredMap.set(cleanOrderId, notif);
+        }
       }
-      // Any other order notification (revision, delivered, status update) is dropped per user rule
+      // Intermediate status/internal updates are filtered out to prevent spam
     } else {
       // Non-order notification (e.g. system broadcast or custom offer received)
       otherNotifications.push(notif);
@@ -444,6 +483,7 @@ export function filterAndSanitizeNotifications(notifications, { currentUserEmail
   const combined = [
     ...Array.from(orderPlacedMap.values()),
     ...Array.from(orderPaidMap.values()),
+    ...Array.from(orderDeliveredMap.values()),
     ...otherNotifications
   ];
 

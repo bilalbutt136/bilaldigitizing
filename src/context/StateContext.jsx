@@ -2146,8 +2146,21 @@ export const StateProvider = ({ children }) => {
       }, false);
     }
 
-    // Email triggers based on new status
+    // Notifications and Email triggers based on new status
     if (newStatus === 'delivered') {
+      const clientEmail = (targetOrder?.clientEmail || targetOrder?.client_email || '').toLowerCase().trim();
+      addNotification({
+        id: `ord-deliv-${cleanTargetId}`,
+        title: `📦 Order Files Ready: ${targetOrder?.title || `Order #${cleanTargetId}`}`,
+        message: `Your production stitch files and deliverables are ready for inspection and download!`,
+        type: 'success',
+        order_id: cleanTargetId,
+        orderId: cleanTargetId,
+        link: `/client-portal?tab=orders&trackOrder=${cleanTargetId}`,
+        recipient_role: 'client',
+        recipient_email: clientEmail || null
+      }, false);
+
       triggerEmailNotification('ORDER_DELIVERED', { ...(targetOrder || {}), id: orderId, ...safeExtraData });
     } else if (newStatus === 'completed') {
       triggerEmailNotification('ORDER_COMPLETED', { ...(targetOrder || {}), id: orderId, ...safeExtraData });
