@@ -641,12 +641,22 @@ export default function AdminChatInbox({ initialChannel = 'inbox' }) {
       const res = await fetch('/api/chat/ai-polish', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: inputText })
+        body: JSON.stringify({ text: inputText, target: 'chat' })
       });
       const data = await res.json();
       if (data?.polishedText) {
         setInputText(data.polishedText);
-        showToast('✨ Message polished with Google Gemini!', 'success');
+        setTimeout(() => {
+          if (textareaRef.current) {
+            adjustTextareaHeight(textareaRef.current);
+          }
+        }, 60);
+
+        if (data.isAiGenerated !== false) {
+          showToast(`✨ Message polished with Google Gemini (${data.modelUsed || 'Flash'})!`, 'success');
+        } else {
+          showToast(data.notice || data.error || 'Gemini key unavailable; standard formatting applied.', 'info');
+        }
       } else if (data?.error) {
         showToast(data.error, 'error');
       }

@@ -16,7 +16,12 @@ import {
   Users,
   Power,
   Eye,
-  EyeOff
+  EyeOff,
+  Sparkles,
+  Zap,
+  RefreshCw,
+  ExternalLink,
+  Loader2
 } from 'lucide-react';
 
 export const AdminSecuritySettings = () => {
@@ -90,6 +95,92 @@ export const AdminSecuritySettings = () => {
   useEffect(() => {
     loadAdminsFromApi();
   }, []);
+
+  // ── Gemini AI Engine State & Handlers ─────────────────────────────────────
+  const [geminiStatus, setGeminiStatus]               = useState(null);
+  const [loadingGeminiStatus, setLoadingGeminiStatus] = useState(false);
+  const [customGeminiKey, setCustomGeminiKey]         = useState('');
+  const [showGeminiKey, setShowGeminiKey]             = useState(false);
+  const [isSavingGeminiKey, setIsSavingGeminiKey]     = useState(false);
+  const [isTestingGeminiKey, setIsTestingGeminiKey]   = useState(false);
+  const [geminiTestFeedback, setGeminiTestFeedback]   = useState(null);
+
+  const loadGeminiStatus = async () => {
+    setLoadingGeminiStatus(true);
+    try {
+      const res = await fetch('/api/admin/gemini-status');
+      const data = await res.json();
+      if (res.ok) {
+        setGeminiStatus(data);
+      }
+    } catch (e) {
+      console.warn('Failed to fetch Gemini status:', e);
+    } finally {
+      setLoadingGeminiStatus(false);
+    }
+  };
+
+  useEffect(() => {
+    loadGeminiStatus();
+  }, []);
+
+  const handleTestGeminiKey = async () => {
+    setIsTestingGeminiKey(true);
+    setGeminiTestFeedback(null);
+    try {
+      const res = await fetch('/api/admin/gemini-status', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'test', apiKey: customGeminiKey })
+      });
+      const data = await res.json();
+      if (data?.success) {
+        setGeminiTestFeedback({
+          success: true,
+          message: `Connected! Latency: ${data.latencyMs}ms (${data.modelUsed || 'gemini-2.5-flash'})`
+        });
+        showToast('✨ Gemini AI connection verified successfully!', 'success');
+      } else {
+        setGeminiTestFeedback({
+          success: false,
+          message: data?.error || 'Connection failed'
+        });
+        showToast(data?.error || 'Test failed', 'error');
+      }
+    } catch {
+      setGeminiTestFeedback({ success: false, message: 'Network error while testing key' });
+      showToast('Network error while testing Gemini key', 'error');
+    } finally {
+      setIsTestingGeminiKey(false);
+    }
+  };
+
+  const handleSaveGeminiKey = async () => {
+    if (!customGeminiKey.trim()) {
+      showToast('Please enter a Gemini API key first.', 'error');
+      return;
+    }
+    setIsSavingGeminiKey(true);
+    try {
+      const res = await fetch('/api/admin/gemini-status', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'save', apiKey: customGeminiKey.trim() })
+      });
+      const data = await res.json();
+      if (data?.success) {
+        showToast('✅ Gemini API key saved & activated across live system!', 'success');
+        setCustomGeminiKey('');
+        loadGeminiStatus();
+      } else {
+        showToast(data?.error || 'Failed to save Gemini key', 'error');
+      }
+    } catch {
+      showToast('Network error while saving Gemini key', 'error');
+    } finally {
+      setIsSavingGeminiKey(false);
+    }
+  };
 
   const handleSaveSecurity = async (e) => {
     e?.preventDefault?.();
@@ -389,6 +480,180 @@ export const AdminSecuritySettings = () => {
                 />
               </div>
             )}
+          </div>
+        </div>
+
+        {/* GOOGLE GEMINI AI POLISH ENGINE & API KEY CONFIGURATION */}
+        <div style={{
+          background: 'var(--bg-card)',
+          border: '1.5px solid var(--border-color)',
+          borderRadius: '16px',
+          padding: '1.5rem',
+          boxShadow: 'var(--shadow-sm)'
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.85rem', flexWrap: 'wrap', gap: '0.75rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+              <div style={{ background: 'rgba(234, 88, 12, 0.12)', borderRadius: '10px', padding: '0.5rem', color: '#ea580c' }}>
+                <Sparkles size={20} />
+              </div>
+              <div>
+                <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: 'var(--color-text-primary)', margin: 0 }}>
+                  Google Gemini AI Polish Engine
+                </h3>
+                <p style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', margin: '0.2rem 0 0 0' }}>
+                  Powers 1-click AI message refinement, Roman Urdu translation, and email copy enhancement.
+                </p>
+              </div>
+            </div>
+
+            {/* Status Badge */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              {loadingGeminiStatus ? (
+                <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                  <Loader2 size={13} className="spin-icon" /> Checking status...
+                </span>
+              ) : geminiStatus?.liveStatus === 'active' ? (
+                <span style={{
+                  display: 'inline-flex', alignItems: 'center', gap: '0.35rem',
+                  background: '#dcfce7', color: '#15803d', fontSize: '0.75rem', fontWeight: 800,
+                  padding: '0.25rem 0.65rem', borderRadius: '9999px', border: '1px solid #86efac'
+                }}>
+                  <CheckCircle2 size={13} /> Active & Operational ({geminiStatus.modelUsed || 'Gemini 2.5 Flash'})
+                </span>
+              ) : (
+                <span style={{
+                  display: 'inline-flex', alignItems: 'center', gap: '0.35rem',
+                  background: '#fee2e2', color: '#b91c1c', fontSize: '0.75rem', fontWeight: 800,
+                  padding: '0.25rem 0.65rem', borderRadius: '9999px', border: '1px solid #fca5a5'
+                }}>
+                  <AlertTriangle size={13} /> {geminiStatus?.configured ? 'Connection Issue' : 'API Key Not Set'}
+                </span>
+              )}
+              <button
+                type="button"
+                onClick={loadGeminiStatus}
+                disabled={loadingGeminiStatus}
+                style={{ background: 'none', border: 'none', color: 'var(--color-text-muted)', cursor: 'pointer', padding: '4px' }}
+                title="Refresh AI Status"
+              >
+                <RefreshCw size={14} className={loadingGeminiStatus ? 'spin-icon' : ''} />
+              </button>
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            {/* Current Active Key Summary */}
+            <div style={{
+              background: 'var(--bg-surface, #f8fafc)',
+              border: '1px solid var(--border-color)',
+              borderRadius: '10px',
+              padding: '0.85rem 1rem',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              flexWrap: 'wrap',
+              gap: '0.5rem'
+            }}>
+              <div>
+                <div style={{ fontSize: '0.72rem', fontWeight: 800, color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                  Active Key in Use
+                </div>
+                <div style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--color-text-primary)', fontFamily: 'monospace', marginTop: '0.15rem' }}>
+                  {geminiStatus?.maskedKey || (geminiStatus?.configured ? 'Configured (Environment)' : 'Not configured')}
+                </div>
+                <div style={{ fontSize: '0.72rem', color: 'var(--color-text-muted)', marginTop: '0.2rem' }}>
+                  Source: {geminiStatus?.source === 'database' ? 'Live Database (site_config)' : geminiStatus?.source === 'environment' ? 'Vercel Environment Variable' : 'None'}
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <button
+                  type="button"
+                  onClick={handleTestGeminiKey}
+                  disabled={isTestingGeminiKey || (!geminiStatus?.configured && !customGeminiKey)}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: '0.35rem',
+                    padding: '0.45rem 0.85rem', borderRadius: '8px', border: '1px solid #ea580c',
+                    background: '#fff7ed', color: '#ea580c', fontSize: '0.78rem', fontWeight: 700,
+                    cursor: isTestingGeminiKey ? 'wait' : 'pointer'
+                  }}
+                >
+                  {isTestingGeminiKey ? <Loader2 size={13} className="spin-icon" /> : <Zap size={13} />}
+                  {isTestingGeminiKey ? 'Testing...' : '⚡ Test Connection'}
+                </button>
+              </div>
+            </div>
+
+            {/* Test Feedback Notice */}
+            {geminiTestFeedback && (
+              <div style={{
+                padding: '0.65rem 0.85rem', borderRadius: '8px', fontSize: '0.78rem', fontWeight: 600,
+                background: geminiTestFeedback.success ? '#dcfce7' : '#fee2e2',
+                color: geminiTestFeedback.success ? '#15803d' : '#b91c1c',
+                border: `1px solid ${geminiTestFeedback.success ? '#86efac' : '#fca5a5'}`
+              }}>
+                {geminiTestFeedback.success ? '✅ ' : '❌ '} {geminiTestFeedback.message}
+              </div>
+            )}
+
+            {/* Input to update or change API key */}
+            <div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.35rem' }}>
+                <label style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--color-text-primary)' }}>
+                  Update or Override Google Gemini API Key
+                </label>
+                <a
+                  href="https://aistudio.google.com/app/apikey"
+                  target="_blank"
+                  rel="noreferrer"
+                  style={{ fontSize: '0.72rem', color: '#ea580c', fontWeight: 700, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '0.2rem' }}
+                >
+                  Get free key at Google AI Studio <ExternalLink size={11} />
+                </a>
+              </div>
+
+              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                <div style={{ position: 'relative', flex: '1 1 300px' }}>
+                  <input
+                    type={showGeminiKey ? 'text' : 'password'}
+                    value={customGeminiKey}
+                    onChange={(e) => setCustomGeminiKey(e.target.value)}
+                    placeholder="Enter AIzaSy... or custom Gemini API key"
+                    className="form-control"
+                    style={{ paddingRight: '2.5rem', fontFamily: 'monospace', fontSize: '0.85rem' }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowGeminiKey(!showGeminiKey)}
+                    style={{
+                      position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)',
+                      background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-muted)', display: 'flex'
+                    }}
+                  >
+                    {showGeminiKey ? <EyeOff size={15} /> : <Eye size={15} />}
+                  </button>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleSaveGeminiKey}
+                  disabled={isSavingGeminiKey || !customGeminiKey.trim()}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: '0.35rem',
+                    padding: '0.55rem 1.15rem', borderRadius: '8px', border: 'none',
+                    background: '#ea580c', color: '#ffffff', fontSize: '0.82rem', fontWeight: 800,
+                    cursor: isSavingGeminiKey || !customGeminiKey.trim() ? 'not-allowed' : 'pointer'
+                  }}
+                >
+                  {isSavingGeminiKey ? <Loader2 size={14} className="spin-icon" /> : <Save size={14} />}
+                  {isSavingGeminiKey ? 'Saving...' : 'Save & Activate Key'}
+                </button>
+              </div>
+
+              <span style={{ fontSize: '0.72rem', color: 'var(--color-text-muted)', marginTop: '0.35rem', display: 'block' }}>
+                Saving immediately activates this key in the live database without requiring a server reboot or redeployment.
+              </span>
+            </div>
           </div>
         </div>
 

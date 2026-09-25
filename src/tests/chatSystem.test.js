@@ -94,11 +94,19 @@ test('Chat System & Fiverr-Style Inbox Architecture', async (t) => {
       assert.ok(mockSystemPrompt.includes(kw), `Prompt missing expected instruction: ${kw}`);
     }
 
-    // Verify mock clean output strips quotes
+    // Verify mock clean output strips quotes and markdown fences
     const rawOutputWithQuotes = '"Dear Sir, I have attached your logo in DST and PES formats. Please review and let me know if changes are needed. Thank you."';
     const cleaned = rawOutputWithQuotes.replace(/^["']|["']$/g, '').trim();
     assert.ok(!cleaned.startsWith('"'));
     assert.ok(!cleaned.endsWith('"'));
+
+    const rawOutputWithMarkdown = '```text\nHere is your DST and PES file.\n```';
+    const cleanedMarkdown = rawOutputWithMarkdown.replace(/^```[a-zA-Z]*\n?([\s\S]*?)\n?```$/g, '$1').trim();
+    assert.equal(cleanedMarkdown, 'Here is your DST and PES file.');
+
+    // Verify Roman Urdu translation instruction keyword
+    const romanUrduPrompt = 'MULTILINGUAL / ROMAN URDU TRANSLATION: If the draft is written in Roman Urdu / Hindi';
+    assert.ok(romanUrduPrompt.includes('ROMAN URDU'));
   });
 
   await t.test('5. Typing indicator heartbeat expiration prevents stuck typing dots', () => {

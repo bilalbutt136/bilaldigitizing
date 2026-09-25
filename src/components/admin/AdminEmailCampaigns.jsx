@@ -5,7 +5,7 @@ import {
   Mail, Send, Users, Clock, CheckCircle, XCircle,
   AlertTriangle, RefreshCw, Sparkles,
   FileText, AtSign, BarChart3, HelpCircle,
-  ShieldCheck
+  ShieldCheck, Loader2, Undo2
 } from 'lucide-react';
 
 const STAT_CARD = ({ icon: Icon, label, value, color = '#ea580c' }) => (
@@ -72,6 +72,60 @@ export function AdminEmailCampaigns() {
   const showToast = (msg, type = 'success') => {
     setToast({ msg, type });
     setTimeout(() => setToast(null), 5000);
+  };
+
+  // AI Polish States & Handlers for Email Campaigns
+  const [isPolishingSubject, setIsPolishingSubject] = useState(false);
+  const [isPolishingMessage, setIsPolishingMessage] = useState(false);
+  const [prevSubject, setPrevSubject]               = useState(null);
+  const [prevMessage, setPrevMessage]               = useState(null);
+
+  const handleAiPolishSubject = async () => {
+    if (!subject.trim() || isPolishingSubject) return;
+    setIsPolishingSubject(true);
+    setPrevSubject(subject);
+    try {
+      const res = await fetch('/api/chat/ai-polish', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: subject, target: 'email_subject', tone: 'promotional' })
+      });
+      const data = await res.json();
+      if (data?.polishedText) {
+        setSubject(data.polishedText);
+        showToast('✨ Subject line polished with Google Gemini!', 'success');
+      } else if (data?.error) {
+        showToast(data.error, 'error');
+      }
+    } catch {
+      showToast('Failed to polish subject line.', 'error');
+    } finally {
+      setIsPolishingSubject(false);
+    }
+  };
+
+  const handleAiPolishMessage = async () => {
+    if (!message.trim() || isPolishingMessage) return;
+    setIsPolishingMessage(true);
+    setPrevMessage(message);
+    try {
+      const res = await fetch('/api/chat/ai-polish', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: message, target: 'email_body', tone: 'promotional' })
+      });
+      const data = await res.json();
+      if (data?.polishedText) {
+        setMessage(data.polishedText);
+        showToast('✨ Email content polished with Google Gemini!', 'success');
+      } else if (data?.error) {
+        showToast(data.error, 'error');
+      }
+    } catch {
+      showToast('Failed to polish email content.', 'error');
+    } finally {
+      setIsPolishingMessage(false);
+    }
   };
 
   // ── Load Campaign History ──────────────────────────────────────────────────
@@ -524,9 +578,44 @@ export function AdminEmailCampaigns() {
 
                 {/* Subject Line */}
                 <div>
-                  <label style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '0.35rem' }}>
-                    EMAIL SUBJECT LINE * (What the customer sees in their inbox)
-                  </label>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.35rem' }}>
+                    <label style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-muted)' }}>
+                      EMAIL SUBJECT LINE * (What the customer sees in their inbox)
+                    </label>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                      {prevSubject !== null && (
+                        <button
+                          type="button"
+                          onClick={() => { setSubject(prevSubject); setPrevSubject(null); }}
+                          style={{ background: 'none', border: 'none', color: '#64748b', fontSize: '0.72rem', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.2rem' }}
+                        >
+                          <Undo2 size={12} /> Undo
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        onClick={handleAiPolishSubject}
+                        disabled={isPolishingSubject || !subject.trim()}
+                        style={{
+                          background: isPolishingSubject ? '#fed7aa' : '#fff7ed',
+                          color: '#ea580c',
+                          border: '1px solid #ffedd5',
+                          borderRadius: '6px',
+                          padding: '0.2rem 0.55rem',
+                          fontSize: '0.72rem',
+                          fontWeight: 700,
+                          cursor: isPolishingSubject || !subject.trim() ? 'not-allowed' : 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.3rem'
+                        }}
+                        title="Polish subject line into high-open-rate studio title with Google Gemini"
+                      >
+                        {isPolishingSubject ? <Loader2 size={12} className="spin-icon" /> : <Sparkles size={12} />}
+                        {isPolishingSubject ? 'Polishing...' : '✨ AI Polish Subject'}
+                      </button>
+                    </div>
+                  </div>
                   <input
                     type="text"
                     value={subject}
@@ -562,9 +651,39 @@ export function AdminEmailCampaigns() {
                     <label style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-muted)' }}>
                       MESSAGE CONTENT * (Normal text — no HTML tags needed!)
                     </label>
-                    <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
-                      Paragraphs will automatically format nicely
-                    </span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                      {prevMessage !== null && (
+                        <button
+                          type="button"
+                          onClick={() => { setMessage(prevMessage); setPrevMessage(null); }}
+                          style={{ background: 'none', border: 'none', color: '#64748b', fontSize: '0.72rem', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.2rem' }}
+                        >
+                          <Undo2 size={12} /> Undo
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        onClick={handleAiPolishMessage}
+                        disabled={isPolishingMessage || !message.trim()}
+                        style={{
+                          background: isPolishingMessage ? '#fed7aa' : '#fff7ed',
+                          color: '#ea580c',
+                          border: '1px solid #ffedd5',
+                          borderRadius: '6px',
+                          padding: '0.2rem 0.55rem',
+                          fontSize: '0.72rem',
+                          fontWeight: 700,
+                          cursor: isPolishingMessage || !message.trim() ? 'not-allowed' : 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.3rem'
+                        }}
+                        title="Polish email body into professional customer copy with Google Gemini"
+                      >
+                        {isPolishingMessage ? <Loader2 size={12} className="spin-icon" /> : <Sparkles size={12} />}
+                        {isPolishingMessage ? 'Polishing...' : '✨ AI Polish Email Body'}
+                      </button>
+                    </div>
                   </div>
                   <textarea
                     value={message}

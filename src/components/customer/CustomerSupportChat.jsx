@@ -153,6 +153,38 @@ export default function CustomerSupportChat({
     }
   };
 
+  // AI Polish Feature
+  const [isPolishing, setIsPolishing] = useState(false);
+  const handleAiPolish = async (e) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    if (!inputText.trim() || isPolishing) return;
+    setIsPolishing(true);
+    try {
+      const res = await fetch('/api/chat/ai-polish', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: inputText, target: 'chat' })
+      });
+      const data = await res.json();
+      if (data?.polishedText) {
+        setInputText(data.polishedText);
+        setTimeout(() => {
+          if (textareaRef.current) {
+            adjustTextareaHeight(textareaRef.current);
+          }
+        }, 50);
+        showToast('✨ Message polished with Google Gemini!', 'success');
+      }
+    } catch {
+      showToast('Could not polish message.', 'error');
+    } finally {
+      setIsPolishing(false);
+    }
+  };
+
   const handleInputFocus = () => {
     stopNotificationSound();
     scrollToBottom();
@@ -1507,6 +1539,33 @@ export default function CustomerSupportChat({
             transition: 'border-color 0.18s ease, background-color 0.18s ease, box-shadow 0.18s ease'
           }}
         />
+
+        {inputText.trim().length > 0 && (
+          <button
+            type="button"
+            onClick={handleAiPolish}
+            disabled={isPolishing}
+            style={{
+              background: isPolishing ? '#fed7aa' : '#fff7ed',
+              color: '#ea580c',
+              border: '1px solid #ffedd5',
+              borderRadius: '50%',
+              width: '40px',
+              height: '40px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: isPolishing ? 'wait' : 'pointer',
+              flexShrink: 0,
+              marginBottom: '1px',
+              transition: 'all 0.15s ease'
+            }}
+            title="Polish typos and elevate draft with AI"
+            aria-label="AI Polish"
+          >
+            {isPolishing ? <Loader2 size={16} className="spin-icon" /> : <Sparkles size={16} />}
+          </button>
+        )}
 
         <button
           type="submit"
