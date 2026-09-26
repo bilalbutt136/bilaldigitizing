@@ -348,14 +348,18 @@ export function isOrderPaymentConfirmedNotification(notif) {
  */
 export function isOrderDeliveredNotification(notif) {
   if (!notif) return false;
+  if (notif.isDelivery === true || notif.soundType === 'delivery' || Boolean(notif.deliveryNumber)) {
+    return true;
+  }
   const id = String(notif.id || '').toLowerCase();
   const title = String(notif.title || '').toLowerCase();
   const message = String(notif.message || notif.body || '').toLowerCase();
 
-  if (id.startsWith('ord-deliv-') || id.includes('notif-deliv-')) {
+  if (id.startsWith('ord-deliv-') || id.includes('notif-deliv-') || id.includes('deliv')) {
     return true;
   }
   if (
+    title.includes('delivery') ||
     title.includes('delivered') || 
     title.includes('files ready') || 
     title.includes('files are ready') || 
@@ -367,7 +371,9 @@ export function isOrderDeliveredNotification(notif) {
   if (
     message.includes('files are ready for download') || 
     message.includes('files delivered') || 
-    message.includes('ready for inspection and download')
+    message.includes('ready for inspection and download') ||
+    message.includes('deliveries') ||
+    message.includes('delivery #')
   ) {
     return true;
   }
@@ -593,16 +599,21 @@ export function filterAndSanitizeNotifications(notifications, { currentUserEmail
     }
   }
 
-  // C. If customer received any Custom Offer notification in otherNotifications and has paid orders,
-  // link any paid order to ensure the middle "Order Placed" notification is suppressed
+  // C. If customer received any Custom Offer notification in otherNotifications,
+  // link matching order to ensure the middle "Order Placed" notification is suppressed
   const customOfferNotifs = otherNotifications.filter(isCustomOfferNotification);
   if (customOfferNotifs.length > 0) {
     for (const offNotif of customOfferNotifs) {
       if (offNotif.order_id) {
         customOfferOrderIds.add(String(offNotif.order_id).replace(/^#+/, '').trim());
       }
+      const rawOfferId = String(offNotif.offer_id || offNotif.offerId || '').replace(/^off-?/i, '').trim();
       for (const [paidId] of orderPaidMap) {
-        customOfferOrderIds.add(paidId);
+        if (rawOfferId && paidId.toLowerCase().includes(rawOfferId.toLowerCase())) {
+          customOfferOrderIds.add(paidId);
+        } else if (orderPaidMap.size === 1 && !offNotif.order_id) {
+          customOfferOrderIds.add(paidId);
+        }
       }
     }
   }

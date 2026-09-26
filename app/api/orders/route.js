@@ -320,9 +320,11 @@ export async function POST(request) {
       try {
         const nowIso = new Date().toISOString();
         const isFromOffer = primaryDbRow?.source === 'custom_offer' || 
-                            body?.source === 'custom_offer' || 
-                            Boolean(body?.offerId) || 
-                            Boolean(body?.offer_id) ||
+                            payload?.source === 'custom_offer' || 
+                            Boolean(payload?.offerId) || 
+                            Boolean(payload?.offer_id) || 
+                            Boolean(primaryDbRow?.offerId) || 
+                            Boolean(primaryDbRow?.offer_id) ||
                             (typeof primaryDbRow?.notes === 'string' && primaryDbRow.notes.includes('custom_offer'));
 
         const notifsToInsert = [
@@ -362,6 +364,20 @@ export async function POST(request) {
         }
 
         await supabase.from('notifications').upsert(notifsToInsert, { onConflict: 'id' });
+
+        // Broadcast to Realtime WebSocket channel so active clients and admins receive it instantly
+        try {
+          const liveChannel = supabase.channel('bdigitizing-live-hub-v2');
+          for (const notifItem of notifsToInsert) {
+            await liveChannel.send({
+              type: 'broadcast',
+              event: 'new_notification',
+              payload: notifItem
+            });
+          }
+        } catch (bErr) {
+          console.warn('[Realtime Order Notif Broadcast Notice]:', bErr?.message);
+        }
       } catch (notifErr) {
         console.warn('Auto notification insert notice:', notifErr.message);
       }
@@ -425,7 +441,7 @@ export async function POST(request) {
       let targetOrder = null;
       const { data: byIn } = await supabase
         .from('orders')
-        .select('id, client_email, status, payment_status, notes')
+        .select('id, title, client_name, client_email, status, payment_status, notes, deliveries')
         .in('id', candidateIds)
         .maybeSingle();
 
@@ -434,7 +450,7 @@ export async function POST(request) {
       } else if (cleanId.length >= 3) {
         const { data: byIlike } = await supabase
           .from('orders')
-          .select('id, client_email, status, payment_status, notes')
+          .select('id, title, client_name, client_email, status, payment_status, notes, deliveries')
           .ilike('id', `%${cleanId}%`)
           .maybeSingle();
         if (byIlike) targetOrder = byIlike;
@@ -550,10 +566,10 @@ export async function POST(request) {
       // ── Comprehensive status-change notifications + auto-ensure conversation ──
       try {
         const nowIso = new Date().toISOString();
-        const clientEmail = (targetOrder?.client_email || '').toLowerCase().trim();
-        const clientName = targetOrder?.client_name || 'Client';
+        const clientEmail = (targetOrder?.client_email || extraData?.clientEmail || extraData?.client_email || '').toLowerCase().trim();
+        const clientName = targetOrder?.client_name || extraData?.clientName || extraData?.client_name || 'Client';
         const resolvedOrderId = targetOrder?.id || rawId;
-        const ordTitle = targetOrder?.title || `Order #${resolvedOrderId}`;
+        const ordTitle = targetOrder?.title || extraData?.title || `Order #${resolvedOrderId}`;
 
         // Always ensure conversation thread exists
         const convId = `order-${resolvedOrderId}`;
@@ -577,7 +593,7 @@ export async function POST(request) {
 
         const insertNotif = async (notif) => {
           try {
-            await supabase.from('notifications').insert([{
+            const notifRecord = {
               id: notif.id || `notif-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
               user_id: null,
               recipient_role: notif.recipient_role || 'client',
@@ -590,18 +606,32 @@ export async function POST(request) {
               read: false,
               created_at: nowIso,
               updated_at: nowIso
-            }]);
+            };
+
+            await supabase.from('notifications').upsert([notifRecord], { onConflict: 'id' });
+
+            // Instant Realtime WebSocket broadcast to connected clients and admins
+            try {
+              const liveChannel = supabase.channel('bdigitizing-live-hub-v2');
+              await liveChannel.send({
+                type: 'broadcast',
+                event: 'new_notification',
+                payload: notifRecord
+              });
+            } catch (bErr) {
+              console.warn('[Realtime Notif Broadcast Notice]:', bErr?.message);
+            }
 
             // High-urgency mobile lock-screen push notification
             try {
               const { dispatchSystemNotificationPush } = await import('../../../src/lib/pushService.js');
               dispatchSystemNotificationPush({
-                title: notif.title,
-                message: notif.message || '',
-                link: notif.link || '/client-portal',
+                title: notifRecord.title,
+                message: notifRecord.message || '',
+                link: notifRecord.link || '/client-portal',
                 orderId: resolvedOrderId,
-                recipientRole: notif.recipient_role || 'client',
-                recipientEmail: notif.recipient_email || null
+                recipientRole: notifRecord.recipient_role || 'client',
+                recipientEmail: notifRecord.recipient_email || null
               }).catch(err => console.warn('[Status Push Notice]:', err?.message));
             } catch (pErr) {}
           } catch (e) { console.warn('[insertNotif notice]:', e.message); }
@@ -1145,7 +1175,7 @@ export async function POST(request) {
           const clientName = targetOrder.client_name || 'Client';
           const ordTitle = targetOrder.title || `Order #${orderId}`;
 
-          await supabase.from('notifications').insert([{
+          const clientNotifRecord = {
             id: `ord-deliv-${orderId}`,
             recipient_role: 'client',
             recipient_email: clientEmail,
@@ -1157,7 +1187,20 @@ export async function POST(request) {
             read: false,
             created_at: nowIso,
             updated_at: nowIso
-          }]);
+          };
+
+          await supabase.from('notifications').upsert([clientNotifRecord], { onConflict: 'id' });
+
+          try {
+            const liveChannel = supabase.channel('bdigitizing-live-hub-v2');
+            await liveChannel.send({
+              type: 'broadcast',
+              event: 'new_notification',
+              payload: clientNotifRecord
+            });
+          } catch (bErr) {
+            console.warn('[Realtime Notif Broadcast Notice]:', bErr?.message);
+          }
 
           // Push notification to client mobile / web
           try {

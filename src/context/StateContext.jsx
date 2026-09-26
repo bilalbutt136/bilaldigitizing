@@ -668,7 +668,9 @@ export const StateProvider = ({ children }) => {
     const isDeliveryNotification = notif.playSound === false || 
       notif.isDelivery === true || 
       notif.soundType === 'delivery' ||
+      Boolean(notif.deliveryNumber) ||
       (typeof notif.title === 'string' && (
+        notif.title.toLowerCase().includes('delivery') ||
         notif.title.toLowerCase().includes('order files ready') || 
         notif.title.toLowerCase().includes('files ready') ||
         notif.title.toLowerCase().includes('delivered')
@@ -879,10 +881,16 @@ export const StateProvider = ({ children }) => {
         }
         setNotifications(prev => {
           const safePrev = Array.isArray(prev) ? prev : [];
-          if (safePrev.some(n => n.id === notif.id)) return prev;
-          const updated = [notif, ...safePrev];
-          saveNotificationsToStorage(updated);
-          return updated;
+          if (safePrev.some(n => String(n.id) === String(notif.id))) return prev;
+          const emailToUse = (authUser?.email || notif.recipient_email || userEmail || '').toLowerCase().trim();
+          const isAdminToUse = authUser?.role === 'admin' || currentView === 'admin' || isAdminUser;
+          const sanitized = filterAndSanitizeNotifications([notif, ...safePrev], {
+            currentUserEmail: emailToUse,
+            isAdmin: isAdminToUse,
+            orders
+          });
+          saveNotificationsToStorage(sanitized, emailToUse);
+          return sanitized;
         });
         showToast(`🔔 ${notif.title || 'New Notification'}: ${notif.message || ''}`, 'info');
       },
@@ -2132,7 +2140,15 @@ export const StateProvider = ({ children }) => {
     
     if (isSupabaseConfigured) {
       try {
-        await updateOrderStatusInSupabase(orderId, newStatus, safeExtraData);
+        const clientEmailForApi = (targetOrder?.clientEmail || targetOrder?.client_email || safeExtraData?.clientEmail || safeExtraData?.client_email || '').toLowerCase().trim();
+        const clientNameForApi = targetOrder?.clientName || targetOrder?.client_name || safeExtraData?.clientName || safeExtraData?.client_name || '';
+        const orderTitleForApi = targetOrder?.title || safeExtraData?.title || '';
+        await updateOrderStatusInSupabase(orderId, newStatus, {
+          ...safeExtraData,
+          clientEmail: clientEmailForApi,
+          clientName: clientNameForApi,
+          title: orderTitleForApi
+        });
       } catch (sbErr) {
         console.warn('Supabase update order status notice:', sbErr);
       }
@@ -2196,7 +2212,7 @@ export const StateProvider = ({ children }) => {
 
     // Notifications and Email triggers based on new status
     if (newStatus === 'delivered') {
-      const clientEmail = (targetOrder?.clientEmail || targetOrder?.client_email || '').toLowerCase().trim();
+      const clientEmail = (targetOrder?.clientEmail || targetOrder?.client_email || safeExtraData?.clientEmail || safeExtraData?.client_email || '').toLowerCase().trim();
       const delivNum = safeExtraData?.deliveryNumber || 
         (Array.isArray(safeExtraData?.deliveries) && safeExtraData.deliveries.length > 0 
           ? (safeExtraData.deliveries[0]?.deliveryNumber || safeExtraData.deliveries.length) 
@@ -2204,8 +2220,8 @@ export const StateProvider = ({ children }) => {
 
       const delivNotifId = delivNum > 1 ? `ord-deliv-${cleanTargetId}-v${delivNum}` : `ord-deliv-${cleanTargetId}`;
       const delivTitle = delivNum > 1 
-        ? `📦 Delivery #${delivNum} Ready: ${targetOrder?.title || `Order #${cleanTargetId}`}`
-        : `📦 Order Files Ready: ${targetOrder?.title || `Order #${cleanTargetId}`}`;
+        ? `📦 Delivery #${delivNum} Ready: ${targetOrder?.title || safeExtraData?.title || `Order #${cleanTargetId}`}`
+        : `📦 Order Files Ready: ${targetOrder?.title || safeExtraData?.title || `Order #${cleanTargetId}`}`;
       const delivMsg = delivNum > 1
         ? `Updated production stitch files (Delivery #${delivNum}) are ready for inspection and download!`
         : `Your production stitch files and deliverables are ready for inspection and download!`;
@@ -2224,7 +2240,7 @@ export const StateProvider = ({ children }) => {
         playSound: false,
         isDelivery: true,
         soundType: 'delivery'
-      }, false);
+      }, true);
 
       triggerEmailNotification('ORDER_DELIVERED', { ...(targetOrder || {}), id: orderId, ...safeExtraData });
     } else if (newStatus === 'completed') {

@@ -403,6 +403,9 @@ export const OrderTrackerDrawer = () => {
 
       await updateOrderStatus(ord.id, 'delivered', {
         status: 'delivered',
+        clientEmail: ord.client_email || ord.clientEmail,
+        clientName: ord.client_name || ord.clientName,
+        title: ord.title || `Order #${ord.id}`,
         outputFileUrl: uploadedCloudinaryFiles.length > 0 ? (uploadedCloudinaryFiles[0].url || uploadedCloudinaryFiles[0].name) : (ord.outputFileUrl || ''),
         uploadedMachineFiles: updatedFiles,
         deliveries: updatedDeliveries,
