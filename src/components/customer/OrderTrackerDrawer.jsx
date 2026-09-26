@@ -27,6 +27,8 @@ import {
   ZoomIn, 
   Check, 
   ChevronRight,
+  ChevronDown,
+  ChevronUp,
   HelpCircle,
   FileCode,
   ShieldCheck,
@@ -113,6 +115,11 @@ export const OrderTrackerDrawer = () => {
   const [adminDragOver, setAdminDragOver] = useState(false);
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
+
+  // Requirements Collapsible Accordion State
+  const [isRequirementsOpen, setIsRequirementsOpen] = useState(false);
+  // Multi-Delivery Version Tab / Dropdown State
+  const [selectedDeliveryIndex, setSelectedDeliveryIndex] = useState(0);
 
   // Section Refs for smooth scrolling on the single page
   const requirementsRef = useRef(null);
@@ -207,6 +214,19 @@ export const OrderTrackerDrawer = () => {
     checkLivePaymentStatus();
     return () => { isSubscribed = false; };
   }, [selectedOrderForDrawer, ord?.id, isPaid, refreshOrders]);
+
+  // Requirements Collapsible Default: open for pending/in-progress orders, collapsed for delivered/completed orders
+  useEffect(() => {
+    if (!selectedOrderForDrawer) return;
+    const st = String(ord?.status || '').toLowerCase();
+    const isDoneOrDeliv = st === 'delivered' || st === 'completed';
+    setIsRequirementsOpen(!isDoneOrDeliv);
+  }, [selectedOrderForDrawer, ord?.id, ord?.status]);
+
+  // Reset delivery version selection to latest (index 0) when switching orders
+  useEffect(() => {
+    setSelectedDeliveryIndex(0);
+  }, [selectedOrderForDrawer, ord?.id, ord?.deliveries?.length]);
 
   // ── Early return AFTER all hooks have been declared ───────────────────────
   if (!selectedOrderForDrawer) return null;
@@ -472,6 +492,51 @@ export const OrderTrackerDrawer = () => {
     }
   }
 
+  // Multi-delivery version normalization
+  const allDeliveries = (() => {
+    if (Array.isArray(ord.deliveries) && ord.deliveries.length > 0) {
+      return ord.deliveries.map((deliv, idx) => {
+        let files = Array.isArray(deliv.files) && deliv.files.length > 0 ? deliv.files : [];
+        if (files.length === 0 && deliv.outputFileUrl) {
+          const ext = (deliv.outputFileUrl.split('.').pop()?.split('?')[0] || 'dst').toLowerCase();
+          files = [{
+            name: `${(ord.title || 'Order').replace(/\s+/g, '_')}_v${idx + 1}.${ext}`,
+            url: deliv.outputFileUrl,
+            format: ext
+          }];
+        }
+        if (files.length === 0 && idx === 0 && uniqueMachineFiles.length > 0) {
+          files = uniqueMachineFiles;
+        }
+        return {
+          ...deliv,
+          files,
+          deliveryNumber: deliv.deliveryNumber || (ord.deliveries.length - idx),
+          title: deliv.title || `Delivery #${deliv.deliveryNumber || (ord.deliveries.length - idx)}`
+        };
+      });
+    }
+
+    if (uniqueMachineFiles.length > 0 || ord.deliveryNotes || ord.deliveryMessage || ord.outputFileUrl) {
+      return [{
+        id: 'delivery_initial',
+        deliveryNumber: 1,
+        title: 'Initial Delivery',
+        deliveryDate: ord.deliveryDate || ord.created_at || new Date().toISOString(),
+        deliveryMessage: ord.deliveryNotes || ord.deliveryMessage || 'Production stitch files and deliverables ready for download.',
+        deliveredBy: 'Master Digitizer Desk',
+        files: uniqueMachineFiles
+      }];
+    }
+
+    return [];
+  })();
+
+  const activeDelivery = allDeliveries[selectedDeliveryIndex] || allDeliveries[0] || null;
+  const activeDeliveryFiles = (activeDelivery && Array.isArray(activeDelivery.files) && activeDelivery.files.length > 0)
+    ? activeDelivery.files
+    : uniqueMachineFiles;
+
   const handleOpenFileAsset = (fileObj, fallbackFormatKey) => {
     let target = fileObj;
     const formatKey = (fileObj?.format || fallbackFormatKey || 'dst').toLowerCase();
@@ -537,21 +602,27 @@ export const OrderTrackerDrawer = () => {
     }
   };
 
-  const handleDownloadAll = async () => {
-    const filesToDownload = uniqueMachineFiles.length > 0 ? uniqueMachineFiles : allDownloadFormats.map(fmt => ({ name: null, format: fmt }));
-    showToast(`Starting batch download of ${filesToDownload.length} files...`, 'info');
-    for (let i = 0; i < filesToDownload.length; i++) {
-      const file = filesToDownload[i];
+  const handleDownloadDeliveryFiles = async (filesList) => {
+    const list = Array.isArray(filesList) && filesList.length > 0 
+      ? filesList 
+      : (uniqueMachineFiles.length > 0 ? uniqueMachineFiles : allDownloadFormats.map(fmt => ({ name: null, format: fmt })));
+    showToast(`Starting batch download of ${list.length} files...`, 'info');
+    for (let i = 0; i < list.length; i++) {
+      const file = list[i];
       if (file.name === null) {
         await handleDownloadFileAsset(null, file.format);
       } else {
         const ext = file.format || (file.name && file.name.split('.').pop().toLowerCase()) || 'dst';
         await handleDownloadFileAsset(file, ext);
       }
-      if (i < filesToDownload.length - 1) {
+      if (i < list.length - 1) {
         await new Promise(r => setTimeout(r, 600));
       }
     }
+  };
+
+  const handleDownloadAll = async () => {
+    await handleDownloadDeliveryFiles(activeDeliveryFiles);
   };
 
   const handleLaunchPayment = () => {
@@ -774,7 +845,10 @@ export const OrderTrackerDrawer = () => {
         }}>
           <button
             type="button"
-            onClick={() => scrollToSection(requirementsRef, 'requirements')}
+            onClick={() => {
+              setIsRequirementsOpen(true);
+              scrollToSection(requirementsRef, 'requirements');
+            }}
             className={`btn btn-sm ${activeSection === 'requirements' ? 'btn-primary-orange' : 'btn-outline'}`}
             style={{ fontWeight: 800, fontSize: '0.8rem', gap: '0.35rem' }}
           >
@@ -808,8 +882,8 @@ export const OrderTrackerDrawer = () => {
             <PackageCheck size={14} /> {isAdmin ? 'Deliver Order / Files' : (isCompleted ? '✅ Final Deliverables' : (isDelivered ? '✨ Delivered Files' : 'Deliverables'))}
           </button>
 
-          {/* Request Modification Tab: ONLY visible when delivered or in revision, NEVER when completed */}
-          {!isCompleted && (normalizedStatus === 'delivered' || isInRevision) && (
+          {/* Request Modification Tab: ONLY visible to CUSTOMER when delivered or in revision, NEVER to admin and NEVER when completed */}
+          {!isAdmin && !isCompleted && (normalizedStatus === 'delivered' || isInRevision) && (
             <button
               type="button"
               onClick={() => scrollToSection(modificationRef, 'modification')}
@@ -820,7 +894,8 @@ export const OrderTrackerDrawer = () => {
             </button>
           )}
 
-          {isCompleted && Array.isArray(ord.revisions) && ord.revisions.length > 0 && (
+          {/* Revision History Tab: visible when revisions exist (admin or completed customer) */}
+          {((!isAdmin && isCompleted) || isAdmin) && Array.isArray(ord.revisions) && ord.revisions.length > 0 && (
             <button
               type="button"
               onClick={() => scrollToSection(modificationRef, 'modification')}
@@ -1171,182 +1246,173 @@ export const OrderTrackerDrawer = () => {
               </form>
             )}
 
-            {/* MULTI-DELIVERY HISTORY TIMELINE (1st, 2nd, 3rd Deliveries) */}
+            {/* MULTI-DELIVERY VERSIONING SYSTEM (DROPDOWN & SEGMENTED TABS) */}
             {isDelivered && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', marginBottom: '1.25rem' }}>
-                {Array.isArray(ord.deliveries) && ord.deliveries.length > 0 ? (
-                  ord.deliveries.map((delivery, dIdx) => {
-                    const isLatest = dIdx === 0;
-                    const dFiles = Array.isArray(delivery.files) && delivery.files.length > 0 ? delivery.files : uniqueMachineFiles;
-                    const dDateStr = delivery.deliveryDate ? new Date(delivery.deliveryDate).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' }) : 'Recently delivered';
-
-                    return (
-                      <div 
-                        key={delivery.id || dIdx}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem', marginBottom: '1.25rem' }}>
+                {/* Delivery Version Selector (Shown when more than 1 delivery exists) */}
+                {allDeliveries.length > 1 && (
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: '0.75rem',
+                    flexWrap: 'wrap',
+                    background: isDark ? 'rgba(30, 41, 59, 0.7)' : 'var(--bg-surface)',
+                    border: '1.5px solid var(--border-color)',
+                    borderRadius: '12px',
+                    padding: '0.65rem 0.9rem'
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                      <span style={{ fontSize: '0.82rem', fontWeight: 800, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                        <Layers size={15} style={{ color: 'var(--orange-500)' }} /> Delivery Version:
+                      </span>
+                      <select
+                        value={selectedDeliveryIndex}
+                        onChange={(e) => setSelectedDeliveryIndex(Number(e.target.value))}
+                        className="form-select"
                         style={{
-                          background: isLatest ? '#f0fdf4' : '#f8fafc',
-                          border: isLatest ? '1.5px solid #86efac' : '1px solid #e2e8f0',
-                          borderRadius: '14px',
-                          padding: '1.25rem',
-                          boxShadow: isLatest ? '0 4px 14px rgba(16, 185, 129, 0.08)' : 'none'
+                          padding: '0.32rem 0.7rem',
+                          borderRadius: '8px',
+                          border: '1.5px solid var(--orange-500)',
+                          background: 'var(--bg-card)',
+                          color: 'var(--text-main)',
+                          fontWeight: 700,
+                          fontSize: '0.8rem',
+                          cursor: 'pointer'
                         }}
                       >
-                        {/* Delivery Header */}
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.85rem', flexWrap: 'wrap', gap: '0.5rem', borderBottom: isLatest ? '1px solid #bbf7d0' : '1px solid #e2e8f0', paddingBottom: '0.65rem' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                            <span style={{ fontSize: '1.15rem' }}>📦</span>
-                            <div>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
-                                <strong style={{ fontSize: '0.95rem', color: isLatest ? '#065f46' : 'var(--navy-900)' }}>
-                                  {delivery.title || `Delivery #${delivery.deliveryNumber || (ord.deliveries.length - dIdx)}`}
-                                </strong>
-                                {isLatest && (
-                                  <span style={{ background: '#10b981', color: '#ffffff', fontSize: '0.65rem', fontWeight: 900, padding: '0.15rem 0.5rem', borderRadius: '9999px', textTransform: 'uppercase' }}>
-                                    Latest Delivery
-                                  </span>
-                                )}
-                              </div>
-                              <span style={{ fontSize: '0.72rem', color: isLatest ? '#047857' : 'var(--text-muted)' }}>
-                                Dispatched {dDateStr} by {delivery.deliveredBy || 'Master Digitizer Desk'}
-                              </span>
-                            </div>
-                          </div>
+                        {allDeliveries.map((deliv, idx) => {
+                          const isLatest = idx === 0;
+                          const delivLabel = deliv.title || `Delivery #${deliv.deliveryNumber || (allDeliveries.length - idx)}`;
+                          return (
+                            <option key={deliv.id || idx} value={idx}>
+                              {delivLabel} {isLatest ? ' (Latest)' : ''}
+                            </option>
+                          );
+                        })}
+                      </select>
+                    </div>
 
-                          <span style={{ fontSize: '0.75rem', fontWeight: 800, color: isLatest ? '#059669' : 'var(--text-muted)' }}>
-                            {dFiles.length} file(s)
+                    {/* Segmented Pill Tabs */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', flexWrap: 'wrap' }}>
+                      {allDeliveries.map((deliv, idx) => {
+                        const isLatest = idx === 0;
+                        const isSelected = selectedDeliveryIndex === idx;
+                        const delivLabel = deliv.title || `Delivery #${deliv.deliveryNumber || (allDeliveries.length - idx)}`;
+                        return (
+                          <button
+                            key={deliv.id || idx}
+                            type="button"
+                            onClick={() => setSelectedDeliveryIndex(idx)}
+                            style={{
+                              padding: '0.3rem 0.65rem',
+                              borderRadius: '7px',
+                              fontSize: '0.76rem',
+                              fontWeight: isSelected ? 800 : 600,
+                              cursor: 'pointer',
+                              transition: 'all 0.15s ease',
+                              background: isSelected ? 'var(--orange-500)' : 'var(--bg-card)',
+                              color: isSelected ? '#ffffff' : 'var(--text-muted)',
+                              border: isSelected ? '1px solid var(--orange-500)' : '1px solid var(--border-color)',
+                              boxShadow: isSelected ? '0 2px 6px rgba(249, 115, 22, 0.28)' : 'none',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '0.25rem'
+                            }}
+                          >
+                            <span>{delivLabel}</span>
+                            {isLatest && <span style={{ fontSize: '0.68rem' }}>✨</span>}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* Selected Delivery Card */}
+                {activeDelivery ? (
+                  <div 
+                    key={activeDelivery.id || selectedDeliveryIndex}
+                    style={{
+                      background: selectedDeliveryIndex === 0 ? '#f0fdf4' : '#f8fafc',
+                      border: selectedDeliveryIndex === 0 ? '1.5px solid #86efac' : '1px solid #e2e8f0',
+                      borderRadius: '14px',
+                      padding: '1.25rem',
+                      boxShadow: selectedDeliveryIndex === 0 ? '0 4px 14px rgba(16, 185, 129, 0.08)' : 'none'
+                    }}
+                  >
+                    {/* Delivery Header */}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.85rem', flexWrap: 'wrap', gap: '0.5rem', borderBottom: selectedDeliveryIndex === 0 ? '1px solid #bbf7d0' : '1px solid #e2e8f0', paddingBottom: '0.65rem' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <span style={{ fontSize: '1.15rem' }}>📦</span>
+                        <div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                            <strong style={{ fontSize: '0.95rem', color: selectedDeliveryIndex === 0 ? '#065f46' : 'var(--navy-900)' }}>
+                              {activeDelivery.title || `Delivery #${activeDelivery.deliveryNumber || (allDeliveries.length - selectedDeliveryIndex)}`}
+                            </strong>
+                            {selectedDeliveryIndex === 0 && (
+                              <span style={{ background: '#10b981', color: '#ffffff', fontSize: '0.65rem', fontWeight: 900, padding: '0.15rem 0.5rem', borderRadius: '9999px', textTransform: 'uppercase' }}>
+                                {allDeliveries.length > 1 ? 'Latest Delivery' : 'Delivered'}
+                              </span>
+                            )}
+                          </div>
+                          <span style={{ fontSize: '0.72rem', color: selectedDeliveryIndex === 0 ? '#047857' : 'var(--text-muted)' }}>
+                            Dispatched {activeDelivery.deliveryDate ? new Date(activeDelivery.deliveryDate).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' }) : 'Recently delivered'} by {activeDelivery.deliveredBy || 'Master Digitizer Desk'}
                           </span>
                         </div>
-
-                        {/* Delivery Note */}
-                        {(delivery.deliveryMessage || delivery.deliveryNotes) && (
-                          <div style={{ background: isLatest ? (isDark ? 'rgba(16, 185, 129, 0.12)' : '#ffffff') : (isDark ? 'var(--color-subtle, #1e293b)' : '#f1f5f9'), border: isLatest ? (isDark ? '1px solid rgba(16, 185, 129, 0.35)' : '1px solid #bbf7d0') : (isDark ? '1px solid var(--color-border, #334155)' : '1px solid #e2e8f0'), padding: '0.75rem 1rem', borderRadius: '10px', marginBottom: '0.85rem' }}>
-                            <div style={{ fontSize: '0.72rem', fontWeight: 800, color: isLatest ? (isDark ? '#34d399' : '#065f46') : 'var(--navy-800)', textTransform: 'uppercase', marginBottom: '0.2rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                              <Sparkles size={12} /> Digitizer Note:
-                            </div>
-                            <div style={{ fontSize: '0.84rem', color: isLatest ? (isDark ? '#6ee7b7' : '#047857') : 'var(--text-main)', lineHeight: 1.4, whiteSpace: 'pre-wrap' }}>
-                              {delivery.deliveryMessage || delivery.deliveryNotes}
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Delivery Files Grid */}
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '0.65rem' }}>
-                          {dFiles.map((f, fIdx) => {
-                            const ext = (f.format || f.name?.split('.').pop() || 'dst').toUpperCase();
-                            const isPdf = ext.toLowerCase() === 'pdf';
-                            const fileIcon = isPdf ? '📄' : (['AI', 'EPS', 'SVG', 'CDR'].includes(ext) ? '🎨' : (['ZIP', 'RAR', '7Z'].includes(ext) ? '📦' : '🧵'));
-
-                            return (
-                              <div key={fIdx} style={{ background: isDark ? 'var(--color-surface, #111827)' : '#ffffff', border: isPdf ? '1.5px solid #fed7aa' : (isDark ? '1px solid var(--color-border, #334155)' : '1px solid #e2e8f0'), borderRadius: '10px', padding: '0.75rem', display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                                  <span style={{ fontSize: '1.2rem' }}>{fileIcon}</span>
-                                  <div style={{ minWidth: 0, flex: 1 }}>
-                                    <div style={{ fontWeight: 800, color: 'var(--navy-900)', fontSize: '0.8rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                                      {f.name || `Production_File.${ext}`}
-                                    </div>
-                                    <div style={{ fontSize: '0.68rem', color: isPdf ? '#ea580c' : 'var(--text-muted)', fontWeight: isPdf ? 700 : 500 }}>
-                                      .{ext} {isPdf ? 'Worksheet & Preview' : 'Production File'}
-                                    </div>
-                                  </div>
-                                </div>
-                                {isPdf ? (
-                                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.3rem' }}>
-                                    <button
-                                      type="button"
-                                      onClick={() => {
-                                        if (f.url) {
-                                          setActivePdfPreview({ url: f.url, name: f.name || 'document.pdf' });
-                                        } else {
-                                          handleOpenFileAsset(f, 'pdf');
-                                        }
-                                      }}
-                                      className="btn btn-outline btn-sm"
-                                      style={{ gap: '0.2rem', justifyContent: 'center', fontSize: '0.72rem', fontWeight: 700, padding: '0.3rem 0.35rem' }}
-                                    >
-                                      <ExternalLink size={11} /> Open
-                                    </button>
-                                    <button
-                                      type="button"
-                                      disabled={downloadingFileKey === (f.id || f.url || f.name || 'pdf')}
-                                      onClick={() => handleDownloadFileAsset(f, 'pdf')}
-                                      className="btn btn-primary-orange btn-sm"
-                                      style={{ gap: '0.2rem', justifyContent: 'center', fontSize: '0.72rem', fontWeight: 800, padding: '0.3rem 0.35rem' }}
-                                    >
-                                      {downloadingFileKey === (f.id || f.url || f.name || 'pdf') ? (
-                                        <Loader2 size={11} className="animate-spin" />
-                                      ) : (
-                                        <Download size={11} />
-                                      )}
-                                      Download
-                                    </button>
-                                  </div>
-                                ) : (
-                                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.3rem' }}>
-                                    <button
-                                      type="button"
-                                      onClick={() => handleOpenFileAsset(f, ext)}
-                                      className="btn btn-outline btn-sm"
-                                      style={{ gap: '0.2rem', justifyContent: 'center', fontSize: '0.72rem', fontWeight: 700, padding: '0.3rem 0.35rem' }}
-                                      title={`Open ${f.name || ext}`}
-                                    >
-                                      <ExternalLink size={11} /> Open
-                                    </button>
-                                    <button
-                                      type="button"
-                                      disabled={downloadingFileKey === (f.id || f.url || f.name || ext)}
-                                      onClick={() => handleDownloadFileAsset(f, ext)}
-                                      className="btn btn-primary-orange btn-sm"
-                                      style={{ gap: '0.2rem', justifyContent: 'center', fontSize: '0.72rem', fontWeight: 800, padding: '0.3rem 0.35rem' }}
-                                      title={`Download ${f.name || ext}`}
-                                    >
-                                      {downloadingFileKey === (f.id || f.url || f.name || ext) ? (
-                                        <Loader2 size={11} className="animate-spin" />
-                                      ) : (
-                                        <Download size={11} />
-                                      )}
-                                      Download
-                                    </button>
-                                  </div>
-                                )}
-                              </div>
-                            );
-                          })}
-                        </div>
                       </div>
-                    );
-                  })
-                ) : (
-                  <div>
-                    {/* Fallback Single Delivery Display */}
-                    {(ord.deliveryNotes || ord.deliveryMessage) && (
-                      <div style={{ background: '#ecfdf5', border: '1.5px solid #a7f3d0', padding: '1rem 1.25rem', borderRadius: '12px', marginBottom: '1.25rem' }}>
-                        <div style={{ fontSize: '0.75rem', fontWeight: 800, color: '#065f46', textTransform: 'uppercase', marginBottom: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                          <Sparkles size={13} /> Digitizer Delivery Note:
+
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                        <span style={{ fontSize: '0.75rem', fontWeight: 800, color: selectedDeliveryIndex === 0 ? '#059669' : 'var(--text-muted)' }}>
+                          {activeDeliveryFiles.length} file(s)
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => handleDownloadDeliveryFiles(activeDeliveryFiles)}
+                          className="btn btn-outline btn-sm"
+                          style={{ fontSize: '0.74rem', fontWeight: 700, padding: '0.25rem 0.6rem', gap: '0.25rem', borderColor: selectedDeliveryIndex === 0 ? '#86efac' : undefined }}
+                          title="Download all files in this delivery version"
+                        >
+                          <Download size={12} /> Download This Version
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Delivery Note */}
+                    {(activeDelivery.deliveryMessage || activeDelivery.deliveryNotes) && (
+                      <div style={{ background: selectedDeliveryIndex === 0 ? (isDark ? 'rgba(16, 185, 129, 0.12)' : '#ffffff') : (isDark ? 'var(--color-subtle, #1e293b)' : '#f1f5f9'), border: selectedDeliveryIndex === 0 ? (isDark ? '1px solid rgba(16, 185, 129, 0.35)' : '1px solid #bbf7d0') : (isDark ? '1px solid var(--color-border, #334155)' : '1px solid #e2e8f0'), padding: '0.75rem 1rem', borderRadius: '10px', marginBottom: '0.85rem' }}>
+                        <div style={{ fontSize: '0.72rem', fontWeight: 800, color: selectedDeliveryIndex === 0 ? (isDark ? '#34d399' : '#065f46') : 'var(--navy-800)', textTransform: 'uppercase', marginBottom: '0.2rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                          <Sparkles size={12} /> Digitizer Delivery Note:
                         </div>
-                        <div style={{ fontSize: '0.88rem', color: '#047857', lineHeight: 1.5, whiteSpace: 'pre-wrap' }}>
-                          {ord.deliveryNotes || ord.deliveryMessage}
+                        <div style={{ fontSize: '0.84rem', color: selectedDeliveryIndex === 0 ? (isDark ? '#6ee7b7' : '#047857') : 'var(--text-main)', lineHeight: 1.4, whiteSpace: 'pre-wrap' }}>
+                          {activeDelivery.deliveryMessage || activeDelivery.deliveryNotes}
                         </div>
                       </div>
                     )}
 
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '0.85rem', marginBottom: '1.25rem' }}>
-                      {uniqueMachineFiles.length > 0 ? (
-                        uniqueMachineFiles.map((f, idx) => {
+                    {/* Delivery Files Grid */}
+                    {activeDeliveryFiles.length > 0 ? (
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '0.65rem' }}>
+                        {activeDeliveryFiles.map((f, fIdx) => {
                           const ext = (f.format || f.name?.split('.').pop() || 'dst').toUpperCase();
                           const isPdf = ext.toLowerCase() === 'pdf';
                           const fileIcon = isPdf ? '📄' : (['AI', 'EPS', 'SVG', 'CDR'].includes(ext) ? '🎨' : (['ZIP', 'RAR', '7Z'].includes(ext) ? '📦' : '🧵'));
 
                           return (
-                            <div key={idx} style={{ background: '#f8fafc', border: isPdf ? '1.5px solid #fed7aa' : '1px solid #e2e8f0', borderRadius: '12px', padding: '0.85rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                <span style={{ fontSize: '1.4rem' }}>{fileIcon}</span>
+                            <div key={fIdx} style={{ background: isDark ? 'var(--color-surface, #111827)' : '#ffffff', border: isPdf ? '1.5px solid #fed7aa' : (isDark ? '1px solid var(--color-border, #334155)' : '1px solid #e2e8f0'), borderRadius: '10px', padding: '0.75rem', display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                                <span style={{ fontSize: '1.2rem' }}>{fileIcon}</span>
                                 <div style={{ minWidth: 0, flex: 1 }}>
-                                  <div style={{ fontWeight: 800, color: 'var(--navy-900)', fontSize: '0.84rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{f.name || `Machine_File.${ext}`}</div>
-                                  <div style={{ fontSize: '0.72rem', color: isPdf ? '#ea580c' : 'var(--text-muted)', fontWeight: isPdf ? 700 : 500 }}>.{ext} {isPdf ? 'Worksheet & Preview' : 'Production File'}</div>
+                                  <div style={{ fontWeight: 800, color: 'var(--navy-900)', fontSize: '0.8rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                    {f.name || `Production_File.${ext}`}
+                                  </div>
+                                  <div style={{ fontSize: '0.68rem', color: isPdf ? '#ea580c' : 'var(--text-muted)', fontWeight: isPdf ? 700 : 500 }}>
+                                    .{ext} {isPdf ? 'Worksheet & Preview' : 'Production File'}
+                                  </div>
                                 </div>
                               </div>
                               {isPdf ? (
-                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.35rem' }}>
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.3rem' }}>
                                   <button
                                     type="button"
                                     onClick={() => {
@@ -1357,48 +1423,48 @@ export const OrderTrackerDrawer = () => {
                                       }
                                     }}
                                     className="btn btn-outline btn-sm"
-                                    style={{ gap: '0.2rem', justifyContent: 'center', fontSize: '0.75rem', fontWeight: 700 }}
+                                    style={{ gap: '0.2rem', justifyContent: 'center', fontSize: '0.72rem', fontWeight: 700, padding: '0.3rem 0.35rem' }}
                                   >
-                                    <ExternalLink size={12} /> Open
+                                    <ExternalLink size={11} /> Open
                                   </button>
                                   <button
                                     type="button"
                                     disabled={downloadingFileKey === (f.id || f.url || f.name || 'pdf')}
                                     onClick={() => handleDownloadFileAsset(f, 'pdf')}
                                     className="btn btn-primary-orange btn-sm"
-                                    style={{ gap: '0.2rem', justifyContent: 'center', fontSize: '0.75rem', fontWeight: 800 }}
+                                    style={{ gap: '0.2rem', justifyContent: 'center', fontSize: '0.72rem', fontWeight: 800, padding: '0.3rem 0.35rem' }}
                                   >
                                     {downloadingFileKey === (f.id || f.url || f.name || 'pdf') ? (
-                                      <Loader2 size={12} className="animate-spin" />
+                                      <Loader2 size={11} className="animate-spin" />
                                     ) : (
-                                      <Download size={12} />
+                                      <Download size={11} />
                                     )}
                                     Download
                                   </button>
                                 </div>
                               ) : (
-                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.35rem' }}>
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.3rem' }}>
                                   <button
                                     type="button"
                                     onClick={() => handleOpenFileAsset(f, ext)}
                                     className="btn btn-outline btn-sm"
-                                    style={{ gap: '0.2rem', justifyContent: 'center', fontSize: '0.75rem', fontWeight: 700 }}
+                                    style={{ gap: '0.2rem', justifyContent: 'center', fontSize: '0.72rem', fontWeight: 700, padding: '0.3rem 0.35rem' }}
                                     title={`Open ${f.name || ext}`}
                                   >
-                                    <ExternalLink size={12} /> Open
+                                    <ExternalLink size={11} /> Open
                                   </button>
                                   <button
                                     type="button"
                                     disabled={downloadingFileKey === (f.id || f.url || f.name || ext)}
                                     onClick={() => handleDownloadFileAsset(f, ext)}
                                     className="btn btn-primary-orange btn-sm"
-                                    style={{ gap: '0.2rem', justifyContent: 'center', fontSize: '0.75rem', fontWeight: 800 }}
+                                    style={{ gap: '0.2rem', justifyContent: 'center', fontSize: '0.72rem', fontWeight: 800, padding: '0.3rem 0.35rem' }}
                                     title={`Download ${f.name || ext}`}
                                   >
                                     {downloadingFileKey === (f.id || f.url || f.name || ext) ? (
-                                      <Loader2 size={12} className="animate-spin" />
+                                      <Loader2 size={11} className="animate-spin" />
                                     ) : (
-                                      <Download size={12} />
+                                      <Download size={11} />
                                     )}
                                     Download
                                   </button>
@@ -1406,50 +1472,17 @@ export const OrderTrackerDrawer = () => {
                               )}
                             </div>
                           );
-                        })
-                      ) : (
-                        allDownloadFormats.map(fmt => {
-                          const isPdf = fmt.toLowerCase() === 'pdf';
-                          const fileIcon = isPdf ? '📄' : (['ai', 'eps', 'svg', 'cdr'].includes(fmt.toLowerCase()) ? '🎨' : '🧵');
-
-                          return (
-                            <div key={fmt} style={{ background: '#f8fafc', border: isPdf ? '1.5px solid #fed7aa' : '1px solid #e2e8f0', borderRadius: '12px', padding: '0.85rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                <span style={{ fontSize: '1.4rem' }}>{fileIcon}</span>
-                                <div>
-                                  <div style={{ fontWeight: 800, color: 'var(--navy-900)', fontSize: '0.84rem' }}>Format (.{fmt.toUpperCase()})</div>
-                                  <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>Standard Production Package</div>
-                                </div>
-                              </div>
-                              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.35rem' }}>
-                                <button
-                                  type="button"
-                                  onClick={() => handleOpenFileAsset(null, fmt)}
-                                  className="btn btn-outline btn-sm"
-                                  style={{ gap: '0.2rem', justifyContent: 'center', fontSize: '0.75rem', fontWeight: 700, padding: '0.35rem 0.3rem' }}
-                                >
-                                  <ExternalLink size={12} /> Open
-                                </button>
-                                <button
-                                  type="button"
-                                  disabled={downloadingFileKey === fmt}
-                                  onClick={() => handleDownloadFileAsset(null, fmt)}
-                                  className="btn btn-primary-orange btn-sm"
-                                  style={{ gap: '0.2rem', justifyContent: 'center', fontSize: '0.75rem', fontWeight: 800, padding: '0.35rem 0.3rem' }}
-                                >
-                                  {downloadingFileKey === fmt ? (
-                                    <Loader2 size={12} className="animate-spin" />
-                                  ) : (
-                                    <Download size={12} />
-                                  )}
-                                  Download
-                                </button>
-                              </div>
-                            </div>
-                          );
-                        })
-                      )}
-                    </div>
+                        })}
+                      </div>
+                    ) : (
+                      <div style={{ textAlign: 'center', padding: '1rem', color: 'var(--text-muted)', fontSize: '0.82rem' }}>
+                        No deliverable files attached to this delivery version.
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div style={{ textAlign: 'center', padding: '1.5rem', color: 'var(--text-muted)', fontSize: '0.88rem' }}>
+                    No deliverable files uploaded yet.
                   </div>
                 )}
               </div>
@@ -1548,7 +1581,7 @@ export const OrderTrackerDrawer = () => {
           </div>
 
           {/* ================================================================
-              SECTION B: ORDER REQUIREMENTS & SOURCE ARTWORK
+              SECTION B: ORDER REQUIREMENTS & SOURCE ARTWORK (COLLAPSIBLE ACCORDION)
              ================================================================ */}
           <div 
             ref={requirementsRef}
@@ -1556,23 +1589,91 @@ export const OrderTrackerDrawer = () => {
               background: 'var(--bg-card)',
               borderRadius: isMobileLayout ? '12px' : '16px',
               border: '1.5px solid var(--border-color)',
-              padding: isMobileLayout ? '1rem' : '1.5rem',
+              padding: isMobileLayout ? '0.85rem' : '1.25rem',
               boxShadow: 'var(--shadow-sm)'
             }}
           >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.65rem' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <span style={{ fontSize: '1.2rem' }}>📋</span>
-                <div>
-                  <h4 style={{ fontSize: isMobileLayout ? '0.98rem' : '1.1rem', fontWeight: 800, color: 'var(--text-main)', margin: 0 }}>
-                    Order Requirements & Specifications
-                  </h4>
-                  <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)' }}>
-                    Customer instructions, dimensions, target fabric, and source logo files
+            {/* Accordion Toggle Header Bar */}
+            <div 
+              onClick={() => setIsRequirementsOpen(prev => !prev)}
+              style={{ 
+                display: 'flex', 
+                justifyContent: 'space-between', 
+                alignItems: 'center', 
+                cursor: 'pointer',
+                userSelect: 'none',
+                gap: '0.75rem',
+                borderBottom: isRequirementsOpen ? '1px solid var(--border-color)' : 'none', 
+                paddingBottom: isRequirementsOpen ? '0.75rem' : '0'
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', minWidth: 0 }}>
+                <span style={{ fontSize: '1.25rem', flexShrink: 0 }}>📋</span>
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                    <h4 style={{ fontSize: isMobileLayout ? '0.95rem' : '1.05rem', fontWeight: 800, color: 'var(--text-main)', margin: 0 }}>
+                      Order Requirements & Specifications
+                    </h4>
+                    {/* Compact preview pills when collapsed */}
+                    {!isRequirementsOpen && (
+                      <span style={{
+                        fontSize: '0.72rem',
+                        fontWeight: 600,
+                        background: 'var(--bg-surface)',
+                        color: 'var(--text-muted)',
+                        padding: '0.15rem 0.5rem',
+                        borderRadius: '6px',
+                        border: '1px solid var(--border-color)',
+                        whiteSpace: 'nowrap'
+                      }}>
+                        {ord.serviceCategory || (ord.type === 'vector' ? 'Vector Art' : 'Embroidery Digitizing')} • {formatDimensions(ord.dimensions || ord.size)}
+                      </span>
+                    )}
+                  </div>
+                  <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)', marginTop: '0.1rem' }}>
+                    {isRequirementsOpen 
+                      ? 'Customer instructions, dimensions, target fabric, and source logo files' 
+                      : 'Click to expand customer instructions, dimensions, and artwork'}
                   </div>
                 </div>
               </div>
+
+              {/* View / Hide Toggle Button */}
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsRequirementsOpen(prev => !prev);
+                }}
+                className="btn btn-sm btn-outline"
+                style={{
+                  fontWeight: 700,
+                  fontSize: '0.78rem',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.35rem',
+                  flexShrink: 0,
+                  padding: '0.35rem 0.75rem',
+                  borderRadius: '8px'
+                }}
+              >
+                {isRequirementsOpen ? (
+                  <>
+                    <ChevronUp size={15} />
+                    <span>Hide Requirements</span>
+                  </>
+                ) : (
+                  <>
+                    <ChevronDown size={15} />
+                    <span>View Requirements</span>
+                  </>
+                )}
+              </button>
             </div>
+
+            {/* Collapsible Content Body */}
+            {isRequirementsOpen && (
+              <div style={{ marginTop: '1rem' }}>
 
             <div style={{ display: 'flex', gap: isMobileLayout ? '1rem' : '1.5rem', flexDirection: isMobileLayout ? 'column' : 'row', alignItems: 'stretch' }}>
               {/* Artwork Box */}
@@ -1709,6 +1810,8 @@ export const OrderTrackerDrawer = () => {
                   })}
                 </div>
               </div>
+            )}
+            </div>
             )}
           </div>
 
@@ -1851,9 +1954,9 @@ export const OrderTrackerDrawer = () => {
           )}
 
           {/* ================================================================
-              SECTION C: MODIFICATION / REVISIONS REQUEST
+              SECTION C: MODIFICATION / REVISIONS REQUEST (CUSTOMER ONLY, READ-ONLY LOGS FOR ADMIN)
              ================================================================ */}
-          {(normalizedStatus === 'delivered' || isInRevision || (isCompleted && Array.isArray(ord.revisions) && ord.revisions.length > 0)) && (
+          {(!isAdmin ? (normalizedStatus === 'delivered' || isInRevision || (isCompleted && Array.isArray(ord.revisions) && ord.revisions.length > 0)) : (Array.isArray(ord.revisions) && ord.revisions.length > 0 || isInRevision)) && (
             <div 
               ref={modificationRef}
               style={{
@@ -1869,10 +1972,10 @@ export const OrderTrackerDrawer = () => {
                   <span style={{ fontSize: '1.3rem' }}>🔄</span>
                   <div>
                     <h4 style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--text-main)', margin: 0 }}>
-                      {isCompleted ? 'Revision History (Archived)' : 'Modification & Revision Requests'}
+                      {isAdmin ? 'Client Modification & Revision History' : (isCompleted ? 'Revision History (Archived)' : 'Modification & Revision Requests')}
                     </h4>
                     <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-                      {isCompleted ? 'Completed project revision logs' : 'Free unlimited adjustments on density, size, colors, or pull compensation'}
+                      {isAdmin ? 'Review customer revision requests and instructions' : (isCompleted ? 'Completed project revision logs' : 'Free unlimited adjustments on density, size, colors, or pull compensation')}
                     </div>
                   </div>
                 </div>
@@ -1889,9 +1992,13 @@ export const OrderTrackerDrawer = () => {
                 <div style={{ background: '#fff1f2', border: '1.5px solid #fecdd3', borderRadius: '12px', padding: '1rem 1.2rem', marginBottom: '1rem', display: 'flex', alignItems: 'flex-start', gap: '0.75rem' }}>
                   <RotateCcw size={20} style={{ color: '#e11d48', flexShrink: 0, marginTop: '0.15rem' }} />
                   <div>
-                    <div style={{ fontWeight: 800, color: '#9f1239', fontSize: '0.88rem' }}>Modification Currently Under Production</div>
+                    <div style={{ fontWeight: 800, color: '#9f1239', fontSize: '0.88rem' }}>
+                      {isAdmin ? 'Order In Revision Status' : 'Modification Currently Under Production'}
+                    </div>
                     <div style={{ fontSize: '0.78rem', color: '#be123c', marginTop: '0.2rem', lineHeight: 1.4 }}>
-                      Our master digitizer team is working on your requested changes. You will receive an instant notification as soon as updated stitch files are uploaded.
+                      {isAdmin 
+                        ? 'Customer has requested changes on this order. Deliver updated stitch files to fulfill revision.'
+                        : 'Our master digitizer team is working on your requested changes. You will receive an instant notification as soon as updated stitch files are uploaded.'}
                     </div>
                   </div>
                 </div>
@@ -1912,8 +2019,8 @@ export const OrderTrackerDrawer = () => {
                 </div>
               )}
 
-              {/* Submit Revision Form: ONLY active when delivered and NOT completed/in_revision */}
-              {ord.status === 'delivered' && !isCompleted && (
+              {/* Submit Revision Form: ONLY active for CUSTOMER when delivered and NOT completed/in_revision */}
+              {!isAdmin && ord.status === 'delivered' && !isCompleted && (
                 <form onSubmit={handleRevisionSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', background: 'var(--bg-surface)', padding: '1.15rem', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
                   <label style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--text-main)' }}>
                     Describe Required Changes:

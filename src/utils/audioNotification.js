@@ -665,6 +665,9 @@ const playCustomerSynthesizedChime = (preset = 'basic_ping', volume = 0.50) => {
  */
 export const playAdminNotificationSound = (type = 'notification', force = false, options = {}) => {
   try {
+    // Deliveries have notification sound completely disabled per specification
+    if (type === 'delivery' || options?.isDelivery || options?.type === 'delivery') return;
+
     if (typeof localStorage !== 'undefined') {
       const isMuted = localStorage.getItem('bdigi_audio_enabled') === 'false';
       if (isMuted && !force) return;
@@ -737,6 +740,9 @@ export const playAdminNotificationSound = (type = 'notification', force = false,
  */
 export const playCustomerNotificationSound = (type = 'chat', force = false, options = {}) => {
   try {
+    // Deliveries have notification sound completely disabled per specification
+    if (type === 'delivery' || options?.isDelivery || options?.type === 'delivery') return;
+
     if (typeof localStorage !== 'undefined') {
       const isMuted = localStorage.getItem('bdigi_audio_enabled') === 'false';
       if (isMuted && !force) return;

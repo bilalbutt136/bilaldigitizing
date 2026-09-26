@@ -664,7 +664,17 @@ export const StateProvider = ({ children }) => {
     });
 
     // Sound should ONLY play for genuinely new, unread notifications
-    const shouldPlaySound = notif.playSound !== false && !isAlreadyRead && !alreadyExists;
+    // Order delivery notification sound is completely disabled per specification
+    const isDeliveryNotification = notif.playSound === false || 
+      notif.isDelivery === true || 
+      notif.soundType === 'delivery' ||
+      (typeof notif.title === 'string' && (
+        notif.title.toLowerCase().includes('order files ready') || 
+        notif.title.toLowerCase().includes('files ready') ||
+        notif.title.toLowerCase().includes('delivered')
+      ));
+
+    const shouldPlaySound = notif.playSound !== false && !isAlreadyRead && !alreadyExists && !isDeliveryNotification;
 
     if (shouldPlaySound) {
       try {
@@ -2182,7 +2192,10 @@ export const StateProvider = ({ children }) => {
         orderId: cleanTargetId,
         link: `/client-portal?tab=orders&trackOrder=${cleanTargetId}`,
         recipient_role: 'client',
-        recipient_email: clientEmail || null
+        recipient_email: clientEmail || null,
+        playSound: false,
+        isDelivery: true,
+        soundType: 'delivery'
       }, false);
 
       triggerEmailNotification('ORDER_DELIVERED', { ...(targetOrder || {}), id: orderId, ...safeExtraData });

@@ -249,5 +249,17 @@ describe('Admin Notification Tune & Bell Sound Alert System', () => {
       playCustomerNotificationSound('chat', false, { messageId: openedNotifId });
     });
   });
+
+  test('13. Delivery notification sound is completely suppressed and disabled', () => {
+    assert.doesNotThrow(() => {
+      // Calling with delivery type or isDelivery option must not throw and must return immediately
+      playAdminNotificationSound('delivery', true);
+      playAdminNotificationSound('notification', true, { isDelivery: true });
+      playAdminNotificationSound('notification', true, { type: 'delivery' });
+      playCustomerNotificationSound('delivery', true);
+      playCustomerNotificationSound('chat', true, { isDelivery: true });
+      playCustomerNotificationSound('chat', true, { type: 'delivery' });
+    });
+  });
 });
 
