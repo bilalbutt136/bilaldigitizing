@@ -340,6 +340,7 @@ export async function POST(request) {
             message: `Support sent you a custom offer: "${offerDbRow.title}" for $${finalPrice.toFixed(2)}. Click to review and accept.`,
             type: 'info',
             link: `/client-portal?tab=orders`,
+            offer_id: offerDbRow.id,
             read: false,
             created_at: nowIso
           }]);

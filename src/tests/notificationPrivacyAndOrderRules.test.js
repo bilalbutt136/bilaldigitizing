@@ -5,6 +5,8 @@ import {
   isOrderPlacedNotification, 
   isOrderPaymentConfirmedNotification,
   isOrderDeliveredNotification,
+  isCustomOfferNotification,
+  getDeliveryVersionKey,
   resolveNotificationDate,
   formatNotificationExactTime,
   getNotificationFullDateTime
@@ -310,5 +312,116 @@ describe('Notification Privacy Isolation & Two-Notifications-Per-Order Enforceme
     // 3. Tooltip provides complete full date-time
     const fullTime = getNotificationFullDateTime(pastNotif);
     assert.ok(fullTime.length > 5);
+  });
+
+  test('11. Multi-delivery notifications: Customer reliably receives Delivery 1, 2, and 3 notifications', () => {
+    const deliveryNotifications = [
+      {
+        id: 'ord-deliv-3001',
+        recipient_role: 'client',
+        recipient_email: 'dan@studio.com',
+        title: '📦 Order Files Ready: Cap Embroidery',
+        message: 'Your production stitch files and deliverables are ready for inspection and download!',
+        order_id: '3001',
+        deliveryNumber: 1,
+        created_at: '2026-09-24T12:00:00.000Z'
+      },
+      {
+        id: 'ord-deliv-3001-v2',
+        recipient_role: 'client',
+        recipient_email: 'dan@studio.com',
+        title: '📦 Delivery #2 Ready: Cap Embroidery',
+        message: 'Updated production stitch files (Delivery #2) are ready for inspection and download!',
+        order_id: '3001',
+        deliveryNumber: 2,
+        created_at: '2026-09-24T14:00:00.000Z'
+      },
+      {
+        id: 'ord-deliv-3001-v2-duplicate',
+        recipient_role: 'client',
+        recipient_email: 'dan@studio.com',
+        title: '📦 Delivery #2 Ready: Cap Embroidery',
+        message: 'Updated production stitch files (Delivery #2) are ready for inspection and download!',
+        order_id: '3001',
+        deliveryNumber: 2,
+        created_at: '2026-09-24T14:00:05.000Z'
+      },
+      {
+        id: 'ord-deliv-3001-v3',
+        recipient_role: 'client',
+        recipient_email: 'dan@studio.com',
+        title: '📦 Delivery #3 Ready: Cap Embroidery',
+        message: 'Updated production stitch files (Delivery #3) are ready for inspection and download!',
+        order_id: '3001',
+        deliveryNumber: 3,
+        created_at: '2026-09-24T16:00:00.000Z'
+      }
+    ];
+
+    const result = filterAndSanitizeNotifications(deliveryNotifications, {
+      currentUserEmail: 'dan@studio.com',
+      isAdmin: false
+    });
+
+    // Exactly 3 delivery notifications (Delivery 1, Delivery 2, Delivery 3) with duplicate Delivery 2 filtered out
+    assert.equal(result.length, 3, 'Must retain distinct deliveries (1, 2, 3) and deduplicate repeated versions');
+    const hasD1 = result.some(n => n.id === 'ord-deliv-3001');
+    const hasD2 = result.some(n => n.id === 'ord-deliv-3001-v2');
+    const hasD3 = result.some(n => n.id === 'ord-deliv-3001-v3');
+
+    assert.equal(hasD1, true, 'Delivery 1 must be delivered');
+    assert.equal(hasD2, true, 'Delivery 2 must be delivered');
+    assert.equal(hasD3, true, 'Delivery 3 must be delivered');
+  });
+
+  test('12. Custom offer notifications: Customer receives exactly 2 notifications (Offer + Payment Confirmed, suppressing redundant middle Placed notification)', () => {
+    const offerFlowNotifications = [
+      {
+        id: 'notif-offer-8089',
+        recipient_role: 'client',
+        recipient_email: 'dan@studio.com',
+        title: 'New Custom Offer Received',
+        message: 'Support sent you a custom offer: "line dance Print - Embroidery Digitizing" for $25.00. Click to review and accept.',
+        type: 'info',
+        offer_id: 'off-8089',
+        created_at: '2026-09-24T10:00:00.000Z'
+      },
+      {
+        id: 'ord-created-ORD-8089F9OMU',
+        recipient_role: 'client',
+        recipient_email: 'dan@studio.com',
+        title: '🎉 Order Placed Successfully!',
+        message: 'Your order "line dance Print - Embroidery Digitizing (Qty: 1)" has been received. Our team will begin production shortly.',
+        type: 'success',
+        order_id: 'ORD-8089F9OMU',
+        created_at: '2026-09-24T10:05:00.000Z'
+      },
+      {
+        id: 'ord-paid-ORD-8089F9OMU',
+        recipient_role: 'client',
+        recipient_email: 'dan@studio.com',
+        title: '✅ Payment Confirmed — Production Started!',
+        message: 'Your order "Order #ORD-8089F9OMU" is in production. We\'ll notify you when files are ready.',
+        type: 'success',
+        order_id: 'ORD-8089F9OMU',
+        created_at: '2026-09-24T10:06:00.000Z'
+      }
+    ];
+
+    const result = filterAndSanitizeNotifications(offerFlowNotifications, {
+      currentUserEmail: 'dan@studio.com',
+      isAdmin: false
+    });
+
+    // Exactly 2 notifications: Custom Offer Received and Payment Confirmed
+    assert.equal(result.length, 2, 'Must contain exactly 2 notifications for custom offer order flow');
+    
+    const hasOffer = result.some(n => isCustomOfferNotification(n));
+    const hasPaid = result.some(n => isOrderPaymentConfirmedNotification(n));
+    const hasPlaced = result.some(n => isOrderPlacedNotification(n));
+
+    assert.equal(hasOffer, true, 'Must include Custom Offer Received notification');
+    assert.equal(hasPaid, true, 'Must include Payment Confirmed notification');
+    assert.equal(hasPlaced, false, 'Redundant middle "Order Placed Successfully!" notification MUST be suppressed');
   });
 });

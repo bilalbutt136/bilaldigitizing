@@ -375,13 +375,76 @@ export function isOrderDeliveredNotification(notif) {
 }
 
 /**
+ * Detects if a notification represents a "Custom Offer Received" event.
+ */
+export function isCustomOfferNotification(notif) {
+  if (!notif) return false;
+  const id = String(notif.id || '').toLowerCase();
+  const title = String(notif.title || '').toLowerCase();
+  const msg = String(notif.message || notif.body || '').toLowerCase();
+
+  if (Boolean(notif.offer_id) || Boolean(notif.offerId) || notif.type === 'custom_offer') {
+    return true;
+  }
+  if (
+    title.includes('custom offer') || 
+    title.includes('offer received') || 
+    title.includes('new offer')
+  ) {
+    return true;
+  }
+  if (
+    msg.includes('sent you a custom offer') || 
+    msg.includes('custom offer:')
+  ) {
+    return true;
+  }
+  return false;
+}
+
+/**
+ * Generates a unique version key for order delivery notifications
+ * allowing Delivery 1, Delivery 2, Delivery 3, etc. to all be delivered to the client
+ * while deduplicating exact identical versions.
+ */
+export function getDeliveryVersionKey(notif, cleanOrderId) {
+  if (!notif) return `${cleanOrderId}_v1`;
+  const rawId = String(notif.id || '').toLowerCase();
+  const rawTitle = String(notif.title || '').toLowerCase();
+  const rawMsg = String(notif.message || notif.body || '').toLowerCase();
+
+  // 1. Look for explicit version tag in id: -v2, -v3, etc.
+  const idMatch = rawId.match(/-v(\d+)/i);
+  if (idMatch) return `${cleanOrderId}_v${idMatch[1]}`;
+
+  // 2. Look for delivery # in title: "Delivery #2", "Delivery #3", etc.
+  const titleMatch = rawTitle.match(/delivery\s*#?\s*(\d+)/i);
+  if (titleMatch) return `${cleanOrderId}_v${titleMatch[1]}`;
+
+  // 3. Look for explicit delivery number property
+  const explicitNum = notif.deliveryNumber || notif.delivery_number || notif.version;
+  if (explicitNum) return `${cleanOrderId}_v${explicitNum}`;
+
+  // 4. Look for delivery # in message: "Delivery #2", "Delivery #3", etc.
+  const msgMatch = rawMsg.match(/delivery\s*#?\s*(\d+)/i);
+  if (msgMatch) return `${cleanOrderId}_v${msgMatch[1]}`;
+
+  // If id is explicitly non-standard (e.g., has timestamp/random hash), keep it unique
+  if (rawId.startsWith('ord-deliv-') && rawId !== `ord-deliv-${cleanOrderId.toLowerCase()}`) {
+    return `${cleanOrderId}_${rawId}`;
+  }
+
+  return `${cleanOrderId}_v1`;
+}
+
+/**
  * Filters and sanitizes notifications:
  * 1. Privacy Isolation: Guests see 0 notifications. Clients strictly see only notifications matching their email.
  * 2. Message Suppression: Excludes chat/message notifications (which have their own dedicated chat badge).
  * 3. Essential order lifecycle rule: For any single order, clean deduplicated notifications are shown:
- *    - Exactly 1 Order Placed notification
+ *    - Exactly 1 Order Placed notification (suppressed for custom offers, where offer notification + payment confirmed is sufficient)
  *    - Exactly 1 Payment Confirmed notification
- *    - Exactly 1 Order Delivered notification (files ready for download)
+ *    - Delivery notifications for each distinct delivery version (Delivery 1, Delivery 2, Delivery 3, etc.)
  */
 export function filterAndSanitizeNotifications(notifications, { currentUserEmail = '', isAdmin = false, orders = [] } = {}) {
   if (!Array.isArray(notifications) || notifications.length === 0) return [];
@@ -403,10 +466,10 @@ export function filterAndSanitizeNotifications(notifications, { currentUserEmail
     };
   };
 
-  // Maps to enforce at most 1 Placed, 1 Paid, and 1 Delivered notification per order for customers
+  // Maps to enforce at most 1 Placed, 1 Paid, and distinct Delivery notifications per order for customers
   const orderPlacedMap = new Map(); // orderId -> notification
   const orderPaidMap = new Map();   // orderId -> notification
-  const orderDeliveredMap = new Map(); // orderId -> notification
+  const orderDeliveredMap = new Map(); // delivKey -> notification
   const otherNotifications = [];
 
   for (const rawNotif of notifications) {
@@ -476,9 +539,12 @@ export function filterAndSanitizeNotifications(notifications, { currentUserEmail
           orderPaidMap.set(cleanOrderId, notif);
         }
       } else if (isDelivered) {
-        // Keep only 1 delivered notification per order (cleanly deduplicated)
-        if (!orderDeliveredMap.has(cleanOrderId)) {
-          orderDeliveredMap.set(cleanOrderId, notif);
+        // Multi-delivery versioning support:
+        // Key delivery notifications by orderId and version (e.g. orderId_v1, orderId_v2)
+        // so customers receive notifications for Delivery 1, Delivery 2, Delivery 3, etc.
+        const delivKey = getDeliveryVersionKey(notif, cleanOrderId);
+        if (!orderDeliveredMap.has(delivKey)) {
+          orderDeliveredMap.set(delivKey, notif);
         }
       }
       // Intermediate status/internal updates are filtered out to prevent spam
@@ -486,6 +552,64 @@ export function filterAndSanitizeNotifications(notifications, { currentUserEmail
       // Non-order notification (e.g. system broadcast or custom offer received)
       otherNotifications.push(notif);
     }
+  }
+
+  // 4. Suppress redundant middle "Order Placed" notification for custom offer orders
+  // Per requirements: Customers receiving a custom offer only need 2 notifications:
+  // (1) Custom Offer Received notification (the initial order/offer announcement)
+  // (2) Payment Confirmed notification
+  // The middle "🎉 Order Placed Successfully!" notification is completely redundant and suppressed.
+  const customOfferOrderIds = new Set();
+
+  // A. Check orders array if provided
+  if (Array.isArray(orders)) {
+    orders.forEach(ord => {
+      if (!ord) return;
+      const cleanId = String(ord.id || '').replace(/^#+/, '').trim();
+      const isFromOffer = ord.source === 'custom_offer' || 
+                          Boolean(ord.offer_id) || 
+                          Boolean(ord.offerId) || 
+                          (typeof ord.notes === 'string' && ord.notes.includes('custom_offer'));
+      if (isFromOffer && cleanId) {
+        customOfferOrderIds.add(cleanId);
+      }
+    });
+  }
+
+  // B. Check notifications for custom offer traces
+  for (const rawNotif of notifications) {
+    if (!rawNotif) continue;
+    const cleanId = String(rawNotif.order_id || rawNotif.orderId || '').replace(/^#+/, '').trim();
+    if (!cleanId) continue;
+
+    const isOfferSource = rawNotif.source === 'custom_offer' || Boolean(rawNotif.offer_id) || Boolean(rawNotif.offerId);
+    const msg = String(rawNotif.message || rawNotif.body || '').toLowerCase();
+    const title = String(rawNotif.title || '').toLowerCase();
+    const isOfferPaid = (title.includes('payment confirmed') || title.includes('payment received')) && 
+                        (msg.includes('offer') || msg.includes('custom offer'));
+
+    if (isOfferSource || isOfferPaid) {
+      customOfferOrderIds.add(cleanId);
+    }
+  }
+
+  // C. If customer received any Custom Offer notification in otherNotifications and has paid orders,
+  // link any paid order to ensure the middle "Order Placed" notification is suppressed
+  const customOfferNotifs = otherNotifications.filter(isCustomOfferNotification);
+  if (customOfferNotifs.length > 0) {
+    for (const offNotif of customOfferNotifs) {
+      if (offNotif.order_id) {
+        customOfferOrderIds.add(String(offNotif.order_id).replace(/^#+/, '').trim());
+      }
+      for (const [paidId] of orderPaidMap) {
+        customOfferOrderIds.add(paidId);
+      }
+    }
+  }
+
+  // Suppress the placed notification for identified custom offer orders
+  for (const cleanOrderId of customOfferOrderIds) {
+    orderPlacedMap.delete(cleanOrderId);
   }
 
   const combined = [

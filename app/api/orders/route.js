@@ -319,7 +319,13 @@ export async function POST(request) {
       // Automatically create notifications in public.notifications (Order Placed - Notification 1)
       try {
         const nowIso = new Date().toISOString();
-        await supabase.from('notifications').upsert([
+        const isFromOffer = primaryDbRow?.source === 'custom_offer' || 
+                            body?.source === 'custom_offer' || 
+                            Boolean(body?.offerId) || 
+                            Boolean(body?.offer_id) ||
+                            (typeof primaryDbRow?.notes === 'string' && primaryDbRow.notes.includes('custom_offer'));
+
+        const notifsToInsert = [
           {
             id: `notif-ord-${mappedDbRow.id}-admin`,
             user_id: user?.id || null,
@@ -333,8 +339,13 @@ export async function POST(request) {
             read: false,
             created_at: nowIso,
             updated_at: nowIso
-          },
-          {
+          }
+        ];
+
+        // Only insert the "Order Placed" notification for direct orders, NOT when originating from a custom offer
+        // (for custom offers, client already received the offer notification, avoiding redundant 3rd notification)
+        if (!isFromOffer) {
+          notifsToInsert.push({
             id: `ord-created-${mappedDbRow.id}`,
             user_id: user?.id || null,
             recipient_role: 'client',
@@ -347,8 +358,10 @@ export async function POST(request) {
             read: false,
             created_at: nowIso,
             updated_at: nowIso
-          }
-        ], { onConflict: 'id' });
+          });
+        }
+
+        await supabase.from('notifications').upsert(notifsToInsert, { onConflict: 'id' });
       } catch (notifErr) {
         console.warn('Auto notification insert notice:', notifErr.message);
       }
@@ -621,13 +634,26 @@ export async function POST(request) {
           });
 
         } else if (newStatus === 'delivered') {
+          const delivNum = extraData?.deliveryNumber || 
+            (Array.isArray(extraData?.deliveries) && extraData.deliveries.length > 0 
+              ? (extraData.deliveries[0]?.deliveryNumber || extraData.deliveries.length) 
+              : (Array.isArray(targetOrder?.deliveries) && targetOrder.deliveries.length > 0 ? (targetOrder.deliveries[0]?.deliveryNumber || targetOrder.deliveries.length) : 1));
+
+          const delivNotifId = delivNum > 1 ? `ord-deliv-${resolvedOrderId}-v${delivNum}` : `ord-deliv-${resolvedOrderId}`;
+          const delivTitle = delivNum > 1 
+            ? `📦 Delivery #${delivNum} Ready: ${ordTitle}`
+            : `📦 Order Files Ready: ${ordTitle}`;
+          const delivMsg = delivNum > 1 
+            ? `Updated production files (Delivery #${delivNum}) are ready for review and download.`
+            : `Your production stitch files and preview documents are ready for inspection and download!`;
+
           // Client Order Delivered Notification
           await insertNotif({
-            id: `ord-deliv-${resolvedOrderId}`,
+            id: delivNotifId,
             recipient_role: 'client',
             recipient_email: clientEmail,
-            title: `📦 Order Files Ready: ${ordTitle}`,
-            message: `Your production stitch files and preview documents are ready for inspection and download!`,
+            title: delivTitle,
+            message: delivMsg,
             type: 'success',
             link: `/client-portal?tab=orders&trackOrder=${resolvedOrderId}`
           });

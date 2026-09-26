@@ -2013,20 +2013,28 @@ export const StateProvider = ({ children }) => {
         setOrders(prev => [fullOrderPayload, ...prev]);
         showToast(`Order ${formatOrderId(localId)} created successfully!`, 'success');
         
+        const isFromOffer = fullOrderPayload.source === 'custom_offer' || 
+                            Boolean(fullOrderPayload.offerId) || 
+                            Boolean(fullOrderPayload.offer_id) ||
+                            (typeof fullOrderPayload.notes === 'string' && fullOrderPayload.notes.includes('custom_offer'));
+
         // Client Notification 1: Order Placed (Local state only; DB already populated by /api/orders)
-        addNotification({
-          id: `ord-created-${localId}`,
-          title: `🎉 Order ${formatOrderId(localId)} Placed!`,
-          message: isAlreadyPaid 
-            ? `Your digitizing order has been created and production has started.`
-            : `Order created. Waiting for payment of $${parseFloat(fullOrderPayload.totalPrice || fullOrderPayload.price || 15).toFixed(2)} to start production.`,
-          type: isAlreadyPaid ? 'success' : 'warning',
-          link: '/client-portal',
-          order_id: localId,
-          orderId: localId,
-          recipient_role: 'client',
-          recipient_email: (fullOrderPayload.clientEmail || '').toLowerCase().trim()
-        }, false);
+        // Suppress for custom offers to ensure only 2 notifications (Offer + Payment Confirmed)
+        if (!isFromOffer) {
+          addNotification({
+            id: `ord-created-${localId}`,
+            title: `🎉 Order ${formatOrderId(localId)} Placed!`,
+            message: isAlreadyPaid 
+              ? `Your digitizing order has been created and production has started.`
+              : `Order created. Waiting for payment of $${parseFloat(fullOrderPayload.totalPrice || fullOrderPayload.price || 15).toFixed(2)} to start production.`,
+            type: isAlreadyPaid ? 'success' : 'warning',
+            link: '/client-portal',
+            order_id: localId,
+            orderId: localId,
+            recipient_role: 'client',
+            recipient_email: (fullOrderPayload.clientEmail || '').toLowerCase().trim()
+          }, false);
+        }
 
         // Client Notification 2: Payment Confirmed (if paid immediately at creation)
         if (isAlreadyPaid) {
@@ -2087,19 +2095,25 @@ export const StateProvider = ({ children }) => {
 
     setOrders(prev => [fullOrderPayload, ...prev]);
     showToast(`Order ${formatOrderId(localId)} created successfully!`, 'success');
-    addNotification({
-      id: `ord-created-${localId}`,
-      title: `🎉 Order ${formatOrderId(localId)} Placed!`,
-      message: isAlreadyPaid 
-        ? `Your digitizing order has been created and production has started.`
-        : `Order created. Waiting for payment of $${parseFloat(fullOrderPayload.totalPrice || fullOrderPayload.price || 15).toFixed(2)} to start production.`,
-      type: isAlreadyPaid ? 'success' : 'warning',
-      link: '/client-portal',
-      order_id: localId,
-      orderId: localId,
-      recipient_role: 'client',
-      recipient_email: (fullOrderPayload.clientEmail || '').toLowerCase().trim()
-    });
+    const isFromOfferFallback = fullOrderPayload.source === 'custom_offer' || 
+                                Boolean(fullOrderPayload.offerId) || 
+                                Boolean(fullOrderPayload.offer_id) ||
+                                (typeof fullOrderPayload.notes === 'string' && fullOrderPayload.notes.includes('custom_offer'));
+    if (!isFromOfferFallback) {
+      addNotification({
+        id: `ord-created-${localId}`,
+        title: `🎉 Order ${formatOrderId(localId)} Placed!`,
+        message: isAlreadyPaid 
+          ? `Your digitizing order has been created and production has started.`
+          : `Order created. Waiting for payment of $${parseFloat(fullOrderPayload.totalPrice || fullOrderPayload.price || 15).toFixed(2)} to start production.`,
+        type: isAlreadyPaid ? 'success' : 'warning',
+        link: '/client-portal',
+        order_id: localId,
+        orderId: localId,
+        recipient_role: 'client',
+        recipient_email: (fullOrderPayload.clientEmail || '').toLowerCase().trim()
+      });
+    }
     triggerEmailNotification('NEW_ORDER', fullOrderPayload);
     return fullOrderPayload;
   };
@@ -2183,13 +2197,27 @@ export const StateProvider = ({ children }) => {
     // Notifications and Email triggers based on new status
     if (newStatus === 'delivered') {
       const clientEmail = (targetOrder?.clientEmail || targetOrder?.client_email || '').toLowerCase().trim();
+      const delivNum = safeExtraData?.deliveryNumber || 
+        (Array.isArray(safeExtraData?.deliveries) && safeExtraData.deliveries.length > 0 
+          ? (safeExtraData.deliveries[0]?.deliveryNumber || safeExtraData.deliveries.length) 
+          : (Array.isArray(targetOrder?.deliveries) && targetOrder.deliveries.length > 0 ? (targetOrder.deliveries[0]?.deliveryNumber || targetOrder.deliveries.length) : 1));
+
+      const delivNotifId = delivNum > 1 ? `ord-deliv-${cleanTargetId}-v${delivNum}` : `ord-deliv-${cleanTargetId}`;
+      const delivTitle = delivNum > 1 
+        ? `📦 Delivery #${delivNum} Ready: ${targetOrder?.title || `Order #${cleanTargetId}`}`
+        : `📦 Order Files Ready: ${targetOrder?.title || `Order #${cleanTargetId}`}`;
+      const delivMsg = delivNum > 1
+        ? `Updated production stitch files (Delivery #${delivNum}) are ready for inspection and download!`
+        : `Your production stitch files and deliverables are ready for inspection and download!`;
+
       addNotification({
-        id: `ord-deliv-${cleanTargetId}`,
-        title: `📦 Order Files Ready: ${targetOrder?.title || `Order #${cleanTargetId}`}`,
-        message: `Your production stitch files and deliverables are ready for inspection and download!`,
+        id: delivNotifId,
+        title: delivTitle,
+        message: delivMsg,
         type: 'success',
         order_id: cleanTargetId,
         orderId: cleanTargetId,
+        deliveryNumber: delivNum,
         link: `/client-portal?tab=orders&trackOrder=${cleanTargetId}`,
         recipient_role: 'client',
         recipient_email: clientEmail || null,

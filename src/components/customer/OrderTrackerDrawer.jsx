@@ -406,6 +406,8 @@ export const OrderTrackerDrawer = () => {
         outputFileUrl: uploadedCloudinaryFiles.length > 0 ? (uploadedCloudinaryFiles[0].url || uploadedCloudinaryFiles[0].name) : (ord.outputFileUrl || ''),
         uploadedMachineFiles: updatedFiles,
         deliveries: updatedDeliveries,
+        deliveryNumber: newDeliveryNumber,
+        deliveryTitle: newDeliveryItem.title,
         deliveryNotes: deliveryNoteText,
         deliveryMessage: deliveryNoteText,
         deliveryDate: new Date().toISOString()
