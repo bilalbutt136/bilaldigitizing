@@ -244,11 +244,16 @@ export const OrderTrackerDrawer = () => {
   }, [selectedOrderForDrawer, ord?.id, isPaid, refreshOrders]);
 
   // Requirements Collapsible Default: open for pending/in-progress orders, collapsed for delivered/completed orders
+  const lastSetOrderIdRef = useRef(null);
   useEffect(() => {
     if (!selectedOrderForDrawer) return;
-    const st = String(ord?.status || '').toLowerCase();
-    const isDoneOrDeliv = st === 'delivered' || st === 'completed';
-    setIsRequirementsOpen(!isDoneOrDeliv);
+    const currentId = ord?.id || selectedOrderForDrawer;
+    if (lastSetOrderIdRef.current !== currentId) {
+      lastSetOrderIdRef.current = currentId;
+      const st = String(ord?.status || '').toLowerCase();
+      const isDoneOrDeliv = st === 'delivered' || st === 'completed';
+      setIsRequirementsOpen(!isDoneOrDeliv);
+    }
   }, [selectedOrderForDrawer, ord?.id, ord?.status]);
 
   // Reset delivery version selection to latest (index 0) when switching orders
