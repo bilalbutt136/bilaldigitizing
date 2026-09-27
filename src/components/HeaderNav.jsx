@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
+import Link from 'next/link';
 import { useNavigate, useLocation } from '../utils/navigation';
 import { useAppState } from '../context/StateContext';
 import { 
@@ -293,9 +294,15 @@ export const HeaderNav = () => {
         boxSizing: 'border-box'
       }}>
         {/* Brand Logo */}
-        <div 
-          style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', cursor: 'pointer', flexShrink: 0 }}
-          onClick={handleGoHome}
+        <Link 
+          href="/"
+          onClick={(e) => {
+            if (currentPath === '/') {
+              e.preventDefault();
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+          }}
+          style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', cursor: 'pointer', flexShrink: 0, textDecoration: 'none' }}
         >
           {siteSettings?.logoUrl ? (
             <img
@@ -333,26 +340,34 @@ export const HeaderNav = () => {
               Embroidery &amp; Vector Studio
             </div>
           </div>
-        </div>
+        </Link>
 
         {/* Public Navigation Links (Desktop) */}
-        {safeCurrentView === 'public' && (
+        {!currentPath.startsWith('/admin-portal') && !currentPath.startsWith('/client-portal') && (
           <nav className="desktop-only" style={{ display: 'flex', alignItems: 'center', gap: '1.75rem' }}>
             {/* Home Link */}
-            <button 
-              onClick={handleGoHome}
+            <Link 
+              href="/"
+              onClick={(e) => {
+                if (currentPath === '/') {
+                  e.preventDefault();
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }
+              }}
               style={{ 
+                textDecoration: 'none',
                 background: 'none', 
                 border: 'none', 
                 color: currentPath === '/' ? 'var(--orange-500)' : 'var(--text-main)', 
                 fontWeight: currentPath === '/' ? 800 : 600, 
                 fontSize: '0.925rem', 
                 cursor: 'pointer', 
-                padding: 0 
+                padding: 0,
+                transition: 'color 0.15s ease'
               }}
             >
               Home
-            </button>
+            </Link>
 
             {/* Services Dropdown Item */}
             <div 
@@ -362,9 +377,11 @@ export const HeaderNav = () => {
               onMouseLeave={() => setIsServicesOpen(false)}
             >
               <button 
-                onClick={() => {
-                  handleNavClick('services');
-                  setIsServicesOpen(!isServicesOpen);
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setIsServicesOpen(prev => !prev);
                 }}
                 style={{ 
                   background: 'none', 
@@ -379,6 +396,8 @@ export const HeaderNav = () => {
                   gap: '0.25rem',
                   transition: 'color 0.15s ease'
                 }}
+                aria-expanded={isServicesOpen}
+                aria-haspopup="true"
               >
                 Services <ChevronDown size={13} style={{ transition: 'transform 0.2s', transform: isServicesOpen ? 'rotate(180deg)' : 'rotate(0)' }} />
               </button>
@@ -405,15 +424,13 @@ export const HeaderNav = () => {
                     animation: 'fadeIn 0.15s ease-out'
                   }}>
                     {/* Option 1: Embroidery Digitizing */}
-                    <button
-                      type="button"
+                    <Link
+                      href="/services/embroidery-digitizing"
                       onClick={() => {
-                        setCurrentView('public');
-                        if (setActiveHomeServiceTab) setActiveHomeServiceTab('embroidery');
-                        navigate('/services/embroidery-digitizing');
                         setIsServicesOpen(false);
                       }}
                       style={{
+                        textDecoration: 'none',
                         width: '100%',
                         textAlign: 'left',
                         padding: '0.55rem 0.85rem',
@@ -427,7 +444,8 @@ export const HeaderNav = () => {
                         transition: 'all 0.18s ease',
                         display: 'flex',
                         alignItems: 'center',
-                        gap: '0.5rem'
+                        gap: '0.5rem',
+                        boxSizing: 'border-box'
                       }}
                       onMouseOver={(e) => {
                         e.currentTarget.style.background = 'rgba(249, 115, 22, 0.12)';
@@ -439,18 +457,16 @@ export const HeaderNav = () => {
                       }}
                     >
                       <PenTool size={16} /> Embroidery Digitizing
-                    </button>
+                    </Link>
 
                     {/* Option 2: Vector Art */}
-                    <button
-                      type="button"
+                    <Link
+                      href="/services/vector-tracing"
                       onClick={() => {
-                        setCurrentView('public');
-                        if (setActiveHomeServiceTab) setActiveHomeServiceTab('vector-art');
-                        navigate('/services/vector-tracing');
                         setIsServicesOpen(false);
                       }}
                       style={{
+                        textDecoration: 'none',
                         width: '100%',
                         textAlign: 'left',
                         padding: '0.55rem 0.85rem',
@@ -464,7 +480,8 @@ export const HeaderNav = () => {
                         transition: 'all 0.18s ease',
                         display: 'flex',
                         alignItems: 'center',
-                        gap: '0.5rem'
+                        gap: '0.5rem',
+                        boxSizing: 'border-box'
                       }}
                       onMouseOver={(e) => {
                         e.currentTarget.style.background = 'rgba(249, 115, 22, 0.12)';
@@ -476,18 +493,16 @@ export const HeaderNav = () => {
                       }}
                     >
                       <ImageIcon size={16} /> Vector Art
-                    </button>
+                    </Link>
                     
                     {/* Option 3: Custom Patches */}
-                    <button
-                      type="button"
+                    <Link
+                      href="/custom-patches"
                       onClick={() => {
-                        setCurrentView('public');
-                        if (setActiveHomeServiceTab) setActiveHomeServiceTab('patches');
-                        navigate('/custom-patches');
                         setIsServicesOpen(false);
                       }}
                       style={{
+                        textDecoration: 'none',
                         width: '100%',
                         textAlign: 'left',
                         padding: '0.55rem 0.85rem',
@@ -501,7 +516,8 @@ export const HeaderNav = () => {
                         transition: 'all 0.18s ease',
                         display: 'flex',
                         alignItems: 'center',
-                        gap: '0.5rem'
+                        gap: '0.5rem',
+                        boxSizing: 'border-box'
                       }}
                       onMouseOver={(e) => {
                         e.currentTarget.style.background = 'rgba(249, 115, 22, 0.12)';
@@ -513,68 +529,65 @@ export const HeaderNav = () => {
                       }}
                     >
                       <Award size={16} /> Custom Patches
-                    </button>
+                    </Link>
                   </div>
                 </div>
               )}
             </div>
 
             {/* Portfolio Link */}
-            <button 
-              onClick={() => {
-                setCurrentView('public');
-                navigate('/portfolio');
-              }}
+            <Link 
+              href="/portfolio"
               style={{ 
+                textDecoration: 'none',
                 background: 'none', 
                 border: 'none', 
                 color: currentPath === '/portfolio' ? 'var(--orange-500)' : 'var(--text-main)', 
                 fontWeight: currentPath === '/portfolio' ? 800 : 600, 
                 fontSize: '0.925rem', 
                 cursor: 'pointer', 
-                padding: 0 
+                padding: 0,
+                transition: 'color 0.15s ease'
               }}
             >
               Portfolio
-            </button>
+            </Link>
             
             {/* Pricing Link */}
-            <button 
-              onClick={() => {
-                setCurrentView('public');
-                navigate('/pricing');
-              }}
+            <Link 
+              href="/pricing"
               style={{ 
+                textDecoration: 'none',
                 background: 'none', 
                 border: 'none', 
                 color: currentPath === '/pricing' ? 'var(--orange-500)' : 'var(--text-main)', 
                 fontWeight: currentPath === '/pricing' ? 800 : 600, 
                 fontSize: '0.925rem', 
                 cursor: 'pointer', 
-                padding: 0 
+                padding: 0,
+                transition: 'color 0.15s ease'
               }}
             >
               Pricing
-            </button>
+            </Link>
             
             {/* FAQs Link */}
-            <button 
-              onClick={() => {
-                setCurrentView('public');
-                navigate('/faqs');
-              }}
+            <Link 
+              href="/faqs"
               style={{ 
+                textDecoration: 'none',
                 background: 'none', 
                 border: 'none', 
                 color: currentPath === '/faqs' ? 'var(--orange-500)' : 'var(--text-main)', 
                 fontWeight: currentPath === '/faqs' ? 800 : 600, 
                 fontSize: '0.925rem', 
                 cursor: 'pointer', 
-                padding: 0 
+                padding: 0,
+                transition: 'color 0.15s ease'
               }}
             >
               FAQs
-            </button>
+            </Link>
             
           </nav>
         )}
@@ -1292,9 +1305,10 @@ export const HeaderNav = () => {
               borderBottom: isDark ? '1px solid rgba(255,255,255,0.08)' : '1px solid #e2e8f0',
               flexShrink: 0
             }}>
-              <div 
-                onClick={() => { handleGoHome(); setIsMobileMenuOpen(false); }}
-                style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.6rem' }}
+              <Link 
+                href="/"
+                onClick={() => setIsMobileMenuOpen(false)}
+                style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.6rem', textDecoration: 'none' }}
               >
                 {siteSettings?.logoUrl ? (
                   <img
@@ -1332,7 +1346,7 @@ export const HeaderNav = () => {
                     Embroidery &amp; Vector Studio
                   </div>
                 </div>
-              </div>
+              </Link>
 
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
                 <ThemeToggle variant="pill" />
@@ -1592,13 +1606,11 @@ export const HeaderNav = () => {
               {/* 3. Navigation Links (Clean Vertical List with subtle icons and dividers) */}
               <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
                 {/* Home */}
-                <button
-                  type="button"
-                  onClick={() => {
-                    handleGoHome();
-                    setIsMobileMenuOpen(false);
-                  }}
+                <Link
+                  href="/"
+                  onClick={() => setIsMobileMenuOpen(false)}
                   style={{
+                    textDecoration: 'none',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'space-between',
@@ -1612,7 +1624,8 @@ export const HeaderNav = () => {
                     fontWeight: 700,
                     cursor: 'pointer',
                     textAlign: 'left',
-                    transition: 'background 0.15s ease'
+                    transition: 'background 0.15s ease',
+                    boxSizing: 'border-box'
                   }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
@@ -1620,7 +1633,7 @@ export const HeaderNav = () => {
                     <span>Home</span>
                   </div>
                   <ChevronRight size={15} style={{ color: isDark ? '#64748b' : '#94a3b8' }} />
-                </button>
+                </Link>
 
                 {/* Services Collapsible Accordion */}
                 <div style={{ display: 'flex', flexDirection: 'column' }}>
@@ -1670,13 +1683,11 @@ export const HeaderNav = () => {
                       borderLeft: isDark ? '2px solid rgba(249, 115, 22, 0.3)' : '2px solid #fed7aa',
                       marginLeft: '1.1rem'
                     }}>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          navigate('/services/embroidery-digitizing');
-                          setIsMobileMenuOpen(false);
-                        }}
+                      <Link
+                        href="/services/embroidery-digitizing"
+                        onClick={() => setIsMobileMenuOpen(false)}
                         style={{
+                          textDecoration: 'none',
                           display: 'flex',
                           alignItems: 'center',
                           gap: '0.55rem',
@@ -1688,20 +1699,19 @@ export const HeaderNav = () => {
                           fontSize: '0.84rem',
                           fontWeight: 600,
                           cursor: 'pointer',
-                          textAlign: 'left'
+                          textAlign: 'left',
+                          boxSizing: 'border-box'
                         }}
                       >
                         <PenTool size={15} style={{ color: '#f97316' }} />
                         <span>Embroidery Digitizing</span>
-                      </button>
+                      </Link>
 
-                      <button
-                        type="button"
-                        onClick={() => {
-                          navigate('/services/vector-tracing');
-                          setIsMobileMenuOpen(false);
-                        }}
+                      <Link
+                        href="/services/vector-tracing"
+                        onClick={() => setIsMobileMenuOpen(false)}
                         style={{
+                          textDecoration: 'none',
                           display: 'flex',
                           alignItems: 'center',
                           gap: '0.55rem',
@@ -1713,20 +1723,19 @@ export const HeaderNav = () => {
                           fontSize: '0.84rem',
                           fontWeight: 600,
                           cursor: 'pointer',
-                          textAlign: 'left'
+                          textAlign: 'left',
+                          boxSizing: 'border-box'
                         }}
                       >
                         <ImageIcon size={15} style={{ color: '#3b82f6' }} />
                         <span>Vector Art Tracing</span>
-                      </button>
+                      </Link>
 
-                      <button
-                        type="button"
-                        onClick={() => {
-                          navigate('/custom-patches');
-                          setIsMobileMenuOpen(false);
-                        }}
+                      <Link
+                        href="/custom-patches"
+                        onClick={() => setIsMobileMenuOpen(false)}
                         style={{
+                          textDecoration: 'none',
                           display: 'flex',
                           alignItems: 'center',
                           gap: '0.55rem',
@@ -1738,24 +1747,23 @@ export const HeaderNav = () => {
                           fontSize: '0.84rem',
                           fontWeight: 600,
                           cursor: 'pointer',
-                          textAlign: 'left'
+                          textAlign: 'left',
+                          boxSizing: 'border-box'
                         }}
                       >
                         <Award size={15} style={{ color: '#10b981' }} />
                         <span>Custom Patches</span>
-                      </button>
+                      </Link>
                     </div>
                   )}
                 </div>
 
                 {/* Portfolio Gallery */}
-                <button
-                  type="button"
-                  onClick={() => {
-                    navigate('/portfolio');
-                    setIsMobileMenuOpen(false);
-                  }}
+                <Link
+                  href="/portfolio"
+                  onClick={() => setIsMobileMenuOpen(false)}
                   style={{
+                    textDecoration: 'none',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'space-between',
@@ -1769,7 +1777,8 @@ export const HeaderNav = () => {
                     fontWeight: 700,
                     cursor: 'pointer',
                     textAlign: 'left',
-                    transition: 'background 0.15s ease'
+                    transition: 'background 0.15s ease',
+                    boxSizing: 'border-box'
                   }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
@@ -1777,16 +1786,14 @@ export const HeaderNav = () => {
                     <span>Portfolio Gallery</span>
                   </div>
                   <ChevronRight size={15} style={{ color: isDark ? '#64748b' : '#94a3b8' }} />
-                </button>
+                </Link>
 
                 {/* Pricing & Rates */}
-                <button
-                  type="button"
-                  onClick={() => {
-                    navigate('/pricing');
-                    setIsMobileMenuOpen(false);
-                  }}
+                <Link
+                  href="/pricing"
+                  onClick={() => setIsMobileMenuOpen(false)}
                   style={{
+                    textDecoration: 'none',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'space-between',
@@ -1800,7 +1807,8 @@ export const HeaderNav = () => {
                     fontWeight: 700,
                     cursor: 'pointer',
                     textAlign: 'left',
-                    transition: 'background 0.15s ease'
+                    transition: 'background 0.15s ease',
+                    boxSizing: 'border-box'
                   }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
@@ -1808,16 +1816,14 @@ export const HeaderNav = () => {
                     <span>Pricing & Rates</span>
                   </div>
                   <ChevronRight size={15} style={{ color: isDark ? '#64748b' : '#94a3b8' }} />
-                </button>
+                </Link>
 
                 {/* FAQs & Guides */}
-                <button
-                  type="button"
-                  onClick={() => {
-                    navigate('/faqs');
-                    setIsMobileMenuOpen(false);
-                  }}
+                <Link
+                  href="/faqs"
+                  onClick={() => setIsMobileMenuOpen(false)}
                   style={{
+                    textDecoration: 'none',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'space-between',
@@ -1831,7 +1837,8 @@ export const HeaderNav = () => {
                     fontWeight: 700,
                     cursor: 'pointer',
                     textAlign: 'left',
-                    transition: 'background 0.15s ease'
+                    transition: 'background 0.15s ease',
+                    boxSizing: 'border-box'
                   }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
@@ -1839,16 +1846,14 @@ export const HeaderNav = () => {
                     <span>FAQs & Formats</span>
                   </div>
                   <ChevronRight size={15} style={{ color: isDark ? '#64748b' : '#94a3b8' }} />
-                </button>
+                </Link>
 
                 {/* Blogs & Industry Guides */}
-                <button
-                  type="button"
-                  onClick={() => {
-                    navigate('/blogs');
-                    setIsMobileMenuOpen(false);
-                  }}
+                <Link
+                  href="/blogs"
+                  onClick={() => setIsMobileMenuOpen(false)}
                   style={{
+                    textDecoration: 'none',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'space-between',
@@ -1862,7 +1867,8 @@ export const HeaderNav = () => {
                     fontWeight: 700,
                     cursor: 'pointer',
                     textAlign: 'left',
-                    transition: 'background 0.15s ease'
+                    transition: 'background 0.15s ease',
+                    boxSizing: 'border-box'
                   }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
@@ -1870,7 +1876,7 @@ export const HeaderNav = () => {
                     <span>Blogs & Guides</span>
                   </div>
                   <ChevronRight size={15} style={{ color: isDark ? '#64748b' : '#94a3b8' }} />
-                </button>
+                </Link>
 
                 {/* Contact / 24/7 Live Support */}
                 <button

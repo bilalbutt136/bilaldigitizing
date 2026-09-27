@@ -8,13 +8,27 @@ export function useNavigate() {
   const router = useRouter();
   return useCallback((path, options) => {
     if (typeof path === 'number') {
-      if (path === -1) router.back();
+      if (path === -1) {
+        if (typeof window !== 'undefined' && window.history.length > 1) {
+          router.back();
+        } else {
+          router.push('/');
+        }
+      }
       return;
     }
-    if (options?.replace) {
-      router.replace(path);
-    } else {
-      router.push(path);
+    if (typeof path === 'string') {
+      try {
+        if (options?.replace) {
+          router.replace(path);
+        } else {
+          router.push(path);
+        }
+      } catch (err) {
+        if (typeof window !== 'undefined') {
+          window.location.href = path;
+        }
+      }
     }
   }, [router]);
 }

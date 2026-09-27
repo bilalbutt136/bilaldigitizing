@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { Scissors, ShieldCheck, Mail, Phone, MapPin, MessageCircle, Clock } from 'lucide-react';
 import { useAppState } from '../../context/StateContext';
 import { useNavigate, useLocation } from '../../utils/navigation';
@@ -256,39 +257,39 @@ export const Footer = () => {
             </h4>
             <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '0.85rem', fontSize: '0.9rem' }}>
               <li>
-                <button onClick={() => navigate('/services/embroidery-digitizing')} style={{ background: 'none', border: 'none', padding: 0, color: '#94a3b8', textDecoration: 'none', transition: 'color 0.2s', cursor: 'pointer', fontSize: 'inherit', textAlign: 'left' }} 
+                <Link href="/services/embroidery-digitizing" style={{ color: '#94a3b8', textDecoration: 'none', transition: 'color 0.2s', cursor: 'pointer', fontSize: 'inherit', textAlign: 'left', display: 'inline-block' }} 
                    onMouseEnter={(e) => e.currentTarget.style.color = 'var(--orange-500)'} 
                    onMouseLeave={(e) => e.currentTarget.style.color = '#94a3b8'}>
                   Embroidery Digitizing
-                </button>
+                </Link>
               </li>
               <li>
-                <button onClick={() => navigate('/services/vector-tracing')} style={{ background: 'none', border: 'none', padding: 0, color: '#94a3b8', textDecoration: 'none', transition: 'color 0.2s', cursor: 'pointer', fontSize: 'inherit', textAlign: 'left' }}
+                <Link href="/services/vector-tracing" style={{ color: '#94a3b8', textDecoration: 'none', transition: 'color 0.2s', cursor: 'pointer', fontSize: 'inherit', textAlign: 'left', display: 'inline-block' }}
                    onMouseEnter={(e) => e.currentTarget.style.color = 'var(--orange-500)'} 
                    onMouseLeave={(e) => e.currentTarget.style.color = '#94a3b8'}>
                   Vector Art Conversion
-                </button>
+                </Link>
               </li>
               <li>
-                <button onClick={() => navigate('/custom-patches')} style={{ background: 'none', border: 'none', padding: 0, color: '#94a3b8', textDecoration: 'none', transition: 'color 0.2s', cursor: 'pointer', fontSize: 'inherit', textAlign: 'left' }}
+                <Link href="/custom-patches" style={{ color: '#94a3b8', textDecoration: 'none', transition: 'color 0.2s', cursor: 'pointer', fontSize: 'inherit', textAlign: 'left', display: 'inline-block' }}
                    onMouseEnter={(e) => e.currentTarget.style.color = 'var(--orange-500)'} 
                    onMouseLeave={(e) => e.currentTarget.style.color = '#94a3b8'}>
                   Custom Physical Patches
-                </button>
+                </Link>
               </li>
               <li>
-                <button onClick={() => navigate('/pricing')} style={{ background: 'none', border: 'none', padding: 0, color: '#94a3b8', textDecoration: 'none', transition: 'color 0.2s', cursor: 'pointer', fontSize: 'inherit', textAlign: 'left' }}
+                <Link href="/pricing" style={{ color: '#94a3b8', textDecoration: 'none', transition: 'color 0.2s', cursor: 'pointer', fontSize: 'inherit', textAlign: 'left', display: 'inline-block' }}
                    onMouseEnter={(e) => e.currentTarget.style.color = 'var(--orange-500)'} 
                    onMouseLeave={(e) => e.currentTarget.style.color = '#94a3b8'}>
                   Live Pricing & Packages
-                </button>
+                </Link>
               </li>
               <li>
-                <button onClick={() => navigate('/portfolio')} style={{ background: 'none', border: 'none', padding: 0, color: '#94a3b8', textDecoration: 'none', transition: 'color 0.2s', cursor: 'pointer', fontSize: 'inherit', textAlign: 'left' }}
+                <Link href="/portfolio" style={{ color: '#94a3b8', textDecoration: 'none', transition: 'color 0.2s', cursor: 'pointer', fontSize: 'inherit', textAlign: 'left', display: 'inline-block' }}
                    onMouseEnter={(e) => e.currentTarget.style.color = 'var(--orange-500)'} 
                    onMouseLeave={(e) => e.currentTarget.style.color = '#94a3b8'}>
                   Sew-Out Portfolio
-                </button>
+                </Link>
               </li>
             </ul>
           </div>
@@ -300,18 +301,18 @@ export const Footer = () => {
             </h4>
             <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '0.85rem', fontSize: '0.9rem' }}>
               <li>
-                <button onClick={() => navigate('/faqs')} style={{ background: 'none', border: 'none', padding: 0, color: '#94a3b8', transition: 'color 0.2s', cursor: 'pointer', fontSize: 'inherit', textAlign: 'left', fontWeight: 600 }}
+                <Link href="/faqs" style={{ color: '#94a3b8', textDecoration: 'none', transition: 'color 0.2s', cursor: 'pointer', fontSize: 'inherit', textAlign: 'left', fontWeight: 600, display: 'inline-block' }}
                    onMouseEnter={(e) => e.currentTarget.style.color = 'var(--orange-500)'} 
                    onMouseLeave={(e) => e.currentTarget.style.color = '#94a3b8'}>
                   Ask the Community / FAQs
-                </button>
+                </Link>
               </li>
               <li>
-                <button onClick={() => navigate('/blogs')} style={{ background: 'none', border: 'none', padding: 0, color: '#94a3b8', transition: 'color 0.2s', cursor: 'pointer', fontSize: 'inherit', textAlign: 'left', fontWeight: 600 }}
+                <Link href="/blogs" style={{ color: '#94a3b8', textDecoration: 'none', transition: 'color 0.2s', cursor: 'pointer', fontSize: 'inherit', textAlign: 'left', fontWeight: 600, display: 'inline-block' }}
                    onMouseEnter={(e) => e.currentTarget.style.color = 'var(--orange-500)'} 
                    onMouseLeave={(e) => e.currentTarget.style.color = '#94a3b8'}>
                   Industry Insights & Blogs
-                </button>
+                </Link>
               </li>
               <li>
                 {email ? (
@@ -332,32 +333,32 @@ export const Footer = () => {
             </h4>
             <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '0.85rem', fontSize: '0.9rem' }}>
               <li>
-                <button onClick={() => navigate('/terms')} style={{ background: 'none', border: 'none', padding: 0, color: '#94a3b8', transition: 'color 0.2s', cursor: 'pointer', fontSize: 'inherit', textAlign: 'left' }}
+                <Link href="/terms" style={{ color: '#94a3b8', textDecoration: 'none', transition: 'color 0.2s', cursor: 'pointer', fontSize: 'inherit', textAlign: 'left', display: 'inline-block' }}
                    onMouseEnter={(e) => e.currentTarget.style.color = 'var(--orange-500)'} 
                    onMouseLeave={(e) => e.currentTarget.style.color = '#94a3b8'}>
                   Terms and Conditions
-                </button>
+                </Link>
               </li>
               <li>
-                <button onClick={() => navigate('/privacy')} style={{ background: 'none', border: 'none', padding: 0, color: '#94a3b8', transition: 'color 0.2s', cursor: 'pointer', fontSize: 'inherit', textAlign: 'left' }}
+                <Link href="/privacy" style={{ color: '#94a3b8', textDecoration: 'none', transition: 'color 0.2s', cursor: 'pointer', fontSize: 'inherit', textAlign: 'left', display: 'inline-block' }}
                    onMouseEnter={(e) => e.currentTarget.style.color = 'var(--orange-500)'} 
                    onMouseLeave={(e) => e.currentTarget.style.color = '#94a3b8'}>
                   Privacy Policy
-                </button>
+                </Link>
               </li>
               <li>
-                <button onClick={() => navigate('/terms')} style={{ background: 'none', border: 'none', padding: 0, color: '#94a3b8', transition: 'color 0.2s', cursor: 'pointer', fontSize: 'inherit', textAlign: 'left' }}
+                <Link href="/terms" style={{ color: '#94a3b8', textDecoration: 'none', transition: 'color 0.2s', cursor: 'pointer', fontSize: 'inherit', textAlign: 'left', display: 'inline-block' }}
                    onMouseEnter={(e) => e.currentTarget.style.color = 'var(--orange-500)'} 
                    onMouseLeave={(e) => e.currentTarget.style.color = '#94a3b8'}>
                   Refund & Cancellation Policy
-                </button>
+                </Link>
               </li>
               <li>
-                <button onClick={() => navigate('/terms')} style={{ background: 'none', border: 'none', padding: 0, color: '#94a3b8', transition: 'color 0.2s', cursor: 'pointer', fontSize: 'inherit', textAlign: 'left' }}
+                <Link href="/terms" style={{ color: '#94a3b8', textDecoration: 'none', transition: 'color 0.2s', cursor: 'pointer', fontSize: 'inherit', textAlign: 'left', display: 'inline-block' }}
                    onMouseEnter={(e) => e.currentTarget.style.color = 'var(--orange-500)'} 
                    onMouseLeave={(e) => e.currentTarget.style.color = '#94a3b8'}>
                   Delivery & Shipping Terms
-                </button>
+                </Link>
               </li>
             </ul>
           </div>
