@@ -263,7 +263,7 @@ export const OrderTrackerDrawer = () => {
     return (
       <div 
         className="order-tracker-drawer-backdrop" 
-        onClick={onClose}
+        onClick={handleCloseDrawer}
         style={{
           position: 'fixed',
           top: 0,
