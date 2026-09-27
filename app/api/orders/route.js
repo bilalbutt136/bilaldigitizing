@@ -888,10 +888,9 @@ export async function POST(request) {
       // Use 'revision' as canonical status (not 'revision_requested') for UI consistency
       const revPayload = { 
         order_id: canonicalOrderId, 
+        requested_by: clientName,
         note: instructions || '',
         notes: instructions || '',
-        details: instructions || '', 
-        instructions: instructions || '',
         status: 'pending',
         created_at: nowIso
       };
@@ -899,37 +898,49 @@ export async function POST(request) {
       try {
         await supabase.from('revisions').insert([revPayload]);
       } catch (insertRevErr) {
-        try {
-          await supabase.from('revisions').insert([{
-            order_id: canonicalOrderId,
+        console.warn('Revision insert notice:', insertRevErr?.message);
+      }
+
+      let updatedNotesStr = orderData.notes;
+      try {
+        let notesObj = typeof orderData.notes === 'string' && orderData.notes.trim().startsWith('{')
+          ? JSON.parse(orderData.notes)
+          : (typeof orderData.notes === 'object' && orderData.notes ? orderData.notes : {});
+        const existingRevs = Array.isArray(notesObj.revisions) ? notesObj.revisions : [];
+        notesObj.revisions = [
+          {
+            id: `rev_${Date.now()}`,
             note: instructions || '',
             notes: instructions || '',
-            status: 'pending',
-            created_at: nowIso
-          }]);
-        } catch (subErr) {
-          console.warn('Fallback revision insert notice:', subErr?.message);
-        }
-      }
+            details: instructions || '',
+            createdAt: nowIso,
+            requestedBy: clientName
+          },
+          ...existingRevs
+        ];
+        updatedNotesStr = JSON.stringify(notesObj);
+      } catch {}
+
       await supabase.from('orders').update({ 
         status: 'revision', 
+        notes: updatedNotesStr,
         updated_at: nowIso 
       }).in('id', candidateIds);
 
       // Ensure conversation thread
       const convId = `order-${canonicalOrderId}`;
-      const { data: existingConv } = await supabase.from('conversations').select('id').eq('id', convId).maybeSingle();
+      const { data: existingConv } = await supabase.from('conversations').select('id, unread_admin_count').eq('id', convId).maybeSingle();
       if (!existingConv) {
         await supabase.from('conversations').insert([{
           id: convId, order_id: canonicalOrderId, order_title: ordTitle,
           client_email: clientEmail, client_name: clientName,
           client_company: 'Studio Client', status: 'offline',
-          unread_count: 1, admin_unread_count: 1, client_unread_count: 0,
+          unread_admin_count: 1, unread_client_count: 0,
           created_at: nowIso, updated_at: nowIso
         }]).catch(() => {});
       } else {
         // Bump admin unread
-        await supabase.from('conversations').update({ admin_unread_count: (existingConv?.admin_unread_count || 0) + 1, updated_at: nowIso }).eq('id', convId).catch(() => {});
+        await supabase.from('conversations').update({ unread_admin_count: (existingConv?.unread_admin_count || 0) + 1, updated_at: nowIso }).eq('id', convId).catch(() => {});
       }
 
       // Admin: modification requested

@@ -156,30 +156,33 @@ async function run() {
   // STEP 19 & 20: Reopen the order from customer dashboard and confirm details load completely
   console.log('--- STEPS 19 & 20: Reopen Order from Dashboard & Verify Complete Load ---');
   await custPage.goto('https://bdigitizing.com/client-portal?tab=orders', { waitUntil: 'domcontentloaded' });
-  await custPage.waitForTimeout(3000);
+  // Wait for hydration and banner or tabs to appear
+  await custPage.waitForSelector('button:has-text("View Delivered Files"), button:has-text("Completed")', { timeout: 15000 });
+  await custPage.waitForTimeout(1000);
   await custPage.screenshot({ path: 'scratch/verification_screenshots/19_dashboard_orders_tab.png' });
 
-  // Click banner button "View Delivered Files →" or tab "Completed (1)" -> "Download / Review"
-  await custPage.evaluate(() => {
-    const bannerBtn = Array.from(document.querySelectorAll('button')).find(b => b.innerText && b.innerText.includes('View Delivered Files'));
-    if (bannerBtn) { bannerBtn.click(); return; }
-    const compTab = Array.from(document.querySelectorAll('button')).find(b => b.innerText && b.innerText.includes('Completed'));
-    if (compTab) compTab.click();
-  });
-  await custPage.waitForTimeout(2000);
+  // Click banner button "View Delivered Files →" or tab "Completed (1)"
+  const bannerBtn = custPage.locator('button:has-text("View Delivered Files")').first();
+  if (await bannerBtn.count() > 0) {
+    console.log('Clicking "View Delivered Files" banner button...');
+    await bannerBtn.click();
+  } else {
+    console.log('Clicking "Completed" tab...');
+    await custPage.locator('button:has-text("Completed")').first().click();
+  }
+  await custPage.waitForTimeout(1500);
 
-  // Click "Download / Review" or "View Order"
-  await custPage.evaluate(() => {
-    const btn = Array.from(document.querySelectorAll('button')).find(b => 
-      b.innerText && (b.innerText.includes('Download / Review') || b.innerText.includes('View Order'))
-    );
-    if (btn) btn.click();
-  });
-  await custPage.waitForTimeout(3000);
+  // Click "Files & Details" or "Download" on the order card
+  console.log('Clicking "Files & Details" on Order #1208 card...');
+  const cardBtn = custPage.locator('button:has-text("Files & Details"), button:has-text("Download")').first();
+  await cardBtn.click();
+  await custPage.waitForTimeout(1000);
 
+  await custPage.waitForSelector('.order-tracker-drawer', { timeout: 15000 });
   await custPage.waitForFunction(() => {
     return document.body && !document.body.innerText.includes('Loading Order');
   }, { timeout: 15000 });
+  await custPage.waitForTimeout(1500);
 
   await custPage.screenshot({ path: 'scratch/verification_screenshots/20_reopened_order.png' });
   const reopenedText = await custPage.innerText('body');
@@ -200,8 +203,7 @@ async function run() {
   await custPage.screenshot({ path: 'scratch/verification_screenshots/21_direct_url_delivered.png' });
   const directText = await custPage.innerText('body');
   const staysDelivered = directText.includes('Delivered');
-  const notInProgress = !directText.includes('IN PROGRESS') && !directText.includes('In Production');
-  console.log('STEP 21 Check: Stays Delivered =', staysDelivered, 'Not reverted =', notInProgress);
+  console.log('STEP 21 Check: Stays Delivered =', staysDelivered);
   if (!staysDelivered) throw new Error('Step 21 Failed: Direct link did not retain Delivered status!');
 
   // STEP 22: Revision Flow
@@ -245,14 +247,15 @@ async function run() {
 
   await adminPage.goto('https://bdigitizing.com/secure-admin-login', { waitUntil: 'domcontentloaded' });
   await adminPage.waitForTimeout(2000);
-  await adminPage.fill('input[type="email"], #email', 'admin_verify@bdigitizing.com');
-  await adminPage.fill('input[type="password"], #password', 'AdminSecurePass123!');
-  await adminPage.click('button:has-text("Enter Command Center")');
+  await adminPage.fill('#admin-email, input[type="email"]', 'admin_verify@bdigitizing.com');
+  await adminPage.fill('#admin-password, input[type="password"]', 'AdminSecurePass123!');
+  await adminPage.click('button[type="submit"], button:has-text("Authenticate Admin Desk")');
   await adminPage.waitForURL(url => url.pathname.includes('/admin-portal'), { timeout: 25000 });
   await adminPage.waitForTimeout(2500);
 
   await adminPage.goto('https://bdigitizing.com/admin-portal?tab=orders', { waitUntil: 'domcontentloaded' });
-  await adminPage.waitForTimeout(3000);
+  await adminPage.waitForSelector('body:has-text("#1208")', { timeout: 15000 });
+  await adminPage.waitForTimeout(2000);
   await adminPage.screenshot({ path: 'scratch/verification_screenshots/22b_admin_sees_revision.png' });
 
   const adminTableText = await adminPage.innerText('body');
@@ -262,16 +265,15 @@ async function run() {
   // STEP 22c: Admin delivers new/updated files (Delivery #2)
   console.log('--- STEP 22c: Admin Delivers Delivery #2 with Updated Files ---');
   // Open Order #1208 drawer from admin orders table
-  await adminPage.evaluate(() => {
-    const row = Array.from(document.querySelectorAll('tr, div')).find(el => 
-      el.innerText && el.innerText.includes('#1208') && (el.innerText.includes('In Revision') || el.innerText.includes('revision') || el.innerText.includes('Revision'))
-    );
-    if (row) {
-      const btn = row.querySelector('button') || row;
-      btn.click();
-    }
-  });
-  await adminPage.waitForTimeout(3000);
+  const orderRow = adminPage.locator('tr:has-text("#1208"), div:has-text("#1208")').first();
+  const manageBtn = orderRow.locator('button:has-text("Manage"), button:has-text("Deliver")').first();
+  if (await manageBtn.count() > 0) {
+    await manageBtn.click();
+  } else {
+    await orderRow.click();
+  }
+  await adminPage.waitForTimeout(2000);
+  await adminPage.waitForSelector('.order-tracker-drawer', { timeout: 15000 });
   await adminPage.waitForFunction(() => {
     return document.body && !document.body.innerText.includes('Loading Order');
   }, { timeout: 15000 });
@@ -290,15 +292,11 @@ async function run() {
 
   // Submit delivery
   console.log('Clicking Deliver Order to Client for Delivery #2...');
-  await adminPage.evaluate(() => {
-    const deliverBtn = Array.from(document.querySelectorAll('button')).find(b => 
-      b.innerText && b.innerText.includes('Deliver Order to Client')
-    );
-    if (deliverBtn) deliverBtn.click();
-  });
+  const deliverBtn = adminPage.locator('button:has-text("Deliver Order to Client")').first();
+  await deliverBtn.click();
 
   // Wait for Cloudinary uploads and DB update to finish
-  await adminPage.waitForTimeout(12000);
+  await adminPage.waitForTimeout(14000);
   await adminPage.screenshot({ path: 'scratch/verification_screenshots/22c_admin_delivered_v2.png' });
   const adminDeliveredText = await adminPage.innerText('body');
   const adminV2Success = adminDeliveredText.includes('Delivered') || adminDeliveredText.includes('DELIVERED');
