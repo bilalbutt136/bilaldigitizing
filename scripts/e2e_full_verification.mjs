@@ -96,12 +96,10 @@ async function run() {
 
   // STEP 16: Confirm original order requirements/specifications are fully visible
   console.log('--- STEP 16: Confirm Original Order Requirements / Specifications ---');
-  // Click "View Requirements" or "Order Requirements" button to expand accordion
+  // Ensure requirements accordion is expanded (click only if currently collapsed)
   await custPage.evaluate(() => {
     const viewBtn = Array.from(document.querySelectorAll('button')).find(b => 
       b.innerText && b.innerText.includes('View Requirements')
-    ) || Array.from(document.querySelectorAll('button')).find(b => 
-      b.innerText && b.innerText.includes('Order Requirements')
     );
     if (viewBtn) viewBtn.click();
   });

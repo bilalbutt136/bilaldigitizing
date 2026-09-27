@@ -11,20 +11,26 @@ import { chromium } from 'playwright';
   await page.goto('https://bdigitizing.com/client-portal?tab=orders&trackOrder=1208');
   await page.waitForTimeout(3000);
 
-  console.log('Clicking Order Requirements button...');
-  const reqBtn = page.locator('.order-tracker-drawer button:has-text("Order Requirements")').first();
-  console.log('Button found:', await reqBtn.count());
-  await reqBtn.click();
-  await page.waitForTimeout(2000);
+  const buttons = await page.evaluate(() => {
+    return Array.from(document.querySelectorAll('button')).map((b, i) => `${i}: "${b.innerText.replace(/\n/g, ' ')}"`);
+  });
+  console.log('Buttons:\n', buttons.join('\n'));
 
-  const text = await page.innerText('.order-tracker-drawer');
-  console.log('Contains Target Fabric:', text.includes('Target Fabric'));
-  console.log('Contains Cotton / Pique:', text.includes('Cotton / Pique'));
-  console.log('Contains Dimensions:', text.includes('Dimensions'));
-  console.log('Contains 3.5":', text.includes('3.5"'));
-  console.log('Contains Left Chest:', text.includes('Left Chest'));
-  console.log('Contains test_patch_artwork:', text.includes('test_patch_artwork'));
+  console.log('\nTrying to click button containing "Order Requirements"...');
+  await page.evaluate(() => {
+    const btn = Array.from(document.querySelectorAll('button')).find(b => b.innerText && b.innerText.includes('Order Requirements'));
+    console.log('btn found:', !!btn);
+    if (btn) btn.click();
+  });
+  await page.waitForTimeout(1500);
 
-  await page.screenshot({ path: 'scratch/verification_screenshots/test_req_click.png' });
+  const textAfter = await page.innerText('body');
+  console.log('After click:');
+  console.log('Contains Target Fabric:', textAfter.includes('Target Fabric'));
+  console.log('Contains Cotton / Pique:', textAfter.includes('Cotton / Pique'));
+  console.log('Contains Placement:', textAfter.includes('Placement'));
+  console.log('Contains Left Chest:', textAfter.includes('Left Chest'));
+
+  await page.screenshot({ path: 'scratch/verification_screenshots/debug_req_click.png' });
   await browser.close();
 })();

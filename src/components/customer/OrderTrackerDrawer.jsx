@@ -116,8 +116,8 @@ export const OrderTrackerDrawer = () => {
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
 
-  // Requirements Collapsible Accordion State
-  const [isRequirementsOpen, setIsRequirementsOpen] = useState(false);
+  // Requirements Collapsible Accordion State (default open so specifications are immediately visible)
+  const [isRequirementsOpen, setIsRequirementsOpen] = useState(true);
   // Multi-Delivery Version Tab / Dropdown State
   const [selectedDeliveryIndex, setSelectedDeliveryIndex] = useState(0);
 
@@ -250,11 +250,9 @@ export const OrderTrackerDrawer = () => {
     const currentId = ord?.id || selectedOrderForDrawer;
     if (lastSetOrderIdRef.current !== currentId) {
       lastSetOrderIdRef.current = currentId;
-      const st = String(ord?.status || '').toLowerCase();
-      const isDoneOrDeliv = st === 'delivered' || st === 'completed';
-      setIsRequirementsOpen(!isDoneOrDeliv);
+      setIsRequirementsOpen(true);
     }
-  }, [selectedOrderForDrawer, ord?.id, ord?.status]);
+  }, [selectedOrderForDrawer, ord?.id]);
 
   // Reset delivery version selection to latest (index 0) when switching orders
   useEffect(() => {
