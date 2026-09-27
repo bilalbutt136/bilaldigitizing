@@ -22,7 +22,8 @@ import {
   UserCheck,
   Receipt,
   Mail,
-  Bell
+  Bell,
+  AlertTriangle
 } from 'lucide-react';
 import { CustomerInvoiceModal } from '../common/CustomerInvoiceModal';
 
@@ -36,6 +37,7 @@ const getNextStatuses = (currentStatus) => {
     'qc': ['delivered', 'in_progress', 'cancelled'],
     'delivered': ['completed', 'revision'],
     'revision': ['in_progress', 'delivered', 'cancelled'],
+    'cancellation_requested': ['cancelled', 'in_progress'],
     'completed': [],
     'cancelled': []
   };
@@ -52,6 +54,7 @@ const statusLabels = {
   'delivered': 'Delivered',
   'completed': 'Completed',
   'revision': 'Revision',
+  'cancellation_requested': 'Cancel Requested',
   'cancelled': 'Cancelled'
 };
 
@@ -172,6 +175,7 @@ export const OrderManagementTable = () => {
     if (filterStatus === 'awaiting_payment') return matchesSearch && (ord?.status === 'awaiting_payment');
     if (filterStatus === 'digitizing') return matchesSearch && (ord?.status === 'digitizing' || ord?.status === 'assigned' || ord?.status === 'in_progress');
     if (filterStatus === 'revision') return matchesSearch && ord?.status === 'revision';
+    if (filterStatus === 'cancellation_requested') return matchesSearch && ord?.status === 'cancellation_requested';
     if (filterStatus === 'delivered') return matchesSearch && (ord?.status === 'delivered' || ord?.status === 'qc');
     if (filterStatus === 'completed') return matchesSearch && ord?.status === 'completed';
     if (filterStatus === 'cancelled') return matchesSearch && ord?.status === 'cancelled';
@@ -262,6 +266,8 @@ export const OrderManagementTable = () => {
         return <span className="badge badge-digitizing">In Progress</span>;
       case 'revision':
         return <span className="badge badge-revision">In Revision</span>;
+      case 'cancellation_requested':
+        return <span className="badge" style={{ background: '#fef3c7', color: '#b45309', border: '1px solid #fde68a', fontWeight: 800 }}>⚠️ Cancel Requested</span>;
       case 'delivered':
       case 'qc':
         return <span className="badge badge-qc">Delivered</span>;
@@ -432,6 +438,22 @@ export const OrderManagementTable = () => {
             style={{ fontWeight: 800, fontSize: '0.76rem', padding: '0.3rem 0.6rem', borderRadius: '6px' }}
           >
             In Revision ({orders.filter(o => o.status === 'revision').length})
+          </button>
+
+          <button 
+            className={`btn btn-sm ${filterStatus === 'cancellation_requested' ? 'btn-primary-orange' : 'btn-outline'}`}
+            onClick={() => setFilterStatus('cancellation_requested')}
+            style={{ 
+              fontWeight: 800, 
+              fontSize: '0.76rem', 
+              padding: '0.3rem 0.6rem', 
+              borderRadius: '6px',
+              background: filterStatus === 'cancellation_requested' ? '#f59e0b' : orders.some(o => o.status === 'cancellation_requested') ? '#fef3c7' : undefined,
+              color: filterStatus === 'cancellation_requested' ? '#ffffff' : orders.some(o => o.status === 'cancellation_requested') ? '#b45309' : undefined,
+              borderColor: orders.some(o => o.status === 'cancellation_requested') ? '#fde68a' : undefined
+            }}
+          >
+            ⚠️ Cancellations ({orders.filter(o => o.status === 'cancellation_requested').length})
           </button>
 
           <button 
@@ -809,7 +831,32 @@ export const OrderManagementTable = () => {
                           </button>
                         )}
 
-                        {ord.status !== 'completed' && ord.status !== 'cancelled' && (
+                        {ord.status === 'cancellation_requested' && (
+                          <button 
+                            type="button"
+                            onClick={() => setSelectedOrderForDrawer(ord)}
+                            style={{ 
+                              fontWeight: 800, 
+                              fontSize: '0.74rem', 
+                              whiteSpace: 'nowrap', 
+                              gap: '0.25rem', 
+                              padding: '0.28rem 0.6rem',
+                              background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+                              color: '#ffffff',
+                              border: 'none',
+                              borderRadius: '6px',
+                              boxShadow: '0 2px 6px rgba(245, 158, 11, 0.35)',
+                              cursor: 'pointer',
+                              display: 'inline-flex',
+                              alignItems: 'center'
+                            }}
+                            title="Customer requested cancellation — review reason and approve or decline"
+                          >
+                            <AlertTriangle size={12} /> Review Cancellation
+                          </button>
+                        )}
+
+                        {ord.status !== 'completed' && ord.status !== 'cancelled' && ord.status !== 'cancellation_requested' && (
                           <button 
                             type="button"
                             onClick={() => setSelectedOrderForDrawer(ord)}

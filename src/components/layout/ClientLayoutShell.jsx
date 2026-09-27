@@ -95,7 +95,7 @@ export const ClientLayoutShell = ({ children }) => {
       {/* PWA Prompt Banner (Visible on mobile website to offer App installation or launch) */}
       {!isAppMode && <PWAInstallBanner />}
       <PWARegistrar />
-      <WhatsAppMessagePopup />
+      {!isAppMode && <WhatsAppMessagePopup />}
     </div>
   );
 };

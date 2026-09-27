@@ -2371,6 +2371,75 @@ export const StateProvider = ({ children }) => {
     showToast(`Order ${formatOrderId(orderId)} marked as CANCELLED`, 'warning');
   };
 
+  const requestOrderCancellation = async (orderId, reason) => {
+    try {
+      const res = await fetch('/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'requestCancellation', payload: { orderId, reason } })
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.success) {
+        showToast(data.error || 'Failed to submit cancellation request.', 'error');
+        return { success: false, error: data.error };
+      }
+      setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: 'cancellation_requested' } : o));
+      showToast('Cancellation request submitted to studio administration.', 'info');
+      if (refreshOrders) refreshOrders();
+      return { success: true, cancellation: data.cancellation };
+    } catch (err) {
+      showToast(err.message || 'Error submitting cancellation request.', 'error');
+      return { success: false, error: err.message };
+    }
+  };
+
+  const approveOrderCancellation = async (orderId, adminNote = '') => {
+    try {
+      const res = await fetch('/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'approveCancellation', payload: { orderId, adminNote } })
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.success) {
+        showToast(data.error || 'Failed to approve cancellation.', 'error');
+        return { success: false, error: data.error };
+      }
+      setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: 'cancelled', payment_status: data.refundIssued ? 'refunded' : o.payment_status } : o));
+      if (data.newBalance !== null && data.newBalance !== undefined) {
+        setWalletBalance(data.newBalance);
+      }
+      showToast(`Order ${formatOrderId(orderId)} cancelled.${data.refundIssued ? ` $${data.refundAmount.toFixed(2)} refunded to wallet.` : ''}`, 'success');
+      if (refreshOrders) refreshOrders();
+      return { success: true, ...data };
+    } catch (err) {
+      showToast(err.message || 'Error approving cancellation.', 'error');
+      return { success: false, error: err.message };
+    }
+  };
+
+  const rejectOrderCancellation = async (orderId, rejectionReason = '') => {
+    try {
+      const res = await fetch('/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'rejectCancellation', payload: { orderId, rejectionReason } })
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.success) {
+        showToast(data.error || 'Failed to reject cancellation.', 'error');
+        return { success: false, error: data.error };
+      }
+      setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: data.status } : o));
+      showToast(`Cancellation declined. Order restored to ${data.status}.`, 'info');
+      if (refreshOrders) refreshOrders();
+      return { success: true, ...data };
+    } catch (err) {
+      showToast(err.message || 'Error rejecting cancellation.', 'error');
+      return { success: false, error: err.message };
+    }
+  };
+
   const deleteOrder = async (orderId) => {
     setOrders(prev => prev.filter(o => o.id !== orderId));
     await deleteOrderInSupabase(orderId);
@@ -2855,6 +2924,7 @@ export const StateProvider = ({ children }) => {
       stopNotificationSound,
       unreadOrdersCount, markOrdersAsRead, lastOrdersViewedTime,
       createOrder, updateOrderStatus, addRevisionRequest, cancelOrder,
+      requestOrderCancellation, approveOrderCancellation, rejectOrderCancellation,
       fetchUserWalletBalance, refreshOrders, refreshClients,
       mobileMode, setMobileMode, isStandaloneApp,
       mobileActiveTab, setMobileTab

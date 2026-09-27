@@ -530,7 +530,7 @@ export async function POST(request) {
         }
 
         // Security check: non-admin clients can only perform legitimate client lifecycle actions
-        const allowedClientTransitions = ['completed', 'revision', 'revision_requested', 'cancelled'];
+        const allowedClientTransitions = ['completed', 'revision', 'revision_requested', 'cancellation_requested', 'cancelled'];
         if (newStatus && !allowedClientTransitions.includes(newStatus)) {
           const isCurrentlyPaid = targetOrder?.payment_status === 'paid';
           if (!isCurrentlyPaid && (newStatus === 'in_progress' || extraData?.paymentStatus === 'paid' || extraData?.payment_status === 'paid')) {
@@ -964,6 +964,316 @@ export async function POST(request) {
       }
 
       return NextResponse.json({ success: true });
+    }
+
+    if (action === 'requestCancellation') {
+      if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      const { orderId, reason } = payload;
+      const cleanReason = String(reason || '').trim();
+      if (!cleanReason) {
+        return NextResponse.json({ error: 'A cancellation reason is required.' }, { status: 400 });
+      }
+
+      const rawOrderId = String(orderId || '').trim();
+      const cleanOrdId = rawOrderId.replace(/^#+/, '');
+      const withHash = `#${cleanOrdId}`;
+      const candidateIds = Array.from(new Set([rawOrderId, cleanOrdId, withHash])).filter(Boolean);
+
+      const { data: orderData } = await supabase
+        .from('orders')
+        .select('id, client_email, client_name, user_id, title, status, payment_status, price, cost, notes')
+        .in('id', candidateIds)
+        .maybeSingle();
+
+      if (!orderData) {
+        return NextResponse.json({ error: 'Order not found.' }, { status: 404 });
+      }
+
+      if (!isAdmin) {
+        const isClientOwner = (orderData?.client_email?.toLowerCase().trim() === user.email?.toLowerCase().trim()) || (orderData?.user_id && orderData.user_id === user.id);
+        if (!isClientOwner) {
+          return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+        }
+      }
+
+      const curStatus = (orderData.status || '').toLowerCase();
+      if (curStatus === 'delivered' || curStatus === 'completed') {
+        return NextResponse.json({ error: 'Delivered or completed orders cannot be cancelled.' }, { status: 400 });
+      }
+      if (curStatus === 'cancelled') {
+        return NextResponse.json({ error: 'This order is already cancelled.' }, { status: 400 });
+      }
+      if (curStatus === 'cancellation_requested') {
+        return NextResponse.json({ error: 'Cancellation request has already been submitted and is awaiting administrator review.' }, { status: 400 });
+      }
+
+      const nowIso = new Date().toISOString();
+      const clientName = orderData.client_name || user.user_metadata?.full_name || 'Client';
+      const clientEmail = (orderData.client_email || user.email || '').toLowerCase().trim();
+      const canonicalOrderId = orderData.id;
+
+      let notesObj = {};
+      try {
+        notesObj = typeof orderData.notes === 'string' && orderData.notes.trim().startsWith('{')
+          ? JSON.parse(orderData.notes)
+          : (typeof orderData.notes === 'object' && orderData.notes ? orderData.notes : {});
+      } catch {
+        notesObj = {};
+      }
+
+      const cancelRecord = {
+        id: `cancel_${Date.now()}`,
+        reason: cleanReason,
+        requested_by: clientName,
+        requested_by_email: clientEmail,
+        requested_at: nowIso,
+        status: 'pending',
+        previous_status: orderData.status || 'in_progress',
+        amount: parseFloat(orderData.price || orderData.cost || 0)
+      };
+
+      notesObj.cancellation = cancelRecord;
+      notesObj.cancellations = [cancelRecord, ...(Array.isArray(notesObj.cancellations) ? notesObj.cancellations : [])];
+
+      const { error: updateErr } = await supabase
+        .from('orders')
+        .update({
+          status: 'cancellation_requested',
+          notes: JSON.stringify(notesObj),
+          updated_at: nowIso
+        })
+        .eq('id', canonicalOrderId);
+
+      if (updateErr) throw updateErr;
+
+      // Admin Notification
+      try {
+        await supabase.from('notifications').insert([{
+          id: `notif-cancel-${cleanOrdId}-${Date.now()}`,
+          recipient_role: 'admin',
+          recipient_email: null,
+          title: `⚠️ Cancellation Requested: ${orderData.title || '#' + cleanOrdId}`,
+          message: `${clientName} (${clientEmail}) requested cancellation for Order #${cleanOrdId}. Reason: "${cleanReason.slice(0, 120)}"`,
+          type: 'warning',
+          order_id: cleanOrdId,
+          link: `/admin-portal?tab=orders&trackOrder=${cleanOrdId}`,
+          read: false,
+          created_at: nowIso,
+          updated_at: nowIso
+        }]);
+      } catch (notifErr) {
+        console.warn('Admin cancellation notification error:', notifErr.message);
+      }
+
+      return NextResponse.json({ success: true, status: 'cancellation_requested', cancellation: cancelRecord });
+    }
+
+    if (action === 'approveCancellation') {
+      if (!user || !isAdmin) {
+        return NextResponse.json({ error: 'Unauthorized: Admin privileges required.' }, { status: 403 });
+      }
+      const { orderId, adminNote } = payload;
+      const rawOrderId = String(orderId || '').trim();
+      const cleanOrdId = rawOrderId.replace(/^#+/, '');
+      const withHash = `#${cleanOrdId}`;
+      const candidateIds = Array.from(new Set([rawOrderId, cleanOrdId, withHash])).filter(Boolean);
+
+      const { data: orderData } = await supabase
+        .from('orders')
+        .select('id, client_email, client_name, user_id, title, status, payment_status, price, cost, notes')
+        .in('id', candidateIds)
+        .maybeSingle();
+
+      if (!orderData) {
+        return NextResponse.json({ error: 'Order not found.' }, { status: 404 });
+      }
+
+      let notesObj = {};
+      try {
+        notesObj = typeof orderData.notes === 'string' && orderData.notes.trim().startsWith('{')
+          ? JSON.parse(orderData.notes)
+          : (typeof orderData.notes === 'object' && orderData.notes ? orderData.notes : {});
+      } catch {
+        notesObj = {};
+      }
+
+      const cancellation = notesObj.cancellation || {};
+      
+      // Idempotency check: Never allow duplicate refund or double processing
+      if (cancellation.refund_issued === true) {
+        return NextResponse.json({ error: 'A wallet refund has already been issued for this order cancellation.' }, { status: 400 });
+      }
+
+      const canonicalOrderId = orderData.id;
+      const nowIso = new Date().toISOString();
+      const pStatus = (orderData.payment_status || '').toLowerCase();
+      const isPaid = pStatus === 'paid' || pStatus === 'completed' || pStatus === 'wallet';
+      const refundAmount = parseFloat(orderData.price || orderData.cost || cancellation.amount || 0);
+
+      let refundSuccess = false;
+      let finalBalance = null;
+
+      if (isPaid && refundAmount > 0) {
+        const clientEmail = (orderData.client_email || '').toLowerCase().trim();
+        let clientRecord = null;
+        if (orderData.user_id) {
+          const { data: byId } = await supabase.from('clients').select('id, email, wallet_balance, name').eq('id', orderData.user_id).maybeSingle();
+          if (byId) clientRecord = byId;
+        }
+        if (!clientRecord && clientEmail) {
+          const { data: byEmail } = await supabase.from('clients').select('id, email, wallet_balance, name').ilike('email', clientEmail).maybeSingle();
+          if (byEmail) clientRecord = byEmail;
+        }
+
+        if (clientRecord) {
+          const currentBal = parseFloat(clientRecord.wallet_balance || 0);
+          finalBalance = parseFloat((currentBal + refundAmount).toFixed(2));
+          await supabase.from('clients').update({ wallet_balance: finalBalance, updated_at: nowIso }).eq('id', clientRecord.id);
+
+          await supabase.from('transactions').insert([{
+            user_id: clientRecord.id,
+            client_email: clientEmail,
+            type: 'refund',
+            amount: refundAmount,
+            payment_method: 'Studio Wallet Refund',
+            description: `Refund for Cancelled Order #${cleanOrdId} (+ $${refundAmount.toFixed(2)})`,
+            created_at: nowIso
+          }]);
+          refundSuccess = true;
+        }
+      }
+
+      cancellation.status = 'approved';
+      cancellation.resolved_at = nowIso;
+      cancellation.admin_note = (adminNote || '').trim();
+      if (refundSuccess) {
+        cancellation.refund_issued = true;
+        cancellation.refund_amount = refundAmount;
+        cancellation.refunded_at = nowIso;
+      }
+      notesObj.cancellation = cancellation;
+
+      const { error: updateErr } = await supabase
+        .from('orders')
+        .update({
+          status: 'cancelled',
+          payment_status: isPaid ? 'refunded' : orderData.payment_status,
+          notes: JSON.stringify(notesObj),
+          updated_at: nowIso
+        })
+        .eq('id', canonicalOrderId);
+
+      if (updateErr) throw updateErr;
+
+      // Customer Notification
+      if (orderData.client_email) {
+        try {
+          const refundText = refundSuccess 
+            ? ` $${refundAmount.toFixed(2)} has been credited to your Studio Wallet.` 
+            : '';
+          await supabase.from('notifications').insert([{
+            id: `notif-approved-cancel-${cleanOrdId}-${Date.now()}`,
+            recipient_role: 'client',
+            recipient_email: orderData.client_email.toLowerCase().trim(),
+            title: `✕ Order #${cleanOrdId} Cancellation Approved`,
+            message: `Your cancellation request for Order #${cleanOrdId} was approved.${refundText}`,
+            type: 'info',
+            order_id: cleanOrdId,
+            link: `/client-portal?tab=orders&trackOrder=${cleanOrdId}`,
+            read: false,
+            created_at: nowIso,
+            updated_at: nowIso
+          }]);
+        } catch (notifErr) {
+          console.warn('Customer cancel notification error:', notifErr.message);
+        }
+      }
+
+      return NextResponse.json({
+        success: true,
+        status: 'cancelled',
+        refundIssued: refundSuccess,
+        refundAmount: refundSuccess ? refundAmount : 0,
+        newBalance: finalBalance
+      });
+    }
+
+    if (action === 'rejectCancellation') {
+      if (!user || !isAdmin) {
+        return NextResponse.json({ error: 'Unauthorized: Admin privileges required.' }, { status: 403 });
+      }
+      const { orderId, rejectionReason } = payload;
+      const rawOrderId = String(orderId || '').trim();
+      const cleanOrdId = rawOrderId.replace(/^#+/, '');
+      const withHash = `#${cleanOrdId}`;
+      const candidateIds = Array.from(new Set([rawOrderId, cleanOrdId, withHash])).filter(Boolean);
+
+      const { data: orderData } = await supabase
+        .from('orders')
+        .select('id, client_email, client_name, user_id, title, status, notes')
+        .in('id', candidateIds)
+        .maybeSingle();
+
+      if (!orderData) {
+        return NextResponse.json({ error: 'Order not found.' }, { status: 404 });
+      }
+
+      let notesObj = {};
+      try {
+        notesObj = typeof orderData.notes === 'string' && orderData.notes.trim().startsWith('{')
+          ? JSON.parse(orderData.notes)
+          : (typeof orderData.notes === 'object' && orderData.notes ? orderData.notes : {});
+      } catch {
+        notesObj = {};
+      }
+
+      const cancellation = notesObj.cancellation || {};
+      const revertStatus = cancellation.previous_status || 'in_progress';
+      const cleanRejection = String(rejectionReason || 'Cancellation request declined by studio operations. Order remains active in production.').trim();
+
+      cancellation.status = 'rejected';
+      cancellation.resolved_at = new Date().toISOString();
+      cancellation.admin_rejection_reason = cleanRejection;
+      notesObj.cancellation = cancellation;
+
+      const nowIso = new Date().toISOString();
+      const { error: updateErr } = await supabase
+        .from('orders')
+        .update({
+          status: revertStatus,
+          notes: JSON.stringify(notesObj),
+          updated_at: nowIso
+        })
+        .eq('id', orderData.id);
+
+      if (updateErr) throw updateErr;
+
+      // Customer Notification
+      if (orderData.client_email) {
+        try {
+          await supabase.from('notifications').insert([{
+            id: `notif-rejected-cancel-${cleanOrdId}-${Date.now()}`,
+            recipient_role: 'client',
+            recipient_email: orderData.client_email.toLowerCase().trim(),
+            title: `ℹ Cancellation Declined: Order #${cleanOrdId}`,
+            message: `Your cancellation request for Order #${cleanOrdId} was declined. Reason: "${cleanRejection}". Work continues in ${revertStatus}.`,
+            type: 'warning',
+            order_id: cleanOrdId,
+            link: `/client-portal?tab=orders&trackOrder=${cleanOrdId}`,
+            read: false,
+            created_at: nowIso,
+            updated_at: nowIso
+          }]);
+        } catch (notifErr) {
+          console.warn('Customer reject notification error:', notifErr.message);
+        }
+      }
+
+      return NextResponse.json({
+        success: true,
+        status: revertStatus,
+        rejectionReason: cleanRejection
+      });
     }
 
     if (action === 'cancelOrder') {

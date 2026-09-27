@@ -49,6 +49,7 @@ import {
   Volume2,
   VolumeX,
   CreditCard,
+  Wallet,
   ChevronDown,
   RefreshCw,
   Activity,
@@ -137,9 +138,9 @@ export const BDigitizingMobileApp = () => {
   const mobilePhone = (mobileCi.phone !== undefined ? mobileCi.phone : (siteSettings?.contactPhone || siteSettings?.supportPhone || '')).trim();
   const mobileEmail = (mobileCi.email !== undefined ? mobileCi.email : (siteSettings?.supportEmail || siteSettings?.contactEmail || '')).trim();
 
-  const validTabs = ['home', 'categories', 'orders', 'profile', 'chat', 'support', 'inbox', 'login', 'signup', 'auth'];
+  const validTabs = ['home', 'categories', 'orders', 'wallet', 'profile', 'chat', 'support', 'inbox', 'login', 'signup', 'auth'];
 
-  // Active Tab: 'home' | 'categories' | 'orders' | 'profile' | 'chat' | 'support' | 'inbox' | 'login' | 'signup' | 'auth'
+  // Active Tab: 'home' | 'categories' | 'orders' | 'wallet' | 'profile' | 'chat' | 'support' | 'inbox' | 'login' | 'signup' | 'auth'
   const getInitialMobileTab = () => {
     if (typeof window !== 'undefined') {
       try {
@@ -159,6 +160,34 @@ export const BDigitizingMobileApp = () => {
 
   const [unreadInboxCount, setUnreadInboxCount] = useState(0);
   const [unreadSupportCount, setUnreadSupportCount] = useState(0);
+
+  // Studio Wallet Live Transactions State
+  const [walletTransactions, setWalletTransactions] = useState([]);
+  const [isLoadingWallet, setIsLoadingWallet] = useState(false);
+
+  const fetchMobileWalletData = React.useCallback(async () => {
+    if (!activeUser && !userEmail) return;
+    setIsLoadingWallet(true);
+    try {
+      const res = await fetch('/api/wallet');
+      if (res.ok) {
+        const data = await res.json();
+        if (data.transactions) {
+          setWalletTransactions(data.transactions);
+        }
+      }
+    } catch (err) {
+      console.warn('Failed to fetch mobile wallet data:', err);
+    } finally {
+      setIsLoadingWallet(false);
+    }
+  }, [activeUser, userEmail]);
+
+  useEffect(() => {
+    if (mobileTab === 'wallet') {
+      fetchMobileWalletData();
+    }
+  }, [mobileTab, fetchMobileWalletData]);
 
   const fetchMobileChatUnread = React.useCallback(async () => {
     const email = (activeUser?.email || userEmail || '').toLowerCase().trim();
@@ -2973,30 +3002,6 @@ export const BDigitizingMobileApp = () => {
                 </div>
               </div>
 
-              {/* Direct WhatsApp & Studio Hotlines */}
-              <div 
-                onClick={() => setIsSupportModalOpen(true)}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  padding: '0.9rem 1.15rem',
-                  borderBottom: isDark ? '1px solid var(--color-border, #334155)' : '1px solid #f1f5f9',
-                  cursor: 'pointer'
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
-                  <div style={{ background: 'rgba(59, 130, 246, 0.12)', color: '#3b82f6', padding: '0.45rem', borderRadius: '10px' }}>
-                    <HelpCircle size={18} />
-                  </div>
-                  <div>
-                    <span style={{ fontSize: '0.9rem', fontWeight: 800, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a', display: 'block' }}>WhatsApp Desk & Hotlines</span>
-                    <span style={{ fontSize: '0.72rem', color: isDark ? 'var(--color-text-secondary, #94a3b8)' : '#64748b' }}>Direct WhatsApp, phone hotline & FAQs</span>
-                  </div>
-                </div>
-                <ChevronRight size={18} style={{ color: isDark ? '#94a3b8' : '#94a3b8' }} />
-              </div>
-
               {/* Service Rates & Packages */}
               <div 
                 onClick={() => setMobileTab('categories')}
@@ -3219,6 +3224,283 @@ export const BDigitizingMobileApp = () => {
       )}
 
       {/* =========================================================================
+          SCREEN: DEDICATED VIP STUDIO WALLET VIEW
+          ========================================================================= */}
+      {mobileTab === 'wallet' && (
+        <div style={{
+          display: 'flex',
+          flexDirection: 'column',
+          minHeight: '100%',
+          background: isDark ? 'var(--color-background, #090d16)' : '#f8fafc',
+          paddingBottom: '5.5rem'
+        }}>
+          {/* Header */}
+          <div style={{
+            background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
+            color: '#ffffff',
+            padding: '1.25rem 1.25rem 1.5rem',
+            boxShadow: '0 4px 18px rgba(15, 23, 42, 0.15)'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <span style={{ fontSize: '0.72rem', fontWeight: 800, color: 'var(--orange-500)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                  Billing & Balance
+                </span>
+                <h2 style={{ margin: '0.2rem 0 0', fontSize: '1.35rem', fontWeight: 900, color: '#ffffff' }}>
+                  Studio Wallet
+                </h2>
+              </div>
+              <button
+                type="button"
+                onClick={fetchMobileWalletData}
+                disabled={isLoadingWallet}
+                style={{
+                  background: 'rgba(255, 255, 255, 0.1)',
+                  border: '1px solid rgba(255, 255, 255, 0.2)',
+                  borderRadius: '10px',
+                  padding: '0.45rem',
+                  color: '#ffffff',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
+                aria-label="Refresh wallet balance"
+              >
+                <RefreshCw size={17} className={isLoadingWallet ? 'spin-fast' : ''} />
+              </button>
+            </div>
+          </div>
+
+          <div style={{ padding: '1rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            {/* VIP Card */}
+            <div style={{
+              background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0369a1 100%)',
+              color: '#ffffff',
+              borderRadius: '20px',
+              padding: '1.4rem',
+              boxShadow: '0 12px 30px rgba(15, 23, 42, 0.25)',
+              border: '1px solid rgba(255, 255, 255, 0.15)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '1rem'
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{
+                  background: 'rgba(255, 255, 255, 0.15)',
+                  backdropFilter: 'blur(4px)',
+                  padding: '0.25rem 0.65rem',
+                  borderRadius: '9999px',
+                  fontSize: '0.68rem',
+                  fontWeight: 800,
+                  letterSpacing: '0.04em',
+                  color: '#ffffff'
+                }}>
+                  ⭐ VIP CLIENT ACCOUNT
+                </span>
+                <span style={{ fontSize: '0.75rem', color: '#93c5fd', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
+                  <Zap size={13} style={{ color: '#fbbf24' }} /> Instant Dispatch
+                </span>
+              </div>
+
+              <div>
+                <span style={{ fontSize: '0.78rem', color: '#cbd5e1', fontWeight: 600 }}>Available Wallet Balance</span>
+                <div style={{ fontSize: '2.3rem', fontWeight: 900, color: '#ffffff', letterSpacing: '-0.02em', marginTop: '0.15rem' }}>
+                  ${Number(walletBalance || 0).toFixed(2)}
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: '0.65rem', flexWrap: 'wrap', paddingTop: '0.35rem' }}>
+                <button
+                  type="button"
+                  onClick={() => setIsDepositModalOpen(true)}
+                  style={{
+                    flex: 1,
+                    minWidth: '140px',
+                    background: 'linear-gradient(135deg, var(--color-secondary, #f97316) 0%, var(--color-primary, #ea580c) 100%)',
+                    color: '#ffffff',
+                    border: 'none',
+                    borderRadius: '12px',
+                    padding: '0.65rem 1rem',
+                    fontWeight: 800,
+                    fontSize: '0.85rem',
+                    cursor: 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.4rem',
+                    boxShadow: '0 4px 14px rgba(234, 88, 12, 0.4)'
+                  }}
+                >
+                  <Plus size={16} /> Top-Up Balance
+                </button>
+              </div>
+            </div>
+
+            {/* Wallet Advantages */}
+            <div style={{
+              background: isDark ? 'var(--color-surface, #1e293b)' : '#ffffff',
+              borderRadius: '16px',
+              padding: '1rem',
+              border: isDark ? '1px solid var(--color-border, #334155)' : '1px solid #e2e8f0',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '0.75rem'
+            }}>
+              <span style={{ fontSize: '0.78rem', fontWeight: 800, color: isDark ? '#ffffff' : '#0f172a', textTransform: 'uppercase', letterSpacing: '0.03em' }}>
+                Why Preload Studio Wallet?
+              </span>
+
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem' }}>
+                <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'rgba(234, 88, 12, 0.12)', color: 'var(--orange-500)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <Zap size={16} />
+                </div>
+                <div>
+                  <h4 style={{ margin: 0, fontSize: '0.86rem', fontWeight: 800, color: isDark ? '#ffffff' : '#0f172a' }}>Zero Checkout Delay</h4>
+                  <p style={{ margin: '0.15rem 0 0', fontSize: '0.75rem', color: isDark ? '#94a3b8' : '#64748b', lineHeight: 1.35 }}>
+                    Dispatch rush embroidery and vector orders immediately without entering credit card details each time.
+                  </p>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem' }}>
+                <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'rgba(16, 185, 129, 0.12)', color: '#059669', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <CheckCircle2 size={16} />
+                </div>
+                <div>
+                  <h4 style={{ margin: 0, fontSize: '0.86rem', fontWeight: 800, color: isDark ? '#ffffff' : '#0f172a' }}>Automated Cancellation Refunds</h4>
+                  <p style={{ margin: '0.15rem 0 0', fontSize: '0.75rem', color: isDark ? '#94a3b8' : '#64748b', lineHeight: 1.35 }}>
+                    Approved cancellation requests are automatically credited back to your studio wallet with zero merchant fee deduction.
+                  </p>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem' }}>
+                <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'rgba(59, 130, 246, 0.12)', color: '#2563eb', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <ShieldCheck size={16} />
+                </div>
+                <div>
+                  <h4 style={{ margin: 0, fontSize: '0.86rem', fontWeight: 800, color: isDark ? '#ffffff' : '#0f172a' }}>100% Protected Balance</h4>
+                  <p style={{ margin: '0.15rem 0 0', fontSize: '0.75rem', color: isDark ? '#94a3b8' : '#64748b', lineHeight: 1.35 }}>
+                    Your wallet credits never expire. Use your balance anytime across embroidery digitizing, vector tracing, and custom patch orders.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Transaction Ledger */}
+            <div style={{
+              background: isDark ? 'var(--color-surface, #1e293b)' : '#ffffff',
+              borderRadius: '16px',
+              padding: '1rem',
+              border: isDark ? '1px solid var(--color-border, #334155)' : '1px solid #e2e8f0',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '0.75rem'
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: '0.82rem', fontWeight: 800, color: isDark ? '#ffffff' : '#0f172a', textTransform: 'uppercase' }}>
+                  Recent Transactions
+                </span>
+                {walletTransactions.length > 0 && (
+                  <span style={{ fontSize: '0.72rem', color: isDark ? '#94a3b8' : '#64748b' }}>
+                    {walletTransactions.length} entries
+                  </span>
+                )}
+              </div>
+
+              {isLoadingWallet ? (
+                <div style={{ padding: '2rem', textAlign: 'center', color: isDark ? '#94a3b8' : '#64748b', fontSize: '0.85rem' }}>
+                  <Loader2 size={24} className="spin-fast" style={{ margin: '0 auto 0.5rem' }} />
+                  Loading transactions...
+                </div>
+              ) : walletTransactions.length === 0 ? (
+                <div style={{
+                  padding: '2rem 1rem',
+                  textAlign: 'center',
+                  background: isDark ? 'rgba(15, 23, 42, 0.4)' : '#f8fafc',
+                  borderRadius: '12px',
+                  border: isDark ? '1px dashed #334155' : '1px dashed #cbd5e1'
+                }}>
+                  <CreditCard size={28} style={{ color: isDark ? '#64748b' : '#94a3b8', margin: '0 auto 0.5rem', display: 'block' }} />
+                  <p style={{ margin: 0, fontSize: '0.85rem', fontWeight: 700, color: isDark ? '#e2e8f0' : '#334155' }}>
+                    No wallet activity yet
+                  </p>
+                  <p style={{ margin: '0.25rem 0 0', fontSize: '0.75rem', color: isDark ? '#94a3b8' : '#64748b' }}>
+                    Top up your wallet to start instant 1-click order payments.
+                  </p>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                  {walletTransactions.map((tx, idx) => {
+                    const isCredit = (tx.amount > 0 || tx.type === 'deposit' || tx.type === 'refund');
+                    const amt = Math.abs(Number(tx.amount || 0));
+                    return (
+                      <div
+                        key={tx.id || idx}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          padding: '0.75rem 0.85rem',
+                          borderRadius: '10px',
+                          background: isDark ? 'rgba(15, 23, 42, 0.3)' : '#f8fafc',
+                          border: isDark ? '1px solid #334155' : '1px solid #f1f5f9'
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                          <div style={{
+                            width: '34px',
+                            height: '34px',
+                            borderRadius: '8px',
+                            background: isCredit ? 'rgba(16, 185, 129, 0.12)' : 'rgba(239, 68, 68, 0.12)',
+                            color: isCredit ? '#059669' : '#dc2626',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            flexShrink: 0
+                          }}>
+                            {isCredit ? <Plus size={16} /> : <CreditCard size={16} />}
+                          </div>
+                          <div>
+                            <span style={{ fontSize: '0.82rem', fontWeight: 800, color: isDark ? '#ffffff' : '#0f172a', display: 'block' }}>
+                              {tx.description || (isCredit ? 'Wallet Credit' : 'Order Payment')}
+                            </span>
+                            <span style={{ fontSize: '0.7rem', color: isDark ? '#94a3b8' : '#64748b' }}>
+                              {tx.created_at ? new Date(tx.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Recent'}
+                            </span>
+                          </div>
+                        </div>
+
+                        <div style={{ textAlign: 'right' }}>
+                          <span style={{
+                            fontSize: '0.88rem',
+                            fontWeight: 900,
+                            color: isCredit ? '#10b981' : (isDark ? '#e2e8f0' : '#0f172a'),
+                            display: 'block'
+                          }}>
+                            {isCredit ? '+' : '-'}${amt.toFixed(2)}
+                          </span>
+                          <span style={{
+                            fontSize: '0.65rem',
+                            fontWeight: 800,
+                            color: isCredit ? '#047857' : '#64748b',
+                            textTransform: 'uppercase'
+                          }}>
+                            {tx.type || (isCredit ? 'Credit' : 'Debit')}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* =========================================================================
           SCREEN 6: 24/7 SUPPORT DESK & INBOX CHAT (LIVE REAL-TIME CONVERSATION)
           ========================================================================= */}
       {(mobileTab === 'chat' || mobileTab === 'support' || mobileTab === 'inbox') && (
@@ -3366,98 +3648,7 @@ export const BDigitizingMobileApp = () => {
           <span style={{ fontSize: '0.68rem', fontWeight: mobileTab === 'home' ? 900 : 600 }}>Home</span>
         </button>
 
-        {/* Tab 2: Inbox */}
-        <button
-          type="button"
-          onClick={() => {
-            setMobileChatMode('inbox');
-            setMobileTab('inbox');
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-          }}
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            background: 'none',
-            border: 'none',
-            cursor: 'pointer',
-            padding: '0.25rem 0',
-            position: 'relative',
-            color: (mobileTab === 'inbox' || mobileTab === 'chat' || mobileTab === 'support') ? (isDark ? '#34d399' : '#047857') : (isDark ? '#94a3b8' : '#64748b'),
-            gap: '0.18rem'
-          }}
-        >
-          <div style={{
-            background: (mobileTab === 'inbox' || mobileTab === 'chat' || mobileTab === 'support') ? (isDark ? 'rgba(16, 185, 129, 0.15)' : '#ecfdf5') : 'transparent',
-            borderRadius: '12px',
-            padding: '0.25rem 0.65rem',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            position: 'relative',
-            transition: 'all 0.2s ease'
-          }}>
-            <MessageSquare size={20} strokeWidth={(mobileTab === 'inbox' || mobileTab === 'chat' || mobileTab === 'support') ? 2.5 : 1.75} />
-            {(unreadSupportCount + unreadInboxCount) > 0 && (
-              <span style={{
-                position: 'absolute',
-                top: '-2px',
-                right: '2px',
-                minWidth: '15px',
-                height: '15px',
-                borderRadius: '9999px',
-                background: '#ef4444',
-                color: '#ffffff',
-                fontSize: '0.55rem',
-                fontWeight: 900,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                padding: '0 3px'
-              }}>
-                {unreadSupportCount + unreadInboxCount}
-              </span>
-            )}
-          </div>
-          <span style={{ fontSize: '0.68rem', fontWeight: (mobileTab === 'inbox' || mobileTab === 'chat' || mobileTab === 'support') ? 900 : 600 }}>Inbox</span>
-        </button>
-
-        {/* Tab 3: Search / Categories */}
-        <button
-          type="button"
-          onClick={() => {
-            setMobileTab('categories');
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-          }}
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            background: 'none',
-            border: 'none',
-            cursor: 'pointer',
-            padding: '0.25rem 0',
-            color: mobileTab === 'categories' ? (isDark ? '#34d399' : '#047857') : (isDark ? '#94a3b8' : '#64748b'),
-            gap: '0.18rem'
-          }}
-        >
-          <div style={{
-            background: mobileTab === 'categories' ? (isDark ? 'rgba(16, 185, 129, 0.15)' : '#ecfdf5') : 'transparent',
-            borderRadius: '12px',
-            padding: '0.25rem 0.65rem',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            transition: 'all 0.2s ease'
-          }}>
-            <Search size={20} strokeWidth={mobileTab === 'categories' ? 2.5 : 1.75} />
-          </div>
-          <span style={{ fontSize: '0.68rem', fontWeight: mobileTab === 'categories' ? 900 : 600 }}>Explore</span>
-        </button>
-
-        {/* Tab 4: Manage Orders */}
+        {/* Tab 2: Orders */}
         <button
           type="button"
           onClick={() => {
@@ -3512,7 +3703,98 @@ export const BDigitizingMobileApp = () => {
           <span style={{ fontSize: '0.68rem', fontWeight: mobileTab === 'orders' ? 900 : 600 }}>Orders</span>
         </button>
 
-        {/* Tab 5: Profile & Account */}
+        {/* Tab 3: Messages */}
+        <button
+          type="button"
+          onClick={() => {
+            setMobileChatMode('inbox');
+            setMobileTab('inbox');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }}
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+            padding: '0.25rem 0',
+            position: 'relative',
+            color: (mobileTab === 'inbox' || mobileTab === 'chat' || mobileTab === 'support') ? (isDark ? '#34d399' : '#047857') : (isDark ? '#94a3b8' : '#64748b'),
+            gap: '0.18rem'
+          }}
+        >
+          <div style={{
+            background: (mobileTab === 'inbox' || mobileTab === 'chat' || mobileTab === 'support') ? (isDark ? 'rgba(16, 185, 129, 0.15)' : '#ecfdf5') : 'transparent',
+            borderRadius: '12px',
+            padding: '0.25rem 0.65rem',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            position: 'relative',
+            transition: 'all 0.2s ease'
+          }}>
+            <MessageSquare size={20} strokeWidth={(mobileTab === 'inbox' || mobileTab === 'chat' || mobileTab === 'support') ? 2.5 : 1.75} />
+            {(unreadSupportCount + unreadInboxCount) > 0 && (
+              <span style={{
+                position: 'absolute',
+                top: '-2px',
+                right: '2px',
+                minWidth: '15px',
+                height: '15px',
+                borderRadius: '9999px',
+                background: '#ef4444',
+                color: '#ffffff',
+                fontSize: '0.55rem',
+                fontWeight: 900,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: '0 3px'
+              }}>
+                {unreadSupportCount + unreadInboxCount}
+              </span>
+            )}
+          </div>
+          <span style={{ fontSize: '0.68rem', fontWeight: (mobileTab === 'inbox' || mobileTab === 'chat' || mobileTab === 'support') ? 900 : 600 }}>Messages</span>
+        </button>
+
+        {/* Tab 4: Wallet */}
+        <button
+          type="button"
+          onClick={() => {
+            setMobileTab('wallet');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }}
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+            padding: '0.25rem 0',
+            color: mobileTab === 'wallet' ? (isDark ? '#34d399' : '#047857') : (isDark ? '#94a3b8' : '#64748b'),
+            gap: '0.18rem'
+          }}
+        >
+          <div style={{
+            background: mobileTab === 'wallet' ? (isDark ? 'rgba(16, 185, 129, 0.15)' : '#ecfdf5') : 'transparent',
+            borderRadius: '12px',
+            padding: '0.25rem 0.65rem',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            transition: 'all 0.2s ease'
+          }}>
+            <Wallet size={20} strokeWidth={mobileTab === 'wallet' ? 2.5 : 1.75} />
+          </div>
+          <span style={{ fontSize: '0.68rem', fontWeight: mobileTab === 'wallet' ? 900 : 600 }}>Wallet</span>
+        </button>
+
+        {/* Tab 5: Profile */}
         <button
           type="button"
           onClick={() => {
@@ -3543,7 +3825,7 @@ export const BDigitizingMobileApp = () => {
           }}>
             <User size={20} strokeWidth={mobileTab === 'profile' ? 2.5 : 1.75} />
           </div>
-          <span style={{ fontSize: '0.68rem', fontWeight: mobileTab === 'profile' ? 900 : 600 }}>Account</span>
+          <span style={{ fontSize: '0.68rem', fontWeight: mobileTab === 'profile' ? 900 : 600 }}>Profile</span>
         </button>
       </nav>
 
@@ -4051,62 +4333,36 @@ export const BDigitizingMobileApp = () => {
               <ChevronRight size={18} style={{ color: '#059669' }} />
             </a>
 
-            {/* Action 2: WhatsApp Direct or Phone Direct (Dynamic Auto-Fit) */}
-            {cleanMobileWa ? (
-              <a
-                href={`https://wa.me/${cleanMobileWa}?text=Hello%20BDigitizing%20Studio%2C%20I%20need%20support%20with%20my%20order.`}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{
-                  padding: '0.95rem 1rem',
-                  borderRadius: '14px',
-                  border: isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid #cbd5e1',
-                  background: isDark ? 'var(--color-subtle, #1e293b)' : '#ffffff',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  cursor: 'pointer',
-                  textDecoration: 'none'
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                  <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: '#22c55e', color: '#ffffff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <MessageCircle size={20} />
-                  </div>
-                  <div>
-                    <h4 style={{ margin: 0, fontSize: '0.92rem', fontWeight: 900, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a' }}>WhatsApp Master Desk</h4>
-                    <span style={{ fontSize: '0.72rem', color: isDark ? 'var(--color-text-secondary, #94a3b8)' : '#64748b' }}>Connect with master digitizers directly</span>
-                  </div>
+            {/* Action 2: In-App Studio Chat */}
+            <div
+              onClick={() => {
+                setIsSupportModalOpen(false);
+                setMobileChatMode('inbox');
+                setMobileTab('inbox');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+              style={{
+                padding: '0.95rem 1rem',
+                borderRadius: '14px',
+                border: isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid #cbd5e1',
+                background: isDark ? 'var(--color-subtle, #1e293b)' : '#ffffff',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                cursor: 'pointer'
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'var(--orange-500)', color: '#ffffff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <MessageSquare size={20} />
                 </div>
-                <ExternalLink size={18} style={{ color: isDark ? 'var(--color-text-secondary, #94a3b8)' : '#64748b' }} />
-              </a>
-            ) : mobilePhone ? (
-              <a
-                href={`tel:${mobilePhone.replace(/[^0-9+]/g, '')}`}
-                style={{
-                  padding: '0.95rem 1rem',
-                  borderRadius: '14px',
-                  border: isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid #cbd5e1',
-                  background: isDark ? 'var(--color-subtle, #1e293b)' : '#ffffff',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  cursor: 'pointer',
-                  textDecoration: 'none'
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                  <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'var(--orange-500)', color: '#ffffff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <Phone size={20} />
-                  </div>
-                  <div>
-                    <h4 style={{ margin: 0, fontSize: '0.92rem', fontWeight: 900, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a' }}>Studio Direct Line</h4>
-                    <span style={{ fontSize: '0.72rem', color: isDark ? 'var(--color-text-secondary, #94a3b8)' : '#64748b' }}>{mobilePhone}</span>
-                  </div>
+                <div>
+                  <h4 style={{ margin: 0, fontSize: '0.92rem', fontWeight: 900, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a' }}>Direct In-App Chat</h4>
+                  <span style={{ fontSize: '0.72rem', color: isDark ? 'var(--color-text-secondary, #94a3b8)' : '#64748b' }}>Chat directly with master digitizers</span>
                 </div>
-                <ExternalLink size={18} style={{ color: isDark ? 'var(--color-text-secondary, #94a3b8)' : '#64748b' }} />
-              </a>
-            ) : null}
+              </div>
+              <ChevronRight size={18} style={{ color: 'var(--orange-500)' }} />
+            </div>
 
             {/* FAQ Accordion Summary */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '0.25rem' }}>

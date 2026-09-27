@@ -253,3 +253,58 @@ export async function POST(request) {
     );
   }
 }
+
+// GET /api/wallet - Get current authenticated user's wallet balance and transaction history
+export async function GET(request) {
+  try {
+    if (!hasServiceRole || !supabaseAdmin) {
+      return NextResponse.json(
+        { success: false, error: 'Wallet service is unavailable.' },
+        { status: 503 }
+      );
+    }
+
+    const { user, error: authError } = await getServerAuthUser(request);
+    if (authError || !user) {
+      return NextResponse.json(
+        { success: false, error: authError || 'Authentication required.' },
+        { status: 401 }
+      );
+    }
+
+    const email = (user.email || '').toLowerCase().trim();
+
+    // 1. Fetch live balance from clients table
+    let balance = 0;
+    const { data: clientData } = await supabaseAdmin
+      .from('clients')
+      .select('id, wallet_balance')
+      .or(`id.eq.${user.id},email.ilike.${email}`)
+      .maybeSingle();
+
+    if (clientData) {
+      balance = parseFloat(clientData.wallet_balance || 0);
+    }
+
+    // 2. Fetch user's transaction ledger
+    const { data: transactions } = await supabaseAdmin
+      .from('transactions')
+      .select('*')
+      .or(`user_id.eq.${user.id},client_email.ilike.${email}`)
+      .order('created_at', { ascending: false })
+      .limit(30);
+
+    return NextResponse.json({
+      success: true,
+      balance,
+      transactions: transactions || []
+    });
+  } catch (err) {
+    console.error('Wallet GET Exception:', err);
+    return NextResponse.json(
+      { success: false, error: err.message || 'Failed to fetch wallet info.' },
+      { status: 500 }
+    );
+  }
+}
+

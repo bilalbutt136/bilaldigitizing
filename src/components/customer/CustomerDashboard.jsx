@@ -70,6 +70,7 @@ export const CustomerDashboard = () => {
     colorTheme,
     setColorTheme,
     setMobileMode,
+    isStandaloneApp,
     availableThemes = THEME_PRESETS,
     activeCustomerTab,
     setActiveCustomerTab,
@@ -1002,6 +1003,82 @@ export const CustomerDashboard = () => {
                     </button>
                   </div>
                 </div>
+
+                {/* Prominent Mobile App Install CTA (Only on Mobile Web when not in Standalone App mode) */}
+                {!isStandaloneApp && (
+                  <div 
+                    className="mobile-only"
+                    style={{
+                      margin: '0.4rem 0 1rem',
+                      background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
+                      color: '#ffffff',
+                      borderRadius: '16px',
+                      padding: '0.85rem 1rem',
+                      boxShadow: '0 8px 24px rgba(15, 23, 42, 0.18)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      gap: '0.75rem',
+                      border: '1.5px solid rgba(255, 255, 255, 0.1)'
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', minWidth: 0 }}>
+                      <div style={{
+                        width: '40px',
+                        height: '40px',
+                        borderRadius: '12px',
+                        background: 'linear-gradient(135deg, #ea580c 0%, #c2410c 100%)',
+                        color: '#ffffff',
+                        fontWeight: 900,
+                        fontSize: '1.1rem',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flexShrink: 0,
+                        boxShadow: '0 4px 12px rgba(234, 88, 12, 0.35)'
+                      }}>
+                        B
+                      </div>
+                      <div style={{ minWidth: 0 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                          <h4 style={{ margin: 0, fontSize: '0.88rem', fontWeight: 800, color: '#ffffff', whiteSpace: 'nowrap' }}>
+                            Get the BDigitizing App
+                          </h4>
+                          <span style={{ fontSize: '0.62rem', background: '#ea580c', color: '#ffffff', fontWeight: 800, padding: '0.08rem 0.35rem', borderRadius: '9999px' }}>
+                            FREE
+                          </span>
+                        </div>
+                        <p style={{ margin: '0.15rem 0 0', fontSize: '0.72rem', color: '#94a3b8', lineHeight: 1.25, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          Fast 1-tap ordering, push notifications & instant tracking
+                        </p>
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (typeof window !== 'undefined' && window.deferredPWAInstallPrompt) {
+                          window.deferredPWAInstallPrompt.prompt();
+                        } else {
+                          window.dispatchEvent(new CustomEvent('bdigi_trigger_pwa_install'));
+                        }
+                      }}
+                      className="btn btn-primary-orange btn-sm"
+                      style={{
+                        padding: '0.45rem 0.85rem',
+                        fontSize: '0.78rem',
+                        fontWeight: 800,
+                        whiteSpace: 'nowrap',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.35rem',
+                        flexShrink: 0
+                      }}
+                    >
+                      <Download size={13} /> Install App
+                    </button>
+                  </div>
+                )}
 
                 {/* Summary Stat Cards - Compact & High Information Density */}
                 <div 
@@ -2866,52 +2943,7 @@ export const CustomerDashboard = () => {
           </span>
         </button>
 
-        {/* Tab 3: Center Elevated + Order Action */}
-        <button
-          type="button"
-          onClick={() => {
-            setIsServiceSelectorOpen(true);
-          }}
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            width: '100%',
-            background: 'none',
-            border: 'none',
-            cursor: 'pointer',
-            padding: 0,
-            marginTop: '-16px',
-            position: 'relative'
-          }}
-          aria-label="Create New Order"
-        >
-          <div style={{
-            background: 'linear-gradient(135deg, #ff7a00 0%, #ff5500 100%)',
-            color: '#ffffff',
-            width: '44px',
-            height: '44px',
-            borderRadius: '50%',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            boxShadow: '0 6px 18px rgba(255, 122, 0, 0.45)',
-            border: '3px solid #ffffff'
-          }}>
-            <Plus size={24} style={{ color: '#ffffff', strokeWidth: 3 }} />
-          </div>
-          <span style={{ 
-            fontSize: '0.62rem', 
-            fontWeight: 800, 
-            color: 'var(--orange-600)', 
-            marginTop: '0.15rem' 
-          }}>
-            + Order
-          </span>
-        </button>
-
-        {/* Tab 4: Inbox & Messages */}
+        {/* Tab 3: Messages / Inbox */}
         <button
           type="button"
           onClick={() => {
@@ -2963,7 +2995,44 @@ export const CustomerDashboard = () => {
             )}
           </div>
           <span style={{ fontSize: '0.65rem', fontWeight: (activeTab === 'inbox' || activeTab === 'chat') ? 800 : 600, marginTop: '0.1rem' }}>
-            Inbox
+            Messages
+          </span>
+        </button>
+
+        {/* Tab 4: Studio Wallet */}
+        <button
+          type="button"
+          onClick={() => {
+            setIsDepositModalOpen(true);
+          }}
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: '100%',
+            color: '#64748b',
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+            padding: '0.2rem 0',
+            position: 'relative',
+            transition: 'all 0.18s ease'
+          }}
+        >
+          <div style={{
+            padding: '0.15rem 0.55rem',
+            borderRadius: '12px',
+            background: 'transparent',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            position: 'relative'
+          }}>
+            <Wallet size={19} style={{ color: '#0284c7' }} />
+          </div>
+          <span style={{ fontSize: '0.65rem', fontWeight: 700, marginTop: '0.1rem', color: '#0284c7' }}>
+            Wallet
           </span>
         </button>
 
