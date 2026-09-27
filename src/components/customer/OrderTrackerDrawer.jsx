@@ -169,6 +169,13 @@ export const OrderTrackerDrawer = () => {
   React.useEffect(() => {
     if (!selectedOrderForDrawer) return;
 
+    const handleOpenCancel = (e) => {
+      if (e?.detail?.orderId) {
+        setIsCancelModalOpen(true);
+      }
+    };
+    window.addEventListener('bdigi_open_cancellation_modal', handleOpenCancel);
+
     const handleKeyDown = (e) => {
       if (e.key === 'Escape') {
         handleSafeCloseDrawer();
@@ -180,6 +187,7 @@ export const OrderTrackerDrawer = () => {
 
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('bdigi_open_cancellation_modal', handleOpenCancel);
       document.body.style.overflow = originalOverflow || 'unset';
     };
   }, [selectedOrderForDrawer, handleSafeCloseDrawer]);

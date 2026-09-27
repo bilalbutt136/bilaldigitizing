@@ -2570,10 +2570,24 @@ export const BDigitizingMobileApp = () => {
                   };
                 } else if (isRevision) {
                   badgeInfo = { 
-                    label: 'REVISION', 
+                    label: 'REVISION REQUESTED', 
                     bg: isDark ? 'rgba(234, 88, 12, 0.15)' : '#fff7ed', 
                     border: isDark ? 'rgba(234, 88, 12, 0.4)' : '#fdba74', 
                     color: isDark ? '#fb923c' : '#ea580c' 
+                  };
+                } else if (s === 'cancellation_requested') {
+                  badgeInfo = { 
+                    label: 'CANCELLATION REQUESTED', 
+                    bg: isDark ? 'rgba(245, 158, 11, 0.15)' : '#fef3c7', 
+                    border: isDark ? 'rgba(245, 158, 11, 0.4)' : '#fde68a', 
+                    color: isDark ? '#fbbf24' : '#b45309' 
+                  };
+                } else if (s === 'cancelled') {
+                  badgeInfo = { 
+                    label: 'CANCELLED', 
+                    bg: isDark ? 'rgba(239, 68, 68, 0.15)' : '#fee2e2', 
+                    border: isDark ? 'rgba(239, 68, 68, 0.4)' : '#fca5a5', 
+                    color: isDark ? '#f87171' : '#b91c1c' 
                   };
                 }
 
@@ -2586,7 +2600,7 @@ export const BDigitizingMobileApp = () => {
                     onClick={() => setSelectedOrderForDrawer(ord)}
                     style={{
                       background: isDark ? 'var(--color-surface, #111827)' : '#ffffff',
-                      border: isUnpaid ? (isDark ? '1.5px solid #ea580c' : '1.5px solid #fdba74') : (isDelivered ? (isDark ? '1.5px solid #059669' : '1.5px solid #86efac') : (isDark ? '1px solid var(--color-border, #334155)' : '1px solid #e2e8f0')),
+                      border: isUnpaid ? (isDark ? '1.5px solid #ea580c' : '1.5px solid #fdba74') : (isDelivered ? (isDark ? '1.5px solid #059669' : '1.5px solid #86efac') : (s === 'cancellation_requested' ? (isDark ? '1.5px solid #f59e0b' : '1.5px solid #fde68a') : (s === 'cancelled' ? (isDark ? '1.5px solid #ef4444' : '1.5px solid #fca5a5') : (isDark ? '1px solid var(--color-border, #334155)' : '1px solid #e2e8f0')))),
                       borderRadius: '12px',
                       padding: '0.8rem 0.9rem',
                       display: 'flex',
@@ -4752,6 +4766,39 @@ export const BDigitizingMobileApp = () => {
             >
               <ClipboardList size={18} style={{ color: '#059669' }} /> View Order & Download Files
             </button>
+
+            {!isOrderUnpaid(isOrderActionMenuOpen) && 
+             String(isOrderActionMenuOpen.status || '').toLowerCase() !== 'delivered' &&
+             String(isOrderActionMenuOpen.status || '').toLowerCase() !== 'completed' &&
+             String(isOrderActionMenuOpen.status || '').toLowerCase() !== 'cancelled' &&
+             String(isOrderActionMenuOpen.status || '').toLowerCase() !== 'cancellation_requested' && (
+              <button
+                type="button"
+                onClick={() => {
+                  const targetOrd = isOrderActionMenuOpen;
+                  setIsOrderActionMenuOpen(null);
+                  setSelectedOrderForDrawer(targetOrd);
+                  setTimeout(() => {
+                    window.dispatchEvent(new CustomEvent('bdigi_open_cancellation_modal', { detail: { orderId: targetOrd.id } }));
+                  }, 180);
+                }}
+                style={{
+                  padding: '0.85rem',
+                  borderRadius: '10px',
+                  border: isDark ? '1px solid rgba(239, 68, 68, 0.3)' : '1px solid #fee2e2',
+                  background: isDark ? 'rgba(239, 68, 68, 0.1)' : '#fff5f5',
+                  fontSize: '0.88rem',
+                  fontWeight: 800,
+                  color: isDark ? '#f87171' : '#b91c1c',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.65rem',
+                  cursor: 'pointer'
+                }}
+              >
+                <X size={18} style={{ color: '#ef4444' }} /> Request Cancellation
+              </button>
+            )}
 
           </div>
         </div>
