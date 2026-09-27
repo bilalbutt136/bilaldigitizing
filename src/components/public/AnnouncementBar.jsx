@@ -107,7 +107,8 @@ export const AnnouncementBar = () => {
     return null;
   }
 
-  const handleDismiss = () => {
+  const handleDismiss = (e) => {
+    if (e) e.stopPropagation();
     setIsDismissed(true);
     if (announcement?.text) {
       const dismissKey = 'announcement_dismissed_' + encodeURIComponent(announcement.text);
@@ -116,7 +117,7 @@ export const AnnouncementBar = () => {
   };
 
   const handleCopyAndApply = (e) => {
-    e.stopPropagation();
+    if (e) e.stopPropagation();
     const promoCode = announcement?.promoCode || (activePromo ? `SAVE${activePromo.discountPercent}` : 'SAVE15');
     try {
       navigator.clipboard.writeText(promoCode);
@@ -131,7 +132,8 @@ export const AnnouncementBar = () => {
     }
   };
 
-  const handleActionClick = () => {
+  const handleActionClick = (e) => {
+    if (e) e.stopPropagation();
     const target = announcement?.linkUrl || '/order';
     const promoCode = announcement?.promoCode || (activePromo ? `SAVE${activePromo.discountPercent}` : 'SAVE15');
     if (target.startsWith('#')) {
@@ -149,6 +151,12 @@ export const AnnouncementBar = () => {
     }
   };
 
+  const handleStripClick = (e) => {
+    // If the click originated from an explicit button, do not double-trigger
+    if (e.target.closest('button')) return;
+    handleActionClick();
+  };
+
   // Determine dynamic background and text color
   const safeThemeKey = (announcement?.theme === 'emerald' ? 'orange' : announcement?.theme) || 'orange';
   const themeObj = THEMES[safeThemeKey] || THEMES.orange;
@@ -157,168 +165,252 @@ export const AnnouncementBar = () => {
     : themeObj.bg;
   const textStyle = announcement.textColor || themeObj.text || '#ffffff';
 
+  // Renders one promotional unit block for the continuous marquee strip
+  const renderPromotionBlock = (keyPrefix) => (
+    <div
+      key={keyPrefix}
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: '0.65rem',
+        padding: '0 1.25rem',
+        whiteSpace: 'nowrap',
+        flexShrink: 0
+      }}
+    >
+      {/* Flash Badge */}
+      {announcement.badge && (
+        <div style={{
+          background: themeObj.badgeBg || 'rgba(255, 255, 255, 0.22)',
+          border: '1px solid rgba(255, 255, 255, 0.4)',
+          padding: '0.12rem 0.5rem',
+          borderRadius: '9999px',
+          fontSize: '0.68rem',
+          fontWeight: 900,
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: '0.25rem',
+          letterSpacing: '0.04em',
+          textTransform: 'uppercase',
+          flexShrink: 0
+        }}>
+          <Flame size={12} style={{ color: '#fef08a' }} />
+          <span>{announcement.badge}</span>
+        </div>
+      )}
+
+      {/* Main Text */}
+      <span style={{ fontWeight: 700, whiteSpace: 'nowrap', flexShrink: 0, fontSize: '0.82rem' }}>
+        {announcement.text}
+      </span>
+
+      {/* Live Urgency Countdown Timer */}
+      {announcement.showCountdown && (
+        <div style={{
+          background: 'rgba(0, 0, 0, 0.3)',
+          border: '1px solid rgba(255, 255, 255, 0.25)',
+          padding: '0.12rem 0.5rem',
+          borderRadius: '6px',
+          fontSize: '0.72rem',
+          fontWeight: 800,
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: '0.3rem',
+          color: '#fef08a',
+          whiteSpace: 'nowrap',
+          flexShrink: 0
+        }}>
+          <Clock size={11} />
+          <span>Ends in: {String(timeLeft.hours).padStart(2, '0')}h {String(timeLeft.minutes).padStart(2, '0')}m {String(timeLeft.seconds).padStart(2, '0')}s</span>
+        </div>
+      )}
+
+      {/* 1-Click Copy & Apply Promo Code Badge */}
+      {announcement.showCodeBadge && announcement.promoCode && (
+        <button
+          type="button"
+          onClick={handleCopyAndApply}
+          style={{
+            background: 'rgba(0, 0, 0, 0.35)',
+            border: '1px dashed rgba(255, 255, 255, 0.8)',
+            color: '#ffffff',
+            padding: '0.15rem 0.55rem',
+            borderRadius: '6px',
+            fontSize: '0.74rem',
+            fontWeight: 900,
+            cursor: 'pointer',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '0.3rem',
+            transition: 'all 0.18s',
+            fontFamily: 'monospace',
+            whiteSpace: 'nowrap',
+            flexShrink: 0
+          }}
+          title="Click to copy & apply coupon code"
+        >
+          <Tag size={11} style={{ color: '#fbbf24' }} />
+          <span>{announcement.promoCode}</span>
+          <span style={{ fontSize: '0.66rem', color: copied ? '#86efac' : 'rgba(255,255,255,0.85)', fontWeight: 800, marginLeft: '2px' }}>
+            {copied ? '✓ Applied!' : 'Apply'}
+          </span>
+        </button>
+      )}
+
+      {/* Action CTA Button */}
+      {announcement.linkText && (
+        <button
+          type="button"
+          onClick={handleActionClick}
+          style={{
+            background: themeObj.btnBg || '#ffffff',
+            color: themeObj.btnColor || '#ea580c',
+            border: 'none',
+            padding: '0.2rem 0.75rem',
+            borderRadius: '9999px',
+            fontSize: '0.74rem',
+            fontWeight: 900,
+            cursor: 'pointer',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '0.25rem',
+            boxShadow: '0 2px 6px rgba(0,0,0,0.18)',
+            whiteSpace: 'nowrap',
+            flexShrink: 0,
+            transition: 'transform 0.15s ease'
+          }}
+          onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.04)'}
+          onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+        >
+          <span>{announcement.linkText}</span>
+          <ArrowRight size={11} />
+        </button>
+      )}
+
+      {/* Elegant Separator */}
+      <span style={{ opacity: 0.45, fontSize: '0.85rem', margin: '0 0.35rem', flexShrink: 0 }}>✦</span>
+    </div>
+  );
+
   return (
     <aside 
       aria-label="Promotional announcement"
       style={{
         background: backgroundStyle,
         color: textStyle,
-        padding: '0.45rem 1rem',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
+        height: '38px',
+        minHeight: '38px',
+        maxHeight: '38px',
         position: 'relative',
         zIndex: 100,
-        fontSize: '0.84rem',
+        fontSize: '0.82rem',
         fontWeight: 600,
         letterSpacing: '0.01em',
-        boxShadow: '0 2px 12px rgba(0,0,0,0.18)',
+        boxShadow: '0 2px 10px rgba(0,0,0,0.18)',
         borderBottom: '1px solid rgba(255, 255, 255, 0.15)',
-        transition: 'background 0.3s ease, color 0.3s ease'
-      }}
-    >
-      <div style={{
+        overflow: 'hidden',
         display: 'flex',
         alignItems: 'center',
-        justifyContent: 'center',
-        gap: '0.65rem',
-        flexWrap: 'wrap',
-        textAlign: 'center',
-        paddingRight: '2rem',
-        maxWidth: '1280px',
-        margin: '0 auto'
-      }}>
-        
-        {/* Flash Badge */}
-        {announcement.badge && (
-          <div style={{
-            background: themeObj.badgeBg || 'rgba(255, 255, 255, 0.22)',
-            border: '1px solid rgba(255, 255, 255, 0.4)',
-            padding: '0.15rem 0.55rem',
-            borderRadius: '9999px',
-            fontSize: '0.7rem',
-            fontWeight: 900,
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '0.25rem',
-            letterSpacing: '0.04em',
-            textTransform: 'uppercase'
-          }}>
-            <Flame size={12} style={{ color: '#fef08a' }} />
-            <span>{announcement.badge}</span>
-          </div>
-        )}
+        userSelect: 'none',
+        cursor: 'pointer',
+        transition: 'background 0.3s ease, color 0.3s ease'
+      }}
+      onClick={handleStripClick}
+    >
+      <style dangerouslySetInnerHTML={{ __html: `
+        @keyframes bdigiAnnouncementMarquee {
+          0% {
+            transform: translate3d(0, 0, 0);
+          }
+          100% {
+            transform: translate3d(-50%, 0, 0);
+          }
+        }
+        .bdigi-announcement-strip {
+          display: inline-flex;
+          align-items: center;
+          white-space: nowrap;
+          width: max-content;
+          animation: bdigiAnnouncementMarquee 38s linear infinite;
+          will-change: transform;
+        }
+        .bdigi-announcement-strip:hover,
+        .bdigi-announcement-strip:active {
+          animation-play-state: paused;
+        }
+        @media (max-width: 768px) {
+          .bdigi-announcement-strip {
+            animation-duration: 26s;
+          }
+        }
+      `}} />
 
-        {/* Main Text */}
-        <span style={{ fontWeight: 700, lineHeight: 1.3 }}>
-          {announcement.text}
-        </span>
+      {/* Left Edge Subtle Fade Gradient */}
+      <div style={{
+        position: 'absolute',
+        left: 0,
+        top: 0,
+        bottom: 0,
+        width: '28px',
+        background: `linear-gradient(to right, ${safeThemeKey === 'orange' ? '#ea580c' : '#0f172a'}, transparent)`,
+        zIndex: 15,
+        pointerEvents: 'none'
+      }} />
 
-        {/* Live Urgency Countdown Timer */}
-        {announcement.showCountdown && (
-          <div style={{
-            background: 'rgba(0, 0, 0, 0.3)',
-            border: '1px solid rgba(255, 255, 255, 0.25)',
-            padding: '0.15rem 0.55rem',
-            borderRadius: '6px',
-            fontSize: '0.74rem',
-            fontWeight: 800,
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '0.3rem',
-            color: '#fef08a'
-          }}>
-            <Clock size={11} />
-            <span>Ends in: {String(timeLeft.hours).padStart(2, '0')}h {String(timeLeft.minutes).padStart(2, '0')}m {String(timeLeft.seconds).padStart(2, '0')}s</span>
-          </div>
-        )}
-
-        {/* 1-Click Copy & Apply Promo Code Badge */}
-        {announcement.showCodeBadge && announcement.promoCode && (
-          <button
-            type="button"
-            onClick={handleCopyAndApply}
-            style={{
-              background: 'rgba(0, 0, 0, 0.35)',
-              border: '1px dashed rgba(255, 255, 255, 0.8)',
-              color: '#ffffff',
-              padding: '0.2rem 0.65rem',
-              borderRadius: '6px',
-              fontSize: '0.76rem',
-              fontWeight: 900,
-              cursor: 'pointer',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '0.35rem',
-              transition: 'all 0.18s',
-              fontFamily: 'monospace'
-            }}
-            title="Click to copy & apply coupon code"
-          >
-            <Tag size={12} style={{ color: '#fbbf24' }} />
-            <span>{announcement.promoCode}</span>
-            <span style={{ fontSize: '0.68rem', color: copied ? '#86efac' : 'rgba(255,255,255,0.85)', fontWeight: 800, marginLeft: '2px' }}>
-              {copied ? '✓ Applied!' : 'Apply'}
-            </span>
-          </button>
-        )}
-
-        {/* Action CTA Button */}
-        {announcement.linkText && (
-          <button
-            type="button"
-            onClick={handleActionClick}
-            style={{
-              background: themeObj.btnBg || '#ffffff',
-              color: themeObj.btnColor || '#ea580c',
-              border: 'none',
-              padding: '0.25rem 0.85rem',
-              borderRadius: '9999px',
-              fontSize: '0.76rem',
-              fontWeight: 900,
-              cursor: 'pointer',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '0.3rem',
-              boxShadow: '0 2px 6px rgba(0,0,0,0.18)',
-              transition: 'transform 0.15s ease'
-            }}
-            onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.04)'}
-            onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
-          >
-            <span>{announcement.linkText}</span>
-            <ArrowRight size={12} />
-          </button>
-        )}
-
+      {/* Continuous Single-Line Running Ticker Strip */}
+      <div className="bdigi-announcement-strip">
+        {/* Set 1 */}
+        <div style={{ display: 'inline-flex', alignItems: 'center', flexShrink: 0 }}>
+          {renderPromotionBlock('set1-a')}
+          {renderPromotionBlock('set1-b')}
+        </div>
+        {/* Set 2 (Identical Clone to ensure completely seamless infinite loop) */}
+        <div style={{ display: 'inline-flex', alignItems: 'center', flexShrink: 0 }}>
+          {renderPromotionBlock('set2-a')}
+          {renderPromotionBlock('set2-b')}
+        </div>
       </div>
 
-      {/* Dismiss X Button */}
-      <button
-        type="button"
-        onClick={handleDismiss}
-        style={{
-          position: 'absolute',
-          right: '0.75rem',
-          top: '50%',
-          transform: 'translateY(-50%)',
-          padding: '0.3rem',
-          background: 'rgba(255,255,255,0.15)',
-          border: 'none',
-          borderRadius: '50%',
-          color: '#ffffff',
-          cursor: 'pointer',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          transition: 'background 0.2s'
-        }}
-        onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.3)'}
-        onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.15)'}
-        aria-label="Dismiss announcement"
-      >
-        <X size={15} />
-      </button>
+      {/* Right Edge Fade Gradient & Dismiss X Button */}
+      <div style={{
+        position: 'absolute',
+        right: 0,
+        top: 0,
+        bottom: 0,
+        width: '56px',
+        background: `linear-gradient(to left, ${safeThemeKey === 'orange' ? '#ea580c' : '#0f172a'} 70%, transparent)`,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'flex-end',
+        paddingRight: '0.65rem',
+        zIndex: 20,
+        pointerEvents: 'none'
+      }}>
+        <button
+          type="button"
+          onClick={handleDismiss}
+          style={{
+            pointerEvents: 'auto',
+            padding: '0.28rem',
+            background: 'rgba(0, 0, 0, 0.25)',
+            border: 'none',
+            borderRadius: '50%',
+            color: '#ffffff',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            transition: 'background 0.2s',
+            backdropFilter: 'blur(4px)'
+          }}
+          onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(0, 0, 0, 0.45)'}
+          onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(0, 0, 0, 0.25)'}
+          aria-label="Dismiss announcement"
+          title="Dismiss announcement"
+        >
+          <X size={14} />
+        </button>
+      </div>
     </aside>
   );
 };
