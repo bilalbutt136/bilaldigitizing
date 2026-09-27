@@ -14,7 +14,6 @@ import { AdminExecutiveDashboard } from './AdminExecutiveDashboard';
 import { PromotionsManager } from './PromotionsManager';
 import { ContactInfoManager } from './ContactInfoManager';
 import { PortfolioManager } from './PortfolioManager';
-import { OrderTrackerDrawer } from '../customer/OrderTrackerDrawer';
 import { isSupabaseConfigured, supabase } from '../../lib/supabase/client';
 import { stopNotificationSound, playMessageChime, playMessageChimeForMessage, playAdminChime } from '../../utils/audioNotification';
 import { 
@@ -853,9 +852,6 @@ export const AdminDashboard = () => {
 
       </main>
       </div>
-
-      {/* Admin Order Drawer for viewing requirements, reviewing and delivering stitch files */}
-      <OrderTrackerDrawer />
     </div>
   );
 };
