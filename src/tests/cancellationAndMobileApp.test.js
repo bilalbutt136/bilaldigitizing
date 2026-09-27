@@ -139,12 +139,17 @@ describe('2. Mobile VIP Architecture & Bottom Navigation Tabs', () => {
     assert.match(fileContent, /setActiveTab\('profile'\)/);
   });
 
-  test('Prominent PWA Install CTA is present on mobile web dashboard', () => {
+  test('Static clutter cards are removed from CustomerDashboard mobile view in favor of clean popup banner', () => {
     const fileContent = fs.readFileSync(path.join(process.cwd(), 'src/components/customer/CustomerDashboard.jsx'), 'utf-8');
     
-    assert.match(fileContent, /Get the BDigitizing App/);
-    assert.match(fileContent, /!isStandaloneApp/);
-    assert.match(fileContent, /bdigi_trigger_pwa_install/);
+    // Confirms static PWA card and 4-8 Hour Express hero banner removed from CustomerDashboard
+    assert.equal(fileContent.includes('Get the BDigitizing App'), false);
+    assert.equal(fileContent.includes('4-8 HOUR EXPRESS'), false);
+
+    // Confirms PWA install popup banner exists in common components
+    const pwaContent = fs.readFileSync(path.join(process.cwd(), 'src/components/common/PWAInstallBanner.jsx'), 'utf-8');
+    assert.match(pwaContent, /Get the BDigitizing App/);
+    assert.match(pwaContent, /bdigi_trigger_pwa_install/);
   });
 });
 
