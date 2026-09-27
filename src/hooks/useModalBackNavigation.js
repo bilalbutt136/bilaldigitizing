@@ -19,15 +19,30 @@ export function useModalBackNavigation({ isOpen, onClose, modalId }) {
   const isRegisteredRef = useRef(false);
 
   useEffect(() => {
-    if (isOpen) {
-      isRegisteredRef.current = true;
-      pushModal(modalId, () => {
-        isRegisteredRef.current = false;
-        if (typeof onCloseRef.current === 'function') {
-          onCloseRef.current();
-        }
-      });
+    if (!isOpen) return;
+
+    // Check if back navigation is needed (mobile device or standalone app or test env)
+    // On wide desktop screens where users don't have mobile back buttons, we do NOT manipulate
+    // window.history, leaving Next.js App Router internal navigation untouched.
+    const isDesktopWeb = typeof window !== 'undefined' && 
+      typeof window.innerWidth === 'number' &&
+      window.innerWidth > 768 && 
+      !window.matchMedia?.('(display-mode: standalone)')?.matches &&
+      !window.navigator?.standalone &&
+      !new URLSearchParams(window.location?.search || '').get('app') &&
+      !document.documentElement?.classList?.contains('mobile-app-active');
+
+    if (isDesktopWeb) {
+      return;
     }
+
+    isRegisteredRef.current = true;
+    pushModal(modalId, () => {
+      isRegisteredRef.current = false;
+      if (typeof onCloseRef.current === 'function') {
+        onCloseRef.current();
+      }
+    });
 
     return () => {
       if (isRegisteredRef.current) {

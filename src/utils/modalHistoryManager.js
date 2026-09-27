@@ -60,7 +60,9 @@ export function pushModal(id, onClose) {
   modalStack.push({ id, onClose });
 
   try {
-    window.history.pushState({ bdigi_modal: id, depth: modalStack.length }, '');
+    const existingState = (window.history && typeof window.history.state === 'object' && window.history.state) || {};
+    const currentUrl = (typeof window.location !== 'undefined' && window.location.href) ? window.location.href : '';
+    window.history.pushState({ ...existingState, bdigi_modal: id, depth: modalStack.length }, '', currentUrl);
   } catch (err) {
     console.warn('[modalHistoryManager] pushState failed:', err);
   }
@@ -80,12 +82,17 @@ export function dismissModal(id) {
   const isTop = idx === modalStack.length - 1;
   modalStack.splice(idx, 1);
 
+  // Strictly verify that the top of browser history actually matches this modal's state
+  // before invoking history.back(), preventing unintended page navigation or history corruption
   if (isTop && window.history && typeof window.history.back === 'function') {
-    isProgrammaticBack = true;
-    lastBackConsumedTimestamp = Date.now();
-    try {
-      window.history.back();
-    } catch {}
+    const currentModalInHistory = window.history.state?.bdigi_modal;
+    if (currentModalInHistory === id) {
+      isProgrammaticBack = true;
+      lastBackConsumedTimestamp = Date.now();
+      try {
+        window.history.back();
+      } catch {}
+    }
   }
 }
 
