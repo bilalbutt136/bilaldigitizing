@@ -845,7 +845,7 @@ export async function POST(request) {
       let orderData = null;
       const { data: byIn } = await supabase
         .from('orders')
-        .select('id, client_email, client_name, user_id, title, status')
+        .select('id, client_email, client_name, user_id, title, status, notes')
         .in('id', candidateIds)
         .maybeSingle();
 
@@ -854,7 +854,7 @@ export async function POST(request) {
       } else if (cleanOrdId.length >= 3) {
         const { data: byIlike } = await supabase
           .from('orders')
-          .select('id, client_email, client_name, user_id, title, status')
+          .select('id, client_email, client_name, user_id, title, status, notes')
           .ilike('id', `%${cleanOrdId}%`)
           .maybeSingle();
         if (byIlike) orderData = byIlike;
