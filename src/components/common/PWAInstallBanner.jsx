@@ -145,10 +145,11 @@ export const PWAInstallBanner = () => {
 
   const handleInstallClick = async () => {
     clearTimeout(dismissTimerRef.current);
+    const promptObj = deferredPrompt || (typeof window !== 'undefined' ? window.deferredPWAInstallPrompt : null);
 
-    if (deferredPrompt) {
-      deferredPrompt.prompt();
-      const { outcome } = await deferredPrompt.userChoice;
+    if (promptObj) {
+      promptObj.prompt();
+      const { outcome } = await promptObj.userChoice;
       if (outcome === 'accepted') {
         setIsAppInstalled(true);
         if (typeof localStorage !== 'undefined') {
@@ -157,6 +158,7 @@ export const PWAInstallBanner = () => {
         setShowBanner(false);
       }
       setDeferredPrompt(null);
+      if (typeof window !== 'undefined') window.deferredPWAInstallPrompt = null;
     } else if (isIOS) {
       setShowIOSInstructions(true);
       setShowBanner(false);
@@ -169,6 +171,7 @@ export const PWAInstallBanner = () => {
   };
 
   const handleOpenApp = () => {
+    if (setMobileMode) setMobileMode('app');
     window.location.href = '/?app=true';
   };
 
@@ -292,7 +295,7 @@ export const PWAInstallBanner = () => {
                 }}
               >
                 <Smartphone size={13} />
-                <span>Open App</span>
+                <span>Launch App</span>
               </button>
             ) : (
               <button

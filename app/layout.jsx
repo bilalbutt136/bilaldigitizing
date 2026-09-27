@@ -197,6 +197,23 @@ export default function RootLayout({ children }) {
           </noscript>
         )}
         <script src="https://accounts.google.com/gsi/client" async defer></script>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              if (typeof window !== 'undefined') {
+                window.addEventListener('beforeinstallprompt', function(e) {
+                  e.preventDefault();
+                  window.deferredPWAInstallPrompt = e;
+                });
+                window.addEventListener('appinstalled', function() {
+                  try {
+                    localStorage.setItem('bdigi_pwa_installed', 'true');
+                  } catch(e) {}
+                });
+              }
+            `
+          }}
+        />
       </head>
       <body 
         suppressHydrationWarning 

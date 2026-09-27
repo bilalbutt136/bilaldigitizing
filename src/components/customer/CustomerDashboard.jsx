@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from '../../utils/navigation';
 import { useAppState, formatOrderId, formatDesignTitle } from '../../context/StateContext';
 import { ArtworkLightboxModal } from '../common/ArtworkLightboxModal';
@@ -32,7 +32,8 @@ import {
   ArrowRight,
   Receipt,
   MessageSquare,
-  Download
+  Download,
+  Smartphone
 } from 'lucide-react';
 import { ClientSidebar } from './ClientSidebar';
 import { MobileSimpleOrderModal } from './MobileSimpleOrderModal';
@@ -130,6 +131,64 @@ export const CustomerDashboard = () => {
     window.addEventListener('bdigi_chat_focus', handleChatFocusEvent);
     return () => window.removeEventListener('bdigi_chat_focus', handleChatFocusEvent);
   }, []);
+
+  // Track whether customer has installed the PWA mobile app
+  const [isAppInstalled, setIsAppInstalled] = useState(false);
+  const [isAppPromptDismissed, setIsAppPromptDismissed] = useState(false);
+
+  useEffect(() => {
+    if (typeof navigator !== 'undefined' && 'getInstalledRelatedApps' in navigator) {
+      navigator.getInstalledRelatedApps().then(apps => {
+        if (Array.isArray(apps) && apps.length > 0) {
+          setIsAppInstalled(true);
+        }
+      }).catch(() => {});
+    }
+    if (typeof localStorage !== 'undefined' && localStorage.getItem('bdigi_pwa_installed') === 'true') {
+      setIsAppInstalled(true);
+    }
+    const handleAppInstalled = () => {
+      setIsAppInstalled(true);
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem('bdigi_pwa_installed', 'true');
+      }
+    };
+    window.addEventListener('appinstalled', handleAppInstalled);
+    return () => window.removeEventListener('appinstalled', handleAppInstalled);
+  }, []);
+
+  // Launch App (existing customer) vs Direct Install Prompt (new customer)
+  const handleAppButtonClick = async () => {
+    if (isAppInstalled) {
+      if (setMobileMode) setMobileMode('app');
+      window.location.href = '/?app=true';
+      return;
+    }
+
+    // New Customer: trigger direct installation
+    if (typeof window !== 'undefined') {
+      const promptObj = window.deferredPWAInstallPrompt;
+      if (promptObj) {
+        try {
+          promptObj.prompt();
+          const { outcome } = await promptObj.userChoice;
+          if (outcome === 'accepted') {
+            setIsAppInstalled(true);
+            if (typeof localStorage !== 'undefined') {
+              localStorage.setItem('bdigi_pwa_installed', 'true');
+            }
+            window.deferredPWAInstallPrompt = null;
+            if (showToast) showToast('BDigitizing App installed successfully!', 'success');
+          }
+          return;
+        } catch (err) {
+          console.error('PWA install error:', err);
+        }
+      }
+      // Trigger PWA install banner / instructions event
+      window.dispatchEvent(new Event('bdigi_trigger_pwa_install'));
+    }
+  };
 
   const setActiveTab = React.useCallback((tab) => {
     if (!tab) return;
@@ -763,6 +822,23 @@ export const CustomerDashboard = () => {
         }
 
         @media (max-width: 1024px) {
+          .client-portal-wrapper:not(.client-portal-chat-mode) {
+            height: auto !important;
+            min-height: calc(100dvh - 65px) !important;
+            max-height: none !important;
+            overflow: visible !important;
+          }
+          .client-portal-wrapper:not(.client-portal-chat-mode) .client-portal-body {
+            height: auto !important;
+            min-height: calc(100dvh - 65px) !important;
+            max-height: none !important;
+            overflow: visible !important;
+          }
+          .client-main-content:not(.client-main-chat-tab) {
+            padding: 0.65rem 0.85rem calc(85px + env(safe-area-inset-bottom, 0px)) !important;
+            height: auto !important;
+            max-height: none !important;
+            overflow: visible !important;
           .client-portal-wrapper.client-portal-chat-mode {
             padding-bottom: 0 !important;
             padding-top: 0 !important;
@@ -890,48 +966,84 @@ export const CustomerDashboard = () => {
             boxSizing: 'border-box'
           }}
         >
-          {/* Optional App Mode Launch Banner for Mobile Screens - Only on Dashboard */}
-          {activeTab === 'dashboard' && (
+          {/* Optional App Mode / PWA Install Banner for Mobile Screens - Only on Dashboard */}
+          {activeTab === 'dashboard' && !isStandaloneApp && !isAppPromptDismissed && (
             <div 
               className="mobile-only"
               style={{
-                background: 'linear-gradient(135deg, rgba(249, 115, 22, 0.08) 0%, rgba(249, 115, 22, 0.02) 100%)',
-                borderBottom: '1px solid var(--border-color)',
-                padding: '0.45rem 0.85rem',
+                background: isDark ? 'rgba(30, 41, 59, 0.75)' : 'linear-gradient(135deg, rgba(249, 115, 22, 0.08) 0%, rgba(249, 115, 22, 0.02) 100%)',
+                border: isDark ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid rgba(249, 115, 22, 0.18)',
+                padding: '0.45rem 0.75rem',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
                 gap: '0.5rem',
                 marginBottom: '0.65rem',
-                borderRadius: '8px'
+                borderRadius: '10px',
+                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.03)'
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
-                <Sparkles size={14} style={{ color: 'var(--orange-500)', flexShrink: 0 }} />
-                <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-main)' }}>
-                  Prefer the full-screen 5-Tab App?
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', minWidth: 0, flex: 1 }}>
+                {isAppInstalled ? (
+                  <Smartphone size={15} style={{ color: 'var(--orange-500)', flexShrink: 0 }} />
+                ) : (
+                  <Sparkles size={15} style={{ color: 'var(--orange-500)', flexShrink: 0 }} />
+                )}
+                <span style={{ fontSize: '0.74rem', fontWeight: 700, color: 'var(--text-main)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  {isAppInstalled ? 'Open fullscreen 5-Tab mobile app?' : 'Get BDigitizing App on your phone'}
                 </span>
               </div>
-              <button
-                type="button"
-                onClick={() => {
-                  if (setMobileMode) setMobileMode('app');
-                  showToast('Switched to App Mode 📱', 'info');
-                }}
-                style={{
-                  background: 'var(--orange-500)',
-                  color: '#ffffff',
-                  border: 'none',
-                  borderRadius: '6px',
-                  padding: '0.25rem 0.6rem',
-                  fontSize: '0.72rem',
-                  fontWeight: 800,
-                  cursor: 'pointer',
-                  whiteSpace: 'nowrap'
-                }}
-              >
-                Launch App
-              </button>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', flexShrink: 0 }}>
+                <button
+                  type="button"
+                  onClick={handleAppButtonClick}
+                  style={{
+                    background: 'var(--orange-500)',
+                    color: '#ffffff',
+                    border: 'none',
+                    borderRadius: '7px',
+                    padding: '0.3rem 0.65rem',
+                    fontSize: '0.72rem',
+                    fontWeight: 800,
+                    cursor: 'pointer',
+                    whiteSpace: 'nowrap',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.25rem',
+                    boxShadow: '0 2px 6px rgba(249, 115, 22, 0.3)'
+                  }}
+                >
+                  {isAppInstalled ? (
+                    <>
+                      <span>Launch App</span>
+                      <ArrowRight size={12} />
+                    </>
+                  ) : (
+                    <>
+                      <Download size={12} />
+                      <span>Install App</span>
+                    </>
+                  )}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsAppPromptDismissed(true)}
+                  aria-label="Dismiss banner"
+                  style={{
+                    background: 'transparent',
+                    border: 'none',
+                    color: 'var(--text-muted)',
+                    padding: '0.2rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer',
+                    borderRadius: '50%'
+                  }}
+                >
+                  <X size={14} />
+                </button>
+              </div>
             </div>
           )}
             
@@ -1180,131 +1292,7 @@ export const CustomerDashboard = () => {
                 </div>
 
                 {/* A. MOBILE-FIRST APP HOME SCREEN (Clean, simple, 1-tap ordering) */}
-                <div className="mobile-only" style={{ marginBottom: '1.5rem' }}>
-                  {/* 4 Quick Action Cards */}
-                  <div style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(4, minmax(0, 1fr))',
-                    gap: '0.35rem',
-                    marginBottom: '1.25rem',
-                    width: '100%',
-                    boxSizing: 'border-box'
-                  }}>
-                    {/* 1. New Order */}
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setIsServiceSelectorOpen(true);
-                      }}
-                      style={{
-                        background: isDark ? 'var(--color-surface, #111827)' : '#ffffff',
-                        border: isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid #e2e8f0',
-                        borderRadius: '14px',
-                        padding: '0.65rem 0.15rem',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '0.3rem',
-                        cursor: 'pointer',
-                        minWidth: 0,
-                        boxSizing: 'border-box'
-                      }}
-                    >
-                      <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'var(--color-primary-light)', color: 'var(--color-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <PlusCircle size={20} />
-                      </div>
-                      <span style={{ fontSize: '0.66rem', fontWeight: 800, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '100%' }}>New Order</span>
-                    </button>
-
-                    {/* 2. My Orders */}
-                    <button
-                      type="button"
-                      onClick={() => setActiveTab('orders')}
-                      style={{
-                        background: isDark ? 'var(--color-surface, #111827)' : '#ffffff',
-                        border: isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid #e2e8f0',
-                        borderRadius: '14px',
-                        padding: '0.65rem 0.15rem',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '0.3rem',
-                        cursor: 'pointer',
-                        position: 'relative',
-                        minWidth: 0,
-                        boxSizing: 'border-box'
-                      }}
-                    >
-                      <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: '#e0f2fe', color: '#0284c7', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <ClipboardList size={20} />
-                      </div>
-                      <span style={{ fontSize: '0.66rem', fontWeight: 800, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '100%' }}>My Orders</span>
-                      {unreadOrdersCount > 0 && (
-                        <span style={{ position: 'absolute', top: '4px', right: '4px', background: '#0284c7', color: '#fff', fontSize: '0.55rem', fontWeight: 900, width: '15px', height: '15px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                          {unreadOrdersCount}
-                        </span>
-                      )}
-                    </button>
-
-                    {/* 3. Studio Inbox & Messages */}
-                    <button
-                      type="button"
-                      onClick={() => setActiveTab('inbox')}
-                      style={{
-                        background: isDark ? 'var(--color-surface, #111827)' : '#ffffff',
-                        border: isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid #e2e8f0',
-                        borderRadius: '14px',
-                        padding: '0.65rem 0.15rem',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '0.3rem',
-                        cursor: 'pointer',
-                        position: 'relative',
-                        minWidth: 0,
-                        boxSizing: 'border-box'
-                      }}
-                    >
-                      <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: '#eef2ff', color: '#6366f1', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <MessageSquare size={20} />
-                      </div>
-                      <span style={{ fontSize: '0.66rem', fontWeight: 800, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '100%' }}>Inbox</span>
-                      {(unreadInboxCount + unreadSupportCount) > 0 && (
-                        <span style={{ position: 'absolute', top: '4px', right: '4px', background: '#6366f1', color: '#fff', fontSize: '0.55rem', fontWeight: 900, width: '15px', height: '15px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                          {unreadInboxCount + unreadSupportCount}
-                        </span>
-                      )}
-                    </button>
-
-                    {/* 4. Profile */}
-                    <button
-                      type="button"
-                      onClick={() => setActiveTab('profile')}
-                      style={{
-                        background: isDark ? 'var(--color-surface, #111827)' : '#ffffff',
-                        border: isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid #e2e8f0',
-                        borderRadius: '14px',
-                        padding: '0.65rem 0.15rem',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '0.3rem',
-                        cursor: 'pointer',
-                        minWidth: 0,
-                        boxSizing: 'border-box'
-                      }}
-                    >
-                      <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: '#f0fdf4', color: '#16a34a', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <User size={20} />
-                      </div>
-                      <span style={{ fontSize: '0.66rem', fontWeight: 800, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '100%' }}>Profile</span>
-                    </button>
-                  </div>
-
+                <div className="mobile-only" style={{ marginBottom: '1.25rem' }}>
                   {/* Active Orders Live Progress Snapshot (if any active order) */}
                   {activeOrders.length > 0 && (
                     <div style={{

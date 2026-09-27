@@ -232,6 +232,7 @@ export const HeaderNav = () => {
   const handleInstallMobileApp = async () => {
     setIsMobileMenuOpen(false);
     if (isAppInstalled) {
+      if (setMobileMode) setMobileMode('app');
       window.location.href = '/?app=true';
       return;
     }
@@ -1972,7 +1973,7 @@ export const HeaderNav = () => {
                 }}
               >
                 <Smartphone size={15} />
-                <span>{isAppInstalled ? 'Open Mobile App (1-Tap Access)' : 'Install Mobile App (1-Tap Access)'}</span>
+                <span>{isAppInstalled ? 'Launch Mobile App (1-Tap Access)' : 'Install Mobile App (1-Tap Access)'}</span>
                 {isAppInstalled ? <ArrowRight size={13} /> : <Download size={13} />}
               </button>
             </div>

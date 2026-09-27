@@ -178,4 +178,38 @@ describe('3. Mobile Hygiene: WhatsApp Removal & Stat Cards Hidden on Mobile', ()
     const mobileQueryMatch = cssContent.match(/@media\s*\(max-width:\s*768px\)[\s\S]*?\.customer-stat-cards-grid\s*\{[\s\S]*?display:\s*none\s*!important;/);
     assert.ok(mobileQueryMatch, 'customer-stat-cards-grid must be display: none !important in @media (max-width: 768px)');
   });
+
+  test('The 4 duplicate quick action buttons are completely removed from CustomerDashboard mobile view', () => {
+    const dashboardContent = fs.readFileSync(path.join(process.cwd(), 'src/components/customer/CustomerDashboard.jsx'), 'utf-8');
+    
+    // Verify 4 Quick Action Cards grid is eliminated
+    assert.equal(dashboardContent.includes('4 Quick Action Cards'), false);
+    assert.equal(dashboardContent.includes('repeat(4, minmax(0, 1fr))'), false);
+  });
+
+  test('Smart Launch App vs Install App handling across CustomerDashboard, HeaderNav, and PWAInstallBanner', () => {
+    const dashboardContent = fs.readFileSync(path.join(process.cwd(), 'src/components/customer/CustomerDashboard.jsx'), 'utf-8');
+    const headerContent = fs.readFileSync(path.join(process.cwd(), 'src/components/HeaderNav.jsx'), 'utf-8');
+    const pwaContent = fs.readFileSync(path.join(process.cwd(), 'src/components/common/PWAInstallBanner.jsx'), 'utf-8');
+    const layoutContent = fs.readFileSync(path.join(process.cwd(), 'app/layout.jsx'), 'utf-8');
+
+    // Early prompt capture in layout
+    assert.match(layoutContent, /window\.deferredPWAInstallPrompt = e/);
+    assert.match(layoutContent, /bdigi_pwa_installed/);
+
+    // CustomerDashboard smart launch vs install
+    assert.match(dashboardContent, /<span>Launch App<\/span>/);
+    assert.match(dashboardContent, /<span>Install App<\/span>/);
+    assert.match(dashboardContent, /window\.location\.href = '\/\?app=true'/);
+    assert.match(dashboardContent, /promptObj\.prompt\(\)/);
+
+    // HeaderNav smart launch vs install
+    assert.match(headerContent, /isAppInstalled \? 'Launch Mobile App \(1-Tap Access\)' : 'Install Mobile App \(1-Tap Access\)'/);
+    assert.match(headerContent, /window\.location\.href = '\/\?app=true'/);
+
+    // PWAInstallBanner Launch App
+    assert.match(pwaContent, /<span>Launch App<\/span>/);
+    assert.match(pwaContent, /<span>Install App<\/span>/);
+  });
 });
+
