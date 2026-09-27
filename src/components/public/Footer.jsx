@@ -504,26 +504,26 @@ export const Footer = () => {
           </div>
 
           <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'center' }}>
-            <button onClick={() => navigate('/privacy')} style={{ background: 'none', border: 'none', padding: 0, color: 'inherit', transition: 'color 0.2s', cursor: 'pointer', fontSize: 'inherit' }}
+            <Link href="/privacy" style={{ textDecoration: 'none', color: 'inherit', transition: 'color 0.2s', cursor: 'pointer', fontSize: 'inherit' }}
                onMouseEnter={(e) => e.currentTarget.style.color = 'var(--orange-500)'} 
                onMouseLeave={(e) => e.currentTarget.style.color = 'inherit'}>
               Privacy Policy
-            </button>
-            <button onClick={() => navigate('/terms')} style={{ background: 'none', border: 'none', padding: 0, color: 'inherit', transition: 'color 0.2s', cursor: 'pointer', fontSize: 'inherit' }}
+            </Link>
+            <Link href="/terms" style={{ textDecoration: 'none', color: 'inherit', transition: 'color 0.2s', cursor: 'pointer', fontSize: 'inherit' }}
                onMouseEnter={(e) => e.currentTarget.style.color = 'var(--orange-500)'} 
                onMouseLeave={(e) => e.currentTarget.style.color = 'inherit'}>
               Terms & Conditions
-            </button>
-            <button onClick={() => navigate('/faqs')} style={{ background: 'none', border: 'none', padding: 0, color: 'inherit', transition: 'color 0.2s', cursor: 'pointer', fontSize: 'inherit' }}
+            </Link>
+            <Link href="/faqs" style={{ textDecoration: 'none', color: 'inherit', transition: 'color 0.2s', cursor: 'pointer', fontSize: 'inherit' }}
                onMouseEnter={(e) => e.currentTarget.style.color = 'var(--orange-500)'} 
                onMouseLeave={(e) => e.currentTarget.style.color = 'inherit'}>
               FAQs
-            </button>
-            <button onClick={() => navigate('/blogs')} style={{ background: 'none', border: 'none', padding: 0, color: 'inherit', transition: 'color 0.2s', cursor: 'pointer', fontSize: 'inherit' }}
+            </Link>
+            <Link href="/blogs" style={{ textDecoration: 'none', color: 'inherit', transition: 'color 0.2s', cursor: 'pointer', fontSize: 'inherit' }}
                onMouseEnter={(e) => e.currentTarget.style.color = 'var(--orange-500)'} 
                onMouseLeave={(e) => e.currentTarget.style.color = 'inherit'}>
               Blogs
-            </button>
+            </Link>
             
             {/* Admin/Portal Links */}
             {(!safeIsAuthenticated || safeAuthUser?.role !== 'admin') && (

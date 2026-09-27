@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { useNavigate } from '../../utils/navigation';
 import { useAppState } from '../../context/StateContext';
 import { 
@@ -118,12 +119,12 @@ export const PortfolioPage = () => {
             color: 'var(--hero-text-secondary, var(--color-text-secondary))', 
             marginBottom: '1.25rem' 
           }}>
-            <button 
-              onClick={() => navigate('/')} 
-              style={{ background: 'none', border: 'none', color: 'var(--hero-text-secondary, var(--color-text-secondary))', cursor: 'pointer', padding: 0, fontWeight: 600 }}
+            <Link 
+              href="/" 
+              style={{ textDecoration: 'none', background: 'none', border: 'none', color: 'var(--hero-text-secondary, var(--color-text-secondary))', cursor: 'pointer', padding: 0, fontWeight: 600 }}
             >
               Home
-            </button>
+            </Link>
             <ChevronRight size={14} />
             <span style={{ color: 'var(--color-primary, #ea580c)', fontWeight: 700 }}>Portfolio Showcase</span>
           </div>
@@ -249,7 +250,11 @@ export const PortfolioPage = () => {
               <button
                 type="button"
                 className="btn btn-primary-orange btn-md"
-                onClick={() => navigate('/order')}
+                onClick={() => {
+                  if (openOrderWizard) openOrderWizard({ type: 'all' });
+                  else if (protectedNavigate) protectedNavigate('customer', true, { type: 'all' });
+                  else navigate('/order');
+                }}
               >
                 Request Custom Sample
               </button>
