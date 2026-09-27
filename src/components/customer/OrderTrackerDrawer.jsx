@@ -42,7 +42,7 @@ import {
   ExternalLink,
   Loader2
 } from 'lucide-react';
-import { uploadFileToCloudinaryFull } from '../../services/supabaseService';
+import { uploadFileToCloudinaryFull, fetchOrderById } from '../../services/supabaseService';
 import { AssignWorkerModal } from '../admin/AssignWorkerModal';
 import { ReviewWorkerUploadModal } from '../admin/ReviewWorkerUploadModal';
 import { CustomerInvoiceModal } from '../common/CustomerInvoiceModal';
@@ -165,10 +165,38 @@ export const OrderTrackerDrawer = () => {
   // Always resolve live reactive order state from global orders array
   const cleanSelId = String(selectedOrderForDrawer?.id || '').trim().replace(/^#+/, '');
   const selWithHash = `#${cleanSelId}`;
-  const ord = orders.find(o => {
+  const matchedFromOrders = (orders || []).find(o => {
     const oClean = String(o?.id || '').trim().replace(/^#+/, '');
     return oClean === cleanSelId || o?.id === selectedOrderForDrawer?.id || o?.id === selWithHash;
-  }) || selectedOrderForDrawer || {};
+  });
+
+  const ord = (matchedFromOrders && matchedFromOrders.status && (matchedFromOrders.client_name || matchedFromOrders.clientName || matchedFromOrders.price !== undefined))
+    ? matchedFromOrders
+    : (selectedOrderForDrawer || {});
+
+  const [isFetchingOrder, setIsFetchingOrder] = useState(false);
+
+  // If order in drawer is incomplete or marked as loading, fetch live from Supabase
+  useEffect(() => {
+    if (!cleanSelId) return;
+    const isMissingDetails = !ord.status || (!ord.client_name && !ord.clientName) || ord._isLoading;
+    if (isMissingDetails && !isFetchingOrder) {
+      let isMounted = true;
+      setIsFetchingOrder(true);
+      fetchOrderById(cleanSelId).then(liveOrder => {
+        if (isMounted && liveOrder) {
+          if (typeof setSelectedOrderForDrawer === 'function') {
+            setSelectedOrderForDrawer(liveOrder);
+          }
+        }
+      }).catch(err => {
+        console.warn('[OrderTrackerDrawer live fetch notice]:', err?.message);
+      }).finally(() => {
+        if (isMounted) setIsFetchingOrder(false);
+      });
+      return () => { isMounted = false; };
+    }
+  }, [cleanSelId, ord.status, ord.client_name, ord.clientName, ord._isLoading]);
 
   const isOrderPaid = (o) => {
     const pStatus = String(o?.payment_status || o?.paymentStatus || '').toLowerCase().trim();
@@ -230,6 +258,53 @@ export const OrderTrackerDrawer = () => {
 
   // ── Early return AFTER all hooks have been declared ───────────────────────
   if (!selectedOrderForDrawer) return null;
+
+  if (ord._isLoading || isFetchingOrder || (!ord.title && !ord.status)) {
+    return (
+      <div 
+        className="order-tracker-drawer-backdrop" 
+        onClick={onClose}
+        style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.6)',
+          backdropFilter: 'blur(4px)',
+          zIndex: 999999,
+          display: 'flex',
+          justifyContent: 'flex-end',
+          alignItems: 'stretch'
+        }}
+      >
+        <div 
+          className="order-tracker-drawer" 
+          onClick={e => e.stopPropagation()}
+          style={{
+            width: '100%',
+            maxWidth: '680px',
+            backgroundColor: 'var(--bg-surface, #ffffff)',
+            height: '100%',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '2.5rem',
+            gap: '1.25rem'
+          }}
+        >
+          <Loader2 size={40} className="animate-spin" style={{ color: 'var(--color-primary-orange, #ff6b00)' }} />
+          <div style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--text-main, #1e293b)' }}>
+            Loading Order #{cleanSelId}...
+          </div>
+          <div style={{ fontSize: '0.88rem', color: 'var(--text-muted, #64748b)' }}>
+            Fetching live production deliverables and specifications from studio server...
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const orderPrice = getOrderPrice(ord);
   const formattedPrice = `$${orderPrice.toFixed(2)}`;
@@ -374,7 +449,9 @@ export const OrderTrackerDrawer = () => {
       const deliveryNoteText = deliveryMessage.trim() || 'Your production stitch files and preview documents are ready for download.';
 
       // Construct Multi-Delivery Structured History (1st Delivery, 2nd Delivery, etc.)
-      const existingDeliveries = Array.isArray(ord.deliveries) ? ord.deliveries : [];
+      const existingDeliveries = (Array.isArray(ord.deliveries) && ord.deliveries.length > 0)
+        ? ord.deliveries
+        : (Array.isArray(notesDeliveries) && notesDeliveries.length > 0 ? notesDeliveries : []);
       let baseDeliveries = [...existingDeliveries];
       if (baseDeliveries.length === 0 && existingFiles.length > 0) {
         baseDeliveries.push({
@@ -388,11 +465,13 @@ export const OrderTrackerDrawer = () => {
         });
       }
 
-      const newDeliveryNumber = baseDeliveries.length + 1;
+      const maxExistingNum = baseDeliveries.reduce((max, d) => Math.max(max, parseInt(d.deliveryNumber || 0, 10)), 0);
+      const newDeliveryNumber = Math.max(baseDeliveries.length + 1, maxExistingNum + 1);
+
       const newDeliveryItem = {
         id: `delivery_${Date.now()}`,
         deliveryNumber: newDeliveryNumber,
-        title: newDeliveryNumber === 1 ? 'Initial Delivery' : `Revision Delivery #${newDeliveryNumber - 1}`,
+        title: newDeliveryNumber === 1 ? 'Initial Delivery' : `Delivery #${newDeliveryNumber}`,
         deliveryDate: new Date().toISOString(),
         deliveryMessage: deliveryNoteText,
         deliveredBy: authUser?.name || 'Master Digitizer Desk',
@@ -497,10 +576,14 @@ export const OrderTrackerDrawer = () => {
     }
   }
 
-  // Multi-delivery version normalization
+  // Multi-delivery version normalization: reliably resolve from ord.deliveries or notesDeliveries
+  const availableDeliveries = (Array.isArray(ord.deliveries) && ord.deliveries.length > 0)
+    ? ord.deliveries
+    : (Array.isArray(notesDeliveries) && notesDeliveries.length > 0 ? notesDeliveries : []);
+
   const allDeliveries = (() => {
-    if (Array.isArray(ord.deliveries) && ord.deliveries.length > 0) {
-      return ord.deliveries.map((deliv, idx) => {
+    if (availableDeliveries.length > 0) {
+      return availableDeliveries.map((deliv, idx) => {
         let files = Array.isArray(deliv.files) && deliv.files.length > 0 ? deliv.files : [];
         if (files.length === 0 && deliv.outputFileUrl) {
           const ext = (deliv.outputFileUrl.split('.').pop()?.split('?')[0] || 'dst').toLowerCase();
@@ -513,11 +596,12 @@ export const OrderTrackerDrawer = () => {
         if (files.length === 0 && idx === 0 && uniqueMachineFiles.length > 0) {
           files = uniqueMachineFiles;
         }
+        const delivNum = deliv.deliveryNumber || (availableDeliveries.length - idx);
         return {
           ...deliv,
           files,
-          deliveryNumber: deliv.deliveryNumber || (ord.deliveries.length - idx),
-          title: deliv.title || `Delivery #${deliv.deliveryNumber || (ord.deliveries.length - idx)}`
+          deliveryNumber: delivNum,
+          title: deliv.title || `Delivery #${delivNum}`
         };
       });
     }
@@ -2119,7 +2203,10 @@ export const OrderTrackerDrawer = () => {
             ) : !isPaid && isAdmin ? (
               <button
                 type="button"
-                onClick={() => updateOrderStatus(ord.id, 'in_progress', { payment_status: 'paid', paymentStatus: 'paid', isPaid: true, paid_at: new Date().toISOString() })}
+                onClick={() => {
+                  const targetStatus = (ord.status === 'delivered' || ord.status === 'completed') ? ord.status : 'in_progress';
+                  updateOrderStatus(ord.id, targetStatus, { payment_status: 'paid', paymentStatus: 'paid', isPaid: true, paid_at: new Date().toISOString() });
+                }}
                 className="btn btn-outline btn-sm"
                 style={{ fontSize: '0.8rem', fontWeight: 800, borderColor: '#10b981', color: '#047857', background: '#ecfdf5' }}
               >

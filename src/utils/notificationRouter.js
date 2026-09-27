@@ -216,12 +216,8 @@ export function handleNotificationClick(notif, context = {}) {
       if (target.orderId) {
         if (typeof openOrderTrackerDrawer === 'function') {
           openOrderTrackerDrawer(target.matchedOrder || target.orderId);
-        } else if (typeof setSelectedOrderForDrawer === 'function') {
-          setSelectedOrderForDrawer(target.matchedOrder || { 
-            id: String(target.orderId).startsWith('#') ? target.orderId : `#${target.orderId}`, 
-            title: `Order #${String(target.orderId).replace(/^#+/, '')}`, 
-            status: 'in_progress' 
-          });
+        } else if (typeof setSelectedOrderForDrawer === 'function' && target.matchedOrder) {
+          setSelectedOrderForDrawer(target.matchedOrder);
         }
       }
     } else {
@@ -238,12 +234,8 @@ export function handleNotificationClick(notif, context = {}) {
       if (target.orderId) {
         if (typeof openOrderTrackerDrawer === 'function') {
           openOrderTrackerDrawer(target.matchedOrder || target.orderId);
-        } else if (typeof setSelectedOrderForDrawer === 'function') {
-          setSelectedOrderForDrawer(target.matchedOrder || { 
-            id: String(target.orderId).startsWith('#') ? target.orderId : `#${target.orderId}`, 
-            title: `Order #${String(target.orderId).replace(/^#+/, '')}`, 
-            status: 'in_progress' 
-          });
+        } else if (typeof setSelectedOrderForDrawer === 'function' && target.matchedOrder) {
+          setSelectedOrderForDrawer(target.matchedOrder);
         }
       }
 
@@ -268,12 +260,8 @@ export function handleNotificationClick(notif, context = {}) {
     if (target.orderId) {
       if (typeof openOrderTrackerDrawer === 'function') {
         openOrderTrackerDrawer(target.matchedOrder || target.orderId);
-      } else if (typeof setSelectedOrderForDrawer === 'function') {
-        setSelectedOrderForDrawer(target.matchedOrder || { 
-          id: String(target.orderId).startsWith('#') ? target.orderId : `#${target.orderId}`, 
-          title: `Order #${String(target.orderId).replace(/^#+/, '')}`, 
-          status: 'in_progress' 
-        });
+      } else if (typeof setSelectedOrderForDrawer === 'function' && target.matchedOrder) {
+        setSelectedOrderForDrawer(target.matchedOrder);
       }
     }
 

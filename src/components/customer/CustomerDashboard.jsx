@@ -58,6 +58,7 @@ export const CustomerDashboard = () => {
     setIsOrderWizardOpen, 
     openOrderWizard,
     setSelectedOrderForDrawer,
+    openOrderTrackerDrawer,
     walletBalance = 0,
     setIsDepositModalOpen,
     setIsCheckoutModalOpen,
@@ -185,12 +186,14 @@ export const CustomerDashboard = () => {
       if (e.detail?.orderId) {
         const rawOrderId = String(e.detail.orderId).trim();
         const cleanId = rawOrderId.replace(/^#+/, '');
-        const found = (orders || []).find(o => {
-          const oClean = String(o?.id || '').trim().replace(/^#+/, '');
-          return oClean === cleanId || o?.id === e.detail.orderId || formatOrderId(o?.id) === String(e.detail.orderId);
-        });
-        if (setSelectedOrderForDrawer) {
-          setSelectedOrderForDrawer(found || { id: `#${cleanId}`, title: `Order #${cleanId}`, status: 'in_progress' });
+        if (openOrderTrackerDrawer) {
+          openOrderTrackerDrawer(cleanId);
+        } else if (setSelectedOrderForDrawer) {
+          const found = (orders || []).find(o => {
+            const oClean = String(o?.id || '').trim().replace(/^#+/, '');
+            return oClean === cleanId || o?.id === e.detail.orderId || formatOrderId(o?.id) === String(e.detail.orderId);
+          });
+          if (found) setSelectedOrderForDrawer(found);
         }
       }
     };
@@ -206,18 +209,22 @@ export const CustomerDashboard = () => {
         const cleanTab = tabParam === 'chat' ? 'inbox' : tabParam;
         setActiveTab(cleanTab);
       }
-      if (trackId && setSelectedOrderForDrawer) {
+      if (trackId) {
         const cleanTrackId = String(trackId).trim().replace(/^#+/, '');
-        const found = (orders || []).find(o => {
-          const oClean = String(o?.id || '').trim().replace(/^#+/, '');
-          return oClean === cleanTrackId || String(o?.id) === String(trackId) || formatOrderId(o?.id) === trackId;
-        });
-        setSelectedOrderForDrawer(found || { id: `#${cleanTrackId}`, title: `Order #${cleanTrackId}`, status: 'in_progress' });
+        if (openOrderTrackerDrawer) {
+          openOrderTrackerDrawer(cleanTrackId);
+        } else if (setSelectedOrderForDrawer) {
+          const found = (orders || []).find(o => {
+            const oClean = String(o?.id || '').trim().replace(/^#+/, '');
+            return oClean === cleanTrackId || String(o?.id) === String(trackId) || formatOrderId(o?.id) === trackId;
+          });
+          if (found) setSelectedOrderForDrawer(found);
+        }
       }
     }
 
     return () => window.removeEventListener('bdigi_switch_tab', handleTabSwitch);
-  }, [orders, setSelectedOrderForDrawer, setActiveTab]);
+  }, [orders, setSelectedOrderForDrawer, openOrderTrackerDrawer, setActiveTab]);
 
   React.useEffect(() => {
     setMounted(true);
@@ -2567,7 +2574,9 @@ export const CustomerDashboard = () => {
               <ClientNotificationsView
                 onNavigateToOrder={(ordOrId) => {
                   setActiveTab('orders');
-                  if (typeof ordOrId === 'object' && ordOrId?.id) {
+                  if (openOrderTrackerDrawer) {
+                    openOrderTrackerDrawer(ordOrId);
+                  } else if (typeof ordOrId === 'object' && ordOrId?.id) {
                     if (setSelectedOrderForDrawer) setSelectedOrderForDrawer(ordOrId);
                   } else {
                     const cleanId = String(ordOrId).trim().replace(/^#+/, '');
@@ -2575,8 +2584,8 @@ export const CustomerDashboard = () => {
                       const oClean = String(o?.id || '').trim().replace(/^#+/, '');
                       return oClean === cleanId || o?.id === ordOrId || formatOrderId(o?.id) === String(ordOrId);
                     });
-                    if (setSelectedOrderForDrawer) {
-                      setSelectedOrderForDrawer(found || { id: `#${cleanId}`, title: `Order #${cleanId}`, status: 'in_progress' });
+                    if (setSelectedOrderForDrawer && found) {
+                      setSelectedOrderForDrawer(found);
                     }
                   }
                 }}

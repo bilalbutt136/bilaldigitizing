@@ -147,30 +147,29 @@ export async function POST(request) {
         const withHash = `#${cleanId}`;
         const candidateIds = Array.from(new Set([rawId, cleanId, withHash])).filter(Boolean);
 
-        const updatePayload = {
-          status: 'in_progress',
-          payment_status: 'paid',
-          updated_at: new Date().toISOString()
-        };
-
         // 1. Direct match by candidate IDs
         const { data: matchedRows } = await supabaseAdmin
           .from('orders')
-          .select('id')
+          .select('id, status')
           .in('id', candidateIds);
 
         if (matchedRows && matchedRows.length > 0) {
           for (const row of matchedRows) {
+            const targetStatus = (row.status === 'delivered' || row.status === 'completed') ? row.status : 'in_progress';
             await supabaseAdmin
               .from('orders')
-              .update(updatePayload)
+              .update({
+                status: targetStatus,
+                payment_status: 'paid',
+                updated_at: new Date().toISOString()
+              })
               .eq('id', row.id);
           }
         } else {
           // 2. Search by partial ID or client email
           let query = supabaseAdmin
             .from('orders')
-            .select('id')
+            .select('id, status')
             .ilike('client_email', email);
 
           if (cleanId.length >= 3) {
@@ -180,9 +179,14 @@ export async function POST(request) {
           const { data: fallbackRows } = await query;
           if (fallbackRows && fallbackRows.length > 0) {
             for (const row of fallbackRows) {
+              const targetStatus = (row.status === 'delivered' || row.status === 'completed') ? row.status : 'in_progress';
               await supabaseAdmin
                 .from('orders')
-                .update(updatePayload)
+                .update({
+                  status: targetStatus,
+                  payment_status: 'paid',
+                  updated_at: new Date().toISOString()
+                })
                 .eq('id', row.id);
             }
           }

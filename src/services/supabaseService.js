@@ -215,8 +215,13 @@ export async function fetchOrdersFromSupabase(customEmail = null, customOrderIds
     const orders = data.orders || [];
     
     // Map snake_case database columns back to camelCase frontend properties
-    return orders.map(order => {
-      let notesData = {};
+    return orders.map(order => mapDatabaseOrderToClientOrder(order)).filter(Boolean);
+  } catch { return []; }
+}
+
+export function mapDatabaseOrderToClientOrder(order) {
+  if (!order) return null;
+  let notesData = {};
       try {
         if (order.notes) {
           notesData = typeof order.notes === 'string' ? JSON.parse(order.notes) : order.notes;
@@ -392,10 +397,24 @@ export async function fetchOrdersFromSupabase(customEmail = null, customOrderIds
         deliveryMessage: notesData.deliveryNotes || notesData.deliveryMessage || order.delivery_notes || '',
         deliveryDate: notesData.deliveryDate || order.delivery_date || null,
         revisions: notesData.revisions || order.revisions || [],
-        notes: notesData.notes || (typeof order.notes === 'string' && !order.notes.startsWith('{') ? order.notes : '')
-      };
-    });
-  } catch { return []; }
+  };
+}
+
+// Fetch a single order by ID with full live hydration from Supabase DB
+export async function fetchOrderById(orderId) {
+  if (!orderId) return null;
+  try {
+    const headers = await getAuthHeaders().catch(() => ({}));
+    const cleanId = String(orderId).trim().replace(/^#+/, '');
+    const res = await fetch(`/api/orders?action=fetchOne&orderId=${encodeURIComponent(cleanId)}`, { headers });
+    if (!res.ok) return null;
+    const data = await res.json();
+    if (!data.order) return null;
+    return mapDatabaseOrderToClientOrder(data.order);
+  } catch (err) {
+    console.warn('[fetchOrderById Error]:', err?.message);
+    return null;
+  }
 }
 
 // Create new Order in Supabase DB & Storage

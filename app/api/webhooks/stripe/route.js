@@ -228,14 +228,31 @@ export async function POST(req) {
         console.log(`[Stripe Webhook] Successfully processed session ${session.id} for offer ${offerId}`);
       } else if (orderId && type !== 'deposit') {
         // Direct standard order payment
+        const rawOrdId = String(orderId).trim();
+        const cleanOrdId = rawOrdId.replace(/^#+/, '');
+        const withHash = `#${cleanOrdId}`;
+        const candidateOrdIds = Array.from(new Set([rawOrdId, cleanOrdId, withHash])).filter(Boolean);
+
+        // Fetch existing order to never regress terminal statuses (delivered, completed)
+        const { data: currentOrd } = await supabase
+          .from('orders')
+          .select('id, status, payment_status, paid_at')
+          .in('id', candidateOrdIds)
+          .maybeSingle();
+
+        const targetStatus = (currentOrd?.status === 'delivered' || currentOrd?.status === 'completed')
+          ? currentOrd.status
+          : 'in_progress';
+
         const { error: ordUpdateErr } = await supabase
           .from('orders')
           .update({
             payment_status: 'paid',
-            status: 'in_progress',
+            status: targetStatus,
+            paid_at: currentOrd?.paid_at || nowIso,
             updated_at: nowIso
           })
-          .eq('id', orderId);
+          .in('id', candidateOrdIds);
 
         if (ordUpdateErr) {
           console.error('[Stripe Webhook] Error updating order status:', ordUpdateErr.message);

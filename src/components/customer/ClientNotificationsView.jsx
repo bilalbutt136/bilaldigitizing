@@ -70,12 +70,8 @@ export const ClientNotificationsView = ({ onNavigateToOrder, userEmail, isAdmin 
       }
       if (openOrderTrackerDrawer) {
         openOrderTrackerDrawer(target.matchedOrder || target.orderId);
-      } else if (setSelectedOrderForDrawer) {
-        setSelectedOrderForDrawer(target.matchedOrder || { 
-          id: String(target.orderId).startsWith('#') ? target.orderId : `#${target.orderId}`, 
-          title: `Order #${String(target.orderId).replace(/^#+/, '')}`, 
-          status: 'in_progress' 
-        });
+      } else if (setSelectedOrderForDrawer && target.matchedOrder) {
+        setSelectedOrderForDrawer(target.matchedOrder);
       }
     } else {
       handleNotificationClick(notif, {

@@ -18,6 +18,7 @@ import {
   fetchCatalogFromSupabase,
   fetchClientsFromSupabase,
   fetchOrdersFromSupabase,
+  fetchOrderById,
   verifyAdminSession,
   fetchAdminUsers,
   addAdminUserInSupabase,
@@ -749,19 +750,42 @@ export const StateProvider = ({ children }) => {
   const openOrderTrackerDrawer = (orderOrId) => {
     if (!orderOrId) return;
     if (typeof orderOrId === 'object' && (orderOrId.id || orderOrId.title)) {
-      setSelectedOrderForDrawer(orderOrId);
+      // If object already has full hydrated properties, use directly
+      if (orderOrId.status && (orderOrId.client_name || orderOrId.clientName || orderOrId.price !== undefined)) {
+        setSelectedOrderForDrawer(orderOrId);
+        return;
+      }
+    }
+    const cleanId = String(typeof orderOrId === 'object' ? orderOrId.id : orderOrId).trim().replace(/^#+/, '');
+    const found = orders.find(o => {
+      const oClean = String(o?.id || '').trim().replace(/^#+/, '');
+      return oClean === cleanId || o?.id === orderOrId || o?.id === `#${cleanId}`;
+    });
+    if (found && found.status && (found.client_name || found.clientName || found.price !== undefined)) {
+      setSelectedOrderForDrawer(found);
       return;
     }
-    const cleanId = String(orderOrId).trim().replace(/^#+/, '');
-    const found = orders.find(o => {
-      const oClean = String(o.id || '').trim().replace(/^#+/, '');
-      return oClean === cleanId || o.id === orderOrId || o.id === `#${cleanId}`;
-    });
-    if (found) {
-      setSelectedOrderForDrawer(found);
-    } else {
-      setSelectedOrderForDrawer({ id: `#${cleanId}`, title: `Order #${cleanId}`, status: 'in_progress' });
-    }
+    
+    // NO FAKE MOCK OBJECT: Set loading state and fetch live from Supabase DB
+    setSelectedOrderForDrawer({ id: `#${cleanId}`, _isLoading: true });
+    (async () => {
+      try {
+        const liveOrder = await fetchOrderById(cleanId);
+        if (liveOrder) {
+          setSelectedOrderForDrawer(liveOrder);
+          setOrders(prev => {
+            const exists = prev.some(p => String(p?.id || '').replace(/^#+/, '') === cleanId);
+            return exists ? prev.map(p => String(p?.id || '').replace(/^#+/, '') === cleanId ? liveOrder : p) : [liveOrder, ...prev];
+          });
+        } else {
+          setSelectedOrderForDrawer(null);
+          showToast(`Order #${cleanId} not found`, 'error');
+        }
+      } catch (err) {
+        console.warn('[openOrderTrackerDrawer live fetch notice]:', err?.message);
+        setSelectedOrderForDrawer(null);
+      }
+    })();
   };
 
   const unreadNotificationsCount = Array.isArray(notifications) ? notifications.filter(n => !n.read && !n.is_read).length : 0;
@@ -2161,7 +2185,11 @@ export const StateProvider = ({ children }) => {
         const resolvedPayStatus = safeExtraData.paymentStatus || safeExtraData.payment_status || (newStatus === 'in_progress' ? 'paid' : ord.payment_status || ord.paymentStatus);
         const isPaidComputed = resolvedPayStatus === 'paid' || resolvedPayStatus === 'completed' || resolvedPayStatus === 'wallet' || newStatus === 'in_progress';
         let resolvedStatus = newStatus || ord.status || 'in_progress';
-        if (isPaidComputed && (resolvedStatus === 'awaiting_payment' || resolvedStatus === 'pending_payment' || resolvedStatus === 'submitted')) {
+        if (ord.status === 'delivered' || ord.status === 'completed') {
+          if (!newStatus || newStatus === 'in_progress') {
+            resolvedStatus = ord.status;
+          }
+        } else if (isPaidComputed && (resolvedStatus === 'awaiting_payment' || resolvedStatus === 'pending_payment' || resolvedStatus === 'submitted')) {
           resolvedStatus = 'in_progress';
         }
 
@@ -2263,6 +2291,8 @@ export const StateProvider = ({ children }) => {
 
   const addRevisionRequest = async (orderId, revisionNote) => {
     const nowIso = new Date().toISOString();
+    const cleanId = String(orderId || '').trim().replace(/^#+/, '');
+    const withHash = `#${cleanId}`;
 
     // Call the Orders API requestRevision — sets status='revision', inserts revision row, fires dual notifications
     if (isSupabaseConfigured) {
@@ -2273,39 +2303,60 @@ export const StateProvider = ({ children }) => {
           headers: { ...headers, 'Content-Type': 'application/json' },
           body: JSON.stringify({
             action: 'requestRevision',
-            payload: { orderId, instructions: revisionNote }
+            payload: { orderId: cleanId, instructions: revisionNote }
           })
         });
       } catch (sbErr) {
         // Fallback: direct Supabase update
         try {
-          await addRevisionInSupabase(orderId, revisionNote, authUser?.name || 'Client');
-          await updateOrderStatusInSupabase(orderId, 'revision');
+          await addRevisionInSupabase(cleanId, revisionNote, authUser?.name || 'Client');
+          await updateOrderStatusInSupabase(cleanId, 'revision');
         } catch (fbErr) {
           console.warn('Supabase add revision fallback notice:', fbErr);
         }
       }
     }
 
-    // Immediately update local UI state
+    const newRevItem = { id: `rev-${Date.now()}`, notes: revisionNote, instructions: revisionNote, requestedBy: authUser?.name || 'Client', createdAt: nowIso };
+
+    // Immediately update local UI state AND drawer state
     setOrders(prev => prev.map(ord => {
-      if (ord.id === orderId) {
+      const ordClean = String(ord?.id || '').trim().replace(/^#+/, '');
+      if (ordClean === cleanId || ord.id === orderId || ord.id === withHash) {
         return {
           ...ord,
           status: 'revision',
           updated_at: nowIso,
-          revisions: [{ id: `rev-${Date.now()}`, notes: revisionNote, requestedBy: authUser?.name || 'Client', createdAt: nowIso }, ...(ord.revisions || [])],
+          revisions: [newRevItem, ...(ord.revisions || [])],
           history: [{ timestamp: nowIso, label: `Revision Requested: "${(revisionNote || '').slice(0, 35)}..."` }, ...(ord.history || [])]
         };
       }
       return ord;
     }));
 
+    setSelectedOrderForDrawer(prev => {
+      if (!prev) return null;
+      const prevClean = String(prev?.id || '').trim().replace(/^#+/, '');
+      if (prevClean === cleanId || prev.id === orderId || prev.id === withHash) {
+        return {
+          ...prev,
+          status: 'revision',
+          updated_at: nowIso,
+          revisions: [newRevItem, ...(prev.revisions || [])]
+        };
+      }
+      return prev;
+    });
+
     showToast(`Modification request sent for Order ${formatOrderId(orderId)}`, 'info');
 
-    const targetOrder = orders.find(o => o.id === orderId);
+    const targetOrder = orders.find(o => {
+      const oClean = String(o?.id || '').trim().replace(/^#+/, '');
+      return oClean === cleanId || o.id === orderId || o.id === withHash;
+    });
+
     triggerEmailNotification('ORDER_REVISION', { 
-      id: orderId, 
+      id: cleanId, 
       clientEmail: targetOrder?.clientEmail || authUser?.email,
       revisionNotes: revisionNote 
     });
@@ -2397,13 +2448,14 @@ export const StateProvider = ({ children }) => {
           const ordClean = String(ord.id || '').trim().replace(/^#+/, '');
           const isMatch = ordClean === cleanOrdId || ord.id === orderId || ord.id === withHash;
           if (isMatch) {
+            const targetStatus = (ord.status === 'delivered' || ord.status === 'completed') ? ord.status : 'in_progress';
             return {
               ...ord,
-              status: 'in_progress',
+              status: targetStatus,
               payment_status: 'paid',
               paymentStatus: 'paid',
               isPaid: true,
-              paid_at: new Date().toISOString(),
+              paid_at: ord.paid_at || new Date().toISOString(),
               updated_at: new Date().toISOString()
             };
           }

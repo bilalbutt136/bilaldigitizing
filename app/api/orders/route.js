@@ -115,37 +115,66 @@ export async function GET(request) {
       return NextResponse.json({ orders: data });
     }
 
-    if (action === 'fetchDetails') {
-      if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-      
-      if (!isAdmin) {
-        const { data: orderData, error: orderError } = await supabase.from('orders').select('client_email, worker_id, user_id').eq('id', orderId).single();
-        const isClientOwner = (orderData?.client_email?.toLowerCase().trim() === user.email?.toLowerCase().trim()) || (orderData?.user_id && orderData.user_id === user.id);
-        const isAssignedWorker = isWorker && (orderData?.worker_id === user.id || orderData?.worker_id === workerData?.id);
+    if (action === 'fetchOne' || action === 'fetchDetails') {
+      if (!user && !isAdmin) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      const rawOrderId = String(orderId || searchParams.get('id') || '').trim();
+      if (!rawOrderId) return NextResponse.json({ error: 'Missing orderId parameter' }, { status: 400 });
 
-        if (orderError || (!isClientOwner && !isAssignedWorker)) {
+      const cleanOrdId = rawOrderId.replace(/^#+/, '');
+      const withHash = `#${cleanOrdId}`;
+      const candidateIds = Array.from(new Set([rawOrderId, cleanOrdId, withHash])).filter(Boolean);
+
+      // Fetch the full order row
+      let orderRow = null;
+      const { data: byIn } = await supabase
+        .from('orders')
+        .select('id, title, client_name, client_email, service_category, service_type, fabric_type, requested_formats, is_rush, price, cost, status, payment_status, artwork_url, image_url, logo, user_id, worker_id, worker_status, worker_file_url, worker_file_name, worker_files, worker_notes, worker_payout, worker_payout_status, admin_worker_feedback, worker_assigned_at, worker_submitted_at, worker_reviewed_at, paid_at, output_file_url, notes, created_at, updated_at')
+        .in('id', candidateIds)
+        .maybeSingle();
+
+      if (byIn) {
+        orderRow = byIn;
+      } else if (cleanOrdId.length >= 3) {
+        const { data: byIlike } = await supabase
+          .from('orders')
+          .select('id, title, client_name, client_email, service_category, service_type, fabric_type, requested_formats, is_rush, price, cost, status, payment_status, artwork_url, image_url, logo, user_id, worker_id, worker_status, worker_file_url, worker_file_name, worker_files, worker_notes, worker_payout, worker_payout_status, admin_worker_feedback, worker_assigned_at, worker_submitted_at, worker_reviewed_at, paid_at, output_file_url, notes, created_at, updated_at')
+          .ilike('id', `%${cleanOrdId}%`)
+          .maybeSingle();
+        if (byIlike) orderRow = byIlike;
+      }
+
+      if (!orderRow) {
+        return NextResponse.json({ error: 'Order not found' }, { status: 404 });
+      }
+
+      // Authorization guard
+      if (!isAdmin) {
+        const isClientOwner = (orderRow.client_email?.toLowerCase().trim() === user?.email?.toLowerCase().trim()) || (orderRow.user_id && orderRow.user_id === user?.id);
+        const isAssignedWorker = isWorker && (orderRow.worker_id === user?.id || orderRow.worker_id === workerData?.id);
+        if (!isClientOwner && !isAssignedWorker) {
           return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
         }
       }
 
-      // Defensive queries with column fallback to guarantee zero 500 crashes
+      // Fetch related order_files
       let orderFilesList = [];
       try {
         const { data: filesData } = await supabase
           .from('order_files')
           .select('id, file_name, file_format, file_type, public_url, file_url, file_path, uploaded_by, created_at')
-          .eq('order_id', orderId);
+          .in('order_id', Array.from(new Set([orderRow.id, ...candidateIds])));
         if (Array.isArray(filesData)) orderFilesList = filesData;
       } catch (fErr) {
         console.warn('order_files query notice:', fErr?.message);
       }
 
+      // Fetch related revisions
       let revisionsList = [];
       try {
         const { data: revData, error: revErr } = await supabase
           .from('revisions')
           .select('*')
-          .eq('order_id', orderId)
+          .in('order_id', Array.from(new Set([orderRow.id, ...candidateIds])))
           .order('created_at', { ascending: false });
         if (!revErr && Array.isArray(revData)) {
           revisionsList = revData.map(r => ({
@@ -158,7 +187,43 @@ export async function GET(request) {
         console.warn('revisions query notice:', rErr?.message);
       }
 
-      return NextResponse.json({ orderFiles: orderFilesList, revisions: revisionsList, messages: [] });
+      // Parse notes JSON safely and hydrate deliveries and specifications
+      let parsedNotes = {};
+      try {
+        if (orderRow.notes) {
+          parsedNotes = typeof orderRow.notes === 'string' ? JSON.parse(orderRow.notes) : orderRow.notes;
+        }
+      } catch {
+        parsedNotes = { notes: orderRow.notes || '' };
+      }
+
+      const hydratedOrder = {
+        ...orderRow,
+        customerNotes: parsedNotes.notes || parsedNotes.instructions || '',
+        patchStyle: parsedNotes.patchStyle || null,
+        patchBacking: parsedNotes.patchBacking || null,
+        patchBorderStyle: parsedNotes.patchBorderStyle || null,
+        patchWidth: parsedNotes.patchWidth || null,
+        patchHeight: parsedNotes.patchHeight || null,
+        patchQuantity: parsedNotes.patchQuantity || null,
+        patchItems: Array.isArray(parsedNotes.patchItems) ? parsedNotes.patchItems : [],
+        placementItems: Array.isArray(parsedNotes.placementItems) ? parsedNotes.placementItems : [],
+        clientUploadedFiles: Array.isArray(parsedNotes.uploadedFiles) ? parsedNotes.uploadedFiles : [],
+        deliveries: Array.isArray(parsedNotes.deliveries) ? parsedNotes.deliveries : [],
+        uploadedMachineFiles: Array.isArray(parsedNotes.uploadedMachineFiles) ? parsedNotes.uploadedMachineFiles : [],
+        deliveryNotes: parsedNotes.deliveryNotes || '',
+        deliveryDate: parsedNotes.deliveryDate || null,
+        order_files: orderFilesList,
+        orderFiles: orderFilesList,
+        revisions: revisionsList
+      };
+
+      return NextResponse.json({ 
+        order: hydratedOrder,
+        orderFiles: orderFilesList, 
+        revisions: revisionsList, 
+        messages: [] 
+      });
     }
 
     return NextResponse.json({ error: 'Unknown action' }, { status: 400 });
@@ -441,7 +506,7 @@ export async function POST(request) {
       let targetOrder = null;
       const { data: byIn } = await supabase
         .from('orders')
-        .select('id, title, client_name, client_email, status, payment_status, notes, deliveries')
+        .select('id, title, client_name, client_email, service_category, service_type, price, status, payment_status, notes, output_file_url, worker_file_url, user_id, created_at, updated_at')
         .in('id', candidateIds)
         .maybeSingle();
 
@@ -450,7 +515,7 @@ export async function POST(request) {
       } else if (cleanId.length >= 3) {
         const { data: byIlike } = await supabase
           .from('orders')
-          .select('id, title, client_name, client_email, status, payment_status, notes, deliveries')
+          .select('id, title, client_name, client_email, service_category, service_type, price, status, payment_status, notes, output_file_url, worker_file_url, user_id, created_at, updated_at')
           .ilike('id', `%${cleanId}%`)
           .maybeSingle();
         if (byIlike) targetOrder = byIlike;
@@ -483,7 +548,12 @@ export async function POST(request) {
       }
 
       let resolvedStatus = newStatus || targetOrder?.status || 'in_progress';
-      if (payStatus === 'paid' && (resolvedStatus === 'awaiting_payment' || resolvedStatus === 'pending_payment' || resolvedStatus === 'submitted' || !resolvedStatus)) {
+      // Never regress delivered or completed orders back to in_progress due to payment status
+      if (targetOrder?.status === 'delivered' || targetOrder?.status === 'completed') {
+        if (!newStatus || newStatus === 'in_progress') {
+          resolvedStatus = targetOrder.status;
+        }
+      } else if (payStatus === 'paid' && (resolvedStatus === 'awaiting_payment' || resolvedStatus === 'pending_payment' || resolvedStatus === 'submitted' || !resolvedStatus)) {
         resolvedStatus = 'in_progress';
       }
       const updatePayload = { status: resolvedStatus, updated_at: new Date().toISOString() };
@@ -492,22 +562,42 @@ export async function POST(request) {
         let existingNotes = {};
         try {
           if (targetOrder?.notes) {
-            existingNotes = typeof targetOrder.notes === 'string' ? JSON.parse(targetOrder.notes) : targetOrder.notes;
+            existingNotes = typeof targetOrder.notes === 'string' ? JSON.parse(targetOrder.notes) : (targetOrder.notes || {});
           }
         } catch {
           existingNotes = { notes: targetOrder?.notes || '' };
         }
+
+        // Non-destructive deep merge: PRESERVE ALL client order specifications & artwork
+        const mergedNotes = {
+          ...existingNotes,
+          notes: existingNotes.notes !== undefined ? existingNotes.notes : (existingNotes.instructions || ''),
+          patchStyle: existingNotes.patchStyle || existingNotes.style || null,
+          patchBacking: existingNotes.patchBacking || existingNotes.backing || null,
+          patchBorderStyle: existingNotes.patchBorderStyle || existingNotes.borderStyle || null,
+          patchWidth: existingNotes.patchWidth || existingNotes.width || null,
+          patchHeight: existingNotes.patchHeight || existingNotes.height || null,
+          patchQuantity: existingNotes.patchQuantity || existingNotes.quantity || null,
+          patchItems: Array.isArray(existingNotes.patchItems) ? existingNotes.patchItems : [],
+          placementItems: Array.isArray(existingNotes.placementItems) ? existingNotes.placementItems : [],
+          uploadedFiles: Array.isArray(existingNotes.uploadedFiles) ? existingNotes.uploadedFiles : []
+        };
+
         if (extraData.deliveryNotes || extraData.deliveryMessage) {
-          existingNotes.deliveryNotes = extraData.deliveryNotes || extraData.deliveryMessage;
+          mergedNotes.deliveryNotes = extraData.deliveryNotes || extraData.deliveryMessage;
         }
-        if (extraData.deliveries) {
-          existingNotes.deliveries = extraData.deliveries;
+        if (extraData.deliveries && Array.isArray(extraData.deliveries)) {
+          mergedNotes.deliveries = extraData.deliveries;
+        } else if (existingNotes.deliveries && Array.isArray(existingNotes.deliveries)) {
+          mergedNotes.deliveries = existingNotes.deliveries;
         }
-        if (extraData.uploadedMachineFiles) {
-          existingNotes.uploadedMachineFiles = extraData.uploadedMachineFiles;
+        if (extraData.uploadedMachineFiles && Array.isArray(extraData.uploadedMachineFiles)) {
+          mergedNotes.uploadedMachineFiles = extraData.uploadedMachineFiles;
+        } else if (existingNotes.uploadedMachineFiles && Array.isArray(existingNotes.uploadedMachineFiles)) {
+          mergedNotes.uploadedMachineFiles = existingNotes.uploadedMachineFiles;
         }
-        existingNotes.deliveryDate = new Date().toISOString();
-        updatePayload.notes = JSON.stringify(existingNotes);
+        mergedNotes.deliveryDate = new Date().toISOString();
+        updatePayload.notes = JSON.stringify(mergedNotes);
       }
 
       if (extraData?.outputFileUrl || extraData?.output_file_url) {
@@ -566,8 +656,24 @@ export async function POST(request) {
       // ── Comprehensive status-change notifications + auto-ensure conversation ──
       try {
         const nowIso = new Date().toISOString();
-        const clientEmail = (targetOrder?.client_email || extraData?.clientEmail || extraData?.client_email || '').toLowerCase().trim();
-        const clientName = targetOrder?.client_name || extraData?.clientName || extraData?.client_name || 'Client';
+        let clientEmail = (targetOrder?.client_email || extraData?.clientEmail || extraData?.client_email || '').toLowerCase().trim();
+        let clientName = targetOrder?.client_name || extraData?.clientName || extraData?.client_name || '';
+
+        // If clientEmail is still missing, lookup in clients table or auth user
+        if (!clientEmail) {
+          if (targetOrder?.user_id) {
+            const { data: cUser } = await supabase.from('clients').select('email, full_name, name').eq('id', targetOrder.user_id).maybeSingle();
+            if (cUser?.email) {
+              clientEmail = cUser.email.toLowerCase().trim();
+              if (!clientName) clientName = cUser.full_name || cUser.name || '';
+            }
+          }
+          if (!clientEmail && user?.email && !isAdmin) {
+            clientEmail = user.email.toLowerCase().trim();
+            if (!clientName) clientName = user.user_metadata?.full_name || 'Client';
+          }
+        }
+        if (!clientName) clientName = 'Valued Client';
         const resolvedOrderId = targetOrder?.id || rawId;
         const ordTitle = targetOrder?.title || extraData?.title || `Order #${resolvedOrderId}`;
 
@@ -664,10 +770,18 @@ export async function POST(request) {
           });
 
         } else if (newStatus === 'delivered') {
+          let targetDeliveries = [];
+          try {
+            if (targetOrder?.notes) {
+              const parsed = typeof targetOrder.notes === 'string' ? JSON.parse(targetOrder.notes) : targetOrder.notes;
+              targetDeliveries = Array.isArray(parsed?.deliveries) ? parsed.deliveries : [];
+            }
+          } catch {}
+
           const delivNum = extraData?.deliveryNumber || 
             (Array.isArray(extraData?.deliveries) && extraData.deliveries.length > 0 
               ? (extraData.deliveries[0]?.deliveryNumber || extraData.deliveries.length) 
-              : (Array.isArray(targetOrder?.deliveries) && targetOrder.deliveries.length > 0 ? (targetOrder.deliveries[0]?.deliveryNumber || targetOrder.deliveries.length) : 1));
+              : (targetDeliveries.length > 0 ? (targetDeliveries[0]?.deliveryNumber || targetDeliveries.length) : 1));
 
           const delivNotifId = delivNum > 1 ? `ord-deliv-${resolvedOrderId}-v${delivNum}` : `ord-deliv-${resolvedOrderId}`;
           const delivTitle = delivNum > 1 
@@ -723,15 +837,38 @@ export async function POST(request) {
     if (action === 'requestRevision') {
       if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
       const { orderId, instructions } = payload;
+      const rawOrderId = String(orderId || '').trim();
+      const cleanOrdId = rawOrderId.replace(/^#+/, '');
+      const withHash = `#${cleanOrdId}`;
+      const candidateIds = Array.from(new Set([rawOrderId, cleanOrdId, withHash])).filter(Boolean);
       
-      const { data: orderData, error: orderError } = await supabase
+      let orderData = null;
+      const { data: byIn } = await supabase
         .from('orders')
-        .select('id, client_email, client_name, title, status')
-        .eq('id', orderId)
+        .select('id, client_email, client_name, user_id, title, status')
+        .in('id', candidateIds)
         .maybeSingle();
 
+      if (byIn) {
+        orderData = byIn;
+      } else if (cleanOrdId.length >= 3) {
+        const { data: byIlike } = await supabase
+          .from('orders')
+          .select('id, client_email, client_name, user_id, title, status')
+          .ilike('id', `%${cleanOrdId}%`)
+          .maybeSingle();
+        if (byIlike) orderData = byIlike;
+      }
+
+      if (!orderData) {
+        return NextResponse.json({ error: 'Order not found' }, { status: 404 });
+      }
+
+      const canonicalOrderId = orderData.id;
+
       if (!isAdmin) {
-        if (orderError || !orderData || orderData?.client_email?.toLowerCase().trim() !== user.email.toLowerCase().trim()) {
+        const isClientOwner = (orderData?.client_email?.toLowerCase().trim() === user.email?.toLowerCase().trim()) || (orderData?.user_id && orderData.user_id === user.id);
+        if (!isClientOwner) {
           return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
         }
       }
@@ -746,11 +883,11 @@ export async function POST(request) {
       const nowIso = new Date().toISOString();
       const clientEmail = (orderData?.client_email || user.email || '').toLowerCase().trim();
       const clientName = orderData?.client_name || user.user_metadata?.full_name || 'Client';
-      const ordTitle = orderData?.title || `Order #${orderId}`;
+      const ordTitle = orderData?.title || `Order #${canonicalOrderId}`;
 
       // Use 'revision' as canonical status (not 'revision_requested') for UI consistency
       const revPayload = { 
-        order_id: orderId, 
+        order_id: canonicalOrderId, 
         note: instructions || '',
         notes: instructions || '',
         details: instructions || '', 
@@ -764,7 +901,7 @@ export async function POST(request) {
       } catch (insertRevErr) {
         try {
           await supabase.from('revisions').insert([{
-            order_id: orderId,
+            order_id: canonicalOrderId,
             note: instructions || '',
             notes: instructions || '',
             status: 'pending',
@@ -777,14 +914,14 @@ export async function POST(request) {
       await supabase.from('orders').update({ 
         status: 'revision', 
         updated_at: nowIso 
-      }).eq('id', orderId);
+      }).in('id', candidateIds);
 
       // Ensure conversation thread
-      const convId = `order-${orderId}`;
+      const convId = `order-${canonicalOrderId}`;
       const { data: existingConv } = await supabase.from('conversations').select('id').eq('id', convId).maybeSingle();
       if (!existingConv) {
         await supabase.from('conversations').insert([{
-          id: convId, order_id: orderId, order_title: ordTitle,
+          id: convId, order_id: canonicalOrderId, order_title: ordTitle,
           client_email: clientEmail, client_name: clientName,
           client_company: 'Studio Client', status: 'offline',
           unread_count: 1, admin_unread_count: 1, client_unread_count: 0,
