@@ -179,7 +179,7 @@ export const OrderTrackerDrawer = () => {
   // If order in drawer is incomplete or marked as loading, fetch live from Supabase
   useEffect(() => {
     if (!cleanSelId) return;
-    const isMissingDetails = !ord.status || (!ord.client_name && !ord.clientName) || ord._isLoading;
+    const isMissingDetails = Boolean(ord._isLoading || (!ord.status && !ord.title));
     if (isMissingDetails && !isFetchingOrder) {
       let isMounted = true;
       setIsFetchingOrder(true);
@@ -192,11 +192,11 @@ export const OrderTrackerDrawer = () => {
       }).catch(err => {
         console.warn('[OrderTrackerDrawer live fetch notice]:', err?.message);
       }).finally(() => {
-        if (isMounted) setIsFetchingOrder(false);
+        setIsFetchingOrder(false);
       });
       return () => { isMounted = false; };
     }
-  }, [cleanSelId, ord.status, ord.client_name, ord.clientName, ord._isLoading]);
+  }, [cleanSelId, ord.status, ord.title, ord._isLoading, isFetchingOrder]);
 
   const isOrderPaid = (o) => {
     const pStatus = String(o?.payment_status || o?.paymentStatus || '').toLowerCase().trim();
@@ -259,7 +259,8 @@ export const OrderTrackerDrawer = () => {
   // ── Early return AFTER all hooks have been declared ───────────────────────
   if (!selectedOrderForDrawer) return null;
 
-  if (ord._isLoading || isFetchingOrder || (!ord.title && !ord.status)) {
+  const isActuallyLoading = Boolean(ord._isLoading || (!ord.status && !ord.title && isFetchingOrder));
+  if (isActuallyLoading) {
     return (
       <div 
         className="order-tracker-drawer-backdrop" 
