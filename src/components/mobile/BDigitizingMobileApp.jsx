@@ -1,8 +1,10 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAppState, formatOrderId } from '../../context/StateContext';
 import { useNavigate } from '../../utils/navigation';
+import { isModalBackConsumed } from '../../utils/modalHistoryManager';
+import { useModalBackNavigation } from '../../hooks/useModalBackNavigation';
 import { 
   Home, 
   Mail, 
@@ -345,47 +347,6 @@ export const BDigitizingMobileApp = () => {
     }
   };
 
-  // Sync tab with mobile hardware / browser back/forward buttons
-  useEffect(() => {
-    // When app mounts on home, prime history state so hardware back button is caught
-    if (typeof window !== 'undefined') {
-      try {
-        if (!window.history.state?.app) {
-          window.history.replaceState({ app: true, tab: 'home' }, '', window.location.href);
-        }
-      } catch {}
-    }
-
-    const handlePopState = (e) => {
-      if (typeof window !== 'undefined') {
-        const stateTab = e?.state?.tab;
-        const urlParams = new URLSearchParams(window.location.search);
-        const tabParam = stateTab || urlParams.get('tab');
-        const validTabs = ['home', 'categories', 'orders', 'profile', 'chat', 'support', 'inbox', 'login', 'signup', 'auth'];
-        
-        // If user is currently on any sub-tab and presses Android back key, return to home
-        if (mobileTab !== 'home') {
-          setMobileTabState('home');
-          try {
-            localStorage.setItem('bdigi_mobile_active_tab', 'home');
-            localStorage.setItem('bdigi_mobile_mode', 'app');
-            const url = new URL(window.location.href);
-            url.searchParams.set('app', 'true');
-            url.searchParams.delete('web');
-            url.searchParams.set('tab', 'home');
-            window.history.replaceState({ app: true, tab: 'home' }, '', url.toString());
-          } catch {}
-        } else if (tabParam && validTabs.includes(tabParam)) {
-          setMobileTabState(tabParam);
-        } else {
-          setMobileTabState('home');
-        }
-      }
-    };
-    window.addEventListener('popstate', handlePopState);
-    return () => window.removeEventListener('popstate', handlePopState);
-  }, [mobileTab]);
-
   const [searchQuery, setSearchQuery] = useState('');
   
   // Category sub-tab: 'all' | 'embroidery' | 'vector' | 'patches'
@@ -410,6 +371,103 @@ export const BDigitizingMobileApp = () => {
   const [isFeedbackModalOpen, setIsFeedbackModalOpen] = useState(false);
   const [isLegalModalOpen, setIsLegalModalOpen] = useState(false);
   const [isVipInfoModalOpen, setIsVipInfoModalOpen] = useState(false);
+
+  // Bind mobile sub-modals to hardware back navigation
+  useModalBackNavigation({ isOpen: isOrderModalOpen, onClose: () => setIsOrderModalOpen(false), modalId: 'mobile_order_modal' });
+  useModalBackNavigation({ isOpen: Boolean(isOrderActionMenuOpen), onClose: () => setIsOrderActionMenuOpen(null), modalId: 'mobile_order_action_menu' });
+  useModalBackNavigation({ isOpen: isNotifDrawerOpen, onClose: () => setIsNotifDrawerOpen(false), modalId: 'mobile_notif_drawer' });
+  useModalBackNavigation({ isOpen: isPreferencesModalOpen, onClose: () => setIsPreferencesModalOpen(false), modalId: 'mobile_preferences' });
+  useModalBackNavigation({ isOpen: isAccountModalOpen, onClose: () => setIsAccountModalOpen(false), modalId: 'mobile_account' });
+  useModalBackNavigation({ isOpen: isSupportModalOpen, onClose: () => setIsSupportModalOpen(false), modalId: 'mobile_support' });
+  useModalBackNavigation({ isOpen: isFeedbackModalOpen, onClose: () => setIsFeedbackModalOpen(false), modalId: 'mobile_feedback' });
+  useModalBackNavigation({ isOpen: isLegalModalOpen, onClose: () => setIsLegalModalOpen(false), modalId: 'mobile_legal' });
+  useModalBackNavigation({ isOpen: isVipInfoModalOpen, onClose: () => setIsVipInfoModalOpen(false), modalId: 'mobile_vip_info' });
+
+  const lastBackPressRef = useRef(0);
+
+  // Sync tab with mobile hardware / browser back/forward buttons & prevent accidental exit
+  useEffect(() => {
+    // When app mounts on home, prime history state so hardware back button is caught
+    if (typeof window !== 'undefined') {
+      try {
+        if (!window.history.state?.app) {
+          window.history.replaceState({ app: true, tab: 'home' }, '', window.location.href);
+        }
+      } catch {}
+    }
+
+    const handlePopState = (e) => {
+      if (typeof window === 'undefined') return;
+
+      // 1. If any modal was just closed by the modalHistoryManager, do not navigate tabs or exit
+      if (isModalBackConsumed()) {
+        return;
+      }
+
+      // 2. Direct safety check for sub-modals
+      if (isOrderModalOpen) { setIsOrderModalOpen(false); return; }
+      if (isOrderActionMenuOpen) { setIsOrderActionMenuOpen(null); return; }
+      if (isNotifDrawerOpen) { setIsNotifDrawerOpen(false); return; }
+      if (isPreferencesModalOpen) { setIsPreferencesModalOpen(false); return; }
+      if (isAccountModalOpen) { setIsAccountModalOpen(false); return; }
+      if (isSupportModalOpen) { setIsSupportModalOpen(false); return; }
+      if (isFeedbackModalOpen) { setIsFeedbackModalOpen(false); return; }
+      if (isLegalModalOpen) { setIsLegalModalOpen(false); return; }
+      if (isVipInfoModalOpen) { setIsVipInfoModalOpen(false); return; }
+
+      const stateTab = e?.state?.tab;
+      const urlParams = new URLSearchParams(window.location.search);
+      const tabParam = stateTab || urlParams.get('tab');
+      const validTabs = ['home', 'orders', 'inbox', 'wallet', 'profile', 'categories', 'chat', 'support', 'login', 'signup', 'auth'];
+      
+      // 3. If user is currently on any sub-tab and presses Android back key, return to home
+      if (mobileTab !== 'home') {
+        setMobileTabState('home');
+        try {
+          localStorage.setItem('bdigi_mobile_active_tab', 'home');
+          localStorage.setItem('bdigi_mobile_mode', 'app');
+          const url = new URL(window.location.href);
+          url.searchParams.set('app', 'true');
+          url.searchParams.delete('web');
+          url.searchParams.set('tab', 'home');
+          window.history.replaceState({ app: true, tab: 'home' }, '', url.toString());
+        } catch {}
+      } else if (tabParam && validTabs.includes(tabParam) && tabParam !== 'home') {
+        setMobileTabState(tabParam);
+      } else {
+        // 4. User is on 'home' tab with no open modals: Double-tap back to exit
+        const now = Date.now();
+        if (now - lastBackPressRef.current < 2000) {
+          // Double-back detected within 2 seconds: let default exit action proceed
+          return;
+        } else {
+          lastBackPressRef.current = now;
+          if (typeof showToast === 'function') {
+            showToast('Press back again to exit', 'info');
+          }
+          try {
+            window.history.pushState({ app: true, tab: 'home', primed: true }, '', window.location.href);
+          } catch {}
+        }
+      }
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [
+    mobileTab,
+    showToast,
+    isOrderModalOpen,
+    isOrderActionMenuOpen,
+    isNotifDrawerOpen,
+    isPreferencesModalOpen,
+    isAccountModalOpen,
+    isSupportModalOpen,
+    isFeedbackModalOpen,
+    isLegalModalOpen,
+    isVipInfoModalOpen
+  ]);
+
 
   // Client VIP Mode State (persisted)
   const [isVipMode, setIsVipMode] = useState(false);

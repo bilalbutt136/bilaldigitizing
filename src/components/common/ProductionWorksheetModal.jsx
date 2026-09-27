@@ -9,12 +9,22 @@ import {
   Download, 
   FileText
 } from 'lucide-react';
+import { useModalBackNavigation } from '../../hooks/useModalBackNavigation';
 
 export const ProductionWorksheetModal = ({ order, onClose }) => {
+  const isModalActive = Boolean(order);
+  const { handleSafeClose } = useModalBackNavigation({
+    isOpen: isModalActive,
+    onClose,
+    modalId: 'production_worksheet_modal'
+  });
+
   useEffect(() => {
+    if (!isModalActive) return;
+
     const handleKeyDown = (e) => {
       if (e.key === 'Escape') {
-        onClose?.();
+        handleSafeClose();
       }
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -25,7 +35,7 @@ export const ProductionWorksheetModal = ({ order, onClose }) => {
       window.removeEventListener('keydown', handleKeyDown);
       document.body.style.overflow = originalOverflow || 'unset';
     };
-  }, [onClose]);
+  }, [isModalActive, handleSafeClose]);
 
   if (!order) return null;
 
@@ -47,7 +57,7 @@ export const ProductionWorksheetModal = ({ order, onClose }) => {
   return (
     <div 
       className="modal-overlay" 
-      onClick={onClose}
+      onClick={handleSafeClose}
       style={{ zIndex: 99999, background: 'rgba(15, 23, 42, 0.85)', backdropFilter: 'blur(8px)' }}
     >
       <div 
@@ -124,7 +134,7 @@ export const ProductionWorksheetModal = ({ order, onClose }) => {
               <Download size={15} /> Download PDF
             </button>
             <button 
-              onClick={onClose}
+              onClick={handleSafeClose}
               style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer', marginLeft: '0.5rem' }}
               aria-label="Close"
             >

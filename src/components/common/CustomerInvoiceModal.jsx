@@ -25,6 +25,7 @@ import {
   formatFabricSpec,
   formatDimensionsSpec
 } from '../../utils/customerInvoicePdfGenerator';
+import { useModalBackNavigation } from '../../hooks/useModalBackNavigation';
 
 export const CustomerInvoiceModal = ({
   order,
@@ -35,10 +36,19 @@ export const CustomerInvoiceModal = ({
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
   const [hasCopiedId, setHasCopiedId] = useState(false);
 
+  const isModalActive = Boolean(isOpen && order);
+  const { handleSafeClose } = useModalBackNavigation({
+    isOpen: isModalActive,
+    onClose,
+    modalId: 'customer_invoice_modal'
+  });
+
   useEffect(() => {
+    if (!isModalActive) return;
+
     const handleKeyDown = (e) => {
       if (e.key === 'Escape') {
-        onClose?.();
+        handleSafeClose();
       }
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -49,7 +59,7 @@ export const CustomerInvoiceModal = ({
       window.removeEventListener('keydown', handleKeyDown);
       document.body.style.overflow = originalOverflow || 'unset';
     };
-  }, [onClose]);
+  }, [isModalActive, handleSafeClose]);
 
   if (!isOpen || !order) return null;
 
@@ -202,7 +212,7 @@ export const CustomerInvoiceModal = ({
   return (
     <div 
       className="modal-overlay customer-invoice-overlay" 
-      onClick={onClose}
+      onClick={handleSafeClose}
       style={{
         position: 'fixed',
         inset: 0,
@@ -374,7 +384,7 @@ export const CustomerInvoiceModal = ({
 
             <button
               type="button"
-              onClick={onClose}
+              onClick={handleSafeClose}
               className="no-print"
               style={{
                 background: 'none',

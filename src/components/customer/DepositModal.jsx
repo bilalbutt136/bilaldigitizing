@@ -18,6 +18,7 @@ import {
   ArrowLeft,
   ChevronRight
 } from 'lucide-react';
+import { useModalBackNavigation } from '../../hooks/useModalBackNavigation';
 
 // Authentic Branded Payment Method SVG Components (matching CheckoutModal)
 const CardBrandIcon = () => (
@@ -162,12 +163,33 @@ export const DepositModal = () => {
     },
   ];
 
+  const handleClose = () => {
+    setIsDepositModalOpen(false);
+    setTimeout(() => {
+      setBoltPaymentUrl(null);
+      setInvoiceId(null);
+      setIsPaid(false);
+      setIsInitializing(false);
+      setSelectedMethod(null);
+      setActiveView('select');
+      setSolanaAddress('');
+      setLightningInvoice('');
+      setHasCopied(false);
+    }, 300);
+  };
+
+  const { handleSafeClose } = useModalBackNavigation({
+    isOpen: isDepositModalOpen,
+    onClose: handleClose,
+    modalId: 'deposit_modal'
+  });
+
   useEffect(() => {
     if (!isDepositModalOpen) return;
 
     const handleKeyDown = (e) => {
       if (e.key === 'Escape') {
-        handleClose();
+        handleSafeClose();
       }
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -178,7 +200,7 @@ export const DepositModal = () => {
       window.removeEventListener('keydown', handleKeyDown);
       document.body.style.overflow = originalOverflow || 'unset';
     };
-  }, [isDepositModalOpen]);
+  }, [isDepositModalOpen, handleSafeClose]);
 
   // Real-time polling for deposit completion
   useEffect(() => {
@@ -208,21 +230,6 @@ export const DepositModal = () => {
       if (intervalId) clearInterval(intervalId);
     };
   }, [isDepositModalOpen, invoiceId, isPaid, depositAmount, fetchUserWalletBalance, authUser, setWalletBalance, showToast]);
-
-  const handleClose = () => {
-    setIsDepositModalOpen(false);
-    setTimeout(() => {
-      setBoltPaymentUrl(null);
-      setInvoiceId(null);
-      setIsPaid(false);
-      setIsInitializing(false);
-      setSelectedMethod(null);
-      setActiveView('select');
-      setSolanaAddress('');
-      setLightningInvoice('');
-      setHasCopied(false);
-    }, 300);
-  };
 
   const copyToClipboard = (text, label = 'Address') => {
     if (text) {
@@ -296,7 +303,7 @@ export const DepositModal = () => {
   return (
     <div 
       className="modal-overlay" 
-      onClick={handleClose}
+      onClick={handleSafeClose}
       style={{
         position: 'fixed',
         top: 0,
@@ -429,7 +436,7 @@ export const DepositModal = () => {
             )}
 
             <button 
-              onClick={handleClose}
+              onClick={handleSafeClose}
               style={{ 
                 background: 'rgba(255, 255, 255, 0.1)', border: '1px solid rgba(255, 255, 255, 0.15)', color: '#cbd5e1', 
                 width: '32px', height: '32px', borderRadius: '50%', 
@@ -470,7 +477,7 @@ export const DepositModal = () => {
                 Your funds have been deposited to your Studio Wallet balance.
               </p>
               <button 
-                onClick={handleClose}
+                onClick={handleSafeClose}
                 style={{ 
                   background: 'linear-gradient(135deg, #059669 0%, #047857 100%)', 
                   color: '#ffffff', 

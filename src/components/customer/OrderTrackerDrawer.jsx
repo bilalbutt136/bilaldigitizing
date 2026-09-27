@@ -6,6 +6,7 @@ import { ArtworkLightboxModal } from '../common/ArtworkLightboxModal';
 import { ProductionWorksheetModal } from '../common/ProductionWorksheetModal';
 import { PdfPreviewModal } from '../common/PdfPreviewModal';
 import { triggerFileDownload, downloadFileDirectly, openPdfInNewTab, openFileInNewTab } from '../../utils/fileDownloader';
+import { useModalBackNavigation } from '../../hooks/useModalBackNavigation';
 import { 
   X, 
   CheckCircle2, 
@@ -153,12 +154,24 @@ export const OrderTrackerDrawer = () => {
     }
   };
 
+  const { handleSafeClose: handleSafeCloseDrawer } = useModalBackNavigation({
+    isOpen: Boolean(selectedOrderForDrawer),
+    onClose: handleCloseDrawer,
+    modalId: 'order_tracker_drawer'
+  });
+
+  const { handleSafeClose: handleSafeCloseCancelModal } = useModalBackNavigation({
+    isOpen: isCancelModalOpen,
+    onClose: () => setIsCancelModalOpen(false),
+    modalId: 'order_cancel_modal'
+  });
+
   React.useEffect(() => {
     if (!selectedOrderForDrawer) return;
 
     const handleKeyDown = (e) => {
       if (e.key === 'Escape') {
-        handleCloseDrawer();
+        handleSafeCloseDrawer();
       }
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -169,7 +182,7 @@ export const OrderTrackerDrawer = () => {
       window.removeEventListener('keydown', handleKeyDown);
       document.body.style.overflow = originalOverflow || 'unset';
     };
-  }, [selectedOrderForDrawer]);
+  }, [selectedOrderForDrawer, handleSafeCloseDrawer]);
 
   // ── Derive order data BEFORE any early return so hook count stays constant ──
   // Always resolve live reactive order state from global orders array
@@ -277,7 +290,7 @@ export const OrderTrackerDrawer = () => {
     return (
       <div 
         className="order-tracker-drawer-backdrop" 
-        onClick={handleCloseDrawer}
+        onClick={handleSafeCloseDrawer}
         style={{
           position: 'fixed',
           top: 0,
@@ -852,7 +865,7 @@ export const OrderTrackerDrawer = () => {
     <>
       <div 
         className={isMobileLayout ? "mobile-fullscreen-modal" : "modal-overlay"}
-        onClick={handleCloseDrawer}
+        onClick={handleSafeCloseDrawer}
       style={{ 
         zIndex: 99990, 
         background: isMobileLayout ? (isDark ? 'var(--color-background, #090d16)' : '#ffffff') : 'rgba(11, 19, 41, 0.85)', 
@@ -903,7 +916,7 @@ export const OrderTrackerDrawer = () => {
             {isMobileLayout && (
               <button
                 type="button"
-                onClick={handleCloseDrawer}
+                onClick={handleSafeCloseDrawer}
                 style={{
                   background: 'rgba(255, 255, 255, 0.12)',
                   border: 'none',
@@ -975,7 +988,7 @@ export const OrderTrackerDrawer = () => {
 
           <button 
             type="button"
-            onClick={handleCloseDrawer}
+            onClick={handleSafeCloseDrawer}
             style={{ 
               background: 'rgba(255, 255, 255, 0.08)', 
               border: 'none', 
@@ -2546,7 +2559,7 @@ export const OrderTrackerDrawer = () => {
 
             <button
               type="button"
-              onClick={handleCloseDrawer}
+              onClick={handleSafeCloseDrawer}
               className="btn btn-outline btn-sm"
               style={{ padding: '0.5rem 1rem', fontSize: '0.82rem', fontWeight: 700 }}
             >
@@ -2687,7 +2700,7 @@ export const OrderTrackerDrawer = () => {
               </div>
               <button
                 type="button"
-                onClick={() => { if (!isSubmittingCancel) setIsCancelModalOpen(false); }}
+                onClick={() => { if (!isSubmittingCancel) handleSafeCloseCancelModal(); }}
                 style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: '#94a3b8' }}
               >
                 <X size={20} />
@@ -2739,7 +2752,7 @@ export const OrderTrackerDrawer = () => {
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '0.5rem' }}>
                 <button
                   type="button"
-                  onClick={() => setIsCancelModalOpen(false)}
+                  onClick={handleSafeCloseCancelModal}
                   disabled={isSubmittingCancel}
                   className="btn btn-outline btn-sm"
                   style={{ fontWeight: 700 }}

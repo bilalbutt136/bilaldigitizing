@@ -43,6 +43,7 @@ import {
 } from '../../utils/promoUtils';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import { GoogleCustomSignInButton } from '../auth/GoogleCustomSignInButton';
+import { useModalBackNavigation } from '../../hooks/useModalBackNavigation';
 
 const GOOGLE_CLIENT_ID = (process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '421520521310-7appibeh1m7cdd90iid17lsq8thlq2oc.apps.googleusercontent.com').trim();
 
@@ -303,6 +304,23 @@ export const OrderWizardModal = () => {
   } = useAppState();
 
   const isDark = theme === 'dark';
+
+  const { handleSafeClose } = useModalBackNavigation({
+    isOpen: isOrderWizardOpen,
+    onClose: () => setIsOrderWizardOpen(false),
+    modalId: 'order_wizard_modal'
+  });
+
+  useEffect(() => {
+    if (!isOrderWizardOpen) return;
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        handleSafeClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOrderWizardOpen, handleSafeClose]);
 
   // Wizard Step State (1 to 5)
   const [step, setStep] = useState(1);
@@ -881,7 +899,7 @@ export const OrderWizardModal = () => {
       <div 
         className="modal-overlay order-wizard-overlay"
         onClick={(e) => {
-          if (e.target === e.currentTarget) setIsOrderWizardOpen(false);
+          if (e.target === e.currentTarget) handleSafeClose();
         }}
         style={{
           position: 'fixed',
@@ -959,7 +977,7 @@ export const OrderWizardModal = () => {
 
               <button
                 type="button"
-                onClick={() => setIsOrderWizardOpen(false)}
+                onClick={handleSafeClose}
                 style={{
                   background: 'var(--color-subtle, #f1f5f9)',
                   border: 'none',

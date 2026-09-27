@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import { GoogleCustomSignInButton } from './GoogleCustomSignInButton';
+import { useModalBackNavigation } from '../../hooks/useModalBackNavigation';
 
 const GOOGLE_CLIENT_ID = (process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '421520521310-7appibeh1m7cdd90iid17lsq8thlq2oc.apps.googleusercontent.com').trim();
 
@@ -119,6 +120,13 @@ export const AuthModal = ({ isStandalonePage = false, initialMode = null }) => {
     }
   };
 
+  const isModalActive = !isStandalonePage && Boolean(isAuthModalOpen);
+  const { handleSafeClose } = useModalBackNavigation({
+    isOpen: isModalActive,
+    onClose: handleClose,
+    modalId: 'auth_modal'
+  });
+
   React.useEffect(() => {
     setAuthError('');
     setIsLoading(false);
@@ -134,7 +142,7 @@ export const AuthModal = ({ isStandalonePage = false, initialMode = null }) => {
         } else if (errorModalText) {
           setErrorModalText(null);
         } else {
-          handleClose();
+          handleSafeClose();
         }
       }
     };
@@ -396,7 +404,7 @@ export const AuthModal = ({ isStandalonePage = false, initialMode = null }) => {
     <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
       <div 
         className={isStandalonePage ? "auth-standalone-page" : "modal-overlay"} 
-        onClick={isStandalonePage ? undefined : handleClose}
+        onClick={isStandalonePage ? undefined : handleSafeClose}
         style={isStandalonePage ? {
           minHeight: 'calc(100vh - 120px)',
           display: 'flex',
@@ -528,7 +536,7 @@ export const AuthModal = ({ isStandalonePage = false, initialMode = null }) => {
         {/* Floating Close Button */}
         <button 
           type="button"
-          onClick={handleClose}
+          onClick={handleSafeClose}
           style={{ 
             position: 'absolute',
             top: '1.25rem',

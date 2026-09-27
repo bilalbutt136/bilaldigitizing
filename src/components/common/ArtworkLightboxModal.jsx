@@ -4,13 +4,24 @@ import React, { useState, useEffect } from 'react';
 import { formatOrderId } from '../../context/StateContext';
 import { downloadFileDirectly, openPdfInNewTab, openFileInNewTab } from '../../utils/fileDownloader';
 import { X, Download, Scissors, ExternalLink, Loader2 } from 'lucide-react';
+import { useModalBackNavigation } from '../../hooks/useModalBackNavigation';
 
 export const ArtworkLightboxModal = ({ order, onClose }) => {
   const [isDownloading, setIsDownloading] = useState(false);
+
+  const isModalActive = Boolean(order);
+  const { handleSafeClose } = useModalBackNavigation({
+    isOpen: isModalActive,
+    onClose,
+    modalId: 'artwork_lightbox_modal'
+  });
+
   useEffect(() => {
+    if (!isModalActive) return;
+
     const handleKeyDown = (e) => {
       if (e.key === 'Escape') {
-        onClose?.();
+        handleSafeClose();
       }
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -21,7 +32,7 @@ export const ArtworkLightboxModal = ({ order, onClose }) => {
       window.removeEventListener('keydown', handleKeyDown);
       document.body.style.overflow = originalOverflow || 'unset';
     };
-  }, [onClose]);
+  }, [isModalActive, handleSafeClose]);
 
   if (!order) return null;
 
@@ -86,7 +97,7 @@ export const ArtworkLightboxModal = ({ order, onClose }) => {
   return (
     <div 
       className="modal-overlay" 
-      onClick={onClose}
+      onClick={handleSafeClose}
       style={{ zIndex: 99999, background: 'rgba(15, 23, 42, 0.85)', backdropFilter: 'blur(8px)' }}
     >
       <div 
@@ -116,7 +127,7 @@ export const ArtworkLightboxModal = ({ order, onClose }) => {
           </div>
 
           <button 
-            onClick={onClose}
+            onClick={handleSafeClose}
             style={{ background: 'var(--color-subtle)', border: 'none', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--color-text-primary)', cursor: 'pointer' }}
             aria-label="Close"
           >

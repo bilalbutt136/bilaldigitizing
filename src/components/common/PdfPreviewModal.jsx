@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState, useRef } from 'react';
 import { openPdfInNewTab, downloadFileDirectly } from '../../utils/fileDownloader';
+import { useModalBackNavigation } from '../../hooks/useModalBackNavigation';
 import { 
   X, 
   Download, 
@@ -9,7 +10,8 @@ import {
   Printer, 
   FileText, 
   Loader2, 
-  AlertCircle 
+  AlertCircle,
+  ArrowLeft
 } from 'lucide-react';
 
 export const PdfPreviewModal = ({ 
@@ -23,10 +25,21 @@ export const PdfPreviewModal = ({
   const [hasError, setHasError] = useState(false);
   const iframeRef = useRef(null);
 
+  const isModalActive = Boolean(isOpen && fileUrl);
+
+  // Bind to mobile hardware back navigation so pressing Android back closes PDF without exiting app
+  const { handleSafeClose } = useModalBackNavigation({
+    isOpen: isModalActive,
+    onClose,
+    modalId: 'pdf_preview_modal'
+  });
+
   useEffect(() => {
+    if (!isModalActive) return;
+
     const handleKeyDown = (e) => {
       if (e.key === 'Escape') {
-        onClose?.();
+        handleSafeClose();
       }
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -37,9 +50,9 @@ export const PdfPreviewModal = ({
       window.removeEventListener('keydown', handleKeyDown);
       document.body.style.overflow = originalOverflow || 'unset';
     };
-  }, [onClose]);
+  }, [isModalActive, handleSafeClose]);
 
-  if (!isOpen || !fileUrl) return null;
+  if (!isModalActive) return null;
 
   const cleanName = fileName || 'Document.pdf';
   const previewProxyUrl = `/api/download?url=${encodeURIComponent(fileUrl)}&filename=${encodeURIComponent(cleanName)}&preview=true`;
@@ -68,7 +81,7 @@ export const PdfPreviewModal = ({
   return (
     <div 
       className="modal-overlay pdf-preview-overlay"
-      onClick={onClose}
+      onClick={handleSafeClose}
       style={{
         position: 'fixed',
         top: 0,
@@ -102,17 +115,47 @@ export const PdfPreviewModal = ({
         }}
       >
         {/* Modal Top Header Bar */}
-        <div style={{
-          padding: '0.85rem 1.25rem',
-          background: '#090d16',
-          color: '#ffffff',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          borderBottom: '1px solid #1e293b',
-          flexShrink: 0
-        }}>
+        <div 
+          className="pdf-preview-header"
+          style={{
+            padding: '0.85rem 1.25rem',
+            background: '#090d16',
+            color: '#ffffff',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            borderBottom: '1px solid #1e293b',
+            flexShrink: 0,
+            gap: '0.75rem'
+          }}
+        >
+          {/* Left zone: Mobile Back button & File Info */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', minWidth: 0 }}>
+            {/* Prominent Back Button (Critical on mobile navigation) */}
+            <button
+              type="button"
+              onClick={handleSafeClose}
+              className="pdf-preview-back-btn"
+              title="Return to Order Details (Back)"
+              style={{
+                background: '#1e293b',
+                color: '#f8fafc',
+                border: '1px solid #334155',
+                borderRadius: '8px',
+                padding: '0.45rem 0.65rem',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.35rem',
+                fontSize: '0.82rem',
+                fontWeight: 700,
+                flexShrink: 0
+              }}
+            >
+              <ArrowLeft size={16} />
+              <span>Back</span>
+            </button>
+
             <div style={{
               background: '#ea580c',
               color: '#ffffff',
@@ -120,34 +163,38 @@ export const PdfPreviewModal = ({
               borderRadius: '8px',
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'center'
-            }}>
+              justifyContent: 'center',
+              flexShrink: 0
+            }} className="pdf-preview-icon-box">
               <FileText size={18} />
             </div>
+
             <div style={{ minWidth: 0 }}>
               <div style={{
-                fontSize: '0.95rem',
+                fontSize: '0.92rem',
                 fontWeight: 700,
                 color: '#f8fafc',
                 whiteSpace: 'nowrap',
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
-                maxWidth: '450px'
+                maxWidth: '340px'
               }}>
                 {cleanName}
               </div>
-              <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
+              <div style={{ fontSize: '0.72rem', color: '#94a3b8', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                 {fileSize || 'PDF Document'} • Interactive Document Preview
               </div>
             </div>
           </div>
 
-          {/* Action Toolbar */}
+          {/* Right Action Toolbar */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexShrink: 0 }}>
+            {/* Desktop Full Buttons */}
             <button
               type="button"
               onClick={handleOpenExternal}
               title="Open in Chrome / Browser Tab"
+              className="pdf-preview-desktop-btn"
               style={{
                 background: '#1e293b',
                 color: '#f1f5f9',
@@ -169,6 +216,7 @@ export const PdfPreviewModal = ({
               type="button"
               onClick={handlePrint}
               title="Print Document"
+              className="pdf-preview-desktop-btn"
               style={{
                 background: '#1e293b',
                 color: '#f1f5f9',
@@ -186,6 +234,27 @@ export const PdfPreviewModal = ({
               <Printer size={14} /> Print
             </button>
 
+            {/* Mobile Icon Button for External Link */}
+            <button
+              type="button"
+              onClick={handleOpenExternal}
+              title="Open in Browser"
+              className="pdf-preview-mobile-btn"
+              style={{
+                background: '#1e293b',
+                color: '#f1f5f9',
+                border: '1px solid #334155',
+                borderRadius: '8px',
+                padding: '0.45rem',
+                cursor: 'pointer',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}
+            >
+              <ExternalLink size={16} />
+            </button>
+
+            {/* Download Button (Adaptive text on desktop, icon + label on mobile) */}
             <button
               type="button"
               onClick={handleDownload}
@@ -205,12 +274,14 @@ export const PdfPreviewModal = ({
                 boxShadow: '0 2px 6px rgba(234, 88, 12, 0.3)'
               }}
             >
-              <Download size={14} /> Download
+              <Download size={14} />
+              <span className="pdf-preview-btn-label">Download</span>
             </button>
 
+            {/* Close Button */}
             <button
               type="button"
-              onClick={onClose}
+              onClick={handleSafeClose}
               title="Close (Esc)"
               style={{
                 background: 'transparent',
@@ -222,7 +293,7 @@ export const PdfPreviewModal = ({
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                marginLeft: '0.35rem'
+                marginLeft: '0.2rem'
               }}
             >
               <X size={20} />

@@ -14,6 +14,7 @@ import {
   FileCheck
 } from 'lucide-react';
 import { uploadFileToCloudinaryFull } from '../../services/supabaseService';
+import { useModalBackNavigation } from '../../hooks/useModalBackNavigation';
 
 export const StoreOrderModal = () => {
   const { 
@@ -43,12 +44,19 @@ export const StoreOrderModal = () => {
   const [uploadedArtwork, setUploadedArtwork] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const isModalActive = Boolean(isStoreOrderModalOpen && selectedStoreItem);
+  const { handleSafeClose } = useModalBackNavigation({
+    isOpen: isModalActive,
+    onClose: () => setIsStoreOrderModalOpen(false),
+    modalId: 'store_order_modal'
+  });
+
   useEffect(() => {
-    if (!isStoreOrderModalOpen) return;
+    if (!isModalActive) return;
 
     const handleKeyDown = (e) => {
       if (e.key === 'Escape') {
-        setIsStoreOrderModalOpen(false);
+        handleSafeClose();
       }
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -59,7 +67,7 @@ export const StoreOrderModal = () => {
       window.removeEventListener('keydown', handleKeyDown);
       document.body.style.overflow = originalOverflow || 'unset';
     };
-  }, [isStoreOrderModalOpen, setIsStoreOrderModalOpen]);
+  }, [isModalActive, handleSafeClose]);
 
   // Initialize modal fields whenever selectedStoreItem changes
   useEffect(() => {
@@ -217,7 +225,7 @@ export const StoreOrderModal = () => {
   return (
     <div 
       className="modal-overlay"
-      onClick={() => setIsStoreOrderModalOpen(false)}
+      onClick={handleSafeClose}
       style={{
         position: 'fixed',
         top: 0,
@@ -273,7 +281,7 @@ export const StoreOrderModal = () => {
           </div>
 
           <button 
-            onClick={() => setIsStoreOrderModalOpen(false)}
+            onClick={handleSafeClose}
             style={{
               background: 'rgba(255, 255, 255, 0.1)',
               border: 'none',
