@@ -330,30 +330,46 @@ export const OrderTrackerDrawer = () => {
   );
   const requiredSpecialty = isVectorOrder ? 'Vector Artist' : 'Embroidery Digitizer';
 
+  // Parse order notes object (handles JSON string or existing object)
+  let parsedNotes = {};
+  if (ord.notes && typeof ord.notes === 'string' && ord.notes.trim().startsWith('{')) {
+    try {
+      parsedNotes = JSON.parse(ord.notes);
+    } catch {}
+  } else if (ord.notes && typeof ord.notes === 'object') {
+    parsedNotes = ord.notes;
+  }
+
   // Collect all uploaded artwork / logo files across all placements and attachments
-  let notesFiles = [];
-  try {
-    if (ord.notes && typeof ord.notes === 'string' && ord.notes.trim().startsWith('{')) {
-      const parsed = JSON.parse(ord.notes);
-      notesFiles = parsed.uploadedFiles || parsed.placementItems?.[0]?.files || [];
-    }
-  } catch {}
+  const notesFiles = [
+    ...(Array.isArray(parsedNotes.uploadedFiles) ? parsedNotes.uploadedFiles : []),
+    ...(Array.isArray(parsedNotes.clientUploadedFiles) ? parsedNotes.clientUploadedFiles : []),
+    ...(Array.isArray(parsedNotes.placementItems?.[0]?.files) ? parsedNotes.placementItems[0].files : [])
+  ];
 
   const clientArtworkFiles = [
     ...(Array.isArray(ord.uploadedFiles) ? ord.uploadedFiles : []),
-    ...(Array.isArray(notesFiles) ? notesFiles : []),
-    ...(Array.isArray(ord.placementItems) ? ord.placementItems.flatMap(p => (Array.isArray(p?.files) ? p.files : []).map(f => ({ ...f, placementName: p?.placement || p?.name }))) : []),
+    ...(Array.isArray(ord.clientUploadedFiles) ? ord.clientUploadedFiles : []),
+    ...(Array.isArray(ord.order_files) ? ord.order_files.filter(f => f && f.file_type === 'client_artwork') : []),
+    ...(Array.isArray(ord.orderFiles) ? ord.orderFiles.filter(f => f && f.file_type === 'client_artwork') : []),
+    ...notesFiles,
+    ...(Array.isArray(ord.placementItems) ? ord.placementItems.flatMap(p => (Array.isArray(p?.files) ? p.files : []).map(f => ({ ...f, placementName: p?.placement || p?.placementType || p?.name }))) : []),
+    ...(Array.isArray(parsedNotes.placementItems) ? parsedNotes.placementItems.flatMap(p => (Array.isArray(p?.files) ? p.files : []).map(f => ({ ...f, placementName: p?.placement || p?.placementType || p?.name }))) : []),
     ...(Array.isArray(ord.patchItems) ? ord.patchItems.flatMap(p => (Array.isArray(p?.files) ? p.files : []).map(f => ({ ...f, placementName: p?.tier || p?.name }))) : []),
     ...(Array.isArray(ord.vectorItems) ? ord.vectorItems.flatMap(v => (Array.isArray(v?.files) ? v.files : []).map(f => ({ ...f, placementName: v?.name }))) : [])
-  ].filter(f => f && (f.url || f.public_url || f.previewUrl));
+  ].filter(f => f && (f.url || f.public_url || f.file_url || f.previewUrl));
 
   const uniqueArtworkFiles = [];
   const seenArtUrls = new Set();
   for (const f of clientArtworkFiles) {
-    const key = f.url || f.public_url || f.name;
+    const key = f.url || f.public_url || f.file_url || f.file_name || f.name;
     if (key && !seenArtUrls.has(key)) {
       seenArtUrls.add(key);
-      uniqueArtworkFiles.push(f);
+      uniqueArtworkFiles.push({
+        ...f,
+        name: f.name || f.file_name || f.fileName || 'Artwork File',
+        url: f.url || f.public_url || f.file_url
+      });
     }
   }
 
@@ -510,16 +526,8 @@ export const OrderTrackerDrawer = () => {
   const userFormats = ord.requestedFormats || ['dst', 'pes', 'emb'];
   const allDownloadFormats = Array.from(new Set([...userFormats, 'pdf']));
 
-  // Comprehensive deliverable aggregation: combine files from uploadedMachineFiles, workerFiles, order_files, deliveries, outputFileUrl, etc.
-  let notesDeliveries = [];
-  let notesMachineFiles = [];
-  try {
-    if (ord.notes && typeof ord.notes === 'string' && ord.notes.trim().startsWith('{')) {
-      const parsedNotes = JSON.parse(ord.notes);
-      notesDeliveries = parsedNotes.deliveries || [];
-      notesMachineFiles = parsedNotes.uploadedMachineFiles || [];
-    }
-  } catch {}
+  const notesDeliveries = parsedNotes.deliveries || [];
+  const notesMachineFiles = parsedNotes.uploadedMachineFiles || [];
 
   const rawMachineFilesList = [
     ...(Array.isArray(ord.uploadedMachineFiles) ? ord.uploadedMachineFiles : []),
@@ -1810,21 +1818,21 @@ export const OrderTrackerDrawer = () => {
                   <div style={{ background: 'var(--bg-surface)', padding: '0.6rem 0.75rem', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
                     <div style={{ fontSize: '0.65rem', fontWeight: 800, textTransform: 'uppercase', color: 'var(--text-muted)' }}>Target Fabric</div>
                     <div style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--text-main)', marginTop: '0.15rem' }}>
-                      {formatFabric(ord.fabric || ord.fabricType)}
+                      {formatFabric(ord.fabric || ord.fabricType || ord.fabric_type || ord.placementItems?.[0]?.fabric || parsedNotes.placementItems?.[0]?.fabric)}
                     </div>
                   </div>
 
                   <div style={{ background: 'var(--bg-surface)', padding: '0.6rem 0.75rem', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
                     <div style={{ fontSize: '0.65rem', fontWeight: 800, textTransform: 'uppercase', color: 'var(--text-muted)' }}>Dimensions</div>
                     <div style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--text-main)', marginTop: '0.15rem' }}>
-                      {formatDimensions(ord.dimensions || ord.size)}
+                      {formatDimensions(ord.dimensions || ord.size || ord.placementItems?.[0]?.dimensions || parsedNotes.placementItems?.[0]?.dimensions)}
                     </div>
                   </div>
 
                   <div style={{ background: 'var(--bg-surface)', padding: '0.6rem 0.75rem', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
                     <div style={{ fontSize: '0.65rem', fontWeight: 800, textTransform: 'uppercase', color: 'var(--text-muted)' }}>Placement</div>
                     <div style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--text-main)', marginTop: '0.15rem' }}>
-                      {ord.placement || ord.placementItems?.[0]?.placement || 'Standard Placement'}
+                      {ord.placement || ord.placementType || ord.placement_type || ord.placementItems?.[0]?.placementType || ord.placementItems?.[0]?.placement || parsedNotes.placementItems?.[0]?.placementType || parsedNotes.placementItems?.[0]?.placement || 'Left Chest / Polo'}
                     </div>
                   </div>
                 </div>
@@ -1835,7 +1843,7 @@ export const OrderTrackerDrawer = () => {
                     📝 Customer Notes & Instructions:
                   </div>
                   <div style={{ fontSize: '0.85rem', color: 'var(--text-main)', lineHeight: 1.45, whiteSpace: 'pre-wrap' }}>
-                    {ord.notes || 'Standard high-density stitch pathing with underlay and pull compensation applied for commercial production.'}
+                    {parsedNotes.notes || parsedNotes.customerNotes || (typeof ord.notes === 'string' && !ord.notes.trim().startsWith('{') ? ord.notes : null) || ord.description || 'Standard high-density stitch pathing with underlay and pull compensation applied for commercial production.'}
                   </div>
                 </div>
               </div>
@@ -1849,9 +1857,9 @@ export const OrderTrackerDrawer = () => {
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '0.65rem' }}>
                   {uniqueArtworkFiles.map((artFile, aIdx) => {
-                    const fileExt = (artFile.format || artFile.name?.split('.').pop() || 'png').toUpperCase();
-                    const artUrl = artFile.url || artFile.public_url;
-                    const artName = artFile.name || `artwork_${aIdx + 1}.${fileExt.toLowerCase()}`;
+                    const fileExt = (artFile.format || artFile.file_format || artFile.name?.split('.').pop() || artFile.file_name?.split('.').pop() || 'png').toUpperCase();
+                    const artUrl = artFile.url || artFile.public_url || artFile.file_url;
+                    const artName = artFile.name || artFile.file_name || `artwork_${aIdx + 1}.${fileExt.toLowerCase()}`;
                     return (
                       <div key={aIdx} style={{ background: 'var(--bg-surface)', padding: '0.6rem 0.75rem', borderRadius: '8px', border: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem' }}>
                         <div style={{ minWidth: 0, flex: 1 }}>
