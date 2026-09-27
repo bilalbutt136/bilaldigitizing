@@ -11,6 +11,7 @@ export const RESEND_VERIFIED_FALLBACK_EMAIL = 'bilalsadiq612@gmail.com';
  */
 export async function resolveAdminNotificationConfig() {
   let adminEmail = '';
+  let adminEmails = [];
   let notificationPrefs = {
     orderAlerts: true,
     messageAlerts: true,
@@ -23,19 +24,64 @@ export async function resolveAdminNotificationConfig() {
     const { data: configRows } = await supabase
       .from('site_config')
       .select('key, value')
-      .in('key', ['admin_notification_email', 'notification_settings', 'contactInfo']);
+      .in('key', ['admin_notification_email', 'admin_notification_emails', 'notification_settings', 'contactInfo', 'site_settings']);
+
+    const collectedEmails = [];
 
     if (Array.isArray(configRows)) {
       configRows.forEach(row => {
+        if (row.key === 'admin_notification_emails' && row.value) {
+          try {
+            const parsed = typeof row.value === 'string' ? JSON.parse(row.value) : row.value;
+            if (Array.isArray(parsed)) {
+              parsed.forEach(e => {
+                if (typeof e === 'string' && EMAIL_REGEX.test(e.trim())) {
+                  collectedEmails.push(e.trim().toLowerCase());
+                }
+              });
+            } else if (typeof row.value === 'string') {
+              row.value.split(/[\s,]+/).forEach(e => {
+                if (EMAIL_REGEX.test(e.trim())) {
+                  collectedEmails.push(e.trim().toLowerCase());
+                }
+              });
+            }
+          } catch {
+            if (typeof row.value === 'string') {
+              row.value.split(/[\s,]+/).forEach(e => {
+                if (EMAIL_REGEX.test(e.trim())) {
+                  collectedEmails.push(e.trim().toLowerCase());
+                }
+              });
+            }
+          }
+        }
+
         if (row.key === 'admin_notification_email' && row.value) {
           const val = String(row.value).trim().replace(/^["']|["']$/g, '');
-          if (EMAIL_REGEX.test(val)) adminEmail = val;
+          val.split(/[\s,]+/).forEach(e => {
+            if (EMAIL_REGEX.test(e.trim())) {
+              const clean = e.trim().toLowerCase();
+              if (!adminEmail) adminEmail = clean;
+              collectedEmails.push(clean);
+            }
+          });
         }
+
         if (row.key === 'notification_settings' && row.value) {
           try {
             const parsed = typeof row.value === 'string' ? JSON.parse(row.value) : row.value;
             if (parsed?.adminEmail && EMAIL_REGEX.test(parsed.adminEmail)) {
-              adminEmail = parsed.adminEmail;
+              const clean = parsed.adminEmail.trim().toLowerCase();
+              if (!adminEmail) adminEmail = clean;
+              collectedEmails.push(clean);
+            }
+            if (Array.isArray(parsed?.adminEmails)) {
+              parsed.adminEmails.forEach(e => {
+                if (typeof e === 'string' && EMAIL_REGEX.test(e.trim())) {
+                  collectedEmails.push(e.trim().toLowerCase());
+                }
+              });
             }
             if (parsed?.orderAlerts !== undefined) notificationPrefs.orderAlerts = Boolean(parsed.orderAlerts);
             if (parsed?.messageAlerts !== undefined) notificationPrefs.messageAlerts = Boolean(parsed.messageAlerts);
@@ -43,25 +89,59 @@ export async function resolveAdminNotificationConfig() {
             if (parsed?.deliveryAlerts !== undefined) notificationPrefs.deliveryAlerts = Boolean(parsed.deliveryAlerts);
           } catch {}
         }
+
+        if (row.key === 'site_settings' && row.value) {
+          try {
+            const parsed = typeof row.value === 'string' ? JSON.parse(row.value) : row.value;
+            if (Array.isArray(parsed?.admin_notification_emails)) {
+              parsed.admin_notification_emails.forEach(e => {
+                if (typeof e === 'string' && EMAIL_REGEX.test(e.trim())) {
+                  collectedEmails.push(e.trim().toLowerCase());
+                }
+              });
+            }
+            if (Array.isArray(parsed?.adminEmails)) {
+              parsed.adminEmails.forEach(e => {
+                if (typeof e === 'string' && EMAIL_REGEX.test(e.trim())) {
+                  collectedEmails.push(e.trim().toLowerCase());
+                }
+              });
+            }
+            if (parsed?.admin_notification_email && EMAIL_REGEX.test(parsed.admin_notification_email)) {
+              collectedEmails.push(parsed.admin_notification_email.trim().toLowerCase());
+            }
+          } catch {}
+        }
+
         if (!adminEmail && row.key === 'contactInfo' && row.value) {
           try {
             const parsed = typeof row.value === 'string' ? JSON.parse(row.value) : row.value;
             if (parsed?.email && EMAIL_REGEX.test(parsed.email)) {
-              adminEmail = parsed.email;
+              adminEmail = parsed.email.trim().toLowerCase();
+              collectedEmails.push(adminEmail);
             }
           } catch {}
         }
       });
     }
+
+    adminEmails = Array.from(new Set(collectedEmails));
   } catch (err) {
     console.warn('[emailService] Error fetching admin notification config:', err?.message);
   }
 
   const fallbackAdmin = process.env.MASTER_ADMIN_EMAIL || process.env.ADMIN_EMAIL || process.env.NEXT_PUBLIC_ADMIN_EMAIL || RESEND_VERIFIED_FALLBACK_EMAIL;
-  const finalAdminEmail = (adminEmail || fallbackAdmin).toLowerCase().trim();
+  const finalAdminEmail = (adminEmail || adminEmails[0] || fallbackAdmin).toLowerCase().trim();
+
+  if (adminEmails.length === 0) {
+    adminEmails = [finalAdminEmail];
+  } else if (!adminEmails.includes(finalAdminEmail)) {
+    adminEmails.unshift(finalAdminEmail);
+  }
 
   return {
     adminEmail: finalAdminEmail,
+    adminEmails,
     notificationPrefs
   };
 }
@@ -75,6 +155,7 @@ export async function sendNotificationEmail(params = {}) {
     orderId,
     clientEmail,
     adminEmail: explicitAdminEmail,
+    adminEmails: explicitAdminEmails,
     clientName,
     serviceName,
     amount,
@@ -82,6 +163,7 @@ export async function sendNotificationEmail(params = {}) {
     senderName,
     recipientEmail,
     revisionNotes,
+    deliveryMessage,
     channel,
     attachments = [],
     orderDetails = {}
@@ -95,9 +177,24 @@ export async function sendNotificationEmail(params = {}) {
 
   try {
     const resend = new Resend(resendApiKey);
-    const { adminEmail: dynamicAdminEmail, notificationPrefs } = await resolveAdminNotificationConfig();
+    const { adminEmail: dynamicAdminEmail, adminEmails: dynamicAdminEmails, notificationPrefs } = await resolveAdminNotificationConfig();
     
-    const targetAdminEmail = (explicitAdminEmail || dynamicAdminEmail || RESEND_VERIFIED_FALLBACK_EMAIL).toLowerCase().trim();
+    let targetAdminEmails = [];
+    if (Array.isArray(explicitAdminEmails) && explicitAdminEmails.length > 0) {
+      targetAdminEmails = explicitAdminEmails.filter(e => typeof e === 'string' && EMAIL_REGEX.test(e.trim())).map(e => e.trim().toLowerCase());
+    } else if (typeof explicitAdminEmail === 'string' && explicitAdminEmail.trim()) {
+      const parts = explicitAdminEmail.split(/[\s,]+/).filter(e => EMAIL_REGEX.test(e.trim())).map(e => e.trim().toLowerCase());
+      if (parts.length > 0) targetAdminEmails = parts;
+    }
+
+    if (targetAdminEmails.length === 0) {
+      targetAdminEmails = Array.isArray(dynamicAdminEmails) && dynamicAdminEmails.length > 0
+        ? dynamicAdminEmails
+        : [dynamicAdminEmail || RESEND_VERIFIED_FALLBACK_EMAIL];
+    }
+
+    targetAdminEmails = Array.from(new Set(targetAdminEmails.map(e => e.toLowerCase().trim())));
+    const targetAdminEmail = targetAdminEmails[0] || (dynamicAdminEmail || RESEND_VERIFIED_FALLBACK_EMAIL).toLowerCase().trim();
     const targetClientEmail = (clientEmail || recipientEmail || '').toLowerCase().trim();
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://bdigitizing.com';
     const configuredFrom = process.env.RESEND_FROM_ADDRESS || 'BDigitizing <support@bdigitizing.com>';
@@ -203,10 +300,7 @@ export async function sendNotificationEmail(params = {}) {
         </div>
       ` : '';
 
-      dispatchResults.adminMessage = await executeSend({
-        to: targetAdminEmail,
-        subject: `💬 New Customer Message: ${senderDisplayName} (${channelTitle})`,
-        html: `
+      const messageHtml = `
           <div style="max-width: 600px; margin: 0 auto; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 12px; font-family: 'Segoe UI', Arial, sans-serif; box-shadow: 0 4px 12px rgba(0,0,0,0.05); overflow: hidden;">
             ${emailHeader('CUSTOMER MESSAGE ALERT', `${channelTitle}`, '#3b82f6')}
             <div style="padding: 24px 28px; color: #1e293b; line-height: 1.6;">
@@ -231,8 +325,18 @@ export async function sendNotificationEmail(params = {}) {
             </div>
             ${emailFooter}
           </div>
-        `
-      });
+        `;
+
+      const adminPromises = targetAdminEmails.map(adminAddr =>
+        executeSend({
+          to: adminAddr,
+          subject: `💬 New Customer Message: ${senderDisplayName} (${channelTitle})`,
+          html: messageHtml
+        })
+      );
+      const adminResults = await Promise.all(adminPromises);
+      dispatchResults.adminMessage = adminResults[0];
+      dispatchResults.adminMessages = adminResults;
     }
   }
 
@@ -254,11 +358,7 @@ export async function sendNotificationEmail(params = {}) {
       const customInstructions = parsedNotes.notes || orderDetails?.instructions || 'Standard studio specifications';
       const orderPriceNumeric = parseFloat(amount || orderDetails?.price || 15).toFixed(2);
 
-      // Dispatch to Studio Administrator
-      dispatchResults.adminOrder = await executeSend({
-        to: targetAdminEmail,
-        subject: `🚨 New Order #${orderId || 'Direct'}: ${serviceName || 'Custom Digitizing'} ($${orderPriceNumeric})`,
-        html: `
+      const orderHtml = `
           <div style="max-width: 600px; margin: 0 auto; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 12px; font-family: 'Segoe UI', Arial, sans-serif; box-shadow: 0 4px 12px rgba(0,0,0,0.05); overflow: hidden;">
             ${emailHeader('NEW ORDER RECEIVED', `Order #${orderId || 'Direct'}`, '#ea580c')}
             <div style="padding: 24px 28px; color: #1e293b; line-height: 1.6;">
@@ -307,8 +407,19 @@ export async function sendNotificationEmail(params = {}) {
             </div>
             ${emailFooter}
           </div>
-        `
-      });
+        `;
+
+      // Dispatch to all configured Studio Administrators in parallel
+      const adminPromises = targetAdminEmails.map(adminAddr =>
+        executeSend({
+          to: adminAddr,
+          subject: `🚨 New Order #${orderId || 'Direct'}: ${serviceName || 'Custom Digitizing'} ($${orderPriceNumeric})`,
+          html: orderHtml
+        })
+      );
+      const adminResults = await Promise.all(adminPromises);
+      dispatchResults.adminOrder = adminResults[0];
+      dispatchResults.adminOrders = adminResults;
 
       // Dispatch Confirmation to Client (if email is valid)
       if (targetClientEmail && EMAIL_REGEX.test(targetClientEmail)) {
@@ -351,10 +462,7 @@ export async function sendNotificationEmail(params = {}) {
   // 3. ORDER REVISION REQUESTED
   else if (type === 'ORDER_REVISION') {
     if (notificationPrefs.revisionAlerts !== false) {
-      dispatchResults.adminRevision = await executeSend({
-        to: targetAdminEmail,
-        subject: `🔄 Revision Requested: Order #${orderId || ''}`,
-        html: `
+      const revisionHtml = `
           <div style="max-width: 600px; margin: 0 auto; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 12px; font-family: 'Segoe UI', Arial, sans-serif; box-shadow: 0 4px 12px rgba(0,0,0,0.05); overflow: hidden;">
             ${emailHeader('REVISION REQUESTED', `Order #${orderId}`, '#f59e0b')}
             <div style="padding: 24px 28px; color: #1e293b; line-height: 1.6;">
@@ -373,8 +481,18 @@ export async function sendNotificationEmail(params = {}) {
             </div>
             ${emailFooter}
           </div>
-        `
-      });
+        `;
+
+      const adminPromises = targetAdminEmails.map(adminAddr =>
+        executeSend({
+          to: adminAddr,
+          subject: `🔄 Revision Requested: Order #${orderId || ''}`,
+          html: revisionHtml
+        })
+      );
+      const adminResults = await Promise.all(adminPromises);
+      dispatchResults.adminRevision = adminResults[0];
+      dispatchResults.adminRevisions = adminResults;
     }
   }
 
@@ -425,38 +543,45 @@ export async function sendNotificationEmail(params = {}) {
 
   // 5. TEST EMAIL (Diagnostics)
   else if (type === 'TEST_EMAIL') {
-    dispatchResults.testEmail = await executeSend({
-      to: targetAdminEmail,
-      subject: `⚡ Test Notification: BDigitizing System Alerts`,
-      html: `
-        <div style="max-width: 600px; margin: 0 auto; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 12px; font-family: 'Segoe UI', Arial, sans-serif; box-shadow: 0 4px 12px rgba(0,0,0,0.05); overflow: hidden;">
-          ${emailHeader('SYSTEM TEST', 'Notification Alert Routing Verified', '#3b82f6')}
-          <div style="padding: 24px 28px; color: #1e293b; line-height: 1.6;">
-            <p style="font-size: 15px; margin-top: 0;">Hello Administrator,</p>
-            <p style="font-size: 14px; color: #475569;">
-              This test confirms that your <strong>BDigitizing Studio</strong> notifications are fully operational and delivering directly to your inbox.
-            </p>
-            
-            <div style="background: #f1f5f9; border-radius: 8px; padding: 16px; margin: 20px 0; border-left: 4px solid #3b82f6;">
-              <div style="font-size: 13px; font-weight: 700; color: #0f172a; margin-bottom: 8px;">CONFIGURATION DETAILS</div>
-              <div style="font-size: 13px; color: #334155; margin-bottom: 4px;"><strong>Target Recipient:</strong> ${targetAdminEmail}</div>
-              <div style="font-size: 13px; color: #334155; margin-bottom: 4px;"><strong>Timestamp:</strong> ${new Date().toUTCString()}</div>
-              <div style="font-size: 13px; color: #334155;"><strong>Resend Delivery Status:</strong> 100% Operational</div>
-            </div>
+    const testPromises = targetAdminEmails.map(adminAddr =>
+      executeSend({
+        to: adminAddr,
+        subject: `⚡ Test Notification: BDigitizing System Alerts`,
+        html: `
+          <div style="max-width: 600px; margin: 0 auto; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 12px; font-family: 'Segoe UI', Arial, sans-serif; box-shadow: 0 4px 12px rgba(0,0,0,0.05); overflow: hidden;">
+            ${emailHeader('SYSTEM TEST', 'Notification Alert Routing Verified', '#3b82f6')}
+            <div style="padding: 24px 28px; color: #1e293b; line-height: 1.6;">
+              <p style="font-size: 15px; margin-top: 0;">Hello Administrator,</p>
+              <p style="font-size: 14px; color: #475569;">
+                This test confirms that your <strong>BDigitizing Studio</strong> notifications are fully operational and delivering directly to your inbox.
+              </p>
+              
+              <div style="background: #f1f5f9; border-radius: 8px; padding: 16px; margin: 20px 0; border-left: 4px solid #3b82f6;">
+                <div style="font-size: 13px; font-weight: 700; color: #0f172a; margin-bottom: 8px;">CONFIGURATION DETAILS</div>
+                <div style="font-size: 13px; color: #334155; margin-bottom: 4px;"><strong>Target Recipient:</strong> ${adminAddr}</div>
+                <div style="font-size: 13px; color: #334155; margin-bottom: 4px;"><strong>Timestamp:</strong> ${new Date().toUTCString()}</div>
+                <div style="font-size: 13px; color: #334155;"><strong>Resend Delivery Status:</strong> 100% Operational</div>
+              </div>
 
-            <div style="text-align: center; margin: 26px 0 10px 0;">
-              <a href="${siteUrl}/admin-portal" style="background: #ea580c; color: #ffffff; padding: 12px 26px; text-decoration: none; border-radius: 8px; font-weight: 700; font-size: 14px; display: inline-block;">
-                Open Admin Portal
-              </a>
+              <div style="text-align: center; margin: 26px 0 10px 0;">
+                <a href="${siteUrl}/admin-portal" style="background: #ea580c; color: #ffffff; padding: 12px 26px; text-decoration: none; border-radius: 8px; font-weight: 700; font-size: 14px; display: inline-block;">
+                  Open Admin Portal
+                </a>
+              </div>
             </div>
+            ${emailFooter}
           </div>
-          ${emailFooter}
-        </div>
-      `
-    });
+        `
+      })
+    );
+    const testResults = await Promise.all(testPromises);
+    dispatchResults.testEmail = testResults[0];
+    dispatchResults.testEmails = testResults;
   }
 
-    const resultsList = Object.values(dispatchResults).filter(Boolean);
+    const resultsList = Object.entries(dispatchResults)
+      .flatMap(([k, v]) => (Array.isArray(v) ? v : [v]))
+      .filter(Boolean);
     const anyErrors = resultsList.some(r => r?.error && !r?.id && !r?.data?.id);
     const hasSuccessfulDeliveries = resultsList.some(r => r?.id || r?.data?.id);
     const firstError = resultsList.find(r => r?.error)?.error;
@@ -464,6 +589,7 @@ export async function sendNotificationEmail(params = {}) {
     return {
       success: hasSuccessfulDeliveries || (!anyErrors && resultsList.length > 0),
       recipient: resultsList[0]?.recipient || targetAdminEmail,
+      recipients: targetAdminEmails,
       fallbackApplied: Boolean(resultsList.some(r => r?.fallbackApplied)),
       message: (anyErrors && !hasSuccessfulDeliveries) ? 'Email dispatch failed' : 'Notification email processed successfully.',
       error: (anyErrors && !hasSuccessfulDeliveries) ? (firstError || 'Email delivery failed') : undefined,

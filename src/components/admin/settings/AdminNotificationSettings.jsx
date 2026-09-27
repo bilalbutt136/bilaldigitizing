@@ -28,7 +28,10 @@ import {
   Check,
   FileAudio,
   Radio,
-  Headphones
+  Headphones,
+  Plus,
+  Star,
+  Users
 } from 'lucide-react';
 import { uploadFileToCloudinaryFull } from '../../../services/supabaseService';
 import { 
@@ -46,7 +49,10 @@ const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 export const AdminNotificationSettings = () => {
   const { siteSettings = {}, updateSiteSettings, showToast, authUser } = useAppState();
 
-  const [adminEmail, setAdminEmail] = useState('');
+  const [adminEmails, setAdminEmails] = useState(['bilalsadiq612@gmail.com']);
+  const [newEmailInput, setNewEmailInput] = useState('');
+  const [emailInputError, setEmailInputError] = useState('');
+  const [testingTarget, setTestingTarget] = useState(null);
   const [orderAlerts, setOrderAlerts] = useState(true);
   const [messageAlerts, setMessageAlerts] = useState(true);
   const [revisionAlerts, setRevisionAlerts] = useState(true);
@@ -78,7 +84,39 @@ export const AdminNotificationSettings = () => {
 
   useEffect(() => {
     if (siteSettings) {
-      const dbEmail = siteSettings?.admin_notification_email || 
+      // 1. Resolve Admin Notification Email List (supporting multiple emails)
+      let resolvedEmails = [];
+      const dbEmails = siteSettings?.admin_notification_emails;
+      if (Array.isArray(dbEmails)) {
+        resolvedEmails = dbEmails
+          .filter(e => typeof e === 'string' && EMAIL_REGEX.test(e.trim()))
+          .map(e => e.trim().toLowerCase());
+      } else if (typeof dbEmails === 'string') {
+        try {
+          const parsed = JSON.parse(dbEmails);
+          if (Array.isArray(parsed)) {
+            resolvedEmails = parsed
+              .filter(e => typeof e === 'string' && EMAIL_REGEX.test(e.trim()))
+              .map(e => e.trim().toLowerCase());
+          }
+        } catch {
+          resolvedEmails = dbEmails
+            .split(/[\s,;]+/)
+            .filter(e => EMAIL_REGEX.test(e.trim()))
+            .map(e => e.trim().toLowerCase());
+        }
+      }
+
+      if (resolvedEmails.length === 0) {
+        const notifAdminEmails = siteSettings?.notification_settings?.adminEmails;
+        if (Array.isArray(notifAdminEmails)) {
+          resolvedEmails = notifAdminEmails
+            .filter(e => typeof e === 'string' && EMAIL_REGEX.test(e.trim()))
+            .map(e => e.trim().toLowerCase());
+        }
+      }
+
+      const singleEmail = siteSettings?.admin_notification_email || 
         siteSettings?.notification_settings?.adminEmail || 
         siteSettings?.adminEmail || 
         siteSettings?.contactInfo?.email || 
@@ -86,9 +124,19 @@ export const AdminNotificationSettings = () => {
         authUser?.email || 
         '';
 
-      if (dbEmail) {
-        setAdminEmail(dbEmail);
+      if (singleEmail && EMAIL_REGEX.test(singleEmail.trim())) {
+        const cleanSingle = singleEmail.trim().toLowerCase();
+        if (!resolvedEmails.includes(cleanSingle)) {
+          resolvedEmails.unshift(cleanSingle);
+        }
       }
+
+      if (resolvedEmails.length === 0) {
+        resolvedEmails = ['bilalsadiq612@gmail.com'];
+      }
+
+      resolvedEmails = Array.from(new Set(resolvedEmails));
+      setAdminEmails(resolvedEmails);
 
       const notifPrefs = siteSettings?.notification_settings || {};
       if (notifPrefs?.orderAlerts !== undefined) setOrderAlerts(Boolean(notifPrefs.orderAlerts));
@@ -138,26 +186,79 @@ export const AdminNotificationSettings = () => {
     }
   }, [siteSettings, authUser]);
 
-  const isValidEmail = Boolean(adminEmail && EMAIL_REGEX.test(adminEmail.trim()));
+  const primaryAdminEmail = adminEmails[0] || 'bilalsadiq612@gmail.com';
+  const isValidEmail = adminEmails.length > 0 && adminEmails.every(e => EMAIL_REGEX.test(e));
+
+  const handleAddEmail = (e) => {
+    e?.preventDefault?.();
+    setEmailInputError('');
+    const raw = newEmailInput.trim();
+    if (!raw) return;
+
+    // Support comma/space separated paste of multiple emails
+    const candidates = raw.split(/[\s,;]+/).map(c => c.trim().toLowerCase()).filter(Boolean);
+    const validToAdd = [];
+    let hasInvalid = false;
+
+    for (const cand of candidates) {
+      if (!EMAIL_REGEX.test(cand)) {
+        hasInvalid = true;
+      } else if (!adminEmails.includes(cand) && !validToAdd.includes(cand)) {
+        validToAdd.push(cand);
+      }
+    }
+
+    if (hasInvalid) {
+      setEmailInputError('Please enter valid email address(es) (e.g. manager@bdigitizing.com).');
+      showToast('One or more email addresses had an invalid format.', 'error');
+      return;
+    }
+
+    if (validToAdd.length === 0) {
+      setEmailInputError('Email is already in the recipient list.');
+      showToast('Entered email address is already added.', 'warning');
+      return;
+    }
+
+    const updated = [...adminEmails, ...validToAdd];
+    setAdminEmails(updated);
+    setNewEmailInput('');
+    showToast(`Added ${validToAdd.join(', ')} to notification list! Remember to click Save Settings.`, 'success');
+  };
+
+  const handleRemoveEmail = (emailToRemove) => {
+    if (adminEmails.length <= 1) {
+      showToast('At least one admin notification email is required.', 'warning');
+      return;
+    }
+    const updated = adminEmails.filter(e => e.toLowerCase() !== emailToRemove.toLowerCase());
+    setAdminEmails(updated);
+    showToast(`Removed ${emailToRemove}. Remember to click Save Settings to persist changes.`, 'info');
+  };
+
+  const handleSetPrimary = (targetEmail) => {
+    const clean = targetEmail.trim().toLowerCase();
+    const updated = [clean, ...adminEmails.filter(e => e.toLowerCase() !== clean)];
+    setAdminEmails(updated);
+    showToast(`Set ${clean} as primary notification recipient.`, 'success');
+  };
 
   const handleSaveSettings = async (e) => {
     e?.preventDefault?.();
 
-    const cleanEmail = adminEmail.trim().toLowerCase();
-    if (!cleanEmail) {
-      showToast('Please enter a recipient notification email address.', 'warning');
+    const cleanEmails = adminEmails.map(e => e.trim().toLowerCase()).filter(e => EMAIL_REGEX.test(e));
+    if (cleanEmails.length === 0) {
+      showToast('Please add at least one valid recipient notification email address.', 'warning');
       return;
     }
 
-    if (!EMAIL_REGEX.test(cleanEmail)) {
-      showToast('Please enter a valid email format (e.g. name@domain.com).', 'error');
-      return;
-    }
+    const primaryEmail = cleanEmails[0];
 
     setIsSaving(true);
     try {
       const notificationSettingsPayload = {
-        adminEmail: cleanEmail,
+        adminEmail: primaryEmail,
+        adminEmails: cleanEmails,
         orderAlerts,
         messageAlerts,
         revisionAlerts,
@@ -166,12 +267,13 @@ export const AdminNotificationSettings = () => {
       };
 
       await updateSiteSettings({
-        admin_notification_email: cleanEmail,
-        adminEmail: cleanEmail,
+        admin_notification_email: primaryEmail,
+        admin_notification_emails: cleanEmails,
+        adminEmail: primaryEmail,
         notification_settings: notificationSettingsPayload
       });
 
-      showToast('Email notification routing updated & persisted to live database!', 'success');
+      showToast(`Email notification routing updated for ${cleanEmails.length} admin inbox${cleanEmails.length > 1 ? 'es' : ''} & persisted to live database!`, 'success');
     } catch (err) {
       console.error('Save notification settings error:', err);
       showToast('Failed to save notification settings.', 'error');
@@ -180,20 +282,22 @@ export const AdminNotificationSettings = () => {
     }
   };
 
-  const handleSendTestEmail = async (testType = 'TEST_EMAIL') => {
-    const cleanEmail = adminEmail.trim().toLowerCase();
-    if (!cleanEmail || !EMAIL_REGEX.test(cleanEmail)) {
-      showToast('Please enter a valid email address before sending a test.', 'warning');
+  const handleSendTestEmail = async (testType = 'TEST_EMAIL', specificEmail = null) => {
+    const targetEmails = specificEmail ? [specificEmail.trim().toLowerCase()] : adminEmails;
+    if (targetEmails.length === 0 || !targetEmails.every(e => EMAIL_REGEX.test(e))) {
+      showToast('Please configure valid admin email address(es) before sending a test.', 'warning');
       return;
     }
 
     setIsSendingTest(true);
+    setTestingTarget(specificEmail || 'ALL');
     setTestResult(null);
 
     try {
       const payload = {
         type: testType,
-        adminEmail: cleanEmail,
+        adminEmail: targetEmails[0],
+        adminEmails: targetEmails,
       };
 
       if (testType === 'NEW_MESSAGE') {
@@ -224,11 +328,15 @@ export const AdminNotificationSettings = () => {
       const data = await res.json();
       if (res.ok && data?.success) {
         const typeLabel = testType === 'NEW_ORDER' ? 'Order' : testType === 'NEW_MESSAGE' ? 'Customer Message' : 'Configuration';
+        const recipientListStr = Array.isArray(data.recipients) && data.recipients.length > 0 
+          ? data.recipients.join(', ') 
+          : (data.recipient || targetEmails.join(', '));
+        
         setTestResult({ 
           success: true, 
-          message: `Test ${typeLabel} email dispatched to ${data.recipient || cleanEmail}! ${data.fallbackApplied ? '(Auto-routed to verified inbox bilalsadiq612@gmail.com)' : ''}` 
+          message: `Test ${typeLabel} email dispatched to ${recipientListStr}! ${data.fallbackApplied ? '(Auto-routed to verified inbox bilalsadiq612@gmail.com)' : ''}` 
         });
-        showToast(`Test ${typeLabel} email dispatched successfully!`, 'success');
+        showToast(`Test ${typeLabel} email dispatched to ${targetEmails.length} recipient${targetEmails.length > 1 ? 's' : ''}!`, 'success');
       } else {
         const errorMsg = data?.error || data?.details || 'Failed to dispatch test email';
         setTestResult({ success: false, message: errorMsg });
@@ -239,6 +347,7 @@ export const AdminNotificationSettings = () => {
       showToast('Failed to send test email. Check API key configuration.', 'error');
     } finally {
       setIsSendingTest(false);
+      setTestingTarget(null);
     }
   };
 
@@ -604,7 +713,7 @@ export const AdminNotificationSettings = () => {
         gap: '1.5rem'
       }}>
 
-        {/* Section 1: Destination Email & Delivery Engine */}
+        {/* Section 1: Multiple Admin Destination Emails & Delivery Engine */}
         <div style={{
           background: 'var(--bg-card)',
           border: '1px solid var(--border-color)',
@@ -615,58 +724,233 @@ export const AdminNotificationSettings = () => {
           flexDirection: 'column',
           gap: '1.25rem'
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', paddingBottom: '0.75rem', borderBottom: '1px solid var(--border-color)' }}>
-            <ShieldCheck size={18} style={{ color: 'var(--orange-500)' }} />
-            <h3 style={{ fontSize: '1rem', fontWeight: 800, color: 'var(--text-main)', margin: 0 }}>
-              Primary Notification Recipient
-            </h3>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingBottom: '0.75rem', borderBottom: '1px solid var(--border-color)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+              <ShieldCheck size={18} style={{ color: 'var(--orange-500)' }} />
+              <h3 style={{ fontSize: '1rem', fontWeight: 800, color: 'var(--text-main)', margin: 0 }}>
+                Admin Notification Recipients
+              </h3>
+            </div>
+            <span style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.35rem',
+              padding: '0.2rem 0.65rem',
+              borderRadius: '9999px',
+              fontSize: '0.75rem',
+              fontWeight: 700,
+              background: 'rgba(234, 88, 12, 0.1)',
+              color: 'var(--orange-500)',
+              border: '1px solid rgba(234, 88, 12, 0.2)'
+            }}>
+              <Users size={12} />
+              {adminEmails.length} Email{adminEmails.length > 1 ? 's' : ''} Configured
+            </span>
           </div>
 
-          <div>
-            <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-main)', marginBottom: '0.5rem' }}>
-              Admin Destination Email Address <span style={{ color: '#ef4444' }}>*</span>
+          <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: '0 0 0.25rem 0', lineHeight: 1.5 }}>
+            Whenever a customer places a <strong>New Order</strong>, requests a revision, or submits a chat inquiry, email alerts are dispatched immediately to <strong>all configured admin addresses below</strong>.
+          </p>
+
+          {/* List of Configured Admin Emails */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
+            {adminEmails.map((email, idx) => {
+              const isPrimary = idx === 0;
+              const isThisTesting = isSendingTest && testingTarget === email;
+
+              return (
+                <div 
+                  key={`${email}-${idx}`}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '0.75rem 1rem',
+                    borderRadius: '10px',
+                    background: isPrimary ? 'rgba(234, 88, 12, 0.05)' : 'var(--bg-main)',
+                    border: `1.5px solid ${isPrimary ? 'rgba(234, 88, 12, 0.35)' : 'var(--border-color)'}`,
+                    transition: 'all 0.2s',
+                    gap: '0.75rem',
+                    flexWrap: 'wrap'
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', minWidth: '200px', flex: 1 }}>
+                    <div style={{
+                      width: '28px',
+                      height: '28px',
+                      borderRadius: '6px',
+                      background: isPrimary ? 'rgba(234, 88, 12, 0.15)' : 'rgba(100, 116, 139, 0.1)',
+                      color: isPrimary ? 'var(--orange-500)' : 'var(--text-muted)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexShrink: 0
+                    }}>
+                      <Mail size={14} />
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                      <span style={{ fontSize: '0.875rem', fontWeight: 700, color: 'var(--text-main)', wordBreak: 'break-all' }}>
+                        {email}
+                      </span>
+                      {isPrimary && (
+                        <span style={{ fontSize: '0.7rem', color: 'var(--orange-500)', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '0.2rem' }}>
+                          <Star size={10} fill="currentColor" /> Primary Order Alert Recipient
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    {!isPrimary && (
+                      <button
+                        type="button"
+                        onClick={() => handleSetPrimary(email)}
+                        title="Set as primary recipient (used as default address)"
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '0.3rem',
+                          padding: '0.35rem 0.65rem',
+                          borderRadius: '8px',
+                          border: '1px solid var(--border-color)',
+                          background: 'var(--bg-card)',
+                          color: 'var(--text-main)',
+                          fontSize: '0.75rem',
+                          fontWeight: 600,
+                          cursor: 'pointer',
+                          transition: 'all 0.2s'
+                        }}
+                      >
+                        <Star size={12} />
+                        <span>Set Primary</span>
+                      </button>
+                    )}
+
+                    <button
+                      type="button"
+                      onClick={() => handleSendTestEmail('NEW_ORDER', email)}
+                      disabled={isSendingTest}
+                      title={`Send a test order alert specifically to ${email}`}
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.3rem',
+                        padding: '0.35rem 0.65rem',
+                        borderRadius: '8px',
+                        border: '1px solid rgba(59, 130, 246, 0.3)',
+                        background: 'rgba(59, 130, 246, 0.08)',
+                        color: '#2563eb',
+                        fontSize: '0.75rem',
+                        fontWeight: 600,
+                        cursor: isSendingTest ? 'wait' : 'pointer',
+                        transition: 'all 0.2s'
+                      }}
+                    >
+                      {isThisTesting ? <RefreshCw size={12} className="spin-icon" /> : <Send size={12} />}
+                      <span>{isThisTesting ? 'Sending...' : 'Test'}</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveEmail(email)}
+                      disabled={adminEmails.length <= 1}
+                      title={adminEmails.length <= 1 ? "At least one recipient email is required" : `Remove ${email}`}
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        width: '28px',
+                        height: '28px',
+                        borderRadius: '8px',
+                        border: '1px solid rgba(239, 68, 68, 0.25)',
+                        background: adminEmails.length <= 1 ? 'transparent' : 'rgba(239, 68, 68, 0.08)',
+                        color: adminEmails.length <= 1 ? 'var(--text-muted)' : '#ef4444',
+                        cursor: adminEmails.length <= 1 ? 'not-allowed' : 'pointer',
+                        opacity: adminEmails.length <= 1 ? 0.4 : 1,
+                        transition: 'all 0.2s'
+                      }}
+                    >
+                      <Trash2 size={13} />
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Add New Admin Email Form */}
+          <div style={{ marginTop: '0.25rem' }}>
+            <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-main)', marginBottom: '0.4rem' }}>
+              Add Additional Admin Email
             </label>
-            <div style={{ position: 'relative' }}>
-              <input
-                type="email"
-                value={adminEmail}
-                onChange={(e) => setAdminEmail(e.target.value)}
-                placeholder="admin@bdigitizing.com"
-                style={{
-                  width: '100%',
-                  padding: '0.75rem 2.75rem 0.75rem 1rem',
-                  borderRadius: '10px',
-                  border: `1.5px solid ${isValidEmail ? 'rgba(34, 197, 94, 0.4)' : (adminEmail ? 'rgba(239, 68, 68, 0.4)' : 'var(--border-color)')}`,
-                  background: 'var(--bg-main)',
-                  color: 'var(--text-main)',
-                  fontSize: '0.9rem',
-                  fontWeight: 600,
-                  outline: 'none',
-                  boxSizing: 'border-box'
-                }}
-              />
-              <div style={{
-                position: 'absolute',
-                right: '12px',
-                top: '50%',
-                transform: 'translateY(-50%)',
-                display: 'flex',
-                alignItems: 'center'
-              }}>
-                {isValidEmail ? (
-                  <CheckCircle2 size={18} style={{ color: '#22c55e' }} />
-                ) : adminEmail ? (
-                  <AlertCircle size={18} style={{ color: '#ef4444' }} />
-                ) : (
-                  <Mail size={18} style={{ color: 'var(--text-muted)' }} />
-                )}
+            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+              <div style={{ position: 'relative', flex: '1 1 240px' }}>
+                <input
+                  type="email"
+                  value={newEmailInput}
+                  onChange={(e) => {
+                    setNewEmailInput(e.target.value);
+                    if (emailInputError) setEmailInputError('');
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleAddEmail();
+                    }
+                  }}
+                  placeholder="e.g. manager@bdigitizing.com or partner@gmail.com"
+                  style={{
+                    width: '100%',
+                    padding: '0.7rem 1rem',
+                    borderRadius: '10px',
+                    border: `1.5px solid ${emailInputError ? 'rgba(239, 68, 68, 0.5)' : 'var(--border-color)'}`,
+                    background: 'var(--bg-main)',
+                    color: 'var(--text-main)',
+                    fontSize: '0.875rem',
+                    fontWeight: 600,
+                    outline: 'none',
+                    boxSizing: 'border-box'
+                  }}
+                />
               </div>
+
+              <button
+                type="button"
+                onClick={handleAddEmail}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.4rem',
+                  padding: '0.7rem 1.15rem',
+                  borderRadius: '10px',
+                  border: 'none',
+                  background: 'var(--orange-500)',
+                  color: '#ffffff',
+                  fontSize: '0.825rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  boxShadow: '0 2px 8px rgba(234, 88, 12, 0.25)',
+                  transition: 'all 0.2s',
+                  flexShrink: 0
+                }}
+              >
+                <Plus size={15} />
+                <span>Add Admin Email</span>
+              </button>
             </div>
-            <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: '0.4rem 0 0' }}>
-              All automated studio alerts, contact inquiries, and new order notifications will route directly to this address.
+
+            {emailInputError && (
+              <p style={{ fontSize: '0.75rem', color: '#ef4444', margin: '0.35rem 0 0 0', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                <AlertCircle size={12} /> {emailInputError}
+              </p>
+            )}
+            <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: '0.4rem 0 0 0' }}>
+              💡 Multiple emails can be pasted separated by commas or spaces. Remember to click <strong>Save Settings</strong> to save changes to the database.
             </p>
           </div>
 
+          {/* Engine Status info */}
           <div style={{
             background: 'var(--bg-main)',
             border: '1px solid var(--border-color)',
@@ -674,19 +958,20 @@ export const AdminNotificationSettings = () => {
             padding: '1rem',
             display: 'flex',
             flexDirection: 'column',
-            gap: '0.55rem'
+            gap: '0.55rem',
+            marginTop: '0.25rem'
           }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.8rem' }}>
               <span style={{ color: 'var(--text-muted)', fontWeight: 600 }}>Delivery Service Provider:</span>
               <span style={{ color: 'var(--text-main)', fontWeight: 700 }}>Resend Transactional API</span>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.8rem' }}>
-              <span style={{ color: 'var(--text-muted)', fontWeight: 600 }}>Verified Safe Recipient:</span>
-              <span style={{ color: '#16a34a', fontWeight: 700 }}>bilalsadiq612@gmail.com</span>
+              <span style={{ color: 'var(--text-muted)', fontWeight: 600 }}>Dispatch Routing Mode:</span>
+              <span style={{ color: '#2563eb', fontWeight: 700 }}>Parallel Multi-Admin Dispatch ({adminEmails.length} Inboxes)</span>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.8rem' }}>
-              <span style={{ color: 'var(--text-muted)', fontWeight: 600 }}>200% Guarantee Engine:</span>
-              <span style={{ color: '#2563eb', fontWeight: 700 }}>Direct In-Process + Auto-Failover</span>
+              <span style={{ color: 'var(--text-muted)', fontWeight: 600 }}>Verified Safe Recipient:</span>
+              <span style={{ color: '#16a34a', fontWeight: 700 }}>bilalsadiq612@gmail.com</span>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.8rem' }}>
               <span style={{ color: 'var(--text-muted)', fontWeight: 600 }}>Persistence Layer:</span>

@@ -191,4 +191,83 @@ describe('Guaranteed Admin Email Notification & Auto-Failover System', () => {
       process.env.RESEND_API_KEY = originalApiKey;
     }
   });
+
+  test('7. Multiple admin notification emails dispatch in parallel to all recipients', async () => {
+    process.env.RESEND_API_KEY = 're_mock_test_key_123';
+    const originalFetch = globalThis.fetch;
+    const capturedRecipients = [];
+
+    globalThis.fetch = async (url, options) => {
+      if (String(url).includes('resend.com')) {
+        const body = JSON.parse(options.body);
+        capturedRecipients.push(body.to);
+        return new Response(JSON.stringify({ id: `mock_multi_${capturedRecipients.length}` }), {
+          status: 200,
+          headers: { 'content-type': 'application/json' }
+        });
+      }
+      return originalFetch(url, options);
+    };
+
+    try {
+      const result = await sendNotificationEmail({
+        type: 'NEW_ORDER',
+        orderId: 'ORD-MULTI-999',
+        serviceName: 'Vector Art & Digitizing',
+        adminEmails: ['bilalsadiq612@gmail.com', 'partner@bdigitizing.com', 'manager@bdigitizing.com'],
+        orderDetails: {
+          orderId: 'ORD-MULTI-999',
+          price: 45.00
+        },
+        clientEmail: 'client@apparel.com'
+      });
+
+      assert.equal(result.success, true);
+      assert.deepEqual(result.recipients, ['bilalsadiq612@gmail.com', 'partner@bdigitizing.com', 'manager@bdigitizing.com']);
+      // 3 admin recipients + 1 client confirmation
+      assert.equal(capturedRecipients.length, 4);
+      assert.ok(capturedRecipients.includes('bilalsadiq612@gmail.com'));
+      assert.ok(capturedRecipients.includes('partner@bdigitizing.com'));
+      assert.ok(capturedRecipients.includes('manager@bdigitizing.com'));
+      assert.ok(capturedRecipients.includes('client@apparel.com'));
+    } finally {
+      globalThis.fetch = originalFetch;
+      process.env.RESEND_API_KEY = originalApiKey;
+    }
+  });
+
+  test('8. TEST_EMAIL dispatches to all configured admin recipients with accurate diagnostics', async () => {
+    process.env.RESEND_API_KEY = 're_mock_test_key_123';
+    const originalFetch = globalThis.fetch;
+    const sentSubjects = [];
+    const sentTo = [];
+
+    globalThis.fetch = async (url, options) => {
+      if (String(url).includes('resend.com')) {
+        const body = JSON.parse(options.body);
+        sentSubjects.push(body.subject);
+        sentTo.push(body.to);
+        return new Response(JSON.stringify({ id: `mock_test_${sentTo.length}` }), {
+          status: 200,
+          headers: { 'content-type': 'application/json' }
+        });
+      }
+      return originalFetch(url, options);
+    };
+
+    try {
+      const result = await sendNotificationEmail({
+        type: 'TEST_EMAIL',
+        adminEmails: ['admin1@bdigitizing.com', 'admin2@bdigitizing.com']
+      });
+
+      assert.equal(result.success, true);
+      assert.equal(sentTo.length, 2);
+      assert.deepEqual(sentTo, ['admin1@bdigitizing.com', 'admin2@bdigitizing.com']);
+      assert.ok(sentSubjects[0].includes('Test Notification: BDigitizing System Alerts'));
+    } finally {
+      globalThis.fetch = originalFetch;
+      process.env.RESEND_API_KEY = originalApiKey;
+    }
+  });
 });

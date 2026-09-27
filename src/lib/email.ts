@@ -16,6 +16,7 @@ export interface OrderNotificationParams {
   instructions?: string;
   targetRole?: 'admin' | 'client' | 'both';
   adminEmail?: string;
+  adminEmails?: string[];
 }
 
 export interface EmailDispatchResult {
@@ -277,14 +278,22 @@ export async function sendOrderNotification(
     placement = 'Left Chest / Cap',
     instructions = 'Standard production specifications',
     targetRole = 'both',
-    adminEmail: explicitAdmin
+    adminEmail: explicitAdmin,
+    adminEmails: explicitAdminEmails
   } = params;
 
   const siteUrl = getSiteUrl();
   const formattedPrice = typeof amount === 'number' ? `$${amount.toFixed(2)}` : (String(amount).startsWith('$') ? amount : `$${amount}`);
 
   // Fetch admin notification email & settings from site_config
-  let adminRecipient = explicitAdmin || process.env.MASTER_ADMIN_EMAIL || process.env.ADMIN_EMAIL || process.env.NEXT_PUBLIC_ADMIN_EMAIL || 'orders@bdigitizing.com';
+  let adminRecipients: string[] = [];
+  if (Array.isArray(explicitAdminEmails) && explicitAdminEmails.length > 0) {
+    adminRecipients = explicitAdminEmails.filter(e => typeof e === 'string' && EMAIL_REGEX.test(e.trim())).map(e => e.trim().toLowerCase());
+  } else if (typeof explicitAdmin === 'string' && explicitAdmin.trim()) {
+    const parts = explicitAdmin.split(/[\s,]+/).filter(e => EMAIL_REGEX.test(e.trim())).map(e => e.trim().toLowerCase());
+    if (parts.length > 0) adminRecipients = parts;
+  }
+
   let orderAlertsEnabled = true;
 
   try {
@@ -292,19 +301,42 @@ export async function sendOrderNotification(
     const { data: rows } = await supabase
       .from('site_config')
       .select('key, value')
-      .in('key', ['admin_notification_email', 'notification_settings']);
+      .in('key', ['admin_notification_email', 'admin_notification_emails', 'notification_settings']);
 
     if (Array.isArray(rows)) {
       rows.forEach((r) => {
+        if (r.key === 'admin_notification_emails' && r.value) {
+          try {
+            const parsed = typeof r.value === 'string' ? JSON.parse(r.value) : r.value;
+            if (Array.isArray(parsed)) {
+              parsed.forEach((e: string) => {
+                if (typeof e === 'string' && EMAIL_REGEX.test(e.trim())) {
+                  adminRecipients.push(e.trim().toLowerCase());
+                }
+              });
+            } else if (typeof r.value === 'string') {
+              r.value.split(/[\s,]+/).forEach((e: string) => {
+                if (EMAIL_REGEX.test(e.trim())) adminRecipients.push(e.trim().toLowerCase());
+              });
+            }
+          } catch {}
+        }
         if (r.key === 'admin_notification_email' && r.value) {
           const clean = String(r.value).trim().replace(/^["']|["']$/g, '');
-          if (EMAIL_REGEX.test(clean)) adminRecipient = clean;
+          if (EMAIL_REGEX.test(clean)) adminRecipients.push(clean.toLowerCase());
         }
         if (r.key === 'notification_settings' && r.value) {
           try {
             const parsed = typeof r.value === 'string' ? JSON.parse(r.value) : r.value;
             if (parsed?.adminEmail && EMAIL_REGEX.test(parsed.adminEmail)) {
-              adminRecipient = parsed.adminEmail;
+              adminRecipients.push(parsed.adminEmail.trim().toLowerCase());
+            }
+            if (Array.isArray(parsed?.adminEmails)) {
+              parsed.adminEmails.forEach((e: string) => {
+                if (typeof e === 'string' && EMAIL_REGEX.test(e.trim())) {
+                  adminRecipients.push(e.trim().toLowerCase());
+                }
+              });
             }
             if (parsed?.orderAlerts !== undefined) orderAlertsEnabled = Boolean(parsed.orderAlerts);
           } catch {}
@@ -313,6 +345,12 @@ export async function sendOrderNotification(
     }
   } catch {}
 
+  const defaultAdmin = (process.env.MASTER_ADMIN_EMAIL || process.env.ADMIN_EMAIL || process.env.NEXT_PUBLIC_ADMIN_EMAIL || 'orders@bdigitizing.com').toLowerCase().trim();
+  adminRecipients = Array.from(new Set(adminRecipients));
+  if (adminRecipients.length === 0) {
+    adminRecipients = [defaultAdmin];
+  }
+
   let adminSuccess = true;
   let clientSuccess = true;
   let adminResendId = '';
@@ -320,7 +358,7 @@ export async function sendOrderNotification(
   let errors: string[] = [];
 
   // 1. DISPATCH TO ADMIN
-  if ((targetRole === 'admin' || targetRole === 'both') && orderAlertsEnabled && adminRecipient) {
+  if ((targetRole === 'admin' || targetRole === 'both') && orderAlertsEnabled && adminRecipients.length > 0) {
     const adminSubject = `🚨 New Order #${orderId}: ${serviceName} (${formattedPrice})`;
     const adminUrl = `${siteUrl}/admin-portal?tab=orders&trackOrder=${encodeURIComponent(orderId)}`;
 
@@ -365,30 +403,32 @@ export async function sendOrderNotification(
       ctaUrl: adminUrl
     });
 
-    const dispatch = await sendMailWithRetry({ to: adminRecipient, subject: adminSubject, html: adminHtml });
-    if (dispatch.success) {
-      adminResendId = dispatch.id || '';
-      await logNotificationToDb({
-        eventType: 'new_order_admin',
-        recipientEmail: adminRecipient,
-        recipientName: 'Studio Admin',
-        subject: adminSubject,
-        status: 'sent',
-        resendId: dispatch.id,
-        payload: { orderId, clientEmail, amount: formattedPrice }
-      });
-    } else {
-      adminSuccess = false;
-      errors.push(`Admin email error: ${dispatch.error}`);
-      await logNotificationToDb({
-        eventType: 'new_order_admin',
-        recipientEmail: adminRecipient,
-        recipientName: 'Studio Admin',
-        subject: adminSubject,
-        status: 'failed',
-        errorMessage: dispatch.error,
-        payload: { orderId, clientEmail, amount: formattedPrice }
-      });
+    for (const recipient of adminRecipients) {
+      const dispatch = await sendMailWithRetry({ to: recipient, subject: adminSubject, html: adminHtml });
+      if (dispatch.success) {
+        if (!adminResendId) adminResendId = dispatch.id || '';
+        await logNotificationToDb({
+          eventType: 'new_order_admin',
+          recipientEmail: recipient,
+          recipientName: 'Studio Admin',
+          subject: adminSubject,
+          status: 'sent',
+          resendId: dispatch.id,
+          payload: { orderId, clientEmail, amount: formattedPrice }
+        });
+      } else {
+        adminSuccess = false;
+        errors.push(`Admin email error (${recipient}): ${dispatch.error}`);
+        await logNotificationToDb({
+          eventType: 'new_order_admin',
+          recipientEmail: recipient,
+          recipientName: 'Studio Admin',
+          subject: adminSubject,
+          status: 'failed',
+          errorMessage: dispatch.error,
+          payload: { orderId, clientEmail, amount: formattedPrice }
+        });
+      }
     }
   }
 

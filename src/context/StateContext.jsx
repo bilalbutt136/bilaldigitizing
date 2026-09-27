@@ -2579,6 +2579,9 @@ export const StateProvider = ({ children }) => {
     if (newSettings.admin_notification_email) {
       await saveCmsConfigToSupabase('admin_notification_email', newSettings.admin_notification_email);
     }
+    if (newSettings.admin_notification_emails) {
+      await saveCmsConfigToSupabase('admin_notification_emails', newSettings.admin_notification_emails);
+    }
     if (newSettings.notification_settings) {
       await saveCmsConfigToSupabase('notification_settings', newSettings.notification_settings);
     }

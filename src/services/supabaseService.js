@@ -1077,6 +1077,10 @@ export async function fetchCatalogFromSupabase() {
 
         return {
           ...rawSettings,
+          admin_notification_email: configMap['admin_notification_email'] || rawSettings?.admin_notification_email || null,
+          admin_notification_emails: configMap['admin_notification_emails'] || rawSettings?.admin_notification_emails || null,
+          notification_settings: configMap['notification_settings'] || rawSettings?.notification_settings || null,
+          notification_sound_settings: configMap['notification_sound_settings'] || rawSettings?.notification_sound_settings || null,
           metaPixelId: rawSettings?.metaPixelId || configMap['meta_pixel_id'] || configMap['metaPixelId'] || null,
           googleAnalyticsId: rawSettings?.googleAnalyticsId || configMap['google_analytics_id'] || configMap['googleAnalyticsId'] || null,
           tiktokPixelId: rawSettings?.tiktokPixelId || configMap['tiktok_pixel_id'] || configMap['tiktokPixelId'] || null,

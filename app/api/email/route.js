@@ -61,6 +61,9 @@ export async function POST(req) {
     return NextResponse.json({
       success: true,
       message: result.message || 'Notification email processed successfully.',
+      recipient: result.recipient,
+      recipients: result.recipients,
+      fallbackApplied: result.fallbackApplied,
       results: result.results
     });
   } catch (error) {
