@@ -1,12 +1,17 @@
 import { NextResponse } from 'next/server';
 import { createAdminClient } from '../../../../src/lib/supabase/admin';
 import { getServerAuthUser } from '../../../../src/lib/supabase/serverAuth';
+import { canAccessConversation } from '../../../../src/lib/chat/authorization';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(request) {
   try {
     const { user, isAdmin } = await getServerAuthUser(request);
+    if (!user?.email) {
+      return NextResponse.json({ error: 'Authentication required.' }, { status: 401 });
+    }
+
     const { searchParams } = new URL(request.url);
     const conversationId = searchParams.get('conversationId') || searchParams.get('conversation_id');
     const clientEmail = searchParams.get('clientEmail')?.toLowerCase().trim();
@@ -16,21 +21,28 @@ export async function GET(request) {
     }
 
     const supabase = createAdminClient();
+    const authEmail = user.email.toLowerCase().trim();
+
+    if (conversationId && !isAdmin) {
+      const allowed = await canAccessConversation(supabase, { user, isAdmin }, conversationId);
+      if (!allowed) {
+        return NextResponse.json({ error: 'Forbidden.' }, { status: 403 });
+      }
+    }
 
     let query = supabase.from('messages').select('*').order('created_at', { ascending: true });
 
     if (conversationId) {
       query = query.eq('conversation_id', conversationId);
-    } else if (clientEmail) {
+    } else if (isAdmin && clientEmail) {
       query = query.ilike('client_email', clientEmail);
+    } else {
+      query = query.ilike('client_email', authEmail);
     }
 
-    // Security check: non-admin clients can only access their own messages
+    // Defense in depth: customer queries are always scoped to the authenticated email.
     if (!isAdmin) {
-      const authEmail = user?.email?.toLowerCase().trim();
-      if (authEmail) {
-        query = query.ilike('client_email', authEmail);
-      }
+      query = query.ilike('client_email', authEmail);
     }
 
     const { data: messages, error } = await query;
@@ -59,8 +71,13 @@ export async function GET(request) {
         if (conversationId) {
           // Strictly match by conversation_id to avoid cross-thread offer leakage
           offerQuery = offerQuery.eq('conversation_id', conversationId);
-        } else if (clientEmail) {
+        } else if (isAdmin && clientEmail) {
           offerQuery = offerQuery.ilike('client_email', clientEmail);
+        } else {
+          offerQuery = offerQuery.ilike('client_email', authEmail);
+        }
+        if (!isAdmin) {
+          offerQuery = offerQuery.ilike('client_email', authEmail);
         }
 
         const { data: offers } = await offerQuery;
@@ -134,6 +151,10 @@ export async function GET(request) {
 export async function POST(request) {
   try {
     const { user, isAdmin } = await getServerAuthUser(request);
+    if (!user?.email) {
+      return NextResponse.json({ error: 'Authentication required.' }, { status: 401 });
+    }
+
     const body = await request.json();
 
     const {
@@ -157,7 +178,7 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Missing conversation_id' }, { status: 400 });
     }
 
-    const cleanEmail = (client_email || user?.email || '').toLowerCase().trim();
+    const cleanEmail = (isAdmin ? (client_email || user.email) : user.email).toLowerCase().trim();
     if (!cleanEmail) {
       return NextResponse.json({ error: 'Missing client_email' }, { status: 400 });
     }
@@ -174,6 +195,21 @@ export async function POST(request) {
 
     const supabase = createAdminClient();
     const nowIso = new Date().toISOString();
+
+    // Customers may create their own new thread, but cannot post into another customer's existing thread.
+    if (!isAdmin) {
+      const { data: existingConversation, error: conversationLookupError } = await supabase
+        .from('conversations')
+        .select('id, client_email')
+        .eq('id', conversation_id)
+        .maybeSingle();
+      if (conversationLookupError) {
+        return NextResponse.json({ error: 'Unable to verify conversation access.' }, { status: 500 });
+      }
+      if (existingConversation && String(existingConversation.client_email || '').trim().toLowerCase() !== cleanEmail) {
+        return NextResponse.json({ error: 'Forbidden.' }, { status: 403 });
+      }
+    }
 
     // 1. Ensure conversation thread exists in conversations table
     try {
