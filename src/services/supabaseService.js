@@ -1,6 +1,6 @@
-import { supabase, isSupabaseConfigured } from '../lib/supabase/client';
-import { getSiteUrl } from '../utils/siteUrl';
-import { filterAndSanitizeNotifications } from '../utils/notificationRouter';
+import { supabase, isSupabaseConfigured } from '../lib/supabase/client.js';
+import { getSiteUrl } from '../utils/siteUrl.js';
+import { filterAndSanitizeNotifications } from '../utils/notificationRouter.js';
 
 export { isSupabaseConfigured };
 
@@ -12,7 +12,13 @@ export async function getAuthHeaders() {
   const headers = { 'Content-Type': 'application/json' };
   try {
     if (supabase) {
-      const { data: { session } } = await supabase.auth.getSession();
+      let { data: { session } } = await supabase.auth.getSession();
+      if (session?.expires_at && session.expires_at < Math.floor(Date.now() / 1000) + 60) {
+        try {
+          const { data: refreshed } = await supabase.auth.refreshSession();
+          if (refreshed?.session) session = refreshed.session;
+        } catch {}
+      }
       if (session?.access_token) {
         headers['Authorization'] = `Bearer ${session.access_token}`;
       }
@@ -177,7 +183,7 @@ export async function updateUserPassword(newPassword) {
 export async function fetchOrdersFromSupabase(customEmail = null, customOrderIds = null, customUserId = null) {
   try {
     const headers = await getAuthHeaders();
-    let url = '/api/orders?action=fetchAll';
+    let url = `/api/orders?action=fetchAll&_t=${Date.now()}`;
     const params = new URLSearchParams();
 
     let resolvedEmail = customEmail;
@@ -209,7 +215,7 @@ export async function fetchOrdersFromSupabase(customEmail = null, customOrderIds
       try {
         const stored = JSON.parse(localStorage.getItem('bdigi_my_order_ids') || '[]');
         if (Array.isArray(stored) && stored.length > 0) {
-          localOrderIds = stored.slice(0, 30);
+          localOrderIds = stored.slice(0, 50);
         }
       } catch {}
     }
@@ -222,13 +228,24 @@ export async function fetchOrdersFromSupabase(customEmail = null, customOrderIds
     const qs = params.toString();
     if (qs) url += `&${qs}`;
 
-    const res = await fetch(url, { headers });
+    const res = await fetch(url, { 
+      headers: {
+        ...headers,
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache'
+      },
+      cache: 'no-store',
+      credentials: 'include'
+    });
     const data = await res.json();
     const orders = data.orders || [];
     
     // Map snake_case database columns back to camelCase frontend properties
     return orders.map(order => mapDatabaseOrderToClientOrder(order)).filter(Boolean);
-  } catch { return []; }
+  } catch (err) { 
+    console.warn('fetchOrdersFromSupabase error notice:', err?.message);
+    return []; 
+  }
 }
 
 export function mapDatabaseOrderToClientOrder(order) {
@@ -1582,10 +1599,23 @@ export function getSharedChatChannel() {
 
     globalChatChannel.on('broadcast', { event: 'order_change' }, (event) => {
       if (event.payload && typeof window !== 'undefined') {
-        window.dispatchEvent(new CustomEvent('bdigi_order_change', { detail: event.payload }));
-        if (event.payload.order) {
+        const orderData = event.payload.order || event.payload;
+        window.dispatchEvent(new CustomEvent('bdigi_order_change', { detail: { order: orderData, eventType: event.payload.eventType || 'UPDATE' } }));
+        if (orderData) {
           orderListeners.forEach(listener => {
-            try { listener({ eventType: event.payload.eventType || 'INSERT', new: event.payload.order, record: event.payload.order }); } catch (err) {}
+            try { listener({ eventType: event.payload.eventType || 'UPDATE', new: orderData, record: orderData }); } catch (err) {}
+          });
+        }
+      }
+    });
+
+    globalChatChannel.on('broadcast', { event: 'order_updated' }, (event) => {
+      if (event.payload && typeof window !== 'undefined') {
+        const orderData = event.payload.order || event.payload;
+        window.dispatchEvent(new CustomEvent('bdigi_order_change', { detail: { order: orderData, eventType: event.payload.eventType || 'UPDATE' } }));
+        if (orderData) {
+          orderListeners.forEach(listener => {
+            try { listener({ eventType: event.payload.eventType || 'UPDATE', new: orderData, record: orderData }); } catch (err) {}
           });
         }
       }
@@ -1678,6 +1708,34 @@ export function broadcastLiveNotification(notificationPayload) {
     }
   } catch (err) {
     console.warn('Broadcast live notification notice:', err);
+  }
+}
+
+export function broadcastLiveOrderUpdate(orderPayload, eventType = 'UPDATE') {
+  if (!orderPayload) return;
+  const orderObj = orderPayload.order || orderPayload;
+  orderListeners.forEach(listener => {
+    try { listener({ eventType, new: orderObj, record: orderObj }); } catch (err) {}
+  });
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('bdigi_order_change', { detail: { order: orderObj, eventType } }));
+  }
+  try {
+    const channel = getSharedChatChannel();
+    if (channel) {
+      channel.send({
+        type: 'broadcast',
+        event: 'order_updated',
+        payload: orderObj
+      });
+      channel.send({
+        type: 'broadcast',
+        event: 'order_change',
+        payload: { order: orderObj, eventType }
+      });
+    }
+  } catch (err) {
+    console.warn('Broadcast live order update notice:', err);
   }
 }
 

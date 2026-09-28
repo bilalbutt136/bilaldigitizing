@@ -133,11 +133,19 @@ export const CustomerDashboard = () => {
     return () => window.removeEventListener('bdigi_chat_focus', handleChatFocusEvent);
   }, []);
 
-  // Ensure customer orders are fresh and synced from Supabase on mount
+  // Ensure customer orders are fresh and synced from Supabase on mount and on real-time order changes
   React.useEffect(() => {
     if (typeof refreshOrders === 'function') {
       refreshOrders().catch(err => console.warn('Customer orders sync notice:', err));
     }
+
+    const handleLiveOrderUpdate = () => {
+      if (typeof refreshOrders === 'function') {
+        refreshOrders().catch(() => {});
+      }
+    };
+    window.addEventListener('bdigi_order_change', handleLiveOrderUpdate);
+    return () => window.removeEventListener('bdigi_order_change', handleLiveOrderUpdate);
   }, [refreshOrders, userEmail]);
 
   // Track whether customer has installed the PWA mobile app
@@ -386,9 +394,15 @@ export const CustomerDashboard = () => {
 
     loadNotificationsCount();
 
-    const unsubscribe = subscribeToNotificationListeners((_payload) => {
+    const unsubscribe = subscribeToNotificationListeners((payload) => {
       if (!isMounted) return;
       refreshNotifications();
+      const notif = payload?.new || payload?.record;
+      if (notif?.order_id || notif?.orderId) {
+        if (typeof refreshOrders === 'function') {
+          refreshOrders().catch(() => {});
+        }
+      }
     });
 
     return () => {
@@ -547,8 +561,8 @@ export const CustomerDashboard = () => {
     const matchesSearch = titleMatch || idMatch;
     const isPaid = isOrderPaid(o);
     
-    if (filterStatus === 'unpaid' || filterStatus === 'awaiting_payment') return matchesSearch && !isPaid;
-    if (filterStatus === 'active') return matchesSearch && isPaid && o?.status !== 'completed' && o?.status !== 'cancelled';
+    if (filterStatus === 'unpaid' || filterStatus === 'awaiting_payment') return matchesSearch && !isPaid && o?.status !== 'cancelled';
+    if (filterStatus === 'active') return matchesSearch && o?.status !== 'completed' && o?.status !== 'cancelled';
     if (filterStatus === 'delivered') return matchesSearch && (o?.status === 'delivered' || (Array.isArray(o?.uploadedMachineFiles) && o.uploadedMachineFiles.length > 0 && o?.status !== 'completed'));
     if (filterStatus === 'revision') return matchesSearch && (o?.status === 'revision' || o?.status === 'revision_requested');
     if (filterStatus === 'completed') return matchesSearch && o?.status === 'completed';

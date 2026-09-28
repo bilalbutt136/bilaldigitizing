@@ -950,8 +950,9 @@ export const StateProvider = ({ children }) => {
 
     const handleLiveOrderEvent = (orderPayload) => {
       if (!orderPayload) return;
-      const incomingOrder = orderPayload.order || orderPayload;
-      if (!incomingOrder || !incomingOrder.id) return;
+      const rawOrder = orderPayload.order || orderPayload;
+      if (!rawOrder || !rawOrder.id) return;
+      const incomingOrder = mapDatabaseOrderToClientOrder(rawOrder) || rawOrder;
 
       // Only accept if admin or matching authenticated user
       const currentUserEmail = (authUser?.email || '').toLowerCase().trim();
@@ -968,7 +969,8 @@ export const StateProvider = ({ children }) => {
 
       setOrders(prev => {
         const safePrev = Array.isArray(prev) ? prev : [];
-        const index = safePrev.findIndex(o => o.id === incomingOrder.id);
+        const cleanIncomingId = String(incomingOrder.id || '').replace(/^#+/, '');
+        const index = safePrev.findIndex(o => String(o.id || '').replace(/^#+/, '') === cleanIncomingId);
         if (index >= 0) {
           const updated = [...safePrev];
           updated[index] = { ...updated[index], ...incomingOrder };
@@ -1438,12 +1440,35 @@ export const StateProvider = ({ children }) => {
             playSound: isInsert && isUnread,
             showToast: isInsert && isUnread
           }, false);
+
+          // If the incoming notification is order-related, refresh orders immediately so tables and counters sync
+          const notifOrdId = notif.order_id || notif.orderId;
+          const isOrdPlaced = isOrderPlacedNotification(notif);
+          const isOrdPaid = isOrderPaymentConfirmedNotification(notif);
+          const isOrdDelivered = isOrderDeliveredNotification(notif);
+          if (notifOrdId || isOrdPlaced || isOrdPaid || isOrdDelivered) {
+            refreshOrders().catch(() => {});
+          }
         }
       });
 
       unsubscribeOrders = subscribeToOrders(async (payload) => {
         const ord = payload.new || payload.record;
         if (!ord) return;
+        const mappedOrd = mapDatabaseOrderToClientOrder(ord) || ord;
+
+        // Immediate optimistic in-memory state update
+        setOrders(prev => {
+          const safePrev = Array.isArray(prev) ? prev : [];
+          const cleanNewId = String(mappedOrd.id || '').replace(/^#+/, '');
+          const existingIdx = safePrev.findIndex(o => String(o.id || '').replace(/^#+/, '') === cleanNewId);
+          if (existingIdx >= 0) {
+            const next = [...safePrev];
+            next[existingIdx] = { ...next[existingIdx], ...mappedOrd };
+            return next;
+          }
+          return [mappedOrd, ...safePrev];
+        });
 
         // If this is a brand-new order (INSERT), push an admin notification immediately
         if (payload.eventType === 'INSERT' || !payload.eventType) {
@@ -1473,18 +1498,7 @@ export const StateProvider = ({ children }) => {
         }
 
         try {
-          const { data: { session: rtSession } } = await supabase.auth.getSession();
-          if (rtSession?.user) {
-            const rtRole = await resolveRole(rtSession.user.email, rtSession.user);
-            const freshOrders = await fetchOrdersFromSupabase(
-              rtRole === 'admin' ? null : rtSession.user.email,
-              null,
-              rtRole === 'admin' ? null : rtSession.user.id
-            );
-            if (freshOrders && Array.isArray(freshOrders)) {
-              setOrders(freshOrders);
-            }
-          }
+          await refreshOrders();
         } catch (err) {
           console.warn('Realtime order update fetch notice:', err);
         }
@@ -2525,9 +2539,16 @@ export const StateProvider = ({ children }) => {
 
   const refreshOrders = async () => {
     try {
-      const isAdminUser = authUser?.role === 'admin';
-      const email = isAdminUser ? null : (authUser?.email || null);
-      const userId = isAdminUser ? null : (authUser?.id || null);
+      let resolvedUser = authUser;
+      if (!resolvedUser && typeof window !== 'undefined') {
+        try {
+          const saved = JSON.parse(localStorage.getItem('bdigi_auth_user') || 'null');
+          if (saved) resolvedUser = saved;
+        } catch {}
+      }
+      const isAdminUser = resolvedUser?.role === 'admin';
+      const email = isAdminUser ? null : (resolvedUser?.email || null);
+      const userId = isAdminUser ? null : (resolvedUser?.id || null);
       const freshOrders = await fetchOrdersFromSupabase(email, null, userId);
       if (freshOrders && Array.isArray(freshOrders)) {
         setOrders(prevOrders => {
@@ -2537,7 +2558,7 @@ export const StateProvider = ({ children }) => {
             const cleanId = String(o.id).replace(/^#+/, '');
             if (freshMap.has(cleanId)) return false;
             const orderAge = now - new Date(o.createdAt || o.created_at || now).getTime();
-            return orderAge < 120000;
+            return !isNaN(orderAge) && orderAge < 300000;
           });
           return [...freshOrders, ...retainedLocalOrders];
         });

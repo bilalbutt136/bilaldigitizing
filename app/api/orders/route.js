@@ -56,7 +56,13 @@ export async function GET(request) {
       // If unauthenticated and no explicit authorized orderIds requested, return empty orders immediately to prevent cross-account leaks
       if (!isAdmin && !isWorker && !user) {
         if (orderCandidateIds.length === 0) {
-          return NextResponse.json({ orders: [] });
+          return NextResponse.json({ orders: [] }, {
+            headers: {
+              'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+              'Pragma': 'no-cache',
+              'Expires': '0'
+            }
+          });
         }
       }
       
@@ -121,14 +127,26 @@ export async function GET(request) {
         data = fallbackRes.data;
       }
 
-      return NextResponse.json({ orders: data || [] });
+      return NextResponse.json({ orders: data || [] }, {
+        headers: {
+          'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0'
+        }
+      });
     }
     
     if (action === 'fetchPending') {
       if (!isAdmin) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
       const { data, error } = await supabase.from('orders').select('id, title, client_name, client_email, service_category, price, status, payment_status, is_rush, artwork_url, image_url, notes, created_at').eq('status', 'pending').order('created_at', { ascending: false });
       if (error) throw error;
-      return NextResponse.json({ orders: data });
+      return NextResponse.json({ orders: data }, {
+        headers: {
+          'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0'
+        }
+      });
     }
 
     if (action === 'fetchOne' || action === 'fetchDetails') {
@@ -241,6 +259,12 @@ export async function GET(request) {
         orderFiles: orderFilesList, 
         revisions: revisionsList, 
         messages: [] 
+      }, {
+        headers: {
+          'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0'
+        }
       });
     }
 
@@ -564,7 +588,30 @@ export async function POST(request) {
           ? insertedOrder
           : mappedDbRow;
 
-      return NextResponse.json({ success: true, order: finalOrder });
+      // Broadcast order_updated & order_change to Realtime WebSocket channel for instant cross-tab & dashboard sync
+      try {
+        const liveChannel = supabase.channel('bdigitizing-live-hub-v2');
+        await liveChannel.send({
+          type: 'broadcast',
+          event: 'order_updated',
+          payload: finalOrder
+        });
+        await liveChannel.send({
+          type: 'broadcast',
+          event: 'order_change',
+          payload: { order: finalOrder, eventType: 'INSERT' }
+        });
+      } catch (bOrdErr) {
+        console.warn('[Realtime Order Broadcast Notice]:', bOrdErr?.message);
+      }
+
+      return NextResponse.json({ success: true, order: finalOrder }, {
+        headers: {
+          'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0'
+        }
+      });
     }
 
     if (action === 'updateStatus') {
@@ -907,7 +954,43 @@ export async function POST(request) {
         console.warn('Status change notification notice:', notifErr.message);
       }
 
-      return NextResponse.json({ success: true });
+      // Fetch and broadcast the updated order so client and admin dashboards immediately sync
+      let refreshedOrderRow = null;
+      try {
+        const { data: latestRow } = await supabase
+          .from('orders')
+          .select('id, title, client_name, client_email, service_category, service_type, fabric_type, requested_formats, is_rush, price, cost, status, payment_status, artwork_url, image_url, logo, user_id, worker_id, worker_status, worker_file_url, worker_file_name, worker_files, worker_notes, worker_payout, worker_payout_status, admin_worker_feedback, worker_assigned_at, worker_submitted_at, worker_reviewed_at, paid_at, output_file_url, notes, created_at, updated_at, order_files(id, file_name, file_format, file_type, public_url, file_url, uploaded_by, created_at)')
+          .in('id', candidateIds)
+          .maybeSingle();
+        refreshedOrderRow = latestRow;
+      } catch (fErr) {
+        console.warn('Refetch updated order notice:', fErr?.message);
+      }
+
+      const broadcastPayload = refreshedOrderRow || { ...targetOrder, ...updatePayload, id: resolvedOrderId };
+      try {
+        const liveChannel = supabase.channel('bdigitizing-live-hub-v2');
+        await liveChannel.send({
+          type: 'broadcast',
+          event: 'order_updated',
+          payload: broadcastPayload
+        });
+        await liveChannel.send({
+          type: 'broadcast',
+          event: 'order_change',
+          payload: { order: broadcastPayload, eventType: 'UPDATE' }
+        });
+      } catch (bErr) {
+        console.warn('Realtime updateStatus order broadcast notice:', bErr?.message);
+      }
+
+      return NextResponse.json({ success: true, order: broadcastPayload }, {
+        headers: {
+          'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0'
+        }
+      });
     }
     
     if (action === 'requestRevision') {
@@ -1039,7 +1122,28 @@ export async function POST(request) {
         console.warn('Revision admin notification notice:', notifErr.message);
       }
 
-      return NextResponse.json({ success: true });
+      const revBroadcast = { ...orderData, status: 'revision', id: canonicalOrderId };
+      try {
+        const liveChannel = supabase.channel('bdigitizing-live-hub-v2');
+        await liveChannel.send({
+          type: 'broadcast',
+          event: 'order_updated',
+          payload: revBroadcast
+        });
+        await liveChannel.send({
+          type: 'broadcast',
+          event: 'order_change',
+          payload: { order: revBroadcast, eventType: 'UPDATE' }
+        });
+      } catch {}
+
+      return NextResponse.json({ success: true, order: revBroadcast }, {
+        headers: {
+          'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0'
+        }
+      });
     }
 
     if (action === 'requestCancellation') {
@@ -1171,9 +1275,25 @@ export async function POST(request) {
           event: 'cancellation_requested',
           payload: { orderId: cleanOrdId, status: 'cancellation_requested', cancellation: cancelRecord }
         });
+        await liveChannel.send({
+          type: 'broadcast',
+          event: 'order_updated',
+          payload: { ...orderData, status: 'cancellation_requested', id: canonicalOrderId, notes: notesObj }
+        });
+        await liveChannel.send({
+          type: 'broadcast',
+          event: 'order_change',
+          payload: { order: { ...orderData, status: 'cancellation_requested', id: canonicalOrderId, notes: notesObj }, eventType: 'UPDATE' }
+        });
       } catch {}
 
-      return NextResponse.json({ success: true, status: 'cancellation_requested', cancellation: cancelRecord });
+      return NextResponse.json({ success: true, status: 'cancellation_requested', cancellation: cancelRecord }, {
+        headers: {
+          'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0'
+        }
+      });
     }
 
     if (action === 'approveCancellation') {
@@ -1318,6 +1438,16 @@ export async function POST(request) {
           event: 'cancellation_approved',
           payload: { orderId: cleanOrdId, status: 'cancelled', refundIssued: refundSuccess, refundAmount }
         });
+        await liveChannel.send({
+          type: 'broadcast',
+          event: 'order_updated',
+          payload: { ...orderData, status: 'cancelled', id: canonicalOrderId, payment_status: isPaid ? 'refunded' : orderData.payment_status, notes: notesObj }
+        });
+        await liveChannel.send({
+          type: 'broadcast',
+          event: 'order_change',
+          payload: { order: { ...orderData, status: 'cancelled', id: canonicalOrderId, payment_status: isPaid ? 'refunded' : orderData.payment_status, notes: notesObj }, eventType: 'UPDATE' }
+        });
       } catch {}
 
       return NextResponse.json({
@@ -1326,6 +1456,12 @@ export async function POST(request) {
         refundIssued: refundSuccess,
         refundAmount: refundSuccess ? refundAmount : 0,
         newBalance: finalBalance
+      }, {
+        headers: {
+          'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0'
+        }
       });
     }
 
@@ -1409,27 +1545,66 @@ export async function POST(request) {
           event: 'cancellation_rejected',
           payload: { orderId: cleanOrdId, status: revertStatus, rejectionReason: cleanRejection }
         });
+        await liveChannel.send({
+          type: 'broadcast',
+          event: 'order_updated',
+          payload: { ...orderData, status: revertStatus, notes: notesObj }
+        });
+        await liveChannel.send({
+          type: 'broadcast',
+          event: 'order_change',
+          payload: { order: { ...orderData, status: revertStatus, notes: notesObj }, eventType: 'UPDATE' }
+        });
       } catch {}
 
       return NextResponse.json({
         success: true,
         status: revertStatus,
         rejectionReason: cleanRejection
+      }, {
+        headers: {
+          'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0'
+        }
       });
     }
 
     if (action === 'cancelOrder') {
       if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
       const { orderId } = payload;
+      let orderData = null;
       if (!isAdmin) {
-        const { data: orderData, error: orderError } = await supabase.from('orders').select('client_email').eq('id', orderId).single();
-        if (orderError || orderData?.client_email?.toLowerCase().trim() !== user.email.toLowerCase().trim()) {
+        const { data: ord, error: orderError } = await supabase.from('orders').select('*').eq('id', orderId).single();
+        if (orderError || ord?.client_email?.toLowerCase().trim() !== user.email.toLowerCase().trim()) {
           return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
         }
+        orderData = ord;
       }
       const { error } = await supabase.from('orders').update({ status: 'cancelled', updated_at: new Date().toISOString() }).eq('id', orderId);
       if (error) throw error;
-      return NextResponse.json({ success: true });
+
+      try {
+        const liveChannel = supabase.channel('bdigitizing-live-hub-v2');
+        await liveChannel.send({
+          type: 'broadcast',
+          event: 'order_updated',
+          payload: { ...(orderData || {}), id: orderId, status: 'cancelled' }
+        });
+        await liveChannel.send({
+          type: 'broadcast',
+          event: 'order_change',
+          payload: { order: { ...(orderData || {}), id: orderId, status: 'cancelled' }, eventType: 'UPDATE' }
+        });
+      } catch {}
+
+      return NextResponse.json({ success: true }, {
+        headers: {
+          'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0'
+        }
+      });
     }
 
     if (action === 'deleteOrder') {
@@ -1503,7 +1678,27 @@ export async function POST(request) {
         console.warn('Worker assignment notification notice:', notifErr.message);
       }
 
-      return NextResponse.json({ success: true, worker_status: 'Pending_Worker_Acceptance', worker_payout: payoutVal });
+      try {
+        const liveChannel = supabase.channel('bdigitizing-live-hub-v2');
+        await liveChannel.send({
+          type: 'broadcast',
+          event: 'order_updated',
+          payload: { ...targetOrder, ...updatePayload, id: orderId }
+        });
+        await liveChannel.send({
+          type: 'broadcast',
+          event: 'order_change',
+          payload: { order: { ...targetOrder, ...updatePayload, id: orderId }, eventType: 'UPDATE' }
+        });
+      } catch {}
+
+      return NextResponse.json({ success: true, worker_status: 'Pending_Worker_Acceptance', worker_payout: payoutVal }, {
+        headers: {
+          'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0'
+        }
+      });
     }
 
     if (action === 'workerBidAndAccept') {
@@ -1590,10 +1785,30 @@ export async function POST(request) {
         console.warn('Admin notification notice:', notifErr?.message);
       }
 
+      try {
+        const liveChannel = supabase.channel('bdigitizing-live-hub-v2');
+        await liveChannel.send({
+          type: 'broadcast',
+          event: 'order_updated',
+          payload: { ...targetOrder, ...updatePayload, id: orderId }
+        });
+        await liveChannel.send({
+          type: 'broadcast',
+          event: 'order_change',
+          payload: { order: { ...targetOrder, ...updatePayload, id: orderId }, eventType: 'UPDATE' }
+        });
+      } catch {}
+
       return NextResponse.json({ 
         success: true, 
         worker_status: 'In_Progress', 
         quoted_price_pkr: pkrAmount 
+      }, {
+        headers: {
+          'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0'
+        }
       });
     }
 
@@ -1692,7 +1907,27 @@ export async function POST(request) {
         console.warn('Worker upload admin notification notice:', notifErr.message);
       }
 
-      return NextResponse.json({ success: true, worker_status: 'Review Pending' });
+      try {
+        const liveChannel = supabase.channel('bdigitizing-live-hub-v2');
+        await liveChannel.send({
+          type: 'broadcast',
+          event: 'order_updated',
+          payload: { ...targetOrder, ...updatePayload, id: orderId }
+        });
+        await liveChannel.send({
+          type: 'broadcast',
+          event: 'order_change',
+          payload: { order: { ...targetOrder, ...updatePayload, id: orderId }, eventType: 'UPDATE' }
+        });
+      } catch {}
+
+      return NextResponse.json({ success: true, worker_status: 'Review Pending' }, {
+        headers: {
+          'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0'
+        }
+      });
     }
 
     if (action === 'adminReviewWorker') {
@@ -1832,7 +2067,27 @@ export async function POST(request) {
           console.warn('[adminReviewWorker client notif error]:', clientNotifErr.message);
         }
 
-        return NextResponse.json({ success: true, worker_status: 'Completed', status: 'delivered' });
+        try {
+          const liveChannel = supabase.channel('bdigitizing-live-hub-v2');
+          await liveChannel.send({
+            type: 'broadcast',
+            event: 'order_updated',
+            payload: { ...targetOrder, ...orderUpdatePayload, id: orderId }
+          });
+          await liveChannel.send({
+            type: 'broadcast',
+            event: 'order_change',
+            payload: { order: { ...targetOrder, ...orderUpdatePayload, id: orderId }, eventType: 'UPDATE' }
+          });
+        } catch {}
+
+        return NextResponse.json({ success: true, worker_status: 'Completed', status: 'delivered' }, {
+          headers: {
+            'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+            'Pragma': 'no-cache',
+            'Expires': '0'
+          }
+        });
       } else if (decision === 'revision') {
         // Send back for revision
         const updatePayload = {
@@ -1868,7 +2123,27 @@ export async function POST(request) {
           console.warn('Worker revision notification notice:', notifErr.message);
         }
 
-        return NextResponse.json({ success: true, worker_status: 'Revisions Needed' });
+        try {
+          const liveChannel = supabase.channel('bdigitizing-live-hub-v2');
+          await liveChannel.send({
+            type: 'broadcast',
+            event: 'order_updated',
+            payload: { ...targetOrder, ...updatePayload, id: orderId }
+          });
+          await liveChannel.send({
+            type: 'broadcast',
+            event: 'order_change',
+            payload: { order: { ...targetOrder, ...updatePayload, id: orderId }, eventType: 'UPDATE' }
+          });
+        } catch {}
+
+        return NextResponse.json({ success: true, worker_status: 'Revisions Needed' }, {
+          headers: {
+            'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+            'Pragma': 'no-cache',
+            'Expires': '0'
+          }
+        });
       } else {
         return NextResponse.json({ error: 'Invalid decision' }, { status: 400 });
       }
