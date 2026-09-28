@@ -458,9 +458,13 @@ export async function createOrderInSupabase(newOrder) {
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok || !data.success) {
-      return { success: false, data: null, error: data.error || 'Failed to submit order to database.' };
+      return { success: false, data: null, error: data.error || `Failed to submit order to database (Status ${res.status}).` };
     }
-    return { success: true, data: data.order };
+    const resolvedOrder = data.order || data.data || (Array.isArray(data.orders) ? data.orders[0] : null);
+    if (!resolvedOrder) {
+      return { success: false, data: null, error: 'Database response missing order record.' };
+    }
+    return { success: true, data: resolvedOrder };
   } catch (err) {
     return { success: false, data: null, error: err?.message || 'Network exception creating order.' };
   }

@@ -72,15 +72,17 @@ export async function GET(request) {
         } else if (isWorker) {
           query = query.eq('worker_id', targetWorkerId);
         } else if (user) {
-          // Authenticated customer: strictly isolate to their own user_id or email
+          // Authenticated customer: isolate to their own user_id, email, or orders they placed in this browser session
           const safeEmail = (user.email || '').toLowerCase().trim();
           const isValidUuid = typeof user.id === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(user.id);
-          if (isValidUuid && safeEmail) {
-            query = query.or(`user_id.eq.${user.id},client_email.ilike.${safeEmail}`);
-          } else if (isValidUuid) {
-            query = query.eq('user_id', user.id);
-          } else if (safeEmail) {
-            query = query.ilike('client_email', safeEmail);
+          const orConditions = [];
+          if (isValidUuid) orConditions.push(`user_id.eq.${user.id}`);
+          if (safeEmail) orConditions.push(`client_email.ilike.${safeEmail}`);
+          if (orderCandidateIds.length > 0) {
+            orConditions.push(`id.in.(${orderCandidateIds.map(id => `"${id}"`).join(',')})`);
+          }
+          if (orConditions.length > 0) {
+            query = query.or(orConditions.join(','));
           }
         } else if (orderCandidateIds.length > 0) {
           query = query.in('id', orderCandidateIds);
@@ -102,12 +104,14 @@ export async function GET(request) {
         } else if (user) {
           const safeEmail = (user.email || '').toLowerCase().trim();
           const isValidUuid = typeof user.id === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(user.id);
-          if (isValidUuid && safeEmail) {
-            fallbackQuery = fallbackQuery.or(`user_id.eq.${user.id},client_email.ilike.${safeEmail}`);
-          } else if (isValidUuid) {
-            fallbackQuery = fallbackQuery.eq('user_id', user.id);
-          } else if (safeEmail) {
-            fallbackQuery = fallbackQuery.ilike('client_email', safeEmail);
+          const orConditions = [];
+          if (isValidUuid) orConditions.push(`user_id.eq.${user.id}`);
+          if (safeEmail) orConditions.push(`client_email.ilike.${safeEmail}`);
+          if (orderCandidateIds.length > 0) {
+            orConditions.push(`id.in.(${orderCandidateIds.map(id => `"${id}"`).join(',')})`);
+          }
+          if (orConditions.length > 0) {
+            fallbackQuery = fallbackQuery.or(orConditions.join(','));
           }
         } else if (orderCandidateIds.length > 0) {
           fallbackQuery = fallbackQuery.in('id', orderCandidateIds);
@@ -432,9 +436,8 @@ export async function POST(request) {
             client_name: mappedDbRow.client_name,
             client_company: 'Studio Client',
             status: 'offline',
-            unread_count: 1,
-            admin_unread_count: 1,
-            client_unread_count: 0,
+            unread_admin_count: 1,
+            unread_client_count: 0,
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
           }]);
@@ -511,7 +514,7 @@ export async function POST(request) {
 
       // Guaranteed email notifications for new order
       try {
-        const { sendNotificationEmail } = await import('../../../src/lib/emailService');
+        const { sendNotificationEmail } = await import('../../../src/lib/emailService.js');
         await sendNotificationEmail({
           type: 'NEW_ORDER',
           orderId: mappedDbRow.id,
@@ -555,7 +558,13 @@ export async function POST(request) {
         console.warn('[Order Push Service Import Notice]:', pushErr?.message);
       }
 
-      return NextResponse.json({ success: true, order: insertedOrder[0] });
+      const finalOrder = (Array.isArray(insertedOrder) && insertedOrder.length > 0)
+        ? insertedOrder[0]
+        : (insertedOrder && typeof insertedOrder === 'object' && !Array.isArray(insertedOrder))
+          ? insertedOrder
+          : mappedDbRow;
+
+      return NextResponse.json({ success: true, order: finalOrder });
     }
 
     if (action === 'updateStatus') {

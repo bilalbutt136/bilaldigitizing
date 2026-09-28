@@ -1159,7 +1159,6 @@ export const StateProvider = ({ children }) => {
               if (typeof window !== 'undefined') {
                 localStorage.removeItem('bdigi_auth_user');
                 localStorage.removeItem('bdigi_current_view');
-                localStorage.removeItem('bdigi_my_order_ids');
                 localStorage.removeItem('bdigi_user_email');
                 if (typeof document !== 'undefined') {
                   document.cookie = 'bdigi_auth=; path=/; max-age=0; SameSite=Lax';
@@ -1740,6 +1739,20 @@ export const StateProvider = ({ children }) => {
     const uData = buildAuthUser(sbUser, role);
     persistAuth(uData, role);
     setWalletBalance(balance);
+
+    // Immediately load orders for the authenticated user so Customer Portal has live data
+    try {
+      fetchOrdersFromSupabase(
+        role === 'admin' ? null : sbUser.email,
+        null,
+        role === 'admin' ? null : sbUser.id
+      ).then(freshOrders => {
+        if (freshOrders && Array.isArray(freshOrders)) {
+          setOrders(freshOrders);
+        }
+      }).catch(err => console.warn('Order hydration after auth notice:', err));
+    } catch {}
+
     return { success: true, role, user: uData };
   };
 
@@ -2048,11 +2061,14 @@ export const StateProvider = ({ children }) => {
         if (sbResult?.success && sbResult?.data) {
           const liveOrder = mapDatabaseOrderToClientOrder(sbResult.data) || sbResult.data;
           canonicalOrder = { ...fullOrderPayload, ...liveOrder };
-        } else if (sbResult?.error) {
-          console.error('[createOrder DB write notice]:', sbResult.error);
+        } else {
+          const errMsg = sbResult?.error || 'Failed to save order to live database.';
+          console.error('[createOrder DB write error]:', errMsg);
+          throw new Error(errMsg);
         }
       } catch (sbErr) {
-        console.warn('Supabase create order notice:', sbErr);
+        console.error('Supabase create order error:', sbErr);
+        throw sbErr;
       }
     }
 

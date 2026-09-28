@@ -80,7 +80,8 @@ export const CustomerDashboard = () => {
     refreshNotifications,
     unreadOrdersCount = 0,
     markOrdersAsRead,
-    dynamicPricingTiers = []
+    dynamicPricingTiers = [],
+    refreshOrders
   } = useAppState();
 
   // Safe User Resolution - declared at top to prevent any TDZ errors
@@ -131,6 +132,13 @@ export const CustomerDashboard = () => {
     window.addEventListener('bdigi_chat_focus', handleChatFocusEvent);
     return () => window.removeEventListener('bdigi_chat_focus', handleChatFocusEvent);
   }, []);
+
+  // Ensure customer orders are fresh and synced from Supabase on mount
+  React.useEffect(() => {
+    if (typeof refreshOrders === 'function') {
+      refreshOrders().catch(err => console.warn('Customer orders sync notice:', err));
+    }
+  }, [refreshOrders, userEmail]);
 
   // Track whether customer has installed the PWA mobile app
   const [isAppInstalled, setIsAppInstalled] = useState(false);

@@ -30,7 +30,7 @@ import {
 
 export const CoreServicesOrderSection = ({ defaultService = 'digitizing', hideTabs = false, initialTier = 'standard' }) => {
   const navigate = useNavigate();
-  const { dynamicPricingTiers = [], patchCards = [], pricing = {}, siteSettings, createOrder, protectedNavigate, showToast } = useAppState();
+  const { dynamicPricingTiers = [], patchCards = [], pricing = {}, siteSettings, createOrder, protectedNavigate, showToast, authUser, isAuthenticated, setIsAuthModalOpen, setAuthModalMode } = useAppState();
 
   // Dynamic patch craft / material rate resolver connected to database & CMS
   const getPatchStyleBaseRate = (styleName) => {
@@ -520,6 +520,15 @@ export const CoreServicesOrderSection = ({ defaultService = 'digitizing', hideTa
       }
     }
 
+    if (!isAuthenticated || !authUser) {
+      if (setIsAuthModalOpen) {
+        if (setAuthModalMode) setAuthModalMode('login');
+        setIsAuthModalOpen(true);
+      }
+      showToast('Please sign in or create an account to finalize and submit your order.', 'warning');
+      return;
+    }
+
     setIsSubmitting(true);
     const totalPrice = calculatePrice();
 
@@ -641,6 +650,10 @@ export const CoreServicesOrderSection = ({ defaultService = 'digitizing', hideTa
       image_url: primaryArtworkUrl,
       logo: primaryArtworkUrl,
       uploadedFiles: allUploadedFiles,
+      clientEmail: (authUser?.email || '').toLowerCase().trim(),
+      client_email: (authUser?.email || '').toLowerCase().trim(),
+      clientName: authUser?.user_metadata?.full_name || authUser?.name || 'Valued Client',
+      client_name: authUser?.user_metadata?.full_name || authUser?.name || 'Valued Client',
       specifications: {
         placementsSummary,
         placementItems: activeService === 'digitizing' || activeService === 'vector' ? updatedPlacementItems : undefined,
@@ -661,11 +674,9 @@ export const CoreServicesOrderSection = ({ defaultService = 'digitizing', hideTa
       showToast('Order submitted successfully!', 'success');
       protectedNavigate('customer', true);
       navigate('/client-portal');
-    } catch {
+    } catch (ordErr) {
       setIsSubmitting(false);
-      showToast('Order created in guest preview session', 'info');
-      protectedNavigate('customer', true);
-      navigate('/client-portal');
+      showToast(ordErr?.message || 'Could not save order. Please try again.', 'error');
     }
   };
 
