@@ -2778,34 +2778,8 @@ export const BDigitizingMobileApp = () => {
                       </span>
 
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                        {s !== 'delivered' && s !== 'completed' && s !== 'cancelled' && s !== 'cancellation_requested' && (
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setSelectedOrderForDrawer(ord);
-                              setTimeout(() => {
-                                window.dispatchEvent(new CustomEvent('bdigi_open_cancellation_modal', { detail: { orderId: ord.id, order: ord } }));
-                              }, 100);
-                            }}
-                            style={{
-                              background: isDark ? 'rgba(239, 68, 68, 0.15)' : '#fef2f2',
-                              border: isDark ? '1px solid rgba(239, 68, 68, 0.4)' : '1px solid #fca5a5',
-                              color: isDark ? '#f87171' : '#dc2626',
-                              padding: '0.22rem 0.55rem',
-                              borderRadius: '6px',
-                              fontSize: '0.72rem',
-                              fontWeight: 700,
-                              cursor: 'pointer',
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              gap: '0.25rem'
-                            }}
-                            title="Request Cancellation"
-                          >
-                            <XCircle size={11} /> Cancel
-                          </button>
-                        )}
+
+
                         <button
                           type="button"
                           onClick={(e) => {
@@ -4798,37 +4772,6 @@ export const BDigitizingMobileApp = () => {
               <ClipboardList size={18} style={{ color: '#059669' }} /> View Order & Download Files
             </button>
 
-            {String(isOrderActionMenuOpen.status || '').toLowerCase() !== 'delivered' &&
-             String(isOrderActionMenuOpen.status || '').toLowerCase() !== 'completed' &&
-             String(isOrderActionMenuOpen.status || '').toLowerCase() !== 'cancelled' &&
-             String(isOrderActionMenuOpen.status || '').toLowerCase() !== 'cancellation_requested' && (
-              <button
-                type="button"
-                onClick={() => {
-                  const targetOrd = isOrderActionMenuOpen;
-                  setIsOrderActionMenuOpen(null);
-                  setSelectedOrderForDrawer(targetOrd);
-                  setTimeout(() => {
-                    window.dispatchEvent(new CustomEvent('bdigi_open_cancellation_modal', { detail: { orderId: targetOrd.id, order: targetOrd } }));
-                  }, 100);
-                }}
-                style={{
-                  padding: '0.85rem',
-                  borderRadius: '10px',
-                  border: isDark ? '1px solid rgba(239, 68, 68, 0.3)' : '1px solid #fee2e2',
-                  background: isDark ? 'rgba(239, 68, 68, 0.1)' : '#fff5f5',
-                  fontSize: '0.88rem',
-                  fontWeight: 800,
-                  color: isDark ? '#f87171' : '#b91c1c',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.65rem',
-                  cursor: 'pointer'
-                }}
-              >
-                <XCircle size={18} style={{ color: '#ef4444' }} /> Request Cancellation
-              </button>
-            )}
 
           </div>
         </div>

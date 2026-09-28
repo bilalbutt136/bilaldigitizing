@@ -1008,29 +1008,7 @@ export const OrderTrackerDrawer = () => {
                     <Clock size={11} /> PENDING
                   </span>
                 )}
-                {!isAdmin && isCancellable && (
-                  <button
-                    type="button"
-                    onClick={() => setIsCancelModalOpen(true)}
-                    style={{
-                      background: 'rgba(239, 68, 68, 0.18)',
-                      border: '1px solid rgba(239, 68, 68, 0.45)',
-                      color: '#fca5a5',
-                      padding: '0.15rem 0.55rem',
-                      borderRadius: '9999px',
-                      fontSize: '0.7rem',
-                      fontWeight: 800,
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '0.25rem',
-                      cursor: 'pointer',
-                      transition: 'all 0.15s ease'
-                    }}
-                    title="Request Cancellation for this order"
-                  >
-                    <XCircle size={12} /> Cancel Order
-                  </button>
-                )}
+
               </div>
               <div style={{ fontSize: '0.74rem', color: '#94a3b8', marginTop: '0.15rem', display: 'flex', alignItems: 'center', gap: '0.35rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 <span>{ord.serviceCategory || (ord.type === 'vector' ? 'Vector Art' : 'Embroidery Digitizing')}</span>
@@ -1158,26 +1136,7 @@ export const OrderTrackerDrawer = () => {
             <Receipt size={14} style={{ color: 'var(--orange-500, #ea580c)' }} /> Tax Invoice (PDF)
           </button>
 
-          {/* Quick Toolbar Cancel Button */}
-          {!isAdmin && isCancellable && (
-            <button
-              type="button"
-              onClick={() => setIsCancelModalOpen(true)}
-              className="btn btn-sm btn-outline"
-              style={{
-                fontWeight: 800,
-                fontSize: '0.8rem',
-                gap: '0.35rem',
-                borderColor: '#fca5a5',
-                color: '#dc2626',
-                background: isDark ? 'rgba(239, 68, 68, 0.12)' : '#fef2f2',
-                whiteSpace: 'nowrap'
-              }}
-              title="Request Order Cancellation"
-            >
-              <XCircle size={14} /> Cancel Order
-            </button>
-          )}
+
         </div>
 
         {/* ==================================================================
@@ -2577,44 +2536,7 @@ export const OrderTrackerDrawer = () => {
               </span>
             ) : null}
 
-            {/* Customer Cancellation Request Action */}
-            {!isAdmin && !isDelivered && !isCompleted && ord.status !== 'cancelled' && ord.status !== 'cancellation_requested' && (
-              <button
-                type="button"
-                onClick={() => setIsCancelModalOpen(true)}
-                className="btn btn-outline btn-sm"
-                style={{
-                  borderColor: '#fca5a5',
-                  color: '#dc2626',
-                  background: '#fef2f2',
-                  fontWeight: 700,
-                  fontSize: '0.78rem',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '0.3rem',
-                  padding: '0.45rem 0.85rem'
-                }}
-              >
-                <XCircle size={14} /> Request Cancellation
-              </button>
-            )}
 
-            {ord.status === 'cancellation_requested' && (
-              <span style={{
-                background: '#fef3c7',
-                color: '#b45309',
-                border: '1px solid #fde68a',
-                padding: '0.4rem 0.75rem',
-                borderRadius: '8px',
-                fontSize: '0.78rem',
-                fontWeight: 800,
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '0.35rem'
-              }}>
-                ⚠️ Cancellation Pending Review
-              </span>
-            )}
 
             {ord.status === 'cancelled' && (
               <span style={{
@@ -2720,182 +2642,7 @@ export const OrderTrackerDrawer = () => {
         />
       )}
 
-      {/* Customer Order Cancellation Modal */}
-      {isCancelModalOpen && (
-        <div style={{
-          position: 'fixed',
-          inset: 0,
-          backgroundColor: 'rgba(15, 23, 42, 0.75)',
-          backdropFilter: 'blur(4px)',
-          zIndex: 9999,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: '1rem'
-        }}>
-          <div style={{
-            background: 'var(--bg-card, #ffffff)',
-            border: '1.5px solid var(--border-color, #e2e8f0)',
-            borderRadius: '18px',
-            width: '100%',
-            maxWidth: '480px',
-            boxShadow: '0 20px 40px rgba(0,0,0,0.25)',
-            overflow: 'hidden',
-            display: 'flex',
-            flexDirection: 'column'
-          }}>
-            <div style={{
-              padding: '1.25rem 1.5rem',
-              borderBottom: '1px solid var(--border-color, #e2e8f0)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              background: '#fff1f2'
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-                <div style={{
-                  width: '36px',
-                  height: '36px',
-                  borderRadius: '10px',
-                  background: '#fee2e2',
-                  color: '#dc2626',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center'
-                }}>
-                  <XCircle size={20} />
-                </div>
-                <div>
-                  <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 900, color: '#991b1b' }}>
-                    Request Order Cancellation
-                  </h3>
-                  <span style={{ fontSize: '0.75rem', color: '#b91c1c' }}>
-                    Order #{cleanSelId || ord.id}
-                  </span>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => { if (!isSubmittingCancel) handleSafeCloseCancelModal(); }}
-                style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: '#94a3b8' }}
-              >
-                <X size={20} />
-              </button>
-            </div>
-
-            <form onSubmit={handleCustomerSubmitCancellation} style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-muted)', lineHeight: 1.5 }}>
-                Cancellation requests are submitted to studio administration. If approved, any paid funds will be automatically credited to your <strong>BDigitizing Studio Wallet</strong> for future orders.
-              </p>
-
-              <div>
-                <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 800, color: 'var(--text-main)', marginBottom: '0.4rem' }}>
-                  Reason for Cancellation <span style={{ color: '#ef4444' }}>*</span>
-                </label>
-
-                {/* Quick Preset Tags */}
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem', marginBottom: '0.55rem' }}>
-                  {[
-                    'Placed by mistake / duplicate order',
-                    'Artwork changed by client',
-                    'Delivery timeline change',
-                    'Need different specifications'
-                  ].map((preset) => (
-                    <button
-                      key={preset}
-                      type="button"
-                      onClick={() => setCancelReason(preset)}
-                      style={{
-                        background: cancelReason === preset ? '#ea580c' : (isDark ? 'rgba(255,255,255,0.06)' : '#f1f5f9'),
-                        color: cancelReason === preset ? '#ffffff' : (isDark ? '#cbd5e1' : '#475569'),
-                        border: cancelReason === preset ? '1px solid #c2410c' : (isDark ? '1px solid rgba(255,255,255,0.1)' : '1px solid #e2e8f0'),
-                        borderRadius: '6px',
-                        padding: '0.22rem 0.55rem',
-                        fontSize: '0.72rem',
-                        fontWeight: 700,
-                        cursor: 'pointer',
-                        transition: 'all 0.15s ease'
-                      }}
-                    >
-                      {preset}
-                    </button>
-                  ))}
-                </div>
-
-                <textarea
-                  value={cancelReason}
-                  onChange={(e) => setCancelReason(e.target.value)}
-                  placeholder="Please explain why you need to cancel this order (e.g., client cancelled project, wrong artwork submitted, etc.)..."
-                  rows={4}
-                  required
-                  style={{
-                    width: '100%',
-                    padding: '0.75rem',
-                    borderRadius: '10px',
-                    border: '1.5px solid var(--border-color, #cbd5e1)',
-                    background: 'var(--bg-main, #ffffff)',
-                    color: 'var(--text-main, #0f172a)',
-                    fontSize: '0.875rem',
-                    outline: 'none',
-                    resize: 'vertical',
-                    boxSizing: 'border-box'
-                  }}
-                />
-              </div>
-
-              <div style={{
-                background: '#f8fafc',
-                border: '1px solid #e2e8f0',
-                borderRadius: '10px',
-                padding: '0.75rem 1rem',
-                fontSize: '0.78rem',
-                color: '#64748b',
-                lineHeight: 1.4
-              }}>
-                💡 <em>Note: Orders that are already digitized and delivered are not eligible for cancellation. For adjustments, use the "Request Modification" feature instead.</em>
-              </div>
-
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '0.5rem' }}>
-                <button
-                  type="button"
-                  onClick={handleSafeCloseCancelModal}
-                  disabled={isSubmittingCancel}
-                  className="btn btn-outline btn-sm"
-                  style={{ fontWeight: 700 }}
-                >
-                  Keep Order
-                </button>
-                <button
-                  type="submit"
-                  disabled={isSubmittingCancel || !cancelReason.trim()}
-                  style={{
-                    background: '#dc2626',
-                    color: '#ffffff',
-                    border: 'none',
-                    borderRadius: '8px',
-                    padding: '0.55rem 1.25rem',
-                    fontWeight: 800,
-                    fontSize: '0.85rem',
-                    cursor: isSubmittingCancel || !cancelReason.trim() ? 'not-allowed' : 'pointer',
-                    opacity: isSubmittingCancel || !cancelReason.trim() ? 0.6 : 1,
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '0.4rem'
-                  }}
-                >
-                  {isSubmittingCancel ? (
-                    <>
-                      <Loader2 size={15} className="spin-fast" /> Submitting...
-                    </>
-                  ) : (
-                    'Submit Cancellation Request'
-                  )}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+    
     </>
   );
 };

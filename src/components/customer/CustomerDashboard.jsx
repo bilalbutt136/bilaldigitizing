@@ -1381,27 +1381,7 @@ export const CustomerDashboard = () => {
                                 >
                                   Track Order
                                 </button>
-                                {isOrderCancellable(topOrd) && (
-                                  <button
-                                    type="button"
-                                    onClick={() => handleOpenCancellation(topOrd)}
-                                    className="btn btn-sm btn-outline"
-                                    style={{
-                                      padding: '0.2rem 0.55rem',
-                                      fontSize: '0.7rem',
-                                      fontWeight: 700,
-                                      borderRadius: '6px',
-                                      borderColor: '#fca5a5',
-                                      color: '#dc2626',
-                                      background: isDark ? 'rgba(239, 68, 68, 0.1)' : '#fef2f2',
-                                      display: 'inline-flex',
-                                      alignItems: 'center',
-                                      gap: '0.2rem'
-                                    }}
-                                  >
-                                    <XCircle size={12} /> Cancel Order
-                                  </button>
-                                )}
+
                               </div>
                             </div>
                           </div>
@@ -1822,48 +1802,7 @@ export const CustomerDashboard = () => {
                                         </button>
                                       )}
 
-                                      {isOrderCancellable(ord) && (
-                                        <button
-                                          type="button"
-                                          onClick={() => handleOpenCancellation(ord)}
-                                          style={{
-                                            padding: '0.32rem 0.65rem',
-                                            fontSize: '0.74rem',
-                                            fontWeight: 700,
-                                            borderRadius: '6px',
-                                            whiteSpace: 'nowrap',
-                                            display: 'inline-flex',
-                                            alignItems: 'center',
-                                            gap: '0.25rem',
-                                            color: '#dc2626',
-                                            border: '1px solid #fca5a5',
-                                            backgroundColor: '#fef2f2',
-                                            cursor: 'pointer'
-                                          }}
-                                          title="Request Cancellation"
-                                        >
-                                          <XCircle size={12} /> Cancel
-                                        </button>
-                                      )}
-                                      {ord.status === 'cancellation_requested' && (
-                                        <span
-                                          style={{
-                                            padding: '0.25rem 0.55rem',
-                                            fontSize: '0.72rem',
-                                            fontWeight: 700,
-                                            borderRadius: '6px',
-                                            whiteSpace: 'nowrap',
-                                            display: 'inline-flex',
-                                            alignItems: 'center',
-                                            gap: '0.25rem',
-                                            color: '#b45309',
-                                            backgroundColor: '#fef3c7',
-                                            border: '1px solid #fde68a'
-                                          }}
-                                        >
-                                          Cancelling...
-                                        </span>
-                                      )}
+
                                       <button 
                                         type="button"
                                         className="btn btn-outline btn-sm"
@@ -2105,46 +2044,7 @@ export const CustomerDashboard = () => {
                                   >
                                     <Receipt size={12} /> Invoice
                                   </button>
-                                  {isOrderCancellable(ord) && (
-                                    <button
-                                      type="button"
-                                      onClick={() => handleOpenCancellation(ord)}
-                                      style={{
-                                        background: '#fef2f2',
-                                        border: '1px solid #fca5a5',
-                                        color: '#dc2626',
-                                        padding: '0.35rem 0.65rem',
-                                        borderRadius: '6px',
-                                        fontWeight: 700,
-                                        fontSize: '0.75rem',
-                                        cursor: 'pointer',
-                                        display: 'inline-flex',
-                                        alignItems: 'center',
-                                        gap: '0.25rem'
-                                      }}
-                                      title="Request Cancellation"
-                                    >
-                                      <XCircle size={12} /> Cancel
-                                    </button>
-                                  )}
-                                  {ord.status === 'cancellation_requested' && (
-                                    <span
-                                      style={{
-                                        background: '#fef3c7',
-                                        border: '1px solid #fde68a',
-                                        color: '#b45309',
-                                        padding: '0.35rem 0.65rem',
-                                        borderRadius: '6px',
-                                        fontWeight: 700,
-                                        fontSize: '0.75rem',
-                                        display: 'inline-flex',
-                                        alignItems: 'center',
-                                        gap: '0.25rem'
-                                      }}
-                                    >
-                                      Cancelling...
-                                    </span>
-                                  )}
+
                                   <button
                                     type="button"
                                     onClick={() => setSelectedOrderForDrawer(ord)}
@@ -2579,7 +2479,7 @@ export const CustomerDashboard = () => {
                               </span>
                             </div>
 
-                            <div style={{ display: 'grid', gridTemplateColumns: isDelivered ? '1fr 1fr' : (isOrderCancellable(ord) ? '1fr auto' : '1fr'), gap: '0.5rem' }}>
+                            <div style={{ display: 'grid', gridTemplateColumns: isDelivered ? '1fr 1fr' : '1fr', gap: '0.5rem' }}>
                               <button
                                 type="button"
                                 onClick={() => setSelectedOrderForDrawer(ord)}
@@ -2623,29 +2523,6 @@ export const CustomerDashboard = () => {
                                 </button>
                               )}
 
-                              {!isDelivered && isOrderCancellable(ord) && (
-                                <button
-                                  type="button"
-                                  onClick={() => handleOpenCancellation(ord)}
-                                  style={{
-                                    background: '#fef2f2',
-                                    border: '1px solid #fca5a5',
-                                    color: '#dc2626',
-                                    padding: '0.5rem 0.75rem',
-                                    fontSize: '0.78rem',
-                                    fontWeight: 800,
-                                    borderRadius: '8px',
-                                    justifyContent: 'center',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '0.35rem',
-                                    cursor: 'pointer'
-                                  }}
-                                  title="Request Order Cancellation"
-                                >
-                                  <XCircle size={13} /> Cancel
-                                </button>
-                              )}
                             </div>
                           </div>
                         );

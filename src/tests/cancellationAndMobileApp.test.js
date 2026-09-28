@@ -213,51 +213,41 @@ describe('3. Mobile Hygiene: WhatsApp Removal & Stat Cards Hidden on Mobile', ()
   });
 });
 
-describe('4. Comprehensive Customer Cancellation Button Visibility Across All Touchpoints', () => {
-  test('OrderTrackerDrawer provides cancellation buttons in header, toolbar, and modal with preset reason tags', () => {
+describe('4. Comprehensive Customer Cancellation Button Complete Removal Across All Touchpoints', () => {
+  test('OrderTrackerDrawer has completely removed customer cancellation buttons and modal', () => {
     const drawerContent = fs.readFileSync(path.join(process.cwd(), 'src/components/customer/OrderTrackerDrawer.jsx'), 'utf-8');
 
-    // Header Cancel Button
-    assert.match(drawerContent, /\{!isAdmin && isCancellable && \([\s\S]*?<XCircle size=\{12\} \/> Cancel Order/);
-    // Quick Toolbar Cancel Button
-    assert.match(drawerContent, /\{!isAdmin && isCancellable && \([\s\S]*?<XCircle size=\{14\} \/> Cancel Order/);
-    // Global event listener for bdigi_open_cancellation_modal
-    assert.match(drawerContent, /bdigi_open_cancellation_modal/);
-    // One-tap preset reason tags in modal
-    assert.match(drawerContent, /Placed by mistake \/ duplicate order/);
-    assert.match(drawerContent, /Artwork changed by client/);
-    assert.match(drawerContent, /Delivery timeline change/);
+    // Header Cancel Button removed
+    assert.ok(!drawerContent.includes('<XCircle size={12} /> Cancel Order'), 'Header Cancel Order button must be removed');
+    // Quick Toolbar Cancel Button removed
+    assert.ok(!drawerContent.includes('<XCircle size={14} /> Cancel Order'), 'Quick Toolbar Cancel Order button must be removed');
+    // Customer action cancellation request button removed
+    assert.ok(!drawerContent.includes('<XCircle size={14} /> Request Cancellation'), 'Customer Request Cancellation action button must be removed');
+    // Customer cancellation modal removed
+    assert.ok(!drawerContent.includes('Customer Order Cancellation Modal'), 'Customer Order Cancellation Modal must be removed');
   });
 
-  test('CustomerDashboard provides Cancel buttons in desktop table, mobile cards, active order card, and orders tab', () => {
+  test('CustomerDashboard has completely removed Cancel buttons from table, cards, and tabs', () => {
     const dashboardContent = fs.readFileSync(path.join(process.cwd(), 'src/components/customer/CustomerDashboard.jsx'), 'utf-8');
 
-    // isOrderCancellable helper exists
-    assert.match(dashboardContent, /const isOrderCancellable = \(o\) =>/);
-    assert.match(dashboardContent, /handleOpenCancellation\(ord\)/);
+    // Desktop table Cancel button removed
+    assert.ok(!dashboardContent.includes('<XCircle size={12} /> Cancel'), 'Desktop table Cancel button must be removed');
 
-    // Desktop table Cancel button
-    assert.match(dashboardContent, /\{isOrderCancellable\(ord\) && \([\s\S]*?<XCircle size=\{12\} \/> Cancel/);
+    // Active order card Cancel button removed
+    assert.ok(!dashboardContent.includes('<XCircle size={12} /> Cancel Order'), 'Active order card Cancel Order button must be removed');
 
-    // Active order card Cancel button
-    assert.match(dashboardContent, /\{isOrderCancellable\(topOrd\) && \([\s\S]*?<XCircle size=\{12\} \/> Cancel Order/);
-
-    // Orders tab grid Cancel button
-    assert.match(dashboardContent, /\{!isDelivered && isOrderCancellable\(ord\) && \([\s\S]*?<XCircle size=\{13\} \/> Cancel/);
+    // Orders tab grid Cancel button removed
+    assert.ok(!dashboardContent.includes('<XCircle size={13} /> Cancel'), 'Orders tab grid Cancel button must be removed');
   });
 
-  test('BDigitizingMobileApp provides Cancel button directly on order cards and in action sheet for all cancellable orders', () => {
+  test('BDigitizingMobileApp has completely removed Cancel buttons from cards and action sheets', () => {
     const mobileContent = fs.readFileSync(path.join(process.cwd(), 'src/components/mobile/BDigitizingMobileApp.jsx'), 'utf-8');
 
-    // XCircle icon imported
-    assert.match(mobileContent, /XCircle,/);
+    // Direct Cancel button on mobile order cards removed
+    assert.ok(!mobileContent.includes('<XCircle size={11} /> Cancel'), 'Mobile order card Cancel button must be removed');
 
-    // Direct Cancel button on mobile order cards
-    assert.match(mobileContent, /<XCircle size=\{11\} \/> Cancel/);
-
-    // Action sheet cancellation button without !isOrderUnpaid restriction
-    assert.match(mobileContent, /<XCircle size=\{18\} style=\{\{ color: '#ef4444' \}\} \/> Request Cancellation/);
-    assert.equal(mobileContent.includes('!isOrderUnpaid(isOrderActionMenuOpen)'), false);
+    // Action sheet cancellation button removed
+    assert.ok(!mobileContent.includes('Request Cancellation'), 'Mobile action sheet Request Cancellation must be removed');
   });
 });
 
