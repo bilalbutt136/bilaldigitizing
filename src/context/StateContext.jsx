@@ -2058,11 +2058,16 @@ export const StateProvider = ({ children }) => {
       ...newOrderData,
       clientName: newOrderData.clientName || authUser?.company || authUser?.name || 'Valued Client',
       clientEmail: (newOrderData.clientEmail || authUser?.email || '').toLowerCase().trim(),
+      client_email: (newOrderData.clientEmail || authUser?.email || '').toLowerCase().trim(),
       clientId: newOrderData.clientId || authUser?.id || authUser?.email || '',
+      user_id: newOrderData.user_id || authUser?.id || null,
       createdAt: new Date().toISOString(),
-      status: newOrderData.status || (isAlreadyPaid ? 'in_progress' : 'awaiting_payment'),
+      created_at: new Date().toISOString(),
+      // Use 'submitted' to match what the DB stores (not 'awaiting_payment')
+      status: newOrderData.status || (isAlreadyPaid ? 'in_progress' : 'submitted'),
       payment_status: isAlreadyPaid ? 'paid' : (newOrderData.payment_status || newOrderData.paymentStatus || 'pending'),
       paymentStatus: isAlreadyPaid ? 'paid' : (newOrderData.payment_status || newOrderData.paymentStatus || 'pending'),
+      isPaid: isAlreadyPaid,
       history: [{ timestamp: new Date().toISOString(), label: isAlreadyPaid ? 'Order Submitted & Paid with Studio Wallet' : 'Order Submitted — Awaiting Payment' }],
       revisions: []
     };
@@ -2089,6 +2094,13 @@ export const StateProvider = ({ children }) => {
     const assignedId = canonicalOrder.id || localId;
     setOrders(prev => [canonicalOrder, ...prev.filter(o => o.id !== assignedId && o.id !== localId)]);
     showToast(`Order ${formatOrderId(assignedId)} created successfully!`, 'success');
+
+    // Refresh orders from DB after a brief delay to ensure the new order is fully persisted
+    // This fixes the race condition where the dashboard shows stale data after order creation
+    setTimeout(async () => {
+      try { await refreshOrders(); } catch {}
+    }, 2000);
+
 
     if (typeof window !== 'undefined' && assignedId) {
       try {
