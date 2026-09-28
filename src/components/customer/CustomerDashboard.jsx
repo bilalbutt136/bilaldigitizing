@@ -36,6 +36,7 @@ import {
   XCircle as _XCircle
 } from 'lucide-react';
 import { ClientSidebar } from './ClientSidebar';
+import CustomerMobileCommandCenter from './CustomerMobileCommandCenter';
 import { MobileSimpleOrderModal } from './MobileSimpleOrderModal';
 import { ClientNotificationsView } from './ClientNotificationsView';
 import { CustomerInvoiceModal } from '../common/CustomerInvoiceModal';
@@ -856,6 +857,29 @@ export const CustomerDashboard = () => {
         }
 
         @media (max-width: 1024px) {
+          .client-portal-wrapper .desktop-only {
+            display: none !important;
+          }
+          .client-portal-wrapper .mobile-only {
+            display: block !important;
+          }
+          .client-portal-wrapper .mobile-only-flex,
+          .customer-mobile-context-header {
+            display: flex !important;
+          }
+          .client-portal-wrapper .mobile-bottom-nav {
+            display: grid !important;
+          }
+          .client-sidebar-fixed {
+            display: none !important;
+          }
+          .customer-mobile-command-center {
+            display: block !important;
+          }
+          .customer-stat-cards-grid,
+          #orders-table-wrapper {
+            display: none !important;
+          }
           .client-portal-wrapper:not(.client-portal-chat-mode) {
             height: auto !important;
             min-height: calc(100dvh - 65px) !important;
@@ -869,10 +893,17 @@ export const CustomerDashboard = () => {
             overflow: visible !important;
           }
           .client-main-content:not(.client-main-chat-tab) {
-            padding: 0.65rem 0.85rem calc(85px + env(safe-area-inset-bottom, 0px)) !important;
+            padding: 0.65rem 0.85rem calc(86px + env(safe-area-inset-bottom, 0px)) !important;
             height: auto !important;
             max-height: none !important;
             overflow: visible !important;
+            width: 100% !important;
+          }
+          .client-portal-body {
+            flex-direction: column !important;
+            width: 100% !important;
+            min-height: 0 !important;
+          }
           .client-portal-wrapper.client-portal-chat-mode {
             padding-bottom: 0 !important;
             padding-top: 0 !important;
@@ -1000,10 +1031,71 @@ export const CustomerDashboard = () => {
             boxSizing: 'border-box'
           }}
         >
+          {!isChatTab && (
+            <div
+              className="mobile-only-flex customer-mobile-context-header"
+              style={{
+                position: 'sticky',
+                top: 0,
+                zIndex: 80,
+                margin: '-0.65rem -0.85rem 0.65rem',
+                padding: 'max(0.65rem, env(safe-area-inset-top, 0px)) 0.9rem 0.65rem',
+                background: isDark ? 'rgba(9, 13, 22, 0.96)' : 'rgba(255, 255, 255, 0.97)',
+                backdropFilter: 'blur(18px)',
+                WebkitBackdropFilter: 'blur(18px)',
+                borderBottom: '1px solid var(--border-color)',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: '0.75rem'
+              }}
+            >
+              <div style={{ minWidth: 0 }}>
+                <div style={{ fontSize: '0.64rem', fontWeight: 900, color: 'var(--orange-600)', textTransform: 'uppercase', letterSpacing: '0.07em' }}>
+                  BDigitizing Studio
+                </div>
+                <div style={{ fontSize: '1rem', fontWeight: 900, color: 'var(--text-main)', marginTop: '0.08rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  {{
+                    dashboard: 'Home',
+                    orders: 'My Orders',
+                    wallet: 'Studio Wallet',
+                    notifications: 'Notifications',
+                    profile: 'My Account',
+                    settings: 'Preferences',
+                    digitizing: 'Embroidery Digitizing',
+                    vector: 'Vector Art',
+                    patches: 'Custom Patches'
+                  }[activeTab] || 'Client Portal'}
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setActiveTab('profile')}
+                aria-label="Open account profile"
+                style={{
+                  width: '40px',
+                  height: '40px',
+                  borderRadius: '12px',
+                  border: '1px solid var(--border-color)',
+                  background: isDark ? 'var(--color-surface, #111827)' : '#f8fafc',
+                  color: 'var(--text-main)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontWeight: 900,
+                  fontSize: '0.9rem',
+                  flexShrink: 0,
+                  cursor: 'pointer'
+                }}
+              >
+                {(activeUser?.name?.[0] || activeUser?.email?.[0] || 'C').toUpperCase()}
+              </button>
+            </div>
+          )}
+
           {/* Optional App Mode / PWA Install Banner for Mobile Screens - Only on Dashboard */}
           {activeTab === 'dashboard' && !isStandaloneApp && !isAppPromptDismissed && (
             <div
-              className="mobile-only"
+              className="mobile-only-flex"
               style={{
                 background: isDark ? 'rgba(30, 41, 59, 0.75)' : 'linear-gradient(135deg, rgba(249, 115, 22, 0.08) 0%, rgba(249, 115, 22, 0.02) 100%)',
                 border: isDark ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid rgba(249, 115, 22, 0.18)',
@@ -1085,7 +1177,7 @@ export const CustomerDashboard = () => {
             {activeTab === 'dashboard' && (
               <>
                 {/* Welcome Header Container - Styled for Parity with Admin Portal */}
-                <div style={{
+                <div className="desktop-only" style={{
                   display: 'flex',
                   justifyContent: 'space-between',
                   alignItems: 'center',
@@ -1325,8 +1417,31 @@ export const CustomerDashboard = () => {
                   </div>
                 </div>
 
+                {/* Dedicated mobile command center: clear hierarchy and one-tap actions. */}
+                <CustomerMobileCommandCenter
+                  activeUser={activeUser}
+                  walletBalance={walletBalance}
+                  activeOrders={activeOrders}
+                  completedOrders={completedOrders}
+                  unpaidOrders={unpaidOrders}
+                  unreadInboxCount={unreadInboxCount}
+                  unreadSupportCount={unreadSupportCount}
+                  unreadNotificationsCount={unreadNotificationsCount}
+                  isDark={isDark}
+                  onNewOrder={() => setIsServiceSelectorOpen(true)}
+                  onOpenOrders={() => setActiveTab('orders')}
+                  onOpenInbox={() => setActiveTab('inbox')}
+                  onOpenWallet={() => setActiveTab('wallet')}
+                  onOpenSupport={() => setActiveTab('support')}
+                  onOpenNotifications={() => setActiveTab('notifications')}
+                  onTrackOrder={(order) => {
+                    if (openOrderTrackerDrawer) openOrderTrackerDrawer(order?.id);
+                    else setSelectedOrderForDrawer(order);
+                  }}
+                />
+
                 {/* A. MOBILE-FIRST APP HOME SCREEN (Clean, simple, 1-tap ordering) */}
-                <div className="mobile-only" style={{ marginBottom: '1.25rem' }}>
+                <div aria-hidden="true" style={{ display: 'none', marginBottom: '1.25rem' }}>
                   {/* Active Orders Live Progress Snapshot (if any active order) */}
                   {activeOrders.length > 0 && (
                     <div style={{
@@ -2157,6 +2272,115 @@ export const CustomerDashboard = () => {
               <CustomPatchesSection />
             )}
 
+            {/* TAB: STUDIO WALLET */}
+            {activeTab === 'wallet' && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem', maxWidth: '720px', margin: '0 auto', width: '100%' }}>
+                <div
+                  style={{
+                    background: 'linear-gradient(145deg, #0f172a 0%, #1e293b 100%)',
+                    borderRadius: '20px',
+                    padding: '1.1rem',
+                    color: '#ffffff',
+                    boxShadow: '0 12px 28px rgba(15, 23, 42, 0.16)',
+                    border: '1px solid rgba(255,255,255,0.08)'
+                  }}
+                >
+                  <div style={{ fontSize: '0.7rem', fontWeight: 800, color: '#cbd5e1', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                    Studio Wallet Balance
+                  </div>
+                  <div style={{ fontSize: '2rem', fontWeight: 900, marginTop: '0.2rem', letterSpacing: '-0.04em' }}>
+                    ${Number(walletBalance || 0).toFixed(2)}
+                  </div>
+                  <div style={{ fontSize: '0.74rem', color: '#94a3b8', marginTop: '0.25rem', lineHeight: 1.45 }}>
+                    Use wallet credit for faster checkout on digitizing, vector and patch orders.
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setIsDepositModalOpen(true)}
+                    style={{
+                      marginTop: '0.9rem',
+                      width: '100%',
+                      minHeight: '48px',
+                      border: 'none',
+                      borderRadius: '12px',
+                      background: 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)',
+                      color: '#ffffff',
+                      fontWeight: 900,
+                      fontSize: '0.88rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '0.45rem',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    <PlusCircle size={18} /> Add funds
+                  </button>
+                </div>
+
+                {unpaidOrders.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('orders')}
+                    style={{
+                      border: '1px solid rgba(249,115,22,0.3)',
+                      background: isDark ? 'rgba(249,115,22,0.1)' : '#fff7ed',
+                      borderRadius: '16px',
+                      padding: '0.85rem',
+                      textAlign: 'left',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      gap: '0.75rem',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    <div>
+                      <div style={{ fontSize: '0.8rem', fontWeight: 900, color: 'var(--text-main)' }}>
+                        {unpaidOrders.length} order{unpaidOrders.length > 1 ? 's' : ''} awaiting payment
+                      </div>
+                      <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)', marginTop: '0.1rem' }}>
+                        Review pending payments in My Orders.
+                      </div>
+                    </div>
+                    <ChevronRight size={18} style={{ color: 'var(--orange-600)', flexShrink: 0 }} />
+                  </button>
+                )}
+
+                <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '16px', padding: '0.9rem' }}>
+                  <div style={{ fontSize: '0.78rem', fontWeight: 900, color: 'var(--text-main)', marginBottom: '0.65rem' }}>
+                    Wallet shortcuts
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.55rem' }}>
+                    <button type="button" onClick={() => setIsServiceSelectorOpen(true)} className="btn btn-primary-orange" style={{ minHeight: '46px', borderRadius: '11px' }}>
+                      <PlusCircle size={16} /> New order
+                    </button>
+                    <button type="button" onClick={() => setActiveTab('orders')} className="btn btn-outline" style={{ minHeight: '46px', borderRadius: '11px' }}>
+                      <ClipboardList size={16} /> Payments
+                    </button>
+                  </div>
+                </div>
+
+                <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '16px', padding: '0.9rem' }}>
+                  <div style={{ fontSize: '0.78rem', fontWeight: 900, color: 'var(--text-main)' }}>How wallet credit works</div>
+                  <div style={{ display: 'grid', gap: '0.55rem', marginTop: '0.65rem' }}>
+                    {[
+                      'Add funds securely whenever you need them.',
+                      'Use available credit during checkout to reduce payment friction.',
+                      'Your balance stays attached to your authenticated studio account.'
+                    ].map((item, index) => (
+                      <div key={item} style={{ display: 'flex', gap: '0.55rem', alignItems: 'flex-start' }}>
+                        <span style={{ width: '22px', height: '22px', borderRadius: '7px', background: 'var(--color-primary-light)', color: 'var(--color-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.65rem', fontWeight: 900, flexShrink: 0 }}>
+                          {index + 1}
+                        </span>
+                        <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', lineHeight: 1.45 }}>{item}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* TAB 4: ACCOUNT & PROFILE */}
             {activeTab === 'profile' && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
@@ -2890,7 +3114,8 @@ export const CustomerDashboard = () => {
         <button
           type="button"
           onClick={() => {
-            setIsDepositModalOpen(true);
+            setActiveTab('wallet');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
           }}
           style={{
             display: 'flex',
@@ -2898,7 +3123,7 @@ export const CustomerDashboard = () => {
             alignItems: 'center',
             justifyContent: 'center',
             width: '100%',
-            color: '#64748b',
+            color: activeTab === 'wallet' ? 'var(--orange-600)' : '#64748b',
             background: 'none',
             border: 'none',
             cursor: 'pointer',
@@ -2910,15 +3135,15 @@ export const CustomerDashboard = () => {
           <div style={{
             padding: '0.15rem 0.55rem',
             borderRadius: '12px',
-            background: 'transparent',
+            background: activeTab === 'wallet' ? '#fff7ed' : 'transparent',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             position: 'relative'
           }}>
-            <Wallet size={19} style={{ color: '#0284c7' }} />
+            <Wallet size={19} style={{ color: activeTab === 'wallet' ? 'var(--orange-600)' : '#64748b' }} />
           </div>
-          <span style={{ fontSize: '0.65rem', fontWeight: 700, marginTop: '0.1rem', color: '#0284c7' }}>
+          <span style={{ fontSize: '0.65rem', fontWeight: activeTab === 'wallet' ? 800 : 600, marginTop: '0.1rem', color: activeTab === 'wallet' ? 'var(--orange-600)' : '#64748b' }}>
             Wallet
           </span>
         </button>

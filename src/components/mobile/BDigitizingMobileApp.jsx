@@ -76,6 +76,7 @@ import {
   createNotificationInSupabase as _createNotificationInSupabase
 } from '../../services/supabaseService';
 import MobileSimpleOrderModal from '../customer/MobileSimpleOrderModal';
+import MobileStudioHub from './MobileStudioHub';
 import { THEME_PRESETS } from '../../utils/themePresets';
 import {
   handleNotificationClick,
@@ -982,12 +983,13 @@ export const BDigitizingMobileApp = () => {
       className="mobile-app-root"
       style={{
         background: 'var(--color-background, #ffffff)',
-        minHeight: '100vh',
+        minHeight: '100dvh',
         maxWidth: '100vw',
         display: 'flex',
         flexDirection: 'column',
         position: 'relative',
-        paddingBottom: (['login', 'signup', 'auth', 'forgot'].includes(mobileTab)) ? '0px' : '70px',
+        paddingBottom: (['login', 'signup', 'auth', 'forgot'].includes(mobileTab)) ? '0px' : 'calc(78px + env(safe-area-inset-bottom, 0px))',
+        paddingTop: 'env(safe-area-inset-top, 0px)',
         overflowX: 'hidden',
         boxSizing: 'border-box',
         fontFamily: "'Inter', system-ui, -apple-system, sans-serif"
@@ -1694,6 +1696,28 @@ export const BDigitizingMobileApp = () => {
               </button>
             </div>
           </div>
+
+          {isAuthenticated && (
+            <MobileStudioHub
+              userName={userName}
+              walletBalance={walletBalance}
+              activeOrdersCount={activeOrders.length}
+              unreadMessages={unreadInboxCount + unreadSupportCount}
+              unpaidOrdersCount={unpaidOrders.length}
+              isDark={isDark}
+              onNewOrder={() => setMobileTab('categories')}
+              onOrders={() => setMobileTab('orders')}
+              onMessages={() => {
+                setMobileChatMode('inbox');
+                setMobileTab('inbox');
+              }}
+              onWallet={() => setMobileTab('wallet')}
+              onSupport={() => {
+                setMobileChatMode('support');
+                setMobileTab('support');
+              }}
+            />
+          )}
 
           {/* Search Input Bar */}
           <div

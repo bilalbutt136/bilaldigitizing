@@ -338,6 +338,25 @@ export const AdminDashboard = () => {
     }
   ];
 
+  const adminMobileTitle = {
+    dashboard: 'Executive Overview',
+    orders: 'Orders & Production',
+    inbox: 'Client Inbox & Offers',
+    support: '24/7 Support Desk',
+    clients: 'Accounts & Wallets',
+    workers: 'Digitizers & Staff',
+    services: 'Service Rates & Tiers',
+    portfolio: 'Portfolio Gallery',
+    promotions: 'Promotions',
+    'email-campaigns': 'Email Campaigns',
+    contact: 'Contact Information',
+    'settings-theme': 'Theme & Brand',
+    'settings-meta': 'Meta Pixel & SEO',
+    'settings-admin': 'Admin Team & Security',
+    'settings-email': 'Email & Alerts',
+    'settings-general': 'Studio Profile & Defaults'
+  }[activeTab] || 'Operations Desk';
+
   return (
     <div
       className="admin-portal-wrapper"
@@ -389,6 +408,44 @@ export const AdminDashboard = () => {
             scroll-behavior: smooth;
           }
         }
+        @media (max-width: 1024px) {
+          .admin-portal-wrapper .desktop-only {
+            display: none !important;
+          }
+          .admin-portal-wrapper > .mobile-only-flex,
+          .admin-portal-wrapper .mobile-only-flex {
+            display: flex !important;
+          }
+          .admin-sidebar-fixed {
+            display: none !important;
+          }
+          .admin-portal-wrapper {
+            height: calc(100dvh - 65px) !important;
+            max-height: calc(100dvh - 65px) !important;
+            min-height: calc(100dvh - 65px) !important;
+            overflow: hidden !important;
+          }
+          .admin-portal-body {
+            flex: 1 1 auto !important;
+            height: auto !important;
+            max-height: none !important;
+            min-height: 0 !important;
+            overflow: hidden !important;
+          }
+          .admin-main-content {
+            height: 100% !important;
+            max-height: 100% !important;
+            min-height: 0 !important;
+            overflow-y: auto !important;
+            overflow-x: hidden !important;
+            padding: 0.7rem 0.75rem calc(82px + env(safe-area-inset-bottom, 0px)) !important;
+            -webkit-overflow-scrolling: touch !important;
+            overscroll-behavior: contain !important;
+          }
+          .admin-mobile-bottom-nav {
+            display: grid !important;
+          }
+        }
         /* Custom scrollbar for sidebar & main content */
         .admin-sidebar-fixed::-webkit-scrollbar {
           width: 5px;
@@ -420,7 +477,7 @@ export const AdminDashboard = () => {
 
       {/* MOBILE STICKY HEADER BAR FOR ADMIN PORTAL */}
       <div
-        className="mobile-only"
+        className="mobile-only-flex"
         style={{
           position: 'sticky',
           top: 0,
@@ -460,16 +517,7 @@ export const AdminDashboard = () => {
               Operations Desk
             </span>
             <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: 'var(--text-main)', margin: 0, lineHeight: 1.1 }}>
-              {activeTab === 'dashboard' && 'Executive Overview'}
-              {activeTab === 'orders' && 'Orders & Production Management'}
-              {activeTab === 'inbox' && 'Client Messages & Studio Inbox'}
-              {activeTab === 'support' && '24/7 Support Desk & Tickets'}
-              {activeTab === 'services' && 'Service Rates & Tiers'}
-              {activeTab === 'portfolio' && 'Portfolio & Work Gallery'}
-              {activeTab === 'clients' && 'Client Directory'}
-              {activeTab === 'promotions' && 'Promotions'}
-              {activeTab === 'contact' && 'Contact Info'}
-              {activeTab.startsWith('settings') && 'System Settings & Control Center'}
+              {adminMobileTitle}
             </h3>
           </div>
         </div>
@@ -478,7 +526,7 @@ export const AdminDashboard = () => {
       {/* MOBILE SLIDE-OUT DRAWER OVERLAY */}
       {isMobileSidebarOpen && (
         <div
-          className="mobile-only"
+          className="mobile-only-flex"
           style={{
             position: 'fixed',
             inset: 0,
@@ -852,6 +900,97 @@ export const AdminDashboard = () => {
 
       </main>
       </div>
+      <nav
+        className="mobile-only admin-mobile-bottom-nav"
+        aria-label="Admin mobile navigation"
+        style={{
+          position: 'fixed',
+          left: 0,
+          right: 0,
+          bottom: 0,
+          zIndex: 1900,
+          gridTemplateColumns: 'repeat(5, 1fr)',
+          alignItems: 'center',
+          minHeight: '66px',
+          padding: '0.25rem 0 max(0.5rem, env(safe-area-inset-bottom, 0.5rem))',
+          background: 'rgba(255,255,255,0.98)',
+          backdropFilter: 'blur(22px)',
+          WebkitBackdropFilter: 'blur(22px)',
+          borderTop: '1px solid var(--border-color)',
+          boxShadow: '0 -4px 20px rgba(15,23,42,0.08)'
+        }}
+      >
+        {[
+          { id: 'dashboard', label: 'Home', icon: LayoutDashboard },
+          { id: 'orders', label: 'Orders', icon: ClipboardList },
+          { id: 'inbox', label: 'Inbox', icon: MessageSquare, badge: unreadChatCount },
+          { id: 'support', label: 'Support', icon: Headphones, badge: unreadSupportCount },
+          { id: 'more', label: 'More', icon: Menu }
+        ].map(item => {
+          const IconComp = item.icon;
+          const isActive = item.id !== 'more' && activeTab === item.id;
+          return (
+            <button
+              key={item.id}
+              type="button"
+              onClick={() => {
+                if (item.id === 'more') setIsMobileSidebarOpen(true);
+                else setActiveTab(item.id);
+              }}
+              style={{
+                border: 'none',
+                background: 'transparent',
+                minHeight: '52px',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '0.15rem',
+                color: isActive ? 'var(--orange-600)' : '#64748b',
+                cursor: 'pointer',
+                position: 'relative',
+                padding: '0.2rem 0'
+              }}
+            >
+              <span style={{
+                minWidth: '38px',
+                height: '28px',
+                borderRadius: '11px',
+                background: isActive ? '#fff7ed' : 'transparent',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                position: 'relative'
+              }}>
+                <IconComp size={19} strokeWidth={isActive ? 2.5 : 1.9} />
+                {item.badge > 0 && (
+                  <span style={{
+                    position: 'absolute',
+                    top: '-4px',
+                    right: '-4px',
+                    minWidth: '16px',
+                    height: '16px',
+                    borderRadius: '999px',
+                    background: '#ef4444',
+                    color: '#ffffff',
+                    fontSize: '0.54rem',
+                    fontWeight: 900,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    padding: '0 3px'
+                  }}>
+                    {item.badge > 99 ? '99+' : item.badge}
+                  </span>
+                )}
+              </span>
+              <span style={{ fontSize: '0.62rem', fontWeight: isActive ? 900 : 700 }}>
+                {item.label}
+              </span>
+            </button>
+          );
+        })}
+      </nav>
     </div>
   );
 };

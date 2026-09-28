@@ -1468,6 +1468,15 @@ button, input, select, textarea, a {
   }
 
 
+  [data-theme="dark"] .mobile-bottom-nav,
+  body.dark-mode .mobile-bottom-nav,
+  [data-theme="dark"] .admin-mobile-bottom-nav,
+  body.dark-mode .admin-mobile-bottom-nav {
+    background: rgba(9, 13, 22, 0.97) !important;
+    border-top-color: rgba(71, 85, 105, 0.8) !important;
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.32) !important;
+  }
+
   .dashboard-main-container { padding-bottom: 5.5rem !important; }
   .dashboard-main-container.client-portal-chat-mode { padding-bottom: 0 !important; }
 

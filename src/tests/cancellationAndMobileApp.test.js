@@ -135,7 +135,7 @@ describe('2. Mobile VIP Architecture & Bottom Navigation Tabs', () => {
     assert.match(fileContent, /Tab 4: Studio Wallet/);
     assert.match(fileContent, /Tab 5: Profile \/ Account/);
     assert.match(fileContent, /setActiveTab\('inbox'\)/);
-    assert.match(fileContent, /setIsDepositModalOpen\(true\)/);
+    assert.match(fileContent, /setActiveTab\('wallet'\)/);
     assert.match(fileContent, /setActiveTab\('profile'\)/);
   });
 
