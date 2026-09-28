@@ -1,10 +1,20 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '../../../../src/lib/supabase/server';
 import { createAdminClient } from '../../../../src/lib/supabase/admin';
+import { checkDistributedRateLimit, getClientIp, getRateLimitHeaders } from '../../../../src/lib/rateLimit';
 
 export async function POST(request) {
   try {
-    const body = await request.json();
+    const ip = getClientIp(request);
+    const rateLimit = await checkDistributedRateLimit(`reset-password:${ip}`, 10, 15 * 60 * 1000);
+    if (!rateLimit.success) {
+      return NextResponse.json(
+        { success: false, error: rateLimit.unavailable ? 'Password reset service is temporarily unavailable.' : 'Too many password reset attempts. Please wait and try again.' },
+        { status: rateLimit.unavailable ? 503 : 429, headers: getRateLimitHeaders(rateLimit) }
+      );
+    }
+
+    const body = await request.json().catch(() => ({}));
     const { password, code, tokenHash, accessToken } = body;
 
     if (!password || password.length < 6) {

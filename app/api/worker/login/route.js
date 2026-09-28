@@ -2,10 +2,20 @@ import { NextResponse } from 'next/server';
 import { createClient } from '../../../../src/lib/supabase/server';
 import { createAdminClient } from '../../../../src/lib/supabase/admin';
 import { supabaseAdmin, hasServiceRole } from '../../../../src/lib/supabaseAdmin';
+import { checkDistributedRateLimit, getClientIp, getRateLimitHeaders } from '../../../../src/lib/rateLimit';
 
 export async function POST(request) {
   try {
-    const body = await request.json();
+    const ip = getClientIp(request);
+    const rateLimit = await checkDistributedRateLimit(`worker-login:${ip}`, 10, 10 * 60 * 1000);
+    if (!rateLimit.success) {
+      return NextResponse.json(
+        { success: false, error: rateLimit.unavailable ? 'Sign-in service is temporarily unavailable.' : 'Too many sign-in attempts. Please wait before trying again.' },
+        { status: rateLimit.unavailable ? 503 : 429, headers: getRateLimitHeaders(rateLimit) }
+      );
+    }
+
+    const body = await request.json().catch(() => ({}));
     const { identifier, email, username, password } = body;
 
     const query = (identifier || email || username || '').trim();

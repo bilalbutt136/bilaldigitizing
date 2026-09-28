@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { safeFetchRemote } from '../../../src/lib/urlValidator';
 import { createAdminClient } from '../../../src/lib/supabase/admin';
+import { createClient as createServerSupabaseClient } from '../../../src/lib/supabase/server';
+import { getServerAuthUser } from '../../../src/lib/supabase/serverAuth';
 
 const MIME_TYPES = {
   pdf: 'application/pdf',
@@ -273,10 +275,16 @@ async function handleFileRequest(request, isHead = false) {
       }
     }
 
-    // 2. Resolve Non-HTTP URLs (Legacy database filenames, relative paths, or storage keys)
+    // 2. Resolve non-HTTP legacy/private assets only for authenticated callers.
+    // Non-admin callers use their own Supabase session so database/storage RLS
+    // remains the authorization boundary instead of the service-role client.
     if (!fileUrl.startsWith('http://') && !fileUrl.startsWith('https://') && !fileUrl.startsWith('//')) {
       try {
-        const supabase = createAdminClient();
+        const { user, isAdmin } = await getServerAuthUser(request);
+        if (!user) {
+          return NextResponse.json({ error: 'Authentication required for private file resolution.' }, { status: 401 });
+        }
+        const supabase = isAdmin ? createAdminClient() : await createServerSupabaseClient();
         const candidateBuckets = [
           'client-uploads',
           'finished-packages',
@@ -407,8 +415,9 @@ async function handleFileRequest(request, isHead = false) {
     if (!filename.includes('.')) filename = `${filename}.${ext}`;
     const disposition = isPreview ? 'inline' : 'attachment';
 
-    // 3. Direct Supabase Storage Object Resolution via Service Role Client
-    const supabaseMatch = fileUrl.match(/\/storage\/v1\/object\/(?:public|sign|authenticated)\/([^/]+)\/(.+)$/);
+    // 3. Authenticated Supabase object URLs use the caller's RLS-scoped client.
+    // Public and signed object URLs are fetched normally below with SSRF-safe HTTPS handling.
+    const supabaseMatch = fileUrl.match(/\/storage\/v1\/object\/(authenticated)\/([^/]+)\/(.+)$/);
     let isConfiguredSupabaseHost = false;
     try {
       const configuredHost = new URL(process.env.NEXT_PUBLIC_SUPABASE_URL || '').hostname.toLowerCase();
@@ -418,22 +427,30 @@ async function handleFileRequest(request, isHead = false) {
 
     if (supabaseMatch && isConfiguredSupabaseHost) {
       try {
-        const bucket = supabaseMatch[1];
-        const rawPath = supabaseMatch[2].split('?')[0];
-        const cleanPath = decodeURIComponent(rawPath);
+        const { user, isAdmin } = await getServerAuthUser(request);
+        if (!user) {
+          return NextResponse.json({ error: 'Authentication required for private file access.' }, { status: 401 });
+        }
 
-        const supabase = createAdminClient();
+        const bucket = supabaseMatch[2];
+        const rawPath = supabaseMatch[3].split('?')[0];
+        const cleanPath = decodeURIComponent(rawPath);
+        const supabase = isAdmin ? createAdminClient() : await createServerSupabaseClient();
+
         const { data: fileBlob, error: downloadError } = await supabase.storage
           .from(bucket)
           .download(cleanPath);
 
-        if (!downloadError && fileBlob) {
-          const arrayBuffer = await fileBlob.arrayBuffer();
-          const detectedType = (ext === 'pdf' || fileBlob.type === 'application/pdf') ? 'application/pdf' : (fileBlob.type || contentType);
-          return createBinaryResponse(Buffer.from(arrayBuffer), detectedType, disposition, filename, request, isHead);
+        if (downloadError || !fileBlob) {
+          return NextResponse.json({ error: 'File not found or access denied.' }, { status: 403 });
         }
+
+        const arrayBuffer = await fileBlob.arrayBuffer();
+        const detectedType = (ext === 'pdf' || fileBlob.type === 'application/pdf') ? 'application/pdf' : (fileBlob.type || contentType);
+        return createBinaryResponse(Buffer.from(arrayBuffer), detectedType, disposition, filename, request, isHead);
       } catch (supabaseErr) {
-        console.warn('[Download Proxy] Supabase admin download fallback:', supabaseErr?.message);
+        console.warn('[Download Proxy] Authenticated Supabase download notice:', supabaseErr?.message);
+        return NextResponse.json({ error: 'File not found or access denied.' }, { status: 403 });
       }
     }
 

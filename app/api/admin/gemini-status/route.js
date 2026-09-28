@@ -8,26 +8,43 @@ const VERCEL_TOKEN = process.env.VERCEL_TOKEN;
 const VERCEL_PROJECT_ID = process.env.VERCEL_PROJECT_ID || null;
 
 async function resolveGeminiKey() {
-  // 1. Environment variables
   const envKey = process.env.GEMINI_API_KEY ||
                  process.env.GOOGLE_AI_API_KEY ||
-                 process.env.GOOGLE_API_KEY ||
-                 process.env.NEXT_PUBLIC_GEMINI_API_KEY;
+                 process.env.GOOGLE_API_KEY;
   if (envKey && envKey.trim()) {
     return { key: envKey.trim(), source: 'environment' };
   }
 
-  // 2. Database site_config table (if service role is available)
   if (hasServiceRole && supabaseAdmin) {
     try {
+      const { data: privateRow } = await supabaseAdmin
+        .from('private_server_config')
+        .select('value')
+        .eq('key', 'gemini_api_key')
+        .maybeSingle();
+
+      const privateValue = privateRow?.value;
+      const privateKey = typeof privateValue === 'string'
+        ? privateValue
+        : (privateValue?.apiKey || privateValue?.key || '');
+      if (privateKey && String(privateKey).trim()) {
+        return { key: String(privateKey).trim(), source: 'private_database' };
+      }
+
+      // Temporary legacy fallback so existing deployments keep working until
+      // the migration scrubs public site_config copies.
       const { data: directKeyRow } = await supabaseAdmin
         .from('site_config')
         .select('value')
         .eq('key', 'gemini_api_key')
         .maybeSingle();
 
-      if (directKeyRow?.value && typeof directKeyRow.value === 'string' && directKeyRow.value.trim()) {
-        return { key: directKeyRow.value.trim(), source: 'database' };
+      const directValue = directKeyRow?.value;
+      const directKey = typeof directValue === 'string'
+        ? directValue
+        : (directValue?.apiKey || directValue?.key || '');
+      if (directKey && String(directKey).trim()) {
+        return { key: String(directKey).trim(), source: 'legacy_database' };
       }
 
       const { data: settingsRow } = await supabaseAdmin
@@ -37,8 +54,8 @@ async function resolveGeminiKey() {
         .maybeSingle();
 
       const settingKey = settingsRow?.value?.geminiApiKey || settingsRow?.value?.gemini_api_key;
-      if (settingKey && typeof settingKey === 'string' && settingKey.trim()) {
-        return { key: settingKey.trim(), source: 'database' };
+      if (settingKey && String(settingKey).trim()) {
+        return { key: String(settingKey).trim(), source: 'legacy_database' };
       }
     } catch (err) {
       console.warn('[Gemini Status] Database key fetch notice:', err.message);
@@ -170,44 +187,47 @@ export async function POST(request) {
     }
 
     // Action: 'save'
-    // 1. Save to Supabase site_config
+    // Persist secrets only in the private server configuration table.
     if (hasServiceRole && supabaseAdmin) {
+      const nowIso = new Date().toISOString();
       const { error: dbErr } = await supabaseAdmin
-        .from('site_config')
+        .from('private_server_config')
         .upsert({
           key: 'gemini_api_key',
-          value: cleanKey,
-          updated_at: new Date().toISOString()
+          value: { apiKey: cleanKey },
+          updated_at: nowIso
         }, { onConflict: 'key' });
 
       if (dbErr) {
-        console.error('[Gemini Status] Failed to save to database:', dbErr);
-        return NextResponse.json({ success: false, error: dbErr.message }, { status: 500 });
+        console.error('[Gemini Status] Failed to save private configuration:', dbErr);
+        return NextResponse.json({ success: false, error: 'Unable to store Gemini configuration securely.' }, { status: 500 });
       }
 
-      // Also merge into site_settings object if it exists
+      // Remove legacy public copies if they exist.
       try {
-        const { data: stRow } = await supabaseAdmin
+        await supabaseAdmin.from('site_config').delete().eq('key', 'gemini_api_key');
+
+        const { data: settingsRow } = await supabaseAdmin
           .from('site_config')
           .select('value')
           .eq('key', 'site_settings')
           .maybeSingle();
 
-        const curSettings = stRow?.value && typeof stRow.value === 'object' ? stRow.value : {};
-        curSettings.geminiApiKey = cleanKey;
-        await supabaseAdmin
-          .from('site_config')
-          .upsert({
-            key: 'site_settings',
-            value: curSettings,
-            updated_at: new Date().toISOString()
-          }, { onConflict: 'key' });
-      } catch (mergeErr) {
-        console.warn('[Gemini Status] Merge to site_settings notice:', mergeErr.message);
+        if (settingsRow?.value && typeof settingsRow.value === 'object') {
+          const cleanSettings = { ...settingsRow.value };
+          delete cleanSettings.geminiApiKey;
+          delete cleanSettings.gemini_api_key;
+          await supabaseAdmin
+            .from('site_config')
+            .update({ value: cleanSettings, updated_at: nowIso })
+            .eq('key', 'site_settings');
+        }
+      } catch (cleanupErr) {
+        console.warn('[Gemini Status] Legacy secret cleanup notice:', cleanupErr.message);
       }
     }
 
-    // 2. Sync to Vercel environment variables if token available
+    // Sync to Vercel environment variables if token available
     let vercelSynced = false;
     if (VERCEL_TOKEN && VERCEL_PROJECT_ID) {
       try {

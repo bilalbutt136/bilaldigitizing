@@ -1,61 +1,148 @@
 import { NextResponse } from 'next/server';
 import { createAdminClient } from '../../../../src/lib/supabase/admin';
+import { checkDistributedRateLimit, getClientIp, getRateLimitHeaders } from '../../../../src/lib/rateLimit';
+
+const GOOGLE_CLIENT_ID = (
+  process.env.GOOGLE_CLIENT_ID ||
+  process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ||
+  '421520521310-7appibeh1m7cdd90iid17lsq8thlq2oc.apps.googleusercontent.com'
+).trim();
+
+async function verifyGoogleAccessToken(accessToken) {
+  const tokenInfoRes = await fetch(
+    `https://oauth2.googleapis.com/tokeninfo?access_token=${encodeURIComponent(accessToken)}`,
+    { cache: 'no-store' }
+  );
+
+  if (!tokenInfoRes.ok) {
+    throw new Error('Google access token is invalid or expired.');
+  }
+
+  const tokenInfo = await tokenInfoRes.json();
+  const tokenAudience = String(
+    tokenInfo.aud ||
+    tokenInfo.audience ||
+    tokenInfo.issued_to ||
+    tokenInfo.azp ||
+    ''
+  ).trim();
+
+  if (!tokenAudience || tokenAudience !== GOOGLE_CLIENT_ID) {
+    throw new Error('Google token was not issued for this application.');
+  }
+
+  if (Number(tokenInfo.expires_in || 0) <= 0) {
+    throw new Error('Google access token has expired.');
+  }
+
+  const userInfoRes = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+    headers: { Authorization: `Bearer ${accessToken}` },
+    cache: 'no-store'
+  });
+
+  if (!userInfoRes.ok) {
+    throw new Error('Unable to verify Google account identity.');
+  }
+
+  const userInfo = await userInfoRes.json();
+  const email = String(userInfo?.email || '').toLowerCase().trim();
+  const verified = userInfo?.email_verified === true || userInfo?.verified_email === true;
+
+  if (!email || !verified) {
+    throw new Error('Google account email is missing or not verified.');
+  }
+
+  const tokenEmail = String(tokenInfo.email || '').toLowerCase().trim();
+  if (tokenEmail && tokenEmail !== email) {
+    throw new Error('Google token identity mismatch.');
+  }
+
+  return {
+    ...userInfo,
+    email
+  };
+}
 
 export async function POST(request) {
   try {
-    const { userInfo } = await request.json().catch(() => ({}));
-
-    if (!userInfo || !userInfo.email) {
-      return NextResponse.json({ error: 'Invalid Google account data received.' }, { status: 400 });
+    const ip = getClientIp(request);
+    const rateLimit = await checkDistributedRateLimit(`google-auth:${ip}`, 20, 5 * 60 * 1000);
+    if (!rateLimit.success) {
+      return NextResponse.json(
+        { success: false, error: rateLimit.unavailable ? 'Authentication service is temporarily unavailable.' : 'Too many Google sign-in attempts. Please wait and try again.' },
+        { status: rateLimit.unavailable ? 503 : 429, headers: getRateLimitHeaders(rateLimit) }
+      );
     }
 
-    const email = String(userInfo.email).toLowerCase().trim();
-    const name = String(userInfo.name || userInfo.given_name || email.split('@')[0]).trim();
-    const avatarUrl = userInfo.picture || null;
+    const { accessToken } = await request.json().catch(() => ({}));
+    if (!accessToken || typeof accessToken !== 'string') {
+      return NextResponse.json({ error: 'A valid Google access token is required.' }, { status: 400 });
+    }
+
+    let userInfo;
+    try {
+      userInfo = await verifyGoogleAccessToken(accessToken.trim());
+    } catch (verificationError) {
+      return NextResponse.json(
+        { success: false, error: verificationError.message || 'Google identity verification failed.' },
+        { status: 401 }
+      );
+    }
+
+    const email = userInfo.email;
+    const name = String(userInfo.name || userInfo.given_name || email.split('@')[0]).trim().slice(0, 120);
+    const avatarUrl = typeof userInfo.picture === 'string' ? userInfo.picture : null;
 
     const supabase = createAdminClient();
 
-    // 1. Check if user is an admin in the admins table
     let role = 'customer';
-    const { data: adminRow } = await supabase
+    const { data: adminRow, error: adminLookupError } = await supabase
       .from('admins')
       .select('email')
       .eq('email', email)
       .maybeSingle();
 
-    if (adminRow) {
-      role = 'admin';
+    if (adminLookupError) {
+      console.warn('[Google Auth API] Admin lookup notice:', adminLookupError.message);
     }
+    if (adminRow) role = 'admin';
 
-    // 2. Ensure user exists in Supabase auth.users
     let authUserId = null;
-    try {
-      const { data: createdUser, error: createAuthErr } = await supabase.auth.admin.createUser({
-        email,
-        email_confirm: true,
+    const { data: createdUser, error: createAuthErr } = await supabase.auth.admin.createUser({
+      email,
+      email_confirm: true,
+      user_metadata: {
+        full_name: name,
+        name,
+        avatar_url: avatarUrl,
+        role
+      }
+    });
+
+    if (!createAuthErr && createdUser?.user) {
+      authUserId = createdUser.user.id;
+    } else {
+      const { data: usersList, error: usersError } = await supabase.auth.admin.listUsers({ page: 1, perPage: 1000 });
+      if (usersError) {
+        throw new Error('Unable to resolve authenticated Google user.');
+      }
+      const matchedUser = usersList?.users?.find(u => String(u.email || '').toLowerCase() === email);
+      if (!matchedUser) {
+        throw createAuthErr || new Error('Unable to resolve authenticated Google user.');
+      }
+      authUserId = matchedUser.id;
+
+      await supabase.auth.admin.updateUserById(authUserId, {
         user_metadata: {
+          ...matchedUser.user_metadata,
           full_name: name,
           name,
-          avatar_url: avatarUrl,
+          avatar_url: avatarUrl || matchedUser.user_metadata?.avatar_url || null,
           role
         }
       });
-
-      if (!createAuthErr && createdUser?.user) {
-        authUserId = createdUser.user.id;
-      } else {
-        // User already exists in auth.users
-        const { data: usersList } = await supabase.auth.admin.listUsers({ page: 1, perPage: 1000 });
-        const matchedUser = usersList?.users?.find(u => (u.email || '').toLowerCase() === email);
-        if (matchedUser) {
-          authUserId = matchedUser.id;
-        }
-      }
-    } catch (authAdminErr) {
-      console.warn('[Google Auth API] Auth user check notice:', authAdminErr?.message);
     }
 
-    // 3. Ensure client record in public.clients table
     const { data: existingClient } = await supabase
       .from('clients')
       .select('*')
@@ -63,28 +150,25 @@ export async function POST(request) {
       .maybeSingle();
 
     let clientRecord = existingClient;
-
     if (!existingClient) {
-      const newClient = {
-        name,
-        email,
-        role,
-        avatar_url: avatarUrl,
-        wallet_balance: 0,
-        status: 'active',
-        created_at: new Date().toISOString()
-      };
-      if (authUserId) {
-        newClient.id = authUserId;
-      }
-
-      const { data: inserted } = await supabase
+      const { data: inserted, error: insertError } = await supabase
         .from('clients')
-        .insert([newClient])
+        .insert([{
+          id: authUserId,
+          name,
+          email,
+          role,
+          avatar_url: avatarUrl,
+          wallet_balance: 0,
+          status: 'active',
+          created_at: new Date().toISOString()
+        }])
         .select()
         .maybeSingle();
 
-      if (inserted) {
+      if (insertError) {
+        console.warn('[Google Auth API] Client insert notice:', insertError.message);
+      } else if (inserted) {
         clientRecord = inserted;
       }
     } else {
@@ -97,43 +181,32 @@ export async function POST(request) {
         .eq('email', email);
     }
 
-    // 4. Generate official session link/token_hash for the browser to verify and persist GoTrue session
-    let tokenHash = null;
-    let emailOtp = null;
-    try {
-      const { data: linkData, error: linkErr } = await supabase.auth.admin.generateLink({
-        type: 'magiclink',
-        email: email
-      });
+    const { data: linkData, error: linkErr } = await supabase.auth.admin.generateLink({
+      type: 'magiclink',
+      email
+    });
 
-      if (!linkErr && linkData?.properties) {
-        tokenHash = linkData.properties.hashed_token || null;
-        emailOtp = linkData.properties.email_otp || null;
-      }
-    } catch (genErr) {
-      console.warn('[Google Auth API] Generate link notice:', genErr?.message);
+    const tokenHash = linkData?.properties?.hashed_token || null;
+    if (linkErr || !tokenHash) {
+      console.error('[Google Auth API] Session link generation failed:', linkErr?.message);
+      return NextResponse.json({ success: false, error: 'Unable to establish a secure application session.' }, { status: 503 });
     }
-
-    // 5. Construct authentic user object
-    const finalUserId = authUserId || clientRecord?.id || `google_${userInfo.sub || Date.now()}`;
-    const returnUser = {
-      id: finalUserId,
-      email,
-      name: clientRecord?.name || name,
-      role: role,
-      wallet_balance: parseFloat(clientRecord?.wallet_balance || 0),
-      avatar_url: avatarUrl || clientRecord?.avatar_url || null,
-      source: 'google_oauth'
-    };
 
     return NextResponse.json({
       success: true,
       token_hash: tokenHash,
-      email_otp: emailOtp,
-      user: returnUser
+      user: {
+        id: authUserId,
+        email,
+        name: clientRecord?.name || name,
+        role,
+        wallet_balance: Number.parseFloat(clientRecord?.wallet_balance || 0),
+        avatar_url: avatarUrl || clientRecord?.avatar_url || null,
+        source: 'google_oauth'
+      }
     });
   } catch (error) {
     console.error('[Google Auth API POST Error]', error);
-    return NextResponse.json({ error: error.message || 'Internal authentication error' }, { status: 500 });
+    return NextResponse.json({ error: 'Internal authentication error.' }, { status: 500 });
   }
 }

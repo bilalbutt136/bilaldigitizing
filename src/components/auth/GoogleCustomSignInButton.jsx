@@ -13,18 +13,14 @@ const GoogleButtonInternal = ({ onAuthSuccess, onAuthError, style = {}, text = '
     onSuccess: async (tokenResponse) => {
       setIsProcessing(true);
       try {
-        const userInfoRes = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
-          headers: { Authorization: `Bearer ${tokenResponse.access_token}` }
-        });
-        const userInfo = await userInfoRes.json();
-        if (!userInfo?.email) {
-          throw new Error('Could not retrieve email from your Google account.');
+        if (!tokenResponse?.access_token) {
+          throw new Error('Google did not return a valid access token.');
         }
 
         const res = await fetch('/api/auth/google', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ userInfo, accessToken: tokenResponse.access_token })
+          body: JSON.stringify({ accessToken: tokenResponse.access_token })
         });
         const data = await res.json();
         if (data.success && data.user) {

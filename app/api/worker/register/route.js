@@ -1,147 +1,150 @@
 import { NextResponse } from 'next/server';
+import { createClient } from '../../../../src/lib/supabase/server';
 import { supabaseAdmin, hasServiceRole } from '../../../../src/lib/supabaseAdmin';
 import { createAdminClient } from '../../../../src/lib/supabase/admin';
 import { sendWorkerApplicationReceivedEmail } from '../../../../src/lib/workerPortalEmails';
+import { checkDistributedRateLimit, getClientIp, getRateLimitHeaders } from '../../../../src/lib/rateLimit';
+
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export async function POST(request) {
   try {
-    const body = await request.json();
-    const { 
-      name, 
-      email, 
-      password, 
-      phone, 
-      experience_years, 
-      primary_software, 
-      portfolio_sample_url, 
+    const ip = getClientIp(request);
+    const rateLimit = await checkDistributedRateLimit(`worker-register:${ip}`, 5, 60 * 60 * 1000);
+    if (!rateLimit.success) {
+      return NextResponse.json(
+        { success: false, error: rateLimit.unavailable ? 'Registration service is temporarily unavailable.' : 'Too many registration attempts. Please wait before trying again.' },
+        { status: rateLimit.unavailable ? 503 : 429, headers: getRateLimitHeaders(rateLimit) }
+      );
+    }
+
+    const body = await request.json().catch(() => ({}));
+    const {
+      name,
+      email,
+      password,
+      phone,
+      experience_years,
+      primary_software,
+      portfolio_sample_url,
       portfolio_file_name,
-      bio 
+      bio
     } = body;
 
-    const cleanEmail = (email || '').toLowerCase().trim();
-    const cleanName = (name || '').trim();
-    const cleanPass = (password || '').trim();
+    const cleanEmail = String(email || '').toLowerCase().trim();
+    const cleanName = String(name || '').trim().slice(0, 120);
+    const cleanPass = String(password || '');
 
     if (!cleanName || !cleanEmail || !cleanPass) {
-      return NextResponse.json({ 
-        error: 'Full name, email address, and password are required.' 
+      return NextResponse.json({
+        error: 'Full name, email address, and password are required.'
       }, { status: 400 });
     }
 
+    if (!EMAIL_REGEX.test(cleanEmail)) {
+      return NextResponse.json({ error: 'Please enter a valid email address.' }, { status: 400 });
+    }
+
     if (cleanPass.length < 6) {
-      return NextResponse.json({ 
-        error: 'Password must be at least 6 characters long.' 
+      return NextResponse.json({
+        error: 'Password must be at least 6 characters long.'
       }, { status: 400 });
     }
 
     const adminClient = (hasServiceRole && supabaseAdmin) ? supabaseAdmin : createAdminClient();
-    if (!adminClient) {
-      return NextResponse.json({ error: 'Database service unavailable.' }, { status: 503 });
-    }
 
-    // Check if worker profile already exists with this email
-    const { data: existingProfile } = await adminClient
+    const { data: existingProfile, error: profileLookupError } = await adminClient
       .from('worker_profiles')
       .select('id, email, status')
       .eq('email', cleanEmail)
       .maybeSingle();
 
+    if (profileLookupError) {
+      console.warn('[Worker Register] Existing profile lookup notice:', profileLookupError.message);
+    }
+
     if (existingProfile) {
-      const existingStatus = (existingProfile.status || '').toLowerCase();
-      if (existingStatus === 'pending') {
-        return NextResponse.json({ 
-          error: 'Your application is currently under review. You will be notified once approved.' 
-        }, { status: 409 });
-      }
-      if (existingStatus === 'active') {
-        return NextResponse.json({ 
-          error: 'An active digitizer account with this email already exists. Please log in directly.' 
-        }, { status: 409 });
-      }
-      return NextResponse.json({ 
-        error: `An application with this email already exists (Status: ${existingProfile.status}).` 
+      return NextResponse.json({
+        error: 'An application or worker account with this email already exists. Please sign in or contact support.'
       }, { status: 409 });
     }
 
-    // Create user in Supabase Auth
-    let authUserId = null;
-    try {
-      const { data: authCreateData, error: authCreateErr } = await adminClient.auth.admin.createUser({
-        email: cleanEmail,
-        password: cleanPass,
-        email_confirm: true,
-        user_metadata: {
-          full_name: cleanName,
-          name: cleanName,
-          role: 'worker',
-          worker_status: 'Pending'
-        }
-      });
-
-      if (authCreateErr) {
-        // If user already exists in auth, check if we can retrieve their ID
-        if (authCreateErr.message?.toLowerCase().includes('already') || authCreateErr.status === 422) {
-          const { data: usersList } = await adminClient.auth.admin.listUsers();
-          const found = usersList?.users?.find(u => u.email?.toLowerCase().trim() === cleanEmail);
-          if (found) {
-            authUserId = found.id;
-            // Update their password and metadata
-            await adminClient.auth.admin.updateUserById(found.id, {
-              password: cleanPass,
-              user_metadata: {
-                ...found.user_metadata,
-                full_name: cleanName,
-                name: cleanName,
-                role: 'worker',
-                worker_status: 'Pending'
-              }
-            });
-          } else {
-            throw authCreateErr;
-          }
-        } else {
-          throw authCreateErr;
-        }
-      } else if (authCreateData?.user) {
-        authUserId = authCreateData.user.id;
+    // Use the normal Supabase signup path. This never overwrites an existing
+    // Auth user's password and respects the project's email-confirmation policy.
+    const supabaseServer = await createClient();
+    const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_APP_URL || '').replace(/\/+$/, '');
+    const signUpOptions = {
+      data: {
+        full_name: cleanName,
+        name: cleanName,
+        role: 'worker_applicant',
+        worker_status: 'Pending'
       }
-    } catch (authErr) {
-      console.error('[Worker Register Auth Error]:', authErr);
-      return NextResponse.json({ 
-        error: authErr.message || 'Failed to create worker authentication credentials.' 
+    };
+    if (siteUrl) {
+      signUpOptions.emailRedirectTo = `${siteUrl}/auth/callback?next=/worker-login`;
+    }
+
+    const { data: authData, error: authErr } = await supabaseServer.auth.signUp({
+      email: cleanEmail,
+      password: cleanPass,
+      options: signUpOptions
+    });
+
+    if (authErr) {
+      console.warn('[Worker Register Auth Notice]:', authErr.message);
+      return NextResponse.json({
+        error: 'Unable to create this application. If you already have an account, please sign in instead.'
       }, { status: 400 });
     }
 
-    if (!authUserId) {
-      return NextResponse.json({ error: 'Could not generate worker user identifier.' }, { status: 500 });
+    const createdUser = authData?.user;
+    if (!createdUser || (Array.isArray(createdUser.identities) && createdUser.identities.length === 0)) {
+      // Supabase intentionally obscures duplicate-email registration details.
+      // Never try to "recover" by resetting that existing user's password.
+      if (authData?.session) {
+        await supabaseServer.auth.signOut().catch(() => {});
+      }
+      return NextResponse.json({
+        error: 'An account with this email already exists. Please sign in instead.'
+      }, { status: 409 });
     }
 
-    // Insert into worker_profiles table
+    if (authData?.session) {
+      // A pending worker application should not automatically become an active session.
+      await supabaseServer.auth.signOut().catch(() => {});
+    }
+
+    const authUserId = createdUser.id;
+    const nowIso = new Date().toISOString();
+
     const profileRecord = {
       id: authUserId,
       name: cleanName,
       email: cleanEmail,
-      phone: phone || null,
-      experience_years: parseInt(experience_years, 10) || 1,
-      primary_software: primary_software || 'Wilcom EmbroideryStudio',
+      phone: phone ? String(phone).trim().slice(0, 50) : null,
+      experience_years: Math.max(0, Math.min(Number.parseInt(experience_years, 10) || 1, 80)),
+      primary_software: String(primary_software || 'Wilcom EmbroideryStudio').trim().slice(0, 120),
       portfolio_sample_url: portfolio_sample_url || null,
-      portfolio_file_name: portfolio_file_name || null,
-      bio: bio || null,
+      portfolio_file_name: portfolio_file_name ? String(portfolio_file_name).slice(0, 255) : null,
+      bio: bio ? String(bio).slice(0, 3000) : null,
       status: 'Pending',
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
+      created_at: nowIso,
+      updated_at: nowIso
     };
 
     const { error: profileErr } = await adminClient
       .from('worker_profiles')
-      .upsert([profileRecord], { onConflict: 'id' });
+      .insert([profileRecord]);
 
     if (profileErr) {
       console.error('[Worker Profile Insert Error]:', profileErr.message);
-      // Don't fail silently; ensure we retry or log clearly
+      // Roll back the newly-created Auth identity if the application record
+      // could not be created, avoiding orphaned worker-applicant accounts.
+      await adminClient.auth.admin.deleteUser(authUserId).catch(() => {});
+      return NextResponse.json({ error: 'Unable to save worker application.' }, { status: 500 });
     }
 
-    // Also insert or update workers directory for immediate compatibility
     try {
       await adminClient
         .from('workers')
@@ -149,33 +152,32 @@ export async function POST(request) {
           id: authUserId,
           name: cleanName,
           email: cleanEmail,
-          phone: phone || null,
-          specialty: primary_software || 'Embroidery Digitizer',
+          phone: phone ? String(phone).trim().slice(0, 50) : null,
+          specialty: String(primary_software || 'Embroidery Digitizer').trim().slice(0, 120),
           status: 'pending',
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
+          created_at: nowIso,
+          updated_at: nowIso
         }], { onConflict: 'id' });
-    } catch (wErr) {
-      console.warn('[Workers Directory Upsert Notice]:', wErr.message);
+    } catch (workerDirectoryError) {
+      console.warn('[Workers Directory Upsert Notice]:', workerDirectoryError?.message);
     }
 
-    // Trigger EMAIL 1: Application Received Notification via Resend
     try {
       await sendWorkerApplicationReceivedEmail({
         to: cleanEmail,
         name: cleanName
       });
     } catch (emailErr) {
-      console.warn('[Worker Register Email 1 Notice]:', emailErr?.message);
+      console.warn('[Worker Register Email Notice]:', emailErr?.message);
     }
 
     return NextResponse.json({
       success: true,
-      message: 'Your application has been received and is under review.',
+      message: 'Your application has been received and is under review. Please verify your email if prompted.',
       workerId: authUserId
     });
   } catch (error) {
     console.error('[Worker Register API Exception]:', error);
-    return NextResponse.json({ error: error.message || 'Registration failed' }, { status: 500 });
+    return NextResponse.json({ error: 'Registration failed.' }, { status: 500 });
   }
 }

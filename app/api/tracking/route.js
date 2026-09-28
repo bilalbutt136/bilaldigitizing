@@ -1,10 +1,30 @@
 import { NextResponse } from 'next/server';
 import { createAdminClient } from '../../../src/lib/supabase/admin';
+import { checkDistributedRateLimit, getClientIp, getRateLimitHeaders } from '../../../src/lib/rateLimit';
+import { createHash } from 'node:crypto';
 
 export async function POST(request) {
   try {
+    const ip = getClientIp(request);
+    const rateLimit = await checkDistributedRateLimit(`tracking:${ip}`, 120, 60 * 1000);
+    if (!rateLimit.success) {
+      return NextResponse.json(
+        { success: false, error: rateLimit.unavailable ? 'Tracking service is temporarily unavailable.' : 'Too many tracking events.' },
+        { status: rateLimit.unavailable ? 503 : 429, headers: getRateLimitHeaders(rateLimit) }
+      );
+    }
+
+    const contentLength = Number(request.headers.get('content-length') || 0);
+    if (contentLength > 64 * 1024) {
+      return NextResponse.json({ error: 'Tracking payload is too large.' }, { status: 413 });
+    }
+
     const data = await request.json().catch(() => ({}));
     const { action, payload } = data;
+    if (payload && JSON.stringify(payload).length > 32 * 1024) {
+      return NextResponse.json({ error: 'Tracking payload is too large.' }, { status: 413 });
+    }
+
     const supabase = createAdminClient();
 
     if (action === 'logEvent' && payload && typeof payload === 'object') {
@@ -87,8 +107,12 @@ export async function POST(request) {
               user_data: {
                 client_ip_address: clientIp !== 'Unknown IP' ? clientIp : undefined,
                 client_user_agent: serverUserAgent || undefined,
-                em: fullTelemetry.userEmail ? [fullTelemetry.userEmail] : undefined,
-                external_id: fullTelemetry.userId ? [fullTelemetry.userId] : undefined,
+                em: fullTelemetry.userEmail
+                  ? [createHash('sha256').update(String(fullTelemetry.userEmail).trim().toLowerCase()).digest('hex')]
+                  : undefined,
+                external_id: fullTelemetry.userId
+                  ? [createHash('sha256').update(String(fullTelemetry.userId).trim()).digest('hex')]
+                  : undefined,
                 fbc: fullTelemetry.fbclid ? `fb.1.${Date.now()}.${fullTelemetry.fbclid}` : undefined
               }
             }]

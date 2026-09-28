@@ -1,38 +1,51 @@
 import { NextResponse } from 'next/server.js';
 import { GoogleGenAI } from '@google/genai';
 import { supabaseAdmin, hasServiceRole } from '../../../../src/lib/supabaseAdmin.js';
+import { getServerAuthUser } from '../../../../src/lib/supabase/serverAuth.js';
+import { checkDistributedRateLimit, getClientIp, getRateLimitHeaders } from '../../../../src/lib/rateLimit.js';
 
 export const dynamic = 'force-dynamic';
 
 /**
- * Resolves Gemini API Key dynamically from environment variables,
- * database site_config, or client-provided override.
+ * Resolves Gemini API Key only from server-controlled configuration.
  */
-async function resolveGeminiApiKey(overrideKey = '') {
-  if (overrideKey && typeof overrideKey === 'string' && overrideKey.trim()) {
-    return overrideKey.trim();
-  }
-
-  // 1. Process environment variables
-  const envKey = process.env.GEMINI_API_KEY || 
-                 process.env.GOOGLE_AI_API_KEY || 
-                 process.env.GOOGLE_API_KEY || 
-                 process.env.NEXT_PUBLIC_GEMINI_API_KEY;
+async function resolveGeminiApiKey() {
+  const envKey = process.env.GEMINI_API_KEY ||
+                 process.env.GOOGLE_AI_API_KEY ||
+                 process.env.GOOGLE_API_KEY;
   if (envKey && envKey.trim()) {
     return envKey.trim();
   }
 
-  // 2. Database site_config table (Live settings persistence)
   if (hasServiceRole && supabaseAdmin) {
     try {
+      const { data: privateRow } = await supabaseAdmin
+        .from('private_server_config')
+        .select('value')
+        .eq('key', 'gemini_api_key')
+        .maybeSingle();
+
+      const privateValue = privateRow?.value;
+      const privateKey = typeof privateValue === 'string'
+        ? privateValue
+        : (privateValue?.apiKey || privateValue?.key || '');
+      if (privateKey && String(privateKey).trim()) {
+        return String(privateKey).trim();
+      }
+
+      // Temporary server-only legacy fallback until migration cleanup completes.
       const { data: directKeyRow } = await supabaseAdmin
         .from('site_config')
         .select('value')
         .eq('key', 'gemini_api_key')
         .maybeSingle();
 
-      if (directKeyRow?.value && typeof directKeyRow.value === 'string' && directKeyRow.value.trim()) {
-        return directKeyRow.value.trim();
+      const directValue = directKeyRow?.value;
+      const directKey = typeof directValue === 'string'
+        ? directValue
+        : (directValue?.apiKey || directValue?.key || '');
+      if (directKey && String(directKey).trim()) {
+        return String(directKey).trim();
       }
 
       const { data: settingsRow } = await supabaseAdmin
@@ -42,8 +55,8 @@ async function resolveGeminiApiKey(overrideKey = '') {
         .maybeSingle();
 
       const settingKey = settingsRow?.value?.geminiApiKey || settingsRow?.value?.gemini_api_key;
-      if (settingKey && typeof settingKey === 'string' && settingKey.trim()) {
-        return settingKey.trim();
+      if (settingKey && String(settingKey).trim()) {
+        return String(settingKey).trim();
       }
     } catch (err) {
       console.warn('[AI Polish API] Database key lookup notice:', err.message);
@@ -98,20 +111,37 @@ function cleanModelOutput(text) {
 
 export async function POST(request) {
   try {
-    const body = await request.json();
-    const { 
-      text, 
-      tone = 'professional', 
-      target = 'chat', // 'chat' | 'email_subject' | 'email_body'
-      customKey = '' 
+    const { user } = await getServerAuthUser(request);
+    if (!user?.email) {
+      return NextResponse.json({ error: 'Authentication required.' }, { status: 401 });
+    }
+
+    const ip = getClientIp(request);
+    const rateLimit = await checkDistributedRateLimit(`ai-polish:${user.id || ip}`, 30, 5 * 60 * 1000);
+    if (!rateLimit.success) {
+      return NextResponse.json(
+        { error: rateLimit.unavailable ? 'AI assistance is temporarily unavailable.' : 'Too many AI polish requests. Please wait and try again.' },
+        { status: rateLimit.unavailable ? 503 : 429, headers: getRateLimitHeaders(rateLimit) }
+      );
+    }
+
+    const body = await request.json().catch(() => ({}));
+    const {
+      text,
+      tone = 'professional',
+      target = 'chat'
     } = body;
 
     if (!text || typeof text !== 'string' || !text.trim()) {
       return NextResponse.json({ error: 'Please enter a message to polish.' }, { status: 400 });
     }
 
-    const rawInput = text.trim();
-    const apiKey = await resolveGeminiApiKey(customKey);
+    const rawInput = text.trim().slice(0, 5000);
+    const allowedTargets = new Set(['chat', 'email_subject', 'email_body']);
+    const allowedTones = new Set(['professional', 'friendly', 'concise', 'promotional']);
+    const safeTarget = allowedTargets.has(target) ? target : 'chat';
+    const safeTone = allowedTones.has(tone) ? tone : 'professional';
+    const apiKey = await resolveGeminiApiKey();
 
     // If no key is configured anywhere, provide a structured error and clean fallback
     if (!apiKey) {
@@ -131,20 +161,20 @@ export async function POST(request) {
 
     // Contextual system prompt based on target
     let targetInstruction = '';
-    if (target === 'email_subject') {
+    if (safeTarget === 'email_subject') {
       targetInstruction = `You are polishing an EMAIL SUBJECT LINE for a commercial embroidery digitizing and vector art studio.
 - Return a single compelling, clear, professional subject line.
 - Do NOT use all-caps spam words or exclamation abuse.
 - Keep it under 65 characters if possible.
 - Do NOT wrap in quotes.`;
-    } else if (target === 'email_body') {
+    } else if (safeTarget === 'email_body') {
       targetInstruction = `You are polishing a CUSTOMER MARKETING OR TRANSACTIONAL EMAIL for "BDigitizing".
 - Format with a polite greeting, clear well-spaced paragraphs, and a professional studio sign-off.
-- Tone should be ${tone === 'promotional' ? 'engaging, energetic, and value-focused' : 'courteous, warm, and professional'}.
+- Tone should be ${safeTone === 'promotional' ? 'engaging, energetic, and value-focused' : 'courteous, warm, and professional'}.
 - Do NOT use HTML tags. Return clean normal text with blank lines between paragraphs.`;
     } else {
       targetInstruction = `You are polishing a LIVE CUSTOMER SUPPORT CHAT MESSAGE for "BDigitizing" (commercial embroidery digitizing, custom patch manufacturing, and vector art conversion studio).
-- Tone: ${tone === 'friendly' ? 'Warm, helpful, courteous' : tone === 'concise' ? 'Direct, clear, concise' : 'Professional, polite, and reassuring studio English'}.
+- Tone: ${safeTone === 'friendly' ? 'Warm, helpful, courteous' : safeTone === 'concise' ? 'Direct, clear, concise' : 'Professional, polite, and reassuring studio English'}.
 - Fix all spelling, typos, and grammatical errors.`;
     }
 
@@ -226,8 +256,8 @@ ${rawInput}`;
         success: true,
         isAiGenerated: true,
         modelUsed,
-        target,
-        tone,
+        target: safeTarget,
+        tone: safeTone,
         originalText: rawInput,
         polishedText
       });

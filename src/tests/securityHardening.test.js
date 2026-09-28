@@ -162,4 +162,75 @@ describe('Security Hardening Regression Coverage', () => {
     assert.match(adminClientSource, /SUPABASE_SERVICE_ROLE_KEY/);
     assert.equal(adminClientSource.includes('|| process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY'), false);
   });
+
+  test('Google sign-in verifies the Google credential server-side instead of trusting profile JSON', () => {
+    const source = fs.readFileSync('app/api/auth/google/route.js', 'utf8');
+    assert.match(source, /oauth2\.googleapis\.com\/tokeninfo/);
+    assert.match(source, /tokenAudience/);
+    assert.match(source, /accessToken/);
+    assert.equal(source.includes('const { userInfo } ='), false);
+    assert.match(source, /checkDistributedRateLimit/);
+  });
+
+  test('AI polish requires authentication and never accepts browser-controlled Gemini secrets', () => {
+    const source = fs.readFileSync('app/api/chat/ai-polish/route.js', 'utf8');
+    assert.match(source, /getServerAuthUser/);
+    assert.match(source, /checkDistributedRateLimit/);
+    assert.match(source, /private_server_config/);
+    assert.equal(source.includes('customKey'), false);
+    assert.equal(source.includes('NEXT_PUBLIC_GEMINI_API_KEY'), false);
+  });
+
+  test('Gemini admin configuration stores secrets privately and never uses public env keys', () => {
+    const source = fs.readFileSync('app/api/admin/gemini-status/route.js', 'utf8');
+    assert.match(source, /private_server_config/);
+    assert.equal(source.includes('NEXT_PUBLIC_GEMINI_API_KEY'), false);
+    const migration = fs.readFileSync('supabase/migrations/20260928000002_private_gemini_secret.sql', 'utf8');
+    assert.match(migration, /DELETE FROM public\.site_config/);
+    assert.match(migration, /private_server_config/);
+  });
+
+  test('worker registration cannot overwrite an existing Auth password or self-promote to worker', () => {
+    const source = fs.readFileSync('app/api/worker/register/route.js', 'utf8');
+    assert.match(source, /auth\.signUp/);
+    assert.match(source, /worker_applicant/);
+    assert.equal(source.includes('auth.admin.updateUserById'), false);
+    assert.equal(source.includes('email_confirm: true'), false);
+    assert.match(source, /checkDistributedRateLimit/);
+  });
+
+  test('public auth and telemetry entry points use shared rate limiting', () => {
+    for (const file of [
+      'app/api/auth/google/route.js',
+      'app/api/auth/reset-password/route.js',
+      'app/api/worker/login/route.js',
+      'app/api/worker/register/route.js',
+      'app/api/tracking/route.js'
+    ]) {
+      const source = fs.readFileSync(file, 'utf8');
+      assert.match(source, /checkDistributedRateLimit/, `${file} must use distributed rate limiting`);
+    }
+  });
+
+  test('tracking hashes user identifiers before forwarding them to Meta CAPI', () => {
+    const source = fs.readFileSync('app/api/tracking/route.js', 'utf8');
+    assert.match(source, /createHash\('sha256'\)/);
+    assert.equal(source.includes('em: fullTelemetry.userEmail ? [fullTelemetry.userEmail]'), false);
+  });
+
+  test('private and legacy downloads require authentication and non-admin callers stay RLS scoped', () => {
+    const source = fs.readFileSync('app/api/download/route.js', 'utf8');
+    assert.match(source, /getServerAuthUser/);
+    assert.match(source, /createServerSupabaseClient/);
+    assert.match(source, /Authentication required for private file resolution/);
+    assert.match(source, /isAdmin \? createAdminClient\(\) : await createServerSupabaseClient\(\)/);
+  });
+
+  test('public health output does not disclose secret configuration or raw database errors', () => {
+    const source = fs.readFileSync('app/api/health/route.js', 'utf8');
+    assert.equal(source.includes('SUPABASE_SERVICE_ROLE_KEY'), false);
+    assert.equal(source.includes('STRIPE_SECRET_KEY'), false);
+    assert.equal(source.includes('RESEND_API_KEY'), false);
+    assert.equal(source.includes('dbError'), false);
+  });
 });
