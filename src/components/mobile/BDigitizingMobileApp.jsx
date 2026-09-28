@@ -58,6 +58,7 @@ import {
   TrendingUp,
   DollarSign,
   Eye,
+  XCircle,
   EyeOff,
   AlertCircle,
   Loader2,
@@ -2776,22 +2777,52 @@ export const BDigitizingMobileApp = () => {
                         {dateStr}
                       </span>
 
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setIsOrderActionMenuOpen(ord);
-                        }}
-                        style={{
-                          background: 'none',
-                          border: 'none',
-                          color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a',
-                          cursor: 'pointer',
-                          padding: '0.15rem'
-                        }}
-                      >
-                        <MoreVertical size={16} />
-                      </button>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                        {s !== 'delivered' && s !== 'completed' && s !== 'cancelled' && s !== 'cancellation_requested' && (
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedOrderForDrawer(ord);
+                              setTimeout(() => {
+                                window.dispatchEvent(new CustomEvent('bdigi_open_cancellation_modal', { detail: { orderId: ord.id, order: ord } }));
+                              }, 100);
+                            }}
+                            style={{
+                              background: isDark ? 'rgba(239, 68, 68, 0.15)' : '#fef2f2',
+                              border: isDark ? '1px solid rgba(239, 68, 68, 0.4)' : '1px solid #fca5a5',
+                              color: isDark ? '#f87171' : '#dc2626',
+                              padding: '0.22rem 0.55rem',
+                              borderRadius: '6px',
+                              fontSize: '0.72rem',
+                              fontWeight: 700,
+                              cursor: 'pointer',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '0.25rem'
+                            }}
+                            title="Request Cancellation"
+                          >
+                            <XCircle size={11} /> Cancel
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setIsOrderActionMenuOpen(ord);
+                          }}
+                          style={{
+                            background: 'none',
+                            border: 'none',
+                            color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a',
+                            cursor: 'pointer',
+                            padding: '0.15rem'
+                          }}
+                        >
+                          <MoreVertical size={16} />
+                        </button>
+                      </div>
                     </div>
                   </div>
                 );
@@ -4767,8 +4798,7 @@ export const BDigitizingMobileApp = () => {
               <ClipboardList size={18} style={{ color: '#059669' }} /> View Order & Download Files
             </button>
 
-            {!isOrderUnpaid(isOrderActionMenuOpen) && 
-             String(isOrderActionMenuOpen.status || '').toLowerCase() !== 'delivered' &&
+            {String(isOrderActionMenuOpen.status || '').toLowerCase() !== 'delivered' &&
              String(isOrderActionMenuOpen.status || '').toLowerCase() !== 'completed' &&
              String(isOrderActionMenuOpen.status || '').toLowerCase() !== 'cancelled' &&
              String(isOrderActionMenuOpen.status || '').toLowerCase() !== 'cancellation_requested' && (
@@ -4779,8 +4809,8 @@ export const BDigitizingMobileApp = () => {
                   setIsOrderActionMenuOpen(null);
                   setSelectedOrderForDrawer(targetOrd);
                   setTimeout(() => {
-                    window.dispatchEvent(new CustomEvent('bdigi_open_cancellation_modal', { detail: { orderId: targetOrd.id } }));
-                  }, 180);
+                    window.dispatchEvent(new CustomEvent('bdigi_open_cancellation_modal', { detail: { orderId: targetOrd.id, order: targetOrd } }));
+                  }, 100);
                 }}
                 style={{
                   padding: '0.85rem',
@@ -4796,7 +4826,7 @@ export const BDigitizingMobileApp = () => {
                   cursor: 'pointer'
                 }}
               >
-                <X size={18} style={{ color: '#ef4444' }} /> Request Cancellation
+                <XCircle size={18} style={{ color: '#ef4444' }} /> Request Cancellation
               </button>
             )}
 

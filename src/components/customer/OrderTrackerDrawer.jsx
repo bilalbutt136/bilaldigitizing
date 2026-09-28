@@ -166,15 +166,31 @@ export const OrderTrackerDrawer = () => {
     modalId: 'order_cancel_modal'
   });
 
+  // Always-active global listener for cancellation modal requests across app
   React.useEffect(() => {
-    if (!selectedOrderForDrawer) return;
-
     const handleOpenCancel = (e) => {
-      if (e?.detail?.orderId) {
-        setIsCancelModalOpen(true);
+      const targetId = e?.detail?.orderId;
+      const targetOrder = e?.detail?.order;
+      if (targetOrder && setSelectedOrderForDrawer) {
+        setSelectedOrderForDrawer(targetOrder);
+      } else if (targetId) {
+        const found = (orders || []).find(o => {
+          const oClean = String(o?.id || '').trim().replace(/^#+/, '');
+          return oClean === String(targetId).trim().replace(/^#+/, '') || o?.id === targetId;
+        });
+        if (found && setSelectedOrderForDrawer) {
+          setSelectedOrderForDrawer(found);
+        }
       }
+      setIsCancelModalOpen(true);
     };
     window.addEventListener('bdigi_open_cancellation_modal', handleOpenCancel);
+    return () => window.removeEventListener('bdigi_open_cancellation_modal', handleOpenCancel);
+  }, [orders, setSelectedOrderForDrawer]);
+
+  // Drawer-specific keyboard navigation & scroll lock
+  React.useEffect(() => {
+    if (!selectedOrderForDrawer) return;
 
     const handleKeyDown = (e) => {
       if (e.key === 'Escape') {
@@ -187,7 +203,6 @@ export const OrderTrackerDrawer = () => {
 
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
-      window.removeEventListener('bdigi_open_cancellation_modal', handleOpenCancel);
       document.body.style.overflow = originalOverflow || 'unset';
     };
   }, [selectedOrderForDrawer, handleSafeCloseDrawer]);
@@ -351,6 +366,7 @@ export const OrderTrackerDrawer = () => {
   const isDelivered = normalizedStatus === 'delivered' || normalizedStatus === 'completed';
   const isCompleted = normalizedStatus === 'completed';
   const isInRevision = normalizedStatus === 'revision';
+  const isCancellable = !isDelivered && !isCompleted && ord.status !== 'cancelled' && ord.status !== 'cancellation_requested';
 
 
   const isCurrentlyOnAdminPortal = currentView === 'admin' || (typeof window !== 'undefined' && (window.location.pathname.includes('admin') || window.location.pathname.includes('admin-portal')));
@@ -984,6 +1000,29 @@ export const OrderTrackerDrawer = () => {
                     <Clock size={11} /> PENDING
                   </span>
                 )}
+                {!isAdmin && isCancellable && (
+                  <button
+                    type="button"
+                    onClick={() => setIsCancelModalOpen(true)}
+                    style={{
+                      background: 'rgba(239, 68, 68, 0.18)',
+                      border: '1px solid rgba(239, 68, 68, 0.45)',
+                      color: '#fca5a5',
+                      padding: '0.15rem 0.55rem',
+                      borderRadius: '9999px',
+                      fontSize: '0.7rem',
+                      fontWeight: 800,
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '0.25rem',
+                      cursor: 'pointer',
+                      transition: 'all 0.15s ease'
+                    }}
+                    title="Request Cancellation for this order"
+                  >
+                    <XCircle size={12} /> Cancel Order
+                  </button>
+                )}
               </div>
               <div style={{ fontSize: '0.74rem', color: '#94a3b8', marginTop: '0.15rem', display: 'flex', alignItems: 'center', gap: '0.35rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 <span>{ord.serviceCategory || (ord.type === 'vector' ? 'Vector Art' : 'Embroidery Digitizing')}</span>
@@ -1110,6 +1149,27 @@ export const OrderTrackerDrawer = () => {
           >
             <Receipt size={14} style={{ color: 'var(--orange-500, #ea580c)' }} /> Tax Invoice (PDF)
           </button>
+
+          {/* Quick Toolbar Cancel Button */}
+          {!isAdmin && isCancellable && (
+            <button
+              type="button"
+              onClick={() => setIsCancelModalOpen(true)}
+              className="btn btn-sm btn-outline"
+              style={{
+                fontWeight: 800,
+                fontSize: '0.8rem',
+                gap: '0.35rem',
+                borderColor: '#fca5a5',
+                color: '#dc2626',
+                background: isDark ? 'rgba(239, 68, 68, 0.12)' : '#fef2f2',
+                whiteSpace: 'nowrap'
+              }}
+              title="Request Order Cancellation"
+            >
+              <XCircle size={14} /> Cancel Order
+            </button>
+          )}
         </div>
 
         {/* ==================================================================
@@ -2724,6 +2784,36 @@ export const OrderTrackerDrawer = () => {
                 <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 800, color: 'var(--text-main)', marginBottom: '0.4rem' }}>
                   Reason for Cancellation <span style={{ color: '#ef4444' }}>*</span>
                 </label>
+
+                {/* Quick Preset Tags */}
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem', marginBottom: '0.55rem' }}>
+                  {[
+                    'Placed by mistake / duplicate order',
+                    'Artwork changed by client',
+                    'Delivery timeline change',
+                    'Need different specifications'
+                  ].map((preset) => (
+                    <button
+                      key={preset}
+                      type="button"
+                      onClick={() => setCancelReason(preset)}
+                      style={{
+                        background: cancelReason === preset ? '#ea580c' : (isDark ? 'rgba(255,255,255,0.06)' : '#f1f5f9'),
+                        color: cancelReason === preset ? '#ffffff' : (isDark ? '#cbd5e1' : '#475569'),
+                        border: cancelReason === preset ? '1px solid #c2410c' : (isDark ? '1px solid rgba(255,255,255,0.1)' : '1px solid #e2e8f0'),
+                        borderRadius: '6px',
+                        padding: '0.22rem 0.55rem',
+                        fontSize: '0.72rem',
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                        transition: 'all 0.15s ease'
+                      }}
+                    >
+                      {preset}
+                    </button>
+                  ))}
+                </div>
+
                 <textarea
                   value={cancelReason}
                   onChange={(e) => setCancelReason(e.target.value)}
