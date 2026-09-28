@@ -48,6 +48,7 @@ import { uploadFileToCloudinaryFull, fetchOrderById } from '../../services/supab
 import { AssignWorkerModal } from '../admin/AssignWorkerModal';
 import { ReviewWorkerUploadModal } from '../admin/ReviewWorkerUploadModal';
 import { CustomerInvoiceModal } from '../common/CustomerInvoiceModal';
+import { getMobileOrderTrackingState } from '../../utils/orderTracking';
 
 // Supported machine formats mapping
 const _MACHINE_FORMAT_EXTENSIONS = {
@@ -361,6 +362,8 @@ export const OrderTrackerDrawer = () => {
 
   // Normalize status — treat 'revision_requested' as 'revision' for all UI guards
   const normalizedStatus = (ord.status === 'revision_requested') ? 'revision' : (ord.status || 'submitted');
+  const mobileTrackingState = getMobileOrderTrackingState(ord);
+  const trackerStage = mobileTrackingState.unpaid ? 1 : Math.max(1, mobileTrackingState.stage);
 
   // Files are considered ready ONLY when status is exactly 'delivered' or 'completed'
   const isDelivered = normalizedStatus === 'delivered' || normalizedStatus === 'completed';
@@ -1375,38 +1378,73 @@ export const OrderTrackerDrawer = () => {
           <div style={{
             background: 'var(--bg-card)',
             border: '1.5px solid var(--border-color)',
-            borderRadius: '16px',
-            padding: '1rem 1.4rem',
+            borderRadius: isMobileLayout ? '13px' : '16px',
+            padding: isMobileLayout ? '0.75rem' : '1rem 1.4rem',
             boxShadow: 'var(--shadow-sm)'
           }}>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.5rem', textAlign: 'center' }}>
-              {[
-                { step: 1, title: isPaid ? 'Placed & Paid' : 'Pending Payment', passed: isPaid, current: !isPaid },
-                { step: 2, title: 'In Production', passed: isPaid && (isDelivered || ord.status === 'qc'), current: isPaid && !isDelivered && ord.status !== 'qc' },
-                { step: 3, title: 'Quality Check', passed: isPaid && isDelivered, current: isPaid && ord.status === 'qc' },
-                { step: 4, title: isCompleted ? 'Completed' : (isDelivered ? 'Delivered' : 'Ready Delivery'), passed: isCompleted, current: isDelivered && !isCompleted }
-              ].map(st => (
-                <div key={st.step}>
-                  <div style={{
-                    width: '30px',
-                    height: '30px',
-                    borderRadius: '50%',
-                    margin: '0 auto 0.35rem auto',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontWeight: 900,
-                    fontSize: '0.75rem',
-                    background: st.passed ? '#10b981' : st.current ? (st.step === 1 && !isPaid ? '#f59e0b' : 'var(--orange-500)') : '#f1f5f9',
-                    color: (st.passed || st.current) ? '#ffffff' : '#94a3b8'
-                  }}>
-                    {st.passed ? <Check size={15} /> : st.step}
-                  </div>
-                  <div style={{ fontSize: '0.75rem', fontWeight: st.current ? 800 : 700, color: st.current ? 'var(--orange-600)' : st.passed ? '#10b981' : 'var(--navy-900)' }}>
-                    {st.title}
-                  </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.65rem', marginBottom: '0.55rem' }}>
+              <div style={{ minWidth: 0 }}>
+                <div style={{ fontSize: isMobileLayout ? '0.78rem' : '0.84rem', fontWeight: 900, color: 'var(--text-main)' }}>
+                  {mobileTrackingState.label}
                 </div>
-              ))}
+                <div style={{ fontSize: isMobileLayout ? '0.65rem' : '0.72rem', color: 'var(--text-muted)', marginTop: '0.08rem', lineHeight: 1.3 }}>
+                  {mobileTrackingState.helper}
+                </div>
+              </div>
+              <span style={{ fontSize: '0.72rem', fontWeight: 900, color: mobileTrackingState.ready ? '#059669' : (mobileTrackingState.unpaid ? '#ea580c' : '#2563eb'), flexShrink: 0 }}>
+                {mobileTrackingState.progress}%
+              </span>
+            </div>
+
+            <div style={{ height: '6px', borderRadius: '999px', overflow: 'hidden', background: 'var(--bg-subtle, #e2e8f0)', marginBottom: '0.7rem' }}>
+              <div style={{
+                width: String(mobileTrackingState.progress) + '%',
+                height: '100%',
+                borderRadius: '999px',
+                background: mobileTrackingState.ready ? '#10b981' : (mobileTrackingState.unpaid ? '#ea580c' : '#2563eb')
+              }} />
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: isMobileLayout ? '0.2rem' : '0.5rem', textAlign: 'center' }}>
+              {[
+                { step: 1, title: isMobileLayout ? (mobileTrackingState.unpaid ? 'Payment' : 'Received') : (mobileTrackingState.unpaid ? 'Pending Payment' : 'Order Received') },
+                { step: 2, title: isMobileLayout ? 'Production' : 'In Production' },
+                { step: 3, title: isMobileLayout ? 'QC' : 'Quality Check' },
+                { step: 4, title: isMobileLayout ? 'Ready' : (isCompleted ? 'Completed' : 'Ready Delivery') }
+              ].map(st => {
+                const passed = mobileTrackingState.ready ? true : trackerStage > st.step;
+                const current = !mobileTrackingState.ready && trackerStage === st.step;
+                return (
+                  <div key={st.step} style={{ minWidth: 0 }}>
+                    <div style={{
+                      width: isMobileLayout ? '26px' : '30px',
+                      height: isMobileLayout ? '26px' : '30px',
+                      borderRadius: '50%',
+                      margin: '0 auto 0.3rem auto',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontWeight: 900,
+                      fontSize: isMobileLayout ? '0.68rem' : '0.75rem',
+                      background: passed ? '#10b981' : current ? (mobileTrackingState.unpaid ? '#f59e0b' : 'var(--orange-500)') : 'var(--bg-subtle, #f1f5f9)',
+                      color: (passed || current) ? '#ffffff' : '#94a3b8'
+                    }}>
+                      {passed ? <Check size={isMobileLayout ? 13 : 15} /> : st.step}
+                    </div>
+                    <div style={{
+                      fontSize: isMobileLayout ? '0.6rem' : '0.75rem',
+                      lineHeight: 1.15,
+                      fontWeight: current ? 800 : 700,
+                      color: current ? 'var(--orange-600)' : passed ? '#10b981' : 'var(--text-muted)',
+                      whiteSpace: isMobileLayout ? 'nowrap' : 'normal',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis'
+                    }}>
+                      {st.title}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
 

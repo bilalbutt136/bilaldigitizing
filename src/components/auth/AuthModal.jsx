@@ -28,6 +28,7 @@ export const AuthModal = ({ isStandalonePage = false, initialMode = null }) => {
     setAuthModalMode,
     authUser,
     isAuthenticated,
+    isAuthInitialized,
     login,
     loginWithGoogle,
     register,
@@ -40,6 +41,20 @@ export const AuthModal = ({ isStandalonePage = false, initialMode = null }) => {
     setActiveCustomerTab
   } = useAppState();
 
+  const redirectStartedRef = React.useRef(false);
+  const redirectStandaloneAfterAuth = React.useCallback((role = authUser?.role) => {
+    if (!isStandalonePage || redirectStartedRef.current) return;
+    const urlParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
+    const redirectParam = urlParams?.get('redirect');
+    const defaultRoute = role === 'admin' ? '/admin-portal' : '/client-portal';
+    const targetRoute = (redirectParam && redirectParam.startsWith('/') && !redirectParam.startsWith('/login'))
+      ? redirectParam
+      : defaultRoute;
+
+    redirectStartedRef.current = true;
+    navigate(targetRoute, { replace: true });
+  }, [authUser?.role, isStandalonePage, navigate]);
+
   const isUserLoggedIn = Boolean(
     isAuthenticated ||
     authUser?.email ||
@@ -51,26 +66,16 @@ export const AuthModal = ({ isStandalonePage = false, initialMode = null }) => {
     })())
   );
 
-  // Auto-dismiss and prevent rendering if user is already authenticated (unless performing password recovery)
+  // Redirect only after the real Supabase session has been verified. Cached local state alone is not authoritative.
   React.useEffect(() => {
+    if (!isAuthInitialized) return;
     if (isUserLoggedIn && authModalMode !== 'update_password') {
       setIsAuthModalOpen(false);
       if (isStandalonePage) {
-        const urlParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
-        const redirectParam = urlParams?.get('redirect');
-        const defaultRoute = (authUser?.role === 'admin') ? '/admin-portal' : '/client-portal';
-        const targetRoute = (redirectParam && redirectParam.startsWith('/') && !redirectParam.startsWith('/login'))
-          ? redirectParam
-          : defaultRoute;
-
-        if (typeof window !== 'undefined') {
-          window.location.replace(targetRoute);
-        } else {
-          navigate(targetRoute);
-        }
+        redirectStandaloneAfterAuth(authUser?.role);
       }
     }
-  }, [isUserLoggedIn, isStandalonePage, authModalMode, authUser?.role, setIsAuthModalOpen, navigate]);
+  }, [isAuthInitialized, isUserLoggedIn, isStandalonePage, authModalMode, authUser?.role, setIsAuthModalOpen, redirectStandaloneAfterAuth]);
 
   // Sync initial mode if provided
   React.useEffect(() => {
@@ -162,9 +167,23 @@ export const AuthModal = ({ isStandalonePage = false, initialMode = null }) => {
     };
   }, [isAuthModalOpen, isStandalonePage, legalModalType, errorModalText, handleSafeClose]);
 
-  if (!isStandalonePage && (!isAuthModalOpen || (isUserLoggedIn && authModalMode !== 'update_password'))) return null;
+  if (!isStandalonePage && (!isAuthModalOpen || (isAuthInitialized && isUserLoggedIn && authModalMode !== 'update_password'))) return null;
 
-  if (isStandalonePage && isUserLoggedIn && authModalMode !== 'update_password') {
+  if (isStandalonePage && !isAuthInitialized && isUserLoggedIn) {
+    return (
+      <div className="auth-session-check" style={{
+        minHeight: 'calc(100vh - 120px)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: 'var(--bg-main, #f8fafc)'
+      }}>
+        <Loader2 className="animate-spin" size={34} style={{ color: 'var(--color-primary, #ea580c)' }} />
+      </div>
+    );
+  }
+
+  if (isStandalonePage && isAuthInitialized && isUserLoggedIn && authModalMode !== 'update_password') {
     const urlParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
     const redirectParam = urlParams?.get('redirect');
     const target = (redirectParam && redirectParam.startsWith('/') && !redirectParam.startsWith('/login'))
@@ -191,11 +210,8 @@ export const AuthModal = ({ isStandalonePage = false, initialMode = null }) => {
         <button
           type="button"
           onClick={() => {
-            if (typeof window !== 'undefined') {
-              window.location.replace(target);
-            } else {
-              navigate(target);
-            }
+            redirectStartedRef.current = true;
+            navigate(target, { replace: true });
           }}
           style={{
             background: 'var(--color-primary, #ea580c)',
@@ -249,7 +265,8 @@ export const AuthModal = ({ isStandalonePage = false, initialMode = null }) => {
       }).catch(() => {});
 
       if (result?.role === 'admin') {
-        navigate('/admin-portal');
+        if (isStandalonePage) redirectStandaloneAfterAuth('admin');
+        else navigate('/admin-portal');
       } else {
         if (typeof window !== 'undefined') {
           localStorage.setItem('bdigi_customer_tab', 'dashboard');
@@ -257,7 +274,8 @@ export const AuthModal = ({ isStandalonePage = false, initialMode = null }) => {
         if (setActiveCustomerTab) {
           setActiveCustomerTab('dashboard');
         }
-        navigate('/client-portal');
+        if (isStandalonePage) redirectStandaloneAfterAuth('customer');
+        else navigate('/client-portal');
         if (orderWizardInitialData) {
           setTimeout(() => {
             if (openOrderWizard) openOrderWizard();
@@ -311,7 +329,8 @@ export const AuthModal = ({ isStandalonePage = false, initialMode = null }) => {
       if (setActiveCustomerTab) {
         setActiveCustomerTab('dashboard');
       }
-      navigate('/client-portal');
+      if (isStandalonePage) redirectStandaloneAfterAuth('customer');
+      else navigate('/client-portal');
       if (orderWizardInitialData) {
         setTimeout(() => {
           if (openOrderWizard) openOrderWizard();
@@ -337,7 +356,8 @@ export const AuthModal = ({ isStandalonePage = false, initialMode = null }) => {
         if (setActiveCustomerTab) {
           setActiveCustomerTab('dashboard');
         }
-        navigate('/client-portal');
+        if (isStandalonePage) redirectStandaloneAfterAuth('customer');
+        else navigate('/client-portal');
         if (orderWizardInitialData) {
           setTimeout(() => {
             if (openOrderWizard) openOrderWizard();
@@ -397,7 +417,8 @@ export const AuthModal = ({ isStandalonePage = false, initialMode = null }) => {
     }
 
     setIsAuthModalOpen(false);
-    navigate('/client-portal');
+    if (isStandalonePage) redirectStandaloneAfterAuth('customer');
+    else navigate('/client-portal');
   };
 
   return (

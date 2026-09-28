@@ -37,6 +37,7 @@ import {
 } from 'lucide-react';
 import { ClientSidebar } from './ClientSidebar';
 import CustomerMobileCommandCenter from './CustomerMobileCommandCenter';
+import MobileOrderTrackingCard from './MobileOrderTrackingCard';
 import { MobileSimpleOrderModal } from './MobileSimpleOrderModal';
 import { ClientNotificationsView } from './ClientNotificationsView';
 import { CustomerInvoiceModal } from '../common/CustomerInvoiceModal';
@@ -2653,7 +2654,23 @@ export const CustomerDashboard = () => {
                   }
 
                   return (
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '1rem' }}>
+                    <>
+                      <div className="mobile-only-flex customer-mobile-orders-list" style={{ display: 'flex', flexDirection: 'column', gap: '0.7rem', width: '100%', minWidth: 0 }}>
+                        {filtered.map(ord => (
+                          <MobileOrderTrackingCard
+                            key={`mobile-${ord.id}`}
+                            order={ord}
+                            isDark={isDark}
+                            onOpen={(order) => {
+                              if (openOrderTrackerDrawer) openOrderTrackerDrawer(order?.id);
+                              else setSelectedOrderForDrawer(order);
+                            }}
+                            onPay={handlePayOrder}
+                          />
+                        ))}
+                      </div>
+
+                      <div className="desktop-only" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '1rem' }}>
                       {filtered.map(ord => {
                         const primaryImg = ord?.artworkUrl || ord?.image_url || ord?.logo || ord?.uploadedFiles?.[0]?.url || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=120&q=80';
                         const statusObj = getOrderDeliveryStatusBadge(ord);
@@ -2751,7 +2768,8 @@ export const CustomerDashboard = () => {
                           </div>
                         );
                       })}
-                    </div>
+                      </div>
+                    </>
                   );
                 })()}
               </div>

@@ -77,6 +77,7 @@ import {
 } from '../../services/supabaseService';
 import MobileSimpleOrderModal from '../customer/MobileSimpleOrderModal';
 import MobileStudioHub from './MobileStudioHub';
+import { getMobileOrderTrackingState } from '../../utils/orderTracking';
 import { THEME_PRESETS } from '../../utils/themePresets';
 import {
   handleNotificationClick,
@@ -2618,6 +2619,7 @@ export const BDigitizingMobileApp = () => {
 
                 const priceVal = Number(ord.totalPrice || ord.price || 15).toFixed(2);
                 const dateStr = ord.created_at ? new Date(ord.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Recent';
+                const trackingState = getMobileOrderTrackingState(ord);
 
                 return (
                   <div
@@ -2715,6 +2717,33 @@ export const BDigitizingMobileApp = () => {
                       }}>
                         {badgeInfo.label}
                       </span>
+                    </div>
+
+                    <div style={{
+                      background: isDark ? 'var(--color-subtle, #1e293b)' : '#f8fafc',
+                      border: isDark ? '1px solid var(--color-border, #334155)' : '1px solid #e2e8f0',
+                      borderRadius: '9px',
+                      padding: '0.5rem 0.6rem'
+                    }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem' }}>
+                        <span style={{ fontSize: '0.71rem', fontWeight: 900, color: isDark ? '#e2e8f0' : '#334155' }}>
+                          {trackingState.label}
+                        </span>
+                        <span style={{ fontSize: '0.68rem', fontWeight: 900, color: trackingState.ready ? '#059669' : (trackingState.unpaid ? '#ea580c' : '#2563eb') }}>
+                          {trackingState.progress}%
+                        </span>
+                      </div>
+                      <div style={{ height: '5px', borderRadius: '999px', overflow: 'hidden', background: isDark ? '#334155' : '#e2e8f0', marginTop: '0.4rem' }}>
+                        <div style={{
+                          width: `${trackingState.progress}%`,
+                          height: '100%',
+                          borderRadius: '999px',
+                          background: trackingState.ready ? '#10b981' : (trackingState.unpaid ? '#ea580c' : '#2563eb')
+                        }} />
+                      </div>
+                      <div style={{ fontSize: '0.62rem', color: isDark ? '#94a3b8' : '#64748b', lineHeight: 1.35, marginTop: '0.35rem' }}>
+                        {trackingState.helper}
+                      </div>
                     </div>
 
                     {/* Prominent Unpaid / Waiting for Payment Action Bar */}
