@@ -204,8 +204,20 @@ export async function fetchOrdersFromSupabase(customEmail = null, customOrderIds
         }
       } catch {}
     }
+    let localOrderIds = customOrderIds;
+    if (!localOrderIds && typeof window !== 'undefined') {
+      try {
+        const stored = JSON.parse(localStorage.getItem('bdigi_my_order_ids') || '[]');
+        if (Array.isArray(stored) && stored.length > 0) {
+          localOrderIds = stored.slice(0, 30);
+        }
+      } catch {}
+    }
     if (resolvedEmail) params.append('email', resolvedEmail);
     if (resolvedUserId) params.append('userId', resolvedUserId);
+    if (Array.isArray(localOrderIds) && localOrderIds.length > 0) {
+      params.append('orderIds', localOrderIds.join(','));
+    }
 
     const qs = params.toString();
     if (qs) url += `&${qs}`;
@@ -397,6 +409,9 @@ export function mapDatabaseOrderToClientOrder(order) {
         deliveryMessage: notesData.deliveryNotes || notesData.deliveryMessage || order.delivery_notes || '',
         deliveryDate: notesData.deliveryDate || order.delivery_date || null,
         revisions: notesData.revisions || order.revisions || [],
+        cancellation: notesData.cancellation || (Array.isArray(notesData.cancellations) ? notesData.cancellations[0] : null) || null,
+        cancellations: Array.isArray(notesData.cancellations) ? notesData.cancellations : (notesData.cancellation ? [notesData.cancellation] : []),
+        customerNotes: notesData.notes || notesData.instructions || order.notes || ''
   };
 }
 
@@ -441,10 +456,13 @@ export async function createOrderInSupabase(newOrder) {
       headers,
       body: JSON.stringify({ action: 'createOrder', payload: { primaryDbRow: newOrder, orderFiles } })
     });
-    const data = await res.json();
-    return { success: res.ok, data: data.order };
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || !data.success) {
+      return { success: false, data: null, error: data.error || 'Failed to submit order to database.' };
+    }
+    return { success: true, data: data.order };
   } catch (err) {
-    return { success: false, data: null };
+    return { success: false, data: null, error: err?.message || 'Network exception creating order.' };
   }
 }
 

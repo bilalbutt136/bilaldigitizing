@@ -24,7 +24,6 @@ import {
   X,
   Zap,
   PackageCheck,
-  Plus,
   Palette,
   ClipboardList,
   Home,
@@ -422,21 +421,19 @@ export const CustomerDashboard = () => {
     const oUserId = String(o?.user_id || o?.clientId || o?.client_id || o?.created_by || '').toLowerCase().trim();
     const curUserId = String(activeUser?.id || '').toLowerCase().trim();
 
-    if (uEmail || curUserId) {
-      if (uEmail && cEmail && cEmail === uEmail) return true;
-      if (curUserId && oUserId && oUserId === curUserId) return true;
-      return false;
-    }
-
-    let localOrderIds = [];
+    const cleanId = String(o?.id || '').trim().replace(/^#+/, '');
+    let isLocalMatch = false;
     if (typeof window !== 'undefined') {
       try {
-        localOrderIds = JSON.parse(localStorage.getItem('bdigi_my_order_ids') || '[]');
+        const localOrderIds = JSON.parse(localStorage.getItem('bdigi_my_order_ids') || '[]');
+        isLocalMatch = localOrderIds.some(lid => String(lid).trim().replace(/^#+/, '') === cleanId);
       } catch {}
     }
-    const cleanId = String(o?.id || '').trim().replace(/^#+/, '');
-    const isLocalMatch = localOrderIds.some(lid => String(lid).trim().replace(/^#+/, '') === cleanId);
-    return isLocalMatch;
+
+    if (uEmail && cEmail && cEmail === uEmail) return true;
+    if (curUserId && oUserId && oUserId === curUserId) return true;
+    if (isLocalMatch) return true;
+    return false;
   });
 
   const isOrderPaid = (o) => {

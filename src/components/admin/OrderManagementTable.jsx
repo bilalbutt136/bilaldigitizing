@@ -23,7 +23,8 @@ import {
   Receipt,
   Mail,
   Bell,
-  AlertTriangle
+  AlertTriangle,
+  X
 } from 'lucide-react';
 import { CustomerInvoiceModal } from '../common/CustomerInvoiceModal';
 
@@ -65,6 +66,8 @@ export const OrderManagementTable = () => {
     ORDER_STATUSES,
     updateOrderStatus,
     refreshOrders,
+    approveOrderCancellation,
+    rejectOrderCancellation,
     showToast
   } = useAppState();
 
@@ -78,6 +81,53 @@ export const OrderManagementTable = () => {
   const [assigningOrder, setAssigningOrder] = useState(null);
   const [reviewOrder, setReviewOrder] = useState(null);
   const [workersList, setWorkersList] = useState([]);
+  const [cancellationReviewOrder, setCancellationReviewOrder] = useState(null);
+  const [rejectionReasonText, setRejectionReasonText] = useState('');
+  const [showRejectForm, setShowRejectForm] = useState(false);
+  const [isProcessingCancellation, setIsProcessingCancellation] = useState(false);
+
+  const handleAdminApproveOrderCancellation = async (order) => {
+    if (!order) return;
+    const cleanId = String(order.id).replace(/^#+/, '');
+    const isPaid = String(order.payment_status || order.paymentStatus || '').toLowerCase() === 'paid';
+    const refundPrompt = isPaid 
+      ? `\n\nThis order was marked as PAID ($${parseFloat(order.price || 0).toFixed(2)}). An idempotent refund will be automatically credited to the customer's Studio Wallet.` 
+      : '';
+    if (!window.confirm(`Are you sure you want to APPROVE cancellation for Order #${cleanId}?${refundPrompt}`)) {
+      return;
+    }
+    setIsProcessingCancellation(true);
+    try {
+      const res = await approveOrderCancellation(order.id);
+      if (res?.success) {
+        setCancellationReviewOrder(null);
+        setShowRejectForm(false);
+        setRejectionReasonText('');
+      }
+    } finally {
+      setIsProcessingCancellation(false);
+    }
+  };
+
+  const handleAdminRejectOrderCancellation = async (order) => {
+    if (!order) return;
+    const cleanReason = rejectionReasonText.trim();
+    if (!cleanReason) {
+      showToast('Please provide a reason for declining the cancellation.', 'error');
+      return;
+    }
+    setIsProcessingCancellation(true);
+    try {
+      const res = await rejectOrderCancellation(order.id, cleanReason);
+      if (res?.success) {
+        setCancellationReviewOrder(null);
+        setShowRejectForm(false);
+        setRejectionReasonText('');
+      }
+    } finally {
+      setIsProcessingCancellation(false);
+    }
+  };
 
   // Fetch workers directory
   useEffect(() => {
@@ -581,6 +631,44 @@ export const OrderManagementTable = () => {
         </div>
       </div>
 
+      {/* Cancellation Management Info Banner */}
+      {filterStatus === 'cancellation_requested' && (
+        <div style={{
+          background: 'linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)',
+          border: '1.5px solid #f59e0b',
+          borderRadius: '10px',
+          padding: '0.85rem 1.25rem',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: '1rem',
+          flexWrap: 'wrap'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+            <AlertTriangle size={18} style={{ color: '#d97706', flexShrink: 0 }} />
+            <div>
+              <strong style={{ fontSize: '0.85rem', color: '#92400e', display: 'block' }}>
+                Dedicated Cancellations Management View
+              </strong>
+              <span style={{ fontSize: '0.78rem', color: '#b45309' }}>
+                Review customer cancellation requests, reasons, and timestamps. Approving will cancel the order and credit eligible funds to the customer wallet. Rejecting restores the order to active production without refund.
+              </span>
+            </div>
+          </div>
+          <span style={{
+            fontSize: '0.75rem',
+            fontWeight: 800,
+            background: '#f59e0b',
+            color: '#ffffff',
+            padding: '0.25rem 0.65rem',
+            borderRadius: '9999px',
+            whiteSpace: 'nowrap'
+          }}>
+            {orders.filter(o => o.status === 'cancellation_requested').length} Pending Requests
+          </span>
+        </div>
+      )}
+
       {/* Orders Table with Dedicated Scroll Viewport */}
       <div 
         className="table-responsive"
@@ -834,7 +922,11 @@ export const OrderManagementTable = () => {
                         {ord.status === 'cancellation_requested' && (
                           <button 
                             type="button"
-                            onClick={() => setSelectedOrderForDrawer(ord)}
+                            onClick={() => {
+                              setCancellationReviewOrder(ord);
+                              setShowRejectForm(false);
+                              setRejectionReasonText('');
+                            }}
                             style={{ 
                               fontWeight: 800, 
                               fontSize: '0.74rem', 
@@ -1030,6 +1122,304 @@ export const OrderManagementTable = () => {
           onClose={() => setInvoiceModalOrder(null)}
         />
       )}
+
+      {/* Dedicated Admin Cancellation Review Modal */}
+      {cancellationReviewOrder && (() => {
+        const ord = cancellationReviewOrder;
+        const cleanId = String(ord.id || '').replace(/^#+/, '');
+        let parsedNotes = {};
+        try {
+          if (ord.notes && typeof ord.notes === 'string' && ord.notes.trim().startsWith('{')) {
+            parsedNotes = JSON.parse(ord.notes);
+          } else if (ord.notes && typeof ord.notes === 'object') {
+            parsedNotes = ord.notes;
+          }
+        } catch {}
+
+        const cData = ord.cancellation || parsedNotes.cancellation || (Array.isArray(parsedNotes.cancellations) ? parsedNotes.cancellations[0] : {}) || {};
+        const cancelReason = cData.reason || ord.customerNotes || 'Customer requested order cancellation.';
+        const requestTime = cData.requested_at ? new Date(cData.requested_at).toLocaleString() : 'Recently';
+        const pStatus = String(ord.payment_status || ord.paymentStatus || '').toLowerCase();
+        const isPaid = pStatus === 'paid' || pStatus === 'completed' || pStatus === 'wallet';
+        const orderAmount = parseFloat(ord.price || ord.totalPrice || ord.cost || 0);
+
+        return (
+          <div style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(15, 23, 42, 0.75)',
+            backdropFilter: 'blur(4px)',
+            zIndex: 9999,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '1rem'
+          }}>
+            <div style={{
+              background: 'var(--bg-card, #ffffff)',
+              border: '1.5px solid var(--border-color, #e2e8f0)',
+              borderRadius: '18px',
+              width: '100%',
+              maxWidth: '540px',
+              boxShadow: '0 24px 48px rgba(0,0,0,0.3)',
+              overflow: 'hidden',
+              display: 'flex',
+              flexDirection: 'column'
+            }}>
+              {/* Header */}
+              <div style={{
+                padding: '1.25rem 1.5rem',
+                borderBottom: '1px solid var(--border-color, #e2e8f0)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                background: 'linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                  <div style={{
+                    width: '38px',
+                    height: '38px',
+                    borderRadius: '10px',
+                    background: '#f59e0b',
+                    color: '#ffffff',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}>
+                    <AlertTriangle size={20} />
+                  </div>
+                  <div>
+                    <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 900, color: '#92400e' }}>
+                      Review Cancellation Request
+                    </h3>
+                    <span style={{ fontSize: '0.78rem', color: '#b45309', fontWeight: 700 }}>
+                      Order #{cleanId} • {ord.title || ord.service_category || 'Commercial Order'}
+                    </span>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => { if (!isProcessingCancellation) setCancellationReviewOrder(null); }}
+                  style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: '#94a3b8' }}
+                >
+                  <X size={20} />
+                </button>
+              </div>
+
+              {/* Body */}
+              <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.1rem' }}>
+                {/* Order Summary Grid */}
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(2, 1fr)',
+                  gap: '0.75rem',
+                  background: 'var(--bg-surface, #f8fafc)',
+                  padding: '1rem',
+                  borderRadius: '12px',
+                  border: '1px solid var(--border-color, #e2e8f0)'
+                }}>
+                  <div>
+                    <span style={{ display: 'block', fontSize: '0.7rem', color: 'var(--text-muted, #64748b)', fontWeight: 700, textTransform: 'uppercase' }}>
+                      Customer
+                    </span>
+                    <strong style={{ fontSize: '0.85rem', color: 'var(--text-main, #0f172a)' }}>
+                      {ord.client_name || ord.clientName || 'Client'}
+                    </strong>
+                    <span style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-muted, #64748b)' }}>
+                      {ord.client_email || ord.clientEmail}
+                    </span>
+                  </div>
+
+                  <div>
+                    <span style={{ display: 'block', fontSize: '0.7rem', color: 'var(--text-muted, #64748b)', fontWeight: 700, textTransform: 'uppercase' }}>
+                      Amount & Payment
+                    </span>
+                    <strong style={{ fontSize: '0.95rem', color: 'var(--text-main, #0f172a)' }}>
+                      ${orderAmount.toFixed(2)}
+                    </strong>
+                    <span style={{
+                      display: 'inline-block',
+                      marginLeft: '0.35rem',
+                      padding: '0.15rem 0.45rem',
+                      borderRadius: '4px',
+                      fontSize: '0.68rem',
+                      fontWeight: 800,
+                      background: isPaid ? '#dcfce7' : '#fee2e2',
+                      color: isPaid ? '#15803d' : '#b91c1c'
+                    }}>
+                      {isPaid ? 'PAID (Refundable)' : 'UNPAID'}
+                    </span>
+                  </div>
+
+                  <div>
+                    <span style={{ display: 'block', fontSize: '0.7rem', color: 'var(--text-muted, #64748b)', fontWeight: 700, textTransform: 'uppercase' }}>
+                      Request Time
+                    </span>
+                    <span style={{ fontSize: '0.8rem', color: 'var(--text-main, #0f172a)', fontWeight: 600 }}>
+                      {requestTime}
+                    </span>
+                  </div>
+
+                  <div>
+                    <span style={{ display: 'block', fontSize: '0.7rem', color: 'var(--text-muted, #64748b)', fontWeight: 700, textTransform: 'uppercase' }}>
+                      Status
+                    </span>
+                    <span style={{
+                      display: 'inline-block',
+                      padding: '0.18rem 0.55rem',
+                      borderRadius: '9999px',
+                      fontSize: '0.72rem',
+                      fontWeight: 800,
+                      background: '#fef3c7',
+                      color: '#b45309',
+                      border: '1px solid #fde68a'
+                    }}>
+                      ⚠️ Pending Admin Review
+                    </span>
+                  </div>
+                </div>
+
+                {/* Customer Stated Reason */}
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 800, color: 'var(--text-main, #0f172a)', marginBottom: '0.4rem' }}>
+                    Customer Reason for Cancellation:
+                  </label>
+                  <div style={{
+                    background: '#fffbeb',
+                    border: '1.5px solid #fcd34d',
+                    borderRadius: '10px',
+                    padding: '0.85rem 1rem',
+                    fontSize: '0.88rem',
+                    color: '#92400e',
+                    lineHeight: 1.5,
+                    fontWeight: 600
+                  }}>
+                    "{cancelReason}"
+                  </div>
+                </div>
+
+                {/* Optional Reject Reason Input */}
+                {showRejectForm && (
+                  <div style={{
+                    background: '#fef2f2',
+                    border: '1px solid #fca5a5',
+                    borderRadius: '10px',
+                    padding: '0.85rem 1rem',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '0.5rem'
+                  }}>
+                    <label style={{ fontSize: '0.78rem', fontWeight: 800, color: '#991b1b' }}>
+                      Reason for Declining (Sent to Customer):
+                    </label>
+                    <textarea
+                      value={rejectionReasonText}
+                      onChange={(e) => setRejectionReasonText(e.target.value)}
+                      placeholder="e.g. Order is already in active commercial digitizing production."
+                      rows={2}
+                      style={{
+                        width: '100%',
+                        padding: '0.5rem',
+                        borderRadius: '6px',
+                        border: '1px solid #f87171',
+                        fontSize: '0.82rem',
+                        outline: 'none',
+                        resize: 'vertical',
+                        boxSizing: 'border-box'
+                      }}
+                    />
+                  </div>
+                )}
+
+                {/* Actions Footer */}
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: '0.5rem',
+                  paddingTop: '0.5rem',
+                  borderTop: '1px solid var(--border-color, #e2e8f0)',
+                  flexWrap: 'wrap'
+                }}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCancellationReviewOrder(null);
+                      setSelectedOrderForDrawer(ord);
+                    }}
+                    className="btn btn-outline btn-sm"
+                    style={{ fontSize: '0.76rem', fontWeight: 700 }}
+                  >
+                    Inspect Full Order Desk
+                  </button>
+
+                  <div style={{ display: 'flex', gap: '0.5rem', marginLeft: 'auto' }}>
+                    {!showRejectForm ? (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowRejectForm(true);
+                          setRejectionReasonText('Order is already in active commercial production.');
+                        }}
+                        disabled={isProcessingCancellation}
+                        style={{
+                          background: '#ffffff',
+                          border: '1.5px solid #d97706',
+                          color: '#b45309',
+                          padding: '0.45rem 0.9rem',
+                          borderRadius: '8px',
+                          fontSize: '0.8rem',
+                          fontWeight: 800,
+                          cursor: 'pointer'
+                        }}
+                      >
+                        ✕ Reject Cancellation
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => handleAdminRejectOrderCancellation(ord)}
+                        disabled={isProcessingCancellation || !rejectionReasonText.trim()}
+                        style={{
+                          background: '#dc2626',
+                          border: 'none',
+                          color: '#ffffff',
+                          padding: '0.45rem 0.9rem',
+                          borderRadius: '8px',
+                          fontSize: '0.8rem',
+                          fontWeight: 800,
+                          cursor: isProcessingCancellation || !rejectionReasonText.trim() ? 'not-allowed' : 'pointer'
+                        }}
+                      >
+                        {isProcessingCancellation ? 'Declining...' : 'Confirm Decline & Revert'}
+                      </button>
+                    )}
+
+                    <button
+                      type="button"
+                      onClick={() => handleAdminApproveOrderCancellation(ord)}
+                      disabled={isProcessingCancellation}
+                      style={{
+                        background: '#16a34a',
+                        border: 'none',
+                        color: '#ffffff',
+                        padding: '0.45rem 1.15rem',
+                        borderRadius: '8px',
+                        fontSize: '0.8rem',
+                        fontWeight: 800,
+                        cursor: isProcessingCancellation ? 'not-allowed' : 'pointer',
+                        boxShadow: '0 2px 8px rgba(22, 163, 74, 0.3)'
+                      }}
+                    >
+                      {isProcessingCancellation ? 'Processing...' : (isPaid ? '✓ Approve & Refund Wallet' : '✓ Approve Cancellation')}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
     </div>
   );

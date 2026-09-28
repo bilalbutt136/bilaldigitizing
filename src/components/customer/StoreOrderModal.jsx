@@ -197,11 +197,24 @@ export const StoreOrderModal = () => {
         await deductWalletBalance(totalPriceNum, created?.id || newStoreOrder.id);
       }
 
-      // Save directly to localStorage store_orders array
+      // Save directly to localStorage store_orders and my_order_ids array
       const existing = JSON.parse(localStorage.getItem('store_orders') || '[]');
       const updated = [newStoreOrder, ...existing.filter(item => item.id !== newStoreOrder.id)];
       localStorage.setItem('store_orders', JSON.stringify(updated));
       window.dispatchEvent(new Event('store_orders_updated'));
+
+      if (typeof window !== 'undefined') {
+        try {
+          const ordIdToSave = created?.id || newStoreOrder.id;
+          if (ordIdToSave) {
+            const prevIds = JSON.parse(localStorage.getItem('bdigi_my_order_ids') || '[]');
+            const cleanId = String(ordIdToSave).trim();
+            if (!prevIds.includes(cleanId)) {
+              localStorage.setItem('bdigi_my_order_ids', JSON.stringify([cleanId, ...prevIds].slice(0, 50)));
+            }
+          }
+        } catch {}
+      }
 
       if (paymentMethod === 'bolt') {
         if (setCheckoutSession && setIsCheckoutModalOpen) {

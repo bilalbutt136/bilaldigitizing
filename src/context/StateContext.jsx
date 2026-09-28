@@ -4,6 +4,7 @@ import React, { createContext, useContext, useState, useEffect, useRef, useCallb
 import { supabase, isSupabaseConfigured } from '../lib/supabase/client';
 import {
   createOrderInSupabase,
+  mapDatabaseOrderToClientOrder,
   updateOrderStatusInSupabase,
   addRevisionInSupabase,
   upsertClientInSupabase,
@@ -2022,7 +2023,7 @@ export const StateProvider = ({ children }) => {
 
   // Order Operations connected to Supabase DB
   const createOrder = async (newOrderData) => {
-    const localId = newOrderData.id || `#${Math.floor(1000 + Math.random() * 9000)}`;
+    const localId = newOrderData.id || `#${Math.floor(10000 + Math.random() * 90000)}`;
     const isAlreadyPaid = String(newOrderData.payment_status || newOrderData.paymentStatus || '').toLowerCase() === 'paid';
     
     const fullOrderPayload = {
@@ -2039,115 +2040,112 @@ export const StateProvider = ({ children }) => {
       revisions: []
     };
 
+    let canonicalOrder = fullOrderPayload;
+
     if (isSupabaseConfigured) {
       try {
-        await createOrderInSupabase(fullOrderPayload);
-        setOrders(prev => [fullOrderPayload, ...prev]);
-        showToast(`Order ${formatOrderId(localId)} created successfully!`, 'success');
-        
-        const isFromOffer = fullOrderPayload.source === 'custom_offer' || 
-                            Boolean(fullOrderPayload.offerId) || 
-                            Boolean(fullOrderPayload.offer_id) ||
-                            (typeof fullOrderPayload.notes === 'string' && fullOrderPayload.notes.includes('custom_offer'));
-
-        // Client Notification 1: Order Placed (Local state only; DB already populated by /api/orders)
-        // Suppress for custom offers to ensure only 2 notifications (Offer + Payment Confirmed)
-        if (!isFromOffer) {
-          addNotification({
-            id: `ord-created-${localId}`,
-            title: `🎉 Order ${formatOrderId(localId)} Placed!`,
-            message: isAlreadyPaid 
-              ? `Your digitizing order has been created and production has started.`
-              : `Order created. Waiting for payment of $${parseFloat(fullOrderPayload.totalPrice || fullOrderPayload.price || 15).toFixed(2)} to start production.`,
-            type: isAlreadyPaid ? 'success' : 'warning',
-            link: '/client-portal',
-            order_id: localId,
-            orderId: localId,
-            recipient_role: 'client',
-            recipient_email: (fullOrderPayload.clientEmail || '').toLowerCase().trim()
-          }, false);
+        const sbResult = await createOrderInSupabase(fullOrderPayload);
+        if (sbResult?.success && sbResult?.data) {
+          const liveOrder = mapDatabaseOrderToClientOrder(sbResult.data) || sbResult.data;
+          canonicalOrder = { ...fullOrderPayload, ...liveOrder };
+        } else if (sbResult?.error) {
+          console.error('[createOrder DB write notice]:', sbResult.error);
         }
-
-        // Client Notification 2: Payment Confirmed (if paid immediately at creation)
-        if (isAlreadyPaid) {
-          addNotification({
-            id: `ord-paid-${localId}`,
-            title: `💳 Payment Confirmed - Order Active!`,
-            message: `Payment confirmed for Order ${formatOrderId(localId)}. Production is underway.`,
-            type: 'success',
-            link: '/client-portal',
-            order_id: localId,
-            orderId: localId,
-            recipient_role: 'client',
-            recipient_email: (fullOrderPayload.clientEmail || '').toLowerCase().trim()
-          }, false);
-        }
-
-        // Broadcast admin notification in real-time so admin portal gets it immediately
-        const adminNotif = {
-          id: `notif-ord-${localId}-admin`,
-          recipient_role: 'admin',
-          recipient_email: null,
-          title: `🚨 New Order: ${fullOrderPayload.title || 'Order'}`,
-          message: `Received from ${fullOrderPayload.clientName || 'Client'} (${(fullOrderPayload.clientEmail || '').toLowerCase()}) — ${fullOrderPayload.serviceCategory || 'Embroidery Digitizing'}. Price: $${parseFloat(fullOrderPayload.price || 15).toFixed(2)}`,
-          type: 'info',
-          link: '/admin-portal',
-          order_id: localId,
-          orderId: localId,
-          read: false,
-          timestamp: new Date().toISOString(),
-          created_at: new Date().toISOString()
-        };
-        broadcastLiveNotification(adminNotif);
-        triggerEmailNotification('NEW_ORDER', fullOrderPayload);
-
-        // Log Purchase Tracking Event with exact customer name and email
-        try {
-          const custIdentity = fullOrderPayload.clientEmail
-            ? `${fullOrderPayload.clientName || 'Customer'} (${fullOrderPayload.clientEmail})`
-            : (authUser?.email ? `${authUser.name || 'Customer'} (${authUser.email})` : 'Customer');
-          
-          const orderAmount = parseFloat(fullOrderPayload.price || 15);
-          const { logTrackingEventToSupabase } = await import('../services/supabaseService');
-          logTrackingEventToSupabase({
-            eventName: 'Purchase',
-            userRole: custIdentity,
-            source: 'Visitor browser',
-            trafficSource: (typeof window !== 'undefined' ? window.location.hostname : 'Direct') || 'Direct',
-            value: `$${orderAmount.toFixed(2)}`,
-            pagePath: '/order'
-          });
-        } catch {}
-
-        return fullOrderPayload;
       } catch (sbErr) {
         console.warn('Supabase create order notice:', sbErr);
       }
     }
 
-    setOrders(prev => [fullOrderPayload, ...prev]);
-    showToast(`Order ${formatOrderId(localId)} created successfully!`, 'success');
-    const isFromOfferFallback = fullOrderPayload.source === 'custom_offer' || 
-                                Boolean(fullOrderPayload.offerId) || 
-                                Boolean(fullOrderPayload.offer_id) ||
-                                (typeof fullOrderPayload.notes === 'string' && fullOrderPayload.notes.includes('custom_offer'));
-    if (!isFromOfferFallback) {
+    const assignedId = canonicalOrder.id || localId;
+    setOrders(prev => [canonicalOrder, ...prev.filter(o => o.id !== assignedId && o.id !== localId)]);
+    showToast(`Order ${formatOrderId(assignedId)} created successfully!`, 'success');
+
+    if (typeof window !== 'undefined' && assignedId) {
+      try {
+        const prevIds = JSON.parse(localStorage.getItem('bdigi_my_order_ids') || '[]');
+        const cleanId = String(assignedId).trim();
+        if (!prevIds.includes(cleanId)) {
+          localStorage.setItem('bdigi_my_order_ids', JSON.stringify([cleanId, ...prevIds].slice(0, 50)));
+        }
+      } catch {}
+    }
+        
+    const isFromOffer = canonicalOrder.source === 'custom_offer' || 
+                        Boolean(canonicalOrder.offerId) || 
+                        Boolean(canonicalOrder.offer_id) || 
+                        Boolean(fullOrderPayload.offerId) ||
+                        Boolean(fullOrderPayload.offer_id) ||
+                        (typeof canonicalOrder.notes === 'string' && canonicalOrder.notes.includes('custom_offer'));
+
+    // Client Notification 1: Order Placed (Local state only; DB already populated by /api/orders)
+    if (!isFromOffer) {
       addNotification({
-        id: `ord-created-${localId}`,
-        title: `🎉 Order ${formatOrderId(localId)} Placed!`,
+        id: `ord-created-${assignedId}`,
+        title: `🎉 Order ${formatOrderId(assignedId)} Placed!`,
         message: isAlreadyPaid 
           ? `Your digitizing order has been created and production has started.`
-          : `Order created. Waiting for payment of $${parseFloat(fullOrderPayload.totalPrice || fullOrderPayload.price || 15).toFixed(2)} to start production.`,
+          : `Order created. Waiting for payment of $${parseFloat(canonicalOrder.totalPrice || canonicalOrder.price || 15).toFixed(2)} to start production.`,
         type: isAlreadyPaid ? 'success' : 'warning',
         link: '/client-portal',
-        order_id: localId,
-        orderId: localId,
+        order_id: assignedId,
+        orderId: assignedId,
         recipient_role: 'client',
-        recipient_email: (fullOrderPayload.clientEmail || '').toLowerCase().trim()
-      });
+        recipient_email: (canonicalOrder.clientEmail || '').toLowerCase().trim()
+      }, false);
     }
-    triggerEmailNotification('NEW_ORDER', fullOrderPayload);
-    return fullOrderPayload;
+
+    // Client Notification 2: Payment Confirmed (if paid immediately at creation)
+    if (isAlreadyPaid) {
+      addNotification({
+        id: `ord-paid-${assignedId}`,
+        title: `💳 Payment Confirmed - Order Active!`,
+        message: `Payment confirmed for Order ${formatOrderId(assignedId)}. Production is underway.`,
+        type: 'success',
+        link: '/client-portal',
+        order_id: assignedId,
+        orderId: assignedId,
+        recipient_role: 'client',
+        recipient_email: (canonicalOrder.clientEmail || '').toLowerCase().trim()
+      }, false);
+    }
+
+    // Broadcast admin notification in real-time so admin portal gets it immediately
+    const adminNotif = {
+      id: `notif-ord-${assignedId}-admin`,
+      recipient_role: 'admin',
+      recipient_email: null,
+      title: `🚨 New Order: ${canonicalOrder.title || 'Order'}`,
+      message: `Received from ${canonicalOrder.clientName || 'Client'} (${(canonicalOrder.clientEmail || '').toLowerCase()}) — ${canonicalOrder.serviceCategory || 'Embroidery Digitizing'}. Price: $${parseFloat(canonicalOrder.price || 15).toFixed(2)}`,
+      type: 'info',
+      link: '/admin-portal',
+      order_id: assignedId,
+      orderId: assignedId,
+      read: false,
+      timestamp: new Date().toISOString(),
+      created_at: new Date().toISOString()
+    };
+    broadcastLiveNotification(adminNotif);
+    triggerEmailNotification('NEW_ORDER', canonicalOrder);
+
+    // Log Purchase Tracking Event with exact customer name and email
+    try {
+      const custIdentity = canonicalOrder.clientEmail
+        ? `${canonicalOrder.clientName || 'Customer'} (${canonicalOrder.clientEmail})`
+        : (authUser?.email ? `${authUser.name || 'Customer'} (${authUser.email})` : 'Customer');
+      
+      const orderAmount = parseFloat(canonicalOrder.price || 15);
+      const { logTrackingEventToSupabase } = await import('../services/supabaseService');
+      logTrackingEventToSupabase({
+        eventName: 'Purchase',
+        userRole: custIdentity,
+        source: 'Visitor browser',
+        trafficSource: (typeof window !== 'undefined' ? window.location.hostname : 'Direct') || 'Direct',
+        value: `$${orderAmount.toFixed(2)}`,
+        pagePath: '/order'
+      });
+    } catch {}
+
+    return canonicalOrder;
   };
 
   const updateOrderStatus = async (orderId, newStatus, extraData = {}) => {
@@ -2373,9 +2371,10 @@ export const StateProvider = ({ children }) => {
 
   const requestOrderCancellation = async (orderId, reason) => {
     try {
+      const headers = await getAuthHeaders();
       const res = await fetch('/api/orders', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({ action: 'requestCancellation', payload: { orderId, reason } })
       });
       const data = await res.json().catch(() => ({}));
@@ -2383,7 +2382,18 @@ export const StateProvider = ({ children }) => {
         showToast(data.error || 'Failed to submit cancellation request.', 'error');
         return { success: false, error: data.error };
       }
-      setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: 'cancellation_requested' } : o));
+      const cleanTarget = String(orderId).replace(/^#+/, '');
+      setOrders(prev => prev.map(o => {
+        const oClean = String(o.id).replace(/^#+/, '');
+        if (oClean === cleanTarget || o.id === orderId) {
+          const updatedNotes = typeof o.notes === 'string' && o.notes.startsWith('{')
+            ? JSON.parse(o.notes)
+            : (typeof o.notes === 'object' && o.notes ? { ...o.notes } : {});
+          updatedNotes.cancellation = data.cancellation;
+          return { ...o, status: 'cancellation_requested', notes: updatedNotes, cancellation: data.cancellation };
+        }
+        return o;
+      }));
       showToast('Cancellation request submitted to studio administration.', 'info');
       if (refreshOrders) refreshOrders();
       return { success: true, cancellation: data.cancellation };
@@ -2395,9 +2405,10 @@ export const StateProvider = ({ children }) => {
 
   const approveOrderCancellation = async (orderId, adminNote = '') => {
     try {
+      const headers = await getAuthHeaders();
       const res = await fetch('/api/orders', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({ action: 'approveCancellation', payload: { orderId, adminNote } })
       });
       const data = await res.json().catch(() => ({}));
@@ -2405,7 +2416,19 @@ export const StateProvider = ({ children }) => {
         showToast(data.error || 'Failed to approve cancellation.', 'error');
         return { success: false, error: data.error };
       }
-      setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: 'cancelled', payment_status: data.refundIssued ? 'refunded' : o.payment_status } : o));
+      const cleanTarget = String(orderId).replace(/^#+/, '');
+      setOrders(prev => prev.map(o => {
+        const oClean = String(o.id).replace(/^#+/, '');
+        if (oClean === cleanTarget || o.id === orderId) {
+          return {
+            ...o,
+            status: 'cancelled',
+            payment_status: data.refundIssued ? 'refunded' : o.payment_status,
+            cancellation: { ...(o.cancellation || {}), status: 'approved', refund_issued: data.refundIssued }
+          };
+        }
+        return o;
+      }));
       if (data.newBalance !== null && data.newBalance !== undefined) {
         setWalletBalance(data.newBalance);
       }
@@ -2420,9 +2443,10 @@ export const StateProvider = ({ children }) => {
 
   const rejectOrderCancellation = async (orderId, rejectionReason = '') => {
     try {
+      const headers = await getAuthHeaders();
       const res = await fetch('/api/orders', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({ action: 'rejectCancellation', payload: { orderId, rejectionReason } })
       });
       const data = await res.json().catch(() => ({}));
@@ -2430,8 +2454,20 @@ export const StateProvider = ({ children }) => {
         showToast(data.error || 'Failed to reject cancellation.', 'error');
         return { success: false, error: data.error };
       }
-      setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: data.status } : o));
-      showToast(`Cancellation declined. Order restored to ${data.status}.`, 'info');
+      const restoredStatus = data.status || 'in_progress';
+      const cleanTarget = String(orderId).replace(/^#+/, '');
+      setOrders(prev => prev.map(o => {
+        const oClean = String(o.id).replace(/^#+/, '');
+        if (oClean === cleanTarget || o.id === orderId) {
+          return {
+            ...o,
+            status: restoredStatus,
+            cancellation: { ...(o.cancellation || {}), status: 'rejected', admin_rejection_reason: rejectionReason }
+          };
+        }
+        return o;
+      }));
+      showToast(`Cancellation declined. Order restored to ${restoredStatus}.`, 'info');
       if (refreshOrders) refreshOrders();
       return { success: true, ...data };
     } catch (err) {
@@ -2478,7 +2514,17 @@ export const StateProvider = ({ children }) => {
       const userId = isAdminUser ? null : (authUser?.id || null);
       const freshOrders = await fetchOrdersFromSupabase(email, null, userId);
       if (freshOrders && Array.isArray(freshOrders)) {
-        setOrders(freshOrders);
+        setOrders(prevOrders => {
+          const freshMap = new Map(freshOrders.map(o => [String(o.id).replace(/^#+/, ''), o]));
+          const now = Date.now();
+          const retainedLocalOrders = (prevOrders || []).filter(o => {
+            const cleanId = String(o.id).replace(/^#+/, '');
+            if (freshMap.has(cleanId)) return false;
+            const orderAge = now - new Date(o.createdAt || o.created_at || now).getTime();
+            return orderAge < 120000;
+          });
+          return [...freshOrders, ...retainedLocalOrders];
+        });
         return freshOrders;
       }
     } catch (err) {

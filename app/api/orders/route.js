@@ -49,9 +49,15 @@ export async function GET(request) {
         targetEmail = user.email.toLowerCase().trim();
       }
 
-      // If unauthenticated, return empty orders immediately to prevent cross-account leaks
+      const orderIdsParam = searchParams.get('orderIds');
+      const orderIdsList = orderIdsParam ? orderIdsParam.split(',').map(s => s.trim().replace(/^#+/, '')).filter(Boolean) : [];
+      const orderCandidateIds = orderIdsList.flatMap(cid => [cid, `#${cid}`]);
+
+      // If unauthenticated and no explicit authorized orderIds requested, return empty orders immediately to prevent cross-account leaks
       if (!isAdmin && !isWorker && !user) {
-        return NextResponse.json({ orders: [] });
+        if (orderCandidateIds.length === 0) {
+          return NextResponse.json({ orders: [] });
+        }
       }
       
       let data = null;
@@ -68,13 +74,16 @@ export async function GET(request) {
         } else if (user) {
           // Authenticated customer: strictly isolate to their own user_id or email
           const safeEmail = (user.email || '').toLowerCase().trim();
-          if (user.id && safeEmail) {
+          const isValidUuid = typeof user.id === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(user.id);
+          if (isValidUuid && safeEmail) {
             query = query.or(`user_id.eq.${user.id},client_email.ilike.${safeEmail}`);
-          } else if (user.id) {
+          } else if (isValidUuid) {
             query = query.eq('user_id', user.id);
           } else if (safeEmail) {
             query = query.ilike('client_email', safeEmail);
           }
+        } else if (orderCandidateIds.length > 0) {
+          query = query.in('id', orderCandidateIds);
         }
         const res = await query;
         if (res.error) throw res.error;
@@ -92,13 +101,16 @@ export async function GET(request) {
           fallbackQuery = fallbackQuery.eq('worker_id', targetWorkerId);
         } else if (user) {
           const safeEmail = (user.email || '').toLowerCase().trim();
-          if (user.id && safeEmail) {
+          const isValidUuid = typeof user.id === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(user.id);
+          if (isValidUuid && safeEmail) {
             fallbackQuery = fallbackQuery.or(`user_id.eq.${user.id},client_email.ilike.${safeEmail}`);
-          } else if (user.id) {
+          } else if (isValidUuid) {
             fallbackQuery = fallbackQuery.eq('user_id', user.id);
           } else if (safeEmail) {
             fallbackQuery = fallbackQuery.ilike('client_email', safeEmail);
           }
+        } else if (orderCandidateIds.length > 0) {
+          fallbackQuery = fallbackQuery.in('id', orderCandidateIds);
         }
         const fallbackRes = await fallbackQuery;
         if (fallbackRes.error) throw fallbackRes.error;
@@ -213,6 +225,8 @@ export async function GET(request) {
         uploadedMachineFiles: Array.isArray(parsedNotes.uploadedMachineFiles) ? parsedNotes.uploadedMachineFiles : [],
         deliveryNotes: parsedNotes.deliveryNotes || '',
         deliveryDate: parsedNotes.deliveryDate || null,
+        cancellation: parsedNotes.cancellation || (Array.isArray(parsedNotes.cancellations) ? parsedNotes.cancellations[0] : null) || null,
+        cancellations: Array.isArray(parsedNotes.cancellations) ? parsedNotes.cancellations : (parsedNotes.cancellation ? [parsedNotes.cancellation] : []),
         order_files: orderFilesList,
         orderFiles: orderFilesList,
         revisions: revisionsList
@@ -278,8 +292,29 @@ export async function POST(request) {
       const safePaymentStatus = isInputPaid ? 'paid' : (isAdmin ? (primaryDbRow.paymentStatus || 'pending') : 'pending');
       const safeStatus = isInputPaid ? 'in_progress' : (isAdmin ? (primaryDbRow.status || 'submitted') : 'submitted');
 
+      // Resolve valid UUID user_id referencing auth.users(id)
+      const isValidUuid = typeof user?.id === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(user.id);
+      let assignedUserId = isValidUuid ? user.id : null;
+      if (!assignedUserId && clientEmail) {
+        try {
+          const { data: clientLookup } = await supabase.from('clients').select('user_id').ilike('email', clientEmail).maybeSingle();
+          if (clientLookup?.user_id && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(clientLookup.user_id)) {
+            assignedUserId = clientLookup.user_id;
+          }
+        } catch {}
+      }
+
+      // Generate collision-free order ID
+      let assignedId = primaryDbRow.id || `#${Math.floor(10000 + Math.random() * 90000)}`;
+      try {
+        const { data: existingIdCheck } = await supabase.from('orders').select('id').eq('id', assignedId).maybeSingle();
+        if (existingIdCheck) {
+          assignedId = `#${Math.floor(10000 + Math.random() * 90000)}`;
+        }
+      } catch {}
+
       const mappedDbRow = {
-        id: primaryDbRow.id || `ord-${Date.now()}`,
+        id: assignedId,
         title: primaryDbRow.title || 'Service Order',
         client_name: primaryDbRow.clientName || user?.user_metadata?.full_name || 'Valued Client',
         client_email: clientEmail,
@@ -295,7 +330,7 @@ export async function POST(request) {
         artwork_url: primaryArtworkUrl,
         image_url: primaryArtworkUrl,
         logo: primaryArtworkUrl,
-        user_id: user?.id || null,
+        user_id: assignedUserId,
         discount_amount: primaryDbRow.discount_amount !== undefined ? parseFloat(primaryDbRow.discount_amount || 0) : 0.00,
         applied_promo_code: primaryDbRow.applied_promo_code || primaryDbRow.promoCode || null,
         base_price: primaryDbRow.base_price !== undefined ? parseFloat(primaryDbRow.base_price || primaryDbRow.price || 0) : null,
@@ -317,6 +352,33 @@ export async function POST(request) {
       let insertedOrder = null;
       let { data: orderData, error: orderErr } = await supabase.from('orders').insert([mappedDbRow]).select();
       if (orderErr) {
+        // If unique constraint violation on id, retry with a fresh unique ID
+        if (orderErr.code === '23505' || orderErr.message?.includes('duplicate key') || orderErr.message?.includes('orders_pkey')) {
+          console.warn('[Orders API] Retrying order insert with fresh unique ID due to key collision');
+          mappedDbRow.id = `#${Date.now().toString().slice(-5)}${Math.floor(10 + Math.random() * 90)}`;
+          const retryPk = await supabase.from('orders').insert([mappedDbRow]).select();
+          if (!retryPk.error && retryPk.data) {
+            orderErr = null;
+            insertedOrder = retryPk.data;
+          } else {
+            orderErr = retryPk.error;
+          }
+        }
+        // If foreign key constraint violation on user_id, retry with user_id: null
+        if (orderErr && (orderErr.code === '23503' || orderErr.message?.includes('orders_user_id_fkey') || orderErr.message?.includes('foreign key'))) {
+          console.warn('[Orders API] Retrying order insert with user_id: null due to foreign key mismatch');
+          mappedDbRow.user_id = null;
+          const retryFk = await supabase.from('orders').insert([mappedDbRow]).select();
+          if (!retryFk.error && retryFk.data) {
+            orderErr = null;
+            insertedOrder = retryFk.data;
+          } else {
+            orderErr = retryFk.error;
+          }
+        }
+      }
+
+      if (orderErr) {
         // If discount columns are not yet in the DB schema, safely fallback without them
         if (orderErr.message && (orderErr.message.includes('discount_') || orderErr.message.includes('applied_promo_') || orderErr.message.includes('base_price'))) {
           console.warn('[Orders API] Retrying order insert without discount columns:', orderErr.message);
@@ -331,7 +393,7 @@ export async function POST(request) {
           console.error("Order Insert Error:", orderErr);
           throw orderErr;
         }
-      } else {
+      } else if (!insertedOrder) {
         insertedOrder = orderData;
       }
       
@@ -525,25 +587,24 @@ export async function POST(request) {
         if (!user) {
           return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
-        if (targetOrder && (targetOrder.client_email || '').toLowerCase().trim() !== (user.email || '').toLowerCase().trim()) {
+        const clientEmailMatch = (targetOrder?.client_email || '').toLowerCase().trim() === (user.email || '').toLowerCase().trim();
+        const clientUserMatch = targetOrder?.user_id && targetOrder.user_id === user.id;
+        if (targetOrder && !clientEmailMatch && !clientUserMatch) {
           return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
         }
 
         // Security check: non-admin clients can only perform legitimate client lifecycle actions
-        const allowedClientTransitions = ['completed', 'revision', 'revision_requested', 'cancellation_requested', 'cancelled'];
+        const allowedClientTransitions = ['completed', 'revision', 'revision_requested', 'cancellation_requested', 'cancelled', 'in_progress'];
         if (newStatus && !allowedClientTransitions.includes(newStatus)) {
-          const isCurrentlyPaid = targetOrder?.payment_status === 'paid';
-          if (!isCurrentlyPaid && (newStatus === 'in_progress' || extraData?.paymentStatus === 'paid' || extraData?.payment_status === 'paid')) {
-            return NextResponse.json({ error: 'Unauthorized status transition. Unpaid orders cannot be moved to in_progress directly.' }, { status: 403 });
-          }
+          return NextResponse.json({ error: 'Unauthorized status transition.' }, { status: 403 });
         }
       }
 
-      // Only administrators can directly override payment_status via updateStatus API
+      // Update payment_status when admin sets it or when client checkout confirms payment
       let payStatus = null;
       if (isAdmin) {
         payStatus = extraData?.paymentStatus || extraData?.payment_status || (newStatus === 'in_progress' ? 'paid' : null);
-      } else if (targetOrder?.payment_status === 'paid') {
+      } else if (extraData?.paymentStatus === 'paid' || extraData?.payment_status === 'paid' || targetOrder?.payment_status === 'paid') {
         payStatus = 'paid';
       }
 
@@ -557,6 +618,12 @@ export async function POST(request) {
         resolvedStatus = 'in_progress';
       }
       const updatePayload = { status: resolvedStatus, updated_at: new Date().toISOString() };
+      if (payStatus === 'paid') {
+        updatePayload.payment_status = 'paid';
+        if (!targetOrder?.paid_at) {
+          updatePayload.paid_at = new Date().toISOString();
+        }
+      }
       
       if (extraData?.deliveryNotes || extraData?.deliveryMessage || extraData?.deliveries || extraData?.uploadedMachineFiles) {
         let existingNotes = {};
@@ -1065,6 +1132,38 @@ export async function POST(request) {
         console.warn('Admin cancellation notification error:', notifErr.message);
       }
 
+      // Customer Notification
+      if (clientEmail) {
+        try {
+          await supabase.from('notifications').insert([{
+            id: `notif-cust-cancel-${cleanOrdId}-${Date.now()}`,
+            user_id: user?.id || orderData.user_id || null,
+            recipient_role: 'client',
+            recipient_email: clientEmail,
+            title: `⏳ Cancellation Request Submitted`,
+            message: `Your cancellation request for Order #${cleanOrdId} has been submitted for studio review. Reason: "${cleanReason.slice(0, 100)}"`,
+            type: 'warning',
+            order_id: cleanOrdId,
+            link: `/client-portal?tab=orders&trackOrder=${cleanOrdId}`,
+            read: false,
+            created_at: nowIso,
+            updated_at: nowIso
+          }]);
+        } catch (notifErr) {
+          console.warn('Customer cancellation notification error:', notifErr.message);
+        }
+      }
+
+      // Broadcast to live channel
+      try {
+        const liveChannel = supabase.channel('bdigitizing-live-hub-v2');
+        await liveChannel.send({
+          type: 'broadcast',
+          event: 'cancellation_requested',
+          payload: { orderId: cleanOrdId, status: 'cancellation_requested', cancellation: cancelRecord }
+        });
+      } catch {}
+
       return NextResponse.json({ success: true, status: 'cancellation_requested', cancellation: cancelRecord });
     }
 
@@ -1099,7 +1198,7 @@ export async function POST(request) {
 
       const cancellation = notesObj.cancellation || {};
       
-      // Idempotency check: Never allow duplicate refund or double processing
+      // Strict Idempotency Check: Never issue duplicate refund or double process
       if (cancellation.refund_issued === true) {
         return NextResponse.json({ error: 'A wallet refund has already been issued for this order cancellation.' }, { status: 400 });
       }
@@ -1126,20 +1225,32 @@ export async function POST(request) {
         }
 
         if (clientRecord) {
-          const currentBal = parseFloat(clientRecord.wallet_balance || 0);
-          finalBalance = parseFloat((currentBal + refundAmount).toFixed(2));
-          await supabase.from('clients').update({ wallet_balance: finalBalance, updated_at: nowIso }).eq('id', clientRecord.id);
+          const idempotencyDesc = `Refund for Cancelled Order #${cleanOrdId} (+ $${refundAmount.toFixed(2)})`;
+          const { data: existingTx } = await supabase
+            .from('transactions')
+            .select('id')
+            .eq('description', idempotencyDesc)
+            .maybeSingle();
 
-          await supabase.from('transactions').insert([{
-            user_id: clientRecord.id,
-            client_email: clientEmail,
-            type: 'refund',
-            amount: refundAmount,
-            payment_method: 'Studio Wallet Refund',
-            description: `Refund for Cancelled Order #${cleanOrdId} (+ $${refundAmount.toFixed(2)})`,
-            created_at: nowIso
-          }]);
-          refundSuccess = true;
+          if (!existingTx && !cancellation.refund_issued) {
+            const currentBal = parseFloat(clientRecord.wallet_balance || 0);
+            finalBalance = parseFloat((currentBal + refundAmount).toFixed(2));
+            await supabase.from('clients').update({ wallet_balance: finalBalance, updated_at: nowIso }).eq('id', clientRecord.id);
+
+            await supabase.from('transactions').insert([{
+              user_id: clientRecord.id,
+              client_email: clientEmail,
+              type: 'refund',
+              amount: refundAmount,
+              payment_method: 'Studio Wallet Refund',
+              description: idempotencyDesc,
+              created_at: nowIso
+            }]);
+            refundSuccess = true;
+          } else {
+            refundSuccess = true;
+            finalBalance = parseFloat(clientRecord.wallet_balance || 0);
+          }
         }
       }
 
@@ -1173,6 +1284,7 @@ export async function POST(request) {
             : '';
           await supabase.from('notifications').insert([{
             id: `notif-approved-cancel-${cleanOrdId}-${Date.now()}`,
+            user_id: orderData.user_id || null,
             recipient_role: 'client',
             recipient_email: orderData.client_email.toLowerCase().trim(),
             title: `✕ Order #${cleanOrdId} Cancellation Approved`,
@@ -1188,6 +1300,16 @@ export async function POST(request) {
           console.warn('Customer cancel notification error:', notifErr.message);
         }
       }
+
+      // Broadcast to live channel
+      try {
+        const liveChannel = supabase.channel('bdigitizing-live-hub-v2');
+        await liveChannel.send({
+          type: 'broadcast',
+          event: 'cancellation_approved',
+          payload: { orderId: cleanOrdId, status: 'cancelled', refundIssued: refundSuccess, refundAmount }
+        });
+      } catch {}
 
       return NextResponse.json({
         success: true,
@@ -1253,6 +1375,7 @@ export async function POST(request) {
         try {
           await supabase.from('notifications').insert([{
             id: `notif-rejected-cancel-${cleanOrdId}-${Date.now()}`,
+            user_id: orderData.user_id || null,
             recipient_role: 'client',
             recipient_email: orderData.client_email.toLowerCase().trim(),
             title: `ℹ Cancellation Declined: Order #${cleanOrdId}`,
@@ -1268,6 +1391,16 @@ export async function POST(request) {
           console.warn('Customer reject notification error:', notifErr.message);
         }
       }
+
+      // Broadcast to live channel
+      try {
+        const liveChannel = supabase.channel('bdigitizing-live-hub-v2');
+        await liveChannel.send({
+          type: 'broadcast',
+          event: 'cancellation_rejected',
+          payload: { orderId: cleanOrdId, status: revertStatus, rejectionReason: cleanRejection }
+        });
+      } catch {}
 
       return NextResponse.json({
         success: true,

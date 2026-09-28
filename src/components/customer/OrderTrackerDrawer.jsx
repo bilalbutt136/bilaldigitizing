@@ -390,7 +390,7 @@ export const OrderTrackerDrawer = () => {
     parsedNotes = ord.notes;
   }
 
-  const cancellationData = parsedNotes.cancellation || (Array.isArray(parsedNotes.cancellations) ? parsedNotes.cancellations[0] : {}) || {};
+  const cancellationData = ord.cancellation || parsedNotes.cancellation || (Array.isArray(parsedNotes.cancellations) ? parsedNotes.cancellations[0] : {}) || {};
 
   // Collect all uploaded artwork / logo files across all placements and attachments
   const notesFiles = [
@@ -489,7 +489,15 @@ export const OrderTrackerDrawer = () => {
         setIsCancelModalOpen(false);
         setCancelReason('');
         if (selectedOrderForDrawer) {
-          setSelectedOrderForDrawer(prev => prev ? { ...prev, status: 'cancellation_requested' } : prev);
+          setSelectedOrderForDrawer(prev => prev ? {
+            ...prev,
+            status: 'cancellation_requested',
+            cancellation: res.cancellation,
+            notes: {
+              ...(typeof prev.notes === 'string' && prev.notes.startsWith('{') ? JSON.parse(prev.notes) : (typeof prev.notes === 'object' ? prev.notes : {})),
+              cancellation: res.cancellation
+            }
+          } : prev);
         }
       }
     } finally {
@@ -2587,7 +2595,7 @@ export const OrderTrackerDrawer = () => {
                   padding: '0.45rem 0.85rem'
                 }}
               >
-                <XCircle size={14} /> Cancel Order
+                <XCircle size={14} /> Request Cancellation
               </button>
             )}
 
