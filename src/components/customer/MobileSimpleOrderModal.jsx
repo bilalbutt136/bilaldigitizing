@@ -1,43 +1,43 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { useAppState, formatOrderId } from '../../context/StateContext';
-import { 
-  X, 
-  Upload, 
-  Layers, 
-  PenTool, 
-  Package, 
-  Clock, 
-  Zap, 
-  ArrowRight, 
-  ArrowLeft, 
-  Check, 
-  CheckCircle2, 
-  Sparkles, 
-  FileText, 
+import { useAppState, formatOrderId as _formatOrderId } from '../../context/StateContext';
+import {
+  X,
+  Upload,
+  Layers,
+  PenTool,
+  Package,
+  Clock as _Clock,
+  Zap,
+  ArrowRight,
+  ArrowLeft,
+  Check,
+  CheckCircle2,
+  Sparkles as _Sparkles,
+  FileText as _FileText,
   FileCheck,
   Trash2,
   Minus,
   Plus,
-  MessageSquare, 
-  Loader2, 
-  Image as ImageIcon,
-  ShieldCheck,
+  MessageSquare as _MessageSquare,
+  Loader2,
+  Image as _ImageIcon,
+  ShieldCheck as _ShieldCheck,
   Tag,
-  Sliders,
-  DollarSign,
-  ChevronRight,
-  Info
+  Sliders as _Sliders,
+  DollarSign as _DollarSign,
+  ChevronRight as _ChevronRight,
+  Info as _Info
 } from 'lucide-react';
 import { uploadFileToCloudinaryFull } from '../../services/supabaseService';
 import { matchCategory } from '../../utils/categoryUtils';
-import { 
-  getActivePromotion, 
-  getServiceDiscountPercent, 
-  calculateOrderPricing, 
-  getServiceDisplayName, 
-  normalizeServiceKey 
+import {
+  getActivePromotion,
+  getServiceDiscountPercent,
+  calculateOrderPricing,
+  getServiceDisplayName,
+  normalizeServiceKey as _normalizeServiceKey
 } from '../../utils/promoUtils';
 import { GoogleCustomSignInButton } from '../auth/GoogleCustomSignInButton';
 
@@ -247,15 +247,15 @@ const SERVICE_TABS = [
 ];
 
 export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embroidery', onOrderCreated }) => {
-  const { 
-    createOrder, 
-    authUser, 
-    currentUser, 
+  const {
+    createOrder,
+    authUser,
+    currentUser,
     isAuthenticated,
     register,
     login,
     loginWithGoogle,
-    showToast, 
+    showToast,
     setSelectedOrderForDrawer,
     setIsCheckoutModalOpen,
     setCheckoutSession,
@@ -269,11 +269,11 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
 
   // Wizard Step (1: Service, 2: Package & Quantity, 3: Upload Artwork & Notes, 4: Specs, 5: Review, 6: Confirmation)
   const [step, setStep] = useState(1);
-  
+
   // Selection State
   const [selectedService, setSelectedService] = useState('embroidery');
   const [selectedPackage, setSelectedPackage] = useState(null);
-  
+
   // Quantity State
   const [quantity, setQuantity] = useState(1);
   const [quantityInput, setQuantityInput] = useState('1');
@@ -288,7 +288,7 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
   const [guestEmail, setGuestEmail] = useState('');
   const [guestPassword, setGuestPassword] = useState('');
   const [guestCompany, setGuestCompany] = useState('');
-  const [isSubmittingAuth, setIsSubmittingAuth] = useState(false);
+  const [_isSubmittingAuth, setIsSubmittingAuth] = useState(false);
 
   // Configuration Specs State
   const [isRush, setIsRush] = useState(false);
@@ -300,12 +300,12 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
   const [patchStyle, setPatchStyle] = useState('Embroidered');
   const [patchBacking, setPatchBacking] = useState('Iron-On');
   const [notes, setNotes] = useState('');
-  
+
   // Multiple Files Upload State
   const [uploadedFiles, setUploadedFiles] = useState([]);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState(null);
-  
+
   // Submission State
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [createdOrderObj, setCreatedOrderObj] = useState(null);
@@ -336,19 +336,20 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
     return coreList;
   };
 
-  // Reset and set default selections on open
+  // Reset and set default selections on open.
+  /* oxlint-disable react-hooks/exhaustive-deps -- selector identity is render-local and must not reset the wizard every render */
   useEffect(() => {
     if (isOpen) {
-      const normService = (defaultService === 'patch' || defaultService === 'patches' || defaultService === 'custom_patches') 
-        ? 'patch' 
-        : (defaultService === 'vector' || defaultService === 'vector-art' || defaultService === 'vector_art') 
-          ? 'vector' 
+      const normService = (defaultService === 'patch' || defaultService === 'patches' || defaultService === 'custom_patches')
+        ? 'patch'
+        : (defaultService === 'vector' || defaultService === 'vector-art' || defaultService === 'vector_art')
+          ? 'vector'
           : 'embroidery';
       setSelectedService(normService);
       const pkgs = getPackagesForCategory(normService);
       const initialPkg = pkgs.find(p => p.is_popular) || pkgs[0];
       setSelectedPackage(initialPkg);
-      
+
       const defaultQty = normService === 'patch' ? 50 : 1;
       setQuantity(defaultQty);
       setQuantityInput(String(defaultQty));
@@ -380,6 +381,7 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
       }
     }
   }, [isOpen, defaultService, siteSettings?.promotions, siteSettings?.service_discounts]);
+  /* oxlint-enable react-hooks/exhaustive-deps */
 
   if (!isOpen) return null;
 
@@ -420,7 +422,7 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
     const pkgs = getPackagesForCategory(serviceId);
     const popularOrFirst = pkgs.find(p => p.is_popular) || pkgs[0];
     setSelectedPackage(popularOrFirst);
-    
+
     const newQty = serviceId === 'patch' ? 50 : 1;
     setQuantity(newQty);
     setQuantityInput(String(newQty));
@@ -456,11 +458,11 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
     );
 
     // 3. Match active campaign code, announcement code, or studio keywords
-    const isMatchingPromo = clean === activeCode || 
-      clean === 'PROMO' || 
-      clean === 'SALE' || 
-      clean === 'WELCOME' || 
-      clean === 'SPECIAL' || 
+    const isMatchingPromo = clean === activeCode ||
+      clean === 'PROMO' ||
+      clean === 'SALE' ||
+      clean === 'WELCOME' ||
+      clean === 'SPECIAL' ||
       clean === 'DISCOUNT' ||
       (livePromo && clean === `SAVE${livePromo.discountPercent}`) ||
       (hasGranular && clean.startsWith('SAVE'));
@@ -683,12 +685,12 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
     setIsSubmitting(true);
     try {
       const firstFileName = uploadedFiles[0]?.name?.replace(/\.[^/.]+$/, '') || 'Artwork';
-      const cleanService = selectedService === 'vector' 
-        ? 'Vector Art' 
-        : selectedService === 'patch' 
-          ? 'Custom Patches' 
+      const cleanService = selectedService === 'vector'
+        ? 'Vector Art'
+        : selectedService === 'patch'
+          ? 'Custom Patches'
           : 'Embroidery Digitizing';
-      
+
       const derivedTitle = selectedService === 'patch'
         ? `${patchStyle} Patches (${quantity} Pcs)`
         : `${firstFileName} - ${cleanService} (Qty: ${quantity})`;
@@ -810,7 +812,7 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
   };
 
   return (
-    <div 
+    <div
       style={{
         position: 'fixed',
         top: 0,
@@ -830,7 +832,7 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
       }}
       onClick={onClose}
     >
-      <div 
+      <div
         className="mobile-order-dialog modal-content"
         style={{
           background: isDark ? 'var(--color-surface, #111827)' : '#ffffff',
@@ -849,7 +851,7 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        
+
         {/* TOP MODAL HEADER */}
         <div style={{
           padding: '1rem 1.25rem',
@@ -922,18 +924,18 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
         </div>
 
         {/* BODY CONTENT AREA */}
-        <div style={{ 
-          flex: '1 1 auto', 
-          overflowY: 'auto', 
+        <div style={{
+          flex: '1 1 auto',
+          overflowY: 'auto',
           minHeight: 0,
           WebkitOverflowScrolling: 'touch',
-          padding: '1.15rem 1.25rem 1.75rem', 
-          display: 'flex', 
-          flexDirection: 'column', 
-          gap: '1rem', 
-          background: isDark ? 'var(--color-surface, #111827)' : '#ffffff' 
+          padding: '1.15rem 1.25rem 1.75rem',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '1rem',
+          background: isDark ? 'var(--color-surface, #111827)' : '#ffffff'
         }}>
-          
+
           {/* =========================================================================
               STEP 1: SELECT 1 OF 3 CORE SERVICES (HIGH CONTRAST & CLEAR LABELS)
               ========================================================================= */}
@@ -1262,7 +1264,7 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
               ========================================================================= */}
           {step === 2 && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.15rem' }}>
-              
+
               {/* Category Switcher Tabs */}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.4rem', background: isDark ? 'var(--color-subtle, #1e293b)' : '#f8fafc', padding: '0.35rem', borderRadius: '12px', border: isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid #cbd5e1' }}>
                 {SERVICE_TABS.map(tab => {
@@ -1397,8 +1399,8 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
 
                 {/* Quick Quantity Chips */}
                 <div style={{ display: 'flex', gap: '0.35rem', overflowX: 'auto', paddingBottom: '0.2rem' }}>
-                  {(selectedService === 'patch' 
-                    ? [50, 100, 250, 500, 1000, 2500] 
+                  {(selectedService === 'patch'
+                    ? [50, 100, 250, 500, 1000, 2500]
                     : [1, 2, 3, 5, 10, 25]
                   ).map(preset => (
                     <button
@@ -1424,7 +1426,7 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
 
                 {/* Real-time Dynamic Price Breakdown Banner */}
                 <div style={{
-                  background: (volumeDiscountAmount + promoDiscountAmount) > 0 
+                  background: (volumeDiscountAmount + promoDiscountAmount) > 0
                     ? (isDark ? 'rgba(5, 150, 105, 0.12)' : '#f0fdf4')
                     : (isDark ? 'var(--color-surface, #111827)' : '#ffffff'),
                   borderRadius: '10px',
@@ -1476,8 +1478,8 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
                   const isSelected = selectedPackage?.id === pkg.id || (!selectedPackage && idx === 0);
                   const pkgOriginalPrice = Number(pkg.price);
                   const hasPromoDiscount = promoDiscountPercent > 0;
-                  const pkgDiscountedPrice = hasPromoDiscount 
-                    ? parseFloat((pkgOriginalPrice * (1 - promoDiscountPercent / 100)).toFixed(2)) 
+                  const pkgDiscountedPrice = hasPromoDiscount
+                    ? parseFloat((pkgOriginalPrice * (1 - promoDiscountPercent / 100)).toFixed(2))
                     : pkgOriginalPrice;
 
                   return (
@@ -1523,9 +1525,9 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
                               }}>
                                 -{promoDiscountPercent}% OFF
                               </span>
-                              <span style={{ 
-                                fontSize: '0.75rem', 
-                                color: isDark ? 'var(--color-text-muted, #94a3b8)' : '#94a3b8', 
+                              <span style={{
+                                fontSize: '0.75rem',
+                                color: isDark ? 'var(--color-text-muted, #94a3b8)' : '#94a3b8',
                                 textDecoration: 'line-through',
                                 fontWeight: 600
                               }}>
@@ -1571,7 +1573,7 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
               ========================================================================= */}
           {step === 3 && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              
+
               {/* Selected Package & Live Price Banner */}
               <div style={{ background: isDark ? 'rgba(5, 150, 105, 0.15)' : '#f0fdf4', border: isDark ? '1.5px solid rgba(5, 150, 105, 0.3)' : '1.5px solid #a7f3d0', borderRadius: '14px', padding: '0.85rem 1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
@@ -1608,7 +1610,7 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
                     Multiple files supported
                   </span>
                 </div>
-                
+
                 <input
                   type="file"
                   ref={fileInputRef}
@@ -1812,7 +1814,7 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
               ========================================================================= */}
           {step === 4 && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              
+
               {/* Dimensions: Width & Height */}
               <div>
                 <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 900, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a', marginBottom: '0.35rem' }}>
@@ -1981,8 +1983,8 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
                   Target Deliverable Formats
                 </label>
                 <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
-                  {(selectedService === 'vector' 
-                    ? ['AI', 'EPS', 'SVG', 'PDF', 'CDR', 'PNG'] 
+                  {(selectedService === 'vector'
+                    ? ['AI', 'EPS', 'SVG', 'PDF', 'CDR', 'PNG']
                     : selectedService === 'patch'
                       ? ['DST', 'PDF Proof', 'Physical Patch Shipment']
                       : ['DST', 'PES', 'EMB', 'EXP', 'JEF', 'VP3', 'PDF Worksheet']
@@ -2016,7 +2018,7 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
               </div>
 
               {/* Express Rush 2-6h Toggle */}
-              <div 
+              <div
                 onClick={() => setIsRush(!isRush)}
                 style={{
                   border: isRush ? '1.5px solid #f59e0b' : (isDark ? '1px solid var(--color-border, #334155)' : '1px solid #cbd5e1'),
@@ -2067,7 +2069,7 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
               ========================================================================= */}
           {step === 5 && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
-              
+
               {/* Order Summary Card */}
               <div style={{ background: isDark ? 'var(--color-subtle, #1e293b)' : '#f8fafc', border: isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid #cbd5e1', borderRadius: '16px', padding: '1rem' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: isDark ? '1px solid var(--color-border, #334155)' : '1px solid #e2e8f0', paddingBottom: '0.65rem', marginBottom: '0.65rem' }}>
@@ -2339,7 +2341,7 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
               ========================================================================= */}
           {step === 6 && (
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: '1.5rem 0.5rem', gap: '0.85rem' }}>
-              
+
               <div style={{
                 width: '64px',
                 height: '64px',
@@ -2357,7 +2359,7 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
               <h3 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 900, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a' }}>
                 Order Successfully Placed!
               </h3>
-              
+
               <div style={{ background: isDark ? 'var(--color-subtle, #1e293b)' : '#f8fafc', border: isDark ? '1px solid var(--color-border, #334155)' : '1px solid #cbd5e1', borderRadius: '12px', padding: '0.65rem 1rem', display: 'inline-block' }}>
                 <span style={{ fontSize: '0.75rem', color: isDark ? 'var(--color-text-muted, #94a3b8)' : '#64748b' }}>Order Identifier: </span>
                 <strong style={{ fontSize: '0.85rem', color: isDark ? '#34d399' : '#059669' }}>
@@ -2458,9 +2460,9 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '0.3rem' }}>
                 <span style={{ fontSize: '0.65rem', color: isDark ? 'var(--color-text-muted, #94a3b8)' : '#64748b', fontWeight: 700 }}>Total</span>
                 {(volumeDiscountAmount + promoDiscountAmount) > 0 && (
-                  <span style={{ 
-                    fontSize: '0.62rem', 
-                    fontWeight: 900, 
+                  <span style={{
+                    fontSize: '0.62rem',
+                    fontWeight: 900,
                     color: isDark ? '#34d399' : '#059669',
                     background: isDark ? 'rgba(5, 150, 105, 0.2)' : '#ecfdf5',
                     padding: '0.05rem 0.32rem',
@@ -2473,9 +2475,9 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
               </div>
               <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'flex-end', gap: '0.3rem' }}>
                 {(volumeDiscountAmount + promoDiscountAmount) > 0 && (
-                  <span style={{ 
-                    fontSize: '0.78rem', 
-                    color: isDark ? 'var(--color-text-muted, #94a3b8)' : '#94a3b8', 
+                  <span style={{
+                    fontSize: '0.78rem',
+                    color: isDark ? 'var(--color-text-muted, #94a3b8)' : '#94a3b8',
                     textDecoration: 'line-through',
                     fontWeight: 600
                   }}>

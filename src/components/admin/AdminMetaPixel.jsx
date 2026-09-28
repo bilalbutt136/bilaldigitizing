@@ -2,12 +2,12 @@
 
 import React, { useState, useEffect } from 'react';
 import { useAppState } from '../../context/StateContext';
-import { BookOpen, Radio, BarChart2, Megaphone, Activity, RefreshCw, CheckCircle2, ShieldCheck, Save, Eye } from 'lucide-react';
+import { BookOpen, Radio, BarChart2, Megaphone, Activity, RefreshCw, CheckCircle2 as _CheckCircle2, ShieldCheck, Save, Eye } from 'lucide-react';
 import { VisitorDetailsModal } from './tracking/VisitorDetailsModal';
 
 export const AdminMetaPixel = () => {
   const { siteSettings, updateSiteSettings, showToast } = useAppState();
-  
+
   // Local state for the input
   const [pixelId, setPixelId] = useState('');
   const [isSaving, setIsSaving] = useState(false);
@@ -15,7 +15,7 @@ export const AdminMetaPixel = () => {
   const [events, setEvents] = useState([]);
   const [loadingEvents, setLoadingEvents] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
-  
+
   useEffect(() => {
     if (activeTab === 'log') {
       loadEvents();
@@ -34,7 +34,7 @@ export const AdminMetaPixel = () => {
       setLoadingEvents(false);
     }
   };
-  
+
   useEffect(() => {
     if (siteSettings?.metaPixelId) {
       setPixelId(siteSettings.metaPixelId);
@@ -44,7 +44,7 @@ export const AdminMetaPixel = () => {
   const handleSave = async (e) => {
     e.preventDefault();
     setIsSaving(true);
-    
+
     try {
       const trimmedId = pixelId.trim();
       if (typeof window !== 'undefined' && trimmedId) {
@@ -56,7 +56,7 @@ export const AdminMetaPixel = () => {
       }
       await updateSiteSettings({ metaPixelId: trimmedId });
       showToast('Meta Pixel ID saved successfully. Tracking is now active.', 'success');
-    } catch (error) {
+    } catch {
       showToast('Failed to save Meta Pixel ID.', 'error');
     } finally {
       setIsSaving(false);
@@ -67,12 +67,12 @@ export const AdminMetaPixel = () => {
 
   return (
     <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
-      
+
       {/* Top Banner */}
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'center', 
+      <div style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
         background: '#f8fafc',
         border: '1px solid var(--border-color)',
         borderRadius: '12px',
@@ -88,10 +88,10 @@ export const AdminMetaPixel = () => {
       </div>
 
       {/* Info Block */}
-      <div style={{ 
-        background: '#f1f5f9', 
-        border: '1px solid #e2e8f0', 
-        borderRadius: '12px', 
+      <div style={{
+        background: '#f1f5f9',
+        border: '1px solid #e2e8f0',
+        borderRadius: '12px',
         padding: '1.5rem',
         marginBottom: '2rem'
       }}>
@@ -109,13 +109,13 @@ export const AdminMetaPixel = () => {
       </div>
 
       {/* Navigation Tabs */}
-      <div style={{ 
-        display: 'flex', 
-        gap: '1rem', 
+      <div style={{
+        display: 'flex',
+        gap: '1rem',
         marginBottom: '2rem',
         flexWrap: 'wrap'
       }}>
-        <button 
+        <button
           onClick={() => setActiveTab('setup')}
           style={{
             flex: 1,
@@ -138,7 +138,7 @@ export const AdminMetaPixel = () => {
           </div>
         </button>
 
-        <button 
+        <button
           onClick={() => setActiveTab('performance')}
           style={{
             flex: 1,
@@ -161,7 +161,7 @@ export const AdminMetaPixel = () => {
           </div>
         </button>
 
-        <button 
+        <button
           onClick={() => setActiveTab('ads')}
           style={{
             flex: 1,
@@ -184,7 +184,7 @@ export const AdminMetaPixel = () => {
           </div>
         </button>
 
-        <button 
+        <button
           onClick={() => setActiveTab('log')}
           style={{
             flex: 1,
@@ -211,8 +211,8 @@ export const AdminMetaPixel = () => {
       {activeTab === 'setup' && (
         <>
           {/* Status Indicators */}
-          <div style={{ 
-            display: 'flex', 
+          <div style={{
+            display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
             background: '#fafafa',
@@ -222,11 +222,11 @@ export const AdminMetaPixel = () => {
             marginBottom: '2rem'
           }}>
             <div style={{ display: 'flex', gap: '1rem' }}>
-              <div style={{ 
-                display: 'flex', 
-                alignItems: 'center', 
-                gap: '0.4rem', 
-                background: isConfigured ? '#dcfce7' : '#f1f5f9', 
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.4rem',
+                background: isConfigured ? '#dcfce7' : '#f1f5f9',
                 color: isConfigured ? '#166534' : '#64748b',
                 padding: '0.4rem 0.8rem',
                 borderRadius: '999px',
@@ -236,12 +236,12 @@ export const AdminMetaPixel = () => {
                 <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: isConfigured ? '#16a34a' : '#94a3b8' }} />
                 Tracking {isConfigured ? 'ON' : 'OFF'}
               </div>
-              
-              <div style={{ 
-                display: 'flex', 
-                alignItems: 'center', 
-                gap: '0.4rem', 
-                background: '#e0e7ff', 
+
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.4rem',
+                background: '#e0e7ff',
                 color: '#3730a3',
                 padding: '0.4rem 0.8rem',
                 borderRadius: '999px',
@@ -252,14 +252,14 @@ export const AdminMetaPixel = () => {
                 Server backup ON
               </div>
             </div>
-            
+
             <div style={{ fontSize: '0.8rem', color: '#64748b' }}>
               Last activity: <strong style={{ color: '#0f172a' }}>{isConfigured ? 'PageView' : 'None'}</strong> {isConfigured ? `• ${new Date().toLocaleString()}` : ''}
             </div>
           </div>
 
           {/* Setup Form */}
-          <div style={{ 
+          <div style={{
             background: '#f8fafc',
             border: '1px solid var(--border-color)',
             borderRadius: '16px',
@@ -267,11 +267,11 @@ export const AdminMetaPixel = () => {
             position: 'relative'
           }}>
             <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1.25rem', marginBottom: '2rem' }}>
-              <div style={{ 
-                width: '32px', 
-                height: '32px', 
-                borderRadius: '50%', 
-                background: '#6366f1', 
+              <div style={{
+                width: '32px',
+                height: '32px',
+                borderRadius: '50%',
+                background: '#6366f1',
                 color: '#ffffff',
                 display: 'flex',
                 alignItems: 'center',
@@ -288,12 +288,12 @@ export const AdminMetaPixel = () => {
                 <p style={{ color: '#475569', fontSize: '0.95rem', margin: 0 }}>
                   Paste the ID from Meta Events Manager — tracking goes live immediately.
                 </p>
-                
+
                 <form onSubmit={handleSave} style={{ marginTop: '1.5rem', display: 'flex', gap: '1rem', maxWidth: '500px' }}>
-                  <input 
-                    type="text" 
-                    className="form-control" 
-                    placeholder="Enter Meta Pixel ID (e.g. 1234567890)" 
+                  <input
+                    type="text"
+                    className="form-control"
+                    placeholder="Enter Meta Pixel ID (e.g. 1234567890)"
                     value={pixelId}
                     onChange={(e) => setPixelId(e.target.value)}
                     style={{ flex: 1 }}
@@ -347,7 +347,7 @@ export const AdminMetaPixel = () => {
               </div>
             </div>
           </div>
-          
+
           <div style={{ overflowX: 'auto', background: '#f8fafc', padding: '1rem' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '950px' }}>
               <thead>
@@ -373,8 +373,8 @@ export const AdminMetaPixel = () => {
                     const whatDisplay = ev.event_name || 'PageView';
                     const deviceDisplay = tel.os ? `${tel.browser || 'Browser'} / ${tel.os} (${tel.deviceType || 'Desktop'})` : (ev.source || 'Desktop');
                     const trafficChannel = tel.trafficChannel || (ev.traffic_source?.startsWith('{') ? 'Direct' : (ev.traffic_source || 'Direct'));
-                    const locationDisplay = tel.city && tel.city !== 'Unknown' 
-                      ? `${tel.city}, ${tel.country || ''}` 
+                    const locationDisplay = tel.city && tel.city !== 'Unknown'
+                      ? `${tel.city}, ${tel.country || ''}`
                       : (tel.country && tel.country !== 'Unknown' ? tel.country : '—');
                     const isReturning = Boolean(tel.isReturningVisitor || (tel.visitCount && tel.visitCount > 1));
 
@@ -392,11 +392,11 @@ export const AdminMetaPixel = () => {
                           )}
                         </td>
                         <td style={{ padding: '1rem', fontSize: '0.85rem' }}>
-                          <span style={{ 
-                            display: 'inline-block', 
-                            padding: '3px 8px', 
-                            borderRadius: '6px', 
-                            fontWeight: 700, 
+                          <span style={{
+                            display: 'inline-block',
+                            padding: '3px 8px',
+                            borderRadius: '6px',
+                            fontWeight: 700,
                             fontSize: '0.75rem',
                             background: whatDisplay === 'PageView' ? '#e0f2fe' : (whatDisplay === 'InitiateCheckout' || whatDisplay === 'Purchase' ? '#dcfce7' : '#f3e8ff'),
                             color: whatDisplay === 'PageView' ? '#0369a1' : (whatDisplay === 'InitiateCheckout' || whatDisplay === 'Purchase' ? '#15803d' : '#7e22ce')

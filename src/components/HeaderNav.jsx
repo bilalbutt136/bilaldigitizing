@@ -4,26 +4,26 @@ import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useNavigate, useLocation } from '../utils/navigation';
 import { useAppState } from '../context/StateContext';
-import { 
+import {
   Home,
-  Scissors, 
-  User, 
-  ChevronDown, 
+  Scissors as _Scissors,
+  User,
+  ChevronDown,
   ChevronRight,
-  Menu, 
-  MoreVertical,
-  X, 
-  Bell, 
-  MessageSquare, 
-  PenTool, 
-  Image as ImageIcon, 
-  Award, 
-  HelpCircle, 
+  Menu,
+  MoreVertical as _MoreVertical,
+  X,
+  Bell,
+  MessageSquare,
+  PenTool,
+  Image as ImageIcon,
+  Award,
+  HelpCircle,
   ArrowRight,
   Sparkles,
   Headphones,
   PlusCircle,
-  Plus,
+  Plus as _Plus,
   Smartphone,
   Download,
   LogIn,
@@ -37,8 +37,8 @@ import {
 } from 'lucide-react';
 import { UserMenuDropdown } from './common/UserMenuDropdown';
 import { ThemeToggle } from './common/ThemeToggle';
-import { 
-  handleNotificationClick, 
+import {
+  handleNotificationClick,
   filterAndSanitizeNotifications,
   formatNotificationExactTime,
   getNotificationFullDateTime
@@ -57,9 +57,9 @@ export const HeaderNav = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const { 
+  const {
     theme,
-    currentView, 
+    currentView,
     setCurrentView,
     isAuthenticated,
     authUser,
@@ -72,12 +72,12 @@ export const HeaderNav = () => {
     setSelectedOrderForDrawer,
     setActiveAdminTab,
     setActiveCustomerTab,
-    setActiveHomeServiceTab,
+    setActiveHomeServiceTab: _setActiveHomeServiceTab,
     orders = [],
     notifications = [],
     markNotificationAsRead,
     markAllNotificationsAsRead,
-    unreadNotificationsCount = 0,
+    unreadNotificationsCount: _unreadNotificationsCount = 0,
     stopNotificationSound,
     setMobileMode,
     mobileMode,
@@ -205,7 +205,7 @@ export const HeaderNav = () => {
       if (servicesDropdownRef.current && !servicesDropdownRef.current.contains(e.target)) {
         setIsServicesOpen(false);
       }
-      const clickedInsideNotification = 
+      const clickedInsideNotification =
         (notificationDropdownRef.current && notificationDropdownRef.current.contains(e.target)) ||
         (mobileNotificationDropdownRef.current && mobileNotificationDropdownRef.current.contains(e.target));
       if (!clickedInsideNotification) {
@@ -259,7 +259,7 @@ export const HeaderNav = () => {
     }
   };
 
-  const handleNavClick = (sectionId) => {
+  const _handleNavClick = (sectionId) => {
     setCurrentView('public');
     if (currentPath !== '/') {
       navigate('/');
@@ -275,7 +275,7 @@ export const HeaderNav = () => {
     }
   };
 
-  const handleGoHome = () => {
+  const _handleGoHome = () => {
     setCurrentView('public');
     navigate('/');
   };
@@ -284,18 +284,18 @@ export const HeaderNav = () => {
     <header style={{ position: 'sticky', top: 0, zIndex: 1000, background: 'var(--bg-card)', backdropFilter: isScrolled ? 'blur(12px)' : 'none', borderBottom: '1px solid var(--border-color)', transition: 'all 0.3s ease', boxShadow: isScrolled ? 'var(--shadow-sm)' : 'none' }}>
       {/* Main Brand Navbar */}
 
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'center', 
-        padding: '0.75rem clamp(1rem, 2vw, 1.75rem)', 
-        width: '100%', 
-        maxWidth: '100%', 
+      <div style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        padding: '0.75rem clamp(1rem, 2vw, 1.75rem)',
+        width: '100%',
+        maxWidth: '100%',
         margin: '0 auto',
         boxSizing: 'border-box'
       }}>
         {/* Brand Logo */}
-        <Link 
+        <Link
           href="/"
           onClick={(e) => {
             if (currentPath === '/') {
@@ -347,7 +347,7 @@ export const HeaderNav = () => {
         {!currentPath.startsWith('/admin-portal') && !currentPath.startsWith('/client-portal') && (
           <nav className="desktop-only" style={{ display: 'flex', alignItems: 'center', gap: '1.75rem' }}>
             {/* Home Link */}
-            <Link 
+            <Link
               href="/"
               onClick={(e) => {
                 if (currentPath === '/') {
@@ -355,14 +355,14 @@ export const HeaderNav = () => {
                   window.scrollTo({ top: 0, behavior: 'smooth' });
                 }
               }}
-              style={{ 
+              style={{
                 textDecoration: 'none',
-                background: 'none', 
-                border: 'none', 
-                color: currentPath === '/' ? 'var(--orange-500)' : 'var(--text-main)', 
-                fontWeight: currentPath === '/' ? 800 : 600, 
-                fontSize: '0.925rem', 
-                cursor: 'pointer', 
+                background: 'none',
+                border: 'none',
+                color: currentPath === '/' ? 'var(--orange-500)' : 'var(--text-main)',
+                fontWeight: currentPath === '/' ? 800 : 600,
+                fontSize: '0.925rem',
+                cursor: 'pointer',
                 padding: 0,
                 transition: 'color 0.15s ease'
               }}
@@ -371,26 +371,26 @@ export const HeaderNav = () => {
             </Link>
 
             {/* Services Dropdown Item */}
-            <div 
+            <div
               ref={servicesDropdownRef}
               style={{ position: 'relative', display: 'inline-block' }}
               onMouseEnter={() => setIsServicesOpen(true)}
               onMouseLeave={() => setIsServicesOpen(false)}
             >
-              <button 
+              <button
                 type="button"
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
                   setIsServicesOpen(prev => !prev);
                 }}
-                style={{ 
-                  background: 'none', 
-                  border: 'none', 
-                  color: (currentPath.includes('/services') || currentPath === '/custom-patches') ? 'var(--orange-500)' : 'var(--text-main)', 
-                  fontWeight: (currentPath.includes('/services') || currentPath === '/custom-patches') ? 800 : 600, 
-                  fontSize: '0.925rem', 
-                  cursor: 'pointer', 
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: (currentPath.includes('/services') || currentPath === '/custom-patches') ? 'var(--orange-500)' : 'var(--text-main)',
+                  fontWeight: (currentPath.includes('/services') || currentPath === '/custom-patches') ? 800 : 600,
+                  fontSize: '0.925rem',
+                  cursor: 'pointer',
                   padding: 0,
                   display: 'flex',
                   alignItems: 'center',
@@ -495,7 +495,7 @@ export const HeaderNav = () => {
                     >
                       <ImageIcon size={16} /> Vector Art
                     </Link>
-                    
+
                     {/* Option 3: Custom Patches */}
                     <Link
                       href="/custom-patches"
@@ -537,74 +537,74 @@ export const HeaderNav = () => {
             </div>
 
             {/* Portfolio Link */}
-            <Link 
+            <Link
               href="/portfolio"
-              style={{ 
+              style={{
                 textDecoration: 'none',
-                background: 'none', 
-                border: 'none', 
-                color: currentPath === '/portfolio' ? 'var(--orange-500)' : 'var(--text-main)', 
-                fontWeight: currentPath === '/portfolio' ? 800 : 600, 
-                fontSize: '0.925rem', 
-                cursor: 'pointer', 
+                background: 'none',
+                border: 'none',
+                color: currentPath === '/portfolio' ? 'var(--orange-500)' : 'var(--text-main)',
+                fontWeight: currentPath === '/portfolio' ? 800 : 600,
+                fontSize: '0.925rem',
+                cursor: 'pointer',
                 padding: 0,
                 transition: 'color 0.15s ease'
               }}
             >
               Portfolio
             </Link>
-            
+
             {/* Pricing Link */}
-            <Link 
+            <Link
               href="/pricing"
-              style={{ 
+              style={{
                 textDecoration: 'none',
-                background: 'none', 
-                border: 'none', 
-                color: currentPath === '/pricing' ? 'var(--orange-500)' : 'var(--text-main)', 
-                fontWeight: currentPath === '/pricing' ? 800 : 600, 
-                fontSize: '0.925rem', 
-                cursor: 'pointer', 
+                background: 'none',
+                border: 'none',
+                color: currentPath === '/pricing' ? 'var(--orange-500)' : 'var(--text-main)',
+                fontWeight: currentPath === '/pricing' ? 800 : 600,
+                fontSize: '0.925rem',
+                cursor: 'pointer',
                 padding: 0,
                 transition: 'color 0.15s ease'
               }}
             >
               Pricing
             </Link>
-            
+
             {/* FAQs Link */}
-            <Link 
+            <Link
               href="/faqs"
-              style={{ 
+              style={{
                 textDecoration: 'none',
-                background: 'none', 
-                border: 'none', 
-                color: currentPath === '/faqs' ? 'var(--orange-500)' : 'var(--text-main)', 
-                fontWeight: currentPath === '/faqs' ? 800 : 600, 
-                fontSize: '0.925rem', 
-                cursor: 'pointer', 
+                background: 'none',
+                border: 'none',
+                color: currentPath === '/faqs' ? 'var(--orange-500)' : 'var(--text-main)',
+                fontWeight: currentPath === '/faqs' ? 800 : 600,
+                fontSize: '0.925rem',
+                cursor: 'pointer',
                 padding: 0,
                 transition: 'color 0.15s ease'
               }}
             >
               FAQs
             </Link>
-            
+
           </nav>
         )}
 
 
 
                 {/* Right Action CTAs */}
-        <div style={{ 
-          display: 'flex', 
-          alignItems: 'center', 
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
           gap: '0.4rem',
           flexShrink: 0
         }}>
           {/* Primary Get Started Button (Desktop - only for non-authenticated guests) */}
           {!safeIsAuthenticated && safeCurrentView !== 'admin' && safeCurrentView !== 'customer' && !currentPath.includes('admin') && (
-            <button 
+            <button
               className="desktop-only btn btn-primary-orange"
               onClick={() => {
                 if (openOrderWizard) {
@@ -757,8 +757,8 @@ export const HeaderNav = () => {
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                       {displayUnreadNotifsCount > 0 && (
-                        <button 
-                          type="button" 
+                        <button
+                          type="button"
                           onClick={() => { if (markAllNotificationsAsRead) markAllNotificationsAsRead(); }}
                           style={{ background: 'none', border: 'none', color: 'var(--color-primary)', fontSize: '0.75rem', fontWeight: 800, cursor: 'pointer' }}
                         >
@@ -784,8 +784,8 @@ export const HeaderNav = () => {
                       </div>
                     ) : (
                       displayNotifications.map((item) => (
-                        <div 
-                          key={item.id} 
+                        <div
+                          key={item.id}
                           onClick={() => {
                             setIsNotificationDropdownOpen(false);
                             handleNotificationClick(item, {
@@ -806,10 +806,10 @@ export const HeaderNav = () => {
                               mobileMode
                             });
                           }}
-                          style={{ 
-                            padding: '0.65rem 0.75rem', 
-                            background: item.read ? 'var(--bg-subtle, #f8fafc)' : 'var(--color-primary-light)', 
-                            borderRadius: '10px', 
+                          style={{
+                            padding: '0.65rem 0.75rem',
+                            background: item.read ? 'var(--bg-subtle, #f8fafc)' : 'var(--color-primary-light)',
+                            borderRadius: '10px',
                             borderLeft: item.read ? '3.5px solid var(--color-border)' : '3.5px solid var(--color-primary)',
                             cursor: 'pointer',
                             transition: 'all 0.15s ease'
@@ -817,7 +817,7 @@ export const HeaderNav = () => {
                         >
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem' }}>
                             <div style={{ fontSize: '0.82rem', fontWeight: 800, color: 'var(--color-text-primary, var(--navy-900))' }}>{item.title}</div>
-                            <span 
+                            <span
                               style={{ fontSize: '0.66rem', color: 'var(--color-text-muted)', whiteSpace: 'nowrap', fontWeight: 600 }}
                               title={getNotificationFullDateTime(item, orders)}
                             >
@@ -893,12 +893,12 @@ export const HeaderNav = () => {
 
           {/* Dynamic Header Controls (Desktop) */}
           <div className="desktop-only" style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-            
+
             {/* 1. Theme Mood Toggle */}
             <ThemeToggle />
 
             {!safeIsAuthenticated ? (
-              <button 
+              <button
                 className="btn btn-outline btn-sm"
                 style={{
                   display: 'flex',
@@ -963,7 +963,7 @@ export const HeaderNav = () => {
                 )}
 
                 {safeCurrentView === 'public' && (
-                  <button 
+                  <button
                     className="btn btn-outline btn-sm"
                     style={{
                       display: 'flex',
@@ -991,7 +991,7 @@ export const HeaderNav = () => {
                     <User size={14} style={{ color: 'var(--orange-500)' }} /> {isAdmin ? 'Admin Portal' : 'Dashboard'}
                   </button>
                 )}
-                
+
                   {/* TOP HEADER INBOX BUTTON */}
                   <button
                     type="button"
@@ -1111,8 +1111,8 @@ export const HeaderNav = () => {
                               </span>
                             )}
                           </div>
-                          <button 
-                            type="button" 
+                          <button
+                            type="button"
                             onClick={() => { if (markAllNotificationsAsRead) markAllNotificationsAsRead(); }}
                             style={{ background: 'none', border: 'none', color: 'var(--color-primary)', fontSize: '0.75rem', fontWeight: 800, cursor: 'pointer' }}
                           >
@@ -1127,8 +1127,8 @@ export const HeaderNav = () => {
                             </div>
                           ) : (
                             displayNotifications.map((item) => (
-                              <div 
-                                key={item.id} 
+                              <div
+                                key={item.id}
                                 onClick={() => {
                                   setIsNotificationDropdownOpen(false);
                                   handleNotificationClick(item, {
@@ -1149,10 +1149,10 @@ export const HeaderNav = () => {
                                     mobileMode
                                   });
                                 }}
-                                style={{ 
-                                  padding: '0.65rem 0.75rem', 
-                                  background: item.read ? 'var(--bg-subtle, #f8fafc)' : 'var(--color-primary-light)', 
-                                  borderRadius: '10px', 
+                                style={{
+                                  padding: '0.65rem 0.75rem',
+                                  background: item.read ? 'var(--bg-subtle, #f8fafc)' : 'var(--color-primary-light)',
+                                  borderRadius: '10px',
                                   borderLeft: item.read ? '3.5px solid var(--color-border)' : '3.5px solid var(--color-primary)',
                                   cursor: 'pointer',
                                   transition: 'all 0.15s ease'
@@ -1160,7 +1160,7 @@ export const HeaderNav = () => {
                               >
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem' }}>
                                   <div style={{ fontSize: '0.82rem', fontWeight: 800, color: 'var(--color-text-primary, var(--navy-900))' }}>{item.title}</div>
-                                  <span 
+                                  <span
                                     style={{ fontSize: '0.66rem', color: 'var(--color-text-muted)', whiteSpace: 'nowrap', fontWeight: 600 }}
                                     title={getNotificationFullDateTime(item, orders)}
                                   >
@@ -1221,7 +1221,7 @@ export const HeaderNav = () => {
                         zIndex: 3000,
                         animation: 'fadeIn 0.15s ease-out'
                       }}>
-                        <button 
+                        <button
                           onClick={() => { setIsSupportDropdownOpen(false); navigate('/faqs'); }}
                           style={{ width: '100%', textAlign: 'left', padding: '0.65rem 0.85rem', background: 'transparent', border: 'none', borderRadius: '8px', cursor: 'pointer', color: 'var(--color-text-primary, var(--navy-900))', fontSize: '0.875rem', fontWeight: 600 }}
                           onMouseOver={(e) => e.currentTarget.style.background = 'var(--color-subtle, #f8fafc)'}
@@ -1229,7 +1229,7 @@ export const HeaderNav = () => {
                         >
                           Ask the Community / FAQs
                         </button>
-                        <button 
+                        <button
                           onClick={() => { setIsSupportDropdownOpen(false); navigate('/blogs'); }}
                           style={{ width: '100%', textAlign: 'left', padding: '0.65rem 0.85rem', background: 'transparent', border: 'none', borderRadius: '8px', cursor: 'pointer', color: 'var(--color-text-primary, var(--navy-900))', fontSize: '0.875rem', fontWeight: 600 }}
                           onMouseOver={(e) => e.currentTarget.style.background = 'var(--color-subtle, #f8fafc)'}
@@ -1237,7 +1237,7 @@ export const HeaderNav = () => {
                         >
                           Blogs
                         </button>
-                        <button 
+                        <button
                           onClick={() => { setIsSupportDropdownOpen(false); navigate('/terms'); }}
                           style={{ width: '100%', textAlign: 'left', padding: '0.65rem 0.85rem', background: 'transparent', border: 'none', borderRadius: '8px', cursor: 'pointer', color: 'var(--color-text-primary, var(--navy-900))', fontSize: '0.875rem', fontWeight: 600 }}
                           onMouseOver={(e) => e.currentTarget.style.background = 'var(--color-subtle, #f8fafc)'}
@@ -1246,7 +1246,7 @@ export const HeaderNav = () => {
                           Terms and Conditions
                         </button>
                         <div style={{ height: '1px', background: 'var(--color-border)', margin: '0.35rem 0' }}></div>
-                        <button 
+                        <button
                           onClick={() => { setIsSupportDropdownOpen(false); handleOpenLiveSupport(); }}
                           style={{ width: '100%', textAlign: 'left', padding: '0.65rem 0.85rem', background: 'transparent', border: 'none', borderRadius: '8px', cursor: 'pointer', color: 'var(--color-primary, var(--orange-600))', fontSize: '0.875rem', fontWeight: 700 }}
                           onMouseOver={(e) => e.currentTarget.style.background = 'var(--color-primary-light, #fff7ed)'}
@@ -1270,7 +1270,7 @@ export const HeaderNav = () => {
       {isMobileMenuOpen && (
         <>
           {/* Backdrop Overlay (Click outside to close) */}
-          <div 
+          <div
             className="mobile-drawer-overlay"
             onClick={() => setIsMobileMenuOpen(false)}
             onTouchMove={(e) => {
@@ -1281,7 +1281,7 @@ export const HeaderNav = () => {
           />
 
           {/* Drawer Sheet Panel */}
-          <aside 
+          <aside
             className="mobile-drawer-sheet"
             role="dialog"
             aria-label="Navigation Menu"
@@ -1306,7 +1306,7 @@ export const HeaderNav = () => {
               borderBottom: isDark ? '1px solid rgba(255,255,255,0.08)' : '1px solid #e2e8f0',
               flexShrink: 0
             }}>
-              <Link 
+              <Link
                 href="/"
                 onClick={() => setIsMobileMenuOpen(false)}
                 style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.6rem', textDecoration: 'none' }}
@@ -1662,13 +1662,13 @@ export const HeaderNav = () => {
                       <Layers size={18} style={{ color: 'var(--color-primary)' }} />
                       <span>Services</span>
                     </div>
-                    <ChevronDown 
-                      size={16} 
-                      style={{ 
+                    <ChevronDown
+                      size={16}
+                      style={{
                         color: isMobileServicesOpen ? 'var(--color-primary)' : (isDark ? '#64748b' : '#94a3b8'),
                         transform: isMobileServicesOpen ? 'rotate(180deg)' : 'rotate(0deg)',
                         transition: 'transform 0.2s ease'
-                      }} 
+                      }}
                     />
                   </button>
 

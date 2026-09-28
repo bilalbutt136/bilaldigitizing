@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { validateSafeUrl } from '../../../src/lib/urlValidator';
+import { safeFetchRemote } from '../../../src/lib/urlValidator';
 import { createAdminClient } from '../../../src/lib/supabase/admin';
 
 const MIME_TYPES = {
@@ -409,7 +409,14 @@ async function handleFileRequest(request, isHead = false) {
 
     // 3. Direct Supabase Storage Object Resolution via Service Role Client
     const supabaseMatch = fileUrl.match(/\/storage\/v1\/object\/(?:public|sign|authenticated)\/([^/]+)\/(.+)$/);
-    if (supabaseMatch) {
+    let isConfiguredSupabaseHost = false;
+    try {
+      const configuredHost = new URL(process.env.NEXT_PUBLIC_SUPABASE_URL || '').hostname.toLowerCase();
+      const fileHost = new URL(fileUrl).hostname.toLowerCase();
+      isConfiguredSupabaseHost = Boolean(configuredHost && fileHost === configuredHost);
+    } catch {}
+
+    if (supabaseMatch && isConfiguredSupabaseHost) {
       try {
         const bucket = supabaseMatch[1];
         const rawPath = supabaseMatch[2].split('?')[0];
@@ -436,27 +443,27 @@ async function handleFileRequest(request, isHead = false) {
       fetchUrl = `https:${fetchUrl}`;
     }
 
-    const validation = validateSafeUrl(fetchUrl);
-    if (!validation.valid) {
-      return NextResponse.json({ error: validation.error || 'Access to this URL is blocked.' }, { status: 403 });
+    // 5. Fetch Remote File Server-Side with DNS and redirect revalidation.
+    let response;
+    try {
+      response = await safeFetchRemote(fetchUrl, {
+        headers: {
+          'User-Agent': 'BDigitizing-SecureAssetProxy/1.0'
+        }
+      });
+    } catch (fetchError) {
+      const status = fetchError?.code === 'UNSAFE_REMOTE_URL' ? 403 : 502;
+      return NextResponse.json({ error: fetchError?.message || 'Remote asset fetch was blocked.' }, { status });
     }
-    fetchUrl = validation.sanitizedUrl;
-
-    // 5. Fetch Remote File Server-Side (bypassing browser CORS completely)
-    let response = await fetch(fetchUrl, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
-      }
-    });
 
     // Handle Cloudinary PDF ACL 401: Cloudinary blocks direct raw PDF requests by default,
     // but delivers the rendered .jpg or .png version with 200 OK.
     if (!response.ok && (fetchUrl.includes('cloudinary.com') || response.status === 401)) {
       if (fetchUrl.toLowerCase().includes('.pdf')) {
         const jpgUrl = fetchUrl.replace(/\.pdf(\?.*)?$/i, '.jpg$1');
-        const jpgRes = await fetch(jpgUrl, {
+        const jpgRes = await safeFetchRemote(jpgUrl, {
           headers: {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+            'User-Agent': 'BDigitizing-SecureAssetProxy/1.0'
           }
         });
         if (jpgRes.ok) {

@@ -1,7 +1,7 @@
 /**
  * Universal Mobile & Desktop Modal History Manager
  * Intercepts browser & Android hardware / gesture back navigation,
- * ensuring modals, drawers, and lightbox viewers close hierarchically 
+ * ensuring modals, drawers, and lightbox viewers close hierarchically
  * without exiting the mobile application.
  */
 
@@ -14,7 +14,7 @@ let isListenerAttached = false;
 function ensurePopStateListener() {
   if (isListenerAttached || typeof window === 'undefined') return;
 
-  window.addEventListener('popstate', (e) => {
+  window.addEventListener('popstate', (_e) => {
     // If popstate was triggered by programmatic dismissModal() calling history.back(),
     // swallow it so we don't double-close or inadvertently navigate tabs.
     if (isProgrammaticBack) {

@@ -134,7 +134,7 @@ export default function BlogsPage() {
   useEffect(() => {
     const fetchBlogs = async () => {
       try {
-        const { data, error } = await supabase.from('blogs').select('*').order('created_at', { ascending: false });
+        const { data, error: _error } = await supabase.from('blogs').select('*').order('created_at', { ascending: false });
         if (data && data.length > 0) {
           setBlogPosts(data);
         }
@@ -146,7 +146,7 @@ export default function BlogsPage() {
   }, []);
   return (
     <div style={{ background: 'var(--bg-main)', color: 'var(--color-text-primary)', minHeight: '100vh', paddingBottom: '6rem' }}>
-      
+
       {/* Blog Header Hero */}
       <div style={{ background: 'var(--hero-bg, var(--bg-surface, #0f172a))', padding: 'clamp(2.5rem, 5vh, 4rem) 1.25rem', textAlign: 'center', color: 'var(--hero-text-primary, var(--color-text-primary))', borderBottom: '1px solid var(--border-color)' }}>
         <h1 style={{ fontSize: 'clamp(2rem, 5vw, 3rem)', fontWeight: 900, marginBottom: '1.25rem', letterSpacing: '-0.02em', color: 'var(--hero-text-primary, var(--color-text-primary))' }}>
@@ -160,12 +160,12 @@ export default function BlogsPage() {
       <div className="container" style={{ maxWidth: '1000px', margin: '-2.5rem auto 0 auto', padding: '0 1rem' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '2.5rem' }}>
           {blogPosts.map((post) => (
-            <article 
-              key={post.id} 
-              style={{ 
-                background: 'var(--bg-card)', 
-                borderRadius: '16px', 
-                overflow: 'hidden', 
+            <article
+              key={post.id}
+              style={{
+                background: 'var(--bg-card)',
+                borderRadius: '16px',
+                overflow: 'hidden',
                 boxShadow: 'var(--shadow-sm)',
                 border: '1px solid var(--border-color)',
                 position: 'relative'
@@ -173,11 +173,11 @@ export default function BlogsPage() {
             >
               {/* Decorative Image/Color Banner */}
               <div style={{ height: '160px', width: '100%', background: post.imageGradient, position: 'relative' }}>
-                <div style={{ 
-                  position: 'absolute', 
-                  bottom: '-16px', 
-                  left: '1.25rem', 
-                  background: 'var(--orange-500)', 
+                <div style={{
+                  position: 'absolute',
+                  bottom: '-16px',
+                  left: '1.25rem',
+                  background: 'var(--orange-500)',
                   color: '#ffffff',
                   padding: '0.35rem 1rem',
                   borderRadius: '999px',
@@ -195,7 +195,7 @@ export default function BlogsPage() {
                 <h2 style={{ fontSize: 'clamp(1.35rem, 3.5vw, 2.1rem)', fontWeight: 900, color: 'var(--color-text-primary)', marginBottom: '0.85rem', lineHeight: 1.2, letterSpacing: '-0.01em' }}>
                   {post.title}
                 </h2>
-                
+
                 {/* Meta Information */}
                 <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '0.65rem 1.25rem', color: 'var(--color-text-muted)', fontSize: '0.85rem', fontWeight: 600, marginBottom: '1.5rem' }}>
                   <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
@@ -210,8 +210,8 @@ export default function BlogsPage() {
                 </div>
 
                 {/* Article Content Rendered with Editorial Typography */}
-                <div 
-                  style={{ 
+                <div
+                  style={{
                     display: 'flex',
                     flexDirection: 'column',
                     gap: '1rem',
@@ -221,18 +221,18 @@ export default function BlogsPage() {
                   {post.content.split('\n\n').map((paragraph, index) => {
                     const trimmed = paragraph.trim();
                     if (!trimmed) return null;
-                    
+
                     // 1. Section Headings (H3)
                     if (trimmed.startsWith('###')) {
                       const headingText = trimmed.replace(/^###\s*/, '');
                       return (
-                        <h3 
-                          key={index} 
-                          style={{ 
-                            fontSize: 'clamp(1.15rem, 2.5vw, 1.35rem)', 
-                            fontWeight: 800, 
-                            color: 'var(--color-text-primary, #0f172a)', 
-                            marginTop: index === 0 ? '0.5rem' : '1.75rem', 
+                        <h3
+                          key={index}
+                          style={{
+                            fontSize: 'clamp(1.15rem, 2.5vw, 1.35rem)',
+                            fontWeight: 800,
+                            color: 'var(--color-text-primary, #0f172a)',
+                            marginTop: index === 0 ? '0.5rem' : '1.75rem',
                             marginBottom: '0.4rem',
                             paddingLeft: '0.75rem',
                             borderLeft: '3.5px solid var(--color-primary, #ea580c)',
@@ -249,44 +249,44 @@ export default function BlogsPage() {
                     if (trimmed.startsWith('-')) {
                       const listLines = trimmed.split('\n').filter(line => line.trim().startsWith('-'));
                       return (
-                        <ul 
-                          key={index} 
-                          style={{ 
-                            display: 'flex', 
-                            flexDirection: 'column', 
-                            gap: '0.65rem', 
-                            margin: '0.5rem 0 0.85rem 0', 
-                            padding: 0, 
-                            listStyle: 'none' 
+                        <ul
+                          key={index}
+                          style={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '0.65rem',
+                            margin: '0.5rem 0 0.85rem 0',
+                            padding: 0,
+                            listStyle: 'none'
                           }}
                         >
                           {listLines.map((line, liIdx) => {
                             const cleanLine = line.replace(/^-\s*/, '').trim();
                             const boldMatch = cleanLine.match(/^\*\*(.*?)\*\*(.*)$/);
-                            
+
                             if (boldMatch) {
                               const boldTitle = boldMatch[1].trim();
                               const restText = boldMatch[2].trim();
                               return (
-                                <li 
-                                  key={liIdx} 
-                                  style={{ 
-                                    display: 'flex', 
-                                    alignItems: 'flex-start', 
-                                    gap: '0.65rem', 
-                                    lineHeight: 1.7, 
-                                    fontSize: 'clamp(0.92rem, 1.8vw, 1rem)' 
+                                <li
+                                  key={liIdx}
+                                  style={{
+                                    display: 'flex',
+                                    alignItems: 'flex-start',
+                                    gap: '0.65rem',
+                                    lineHeight: 1.7,
+                                    fontSize: 'clamp(0.92rem, 1.8vw, 1rem)'
                                   }}
                                 >
-                                  <span 
-                                    style={{ 
-                                      width: '6px', 
-                                      height: '6px', 
-                                      borderRadius: '50%', 
-                                      background: 'var(--color-primary, #ea580c)', 
-                                      marginTop: '0.55rem', 
-                                      flexShrink: 0 
-                                    }} 
+                                  <span
+                                    style={{
+                                      width: '6px',
+                                      height: '6px',
+                                      borderRadius: '50%',
+                                      background: 'var(--color-primary, #ea580c)',
+                                      marginTop: '0.55rem',
+                                      flexShrink: 0
+                                    }}
                                   />
                                   <div style={{ color: 'var(--color-text-secondary, #475569)', fontWeight: 400 }}>
                                     <strong style={{ fontWeight: 700, color: 'var(--color-text-primary, #0f172a)', marginRight: '0.35rem' }}>
@@ -299,25 +299,25 @@ export default function BlogsPage() {
                             }
 
                             return (
-                              <li 
-                                key={liIdx} 
-                                style={{ 
-                                  display: 'flex', 
-                                  alignItems: 'flex-start', 
-                                  gap: '0.65rem', 
-                                  lineHeight: 1.7, 
-                                  fontSize: 'clamp(0.92rem, 1.8vw, 1rem)' 
+                              <li
+                                key={liIdx}
+                                style={{
+                                  display: 'flex',
+                                  alignItems: 'flex-start',
+                                  gap: '0.65rem',
+                                  lineHeight: 1.7,
+                                  fontSize: 'clamp(0.92rem, 1.8vw, 1rem)'
                                 }}
                               >
-                                <span 
-                                  style={{ 
-                                    width: '6px', 
-                                    height: '6px', 
-                                    borderRadius: '50%', 
-                                    background: 'var(--color-primary, #ea580c)', 
-                                    marginTop: '0.55rem', 
-                                    flexShrink: 0 
-                                  }} 
+                                <span
+                                  style={{
+                                    width: '6px',
+                                    height: '6px',
+                                    borderRadius: '50%',
+                                    background: 'var(--color-primary, #ea580c)',
+                                    marginTop: '0.55rem',
+                                    flexShrink: 0
+                                  }}
                                 />
                                 <div style={{ color: 'var(--color-text-secondary, #475569)', fontWeight: 400 }}>
                                   {cleanLine}
@@ -345,12 +345,12 @@ export default function BlogsPage() {
                     };
 
                     return (
-                      <p 
-                        key={index} 
-                        style={{ 
-                          fontSize: 'clamp(0.94rem, 1.8vw, 1.02rem)', 
-                          fontWeight: 400, 
-                          color: 'var(--color-text-secondary, #475569)', 
+                      <p
+                        key={index}
+                        style={{
+                          fontSize: 'clamp(0.94rem, 1.8vw, 1.02rem)',
+                          fontWeight: 400,
+                          color: 'var(--color-text-secondary, #475569)',
                           lineHeight: 1.75,
                           margin: 0
                         }}
@@ -364,14 +364,14 @@ export default function BlogsPage() {
             </article>
           ))}
         </div>
-        
+
         {/* Support CTA at bottom */}
         <div style={{ marginTop: '4rem', textAlign: 'center', padding: '3rem', background: 'var(--navy-900)', borderRadius: '16px', color: '#ffffff' }}>
           <h3 style={{ fontSize: '1.8rem', fontWeight: 900, marginBottom: '1rem' }}>Need personalized advice?</h3>
           <p style={{ color: 'var(--navy-200)', fontSize: '1.1rem', maxWidth: '500px', margin: '0 auto 2rem auto' }}>
             Our industry experts are available 24/7 to review your artwork and recommend the best digitizing or manufacturing approach.
           </p>
-          <Link 
+          <Link
             href="/contact"
             style={{
               background: 'linear-gradient(135deg, #ff7a00, #ff9d40)',

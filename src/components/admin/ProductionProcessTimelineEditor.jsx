@@ -2,23 +2,23 @@
 
 import React, { useState, useEffect } from 'react';
 import { useAppState } from '../../context/StateContext';
-import { 
-  Save, 
-  RotateCcw, 
-  Plus, 
-  Trash2, 
-  ChevronUp, 
-  ChevronDown, 
-  Layers, 
-  PenTool, 
-  FileCheck, 
-  Clock, 
-  Sparkles, 
-  CheckCircle2, 
-  Eye, 
-  EyeOff, 
-  AlertCircle,
-  HelpCircle,
+import {
+  Save,
+  RotateCcw,
+  Plus,
+  Trash2,
+  ChevronUp,
+  ChevronDown,
+  Layers,
+  PenTool,
+  FileCheck,
+  Clock,
+  Sparkles,
+  CheckCircle2 as _CheckCircle2,
+  Eye,
+  EyeOff,
+  AlertCircle as _AlertCircle,
+  HelpCircle as _HelpCircle,
   Zap
 } from 'lucide-react';
 import { getCmsContent, saveCmsContent } from '../../services/supabaseService';
@@ -275,7 +275,7 @@ export const ProductionProcessTimelineEditor = () => {
     return () => {
       isMounted = false;
     };
-  }, [activeService, currentPrefix]);
+  }, [activeService, currentPrefix, currentDefaults]);
 
   // Handle Step Mutations
   const handleAddStep = () => {
@@ -442,7 +442,7 @@ export const ProductionProcessTimelineEditor = () => {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
-      
+
       {/* Top Header Card */}
       <div style={{
         background: 'var(--bg-card, #ffffff)',
@@ -650,7 +650,7 @@ export const ProductionProcessTimelineEditor = () => {
           {/* Steps List */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             {formData.steps.map((step, idx) => (
-              <div 
+              <div
                 key={idx}
                 style={{
                   background: 'var(--color-subtle, #f8fafc)',
@@ -826,7 +826,7 @@ export const ProductionProcessTimelineEditor = () => {
           {/* Timeline Items List */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
             {formData.timeline.map((item, idx) => (
-              <div 
+              <div
                 key={idx}
                 style={{
                   background: 'var(--color-subtle, #f8fafc)',

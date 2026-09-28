@@ -1,30 +1,30 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
-import { 
-  TrendingUp, 
-  ClipboardList, 
-  Layers, 
-  Users, 
-  Search, 
-  Filter, 
-  Sparkles, 
-  Sliders, 
-  RefreshCw, 
-  Clock, 
-  CheckCircle2, 
-  AlertCircle, 
-  ExternalLink, 
-  Eye, 
-  ChevronRight, 
-  Tag, 
-  ShieldCheck, 
-  Zap, 
+import {
+  TrendingUp as _TrendingUp,
+  ClipboardList,
+  Layers,
+  Users,
+  Search,
+  Filter as _Filter,
+  Sparkles,
+  Sliders,
+  RefreshCw,
+  Clock as _Clock,
+  CheckCircle2 as _CheckCircle2,
+  AlertCircle,
+  ExternalLink as _ExternalLink,
+  Eye as _Eye,
+  ChevronRight as _ChevronRight,
+  Tag as _Tag,
+  ShieldCheck,
+  Zap,
   ArrowUpRight,
-  Maximize2,
+  Maximize2 as _Maximize2,
   DollarSign,
   Activity,
-  Scissors,
+  Scissors as _Scissors,
   CheckCheck
 } from 'lucide-react';
 import AdminCreateOfferModal from './AdminCreateOfferModal';
@@ -45,8 +45,8 @@ export const AdminExecutiveDashboard = ({
   const [isOfferModalOpen, setIsOfferModalOpen] = useState(false);
   const [lightboxOrder, setLightboxOrder] = useState(null);
 
-  const safeOrders = Array.isArray(orders) ? orders : [];
-  const safeClients = Array.isArray(clients) ? clients : [];
+  const safeOrders = useMemo(() => (Array.isArray(orders) ? orders : []), [orders]);
+  const safeClients = useMemo(() => (Array.isArray(clients) ? clients : []), [clients]);
 
   // Core KPI Calculations
   const totalRevenue = useMemo(() => {
@@ -78,11 +78,11 @@ export const AdminExecutiveDashboard = ({
   }, [safeOrders]);
 
   const rushJobs = useMemo(() => {
-    return safeOrders.filter(o => 
-      o?.is_rush || 
-      o?.isRush || 
-      o?.turnaround === 'rush' || 
-      o?.turnaround === '2-4 hours' || 
+    return safeOrders.filter(o =>
+      o?.is_rush ||
+      o?.isRush ||
+      o?.turnaround === 'rush' ||
+      o?.turnaround === '2-4 hours' ||
       String(o?.notes || '').toLowerCase().includes('rush') ||
       String(o?.title || '').toLowerCase().includes('rush')
     );
@@ -135,10 +135,10 @@ export const AdminExecutiveDashboard = ({
       if (selectedStatus !== 'all') {
         if (selectedStatus === 'rush') {
           const isRush = Boolean(
-            o?.is_rush || 
-            o?.isRush || 
-            o?.turnaround === 'rush' || 
-            o?.turnaround === '2-4 hours' || 
+            o?.is_rush ||
+            o?.isRush ||
+            o?.turnaround === 'rush' ||
+            o?.turnaround === '2-4 hours' ||
             String(o?.notes || '').toLowerCase().includes('rush') ||
             String(o?.title || '').toLowerCase().includes('rush')
           );
@@ -201,7 +201,7 @@ export const AdminExecutiveDashboard = ({
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem', width: '100%' }}>
-      
+
       {/* 1. COMMAND HEADER & REALTIME STATUS BAR */}
       <div style={{
         background: 'linear-gradient(135deg, var(--bg-card) 0%, var(--bg-subtle, #f8fafc) 100%)',
@@ -370,7 +370,7 @@ export const AdminExecutiveDashboard = ({
         </div>
 
         {/* Metric 2: Active Pipeline */}
-        <div 
+        <div
           onClick={() => setActiveTab('orders')}
           role="button"
           tabIndex={0}
@@ -457,7 +457,7 @@ export const AdminExecutiveDashboard = ({
         </div>
 
         {/* Metric 4: Registered Studio Accounts */}
-        <div 
+        <div
           onClick={() => setActiveTab('clients')}
           role="button"
           tabIndex={0}
@@ -631,7 +631,7 @@ export const AdminExecutiveDashboard = ({
         gap: '1rem',
         alignItems: 'start'
       }}>
-        
+
         {/* LEFT COLUMN: LIVE PRODUCTION QUEUE */}
         <div style={{
           background: 'var(--bg-card, #ffffff)',
@@ -643,7 +643,7 @@ export const AdminExecutiveDashboard = ({
           flexDirection: 'column',
           gap: '0.85rem'
         }}>
-          
+
           {/* Header & Filter Controls */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
@@ -1121,7 +1121,7 @@ export const AdminExecutiveDashboard = ({
 
         {/* RIGHT COLUMN: PRIORITY ALERTS & STUDIO CAPACITY */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
-          
+
           {/* WIDGET 1: PRIORITY ALERTS CARD */}
           <div style={{
             background: 'var(--bg-card, #ffffff)',
@@ -1139,7 +1139,7 @@ export const AdminExecutiveDashboard = ({
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
               {/* Pending Specs Verification */}
-              <div 
+              <div
                 onClick={() => { setSelectedStatus(selectedStatus === 'pending' ? 'all' : 'pending'); }}
                 role="button"
                 tabIndex={0}
@@ -1174,7 +1174,7 @@ export const AdminExecutiveDashboard = ({
 
               {/* Rush Orders */}
               {rushJobs.length > 0 && (
-                <div 
+                <div
                   onClick={() => { setSelectedStatus(selectedStatus === 'rush' ? 'all' : 'rush'); }}
                   role="button"
                   tabIndex={0}

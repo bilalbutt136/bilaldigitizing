@@ -5,60 +5,60 @@ import { useAppState, formatOrderId } from '../../context/StateContext';
 import { useNavigate } from '../../utils/navigation';
 import { isModalBackConsumed } from '../../utils/modalHistoryManager';
 import { useModalBackNavigation } from '../../hooks/useModalBackNavigation';
-import { 
-  Home, 
-  Mail, 
-  Search, 
-  ClipboardList, 
-  User, 
-  Bell, 
+import {
+  Home,
+  Mail,
+  Search,
+  ClipboardList,
+  User,
+  Bell,
   MessageSquare,
-  SlidersHorizontal, 
-  MoreVertical, 
-  ChevronRight, 
-  Plus, 
-  Layers, 
-  PenTool, 
-  Package, 
-  Clock, 
-  Zap, 
-  CheckCircle2, 
-  Check, 
-  Sparkles, 
-  Send, 
-  Paperclip, 
-  X, 
-  Settings, 
-  HelpCircle, 
-  Share2, 
-  ShieldCheck, 
-  ArrowLeft, 
+  SlidersHorizontal as _SlidersHorizontal,
+  MoreVertical,
+  ChevronRight,
+  Plus,
+  Layers,
+  PenTool,
+  Package,
+  Clock,
+  Zap,
+  CheckCircle2,
+  Check as _Check,
+  Sparkles,
+  Send as _Send,
+  Paperclip as _Paperclip,
+  X,
+  Settings,
+  HelpCircle,
+  Share2,
+  ShieldCheck,
+  ArrowLeft,
   ArrowRight,
-  RotateCcw, 
-  FileText, 
-  Download,
+  RotateCcw as _RotateCcw,
+  FileText as _FileText,
+  Download as _Download,
   LayoutGrid,
   Tag,
-  Palette,
+  Palette as _Palette,
   LogOut,
-  Info,
+  Info as _Info,
   Globe,
-  Phone,
-  MessageCircle,
-  ExternalLink,
+  Phone as _Phone,
+  MessageCircle as _MessageCircle,
+  ExternalLink as _ExternalLink,
   Star,
   Lock,
   Volume2,
   VolumeX,
   CreditCard,
   Wallet,
-  ChevronDown,
+  ChevronDown as _ChevronDown,
   RefreshCw,
-  Activity,
-  TrendingUp,
-  DollarSign,
+  Activity as _Activity,
+  TrendingUp as _TrendingUp,
+  DollarSign as _DollarSign,
   Eye,
-  XCircle,
+  XCircle as _XCircle,
   EyeOff,
   AlertCircle,
   Loader2,
@@ -67,18 +67,18 @@ import {
   CheckCheck
 } from 'lucide-react';
 import CustomerSupportChat from '../customer/CustomerSupportChat';
-import { playMessageChime, playAdminChime, playCustomerChime, unlockAudioContext } from '../../utils/audioNotification';
-import { 
-  fetchNotificationsFromSupabase, 
+import { playMessageChime as _playMessageChime, playAdminChime, playCustomerChime, unlockAudioContext } from '../../utils/audioNotification';
+import {
+  fetchNotificationsFromSupabase,
   markNotificationAsReadInSupabase,
-  markAllNotificationsAsReadInSupabase, 
+  markAllNotificationsAsReadInSupabase,
   upsertClientInSupabase,
-  createNotificationInSupabase
+  createNotificationInSupabase as _createNotificationInSupabase
 } from '../../services/supabaseService';
 import MobileSimpleOrderModal from '../customer/MobileSimpleOrderModal';
 import { THEME_PRESETS } from '../../utils/themePresets';
-import { 
-  handleNotificationClick, 
+import {
+  handleNotificationClick,
   filterAndSanitizeNotifications,
   formatNotificationExactTime,
   getNotificationFullDateTime
@@ -89,11 +89,11 @@ import { GoogleCustomSignInButton } from '../auth/GoogleCustomSignInButton';
 const GOOGLE_CLIENT_ID = (process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '421520521310-7appibeh1m7cdd90iid17lsq8thlq2oc.apps.googleusercontent.com').trim();
 
 export const BDigitizingMobileApp = () => {
-  const navigate = useNavigate();
-  const { 
-    orders = [], 
-    authUser, 
-    currentUser, 
+  const _navigate = useNavigate();
+  const {
+    orders = [],
+    authUser,
+    currentUser,
     isAuthenticated,
     isAuthInitialized,
     login,
@@ -111,13 +111,13 @@ export const BDigitizingMobileApp = () => {
     showToast,
     logout,
     theme,
-    setTheme,
+    setTheme: _setTheme,
     colorTheme,
     setColorTheme,
     setMobileMode,
-    mobileActiveTab,
+    mobileActiveTab: _mobileActiveTab,
     setMobileTab: setGlobalMobileTab,
-    dynamicPricingTiers = [],
+    dynamicPricingTiers: _dynamicPricingTiers = [],
     notifications: globalNotifications = [],
     markNotificationAsRead: markGlobalNotificationAsRead,
     markAllNotificationsAsRead: markAllGlobalNotificationsAsRead,
@@ -137,8 +137,8 @@ export const BDigitizingMobileApp = () => {
 
   const mobileCi = siteSettings?.contactInfo || {};
   const mobileWhatsapp = (mobileCi.whatsapp !== undefined ? mobileCi.whatsapp : (siteSettings?.whatsapp || '')).trim();
-  const cleanMobileWa = mobileWhatsapp.replace(/[^0-9]/g, '');
-  const mobilePhone = (mobileCi.phone !== undefined ? mobileCi.phone : (siteSettings?.contactPhone || siteSettings?.supportPhone || '')).trim();
+  const _cleanMobileWa = mobileWhatsapp.replace(/[^0-9]/g, '');
+  const _mobilePhone = (mobileCi.phone !== undefined ? mobileCi.phone : (siteSettings?.contactPhone || siteSettings?.supportPhone || '')).trim();
   const mobileEmail = (mobileCi.email !== undefined ? mobileCi.email : (siteSettings?.supportEmail || siteSettings?.contactEmail || '')).trim();
 
   const validTabs = ['home', 'categories', 'orders', 'wallet', 'profile', 'chat', 'support', 'inbox', 'login', 'signup', 'auth'];
@@ -150,7 +150,7 @@ export const BDigitizingMobileApp = () => {
         const urlParams = new URLSearchParams(window.location.search);
         const tabParam = urlParams.get('tab');
         if (tabParam && validTabs.includes(tabParam)) return tabParam;
-        
+
         const storedTab = localStorage.getItem('bdigi_mobile_active_tab');
         if (storedTab && validTabs.includes(storedTab)) return storedTab;
       } catch {}
@@ -159,7 +159,7 @@ export const BDigitizingMobileApp = () => {
   };
 
   const [mobileTab, setMobileTabState] = useState(getInitialMobileTab);
-  const [mobileChatMode, setMobileChatMode] = useState('inbox'); // Default to unified Inbox
+  const [_mobileChatMode, setMobileChatMode] = useState('inbox'); // Default to unified Inbox
 
   const [unreadInboxCount, setUnreadInboxCount] = useState(0);
   const [unreadSupportCount, setUnreadSupportCount] = useState(0);
@@ -349,10 +349,10 @@ export const BDigitizingMobileApp = () => {
   };
 
   const [searchQuery, setSearchQuery] = useState('');
-  
+
   // Category sub-tab: 'all' | 'embroidery' | 'vector' | 'patches'
   const [activeCategoryFilter, setActiveCategoryFilter] = useState('all');
-  
+
   // Orders filter: 'all' | 'awaiting_payment' | 'delivered' | 'active' | 'completed'
   const [orderFilter, setOrderFilter] = useState('all');
 
@@ -360,7 +360,7 @@ export const BDigitizingMobileApp = () => {
   const [isOrderModalOpen, setIsOrderModalOpen] = useState(false);
   const [orderDefaultService, setOrderDefaultService] = useState('embroidery');
   const [isOrderActionMenuOpen, setIsOrderActionMenuOpen] = useState(null); // order object
-  
+
   // Real-time unread counts
   const [notifications, setNotifications] = useState([]);
   const [isNotifDrawerOpen, setIsNotifDrawerOpen] = useState(false);
@@ -420,7 +420,7 @@ export const BDigitizingMobileApp = () => {
       const urlParams = new URLSearchParams(window.location.search);
       const tabParam = stateTab || urlParams.get('tab');
       const validTabs = ['home', 'orders', 'inbox', 'wallet', 'profile', 'categories', 'chat', 'support', 'login', 'signup', 'auth'];
-      
+
       // 3. If user is currently on any sub-tab and presses Android back key, return to home
       if (mobileTab !== 'home') {
         setMobileTabState('home');
@@ -484,7 +484,7 @@ export const BDigitizingMobileApp = () => {
   const [defaultEmbFormat, setDefaultEmbFormat] = useState('DST');
   const [defaultVecFormat, setDefaultVecFormat] = useState('AI');
   const [currencyPref, setCurrencyPref] = useState('USD');
-  const [autoDownloadReceipts, setAutoDownloadReceipts] = useState(true);
+  const [autoDownloadReceipts, _setAutoDownloadReceipts] = useState(true);
 
   // Feedback Form State
   const [feedbackRating, setFeedbackRating] = useState(5);
@@ -546,14 +546,14 @@ export const BDigitizingMobileApp = () => {
     if (mobileTab === 'orders' && typeof markOrdersAsRead === 'function') {
       markOrdersAsRead();
     }
-  }, [mobileTab, userEmail, markOrdersAsRead]);
+  }, [mobileTab, userEmail, markOrdersAsRead, refreshOrders]);
 
   // Listen for global tab switch events (e.g. clicking Client Dashboard, Orders, or Notifications from header)
   useEffect(() => {
     const handleTabSwitch = (e) => {
       const targetTab = e.detail?.tab;
       if (!targetTab) return;
-      
+
       const cleanTab = targetTab === 'dashboard' ? 'home' : (['chat', 'support'].includes(targetTab) ? 'inbox' : targetTab);
       setMobileTabState(cleanTab);
       setIsPreferencesModalOpen(false);
@@ -561,7 +561,7 @@ export const BDigitizingMobileApp = () => {
       setIsFeedbackModalOpen(false);
       setIsLegalModalOpen(false);
       setIsNotifDrawerOpen(false);
-      
+
       if (cleanTab === 'support') {
         setIsSupportModalOpen(true);
       } else {
@@ -619,7 +619,7 @@ export const BDigitizingMobileApp = () => {
       window.removeEventListener('bdigi_switch_tab', handleTabSwitch);
       window.removeEventListener('bdigi_open_mobile_order', handleOpenOrderEvent);
     };
-  }, []);
+  }, [refreshOrders, showToast]);
 
   const isAdmin = authUser?.role === 'admin' || currentUser?.role === 'admin';
 
@@ -646,7 +646,7 @@ export const BDigitizingMobileApp = () => {
       if (currentUserId && orderUserId && orderUserId === currentUserId) return true;
       return false;
     }
-    
+
     let localOrderIds = [];
     if (typeof window !== 'undefined') {
       try {
@@ -679,11 +679,11 @@ export const BDigitizingMobileApp = () => {
 
   // Calculate live statistics for Dashboard
   const totalOrdersCount = myOrders.length;
-  const activeOrdersCount = activeOrders.length;
-  const deliveredOrdersCount = deliveredOrders.length;
-  const completedOrdersCount = completedOrders.length;
+  const _activeOrdersCount = activeOrders.length;
+  const _deliveredOrdersCount = deliveredOrders.length;
+  const _completedOrdersCount = completedOrders.length;
   const unpaidOrdersCount = unpaidOrders.length;
-  const totalValueSpent = myOrders.reduce((sum, o) => {
+  const _totalValueSpent = myOrders.reduce((sum, o) => {
     const rawP = parseFloat(o.totalPrice ?? o.price ?? 0);
     const p = !isNaN(rawP) && rawP > 0 ? rawP : 15;
     return sum + p;
@@ -755,7 +755,7 @@ export const BDigitizingMobileApp = () => {
     setIsOrderModalOpen(true);
   };
 
-  const handleToggleVipMode = () => {
+  const _handleToggleVipMode = () => {
     const nextVal = !isVipMode;
     setIsVipMode(nextVal);
     if (typeof window !== 'undefined') {
@@ -958,10 +958,10 @@ export const BDigitizingMobileApp = () => {
           justifyContent: 'center',
           boxShadow: '0 10px 28px rgba(16, 185, 129, 0.25)'
         }}>
-          <img 
-            src="/favicon.png" 
-            alt="BDigitizing" 
-            style={{ width: '42px', height: '48px', objectFit: 'contain', display: 'block' }} 
+          <img
+            src="/favicon.png"
+            alt="BDigitizing"
+            style={{ width: '42px', height: '48px', objectFit: 'contain', display: 'block' }}
           />
         </div>
         <div style={{ textAlign: 'center' }}>
@@ -978,7 +978,7 @@ export const BDigitizingMobileApp = () => {
   }
 
   return (
-    <div 
+    <div
       className="mobile-app-root"
       style={{
         background: 'var(--color-background, #ffffff)',
@@ -993,7 +993,7 @@ export const BDigitizingMobileApp = () => {
         fontFamily: "'Inter', system-ui, -apple-system, sans-serif"
       }}
     >
-      
+
       {/* =========================================================================
           SCREEN 0: DEDICATED FULL-SCREEN MOBILE AUTHENTICATION (LOGIN / SIGNUP / FORGOT)
           ========================================================================= */}
@@ -1062,7 +1062,7 @@ export const BDigitizingMobileApp = () => {
           </div>
 
           <div style={{ padding: '1.5rem 1.25rem 3rem', display: 'flex', flexDirection: 'column', gap: '1.25rem', maxWidth: '440px', margin: '0 auto', width: '100%', boxSizing: 'border-box' }}>
-            
+
             {/* Header Title */}
             <div style={{ textAlign: 'center' }}>
               <div style={{
@@ -1083,8 +1083,8 @@ export const BDigitizingMobileApp = () => {
                 {mobileAuthMode === 'signup' ? 'Create Studio Account' : mobileAuthMode === 'forgot' ? 'Reset Password' : 'Sign In to Studio'}
               </h2>
               <p style={{ margin: 0, fontSize: '0.82rem', color: isDark ? 'var(--color-text-muted, #94a3b8)' : '#64748b', lineHeight: 1.4 }}>
-                {mobileAuthMode === 'signup' 
-                  ? 'Join thousands of apparel brands and get instant access to 4–12h turnaround digitizing.' 
+                {mobileAuthMode === 'signup'
+                  ? 'Join thousands of apparel brands and get instant access to 4–12h turnaround digitizing.'
                   : mobileAuthMode === 'forgot'
                   ? 'Enter your account email and we will send you a secure password reset link.'
                   : 'Access your order stitch test runs, downloads, and real-time order tracking.'}
@@ -1621,7 +1621,7 @@ export const BDigitizingMobileApp = () => {
           ========================================================================= */}
       {mobileTab === 'home' && (
         <div style={{ padding: '0.85rem 1rem', display: 'flex', flexDirection: 'column', gap: '1.25rem', background: isDark ? 'var(--color-background, #090d16)' : '#f8fafc' }}>
-          
+
           {/* Top Brand Header */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: isDark ? 'var(--color-surface, #111827)' : '#ffffff', padding: '0.75rem 1rem', borderRadius: '16px', border: isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid #cbd5e1', boxShadow: '0 2px 8px rgba(0,0,0,0.02)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
@@ -1696,7 +1696,7 @@ export const BDigitizingMobileApp = () => {
           </div>
 
           {/* Search Input Bar */}
-          <div 
+          <div
             onClick={() => setMobileTab('categories')}
             style={{
               display: 'flex',
@@ -1774,7 +1774,7 @@ export const BDigitizingMobileApp = () => {
               </button>
             </div>
           ) : activeOrders.length > 0 ? (
-            <div 
+            <div
               onClick={() => {
                 setOrderFilter('active');
                 setMobileTab('orders');
@@ -1820,7 +1820,7 @@ export const BDigitizingMobileApp = () => {
               </span>
             </div>
           ) : myOrders.length > 0 ? (
-            <div 
+            <div
               onClick={() => setMobileTab('orders')}
               style={{
                 background: isDark ? 'var(--color-surface, #111827)' : '#ffffff',
@@ -2028,7 +2028,7 @@ export const BDigitizingMobileApp = () => {
           ========================================================================= */}
       {mobileTab === 'categories' && (
         <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100%', padding: '0.85rem 1rem 1.5rem', gap: '1rem' }}>
-          
+
           {/* Categories Top Header */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
@@ -2210,7 +2210,7 @@ export const BDigitizingMobileApp = () => {
           ========================================================================= */}
       {mobileTab === 'orders' && (
         <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100%', background: isDark ? 'var(--color-background, #090d16)' : '#f8fafc' }}>
-          
+
           {/* Manage Orders Top Bar */}
           <div style={{
             padding: '0.65rem 0.85rem',
@@ -2301,7 +2301,7 @@ export const BDigitizingMobileApp = () => {
 
           {/* Unpaid Alert Banner (Concise single line) */}
           {unpaidOrdersCount > 0 && orderFilter !== 'awaiting_payment' && (
-            <div 
+            <div
               onClick={() => setOrderFilter('awaiting_payment')}
               style={{
                 margin: '0.4rem 0.75rem 0',
@@ -2542,53 +2542,53 @@ export const BDigitizingMobileApp = () => {
                 const isCompleted = s === 'completed';
                 const isRevision = s === 'revision' || s === 'modification';
 
-                let badgeInfo = { 
-                  label: 'IN PRODUCTION', 
-                  bg: isDark ? 'rgba(2, 132, 199, 0.15)' : '#eff6ff', 
-                  border: isDark ? 'rgba(2, 132, 199, 0.4)' : '#bae6fd', 
-                  color: isDark ? '#38bdf8' : '#0284c7' 
+                let badgeInfo = {
+                  label: 'IN PRODUCTION',
+                  bg: isDark ? 'rgba(2, 132, 199, 0.15)' : '#eff6ff',
+                  border: isDark ? 'rgba(2, 132, 199, 0.4)' : '#bae6fd',
+                  color: isDark ? '#38bdf8' : '#0284c7'
                 };
                 if (isUnpaid) {
-                  badgeInfo = { 
-                    label: 'WAITING FOR PAYMENT', 
-                    bg: isDark ? 'rgba(234, 88, 12, 0.15)' : '#fff7ed', 
-                    border: isDark ? 'rgba(234, 88, 12, 0.4)' : '#fdba74', 
-                    color: isDark ? '#fb923c' : '#c2410c' 
+                  badgeInfo = {
+                    label: 'WAITING FOR PAYMENT',
+                    bg: isDark ? 'rgba(234, 88, 12, 0.15)' : '#fff7ed',
+                    border: isDark ? 'rgba(234, 88, 12, 0.4)' : '#fdba74',
+                    color: isDark ? '#fb923c' : '#c2410c'
                   };
                 } else if (isDelivered) {
-                  badgeInfo = { 
-                    label: 'DELIVERED', 
-                    bg: isDark ? 'rgba(16, 185, 129, 0.15)' : '#ecfdf5', 
-                    border: isDark ? 'rgba(16, 185, 129, 0.4)' : '#86efac', 
-                    color: isDark ? '#34d399' : '#047857' 
+                  badgeInfo = {
+                    label: 'DELIVERED',
+                    bg: isDark ? 'rgba(16, 185, 129, 0.15)' : '#ecfdf5',
+                    border: isDark ? 'rgba(16, 185, 129, 0.4)' : '#86efac',
+                    color: isDark ? '#34d399' : '#047857'
                   };
                 } else if (isCompleted) {
-                  badgeInfo = { 
-                    label: 'COMPLETED', 
-                    bg: isDark ? 'var(--color-subtle, #1e293b)' : '#f1f5f9', 
-                    border: isDark ? 'var(--color-border, #334155)' : '#cbd5e1', 
-                    color: isDark ? '#94a3b8' : '#334155' 
+                  badgeInfo = {
+                    label: 'COMPLETED',
+                    bg: isDark ? 'var(--color-subtle, #1e293b)' : '#f1f5f9',
+                    border: isDark ? 'var(--color-border, #334155)' : '#cbd5e1',
+                    color: isDark ? '#94a3b8' : '#334155'
                   };
                 } else if (isRevision) {
-                  badgeInfo = { 
-                    label: 'REVISION REQUESTED', 
-                    bg: isDark ? 'rgba(234, 88, 12, 0.15)' : '#fff7ed', 
-                    border: isDark ? 'rgba(234, 88, 12, 0.4)' : '#fdba74', 
-                    color: isDark ? '#fb923c' : '#ea580c' 
+                  badgeInfo = {
+                    label: 'REVISION REQUESTED',
+                    bg: isDark ? 'rgba(234, 88, 12, 0.15)' : '#fff7ed',
+                    border: isDark ? 'rgba(234, 88, 12, 0.4)' : '#fdba74',
+                    color: isDark ? '#fb923c' : '#ea580c'
                   };
                 } else if (s === 'cancellation_requested') {
-                  badgeInfo = { 
-                    label: 'CANCELLATION REQUESTED', 
-                    bg: isDark ? 'rgba(245, 158, 11, 0.15)' : '#fef3c7', 
-                    border: isDark ? 'rgba(245, 158, 11, 0.4)' : '#fde68a', 
-                    color: isDark ? '#fbbf24' : '#b45309' 
+                  badgeInfo = {
+                    label: 'CANCELLATION REQUESTED',
+                    bg: isDark ? 'rgba(245, 158, 11, 0.15)' : '#fef3c7',
+                    border: isDark ? 'rgba(245, 158, 11, 0.4)' : '#fde68a',
+                    color: isDark ? '#fbbf24' : '#b45309'
                   };
                 } else if (s === 'cancelled') {
-                  badgeInfo = { 
-                    label: 'CANCELLED', 
-                    bg: isDark ? 'rgba(239, 68, 68, 0.15)' : '#fee2e2', 
-                    border: isDark ? 'rgba(239, 68, 68, 0.4)' : '#fca5a5', 
-                    color: isDark ? '#f87171' : '#b91c1c' 
+                  badgeInfo = {
+                    label: 'CANCELLED',
+                    bg: isDark ? 'rgba(239, 68, 68, 0.15)' : '#fee2e2',
+                    border: isDark ? 'rgba(239, 68, 68, 0.4)' : '#fca5a5',
+                    color: isDark ? '#f87171' : '#b91c1c'
                   };
                 }
 
@@ -2813,7 +2813,7 @@ export const BDigitizingMobileApp = () => {
           ========================================================================= */}
       {mobileTab === 'profile' && (
         <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100%', background: isDark ? 'var(--color-background, #090d16)' : '#f8fafc', paddingBottom: '2.5rem' }}>
-          
+
           {/* Top Brand Executive Header */}
           <div style={{
             background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 60%, #334155 100%)',
@@ -2957,7 +2957,7 @@ export const BDigitizingMobileApp = () => {
 
             <div style={{ background: isDark ? 'var(--color-surface, #111827)' : '#ffffff', borderRadius: '16px', border: isDark ? '1px solid var(--color-border, #334155)' : '1px solid #e2e8f0', overflow: 'hidden', boxShadow: isDark ? '0 2px 8px rgba(0,0,0,0.2)' : '0 2px 8px rgba(0,0,0,0.02)' }}>
               {/* Account Profile */}
-              <div 
+              <div
                 onClick={() => {
                   if (isAuthenticated) {
                     setIsAccountModalOpen(true);
@@ -2988,7 +2988,7 @@ export const BDigitizingMobileApp = () => {
               </div>
 
               {/* Wallet & Balance */}
-              <div 
+              <div
                 onClick={() => setIsDepositModalOpen(true)}
                 style={{
                   display: 'flex',
@@ -3014,7 +3014,7 @@ export const BDigitizingMobileApp = () => {
               </div>
 
               {/* Orders History */}
-              <div 
+              <div
                 onClick={() => setMobileTab('orders')}
                 style={{
                   display: 'flex',
@@ -3046,7 +3046,7 @@ export const BDigitizingMobileApp = () => {
 
             <div style={{ background: isDark ? 'var(--color-surface, #111827)' : '#ffffff', borderRadius: '16px', border: isDark ? '1px solid var(--color-border, #334155)' : '1px solid #e2e8f0', overflow: 'hidden', boxShadow: isDark ? '0 2px 8px rgba(0,0,0,0.2)' : '0 2px 8px rgba(0,0,0,0.02)' }}>
               {/* Inbox & Studio Messages */}
-              <div 
+              <div
                 onClick={() => {
                   setMobileChatMode('inbox');
                   setMobileTab('inbox');
@@ -3080,7 +3080,7 @@ export const BDigitizingMobileApp = () => {
               </div>
 
               {/* Service Rates & Packages */}
-              <div 
+              <div
                 onClick={() => setMobileTab('categories')}
                 style={{
                   display: 'flex',
@@ -3104,7 +3104,7 @@ export const BDigitizingMobileApp = () => {
               </div>
 
               {/* Quality Guarantee & Terms */}
-              <div 
+              <div
                 onClick={() => setIsLegalModalOpen(true)}
                 style={{
                   display: 'flex',
@@ -3128,7 +3128,7 @@ export const BDigitizingMobileApp = () => {
               </div>
 
               {/* Share Feedback */}
-              <div 
+              <div
                 onClick={() => setIsFeedbackModalOpen(true)}
                 style={{
                   display: 'flex',
@@ -3160,7 +3160,7 @@ export const BDigitizingMobileApp = () => {
 
             <div style={{ background: isDark ? 'var(--color-surface, #111827)' : '#ffffff', borderRadius: '16px', border: isDark ? '1px solid var(--color-border, #334155)' : '1px solid #e2e8f0', overflow: 'hidden', boxShadow: isDark ? '0 2px 8px rgba(0,0,0,0.2)' : '0 2px 8px rgba(0,0,0,0.02)' }}>
               {/* Preferences */}
-              <div 
+              <div
                 onClick={() => setIsPreferencesModalOpen(true)}
                 style={{
                   display: 'flex',
@@ -3184,7 +3184,7 @@ export const BDigitizingMobileApp = () => {
               </div>
 
               {/* Switch to Website View */}
-              <div 
+              <div
                 onClick={() => {
                   if (setMobileMode) setMobileMode('website');
                   showToast('Switched to Website view 🌐', 'info');
@@ -3213,7 +3213,7 @@ export const BDigitizingMobileApp = () => {
 
           {/* Invite friends row */}
           <div style={{ padding: '0.75rem 1.25rem 0.5rem' }}>
-            <div 
+            <div
               onClick={() => {
                 if (typeof navigator !== 'undefined' && navigator.share) {
                   navigator.share({ title: 'BDigitizing Studio', url: window.location.origin });
@@ -3673,7 +3673,7 @@ export const BDigitizingMobileApp = () => {
       {/* =========================================================================
           UNIVERSAL BOTTOM 5-TAB NAVIGATION BAR
           ========================================================================= */}
-      <nav 
+      <nav
         style={{
           position: 'fixed',
           bottom: 0,
@@ -4894,7 +4894,7 @@ export const BDigitizingMobileApp = () => {
                       <h5 style={{ margin: 0, fontSize: '0.88rem', fontWeight: 800, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a' }}>
                         {n.title || 'Studio Notification'}
                       </h5>
-                      <span 
+                      <span
                         style={{ fontSize: '0.68rem', color: isDark ? '#94a3b8' : '#64748b', whiteSpace: 'nowrap', fontWeight: 600, flexShrink: 0 }}
                         title={getNotificationFullDateTime(n, orders)}
                       >
@@ -4917,7 +4917,7 @@ export const BDigitizingMobileApp = () => {
         isOpen={isOrderModalOpen}
         onClose={() => setIsOrderModalOpen(false)}
         defaultService={orderDefaultService}
-        onOrderCreated={(newOrd) => {
+        onOrderCreated={(_newOrd) => {
           setMobileTab('orders');
           if (typeof refreshOrders === 'function') {
             refreshOrders().catch(() => {});

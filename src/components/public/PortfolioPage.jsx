@@ -4,21 +4,21 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useNavigate } from '../../utils/navigation';
 import { useAppState } from '../../context/StateContext';
-import { 
-  Sparkles, 
-  ArrowRight, 
-  ChevronRight, 
-  Zap, 
-  Maximize2, 
-  X, 
-  CheckCircle2, 
+import {
+  Sparkles,
+  ArrowRight,
+  ChevronRight,
+  Zap as _Zap,
+  Maximize2,
+  X,
+  CheckCircle2 as _CheckCircle2,
   UploadCloud,
-  Eye,
+  Eye as _Eye,
   Layers,
   PenTool,
   Tag,
   ShieldCheck,
-  FileCheck
+  FileCheck as _FileCheck
 } from 'lucide-react';
 
 const CATEGORIES = [
@@ -28,8 +28,8 @@ const CATEGORIES = [
   { key: 'patches', label: 'Custom Patches', icon: Tag }
 ];
 
-import { supabase } from '../../lib/supabase/client';
-import { fetchCatalogFromSupabase } from '../../services/supabaseService';
+import { supabase as _supabase } from '../../lib/supabase/client';
+import { fetchCatalogFromSupabase as _fetchCatalogFromSupabase } from '../../services/supabaseService';
 
 export const PortfolioPage = () => {
   const navigate = useNavigate();
@@ -69,8 +69,8 @@ export const PortfolioPage = () => {
     })
     .filter(item => Boolean(item.afterImg));
 
-  const filteredItems = activeFilter === 'all' 
-    ? combinedItems 
+  const filteredItems = activeFilter === 'all'
+    ? combinedItems
     : combinedItems.filter(item => item.categoryKey === activeFilter);
 
   const handleStartOrder = (item) => {
@@ -89,7 +89,7 @@ export const PortfolioPage = () => {
 
   return (
     <div style={{ background: 'var(--bg-main, #f8fafc)', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-      
+
       {/* 1. Page Header Banner */}
       <section style={{
         background: 'var(--hero-bg, linear-gradient(135deg, #0b1329 0%, #0f172a 60%, #1e1b4b 100%))',
@@ -111,16 +111,16 @@ export const PortfolioPage = () => {
 
         <div className="container" style={{ position: 'relative', zIndex: 1 }}>
           {/* Breadcrumbs */}
-          <div style={{ 
-            display: 'flex', 
-            alignItems: 'center', 
-            gap: '0.5rem', 
-            fontSize: '0.85rem', 
-            color: 'var(--hero-text-secondary, var(--color-text-secondary))', 
-            marginBottom: '1.25rem' 
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+            fontSize: '0.85rem',
+            color: 'var(--hero-text-secondary, var(--color-text-secondary))',
+            marginBottom: '1.25rem'
           }}>
-            <Link 
-              href="/" 
+            <Link
+              href="/"
               style={{ textDecoration: 'none', background: 'none', border: 'none', color: 'var(--hero-text-secondary, var(--color-text-secondary))', cursor: 'pointer', padding: 0, fontWeight: 600 }}
             >
               Home
@@ -175,7 +175,7 @@ export const PortfolioPage = () => {
       {/* 2. Main Content & Category Switcher */}
       <section style={{ padding: '3.5rem 0 5rem', flex: 1 }}>
         <div className="container">
-          
+
           {/* Category Filter Tabs */}
           <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '3rem' }}>
             <div style={{
@@ -192,8 +192,8 @@ export const PortfolioPage = () => {
               {CATEGORIES.map(cat => {
                 const IconComp = cat.icon;
                 const isSelected = activeFilter === cat.key;
-                const count = cat.key === 'all' 
-                  ? combinedItems.length 
+                const count = cat.key === 'all'
+                  ? combinedItems.length
                   : combinedItems.filter(i => i.categoryKey === cat.key).length;
 
                 return (
@@ -208,8 +208,8 @@ export const PortfolioPage = () => {
                       padding: '0.6rem 1.35rem',
                       borderRadius: '9999px',
                       border: 'none',
-                      background: isSelected 
-                        ? 'linear-gradient(135deg, var(--orange-500) 0%, var(--orange-600) 100%)' 
+                      background: isSelected
+                        ? 'linear-gradient(135deg, var(--orange-500) 0%, var(--orange-600) 100%)'
                         : 'transparent',
                       color: isSelected ? '#ffffff' : 'var(--color-text-primary)',
                       fontWeight: isSelected ? 800 : 700,
@@ -268,8 +268,8 @@ export const PortfolioPage = () => {
               {filteredItems.map((item) => {
                 const isVector = item.categoryKey === 'vector';
                 const isPatch = item.categoryKey === 'patches';
-                const badgeBg = isVector ? 'rgba(6, 182, 212, 0.12)' : isPatch ? 'rgba(168, 85, 247, 0.12)' : 'rgba(249, 115, 22, 0.12)';
-                const badgeColor = isVector ? '#0891b2' : isPatch ? '#9333ea' : '#ea580c';
+                const _badgeBg = isVector ? 'rgba(6, 182, 212, 0.12)' : isPatch ? 'rgba(168, 85, 247, 0.12)' : 'rgba(249, 115, 22, 0.12)';
+                const _badgeColor = isVector ? '#0891b2' : isPatch ? '#9333ea' : '#ea580c';
 
                 return (
                   <div
@@ -428,8 +428,8 @@ export const PortfolioPage = () => {
 
       {/* 3. Interactive Modal Preview */}
       {activeItemModal && (
-        <div 
-          className="modal-overlay" 
+        <div
+          className="modal-overlay"
           onClick={() => setActiveItemModal(null)}
           style={{
             position: 'fixed',
@@ -443,7 +443,7 @@ export const PortfolioPage = () => {
             padding: '1.5rem'
           }}
         >
-          <div 
+          <div
             className="modal-dialog"
             onClick={(e) => e.stopPropagation()}
             style={{
@@ -468,8 +468,8 @@ export const PortfolioPage = () => {
               justifyContent: 'center',
               position: 'relative'
             }}>
-              <img 
-                src={showOriginalInModal && activeItemModal.beforeImg ? activeItemModal.beforeImg : activeItemModal.afterImg} 
+              <img
+                src={showOriginalInModal && activeItemModal.beforeImg ? activeItemModal.beforeImg : activeItemModal.afterImg}
                 alt={activeItemModal.title}
                 style={{
                   maxWidth: '100%',
@@ -563,7 +563,7 @@ export const PortfolioPage = () => {
 
                 {/* Technical Specifications Grid */}
                 <div style={{ background: 'var(--color-subtle, var(--bg-subtle))', padding: '1.25rem', borderRadius: '16px', border: '1px solid var(--border-color)', display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '1.5rem' }}>
-                  
+
                   {activeItemModal.stitchCount && (
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem' }}>
                       <span style={{ color: 'var(--color-text-muted)', fontWeight: 600 }}>Stitch Density:</span>

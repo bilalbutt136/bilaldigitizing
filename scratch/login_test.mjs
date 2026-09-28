@@ -32,7 +32,7 @@ async function test() {
     let body = null;
     try {
       body = await res.json();
-    } catch (e) {
+    } catch {
       body = await res.text();
     }
     return { status, body };

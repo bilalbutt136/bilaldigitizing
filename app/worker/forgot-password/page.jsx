@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { supabaseClient } from '../../../src/lib/supabaseClient';
-import { Scissors, Mail, ArrowRight, ArrowLeft, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Scissors as _Scissors, Mail, ArrowRight, ArrowLeft, CheckCircle2, AlertCircle } from 'lucide-react';
 
 export default function WorkerForgotPasswordPage() {
   const [email, setEmail] = useState('');

@@ -3,18 +3,18 @@
 import React, { useState } from 'react';
 import { useNavigate } from '../../utils/navigation';
 import { useAppState } from '../../context/StateContext';
-import { 
-  Zap, 
+import {
+  Zap,
   Trophy,
   Upload,
-  UploadCloud, 
-  Check, 
-  CheckCircle2, 
-  Clock, 
-  FileCode, 
-  ShieldCheck, 
-  Sparkles, 
-  Trash2, 
+  UploadCloud as _UploadCloud,
+  Check,
+  CheckCircle2,
+  Clock,
+  FileCode,
+  ShieldCheck,
+  Sparkles,
+  Trash2,
   ArrowRight,
   Wallet,
   CreditCard
@@ -26,13 +26,13 @@ import { matchCategory } from '../../utils/categoryUtils';
 
 export const VectorArtPage = ({ hideHero = false }) => {
   const navigate = useNavigate();
-  const { 
-    createOrder, 
-    pricing, 
+  const {
+    createOrder,
+    pricing,
     dynamicPricingTiers = [],
-    walletBalance = 0, 
+    walletBalance = 0,
     openOrderWizard,
-    deductWalletBalance, 
+    deductWalletBalance,
     setIsDepositModalOpen,
     isAuthenticated,
     setIsAuthModalOpen,
@@ -52,7 +52,7 @@ export const VectorArtPage = ({ hideHero = false }) => {
   const [colorMode, setColorMode] = useState('Spot Colors (Pantone/Solid)');
   const [requestedFormats, setRequestedFormats] = useState(['ai', 'eps', 'svg', 'pdf']);
   const [isRush, setIsRush] = useState(false);
-  const [title, setTitle] = useState('');
+  const [title, _setTitle] = useState('');
   const [paymentOption, setPaymentOption] = useState('bolt'); // 'bolt' | 'wallet'
   const [isOrderViewOpen, setIsOrderViewOpen] = useState(false);
 
@@ -133,8 +133,8 @@ export const VectorArtPage = ({ hideHero = false }) => {
   };
 
   // File Upload State
-  const [selectedAssets, setSelectedAssets] = useState([]);
-  const [isDragOver, setIsDragOver] = useState(false);
+  const [_selectedAssets, setSelectedAssets] = useState([]);
+  const [_isDragOver, setIsDragOver] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const VECTOR_FORMAT_OPTIONS = serviceCmsContent['vector_format_options'] || [
@@ -146,7 +146,7 @@ export const VectorArtPage = ({ hideHero = false }) => {
   ];
 
   const toggleFormat = (fmtId) => {
-    setRequestedFormats(prev => 
+    setRequestedFormats(prev =>
       prev.includes(fmtId) ? prev.filter(f => f !== fmtId) : [...prev, fmtId]
     );
   };
@@ -166,8 +166,8 @@ export const VectorArtPage = ({ hideHero = false }) => {
 
   const rushFeeAmount = 10.00;
 
-  const safeVectorItems = Array.isArray(vectorItems) && vectorItems.length > 0 
-    ? vectorItems 
+  const safeVectorItems = Array.isArray(vectorItems) && vectorItems.length > 0
+    ? vectorItems
     : [{ id: 1, name: 'Vector Artwork #1', complexity: 'Simple Vector Redraw', quantity: 1, quantityInput: '1', notes: '' }];
 
   let basePrice = 0;
@@ -226,7 +226,7 @@ export const VectorArtPage = ({ hideHero = false }) => {
     setSelectedAssets(prev => [...prev, ...newAssets]);
   };
 
-  const handleFileDrop = (e) => {
+  const _handleFileDrop = (e) => {
     e.preventDefault();
     setIsDragOver(false);
     if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
@@ -234,13 +234,13 @@ export const VectorArtPage = ({ hideHero = false }) => {
     }
   };
 
-  const handleFileSelect = (e) => {
+  const _handleFileSelect = (e) => {
     if (e.target.files && e.target.files.length > 0) {
       processFilesList(e.target.files);
     }
   };
 
-  const removeAsset = (assetId) => {
+  const _removeAsset = (assetId) => {
     setSelectedAssets(prev => prev.filter(ast => ast.id !== assetId));
   };
 
@@ -345,7 +345,7 @@ export const VectorArtPage = ({ hideHero = false }) => {
 
   return (
     <div style={{ background: 'var(--bg-main, #ffffff)', minHeight: '100vh', paddingBottom: '5rem', color: 'var(--color-text-primary, #0f172a)' }}>
-      
+
       {/* 1. Studio Header Banner */}
       {!hideHero && (
         <section style={{
@@ -367,7 +367,7 @@ export const VectorArtPage = ({ hideHero = false }) => {
 
         <div className="container" style={{ position: 'relative', zIndex: 2 }}>
           <div style={{ maxWidth: '800px', margin: '0 auto', textAlign: 'center' }}>
-            
+
             <div style={{
               display: 'inline-flex',
               alignItems: 'center',
@@ -419,7 +419,7 @@ export const VectorArtPage = ({ hideHero = false }) => {
             </div>
 
             <div style={{ marginTop: '2.5rem', display: 'flex', justifyContent: 'center', gap: '1rem', flexWrap: 'wrap' }}>
-              <button 
+              <button
                 className="btn btn-primary-orange btn-lg"
                 onClick={() => {
                   const el = document.getElementById('pricing-tiers');
@@ -430,7 +430,7 @@ export const VectorArtPage = ({ hideHero = false }) => {
                 {dbSettings.vector_hero_btn_primary || 'Order Digitizing Design'} <ArrowRight size={20} />
               </button>
 
-              <button 
+              <button
                 onClick={() => {
                   const el = document.getElementById('pricing-tiers');
                   if (el) el.scrollIntoView({ behavior: 'smooth' });
@@ -451,7 +451,7 @@ export const VectorArtPage = ({ hideHero = false }) => {
         <section style={{ padding: '5rem 0 6rem', background: 'var(--bg-main)', color: 'var(--color-text-primary)' }}>
           <div id="pricing-tiers" className="container" style={{ maxWidth: '1240px', overflow: 'visible' }}>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 290px), 1fr))', gap: '2rem', marginBottom: '1.5rem', paddingTop: '1rem', overflow: 'visible' }}>
-            
+
             {(() => {
               const handleSelectVectorTier = (cat) => {
                 if (openOrderWizard) {
@@ -596,7 +596,7 @@ export const VectorArtPage = ({ hideHero = false }) => {
       ) : (
         /* Dedicated Order Configuration View */
         <div id="vector-order-form" className="container" style={{ marginTop: '2rem' }}>
-          
+
           {/* Back Action Bar */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem', paddingBottom: '1rem', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
             <button
@@ -626,7 +626,7 @@ export const VectorArtPage = ({ hideHero = false }) => {
               </span>
             </div>
           </div>
-        <div 
+        <div
           className="grid-responsive-2col"
           style={{
             display: 'grid',
@@ -635,10 +635,10 @@ export const VectorArtPage = ({ hideHero = false }) => {
             alignItems: 'start'
           }}
         >
-          
+
           {/* Main Order Form */}
           <form onSubmit={handleSubmitOrder} style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
-            
+
             {/* Step 1: Artwork Specifications */}
             <div style={{ padding: '2rem', background: '#1e293b', border: '1px solid rgba(255, 255, 255, 0.12)', borderRadius: '16px', boxShadow: '0 10px 30px rgba(0, 0, 0, 0.3)' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '1.5rem' }}>
@@ -651,7 +651,7 @@ export const VectorArtPage = ({ hideHero = false }) => {
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-                
+
                 {/* Itemized Vector Cart Items */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                   <label style={{ display: 'block', fontWeight: 800, fontSize: '0.875rem', color: '#ffffff' }}>
@@ -662,7 +662,7 @@ export const VectorArtPage = ({ hideHero = false }) => {
                     const compStr = (item.complexity || '').toLowerCase();
                     const isSuperRush = compStr.includes('super rush') || compStr.includes('express');
                     const isComplex = compStr.includes('complex') && !isSuperRush;
-                    const isSimple = !isComplex && !isSuperRush;
+                    const _isSimple = !isComplex && !isSuperRush;
 
                     let itemRate = simpleRate;
                     if (isSuperRush) itemRate = superRushRate;
@@ -711,13 +711,13 @@ export const VectorArtPage = ({ hideHero = false }) => {
 
                         {/* Streamlined Row: Package Tier, Name, and Quantity */}
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 180px), 1fr))', gap: '0.75rem', alignItems: 'center' }}>
-                          
+
                           <div>
                             <label style={{ display: 'block', fontSize: '0.73rem', fontWeight: 700, color: '#cbd5e1', marginBottom: '0.2rem' }}>Package Tier *</label>
-                            <select 
-                              value={item.complexity || 'Simple Vector Redraw'} 
-                              onChange={(e) => updateVectorItem(item.id, 'complexity', e.target.value)} 
-                              className="form-control" 
+                            <select
+                              value={item.complexity || 'Simple Vector Redraw'}
+                              onChange={(e) => updateVectorItem(item.id, 'complexity', e.target.value)}
+                              className="form-control"
                               style={{ background: '#1e293b', color: '#ffffff', border: '1px solid rgba(255,255,255,0.15)', fontSize: '0.825rem', width: '100%' }}
                             >
                               <option value="Simple Vector Redraw">⚡ Simple Redraw (${simpleRate.toFixed(2)})</option>
@@ -965,7 +965,7 @@ export const VectorArtPage = ({ hideHero = false }) => {
           {/* Right Checkout & Order Summary Card */}
           <div style={{ position: 'sticky', top: '100px' }}>
             <div className="card" style={{ padding: '1.75rem', background: '#1e293b', border: '2px solid var(--orange-500)', borderRadius: '16px', boxShadow: '0 12px 32px rgba(255, 122, 0, 0.18)' }}>
-              
+
               <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: '#ffffff', marginBottom: '1.25rem', borderBottom: '1px solid rgba(255,255,255,0.12)', paddingBottom: '0.75rem' }}>
                 Vector Order Summary
               </h3>

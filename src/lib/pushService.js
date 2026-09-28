@@ -1,244 +1,154 @@
 import webpush from 'web-push';
 import { createAdminClient } from './supabase/admin.js';
 
-// Pre-configured permanent VAPID keypair (works out of the box on live Vercel deployments)
-export const DEFAULT_VAPID_PUBLIC_KEY = 'BLpbdzESZqfA4Coj36smEyG1UMD13BekGtVOKBOWvha9puENh5eXHg3-SLXCMWo-VbFkqPA2X-gSiMnM-_20qNM';
-export const DEFAULT_VAPID_PRIVATE_KEY = 'QJkDk8tJ43PqLVBlYQFYYsMX-L8Gw7SHavd-4V8WpFI';
 export const DEFAULT_VAPID_SUBJECT = 'mailto:support@bdigitizing.com';
 
 let isVapidConfigured = false;
+let cachedVapidKeys = null;
 
 /**
- * Ensures web-push is initialized with valid VAPID keys
+ * Loads web-push credentials from environment variables, with a server-only
+ * Supabase secret-store fallback for deployments where environment management
+ * is unavailable. The fallback table is inaccessible to anon/authenticated roles.
  */
-export function getVapidKeys() {
-  const publicKey = (process.env.VAPID_PUBLIC_KEY || process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || DEFAULT_VAPID_PUBLIC_KEY).trim();
-  const privateKey = (process.env.VAPID_PRIVATE_KEY || DEFAULT_VAPID_PRIVATE_KEY).trim();
-  const subject = (process.env.VAPID_SUBJECT || DEFAULT_VAPID_SUBJECT).trim();
+export async function getVapidKeys() {
+  let publicKey = (process.env.VAPID_PUBLIC_KEY || process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || '').trim();
+  let privateKey = (process.env.VAPID_PRIVATE_KEY || '').trim();
+  let subject = (process.env.VAPID_SUBJECT || DEFAULT_VAPID_SUBJECT).trim();
 
-  if (!isVapidConfigured && publicKey && privateKey) {
+  if ((!publicKey || !privateKey) && cachedVapidKeys) {
+    ({ publicKey, privateKey, subject } = cachedVapidKeys);
+  }
+
+  if (!publicKey || !privateKey) {
     try {
-      webpush.setVapidDetails(subject, publicKey, privateKey);
-      isVapidConfigured = true;
-    } catch (err) {
-      console.warn('[pushService] VAPID initialization warning:', err.message);
+      const supabase = createAdminClient();
+      const { data, error } = await supabase
+        .from('private_server_config')
+        .select('value')
+        .eq('key', 'vapid_keys')
+        .maybeSingle();
+
+      if (error) throw error;
+      const stored = typeof data?.value === 'string' ? JSON.parse(data.value) : data?.value;
+      publicKey = String(stored?.publicKey || '').trim();
+      privateKey = String(stored?.privateKey || '').trim();
+      subject = String(stored?.subject || subject || DEFAULT_VAPID_SUBJECT).trim();
+    } catch (error) {
+      console.warn('[pushService] Unable to load server-side VAPID configuration:', error?.message);
     }
   }
 
-  return { publicKey, privateKey, subject };
+  if (!publicKey || !privateKey) {
+    throw new Error('VAPID credentials are not configured in the server environment or private server configuration.');
+  }
+
+  cachedVapidKeys = { publicKey, privateKey, subject };
+
+  if (!isVapidConfigured) {
+    webpush.setVapidDetails(subject, publicKey, privateKey);
+    isVapidConfigured = true;
+  }
+
+  return cachedVapidKeys;
 }
 
 /**
- * Returns the public VAPID key for client registration
+ * Returns the public VAPID key for client registration.
  */
-export function getPublicVapidKey() {
-  const { publicKey } = getVapidKeys();
+export async function getPublicVapidKey() {
+  const { publicKey } = await getVapidKeys();
   return publicKey;
 }
 
 /**
- * Saves a browser push subscription to Supabase with resilient fallback to site_config
+ * Saves an authenticated browser push subscription to the dedicated private table.
  */
 export async function savePushSubscription({ subscription, userId = null, userEmail = null, role = 'client', userAgent = '' }) {
-  if (!subscription || !subscription.endpoint) {
+  if (!subscription?.endpoint) {
     throw new Error('Invalid subscription object: missing endpoint');
   }
-
-  const endpoint = subscription.endpoint;
-  const p256dh = subscription.keys?.p256dh || '';
-  const auth = subscription.keys?.auth || '';
-  const cleanEmail = userEmail ? userEmail.toLowerCase().trim() : null;
-  const cleanRole = role === 'admin' ? 'admin' : 'client';
-
-  try {
-    const supabase = createAdminClient();
-
-    // 1. Try persisting into dedicated `push_subscriptions` table
-    const { error: tableError } = await supabase
-      .from('push_subscriptions')
-      .upsert({
-        endpoint,
-        p256dh,
-        auth,
-        user_id: userId || null,
-        user_email: cleanEmail,
-        role: cleanRole,
-        user_agent: userAgent || (typeof navigator !== 'undefined' ? navigator.userAgent : null),
-        updated_at: new Date().toISOString()
-      }, { onConflict: 'endpoint' });
-
-    if (!tableError) {
-      return { success: true, storage: 'table' };
-    }
-
-    console.warn('[pushService] push_subscriptions table write notice:', tableError.message);
-  } catch (err) {
-    console.warn('[pushService] Database connection notice:', err.message);
+  if (!subscription?.keys?.p256dh || !subscription?.keys?.auth) {
+    throw new Error('Invalid subscription object: missing encryption keys');
+  }
+  if (!userId || !userEmail) {
+    throw new Error('Authenticated user identity is required for push subscriptions.');
   }
 
-  // 2. Resilient fallback: store in site_config if table is pending migration
-  try {
-    const supabase = createAdminClient();
-    const { data: configRecord } = await supabase
-      .from('site_config')
-      .select('value')
-      .eq('key', 'push_subscriptions_store')
-      .maybeSingle();
+  const cleanEmail = String(userEmail).toLowerCase().trim();
+  const cleanRole = role === 'admin' ? 'admin' : (role === 'worker' ? 'worker' : 'client');
+  const supabase = createAdminClient();
 
-    let store = [];
-    if (configRecord?.value) {
-      try {
-        store = typeof configRecord.value === 'string' ? JSON.parse(configRecord.value) : configRecord.value;
-      } catch {}
-    }
-    if (!Array.isArray(store)) store = [];
-
-    // Filter out previous entry with same endpoint
-    store = store.filter(s => s && s.endpoint !== endpoint);
-    store.push({
-      endpoint,
-      p256dh,
-      auth,
-      user_id: userId || null,
+  const { error } = await supabase
+    .from('push_subscriptions')
+    .upsert({
+      endpoint: subscription.endpoint,
+      p256dh: subscription.keys.p256dh,
+      auth: subscription.keys.auth,
+      user_id: String(userId),
       user_email: cleanEmail,
       role: cleanRole,
       user_agent: userAgent || null,
       updated_at: new Date().toISOString()
-    });
+    }, { onConflict: 'endpoint' });
 
-    // Keep store capped at most recent 200 devices
-    if (store.length > 200) {
-      store = store.slice(-200);
-    }
-
-    await supabase
-      .from('site_config')
-      .upsert({
-        key: 'push_subscriptions_store',
-        value: JSON.stringify(store),
-        updated_at: new Date().toISOString()
-      }, { onConflict: 'key' });
-
-    return { success: true, storage: 'site_config' };
-  } catch (fallbackErr) {
-    console.warn('[pushService] Fallback store notice:', fallbackErr.message);
-    return { success: false, error: fallbackErr.message };
+  if (error) {
+    console.error('[pushService] push_subscriptions write failed:', error.message);
+    return { success: false, error: 'Unable to persist push subscription.' };
   }
+
+  return { success: true, storage: 'push_subscriptions' };
 }
 
 /**
- * Removes an expired or revoked subscription endpoint
+ * Removes an expired or revoked subscription endpoint.
  */
 export async function removePushSubscription(endpoint) {
   if (!endpoint) return;
   try {
     const supabase = createAdminClient();
-    await supabase.from('push_subscriptions').delete().eq('endpoint', endpoint);
-  } catch {}
-
-  try {
-    const supabase = createAdminClient();
-    const { data: configRecord } = await supabase
-      .from('site_config')
-      .select('value')
-      .eq('key', 'push_subscriptions_store')
-      .maybeSingle();
-
-    if (configRecord?.value) {
-      let store = typeof configRecord.value === 'string' ? JSON.parse(configRecord.value) : configRecord.value;
-      if (Array.isArray(store)) {
-        store = store.filter(s => s && s.endpoint !== endpoint);
-        await supabase
-          .from('site_config')
-          .upsert({
-            key: 'push_subscriptions_store',
-            value: JSON.stringify(store),
-            updated_at: new Date().toISOString()
-          }, { onConflict: 'key' });
-      }
-    }
-  } catch {}
+    const { error } = await supabase.from('push_subscriptions').delete().eq('endpoint', endpoint);
+    if (error) console.warn('[pushService] Subscription cleanup notice:', error.message);
+  } catch (error) {
+    console.warn('[pushService] Subscription cleanup notice:', error?.message);
+  }
 }
 
 /**
- * Retrieves all valid subscriptions matching email, role, or broadcast
+ * Retrieves subscriptions from the dedicated private table only.
  */
 export async function getActiveSubscriptions({ email = null, role = null, all = false }) {
-  const cleanEmail = email ? email.toLowerCase().trim() : null;
-  const subscriptionsMap = new Map();
+  const cleanEmail = email ? String(email).toLowerCase().trim() : null;
+  const supabase = createAdminClient();
+  let query = supabase.from('push_subscriptions').select('endpoint, p256dh, auth, role, user_email');
 
-  // 1. Try querying push_subscriptions table
-  try {
-    const supabase = createAdminClient();
-    let query = supabase.from('push_subscriptions').select('*');
-
-    if (!all) {
-      if (cleanEmail && role) {
-        query = query.or(`user_email.eq.${cleanEmail},role.eq.${role}`);
-      } else if (cleanEmail) {
-        query = query.eq('user_email', cleanEmail);
-      } else if (role) {
-        query = query.eq('role', role);
-      }
-    }
-
-    const { data, error } = await query;
-    if (!error && Array.isArray(data)) {
-      data.forEach(item => {
-        if (item.endpoint && item.p256dh && item.auth) {
-          subscriptionsMap.set(item.endpoint, {
-            endpoint: item.endpoint,
-            keys: { p256dh: item.p256dh, auth: item.auth },
-            role: item.role,
-            user_email: item.user_email
-          });
-        }
-      });
-    }
-  } catch (err) {
-    console.warn('[pushService] Table query notice:', err.message);
+  if (!all) {
+    if (!cleanEmail && !role) return [];
+    if (cleanEmail) query = query.eq('user_email', cleanEmail);
+    if (role) query = query.eq('role', role);
   }
 
-  // 2. Supplement / fallback with site_config store
-  try {
-    const supabase = createAdminClient();
-    const { data: configRecord } = await supabase
-      .from('site_config')
-      .select('value')
-      .eq('key', 'push_subscriptions_store')
-      .maybeSingle();
+  const { data, error } = await query;
+  if (error) {
+    console.error('[pushService] push_subscriptions query failed:', error.message);
+    return [];
+  }
 
-    if (configRecord?.value) {
-      let store = typeof configRecord.value === 'string' ? JSON.parse(configRecord.value) : configRecord.value;
-      if (Array.isArray(store)) {
-        store.forEach(item => {
-          if (!item || !item.endpoint || !item.p256dh || !item.auth) return;
-          const matchEmail = cleanEmail && item.user_email && item.user_email.toLowerCase() === cleanEmail;
-          const matchRole = role && item.role === role;
-
-          if (all || matchEmail || matchRole) {
-            if (!subscriptionsMap.has(item.endpoint)) {
-              subscriptionsMap.set(item.endpoint, {
-                endpoint: item.endpoint,
-                keys: { p256dh: item.p256dh, auth: item.auth },
-                role: item.role,
-                user_email: item.user_email
-              });
-            }
-          }
-        });
-      }
-    }
-  } catch {}
-
-  return Array.from(subscriptionsMap.values());
+  return (Array.isArray(data) ? data : [])
+    .filter(item => item?.endpoint && item?.p256dh && item?.auth)
+    .map(item => ({
+      endpoint: item.endpoint,
+      keys: { p256dh: item.p256dh, auth: item.auth },
+      role: item.role,
+      user_email: item.user_email
+    }));
 }
 
 /**
  * Dispatches a single high-urgency push notification to a device endpoint
  */
 export async function sendPushNotification(subscription, payload) {
-  getVapidKeys();
+  await getVapidKeys();
 
   const pushPayload = typeof payload === 'object' ? JSON.stringify(payload) : String(payload);
 
@@ -308,12 +218,12 @@ export async function dispatchChatMessagePush({
   const snippet = (messageText || 'Sent an attachment or file').substring(0, 100);
   const isFromAdmin = senderRole === 'admin';
 
-  const title = isFromAdmin 
-    ? '💬 BDigitizing Support' 
+  const title = isFromAdmin
+    ? '💬 BDigitizing Support'
     : `💬 New Message from ${senderName || 'Customer'}`;
 
   const body = snippet;
-  const url = isFromAdmin 
+  const url = isFromAdmin
     ? `/client-portal?tab=inbox${conversationId ? `&chatId=${encodeURIComponent(conversationId)}` : ''}`
     : `/admin-portal?tab=inbox${conversationId ? `&chatId=${encodeURIComponent(conversationId)}` : ''}`;
 

@@ -3,9 +3,9 @@ import assert from 'node:assert/strict';
 import {
   parseReferrerInfo,
   extractMarketingParams,
-  detectDeviceType,
-  detectOS,
-  detectBrowser,
+  detectDeviceType as _detectDeviceType,
+  detectOS as _detectOS,
+  detectBrowser as _detectBrowser,
   generateUUID,
   resolveUserIdentity
 } from '../utils/visitorTracker.js';

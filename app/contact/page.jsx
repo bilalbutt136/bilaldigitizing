@@ -2,16 +2,16 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { 
-  Mail, 
-  Phone, 
-  MessageCircle, 
-  MapPin, 
-  Clock, 
-  ShieldCheck, 
-  Send, 
-  CheckCircle, 
-  Sparkles, 
+import {
+  Mail,
+  Phone,
+  MessageCircle,
+  MapPin,
+  Clock,
+  ShieldCheck,
+  Send,
+  CheckCircle,
+  Sparkles,
   ChevronRight,
   Headphones,
   ArrowRight
@@ -51,7 +51,7 @@ export default function ContactPage() {
     setSubmitting(true);
     try {
       // Send message to contact endpoint or fallback grace
-      const res = await fetch('/api/email', {
+      const _res = await fetch('/api/email', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -75,7 +75,7 @@ export default function ContactPage() {
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--color-bg, #0b1120)', color: 'var(--color-text-primary, #ffffff)', paddingBottom: '5rem' }}>
-      
+
       {/* Top Banner / Breadcrumb */}
       <div style={{ background: 'rgba(255, 255, 255, 0.02)', borderBottom: '1px solid rgba(255, 255, 255, 0.07)', padding: '1rem 0' }}>
         <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem' }}>
@@ -86,16 +86,16 @@ export default function ContactPage() {
       </div>
 
       <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '3.5rem 1.5rem 0' }}>
-        
+
         {/* Header */}
         <div style={{ textAlign: 'center', marginBottom: '3.5rem' }}>
-          <div style={{ 
-            display: 'inline-flex', 
-            alignItems: 'center', 
-            gap: '0.5rem', 
-            padding: '0.4rem 1rem', 
-            background: 'rgba(234, 88, 12, 0.1)', 
-            border: '1px solid rgba(234, 88, 12, 0.25)', 
+          <div style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+            padding: '0.4rem 1rem',
+            background: 'rgba(234, 88, 12, 0.1)',
+            border: '1px solid rgba(234, 88, 12, 0.25)',
             borderRadius: '999px',
             color: '#f97316',
             fontSize: '0.85rem',
@@ -113,18 +113,18 @@ export default function ContactPage() {
         </div>
 
         {/* Quick Contact Cards */}
-        <div style={{ 
-          display: 'grid', 
-          gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', 
-          gap: '1.5rem', 
-          marginBottom: '4rem' 
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
+          gap: '1.5rem',
+          marginBottom: '4rem'
         }}>
-          
+
           {/* Card 1: Email */}
-          <div style={{ 
-            background: 'rgba(255, 255, 255, 0.03)', 
-            border: '1px solid rgba(255, 255, 255, 0.08)', 
-            borderRadius: '16px', 
+          <div style={{
+            background: 'rgba(255, 255, 255, 0.03)',
+            border: '1px solid rgba(255, 255, 255, 0.08)',
+            borderRadius: '16px',
             padding: '1.75rem',
             transition: 'border-color 0.2s',
             display: 'flex',
@@ -137,8 +137,8 @@ export default function ContactPage() {
             <p style={{ color: '#94a3b8', fontSize: '0.875rem', marginBottom: '1.25rem', flexGrow: 1 }}>
               Direct line to our senior production engineers for detailed artwork reviews and quotes.
             </p>
-            <a 
-              href={`mailto:${email}`} 
+            <a
+              href={`mailto:${email}`}
               style={{ color: '#ea580c', textDecoration: 'none', fontWeight: 700, fontSize: '0.95rem', wordBreak: 'break-all' }}
             >
               {email}
@@ -146,10 +146,10 @@ export default function ContactPage() {
           </div>
 
           {/* Card 2: Phone */}
-          <div style={{ 
-            background: 'rgba(255, 255, 255, 0.03)', 
-            border: '1px solid rgba(255, 255, 255, 0.08)', 
-            borderRadius: '16px', 
+          <div style={{
+            background: 'rgba(255, 255, 255, 0.03)',
+            border: '1px solid rgba(255, 255, 255, 0.08)',
+            borderRadius: '16px',
             padding: '1.75rem',
             transition: 'border-color 0.2s',
             display: 'flex',
@@ -162,8 +162,8 @@ export default function ContactPage() {
             <p style={{ color: '#94a3b8', fontSize: '0.875rem', marginBottom: '1.25rem', flexGrow: 1 }}>
               Speak directly with our US customer account specialists during business hours.
             </p>
-            <a 
-              href={`tel:${cleanPhone}`} 
+            <a
+              href={`tel:${cleanPhone}`}
               style={{ color: '#3b82f6', textDecoration: 'none', fontWeight: 700, fontSize: '0.95rem' }}
             >
               {phone}
@@ -171,10 +171,10 @@ export default function ContactPage() {
           </div>
 
           {/* Card 3: WhatsApp */}
-          <div style={{ 
-            background: 'rgba(255, 255, 255, 0.03)', 
-            border: '1px solid rgba(255, 255, 255, 0.08)', 
-            borderRadius: '16px', 
+          <div style={{
+            background: 'rgba(255, 255, 255, 0.03)',
+            border: '1px solid rgba(255, 255, 255, 0.08)',
+            borderRadius: '16px',
             padding: '1.75rem',
             transition: 'border-color 0.2s',
             display: 'flex',
@@ -187,10 +187,10 @@ export default function ContactPage() {
             <p style={{ color: '#94a3b8', fontSize: '0.875rem', marginBottom: '1.25rem', flexGrow: 1 }}>
               Fast-track urgent order queries, sew-out proofs, or file format questions 24/7.
             </p>
-            <a 
-              href={`https://wa.me/${cleanWhatsapp}`} 
-              target="_blank" 
-              rel="noopener noreferrer" 
+            <a
+              href={`https://wa.me/${cleanWhatsapp}`}
+              target="_blank"
+              rel="noopener noreferrer"
               style={{ color: '#22c55e', textDecoration: 'none', fontWeight: 700, fontSize: '0.95rem' }}
             >
               WhatsApp Us Now &rarr;
@@ -198,10 +198,10 @@ export default function ContactPage() {
           </div>
 
           {/* Card 4: Operations Desk */}
-          <div style={{ 
-            background: 'rgba(255, 255, 255, 0.03)', 
-            border: '1px solid rgba(255, 255, 255, 0.08)', 
-            borderRadius: '16px', 
+          <div style={{
+            background: 'rgba(255, 255, 255, 0.03)',
+            border: '1px solid rgba(255, 255, 255, 0.08)',
+            borderRadius: '16px',
             padding: '1.75rem',
             transition: 'border-color 0.2s',
             display: 'flex',
@@ -223,19 +223,19 @@ export default function ContactPage() {
         </div>
 
         {/* Main Content: Contact Form & Studio Details */}
-        <div style={{ 
-          display: 'grid', 
-          gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 460px), 1fr))', 
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 460px), 1fr))',
           gap: '3rem',
           alignItems: 'start'
         }}>
-          
+
           {/* Inquiry Form */}
-          <div style={{ 
-            background: 'rgba(255, 255, 255, 0.02)', 
-            border: '1px solid rgba(255, 255, 255, 0.08)', 
-            borderRadius: '20px', 
-            padding: '2.5rem' 
+          <div style={{
+            background: 'rgba(255, 255, 255, 0.02)',
+            border: '1px solid rgba(255, 255, 255, 0.08)',
+            borderRadius: '20px',
+            padding: '2.5rem'
           }}>
             <h2 style={{ fontSize: '1.5rem', fontWeight: 800, marginBottom: '0.5rem' }}>Send Us a Message</h2>
             <p style={{ color: '#94a3b8', fontSize: '0.9rem', marginBottom: '2rem' }}>
@@ -243,12 +243,12 @@ export default function ContactPage() {
             </p>
 
             {submitted ? (
-              <div style={{ 
-                background: 'rgba(34, 197, 94, 0.1)', 
-                border: '1px solid rgba(34, 197, 94, 0.3)', 
-                borderRadius: '12px', 
-                padding: '2rem', 
-                textAlign: 'center' 
+              <div style={{
+                background: 'rgba(34, 197, 94, 0.1)',
+                border: '1px solid rgba(34, 197, 94, 0.3)',
+                borderRadius: '12px',
+                padding: '2rem',
+                textAlign: 'center'
               }}>
                 <CheckCircle size={48} style={{ color: '#22c55e', margin: '0 auto 1rem' }} />
                 <h3 style={{ fontSize: '1.25rem', fontWeight: 800, marginBottom: '0.5rem' }}>Message Dispatched!</h3>
@@ -282,10 +282,10 @@ export default function ContactPage() {
                     <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 700, marginBottom: '0.4rem', color: '#cbd5e1' }}>
                       Full Name *
                     </label>
-                    <input 
-                      type="text" 
+                    <input
+                      type="text"
                       required
-                      placeholder="e.g. John Doe" 
+                      placeholder="e.g. John Doe"
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                       style={{
@@ -305,10 +305,10 @@ export default function ContactPage() {
                     <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 700, marginBottom: '0.4rem', color: '#cbd5e1' }}>
                       Email Address *
                     </label>
-                    <input 
-                      type="email" 
+                    <input
+                      type="email"
                       required
-                      placeholder="e.g. john@example.com" 
+                      placeholder="e.g. john@example.com"
                       value={formData.email}
                       onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                       style={{
@@ -330,9 +330,9 @@ export default function ContactPage() {
                     <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 700, marginBottom: '0.4rem', color: '#cbd5e1' }}>
                       Phone (Optional)
                     </label>
-                    <input 
-                      type="tel" 
-                      placeholder="+1 (555) 000-0000" 
+                    <input
+                      type="tel"
+                      placeholder="+1 (555) 000-0000"
                       value={formData.phone}
                       onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                       style={{
@@ -378,9 +378,9 @@ export default function ContactPage() {
                   <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 700, marginBottom: '0.4rem', color: '#cbd5e1' }}>
                     Subject
                   </label>
-                  <input 
-                    type="text" 
-                    placeholder="Brief summary of your question" 
+                  <input
+                    type="text"
+                    placeholder="Brief summary of your question"
                     value={formData.subject}
                     onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
                     style={{
@@ -400,10 +400,10 @@ export default function ContactPage() {
                   <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 700, marginBottom: '0.4rem', color: '#cbd5e1' }}>
                     Your Message / Artwork Specifications *
                   </label>
-                  <textarea 
+                  <textarea
                     rows={4}
                     required
-                    placeholder="Please include details such as desired width/height, fabric type (piqué, twill, fleece, cap), or machine file format needed..." 
+                    placeholder="Please include details such as desired width/height, fabric type (piqué, twill, fleece, cap), or machine file format needed..."
                     value={formData.message}
                     onChange={(e) => setFormData({ ...formData, message: e.target.value })}
                     style={{
@@ -450,13 +450,13 @@ export default function ContactPage() {
 
           {/* Right Column: Information & Direct Actions */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-            
+
             {/* Quick Order Banner */}
-            <div style={{ 
-              background: 'linear-gradient(135deg, rgba(234, 88, 12, 0.12) 0%, rgba(249, 115, 22, 0.05) 100%)', 
-              border: '1px solid rgba(234, 88, 12, 0.3)', 
-              borderRadius: '20px', 
-              padding: '2rem' 
+            <div style={{
+              background: 'linear-gradient(135deg, rgba(234, 88, 12, 0.12) 0%, rgba(249, 115, 22, 0.05) 100%)',
+              border: '1px solid rgba(234, 88, 12, 0.3)',
+              borderRadius: '20px',
+              padding: '2rem'
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem' }}>
                 <Headphones size={24} style={{ color: '#ea580c' }} />
@@ -491,16 +491,16 @@ export default function ContactPage() {
             </div>
 
             {/* Studio Headquarters */}
-            <div style={{ 
-              background: 'rgba(255, 255, 255, 0.02)', 
-              border: '1px solid rgba(255, 255, 255, 0.08)', 
-              borderRadius: '20px', 
-              padding: '2rem' 
+            <div style={{
+              background: 'rgba(255, 255, 255, 0.02)',
+              border: '1px solid rgba(255, 255, 255, 0.08)',
+              borderRadius: '20px',
+              padding: '2rem'
             }}>
               <h3 style={{ fontSize: '1.2rem', fontWeight: 800, marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <MapPin size={20} style={{ color: '#ea580c' }} /> Office Headquarters
               </h3>
-              
+
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', color: '#cbd5e1', fontSize: '0.95rem' }}>
                 <div>
                   <div style={{ color: '#94a3b8', fontSize: '0.8rem', fontWeight: 700, textTransform: 'uppercase', marginBottom: '0.25rem' }}>Registered US Address</div>
@@ -522,10 +522,10 @@ export default function ContactPage() {
             </div>
 
             {/* FAQs Shortcut */}
-            <div style={{ 
-              background: 'rgba(255, 255, 255, 0.02)', 
-              border: '1px solid rgba(255, 255, 255, 0.08)', 
-              borderRadius: '20px', 
+            <div style={{
+              background: 'rgba(255, 255, 255, 0.02)',
+              border: '1px solid rgba(255, 255, 255, 0.08)',
+              borderRadius: '20px',
               padding: '1.75rem',
               display: 'flex',
               alignItems: 'center',
@@ -536,7 +536,7 @@ export default function ContactPage() {
                 <h4 style={{ fontSize: '1rem', fontWeight: 800, margin: '0 0 0.25rem 0' }}>Frequently Asked Questions</h4>
                 <p style={{ color: '#94a3b8', fontSize: '0.85rem', margin: 0 }}>Find immediate answers on thread counts, file formats &amp; turnaround.</p>
               </div>
-              <Link 
+              <Link
                 href="/faqs"
                 style={{
                   background: 'rgba(255, 255, 255, 0.08)',

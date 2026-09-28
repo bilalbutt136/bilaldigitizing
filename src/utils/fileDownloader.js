@@ -81,8 +81,8 @@ export async function downloadFileDirectly(url, filename = 'download') {
     .trim();
 
   // Ensure extension for PDFs
-  const isPdf = resolvedUrl.toLowerCase().includes('.pdf') || 
-                resolvedUrl.toLowerCase().includes('application/pdf') || 
+  const isPdf = resolvedUrl.toLowerCase().includes('.pdf') ||
+                resolvedUrl.toLowerCase().includes('application/pdf') ||
                 cleanFilename.toLowerCase().endsWith('.pdf');
 
   if (isPdf && !cleanFilename.toLowerCase().endsWith('.pdf')) {
@@ -259,7 +259,7 @@ export function openFileInNewTab(url, filename = '') {
         if (a.parentNode) a.parentNode.removeChild(a);
       }, 1000);
     }
-  } catch (openErr) {
+  } catch {
     window.location.href = previewProxyUrl;
   }
 }
@@ -357,7 +357,7 @@ export async function openPdfInNewTab(url, filename = 'document.pdf') {
       if (a.parentNode) a.parentNode.removeChild(a);
     }, 1000);
     return;
-  } catch (clickErr) {
+  } catch {
     const newTab = window.open(previewProxyUrl, '_blank');
     if (newTab) newTab.opener = null;
   }

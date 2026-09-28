@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Check, Sparkles, CheckCircle2, Clock, AlertCircle, Layers, Bell } from 'lucide-react';
+import { Check, Sparkles, CheckCircle2 as _CheckCircle2, Clock as _Clock, AlertCircle as _AlertCircle, Layers, Bell } from 'lucide-react';
 
 /**
  * Reusable Theme Preview Card Component
@@ -29,7 +29,7 @@ export default function ThemePreviewCard({
   const isDark = mode === 'dark';
 
   const primaryColor = tokens['--color-primary'] || themePreset.palette.primary;
-  const secondaryColor = tokens['--color-secondary'] || themePreset.palette.secondary;
+  const _secondaryColor = tokens['--color-secondary'] || themePreset.palette.secondary;
   const accentColor = tokens['--color-accent'] || themePreset.palette.accent;
   const surfaceColor = tokens['--color-surface'] || (isDark ? '#111827' : '#ffffff');
   const bgColor = tokens['--color-background'] || (isDark ? '#070f1a' : '#f8fafc');
@@ -47,7 +47,7 @@ export default function ThemePreviewCard({
         border: isSelected ? `2.5px solid ${primaryColor}` : '1.5px solid var(--border-color)',
         padding: '1.25rem',
         cursor: 'pointer',
-        boxShadow: isSelected 
+        boxShadow: isSelected
           ? `0 12px 30px -5px ${tokens['--color-primary-glow'] || 'rgba(0,0,0,0.15)'}, 0 0 0 1px ${primaryColor}`
           : 'var(--shadow-sm)',
         transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
@@ -101,7 +101,7 @@ export default function ThemePreviewCard({
               {themePreset.name}
             </h3>
           </div>
-          
+
           <span style={{
             fontSize: '0.72rem',
             fontWeight: 800,
@@ -143,7 +143,7 @@ export default function ThemePreviewCard({
         gap: '0.6rem',
         overflow: 'hidden'
       }}>
-        
+
         {/* Mini Header & Navigation */}
         <div style={{
           background: surfaceColor,

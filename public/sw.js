@@ -38,7 +38,7 @@ self.addEventListener('message', (event) => {
 self.addEventListener('fetch', (event) => {
   // Pass through non-GET, API requests, and Next.js chunks directly to network
   if (
-    event.request.method !== 'GET' || 
+    event.request.method !== 'GET' ||
     event.request.url.includes('/api/') ||
     event.request.url.includes('/_next/')
   ) {
@@ -107,10 +107,10 @@ self.addEventListener('push', (event) => {
     try {
       const parsed = event.data.json();
       data = { ...data, ...parsed };
-    } catch (e) {
+    } catch {
       try {
         data.body = event.data.text() || data.body;
-      } catch (err) {}
+      } catch {}
     }
   }
 

@@ -5,21 +5,21 @@ import { useAppState, formatOrderId, formatDesignTitle } from '../../context/Sta
 import { ArtworkLightboxModal } from '../common/ArtworkLightboxModal';
 import { AssignWorkerModal } from './AssignWorkerModal';
 import { ReviewWorkerUploadModal } from './ReviewWorkerUploadModal';
-import { 
-  CheckCircle, 
-  Search, 
+import {
+  CheckCircle,
+  Search,
   ChevronRight,
   ZoomIn,
   Clock,
   UploadCloud,
-  PackageCheck,
+  PackageCheck as _PackageCheck,
   PackageOpen,
-  Package,
-  FileText,
+  Package as _Package,
+  FileText as _FileText,
   RefreshCw,
-  Scissors,
+  Scissors as _Scissors,
   FileCheck,
-  UserCheck,
+  UserCheck as _UserCheck,
   Receipt,
   Mail,
   Bell,
@@ -28,7 +28,7 @@ import {
 } from 'lucide-react';
 import { CustomerInvoiceModal } from '../common/CustomerInvoiceModal';
 
-const getNextStatuses = (currentStatus) => {
+const _getNextStatuses = (currentStatus) => {
   const transitions = {
     'awaiting_payment': ['in_progress', 'cancelled'],
     'submitted': ['in_progress', 'digitizing', 'cancelled'],
@@ -60,11 +60,11 @@ const statusLabels = {
 };
 
 export const OrderManagementTable = () => {
-  const { 
-    orders = [], 
+  const {
+    orders = [],
     setSelectedOrderForDrawer,
-    ORDER_STATUSES,
-    updateOrderStatus,
+    ORDER_STATUSES: _ORDER_STATUSES,
+    updateOrderStatus: _updateOrderStatus,
     refreshOrders,
     approveOrderCancellation,
     rejectOrderCancellation,
@@ -90,8 +90,8 @@ export const OrderManagementTable = () => {
     if (!order) return;
     const cleanId = String(order.id).replace(/^#+/, '');
     const isPaid = String(order.payment_status || order.paymentStatus || '').toLowerCase() === 'paid';
-    const refundPrompt = isPaid 
-      ? `\n\nThis order was marked as PAID ($${parseFloat(order.price || 0).toFixed(2)}). An idempotent refund will be automatically credited to the customer's Studio Wallet.` 
+    const refundPrompt = isPaid
+      ? `\n\nThis order was marked as PAID ($${parseFloat(order.price || 0).toFixed(2)}). An idempotent refund will be automatically credited to the customer's Studio Wallet.`
       : '';
     if (!window.confirm(`Are you sure you want to APPROVE cancellation for Order #${cleanId}?${refundPrompt}`)) {
       return;
@@ -137,18 +137,20 @@ export const OrderManagementTable = () => {
       .catch(() => {});
   }, []);
 
-  const getWorkerName = (workerId) => {
+  const _getWorkerName = (workerId) => {
     if (!workerId) return null;
     const found = workersList.find(w => w.id === workerId);
     return found ? (found.name || found.email) : 'Assigned Worker';
   };
 
-  // Auto-refresh orders from Supabase on mount
+  // Auto-refresh orders from Supabase on mount.
+  /* oxlint-disable react-hooks/exhaustive-deps -- mount-only refresh; callback identity may change after the refresh it triggers */
   React.useEffect(() => {
     if (refreshOrders) {
       refreshOrders();
     }
   }, []);
+  /* oxlint-enable react-hooks/exhaustive-deps */
 
   const handleManualRefresh = async () => {
     if (isRefreshing) return;
@@ -176,9 +178,9 @@ export const OrderManagementTable = () => {
     const payStatusLower = (ord?.paymentStatus || ord?.payment_status || '').toLowerCase();
     const isPaidFlag = ord?.isPaid === true || ord?.paid === true;
 
-    return isPaidFlag || 
-           payStatusLower === 'paid' || 
-           payStatusLower === 'completed' || 
+    return isPaidFlag ||
+           payStatusLower === 'paid' ||
+           payStatusLower === 'completed' ||
            payStatusLower === 'verified' ||
            (statusLower === 'completed' && payStatusLower !== 'pending' && payStatusLower !== 'unpaid' && payStatusLower !== 'failed');
   };
@@ -187,7 +189,7 @@ export const OrderManagementTable = () => {
     const titleText = (ord?.title || ord?.description || '').toLowerCase();
     const idText = (ord?.id || '').toLowerCase();
     const clientNameText = (ord?.clientName || ord?.clientEmail || '').toLowerCase();
-    const matchesSearch = titleText.includes(searchTerm.toLowerCase()) || 
+    const matchesSearch = titleText.includes(searchTerm.toLowerCase()) ||
                           idText.includes(searchTerm.toLowerCase()) ||
                           clientNameText.includes(searchTerm.toLowerCase());
 
@@ -210,10 +212,10 @@ export const OrderManagementTable = () => {
 
     if (filterStatus === 'rush') {
       const isRush = Boolean(
-        ord?.is_rush || 
-        ord?.isRush || 
-        ord?.turnaround === 'rush' || 
-        ord?.turnaround === '2-4 hours' || 
+        ord?.is_rush ||
+        ord?.isRush ||
+        ord?.turnaround === 'rush' ||
+        ord?.turnaround === '2-4 hours' ||
         String(ord?.notes || '').toLowerCase().includes('rush') ||
         String(ord?.title || '').toLowerCase().includes('rush')
       );
@@ -244,11 +246,11 @@ export const OrderManagementTable = () => {
 
     if (isPaid) {
       return (
-        <span 
-          className="badge" 
-          style={{ 
-            background: '#dcfce7', 
-            color: '#15803d', 
+        <span
+          className="badge"
+          style={{
+            background: '#dcfce7',
+            color: '#15803d',
             border: '1px solid #bbf7d0',
             fontWeight: 800,
             fontSize: '0.725rem',
@@ -267,8 +269,8 @@ export const OrderManagementTable = () => {
     }
 
     return (
-      <span 
-        className="badge" 
+      <span
+        className="badge"
         onClick={async (e) => {
           e.stopPropagation();
           const cleanId = String(ord.id).trim().replace(/^#+/, '');
@@ -286,9 +288,9 @@ export const OrderManagementTable = () => {
             if (showToast) showToast('Could not verify gateway payment status.', 'error');
           }
         }}
-        style={{ 
-          background: '#fff7ed', 
-          color: '#c2410c', 
+        style={{
+          background: '#fff7ed',
+          color: '#c2410c',
           border: '1px solid #ffedd5',
           fontWeight: 800,
           fontSize: '0.725rem',
@@ -416,7 +418,7 @@ export const OrderManagementTable = () => {
 
   return (
     <div className="card" style={{ padding: '0.65rem 0.85rem', background: 'var(--bg-card)', borderRadius: '12px', border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-sm)' }}>
-      
+
       {/* Controls & Lifecycle Filter Tabs */}
       <div style={{
         display: 'flex',
@@ -426,7 +428,7 @@ export const OrderManagementTable = () => {
       }}>
         {/* Status Lifecycle Buttons */}
         <div style={{ display: 'flex', gap: '0.3rem', flexWrap: 'wrap', alignItems: 'center' }}>
-          <button 
+          <button
             className={`btn btn-sm ${filterStatus === 'all' ? 'btn-primary-orange' : 'btn-outline'}`}
             onClick={() => setFilterStatus('all')}
             style={{ fontWeight: 800, fontSize: '0.76rem', padding: '0.3rem 0.6rem', borderRadius: '6px' }}
@@ -434,13 +436,13 @@ export const OrderManagementTable = () => {
             All Orders ({orders.length})
           </button>
 
-          <button 
+          <button
             className={`btn btn-sm ${filterStatus === 'rush' ? 'btn-primary-orange' : 'btn-outline'}`}
             onClick={() => setFilterStatus(filterStatus === 'rush' ? 'all' : 'rush')}
-            style={{ 
-              fontWeight: 800, 
-              fontSize: '0.76rem', 
-              padding: '0.3rem 0.6rem', 
+            style={{
+              fontWeight: 800,
+              fontSize: '0.76rem',
+              padding: '0.3rem 0.6rem',
               borderRadius: '6px',
               background: filterStatus === 'rush' ? '#dc2626' : (orders.some(o => o.is_rush || o.isRush || o.turnaround === 'rush' || o.turnaround === '2-4 hours' || String(o.notes || '').toLowerCase().includes('rush') || String(o.title || '').toLowerCase().includes('rush')) ? '#fef2f2' : undefined),
               color: filterStatus === 'rush' ? '#ffffff' : (orders.some(o => o.is_rush || o.isRush || o.turnaround === 'rush' || o.turnaround === '2-4 hours' || String(o.notes || '').toLowerCase().includes('rush') || String(o.title || '').toLowerCase().includes('rush')) ? '#991b1b' : undefined),
@@ -450,7 +452,7 @@ export const OrderManagementTable = () => {
             Rush ({orders.filter(o => o.is_rush || o.isRush || o.turnaround === 'rush' || o.turnaround === '2-4 hours' || String(o.notes || '').toLowerCase().includes('rush') || String(o.title || '').toLowerCase().includes('rush')).length})
           </button>
 
-          <button 
+          <button
             className={`btn btn-sm ${filterStatus === 'submitted' ? 'btn-primary-orange' : 'btn-outline'}`}
             onClick={() => setFilterStatus('submitted')}
             style={{ fontWeight: 800, fontSize: '0.76rem', padding: '0.3rem 0.6rem', borderRadius: '6px' }}
@@ -458,13 +460,13 @@ export const OrderManagementTable = () => {
             New ({orders.filter(o => o.status === 'submitted' || !o.status).length})
           </button>
 
-          <button 
+          <button
             className={`btn btn-sm ${filterStatus === 'worker_review' ? 'btn-primary-orange' : 'btn-outline'}`}
             onClick={() => setFilterStatus('worker_review')}
-            style={{ 
-              fontWeight: 800, 
-              fontSize: '0.76rem', 
-              padding: '0.3rem 0.6rem', 
+            style={{
+              fontWeight: 800,
+              fontSize: '0.76rem',
+              padding: '0.3rem 0.6rem',
               borderRadius: '6px',
               background: filterStatus === 'worker_review' ? '#2563eb' : orders.some(o => o.worker_status === 'Review Pending' || o.workerStatus === 'Review Pending') ? '#eff6ff' : undefined,
               color: filterStatus === 'worker_review' ? '#ffffff' : orders.some(o => o.worker_status === 'Review Pending' || o.workerStatus === 'Review Pending') ? '#2563eb' : undefined,
@@ -474,7 +476,7 @@ export const OrderManagementTable = () => {
             Worker Reviews ({orders.filter(o => o.worker_status === 'Review Pending' || o.workerStatus === 'Review Pending').length})
           </button>
 
-          <button 
+          <button
             className={`btn btn-sm ${filterStatus === 'digitizing' ? 'btn-primary-orange' : 'btn-outline'}`}
             onClick={() => setFilterStatus('digitizing')}
             style={{ fontWeight: 800, fontSize: '0.76rem', padding: '0.3rem 0.6rem', borderRadius: '6px' }}
@@ -482,7 +484,7 @@ export const OrderManagementTable = () => {
             In Progress ({orders.filter(o => o.status === 'digitizing' || o.status === 'assigned').length})
           </button>
 
-          <button 
+          <button
             className={`btn btn-sm ${filterStatus === 'revision' ? 'btn-primary-orange' : 'btn-outline'}`}
             onClick={() => setFilterStatus('revision')}
             style={{ fontWeight: 800, fontSize: '0.76rem', padding: '0.3rem 0.6rem', borderRadius: '6px' }}
@@ -490,13 +492,13 @@ export const OrderManagementTable = () => {
             In Revision ({orders.filter(o => o.status === 'revision').length})
           </button>
 
-          <button 
+          <button
             className={`btn btn-sm ${filterStatus === 'cancellation_requested' ? 'btn-primary-orange' : 'btn-outline'}`}
             onClick={() => setFilterStatus('cancellation_requested')}
-            style={{ 
-              fontWeight: 800, 
-              fontSize: '0.76rem', 
-              padding: '0.3rem 0.6rem', 
+            style={{
+              fontWeight: 800,
+              fontSize: '0.76rem',
+              padding: '0.3rem 0.6rem',
               borderRadius: '6px',
               background: filterStatus === 'cancellation_requested' ? '#f59e0b' : orders.some(o => o.status === 'cancellation_requested') ? '#fef3c7' : undefined,
               color: filterStatus === 'cancellation_requested' ? '#ffffff' : orders.some(o => o.status === 'cancellation_requested') ? '#b45309' : undefined,
@@ -506,7 +508,7 @@ export const OrderManagementTable = () => {
             ⚠️ Cancellations ({orders.filter(o => o.status === 'cancellation_requested').length})
           </button>
 
-          <button 
+          <button
             className={`btn btn-sm ${filterStatus === 'delivered' ? 'btn-primary-orange' : 'btn-outline'}`}
             onClick={() => setFilterStatus('delivered')}
             style={{ fontWeight: 800, fontSize: '0.76rem', padding: '0.3rem 0.6rem', borderRadius: '6px' }}
@@ -514,7 +516,7 @@ export const OrderManagementTable = () => {
             Delivered ({orders.filter(o => o.status === 'delivered' || o.status === 'qc').length})
           </button>
 
-          <button 
+          <button
             className={`btn btn-sm ${filterStatus === 'completed' ? 'btn-primary-orange' : 'btn-outline'}`}
             onClick={() => setFilterStatus('completed')}
             style={{ fontWeight: 800, fontSize: '0.76rem', padding: '0.3rem 0.6rem', borderRadius: '6px' }}
@@ -522,7 +524,7 @@ export const OrderManagementTable = () => {
             Completed ({orders.filter(o => o.status === 'completed').length})
           </button>
 
-          <button 
+          <button
             className={`btn btn-sm ${filterStatus === 'cancelled' ? 'btn-primary-orange' : 'btn-outline'}`}
             onClick={() => setFilterStatus('cancelled')}
             style={{ fontWeight: 800, fontSize: '0.76rem', padding: '0.3rem 0.6rem', borderRadius: '6px' }}
@@ -532,11 +534,11 @@ export const OrderManagementTable = () => {
         </div>
 
         {/* Category, Payment & Search Controls (Strict Single Row) */}
-        <div style={{ 
-          display: 'flex', 
-          gap: '0.5rem', 
-          alignItems: 'center', 
-          width: '100%', 
+        <div style={{
+          display: 'flex',
+          gap: '0.5rem',
+          alignItems: 'center',
+          width: '100%',
           flexWrap: 'nowrap'
         }}>
           {/* Category Dropdown Filter */}
@@ -544,13 +546,13 @@ export const OrderManagementTable = () => {
             className="form-control"
             value={filterCategory}
             onChange={(e) => setFilterCategory(e.target.value)}
-            style={{ 
-              minWidth: '135px', 
+            style={{
+              minWidth: '135px',
               maxWidth: '160px',
-              flex: '0 0 auto', 
-              fontWeight: 800, 
-              fontSize: '0.78rem', 
-              background: 'var(--bg-surface)', 
+              flex: '0 0 auto',
+              fontWeight: 800,
+              fontSize: '0.78rem',
+              background: 'var(--bg-surface)',
               color: 'var(--text-main)',
               height: '32px',
               padding: '0 0.5rem',
@@ -568,13 +570,13 @@ export const OrderManagementTable = () => {
             className="form-control"
             value={filterPayment}
             onChange={(e) => setFilterPayment(e.target.value)}
-            style={{ 
-              minWidth: '130px', 
+            style={{
+              minWidth: '130px',
               maxWidth: '150px',
-              flex: '0 0 auto', 
-              fontWeight: 800, 
-              fontSize: '0.78rem', 
-              background: 'var(--bg-surface)', 
+              flex: '0 0 auto',
+              fontWeight: 800,
+              fontSize: '0.78rem',
+              background: 'var(--bg-surface)',
               color: 'var(--text-main)',
               height: '32px',
               padding: '0 0.5rem',
@@ -589,16 +591,16 @@ export const OrderManagementTable = () => {
           {/* Search Input */}
           <div style={{ position: 'relative', flex: '1 1 auto', minWidth: 0 }}>
             <Search size={14} style={{ position: 'absolute', left: '9px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-light)', pointerEvents: 'none' }} />
-            <input 
-              type="text" 
+            <input
+              type="text"
               className="form-control"
               placeholder="Search order ID, customer name, email, service..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              style={{ 
-                paddingLeft: '2rem', 
-                fontSize: '0.78rem', 
-                width: '100%', 
+              style={{
+                paddingLeft: '2rem',
+                fontSize: '0.78rem',
+                width: '100%',
                 height: '32px',
                 borderRadius: '6px'
               }}
@@ -670,12 +672,12 @@ export const OrderManagementTable = () => {
       )}
 
       {/* Orders Table with Dedicated Scroll Viewport */}
-      <div 
+      <div
         className="table-responsive"
-        style={{ 
-          maxHeight: '680px', 
-          overflowY: 'auto', 
-          overflowX: 'auto', 
+        style={{
+          maxHeight: '680px',
+          overflowY: 'auto',
+          overflowX: 'auto',
           border: '1px solid var(--border-color)',
           borderRadius: '10px',
           background: 'var(--bg-card)',
@@ -685,8 +687,8 @@ export const OrderManagementTable = () => {
       >
         <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.825rem' }}>
           <thead style={{ position: 'sticky', top: 0, zIndex: 10, background: 'var(--bg-surface)', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
-            <tr style={{ 
-              borderBottom: '2px solid var(--border-color)', 
+            <tr style={{
+              borderBottom: '2px solid var(--border-color)',
               color: 'var(--text-main)',
               fontSize: '0.72rem',
               fontWeight: 800,
@@ -718,33 +720,33 @@ export const OrderManagementTable = () => {
               </tr>
             ) : (
               paginatedOrders.map((ord) => {
-                const artworkImg = 
-                  ord.artwork_url || 
-                  ord.artworkUrl || 
-                  ord.image_url || 
-                  ord.logo || 
-                  ord.file_url || 
-                  ord.uploadedFiles?.[0]?.url || 
-                  ord.uploadedFiles?.[0]?.public_url || 
-                  ord.placementItems?.[0]?.files?.[0]?.url || 
-                  ord.patchItems?.[0]?.files?.[0]?.url || 
-                  ord.vectorItems?.[0]?.files?.[0]?.url || 
-                  ord.order_files?.[0]?.public_url || 
-                  ord.order_files?.[0]?.file_url || 
-                  (ord.file_path && ord.file_path.startsWith('http') ? ord.file_path : null) || 
+                const artworkImg =
+                  ord.artwork_url ||
+                  ord.artworkUrl ||
+                  ord.image_url ||
+                  ord.logo ||
+                  ord.file_url ||
+                  ord.uploadedFiles?.[0]?.url ||
+                  ord.uploadedFiles?.[0]?.public_url ||
+                  ord.placementItems?.[0]?.files?.[0]?.url ||
+                  ord.patchItems?.[0]?.files?.[0]?.url ||
+                  ord.vectorItems?.[0]?.files?.[0]?.url ||
+                  ord.order_files?.[0]?.public_url ||
+                  ord.order_files?.[0]?.file_url ||
+                  (ord.file_path && ord.file_path.startsWith('http') ? ord.file_path : null) ||
                   'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=120&q=80';
 
                 const thumbnailSrc = (artworkImg.includes('cloudinary.com') && artworkImg.toLowerCase().includes('.pdf'))
                   ? artworkImg.replace(/\.pdf(\?.*)?$/i, '.jpg$1')
                   : artworkImg;
-                
+
                 const isReviewPending = ord.worker_status === 'Review Pending' || ord.workerStatus === 'Review Pending';
-                
+
                 return (
-                  <tr 
+                  <tr
                     key={ord.id}
-                    style={{ 
-                      borderBottom: '1px solid var(--border-color)', 
+                    style={{
+                      borderBottom: '1px solid var(--border-color)',
                       transition: 'all 0.15s ease',
                       backgroundColor: isReviewPending ? 'rgba(37, 99, 235, 0.05)' : undefined,
                       borderLeft: isReviewPending ? '4px solid #2563eb' : '4px solid transparent'
@@ -806,12 +808,12 @@ export const OrderManagementTable = () => {
                           {getStatusBadge(ord.status)}
                         </div>
                         {isReviewPending && (
-                          <div style={{ 
-                            display: 'inline-flex', 
-                            alignItems: 'center', 
+                          <div style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
                             gap: '0.25rem',
-                            background: '#eff6ff', 
-                            color: '#1d4ed8', 
+                            background: '#eff6ff',
+                            color: '#1d4ed8',
                             border: '1px solid #bfdbfe',
                             borderRadius: '4px',
                             padding: '0.15rem 0.35rem',
@@ -826,26 +828,26 @@ export const OrderManagementTable = () => {
 
                     {/* 7. ARTWORK */}
                     <td style={{ padding: '0.5rem 0.75rem', textAlign: 'center' }}>
-                      <div 
+                      <div
                         style={{ position: 'relative', display: 'inline-block', cursor: 'pointer' }}
                         onClick={() => setLightboxOrder({ ...ord, artwork_url: artworkImg, artworkUrl: artworkImg })}
                         title="Inspect full resolution artwork"
                       >
-                        <img 
-                          src={thumbnailSrc} 
-                          alt={ord.title} 
+                        <img
+                          src={thumbnailSrc}
+                          alt={ord.title}
                           loading="lazy"
                           decoding="async"
                           onError={(e) => {
                             e.currentTarget.onerror = null;
                             e.currentTarget.src = 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=120&q=80';
                           }}
-                          style={{ 
-                            width: '38px', 
-                            height: '38px', 
-                            borderRadius: '6px', 
-                            objectFit: 'cover', 
-                            border: '1.5px solid var(--orange-500)', 
+                          style={{
+                            width: '38px',
+                            height: '38px',
+                            borderRadius: '6px',
+                            objectFit: 'cover',
+                            border: '1.5px solid var(--orange-500)',
                             background: '#f1f5f9',
                             boxShadow: '0 1px 4px rgba(0,0,0,0.06)'
                           }}
@@ -875,12 +877,12 @@ export const OrderManagementTable = () => {
                         type="button"
                         className="btn btn-outline btn-sm"
                         onClick={() => setInvoiceModalOrder(ord)}
-                        style={{ 
-                          fontWeight: 800, 
-                          fontSize: '0.74rem', 
-                          whiteSpace: 'nowrap', 
-                          gap: '0.25rem', 
-                          padding: '0.28rem 0.6rem', 
+                        style={{
+                          fontWeight: 800,
+                          fontSize: '0.74rem',
+                          whiteSpace: 'nowrap',
+                          gap: '0.25rem',
+                          padding: '0.28rem 0.6rem',
                           borderRadius: '6px',
                           display: 'inline-flex',
                           alignItems: 'center'
@@ -895,14 +897,14 @@ export const OrderManagementTable = () => {
                     <td style={{ padding: '0.5rem 0.75rem', textAlign: 'right' }}>
                       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.25rem' }}>
                         {(ord.worker_status === 'Review Pending' || ord.workerStatus === 'Review Pending') && (
-                          <button 
+                          <button
                             type="button"
                             onClick={() => setReviewOrder(ord)}
-                            style={{ 
-                              fontWeight: 800, 
-                              fontSize: '0.74rem', 
-                              whiteSpace: 'nowrap', 
-                              gap: '0.25rem', 
+                            style={{
+                              fontWeight: 800,
+                              fontSize: '0.74rem',
+                              whiteSpace: 'nowrap',
+                              gap: '0.25rem',
                               padding: '0.28rem 0.6rem',
                               background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
                               color: '#ffffff',
@@ -920,18 +922,18 @@ export const OrderManagementTable = () => {
                         )}
 
                         {ord.status === 'cancellation_requested' && (
-                          <button 
+                          <button
                             type="button"
                             onClick={() => {
                               setCancellationReviewOrder(ord);
                               setShowRejectForm(false);
                               setRejectionReasonText('');
                             }}
-                            style={{ 
-                              fontWeight: 800, 
-                              fontSize: '0.74rem', 
-                              whiteSpace: 'nowrap', 
-                              gap: '0.25rem', 
+                            style={{
+                              fontWeight: 800,
+                              fontSize: '0.74rem',
+                              whiteSpace: 'nowrap',
+                              gap: '0.25rem',
                               padding: '0.28rem 0.6rem',
                               background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
                               color: '#ffffff',
@@ -949,14 +951,14 @@ export const OrderManagementTable = () => {
                         )}
 
                         {ord.status !== 'completed' && ord.status !== 'cancelled' && ord.status !== 'cancellation_requested' && (
-                          <button 
+                          <button
                             type="button"
                             onClick={() => setSelectedOrderForDrawer(ord)}
-                            style={{ 
-                              fontWeight: 800, 
-                              fontSize: '0.74rem', 
-                              whiteSpace: 'nowrap', 
-                              gap: '0.25rem', 
+                            style={{
+                              fontWeight: 800,
+                              fontSize: '0.74rem',
+                              whiteSpace: 'nowrap',
+                              gap: '0.25rem',
                               padding: '0.28rem 0.6rem',
                               background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
                               color: '#ffffff',
@@ -973,7 +975,7 @@ export const OrderManagementTable = () => {
                           </button>
                         )}
 
-                        <button 
+                        <button
                           className="btn btn-primary-orange btn-sm"
                           onClick={() => setSelectedOrderForDrawer(ord)}
                           style={{ fontWeight: 800, fontSize: '0.74rem', whiteSpace: 'nowrap', gap: '0.25rem', padding: '0.28rem 0.6rem', borderRadius: '6px' }}
@@ -1028,9 +1030,9 @@ export const OrderManagementTable = () => {
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-              <button 
+              <button
                 type="button"
-                onClick={() => setCurrentPage(1)} 
+                onClick={() => setCurrentPage(1)}
                 disabled={validCurrentPage === 1}
                 className="btn btn-outline btn-sm"
                 style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem', opacity: validCurrentPage === 1 ? 0.4 : 1, cursor: validCurrentPage === 1 ? 'not-allowed' : 'pointer' }}
@@ -1038,9 +1040,9 @@ export const OrderManagementTable = () => {
               >
                 «
               </button>
-              <button 
+              <button
                 type="button"
-                onClick={() => setCurrentPage(p => Math.max(1, p - 1))} 
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                 disabled={validCurrentPage === 1}
                 className="btn btn-outline btn-sm"
                 style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem', opacity: validCurrentPage === 1 ? 0.4 : 1, cursor: validCurrentPage === 1 ? 'not-allowed' : 'pointer' }}
@@ -1053,9 +1055,9 @@ export const OrderManagementTable = () => {
                 Page {validCurrentPage} of {totalPages}
               </span>
 
-              <button 
+              <button
                 type="button"
-                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} 
+                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                 disabled={validCurrentPage >= totalPages}
                 className="btn btn-outline btn-sm"
                 style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem', opacity: validCurrentPage >= totalPages ? 0.4 : 1, cursor: validCurrentPage >= totalPages ? 'not-allowed' : 'pointer' }}
@@ -1063,9 +1065,9 @@ export const OrderManagementTable = () => {
               >
                 Next ›
               </button>
-              <button 
+              <button
                 type="button"
-                onClick={() => setCurrentPage(totalPages)} 
+                onClick={() => setCurrentPage(totalPages)}
                 disabled={validCurrentPage >= totalPages}
                 className="btn btn-outline btn-sm"
                 style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem', opacity: validCurrentPage >= totalPages ? 0.4 : 1, cursor: validCurrentPage >= totalPages ? 'not-allowed' : 'pointer' }}
@@ -1080,9 +1082,9 @@ export const OrderManagementTable = () => {
 
       {/* Artwork Inspection Lightbox Modal */}
       {lightboxOrder && (
-        <ArtworkLightboxModal 
-          order={lightboxOrder} 
-          onClose={() => setLightboxOrder(null)} 
+        <ArtworkLightboxModal
+          order={lightboxOrder}
+          onClose={() => setLightboxOrder(null)}
         />
       )}
 

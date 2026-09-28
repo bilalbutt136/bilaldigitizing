@@ -47,7 +47,7 @@ export async function GET() {
       settings.forEach(s => {
         try {
           formattedSettings[s.key] = typeof s.value === 'string' ? JSON.parse(s.value) : s.value;
-        } catch(e) {
+        } catch {
           formattedSettings[s.key] = s.value;
         }
       });

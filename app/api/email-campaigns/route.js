@@ -3,7 +3,7 @@ import { Resend } from 'resend';
 import nodemailer from 'nodemailer';
 import { getServerAuthUser } from '../../../src/lib/supabase/serverAuth';
 import { createAdminClient } from '../../../src/lib/supabase/admin';
-import { checkRateLimit, getClientIp, getRateLimitHeaders } from '../../../src/lib/rateLimit';
+import { checkDistributedRateLimit, getClientIp, getRateLimitHeaders } from '../../../src/lib/rateLimit';
 
 export const dynamic = 'force-dynamic';
 
@@ -72,7 +72,7 @@ export function generateCampaignHtml({
     <tr>
       <td align="center">
         <table role="presentation" width="100%" style="max-width: 600px; background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 14px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.05);">
-          
+
           <!-- Header -->
           <tr>
             <td style="background: #090d16; padding: 26px 30px; text-align: center; border-bottom: 3px solid #ea580c;">
@@ -235,11 +235,11 @@ export async function GET(req) {
 export async function POST(req) {
   try {
     const ip = getClientIp(req);
-    const rateLimit = checkRateLimit(`email-campaign:${ip}`, 10, 60000);
+    const rateLimit = await checkDistributedRateLimit(`email-campaign:${ip}`, 10, 60000);
     if (!rateLimit.success) {
       return NextResponse.json(
         { error: 'Too many requests. Please wait a moment before sending another campaign.' },
-        { status: 429, headers: getRateLimitHeaders(rateLimit) }
+        { status: rateLimit.unavailable ? 503 : 429, headers: getRateLimitHeaders(rateLimit) }
       );
     }
 

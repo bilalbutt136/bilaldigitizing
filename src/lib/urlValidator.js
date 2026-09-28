@@ -1,3 +1,6 @@
+import dns from 'node:dns/promises';
+import net from 'node:net';
+
 /**
  * SSRF Protection & URL Sanitization Utility
  * Validates URLs before server-side fetching to protect against SSRF and private network probing.
@@ -37,7 +40,6 @@ const TRUSTED_DOMAINS = [
   'api.cloudinary.com',
   'bdigitizing.vercel.app',
   'bilaldigitizing.vercel.app',
-  'vercel.app',
 ];
 
 /**
@@ -142,4 +144,113 @@ export function validateSafeUrl(rawUrl) {
   }
 
   return { valid: true, sanitizedUrl: parsed.toString() };
+}
+
+
+function isPrivateIpAddress(address) {
+  if (!address || !net.isIP(address)) return false;
+
+  if (net.isIPv4(address)) {
+    const parts = address.split('.').map(Number);
+    const [a, b] = parts;
+    return (
+      a === 10 ||
+      a === 127 ||
+      a === 0 ||
+      (a === 169 && b === 254) ||
+      (a === 172 && b >= 16 && b <= 31) ||
+      (a === 192 && b === 168) ||
+      (a === 100 && b >= 64 && b <= 127) ||
+      (a === 198 && (b === 18 || b === 19)) ||
+      (a >= 224)
+    );
+  }
+
+  const normalized = address.toLowerCase();
+  return (
+    normalized === '::' ||
+    normalized === '::1' ||
+    normalized.startsWith('fc') ||
+    normalized.startsWith('fd') ||
+    normalized.startsWith('fe8') ||
+    normalized.startsWith('fe9') ||
+    normalized.startsWith('fea') ||
+    normalized.startsWith('feb')
+  );
+}
+
+/**
+ * Re-validates a remote URL against DNS resolution to prevent rebinding/private-network targets.
+ */
+export async function validateSafeRemoteUrl(rawUrl) {
+  const basic = validateSafeUrl(rawUrl);
+  if (!basic.valid) return basic;
+
+  let parsed;
+  try {
+    parsed = new URL(basic.sanitizedUrl);
+  } catch {
+    return { valid: false, error: 'Invalid URL format.' };
+  }
+
+  if (parsed.protocol !== 'https:') {
+    return { valid: false, error: 'Remote asset fetching requires HTTPS.' };
+  }
+
+  const hostname = parsed.hostname.toLowerCase();
+  if (net.isIP(hostname)) {
+    if (isPrivateIpAddress(hostname)) {
+      return { valid: false, error: 'Target host resolves to a restricted network address.' };
+    }
+    return basic;
+  }
+
+  try {
+    const records = await dns.lookup(hostname, { all: true, verbatim: true });
+    if (!records.length || records.some(record => isPrivateIpAddress(record.address))) {
+      return { valid: false, error: 'Target host resolves to a restricted network address.' };
+    }
+  } catch {
+    return { valid: false, error: 'Target host could not be safely resolved.' };
+  }
+
+  return basic;
+}
+
+/**
+ * Fetches a trusted remote asset while validating every redirect target.
+ */
+export async function safeFetchRemote(rawUrl, options = {}, maxRedirects = 3) {
+  let currentUrl = rawUrl;
+
+  for (let redirectCount = 0; redirectCount <= maxRedirects; redirectCount += 1) {
+    const validation = await validateSafeRemoteUrl(currentUrl);
+    if (!validation.valid) {
+      const error = new Error(validation.error || 'Unsafe remote URL.');
+      error.code = 'UNSAFE_REMOTE_URL';
+      throw error;
+    }
+
+    const response = await fetch(validation.sanitizedUrl, {
+      ...options,
+      redirect: 'manual'
+    });
+
+    if (![301, 302, 303, 307, 308].includes(response.status)) {
+      return response;
+    }
+
+    const location = response.headers.get('location');
+    if (!location) {
+      throw new Error('Remote server returned an invalid redirect.');
+    }
+
+    if (redirectCount === maxRedirects) {
+      throw new Error('Remote asset exceeded the redirect limit.');
+    }
+
+    currentUrl = new URL(location, validation.sanitizedUrl).toString();
+  }
+
+  throw new Error('Remote asset fetch failed.');
 }

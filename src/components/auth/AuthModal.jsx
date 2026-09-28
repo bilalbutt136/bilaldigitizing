@@ -3,12 +3,12 @@
 import React, { useState } from 'react';
 import { useNavigate } from '../../utils/navigation';
 import { useAppState } from '../../context/StateContext';
-import { 
-  X, 
-  Lock, 
-  Mail, 
-  User, 
-  ArrowRight, 
+import {
+  X,
+  Lock,
+  Mail,
+  User,
+  ArrowRight,
   CheckCircle2,
   AlertCircle,
   Loader2
@@ -21,8 +21,8 @@ const GOOGLE_CLIENT_ID = (process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '421520521
 
 export const AuthModal = ({ isStandalonePage = false, initialMode = null }) => {
   const navigate = useNavigate();
-  const { 
-    isAuthModalOpen, 
+  const {
+    isAuthModalOpen,
     setIsAuthModalOpen,
     authModalMode,
     setAuthModalMode,
@@ -36,13 +36,13 @@ export const AuthModal = ({ isStandalonePage = false, initialMode = null }) => {
     showToast,
     openOrderWizard,
     orderWizardInitialData,
-    authModalTarget,
+    authModalTarget: _authModalTarget,
     setActiveCustomerTab
   } = useAppState();
 
   const isUserLoggedIn = Boolean(
-    isAuthenticated || 
-    authUser?.email || 
+    isAuthenticated ||
+    authUser?.email ||
     (typeof window !== 'undefined' && (() => {
       try {
         const saved = localStorage.getItem('bdigi_auth_user');
@@ -59,8 +59,8 @@ export const AuthModal = ({ isStandalonePage = false, initialMode = null }) => {
         const urlParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
         const redirectParam = urlParams?.get('redirect');
         const defaultRoute = (authUser?.role === 'admin') ? '/admin-portal' : '/client-portal';
-        const targetRoute = (redirectParam && redirectParam.startsWith('/') && !redirectParam.startsWith('/login')) 
-          ? redirectParam 
+        const targetRoute = (redirectParam && redirectParam.startsWith('/') && !redirectParam.startsWith('/login'))
+          ? redirectParam
           : defaultRoute;
 
         if (typeof window !== 'undefined') {
@@ -111,7 +111,7 @@ export const AuthModal = ({ isStandalonePage = false, initialMode = null }) => {
     if (isStandalonePage) {
       navigate('/');
     } else if (typeof window !== 'undefined') {
-      const isAuthPath = ['/login', '/signup', '/reset-password'].some(p => 
+      const isAuthPath = ['/login', '/signup', '/reset-password'].some(p =>
         window.location.pathname === p || window.location.pathname.startsWith(`${p}/`)
       );
       if (isAuthPath) {
@@ -147,7 +147,7 @@ export const AuthModal = ({ isStandalonePage = false, initialMode = null }) => {
       }
     };
     window.addEventListener('keydown', handleKeyDown);
-    
+
     let originalOverflow = '';
     if (!isStandalonePage) {
       originalOverflow = document.body.style.overflow;
@@ -160,7 +160,7 @@ export const AuthModal = ({ isStandalonePage = false, initialMode = null }) => {
         document.body.style.overflow = originalOverflow || 'unset';
       }
     };
-  }, [isAuthModalOpen, isStandalonePage, legalModalType, errorModalText]);
+  }, [isAuthModalOpen, isStandalonePage, legalModalType, errorModalText, handleSafeClose]);
 
   if (!isStandalonePage && (!isAuthModalOpen || (isUserLoggedIn && authModalMode !== 'update_password'))) return null;
 
@@ -239,7 +239,7 @@ export const AuthModal = ({ isStandalonePage = false, initialMode = null }) => {
       }
 
       setIsAuthModalOpen(false);
-      
+
       // Track Login Event
       import('../common/MetaPixelTracker').then(({ trackMetaEvent }) => {
         const userRole = result?.role === 'admin'
@@ -402,8 +402,8 @@ export const AuthModal = ({ isStandalonePage = false, initialMode = null }) => {
 
   return (
     <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
-      <div 
-        className={isStandalonePage ? "auth-standalone-page" : "modal-overlay"} 
+      <div
+        className={isStandalonePage ? "auth-standalone-page" : "modal-overlay"}
         onClick={isStandalonePage ? undefined : handleSafeClose}
         style={isStandalonePage ? {
           minHeight: 'calc(100vh - 120px)',
@@ -422,14 +422,14 @@ export const AuthModal = ({ isStandalonePage = false, initialMode = null }) => {
           padding: '1rem'
         }}
       >
-      <div 
-        className="modal-content auth-modal-dialog" 
+      <div
+        className="modal-content auth-modal-dialog"
         onClick={(e) => e.stopPropagation()}
-        style={{ 
-          maxWidth: '920px', 
+        style={{
+          maxWidth: '920px',
           width: '100%',
           maxHeight: isStandalonePage ? 'none' : 'calc(100vh - 40px)',
-          borderRadius: '24px', 
+          borderRadius: '24px',
           overflow: 'hidden',
           boxShadow: isStandalonePage ? '0 20px 60px rgba(15, 23, 42, 0.12)' : '0 25px 70px rgba(15, 23, 42, 0.35)',
           border: '1px solid var(--color-border)',
@@ -466,9 +466,9 @@ export const AuthModal = ({ isStandalonePage = false, initialMode = null }) => {
                   {legalModalType === 'terms' ? 'Terms of Service & Studio Agreement' : 'Privacy Policy & Data Protection Standards'}
                 </h3>
               </div>
-              <button 
-                type="button" 
-                onClick={() => setLegalModalType(null)} 
+              <button
+                type="button"
+                onClick={() => setLegalModalType(null)}
                 style={{ background: 'var(--color-subtle, #f1f5f9)', border: 'none', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--color-text-primary)', transition: 'all 0.15s ease' }}
                 onMouseOver={(e) => { e.currentTarget.style.background = 'var(--color-primary, #ff7a00)'; e.currentTarget.style.color = '#ffffff'; }}
                 onMouseOut={(e) => { e.currentTarget.style.background = 'var(--color-subtle, #f1f5f9)'; e.currentTarget.style.color = 'var(--color-text-primary)'; }}
@@ -521,10 +521,10 @@ export const AuthModal = ({ isStandalonePage = false, initialMode = null }) => {
             </div>
 
             <div style={{ marginTop: '1rem', textAlign: 'right', borderTop: '1px solid var(--border-color)', paddingTop: '0.75rem' }}>
-              <button 
-                type="button" 
-                className="btn btn-primary-orange btn-sm" 
-                onClick={() => setLegalModalType(null)} 
+              <button
+                type="button"
+                className="btn btn-primary-orange btn-sm"
+                onClick={() => setLegalModalType(null)}
                 style={{ borderRadius: 'var(--radius-md)', fontWeight: 800, padding: '0.5rem 1.25rem' }}
               >
                 Close & Return to Form
@@ -534,16 +534,16 @@ export const AuthModal = ({ isStandalonePage = false, initialMode = null }) => {
         )}
 
         {/* Floating Close Button */}
-        <button 
+        <button
           type="button"
           onClick={handleSafeClose}
-          style={{ 
+          style={{
             position: 'absolute',
             top: '1.25rem',
             right: '1.25rem',
-            background: 'var(--color-subtle, #f1f5f9)', 
-            border: '1px solid var(--color-border)', 
-            color: 'var(--color-text-primary, var(--navy-900))', 
+            background: 'var(--color-subtle, #f1f5f9)',
+            border: '1px solid var(--color-border)',
+            color: 'var(--color-text-primary, var(--navy-900))',
             width: '36px',
             height: '36px',
             borderRadius: '50%',
@@ -563,7 +563,7 @@ export const AuthModal = ({ isStandalonePage = false, initialMode = null }) => {
         </button>
 
         {/* LEFT PANEL: BRANDED VALUE PROPOSITION (EMBROIDERY, VECTOR ART & CUSTOM PATCHES) */}
-        <div 
+        <div
           className="auth-split-left-panel"
           style={{
             background: 'linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%)',
@@ -600,7 +600,7 @@ export const AuthModal = ({ isStandalonePage = false, initialMode = null }) => {
             <h1 style={{ fontSize: '1.65rem', fontWeight: 800, color: '#ffffff', lineHeight: 1.25, letterSpacing: '-0.02em', margin: 0 }}>
               Pro Embroidery, Vector Art & Custom Patches
             </h1>
-            
+
             <p style={{ color: '#cbd5e1', fontSize: '0.875rem', lineHeight: 1.6, margin: 0 }}>
               Your all-in-one studio for premium digital assets and production-ready files.
             </p>
@@ -628,7 +628,7 @@ export const AuthModal = ({ isStandalonePage = false, initialMode = null }) => {
         </div>
         {/* RIGHT PANEL: AUTHENTICATION FORMS (COMPACT ZERO-SCROLL FITTING) */}
         <div style={{ padding: 'clamp(1rem, 3vw, 1.75rem)', overflowY: 'auto', maxHeight: 'calc(100vh - 40px)', boxSizing: 'border-box' }}>
-          
+
           {/* Header section with title and quick toggle */}
           <div style={{ marginBottom: '0.9rem' }}>
             <h2 style={{ fontSize: '1.5rem', fontWeight: 900, color: 'var(--navy-900)', marginBottom: '0.15rem', letterSpacing: '-0.01em' }}>
@@ -665,7 +665,7 @@ export const AuthModal = ({ isStandalonePage = false, initialMode = null }) => {
           {/* MODE 2: CLIENT SIGNUP FORM (TOP SECTION MANUAL FORM FIRST!) */}
           {authModalMode === 'signup' && (
             <form onSubmit={handleSignupSubmit} name="signupForm" method="post">
-              
+
               {/* 1. Full Name */}
               <div className="form-group" style={{ marginBottom: '0.6rem' }}>
                 <label style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--navy-900)', marginBottom: '0.2rem', display: 'block' }}>
@@ -673,8 +673,8 @@ export const AuthModal = ({ isStandalonePage = false, initialMode = null }) => {
                 </label>
                 <div style={{ position: 'relative' }}>
                   <User size={15} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-light)' }} />
-                  <input 
-                    type="text" 
+                  <input
+                    type="text"
                     name="name"
                     autoComplete="name"
                     className="form-control"
@@ -694,8 +694,8 @@ export const AuthModal = ({ isStandalonePage = false, initialMode = null }) => {
                 </label>
                 <div style={{ position: 'relative' }}>
                   <Mail size={15} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-light)' }} />
-                  <input 
-                    type="email" 
+                  <input
+                    type="email"
                     name="email"
                     autoComplete="username"
                     className="form-control"
@@ -715,8 +715,8 @@ export const AuthModal = ({ isStandalonePage = false, initialMode = null }) => {
                 </label>
                 <div style={{ position: 'relative' }}>
                   <Lock size={15} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-light)' }} />
-                  <input 
-                    type="password" 
+                  <input
+                    type="password"
                     name="password"
                     autoComplete="new-password"
                     className="form-control"
@@ -736,8 +736,8 @@ export const AuthModal = ({ isStandalonePage = false, initialMode = null }) => {
                 </label>
                 <div style={{ position: 'relative' }}>
                   <Lock size={15} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-light)' }} />
-                  <input 
-                    type="password" 
+                  <input
+                    type="password"
                     name="confirmPassword"
                     autoComplete="new-password"
                     className="form-control"
@@ -750,8 +750,8 @@ export const AuthModal = ({ isStandalonePage = false, initialMode = null }) => {
                 </div>
               </div>
 
-              <button 
-                type="submit" 
+              <button
+                type="submit"
                 className="btn btn-primary-orange btn-lg"
                 style={{ width: '100%', height: '40px', borderRadius: 'var(--radius-md)', fontWeight: 800, fontSize: '0.88rem' }}
                 disabled={isLoading}
@@ -795,17 +795,17 @@ export const AuthModal = ({ isStandalonePage = false, initialMode = null }) => {
 
               <div style={{ marginTop: '0.65rem', textAlign: 'center', fontSize: '0.7rem', color: 'var(--text-muted)' }}>
                 By joining, you agree to our{' '}
-                <button 
-                  type="button" 
-                  onClick={() => setLegalModalType('terms')} 
+                <button
+                  type="button"
+                  onClick={() => setLegalModalType('terms')}
                   style={{ background: 'none', border: 'none', padding: 0, color: 'var(--color-primary)', textDecoration: 'underline', cursor: 'pointer', fontWeight: 700, fontSize: '0.7rem' }}
                 >
                   Terms of Service
                 </button>{' '}
                 &{' '}
-                <button 
-                  type="button" 
-                  onClick={() => setLegalModalType('privacy')} 
+                <button
+                  type="button"
+                  onClick={() => setLegalModalType('privacy')}
                   style={{ background: 'none', border: 'none', padding: 0, color: 'var(--color-primary)', textDecoration: 'underline', cursor: 'pointer', fontWeight: 700, fontSize: '0.7rem' }}
                 >
                   Privacy Policy
@@ -817,7 +817,7 @@ export const AuthModal = ({ isStandalonePage = false, initialMode = null }) => {
           {/* MODE 1: CLEAN PUBLIC SIGN IN FORM */}
           {authModalMode === 'login' && (
             <form onSubmit={handleLoginSubmit} name="loginForm" method="post">
-              
+
               {/* Email Input */}
               <div className="form-group" style={{ marginBottom: '0.85rem' }}>
                 <label htmlFor="email" style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--navy-900)', marginBottom: '0.2rem', display: 'block' }}>
@@ -825,8 +825,8 @@ export const AuthModal = ({ isStandalonePage = false, initialMode = null }) => {
                 </label>
                 <div style={{ position: 'relative' }}>
                   <Mail size={15} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-light)' }} />
-                  <input 
-                    type="email" 
+                  <input
+                    type="email"
                     id="email"
                     name="email"
                     autoComplete="email"
@@ -847,8 +847,8 @@ export const AuthModal = ({ isStandalonePage = false, initialMode = null }) => {
                 </label>
                 <div style={{ position: 'relative' }}>
                   <Lock size={15} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-light)' }} />
-                  <input 
-                    type="password" 
+                  <input
+                    type="password"
                     id="password"
                     name="password"
                     autoComplete="current-password"
@@ -871,8 +871,8 @@ export const AuthModal = ({ isStandalonePage = false, initialMode = null }) => {
                 margin: '0.75rem 0 1.1rem'
               }}>
                 <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', cursor: 'pointer', color: 'var(--navy-800)', fontWeight: 600 }}>
-                  <input 
-                    type="checkbox" 
+                  <input
+                    type="checkbox"
                     checked={rememberMe}
                     onChange={(e) => setRememberMe(e.target.checked)}
                     style={{ accentColor: 'var(--color-primary)' }}
@@ -880,7 +880,7 @@ export const AuthModal = ({ isStandalonePage = false, initialMode = null }) => {
                   Remember me
                 </label>
 
-                <button 
+                <button
                   type="button"
                   onClick={() => { setAuthModalMode('forgot'); setAuthError(''); }}
                   style={{ background: 'none', border: 'none', color: 'var(--orange-600)', cursor: 'pointer', fontWeight: 700, fontSize: '0.8rem' }}
@@ -889,8 +889,8 @@ export const AuthModal = ({ isStandalonePage = false, initialMode = null }) => {
                 </button>
               </div>
 
-              <button 
-                type="submit" 
+              <button
+                type="submit"
                 className="btn btn-primary-orange btn-lg"
                 style={{ width: '100%', height: '42px', borderRadius: 'var(--radius-md)', fontWeight: 800, fontSize: '0.9rem' }}
                 disabled={isLoading}
@@ -949,8 +949,8 @@ export const AuthModal = ({ isStandalonePage = false, initialMode = null }) => {
                     </label>
                     <div style={{ position: 'relative' }}>
                       <Mail size={16} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-light)' }} />
-                      <input 
-                        type="email" 
+                      <input
+                        type="email"
                         name="email"
                         autoComplete="email"
                         className="form-control"
@@ -991,8 +991,8 @@ export const AuthModal = ({ isStandalonePage = false, initialMode = null }) => {
 
               <div style={{ display: 'flex', gap: '0.65rem', justifyContent: 'center', alignItems: 'center', marginTop: '1.1rem', flexWrap: 'wrap' }}>
                 {forgotSubmitted && (
-                  <button 
-                    type="button" 
+                  <button
+                    type="button"
                     className="btn btn-primary-orange btn-sm"
                     onClick={() => setForgotSubmitted(false)}
                     style={{ borderRadius: 'var(--radius-md)', fontWeight: 800, padding: '0.45rem 1rem', fontSize: '0.825rem' }}
@@ -1001,8 +1001,8 @@ export const AuthModal = ({ isStandalonePage = false, initialMode = null }) => {
                   </button>
                 )}
 
-                <button 
-                  type="button" 
+                <button
+                  type="button"
                   className="btn btn-outline btn-sm"
                   onClick={() => { setAuthModalMode('login'); setForgotSubmitted(false); }}
                   style={{ borderRadius: 'var(--radius-md)', fontWeight: 700, padding: '0.45rem 1rem', fontSize: '0.825rem' }}
@@ -1026,8 +1026,8 @@ export const AuthModal = ({ isStandalonePage = false, initialMode = null }) => {
                 </label>
                 <div style={{ position: 'relative' }}>
                   <Lock size={15} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-light)' }} />
-                  <input 
-                    type="password" 
+                  <input
+                    type="password"
                     name="newPassword"
                     autoComplete="new-password"
                     className="form-control"
@@ -1046,8 +1046,8 @@ export const AuthModal = ({ isStandalonePage = false, initialMode = null }) => {
                 </label>
                 <div style={{ position: 'relative' }}>
                   <Lock size={15} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-light)' }} />
-                  <input 
-                    type="password" 
+                  <input
+                    type="password"
                     name="confirmNewPassword"
                     autoComplete="new-password"
                     className="form-control"
@@ -1060,8 +1060,8 @@ export const AuthModal = ({ isStandalonePage = false, initialMode = null }) => {
                 </div>
               </div>
 
-              <button 
-                type="submit" 
+              <button
+                type="submit"
                 className="btn btn-primary-orange btn-lg"
                 style={{ width: '100%', height: '42px', borderRadius: 'var(--radius-md)', fontWeight: 800, fontSize: '0.9rem' }}
                 disabled={isLoading}
@@ -1083,7 +1083,7 @@ export const AuthModal = ({ isStandalonePage = false, initialMode = null }) => {
 
       {/* PROMINENT CENTERED LOGIN ERROR MODAL POPUP OVERLAY */}
       {errorModalText && (
-        <div 
+        <div
           style={{
             position: 'fixed',
             inset: 0,
@@ -1098,7 +1098,7 @@ export const AuthModal = ({ isStandalonePage = false, initialMode = null }) => {
           }}
           onClick={() => setErrorModalText(null)}
         >
-          <div 
+          <div
             style={{
               maxWidth: '440px',
               width: '100%',

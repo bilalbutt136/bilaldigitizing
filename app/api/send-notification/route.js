@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { checkRateLimit, getClientIp, getRateLimitHeaders } from '../../../src/lib/rateLimit.js';
+import { checkDistributedRateLimit, getClientIp, getRateLimitHeaders } from '../../../src/lib/rateLimit.js';
 import { sendOrderNotification } from '../../../src/lib/email.js';
 import { createAdminClient } from '../../../src/lib/supabase/admin.js';
 
@@ -60,11 +60,11 @@ export async function POST(req) {
   try {
     const ip = getClientIp(req);
     // Rate limit: Max 60 requests per minute per IP
-    const rateLimit = checkRateLimit(`send-notification:${ip}`, 60, 60000);
+    const rateLimit = await checkDistributedRateLimit(`send-notification:${ip}`, 60, 60000);
     if (!rateLimit.success) {
       return NextResponse.json(
         { success: false, error: 'Rate limit exceeded for notification webhook. Please slow down.' },
-        { status: 429, headers: getRateLimitHeaders(rateLimit) }
+        { status: rateLimit.unavailable ? 503 : 429, headers: getRateLimitHeaders(rateLimit) }
       );
     }
 
@@ -162,7 +162,7 @@ export async function POST(req) {
             recipientEmail: clientEmail
           }).catch(() => {});
         }
-      } catch (pErr) {}
+      } catch  {}
 
       return NextResponse.json({
         success: result.success,
@@ -216,7 +216,7 @@ export async function POST(req) {
           conversationId,
           orderId
         }).catch(() => {});
-      } catch (pErr) {}
+      } catch  {}
 
       return NextResponse.json({
         success: result?.success !== false,

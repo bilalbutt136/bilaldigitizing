@@ -1,12 +1,12 @@
 import test, { describe, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
-import { 
-  pushModal, 
-  dismissModal, 
-  isModalBackConsumed, 
-  hasActiveModals, 
-  getModalStackDepth, 
-  resetModalStack 
+import {
+  pushModal,
+  dismissModal,
+  isModalBackConsumed,
+  hasActiveModals,
+  getModalStackDepth,
+  resetModalStack
 } from '../utils/modalHistoryManager.js';
 
 describe('Universal Mobile & Desktop Modal History Manager', () => {
@@ -22,11 +22,11 @@ describe('Universal Mobile & Desktop Modal History Manager', () => {
     global.window = {
       history: {
         state: historyStack[historyStack.length - 1],
-        pushState: (state, title, url) => {
+        pushState: (state, _title, _url) => {
           historyStack.push(state);
           global.window.history.state = state;
         },
-        replaceState: (state, title, url) => {
+        replaceState: (state, _title, _url) => {
           if (historyStack.length > 0) {
             historyStack[historyStack.length - 1] = state;
           } else {
@@ -123,7 +123,7 @@ describe('Universal Mobile & Desktop Modal History Manager', () => {
   });
 
   test('5. Duplicate push of the same modal id does not create duplicate history entries', () => {
-    let callCount = 0;
+    let _callCount = 0;
     pushModal('pdf_preview_modal', () => { callCount++; });
     pushModal('pdf_preview_modal', () => { callCount++; });
 

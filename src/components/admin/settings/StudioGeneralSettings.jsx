@@ -2,18 +2,18 @@
 
 import React, { useState, useEffect } from 'react';
 import { useAppState } from '../../../context/StateContext';
-import { 
-  Building2, 
-  Phone, 
-  Mail, 
-  MapPin, 
-  Clock, 
-  DollarSign, 
-  FileText, 
-  Save, 
-  CheckCircle2, 
-  Sparkles,
-  Sliders
+import {
+  Building2,
+  Phone as _Phone,
+  Mail as _Mail,
+  MapPin as _MapPin,
+  Clock as _Clock,
+  DollarSign as _DollarSign,
+  FileText as _FileText,
+  Save,
+  CheckCircle2 as _CheckCircle2,
+  Sparkles as _Sparkles,
+  Sliders as _Sliders
 } from 'lucide-react';
 
 export const StudioGeneralSettings = () => {
@@ -103,7 +103,7 @@ export const StudioGeneralSettings = () => {
 
   return (
     <form onSubmit={handleSaveGeneral} style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-      
+
       {/* 1. Header Card */}
       <div className="card" style={{ padding: '2rem', background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '20px', boxShadow: 'var(--shadow-sm)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', marginBottom: '0.35rem' }}>

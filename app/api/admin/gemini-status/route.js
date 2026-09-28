@@ -5,13 +5,13 @@ import { getServerAuthUser } from '../../../../src/lib/supabase/serverAuth.js';
 export const dynamic = 'force-dynamic';
 
 const VERCEL_TOKEN = process.env.VERCEL_TOKEN;
-const VERCEL_PROJECT_ID = process.env.VERCEL_PROJECT_ID || process.env.VERCEL_PROJECT_ID;
+const VERCEL_PROJECT_ID = process.env.VERCEL_PROJECT_ID || null;
 
 async function resolveGeminiKey() {
   // 1. Environment variables
-  const envKey = process.env.GEMINI_API_KEY || 
-                 process.env.GOOGLE_AI_API_KEY || 
-                 process.env.GOOGLE_API_KEY || 
+  const envKey = process.env.GEMINI_API_KEY ||
+                 process.env.GOOGLE_AI_API_KEY ||
+                 process.env.GOOGLE_API_KEY ||
                  process.env.NEXT_PUBLIC_GEMINI_API_KEY;
   if (envKey && envKey.trim()) {
     return { key: envKey.trim(), source: 'environment' };
@@ -58,7 +58,7 @@ function maskApiKey(key) {
 async function testGeminiPing(key) {
   const start = Date.now();
   const modelsToTry = ['gemini-2.5-flash', 'gemini-3.8-flash'];
-  
+
   for (const model of modelsToTry) {
     try {
       const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`, {
@@ -222,7 +222,7 @@ export async function POST(request) {
             // Edit existing
             await fetch(`https://api.vercel.com/v9/projects/${VERCEL_PROJECT_ID}/env/${existingEnv.id}`, {
               method: 'PATCH',
-              headers: { 
+              headers: {
                 Authorization: `Bearer ${VERCEL_TOKEN}`,
                 'Content-Type': 'application/json'
               },
@@ -233,7 +233,7 @@ export async function POST(request) {
             // Create new
             await fetch(`https://api.vercel.com/v10/projects/${VERCEL_PROJECT_ID}/env`, {
               method: 'POST',
-              headers: { 
+              headers: {
                 Authorization: `Bearer ${VERCEL_TOKEN}`,
                 'Content-Type': 'application/json'
               },
@@ -256,7 +256,7 @@ export async function POST(request) {
       success: true,
       maskedKey: maskApiKey(cleanKey),
       vercelSynced,
-      message: vercelSynced 
+      message: vercelSynced
         ? 'Gemini API key saved to live database & synced to Vercel production successfully!'
         : 'Gemini API key saved to live database successfully!'
     });

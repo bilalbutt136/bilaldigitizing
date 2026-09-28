@@ -4,28 +4,28 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from '../../utils/navigation';
 import { useAppState } from '../../context/StateContext';
 import { matchCategory } from '../../utils/categoryUtils';
-import { 
-  Layers, 
-  PenTool, 
-  Tag, 
-  Upload, 
-  Trash2, 
-  Sparkles, 
-  Clock, 
+import {
+  Layers,
+  PenTool,
+  Tag,
+  Upload,
+  Trash2,
+  Sparkles,
+  Clock as _Clock,
   ArrowRight,
   ShieldCheck,
   FileCode,
   Zap,
-  Check,
+  Check as _Check,
   Plus
 } from 'lucide-react';
 import { PackageCard } from './PackageCard';
 import { uploadFileToCloudinaryFull } from '../../services/supabaseService';
-import { 
-  getActivePromotion, 
-  getServiceDiscountPercent, 
-  getServiceDisplayName, 
-  normalizeServiceKey 
+import {
+  getActivePromotion,
+  getServiceDiscountPercent,
+  getServiceDisplayName,
+  normalizeServiceKey as _normalizeServiceKey
 } from '../../utils/promoUtils';
 
 export const CoreServicesOrderSection = ({ defaultService = 'digitizing', hideTabs = false, initialTier = 'standard' }) => {
@@ -35,10 +35,10 @@ export const CoreServicesOrderSection = ({ defaultService = 'digitizing', hideTa
   // Dynamic patch craft / material rate resolver connected to database & CMS
   const getPatchStyleBaseRate = (styleName) => {
     const clean = (styleName || '').toLowerCase().trim();
-    
+
     // 1. Check dynamicPricingTiers
-    const foundDynamic = (dynamicPricingTiers || []).find(t => 
-      matchCategory(t.service_type, 'patch') && 
+    const foundDynamic = (dynamicPricingTiers || []).find(t =>
+      matchCategory(t.service_type, 'patch') &&
       (t.title?.toLowerCase().includes(clean) || clean.includes(t.title?.toLowerCase()))
     );
     if (foundDynamic && !isNaN(parseFloat(foundDynamic.price))) {
@@ -46,7 +46,7 @@ export const CoreServicesOrderSection = ({ defaultService = 'digitizing', hideTa
     }
 
     // 2. Check patchCards from CMS
-    const foundCard = (patchCards || []).find(p => 
+    const foundCard = (patchCards || []).find(p =>
       p.title?.toLowerCase().includes(clean) || clean.includes(p.title?.toLowerCase()) ||
       (clean.includes('woven') && (p.tierKey === 'basic' || p.id?.includes('basic'))) ||
       (clean.includes('embroidered') && (p.tierKey === 'standard' || p.id?.includes('standard'))) ||
@@ -92,17 +92,17 @@ export const CoreServicesOrderSection = ({ defaultService = 'digitizing', hideTa
   const [title] = useState('');
   const [notes, setNotes] = useState('');
   const [isRush, setIsRush] = useState(false);
-  const [selectedAssets] = useState([]);
+  const [_selectedAssets] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Service 1: Embroidery Digitizing State with Itemized Placement Cart Flow
   const [placementItems, setPlacementItems] = useState([
-    { 
-      id: 'plc-initial-1', 
-      placementType: 'left_chest', 
-      quantity: 1, 
-      quantityInput: '1', 
-      specificNotes: '' 
+    {
+      id: 'plc-initial-1',
+      placementType: 'left_chest',
+      quantity: 1,
+      quantityInput: '1',
+      specificNotes: ''
     }
   ]);
   const [fabricType, setFabricType] = useState('Pique Polo Cotton');
@@ -370,7 +370,7 @@ export const CoreServicesOrderSection = ({ defaultService = 'digitizing', hideTa
   }, []);
 
   const toggleTargetFormat = (fmtId) => {
-    setTargetFormats(prev => 
+    setTargetFormats(prev =>
       prev.includes(fmtId) ? prev.filter(f => f !== fmtId) : [...prev, fmtId]
     );
   };
@@ -416,7 +416,7 @@ export const CoreServicesOrderSection = ({ defaultService = 'digitizing', hideTa
 
     const discountAmount = (baseSubtotal * discountPercent) / 100;
     const subtotalAfterDiscount = baseSubtotal - discountAmount;
-    
+
     // Super Rush (2-4 Hrs) is ONLY available for single-design placement orders (total items === 1)
     const allowRush = totalPlacementItemsCount === 1;
     const rushFee = (isRush && allowRush) ? 10.00 : 0.00;
@@ -439,7 +439,7 @@ export const CoreServicesOrderSection = ({ defaultService = 'digitizing', hideTa
   // Dynamic Price Calculation
   const calculatePrice = () => {
     let base = 0;
-    
+
     if (activeService === 'digitizing') {
       return getDigitizingPricingDetails().total;
     } else if (activeService === 'vector') {
@@ -457,19 +457,19 @@ export const CoreServicesOrderSection = ({ defaultService = 'digitizing', hideTa
         const h = parseFloat(item.patchHeight) || 3.0;
         const sizeInches = (w + h) / 2;
         const sizeMultiplier = sizeInches > 3.0 ? (1 + (sizeInches - 3.0) * 0.18) : 1.0;
-        
+
         let materialBase = getPatchStyleBaseRate(item.patchStyle);
-        
+
         let qtyDiscount = 1.0;
         const q = item.quantity || 50;
         if (q >= 500) qtyDiscount = 0.80;
         else if (q >= 250) qtyDiscount = 0.88;
         else if (q >= 100) qtyDiscount = 0.95;
-        
+
         let backingAddon = 0;
         if (item.patchBacking === 'Velcro') backingAddon = 0.40;
         if (item.patchBacking === 'Adhesive') backingAddon = 0.25;
-        
+
         const rateEach = parseFloat(((materialBase * sizeMultiplier * qtyDiscount) + backingAddon).toFixed(2));
         patchesSubtotal += (rateEach * q);
       });
@@ -484,7 +484,7 @@ export const CoreServicesOrderSection = ({ defaultService = 'digitizing', hideTa
       base = capQuantity * (unitCapRate + puffExtra);
     }
 
-    const totalQty = activeService === 'vector' 
+    const totalQty = activeService === 'vector'
       ? placementItems.reduce((sum, item) => sum + (item.quantity || 1), 0)
       : activeService === 'patches'
       ? patchItems.reduce((sum, item) => sum + (item.quantity || 1), 0)
@@ -492,7 +492,7 @@ export const CoreServicesOrderSection = ({ defaultService = 'digitizing', hideTa
 
     const allowRush = activeService === 'vector' ? (totalQty === 1) : false;
     const rushFee = (isRush && allowRush && activeService === 'vector') ? 10.00 : 0.00;
-    
+
     return (base + rushFee).toFixed(2);
   };
 
@@ -534,7 +534,7 @@ export const CoreServicesOrderSection = ({ defaultService = 'digitizing', hideTa
 
     let placementsSummary = '';
     let totalPlacementCount = 0;
-    
+
     if (activeService === 'digitizing') {
       const details = getDigitizingPricingDetails();
       placementsSummary = details.placementBreakdown.map(p => `${p.label} (x${p.quantity})`).join(', ');
@@ -624,7 +624,7 @@ export const CoreServicesOrderSection = ({ defaultService = 'digitizing', hideTa
     const newOrderPayload = {
       title: orderTitle,
       type: activeService,
-      serviceCategory: 
+      serviceCategory:
         activeService === 'digitizing' ? `Embroidery Digitizing (${placementsSummary})` :
         activeService === 'vector' ? `Vector Tracing (${placementsSummary})` :
         activeService === 'patches' ? `Custom Patches (${placementsSummary})` :
@@ -687,9 +687,9 @@ export const CoreServicesOrderSection = ({ defaultService = 'digitizing', hideTa
   const liveFinalPrice = Math.max(0, parseFloat((baseCalculatedPrice - livePromoDiscount).toFixed(2)));
 
   return (
-    <section id="order-builder" style={{ 
-      padding: '5.5rem 0', 
-      background: 'linear-gradient(135deg, #0b1329 0%, #0f172a 60%, #1e1b4b 100%)', 
+    <section id="order-builder" style={{
+      padding: '5.5rem 0',
+      background: 'linear-gradient(135deg, #0b1329 0%, #0f172a 60%, #1e1b4b 100%)',
       color: '#ffffff',
       position: 'relative',
       overflow: 'hidden'
@@ -717,7 +717,7 @@ export const CoreServicesOrderSection = ({ defaultService = 'digitizing', hideTa
       }} />
 
       <div className="container" style={{ position: 'relative', zIndex: 1 }}>
-        
+
         {/* Section Header */}
         <div style={{ textAlign: 'center', maxWidth: '780px', margin: '0 auto 3rem' }}>
           <div style={{
@@ -743,8 +743,8 @@ export const CoreServicesOrderSection = ({ defaultService = 'digitizing', hideTa
           </h2>
 
           <p style={{ color: '#cbd5e1', fontSize: '1.05rem', lineHeight: 1.6 }}>
-            {hideTabs 
-              ? 'Upload your artwork, select your target machine formats, configure stitch options, and receive instant transparent pricing.' 
+            {hideTabs
+              ? 'Upload your artwork, select your target machine formats, configure stitch options, and receive instant transparent pricing.'
               : 'Choose from our core services below to upload your artwork, customize specifications, and receive instant transparent pricing.'
             }
           </p>
@@ -883,7 +883,7 @@ export const CoreServicesOrderSection = ({ defaultService = 'digitizing', hideTa
                       key={cardObj.id}
                       cat={cardObj}
                       idx={idx}
-                      onSelect={(selectedCat) => {
+                      onSelect={(_selectedCat) => {
                         const tierKey = idx === 0 ? 'basic' : idx === 2 ? 'premium' : 'standard';
                         setDigitizingPackageTier(tierKey);
                         setIsOrderViewOpen(true);
@@ -936,10 +936,10 @@ export const CoreServicesOrderSection = ({ defaultService = 'digitizing', hideTa
               gap: '2rem',
               alignItems: 'start'
             }}>
-              
+
               {/* Form Left Side */}
               <form onSubmit={handleSubmitOrder} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-            
+
               {/* Step 1: Service-Specific Specifications & Item Placement Options */}
               <div className="card" style={{ padding: '1.75rem', background: '#1e293b', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '16px' }}>
                 <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#ffffff', marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -1076,7 +1076,7 @@ export const CoreServicesOrderSection = ({ defaultService = 'digitizing', hideTa
 
                             {/* Row Content Grid */}
                             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '0.85rem', alignItems: 'end' }}>
-                              
+
                               {/* Placement Type Dropdown */}
                               <div>
                                 <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: '#cbd5e1', marginBottom: '0.35rem' }}>
@@ -1303,7 +1303,7 @@ export const CoreServicesOrderSection = ({ defaultService = 'digitizing', hideTa
 
                   {/* Super Rush Option (Displayed ONLY when total items === 1) */}
                   {totalPlacementQuantity === 1 ? (
-                    <div 
+                    <div
                       onClick={() => setIsRush(!isRush)}
                       style={{
                         background: isRush ? 'linear-gradient(135deg, rgba(255, 122, 0, 0.25) 0%, rgba(255, 122, 0, 0.1) 100%)' : '#0f172a',
@@ -1416,7 +1416,7 @@ export const CoreServicesOrderSection = ({ defaultService = 'digitizing', hideTa
                                 <button type="button" onClick={() => updatePlacementItem(item.id, 'quantity', item.quantity + 1)} style={{ width: '32px', height: '36px', background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', color: '#ffffff', fontWeight: 800, borderRadius: '6px', cursor: 'pointer' }}>+</button>
                               </div>
                             </div>
-                            
+
                             {/* File Upload Zone */}
                             <div style={{ gridColumn: 'span 2', background: '#1e293b', padding: '0.75rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)', marginTop: '0.35rem' }}>
                               <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.73rem', fontWeight: 700, color: '#cbd5e1', marginBottom: '0.35rem' }}>
@@ -1449,7 +1449,7 @@ export const CoreServicesOrderSection = ({ defaultService = 'digitizing', hideTa
                   <button type="button" onClick={addPlacementItem} style={{ marginTop: '1rem', width: '100%', padding: '0.75rem', background: 'rgba(255, 122, 0, 0.12)', border: '1.5px dashed var(--orange-500)', color: 'var(--orange-400)', fontWeight: 800, fontSize: '0.875rem', borderRadius: '10px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
                     + Add Another Vector Item
                   </button>
-                  
+
                   {/* Target Formats for Vector */}
                   <div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
@@ -1479,12 +1479,12 @@ export const CoreServicesOrderSection = ({ defaultService = 'digitizing', hideTa
                       let backingAddon = 0;
                       if (item.patchBacking === 'Velcro') backingAddon = 0.40;
                       if (item.patchBacking === 'Adhesive') backingAddon = 0.25;
-                      
+
                       const w = parseFloat(item.patchWidth) || 3.0;
                       const h = parseFloat(item.patchHeight) || 3.0;
                       const sizeInches = (w + h) / 2;
                       const sizeMultiplier = sizeInches > 3.0 ? (1 + (sizeInches - 3.0) * 0.18) : 1.0;
-                      
+
                       let qtyDiscount = 1.0;
                       if (itemQty >= 500) qtyDiscount = 0.80;
                       else if (itemQty >= 250) qtyDiscount = 0.88;
@@ -1529,7 +1529,7 @@ export const CoreServicesOrderSection = ({ defaultService = 'digitizing', hideTa
                                 <option value="Adhesive">Peel & Stick (Adhesive)</option>
                               </select>
                             </div>
-                            
+
                             <div style={{ display: 'flex', gap: '0.5rem' }}>
                               <div style={{ flex: 1 }}>
                                 <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: '#cbd5e1', marginBottom: '0.35rem' }}>Width (in)</label>
@@ -1540,7 +1540,7 @@ export const CoreServicesOrderSection = ({ defaultService = 'digitizing', hideTa
                                 <input type="number" step="0.1" value={item.patchHeight} onChange={(e) => updatePatchItem(item.id, 'patchHeight', e.target.value)} className="form-control" style={{ background: '#1e293b', color: '#ffffff', border: '1px solid rgba(255,255,255,0.15)', fontSize: '0.85rem' }} />
                               </div>
                             </div>
-                            
+
                             <div>
                               <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: '#cbd5e1', marginBottom: '0.35rem' }}>Quantity (Min 50) *</label>
                               <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
@@ -1714,10 +1714,10 @@ export const CoreServicesOrderSection = ({ defaultService = 'digitizing', hideTa
                 <div style={{ display: 'flex', justifyContent: 'space-between', color: '#cbd5e1' }}>
                   <span>Turnaround Guarantee:</span>
                   <span style={{ color: '#ffffff', fontWeight: 700 }}>
-                    {activeService === 'patches' 
-                      ? '📦 3-5 Days Worldwide Shipping' 
+                    {activeService === 'patches'
+                      ? '📦 3-5 Days Worldwide Shipping'
                       : (isRush && totalPlacementQuantity === 1)
-                        ? '⚡ 2-4 Hours Super Rush' 
+                        ? '⚡ 2-4 Hours Super Rush'
                         : '8-12 Hours Standard'}
                   </span>
                 </div>

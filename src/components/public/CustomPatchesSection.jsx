@@ -6,25 +6,25 @@ import {
   CheckCircle,
   ArrowRight,
   Sparkles,
-  Clock,
-  Truck,
-  FileCheck,
+  Clock as _Clock,
+  Truck as _Truck,
+  FileCheck as _FileCheck,
   Zap,
   Trophy,
   Package,
-  Tag,
-  Image as ImageIcon
+  Tag as _Tag,
+  Image as _ImageIcon
 } from 'lucide-react';
 import { PackageCard } from './PackageCard';
 import { ServiceProcessTimelineSection } from './ServiceProcessTimelineSection';
 import { matchCategory } from '../../utils/categoryUtils';
 
-export const CustomPatchesSection = ({ hideTabs = false, hideHero = false }) => {
-  const { openOrderWizard, setIsOrderWizardOpen, patchCards = [], dynamicPricingTiers = [], serviceCmsContent = {}, portfolioSamples, homePageConfig = {} } = useAppState();
-  
+export const CustomPatchesSection = ({ hideTabs: _hideTabs = false, hideHero = false }) => {
+  const { openOrderWizard, setIsOrderWizardOpen, patchCards: _patchCards = [], dynamicPricingTiers = [], serviceCmsContent: _serviceCmsContent = {}, portfolioSamples: _portfolioSamples, homePageConfig = {} } = useAppState();
+
   const dbSettings = homePageConfig?.settings || {};
 
-  const [selectedTier, setSelectedTier] = useState('standard');
+  const [_selectedTier, setSelectedTier] = useState('standard');
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' });
@@ -203,8 +203,8 @@ export const CustomPatchesSection = ({ hideTabs = false, hideHero = false }) => 
     }
   ];
 
-  const [processSteps, setProcessSteps] = useState(defaultPatchProcessSteps);
-  const [timelineSpecs, setTimelineSpecs] = useState(defaultPatchTimelineSpecs);
+  const [_processSteps, setProcessSteps] = useState(defaultPatchProcessSteps);
+  const [_timelineSpecs, setTimelineSpecs] = useState(defaultPatchTimelineSpecs);
 
   useEffect(() => {
     import('../../services/supabaseService').then(({ getCmsContent }) => {
@@ -232,12 +232,12 @@ export const CustomPatchesSection = ({ hideTabs = false, hideHero = false }) => 
 
   return (
     <div style={{ background: 'var(--bg-main)', color: 'var(--color-text-primary)', minHeight: '100vh', paddingBottom: '5rem' }}>
-      
+
       {/* SECTION 1: High-Impact Hero & Overview Banner */}
       {!hideHero && (
-        <section style={{ 
-          padding: 'clamp(2.5rem, 5vh, 3.5rem) 0', 
-          background: 'var(--hero-bg, linear-gradient(135deg, #0b1329 0%, #0f172a 60%, #1e1b4b 100%))', 
+        <section style={{
+          padding: 'clamp(2.5rem, 5vh, 3.5rem) 0',
+          background: 'var(--hero-bg, linear-gradient(135deg, #0b1329 0%, #0f172a 60%, #1e1b4b 100%))',
           borderBottom: '1px solid var(--border-color)',
           position: 'relative',
           overflow: 'hidden'
@@ -265,7 +265,7 @@ export const CustomPatchesSection = ({ hideTabs = false, hideHero = false }) => 
         }} />
 
         <div className="container" style={{ textAlign: 'center', maxWidth: '850px', position: 'relative', zIndex: 1 }}>
-          
+
           <div style={{
             display: 'inline-flex',
             alignItems: 'center',
@@ -317,7 +317,7 @@ export const CustomPatchesSection = ({ hideTabs = false, hideHero = false }) => 
           </div>
 
           <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', flexWrap: 'wrap' }}>
-            <button 
+            <button
               className="btn btn-primary-orange btn-lg"
               onClick={() => handleStartOrder('standard')}
               style={{ fontWeight: 800, padding: '0.85rem 2rem', fontSize: '1.05rem' }}
@@ -325,8 +325,8 @@ export const CustomPatchesSection = ({ hideTabs = false, hideHero = false }) => 
               {dbSettings.patch_hero_btn_primary || 'Order Custom Patches'} <ArrowRight size={20} />
             </button>
 
-            <a 
-              href="#pricing-tiers" 
+            <a
+              href="#pricing-tiers"
               className="btn btn-outline btn-lg"
               style={{ fontWeight: 700, padding: '0.85rem 1.75rem', color: 'var(--hero-text-primary, var(--color-text-primary))', borderColor: 'var(--border-color)' }}
             >
@@ -372,9 +372,9 @@ export const CustomPatchesSection = ({ hideTabs = false, hideHero = false }) => 
       </section>
 
       {/* SECTION 2: Dynamic 2-Column Process & Delivery Timeline */}
-      <ServiceProcessTimelineSection 
-        serviceType="patches" 
-        onCtaClick={() => handleStartOrder('standard')} 
+      <ServiceProcessTimelineSection
+        serviceType="patches"
+        onCtaClick={() => handleStartOrder('standard')}
       />
 
     </div>

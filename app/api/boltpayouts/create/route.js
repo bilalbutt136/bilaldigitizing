@@ -1,17 +1,18 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin, hasServiceRole } from '../../../../src/lib/supabaseAdmin';
 import { getServerAuthUser } from '../../../../src/lib/supabase/serverAuth';
-import { checkRateLimit, getClientIp, getRateLimitHeaders } from '../../../../src/lib/rateLimit';
+import { checkDistributedRateLimit, getClientIp, getRateLimitHeaders } from '../../../../src/lib/rateLimit';
+import { resolveAuthoritativePayment, PaymentAuthorizationError } from '../../../../src/lib/payments/paymentAuthorization';
 
 function formatBoltAmount(amt) {
   const num = parseFloat(amt);
   if (isNaN(num) || num <= 0) return 0.99;
-  
+
   // If already ending in .99
   if (Math.abs(num - (Math.floor(num) + 0.99)) < 0.001) {
     return Number(num.toFixed(2));
   }
-  
+
   // Convert standard amount (e.g. 16.00 -> 15.99, 10.00 -> 9.99, 20.00 -> 19.99, 35.00 -> 34.99)
   const rounded = Math.ceil(num) - 0.01;
   return Number(Math.max(0.99, rounded).toFixed(2));
@@ -32,23 +33,23 @@ function extractSolanaAddress(url, boltData = {}) {
 
   try {
     const parsed = new URL(url);
-    const paramAddr = parsed.searchParams.get('address') || 
-                      parsed.searchParams.get('solanaAddress') || 
-                      parsed.searchParams.get('pyusdAddress') || 
-                      parsed.searchParams.get('wallet') || 
-                      parsed.searchParams.get('to') || 
+    const paramAddr = parsed.searchParams.get('address') ||
+                      parsed.searchParams.get('solanaAddress') ||
+                      parsed.searchParams.get('pyusdAddress') ||
+                      parsed.searchParams.get('wallet') ||
+                      parsed.searchParams.get('to') ||
                       parsed.searchParams.get('recipient') ||
                       parsed.searchParams.get('destination');
     if (paramAddr && paramAddr.length >= 32 && paramAddr.length <= 44) {
       return paramAddr;
     }
-  } catch (e) {}
+  } catch  {}
 
   const matches = url.match(/[1-9A-HJ-NP-Za-km-z]{32,44}/g);
   if (matches && matches.length > 0) {
-    const valid = matches.find(m => 
-      !m.toLowerCase().includes('http') && 
-      !m.toLowerCase().includes('boltpayouts') && 
+    const valid = matches.find(m =>
+      !m.toLowerCase().includes('http') &&
+      !m.toLowerCase().includes('boltpayouts') &&
       !m.toLowerCase().includes('taptapup') &&
       !m.toLowerCase().includes('checkout') &&
       !m.toLowerCase().includes('invoice')
@@ -76,12 +77,12 @@ function extractLightningInvoice(url, boltData = {}) {
 
   try {
     const parsed = new URL(url);
-    const param = parsed.searchParams.get('lightning') || 
-                  parsed.searchParams.get('invoice') || 
-                  parsed.searchParams.get('req') || 
+    const param = parsed.searchParams.get('lightning') ||
+                  parsed.searchParams.get('invoice') ||
+                  parsed.searchParams.get('req') ||
                   parsed.searchParams.get('ln');
     if (param) return param;
-  } catch (e) {}
+  } catch  {}
 
   const match = url.match(/lnbc[0-9a-zA-Z]+/);
   if (match) return match[0];
@@ -92,66 +93,44 @@ function extractLightningInvoice(url, boltData = {}) {
 export async function POST(request) {
   try {
     const ip = getClientIp(request);
-    const rateLimit = checkRateLimit(`boltpayouts-create:${ip}`, 25, 60000);
+    const rateLimit = await checkDistributedRateLimit(`boltpayouts-create:${ip}`, 25, 60000);
     if (!rateLimit.success) {
       return NextResponse.json(
         { success: false, error: 'Too many payment requests. Please wait a moment.' },
-        { status: 429, headers: getRateLimitHeaders(rateLimit) }
+        { status: rateLimit.unavailable ? 503 : 429, headers: getRateLimitHeaders(rateLimit) }
       );
     }
 
-    const { user } = await getServerAuthUser(request);
+    const { user, isAdmin } = await getServerAuthUser(request);
+    if (!user) {
+      return NextResponse.json({ success: false, error: 'Authentication required.' }, { status: 401 });
+    }
 
     if (!hasServiceRole || !supabaseAdmin) {
       return NextResponse.json({ success: false, error: 'Server misconfiguration: Database service client unavailable' }, { status: 500 });
     }
 
     const body = await request.json().catch(() => ({}));
-    const rawAmount = parseFloat(body.amount);
     const rawMethod = body.method || 'card';
-    const orderId = body.orderId || null;
-    const offerId = body.offerId || null;
-    const conversationId = body.conversationId || body.chatId || null;
-    const bodyEmail = (body.clientEmail || body.email || '').toLowerCase().trim();
+    const payment = await resolveAuthoritativePayment({
+      supabase: supabaseAdmin,
+      user,
+      isAdmin,
+      body: {
+        ...body,
+        type: body.offerId ? 'custom_offer' : (body.orderId ? 'order_payment' : 'deposit')
+      },
+      allowDeposit: true
+    });
 
-    let targetEmail = (user?.email || bodyEmail || '').toLowerCase().trim();
-    let targetUserId = user?.id || null;
+    const orderId = payment.orderId;
+    const offerId = payment.offerId;
+    const _conversationId = payment.conversationId;
+    const targetEmail = payment.targetEmail;
+    const targetUserId = payment.targetUserId;
 
-    // If session is unauthenticated, resolve email from order or custom offer in database
-    if (!targetEmail && (orderId || offerId) && hasServiceRole && supabaseAdmin) {
-      try {
-        if (orderId) {
-          const { data: ord } = await supabaseAdmin
-            .from('orders')
-            .select('client_email, clientEmail, user_id')
-            .eq('id', orderId)
-            .maybeSingle();
-          targetEmail = (ord?.client_email || ord?.clientEmail || '').toLowerCase().trim();
-          if (!targetUserId && ord?.user_id) targetUserId = ord.user_id;
-        } else if (offerId) {
-          const { data: off } = await supabaseAdmin
-            .from('custom_offers')
-            .select('client_email, customer_id')
-            .eq('id', offerId)
-            .maybeSingle();
-          targetEmail = (off?.client_email || '').toLowerCase().trim();
-          if (!targetUserId && off?.customer_id) targetUserId = off.customer_id;
-        }
-      } catch (ordLookupErr) {
-        console.warn('[BoltPayouts Create] Order/Offer lookup warning:', ordLookupErr.message);
-      }
-    }
-
-    if (!targetEmail) {
-      targetEmail = 'client@bdigitizing.pro';
-    }
-    
-    if (isNaN(rawAmount) || rawAmount <= 0) {
-      return NextResponse.json({ success: false, error: 'Invalid amount' }, { status: 400 });
-    }
-
-    // Format amount into standard .99 format expected by BoltPayouts
-    const boltAmount = formatBoltAmount(rawAmount);
+    // BoltPayouts requires .99-style amounts; the source amount is authoritative server data.
+    const boltAmount = formatBoltAmount(payment.amount);
 
     // Map UI methods to correct BoltPayouts backend methods with automatic fallback
     let gatewayMethod = rawMethod;
@@ -239,8 +218,8 @@ export async function POST(request) {
     if (!boltResponse.ok || !boltData.success) {
       console.error("BoltPayouts API Error:", boltData);
       const errorMessage = boltData.error || boltData.message || 'Payment provider gateway error';
-      return NextResponse.json({ 
-        success: false, 
+      return NextResponse.json({
+        success: false,
         error: errorMessage,
         details: boltData
       }, { status: boltResponse.status === 200 ? 400 : boltResponse.status });
@@ -345,7 +324,10 @@ export async function POST(request) {
     });
 
   } catch (err) {
+    if (err instanceof PaymentAuthorizationError) {
+      return NextResponse.json({ success: false, error: err.message }, { status: err.status });
+    }
     console.error('Bolt create exception:', err);
-    return NextResponse.json({ success: false, error: err.message || 'Payment initiation error' }, { status: 500 });
+    return NextResponse.json({ success: false, error: 'Payment initiation error' }, { status: 500 });
   }
 }

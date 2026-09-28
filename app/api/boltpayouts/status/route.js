@@ -119,7 +119,7 @@ export async function GET(request) {
               cache: 'no-store'
             });
             boltCheckData = await boltRes.json().catch(() => ({}));
-          } catch (e1) {
+          } catch {
             // Secondary fallback attempt
             const boltRes2 = await fetch(`https://www.boltpayouts.xyz/api/check-status?orderId=${inv.bolt_order_id}`, {
               headers: { 'x-api-key': apiKey },
@@ -129,8 +129,8 @@ export async function GET(request) {
           }
 
           const isPaidOnBolt = boltCheckData && (
-            boltCheckData.status === 'paid' || 
-            boltCheckData.status === 'completed' || 
+            boltCheckData.status === 'paid' ||
+            boltCheckData.status === 'completed' ||
             boltCheckData.status === 'success' ||
             boltCheckData.paid === true
           );
@@ -194,7 +194,7 @@ export async function GET(request) {
   }
 }
 
-async function settleOrderPayment(orderId, clientEmail) {
+async function settleOrderPayment(orderId, _clientEmail) {
   try {
     const rawOrdId = String(orderId).trim();
     const cleanOrdId = rawOrdId.replace(/^#+/, '');
@@ -249,7 +249,7 @@ async function settleWalletDeposit(clientEmail, amount, invoice) {
   if (!clientEmail || !amount) return;
   try {
     const depositMethod = `BoltPayouts (${invoice.payment_method || invoice.method || 'online'})`;
-    
+
     // 1. Try RPC
     const { error: rpcErr } = await supabaseAdmin.rpc('deposit_funds', {
       p_client_email: clientEmail,

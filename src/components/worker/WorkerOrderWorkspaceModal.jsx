@@ -1,31 +1,31 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { 
-  X, 
-  UploadCloud, 
-  FileCheck, 
-  AlertTriangle, 
-  CheckCircle, 
-  ExternalLink, 
-  Download, 
-  ZoomIn, 
-  Layers, 
-  Maximize2, 
-  Info, 
-  Sparkles, 
-  RefreshCw, 
+import {
+  X,
+  UploadCloud,
+  FileCheck,
+  AlertTriangle,
+  CheckCircle,
+  ExternalLink,
+  Download,
+  ZoomIn,
+  Layers,
+  Maximize2 as _Maximize2,
+  Info,
+  Sparkles as _Sparkles,
+  RefreshCw as _RefreshCw,
   Clock,
-  DollarSign,
-  Palette,
-  Scissors,
+  DollarSign as _DollarSign,
+  Palette as _Palette,
+  Scissors as _Scissors,
   FileText,
-  User,
-  ShieldCheck,
+  User as _User,
+  ShieldCheck as _ShieldCheck,
   Loader2,
-  FileCode
+  FileCode as _FileCode
 } from 'lucide-react';
-import { uploadFileToCloudinaryFull } from '../../services/supabaseService';
+import { uploadFileToCloudinaryFull as _uploadFileToCloudinaryFull } from '../../services/supabaseService';
 import { downloadFileDirectly, openFileInNewTab } from '../../utils/fileDownloader';
 import { formatOrderId } from '../../utils/formatters';
 
@@ -39,7 +39,7 @@ const ACCEPTED_EXTENSIONS = [
  */
 export function parseOrderInstructions(order) {
   if (!order) return { adminFeedback: '', customerNotes: '', placementNotes: [], patchSpecs: null, hasAny: false };
-  
+
   // Safely unescape text that may have literal \\n from JSON transport
   const safeText = (raw) => {
     if (!raw) return '';
@@ -160,7 +160,7 @@ export function getRelativeTimeString(dt) {
 }
 
 export const WorkerOrderWorkspaceModal = ({ order, isOpen, onClose, onOrderUpdated, showToast, initialTab = 'specs' }) => {
-  const [activeTab, setActiveTab] = useState(initialTab || 'specs');
+  const [_activeTab, setActiveTab] = useState(initialTab || 'specs');
 
   useEffect(() => {
     if (initialTab && isOpen) {
@@ -173,7 +173,7 @@ export const WorkerOrderWorkspaceModal = ({ order, isOpen, onClose, onOrderUpdat
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
-  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [_lightboxOpen, setLightboxOpen] = useState(false);
   const fileInputRef = useRef(null);
 
   // PKR Bidding State for Pending_Worker_Acceptance
@@ -537,7 +537,7 @@ export const WorkerOrderWorkspaceModal = ({ order, isOpen, onClose, onOrderUpdat
                 alignItems: 'center',
                 textAlign: 'center'
               }}>
-                <div 
+                <div
                   style={{
                     position: 'relative',
                     width: '100%',
@@ -936,7 +936,7 @@ export const WorkerOrderWorkspaceModal = ({ order, isOpen, onClose, onOrderUpdat
                   />
 
                   <UploadCloud size={36} style={{ color: isDragging ? '#f97316' : '#64748b', margin: '0 auto 0.75rem' }} />
-                  
+
                   <div>
                     <p style={{ margin: '0 0 0.25rem 0', fontWeight: 700, color: '#e2e8f0', fontSize: '0.9rem' }}>
                       Drag & Drop files here, or <span style={{ color: '#f97316' }}>Browse Files</span>

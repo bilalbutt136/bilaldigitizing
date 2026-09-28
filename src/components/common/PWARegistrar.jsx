@@ -18,6 +18,20 @@ function urlBase64ToUint8Array(base64String) {
   return outputArray;
 }
 
+function arrayBufferToUrlBase64(buffer) {
+  if (!buffer) return '';
+  const bytes = new Uint8Array(buffer);
+  let binary = '';
+  for (const byte of bytes) binary += String.fromCharCode(byte);
+  return window.btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
+}
+
+function subscriptionUsesVapidKey(subscription, publicKey) {
+  const currentKey = subscription?.options?.applicationServerKey;
+  if (!currentKey || !publicKey) return false;
+  return arrayBufferToUrlBase64(currentKey) === String(publicKey).replace(/=+$/g, '');
+}
+
 export const PWARegistrar = () => {
   const { authUser, currentUser } = useAppState();
   const activeUser = authUser || currentUser;
@@ -35,17 +49,24 @@ export const PWARegistrar = () => {
 
       try {
         if (Notification.permission === 'granted') {
+          const keyRes = await fetch('/api/push/vapid-key');
+          const keyData = await keyRes.json();
+          if (!keyData.success || !keyData.publicKey) {
+            throw new Error(keyData.error || 'Failed to retrieve VAPID key');
+          }
+
+          const applicationServerKey = urlBase64ToUint8Array(keyData.publicKey);
           let sub = await reg.pushManager.getSubscription();
+          if (sub && !subscriptionUsesVapidKey(sub, keyData.publicKey)) {
+            await sub.unsubscribe();
+            sub = null;
+            hasSubscribedRef.current = false;
+          }
           if (!sub) {
-            const keyRes = await fetch('/api/push/vapid-key');
-            const keyData = await keyRes.json();
-            if (keyData.success && keyData.publicKey) {
-              const applicationServerKey = urlBase64ToUint8Array(keyData.publicKey);
-              sub = await reg.pushManager.subscribe({
-                userVisibleOnly: true,
-                applicationServerKey
-              });
-            }
+            sub = await reg.pushManager.subscribe({
+              userVisibleOnly: true,
+              applicationServerKey
+            });
           }
 
           if (sub && !hasSubscribedRef.current) {

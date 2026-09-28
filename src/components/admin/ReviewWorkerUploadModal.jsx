@@ -1,17 +1,17 @@
 'use client';
 
 import React, { useState } from 'react';
-import { 
-  X, 
-  Download, 
-  CheckCircle, 
-  RotateCcw, 
-  AlertTriangle, 
-  FileText, 
+import {
+  X,
+  Download,
+  CheckCircle,
+  RotateCcw,
+  AlertTriangle as _AlertTriangle,
+  FileText as _FileText,
   ExternalLink,
   Clock,
-  User,
-  Scissors,
+  User as _User,
+  Scissors as _Scissors,
   Loader2
 } from 'lucide-react';
 import { formatOrderId } from '../../context/StateContext';
@@ -36,7 +36,7 @@ export const ReviewWorkerUploadModal = ({ order, isOpen, onClose, onReviewed, sh
       if (Array.isArray(parsed)) workerFilesList = parsed;
     } catch {}
   }
-  
+
   if (workerFilesList.length === 0 && (order.worker_file_url || order.workerFileUrl)) {
     const singleUrl = order.worker_file_url || order.workerFileUrl;
     const singleName = order.worker_file_name || order.workerFileName || (typeof singleUrl === 'string' ? singleUrl.split('/').pop() : 'digitized_file.dst');
@@ -102,7 +102,7 @@ export const ReviewWorkerUploadModal = ({ order, isOpen, onClose, onReviewed, sh
   };
 
   return (
-    <div 
+    <div
       onClick={(e) => {
         e.stopPropagation();
         onClose();
@@ -119,7 +119,7 @@ export const ReviewWorkerUploadModal = ({ order, isOpen, onClose, onReviewed, sh
         padding: '1.25rem'
       }}
     >
-      <div 
+      <div
         onClick={(e) => e.stopPropagation()}
         style={{
           background: 'var(--bg-card, #ffffff)',

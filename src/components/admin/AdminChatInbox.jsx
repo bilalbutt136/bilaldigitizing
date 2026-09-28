@@ -5,8 +5,8 @@ import { useAppState } from '../../context/StateContext';
 import { createClient } from '../../lib/supabase/client';
 import OfferCardMessage from '../common/OfferCardMessage';
 import AdminCreateOfferModal from './AdminCreateOfferModal';
-import { downloadFileDirectly, openFileInNewTab } from '../../utils/fileDownloader';
-import { playMessageChime, playMessageChimeForMessage, playAdminChime, stopNotificationSound, unlockAudioContext } from '../../utils/audioNotification';
+import { downloadFileDirectly, openFileInNewTab as _openFileInNewTab } from '../../utils/fileDownloader';
+import { playMessageChime as _playMessageChime, playMessageChimeForMessage, playAdminChime, stopNotificationSound, unlockAudioContext } from '../../utils/audioNotification';
 import { subscribeToPresence, syncPresenceFromRest } from '../../services/presenceService';
 import {
   Search,
@@ -20,15 +20,15 @@ import {
   Download,
   Sparkles,
   Tag,
-  MoreHorizontal,
+  MoreHorizontal as _MoreHorizontal,
   X,
-  Check,
+  Check as _Check,
   CheckCheck,
   Loader2,
   RefreshCw,
-  Clock,
+  Clock as _Clock,
   Plus,
-  Trash2,
+  Trash2 as _Trash2,
   CornerDownLeft,
   Undo2,
   ExternalLink,
@@ -55,7 +55,7 @@ const formatChatDateHeader = (dateStr) => {
 };
 
 export default function AdminChatInbox({ initialChannel = 'inbox' }) {
-  const { authUser, orders = [] } = useAppState();
+  const { authUser, orders: _orders = [] } = useAppState();
 
   const [conversations, setConversations] = useState([]);
   const [activeConversationId, setActiveConversationId] = useState(null);
@@ -321,11 +321,13 @@ export default function AdminChatInbox({ initialChannel = 'inbox' }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeFilter, activeChannel]);
 
+  /* oxlint-disable react-hooks/exhaustive-deps -- fetch is keyed by conversation id, not render-local helper identity */
   useEffect(() => {
     if (activeConversationId) {
       fetchActiveMessages(activeConversationId);
     }
   }, [activeConversationId]);
+  /* oxlint-enable react-hooks/exhaustive-deps */
 
   // Real-time polling & silent sync
   useEffect(() => {
@@ -381,7 +383,8 @@ export default function AdminChatInbox({ initialChannel = 'inbox' }) {
     return () => clearInterval(interval);
   }, [activeConversationId, messages.length, activeChannel, activeFilter, searchQuery, fetchChannelUnreadCounts]);
 
-  // Global Realtime Supabase Channel Subscription for instant push & broadcast
+  // Global Realtime Supabase Channel Subscription for instant push & broadcast.
+  /* oxlint-disable react-hooks/exhaustive-deps -- resubscribe on channel/filter state only; helper identity would churn sockets */
   useEffect(() => {
     const supabase = createClient();
     if (!supabase) return;
@@ -470,6 +473,7 @@ export default function AdminChatInbox({ initialChannel = 'inbox' }) {
       supabase.removeChannel(globalSub);
     };
   }, [activeConversationId, activeChannel, activeFilter, searchQuery, fetchChannelUnreadCounts]);
+  /* oxlint-enable react-hooks/exhaustive-deps */
 
   // Dedicated Presence Subscription via shared presenceService (crash-proof)
   useEffect(() => {
@@ -660,7 +664,7 @@ export default function AdminChatInbox({ initialChannel = 'inbox' }) {
       } else if (data?.error) {
         showToast(data.error, 'error');
       }
-    } catch (err) {
+    } catch {
       showToast('Failed to polish message. Please try again.', 'error');
     } finally {
       setIsPolishing(false);
@@ -707,7 +711,7 @@ export default function AdminChatInbox({ initialChannel = 'inbox' }) {
         } else {
           showToast(`Failed to upload ${file.name}: ${data?.error || 'Unknown error'}`, 'error');
         }
-      } catch (err) {
+      } catch {
         showToast(`Upload failed for ${file.name}`, 'error');
       }
     }
@@ -781,7 +785,7 @@ export default function AdminChatInbox({ initialChannel = 'inbox' }) {
           return c;
         }));
       }
-    } catch (err) {
+    } catch {
       showToast('Failed to send message.', 'error');
       setInputText(messageText);
       setPendingAttachments(attachmentsToSend);
@@ -831,7 +835,7 @@ export default function AdminChatInbox({ initialChannel = 'inbox' }) {
       return '';
     }
   };
-  const formatRelativeTime = formatThreadTime;
+  const _formatRelativeTime = formatThreadTime;
 
   const handleSelectConversation = (convId) => {
     stopNotificationSound();
@@ -1594,7 +1598,7 @@ export default function AdminChatInbox({ initialChannel = 'inbox' }) {
                       // Grouping logic: same sender and sent within 5 minutes
                       const isFirstInGroup = !prevMsg || prevMsg.sender !== msg.sender || showDateHeader ||
                         (new Date(msg.created_at) - new Date(prevMsg.created_at) > 5 * 60 * 1000);
-                      const isLastInGroup = !nextMsg || nextMsg.sender !== msg.sender ||
+                      const _isLastInGroup = !nextMsg || nextMsg.sender !== msg.sender ||
                         (new Date(nextMsg.created_at).toDateString() !== currDate) ||
                         (new Date(nextMsg.created_at) - new Date(msg.created_at) > 5 * 60 * 1000);
 

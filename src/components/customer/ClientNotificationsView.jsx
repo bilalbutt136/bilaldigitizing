@@ -1,17 +1,17 @@
 'use client';
 
 import React, { useState } from 'react';
-import { 
-  Bell, 
-  CheckCheck, 
-  Clock, 
-  Package, 
-  Tag, 
-  Sparkles, 
-  ChevronRight, 
-  PackageCheck, 
-  AlertCircle, 
-  Layers,
+import {
+  Bell,
+  CheckCheck,
+  Clock as _Clock,
+  Package,
+  Tag,
+  Sparkles,
+  ChevronRight,
+  PackageCheck,
+  AlertCircle as _AlertCircle,
+  Layers as _Layers,
   Inbox,
   CheckCircle2,
   RotateCcw,
@@ -21,9 +21,9 @@ import {
 } from 'lucide-react';
 import { useAppState } from '../../context/StateContext';
 import { useNavigate } from '../../utils/navigation';
-import { 
-  handleNotificationClick, 
-  parseNotificationTarget, 
+import {
+  handleNotificationClick,
+  parseNotificationTarget,
   filterAndSanitizeNotifications,
   formatNotificationExactTime,
   getNotificationFullDateTime
@@ -35,7 +35,7 @@ export const ClientNotificationsView = ({ onNavigateToOrder, userEmail, isAdmin 
     notifications = [],
     markNotificationAsRead,
     markAllNotificationsAsRead,
-    unreadNotificationsCount = 0,
+    unreadNotificationsCount: _unreadNotificationsCount = 0,
     openOrderTrackerDrawer,
     setSelectedOrderForDrawer,
     orders = [],
@@ -153,7 +153,7 @@ export const ClientNotificationsView = ({ onNavigateToOrder, userEmail, isAdmin 
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', width: '100%', maxWidth: '800px', margin: '0 auto' }}>
-      
+
       {/* Header & Controls */}
       <div style={{
         background: 'var(--color-surface, #ffffff)',
@@ -324,7 +324,7 @@ export const ClientNotificationsView = ({ onNavigateToOrder, userEmail, isAdmin 
                     }}>
                       {notif.title || 'Studio Notification'}
                     </h5>
-                    <span 
+                    <span
                       style={{ fontSize: '0.68rem', color: 'var(--color-text-muted, #94a3b8)', flexShrink: 0, marginLeft: '0.5rem', fontWeight: 600 }}
                       title={getNotificationFullDateTime(notif, orders)}
                     >

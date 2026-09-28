@@ -65,7 +65,7 @@ export async function GET(request) {
         supabase.from('faqs').select('*').order('sort_order', { ascending: true }),
         supabase.from('testimonials').select('*').order('created_at', { ascending: false })
       ]);
-      return NextResponse.json({ 
+      return NextResponse.json({
         services, pricing_cards, patch_cards, store_products, pricing_tiers,
         portfolio, sew_outs, hero_slides, digitizers, site_config, faqs, testimonials
       }, {
@@ -89,12 +89,12 @@ export async function POST(request) {
     const data = await request.json();
     const { action, payload, tableName } = data;
     const supabase = createAdminClient();
-    
+
     const { user, isAdmin } = await getServerAuthUser(request);
     if (!user || !isAdmin) {
       return NextResponse.json({ error: 'Unauthorized: Admin privileges required.' }, { status: 403 });
     }
-    
+
     if (!ALLOWED_TABLES.includes(tableName)) {
       return NextResponse.json({ error: 'Invalid table name' }, { status: 400 });
     }
@@ -139,11 +139,11 @@ export async function POST(request) {
         console.error(`[Catalog API upsert error on ${tableName}]:`, error);
         throw error;
       }
-      
+
       revalidateAllSitePages();
       return NextResponse.json({ success: true, data: savedData });
     }
-    
+
     if (action === 'delete') {
       const { error } = await supabase.from(tableName).delete().eq('id', payload.id);
       if (error) throw error;
@@ -155,7 +155,7 @@ export async function POST(request) {
       await supabase.from(tableName).delete().neq('id', '00000000-0000-0000-0000-000000000000');
       if (payload && payload.length > 0) {
         const cleanData = payload.map(item => {
-          const { id, ...rest } = item;
+          const { id: _id, ...rest } = item;
           return rest;
         });
         const { error } = await supabase.from(tableName).insert(cleanData);

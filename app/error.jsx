@@ -1,14 +1,14 @@
 'use client';
 
 import React, { useEffect } from 'react';
-import { RefreshCw, Home, AlertCircle, RotateCcw } from 'lucide-react';
+import { RefreshCw, Home as _Home, AlertCircle, RotateCcw } from 'lucide-react';
 
 export default function Error({ error, reset }) {
   useEffect(() => {
     console.error('Next.js Client Exception Caught:', error);
 
     // Auto-recover from chunk load errors caused by new deployments
-    const isChunkError = 
+    const isChunkError =
       error?.name === 'ChunkLoadError' ||
       error?.message?.includes('Loading chunk') ||
       error?.message?.includes('Failed to fetch dynamically imported module') ||
@@ -36,7 +36,7 @@ export default function Error({ error, reset }) {
     }
   };
 
-  const isChunkError = 
+  const isChunkError =
     error?.name === 'ChunkLoadError' ||
     error?.message?.includes('Loading chunk') ||
     error?.message?.includes('Failed to fetch dynamically imported module') ||
@@ -72,7 +72,7 @@ export default function Error({ error, reset }) {
         {isChunkError ? 'Updating to Latest Version...' : 'Interface State Synchronizing'}
       </h2>
       <p style={{ color: '#64748b', fontSize: '0.9rem', maxWidth: '480px', lineHeight: 1.55, marginBottom: '1.5rem' }}>
-        {isChunkError 
+        {isChunkError
           ? 'A new version of BDigitizing was just deployed. Click below to load the newest updates.'
           : 'A temporary client-side state discrepancy occurred. Click below to reconnect or return to the main dashboard.'}
       </p>

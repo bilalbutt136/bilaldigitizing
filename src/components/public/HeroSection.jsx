@@ -4,11 +4,11 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from '../../utils/navigation';
 import { useAppState } from '../../context/StateContext';
 import { normalizeCategory } from '../../utils/categoryUtils';
-import { supabase } from '../../lib/supabase/client';
-import { 
-  CheckCircle2, 
-  ArrowRight, 
-  Upload, 
+import { supabase as _supabase } from '../../lib/supabase/client';
+import {
+  CheckCircle2,
+  ArrowRight,
+  Upload,
   Star,
   Tag,
   Layers,
@@ -132,10 +132,10 @@ const DEFAULT_SERVICE_DATA = {
 
 export const HeroSection = () => {
   const navigate = useNavigate();
-  const { 
-    protectedNavigate, 
-    openOrderWizard, 
-    activeHomeServiceTab = 'all', 
+  const {
+    protectedNavigate,
+    openOrderWizard,
+    activeHomeServiceTab = 'all',
     setActiveHomeServiceTab,
     heroSlides = [],
     portfolioSamples = []
@@ -168,7 +168,7 @@ export const HeroSection = () => {
 
   const primaryCtaText = matchedSlide?.primary_cta || matchedSlide?.primaryCta || defaultContent.primary_cta;
   const primaryBtnAction = matchedSlide?.primary_btn_action || matchedSlide?.trust_points?.[0]?.primaryBtnAction || defaultContent.primary_btn_action;
-  
+
   const secondaryCtaText = matchedSlide?.secondary_cta || matchedSlide?.secondaryCta || defaultContent.secondary_cta;
   const secondaryBtnAction = matchedSlide?.secondary_btn_action || matchedSlide?.trust_points?.[0]?.secondaryBtnAction || defaultContent.secondary_btn_action;
 
@@ -516,10 +516,10 @@ export const HeroSection = () => {
       `}} />
 
       <div className="container" style={{ position: 'relative', zIndex: 1, maxWidth: '1380px', width: '100%', boxSizing: 'border-box' }}>
-        
+
         {/* Top 4 Navigation Tabs Switcher */}
         <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 'clamp(0.85rem, 1.8vw, 1.25rem)', width: '100%' }}>
-          <div 
+          <div
             className="hero-nav-tabs-wrapper"
             style={{
               display: 'inline-flex',
@@ -554,8 +554,8 @@ export const HeroSection = () => {
                     padding: '0.48rem 1.2rem',
                     borderRadius: '9999px',
                     border: 'none',
-                    background: isSelected 
-                      ? 'linear-gradient(135deg, var(--color-secondary), var(--color-primary))' 
+                    background: isSelected
+                      ? 'linear-gradient(135deg, var(--color-secondary), var(--color-primary))'
                       : 'transparent',
                     color: isSelected ? 'var(--color-text-on-primary, #ffffff)' : 'var(--hero-tabs-text, var(--color-text-primary))',
                     fontWeight: isSelected ? 800 : 700,
@@ -582,12 +582,12 @@ export const HeroSection = () => {
           width: '100%',
           boxSizing: 'border-box'
         }}>
-          
+
           {/* Left Column: Dynamic Service Copy, Benefits, Packages & CTAs */}
           <div className="hero-left-content" style={{ textAlign: 'left' }}>
-            
+
             {/* Dynamic Badge */}
-            <div className="badge-pill-glow" style={{ 
+            <div className="badge-pill-glow" style={{
               marginBottom: '0.55rem',
               background: 'var(--color-primary-light)',
               border: '1px solid var(--color-border)',
@@ -687,11 +687,11 @@ export const HeroSection = () => {
               gap: '0.75rem',
               marginBottom: '0.85rem'
             }}>
-              <button 
+              <button
                 type="button"
                 className="btn btn-primary-orange btn-lg"
                 onClick={handlePrimaryAction}
-                style={{ 
+                style={{
                   background: 'linear-gradient(135deg, var(--color-secondary) 0%, var(--color-primary) 100%)',
                   color: 'var(--color-text-on-primary, #ffffff)',
                   border: 'none',
@@ -711,15 +711,15 @@ export const HeroSection = () => {
                 <ArrowRight size={16} />
               </button>
 
-              <button 
+              <button
                 type="button"
                 className="btn btn-outline btn-lg"
                 onClick={handleSecondaryAction}
-                style={{ 
+                style={{
                   background: 'var(--color-surface, transparent)',
-                  color: 'var(--color-text-primary)', 
+                  color: 'var(--color-text-primary)',
                   border: '1.5px solid var(--color-border)',
-                  padding: '0.72rem 1.25rem', 
+                  padding: '0.72rem 1.25rem',
                   fontSize: '0.92rem',
                   fontWeight: 700,
                   display: 'inline-flex',
@@ -759,12 +759,12 @@ export const HeroSection = () => {
           </div>
 
           {/* Right Column: Clean, Full Showcase Image Card (Auto-rotates every 5s) */}
-          <div 
+          <div
             style={{ width: '100%', display: 'flex', justifyContent: 'center' }}
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}
           >
-            <div 
+            <div
               className="hero-showcase-card"
               style={{
                 background: 'var(--hero-card-bg, var(--color-surface))',
@@ -778,7 +778,7 @@ export const HeroSection = () => {
                 boxSizing: 'border-box'
               }}
             >
-              
+
               {/* Header Title & Slide Index Counter */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.55rem', gap: '0.5rem', flexWrap: 'wrap' }}>
                 <div style={{ minWidth: 0, flex: 1 }}>
@@ -831,7 +831,7 @@ export const HeroSection = () => {
               </div>
 
               {/* Full, Clear Showcase Image Container (Exact 4:3 / 1200x900 Ratio - Fills completely edge-to-edge) */}
-              <div 
+              <div
                 className="hero-showcase-image-box"
                 style={{
                   position: 'relative',
@@ -852,20 +852,20 @@ export const HeroSection = () => {
               >
                 {/* Full, Auto-Adjusted Showcase Image or Empty State */}
                 {currentImage?.imageUrl ? (
-                  <img 
-                    src={currentImage.imageUrl} 
-                    alt={currentImage?.title || "Studio Showcase"} 
+                  <img
+                    src={currentImage.imageUrl}
+                    alt={currentImage?.title || "Studio Showcase"}
                     loading="lazy"
                     decoding="async"
-                    style={{ 
-                      width: '100%', 
-                      height: '100%', 
-                      objectFit: 'contain', 
-                      objectPosition: 'center', 
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'contain',
+                      objectPosition: 'center',
                       display: 'block',
                       transition: 'transform 0.4s cubic-bezier(0.4, 0, 0.2, 1)'
-                    }} 
-                    draggable="false" 
+                    }}
+                    draggable="false"
                   />
                 ) : (
                   <div style={{
@@ -885,8 +885,8 @@ export const HeroSection = () => {
                     <p style={{ fontSize: '0.82rem', margin: 0, maxWidth: '280px', color: 'var(--color-text-muted)' }}>
                       Live sew-outs and digitized machine files directly from our studio.
                     </p>
-                    <button 
-                      type="button" 
+                    <button
+                      type="button"
                       className="btn btn-outline btn-sm"
                       onClick={() => navigate('/portfolio')}
                       style={{ marginTop: '0.25rem' }}

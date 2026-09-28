@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabaseClient } from '../../../src/lib/supabaseClient';
 import { WorkerDashboard } from '../../../src/components/worker/WorkerDashboard';
-import { Scissors } from 'lucide-react';
+import { Scissors as _Scissors } from 'lucide-react';
 
 export default function WorkerPortalDashboardPage() {
   const router = useRouter();
@@ -170,7 +170,7 @@ export default function WorkerPortalDashboardPage() {
           }}>
             <img src="/favicon.png" alt="BDigitizing" style={{ width: '32px', height: '36px', objectFit: 'contain' }} />
           </div>
-          
+
           <div style={{
             margin: '0 auto 1.25rem',
             width: '32px',

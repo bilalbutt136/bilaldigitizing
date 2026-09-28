@@ -2,7 +2,7 @@
 
 import React, { useState, useRef } from 'react';
 import { useAppState } from '../../../context/StateContext';
-import { Palette, Sun, Moon, Sparkles, RefreshCw, Sliders, Check, Eye, Copy, ArrowRight, ShieldCheck, Tag, Image as ImageIcon, Upload, Trash2, Globe } from 'lucide-react';
+import { Palette, Sun, Moon, Sparkles, RefreshCw, Sliders, Check as _Check, Eye, Copy as _Copy, ArrowRight, ShieldCheck as _ShieldCheck, Tag as _Tag, Image as ImageIcon, Upload, Trash2, Globe } from 'lucide-react';
 import ThemePreviewCard from '../../common/ThemePreviewCard';
 import { THEME_PRESETS } from '../../../utils/themePresets';
 import { uploadFileToCloudinaryFull } from '../../../services/supabaseService';
@@ -58,7 +58,7 @@ export const ThemeBrandingSettings = () => {
       };
       setCustomBrandColors(brandPayload);
       setIsCustomBrandActive(true);
-      
+
       // Persist to Supabase site_settings
       await updateSiteSettings({
         themePreset: colorTheme,
@@ -350,16 +350,16 @@ export const ThemeBrandingSettings = () => {
               Primary Brand Color (Buttons & CTAs)
             </label>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'var(--color-subtle, var(--bg-subtle))', border: '1px solid var(--border-color)', borderRadius: '10px', padding: '0.4rem 0.6rem' }}>
-              <input 
-                type="color" 
-                value={customPrimary} 
-                onChange={(e) => setCustomPrimary(e.target.value)} 
+              <input
+                type="color"
+                value={customPrimary}
+                onChange={(e) => setCustomPrimary(e.target.value)}
                 style={{ width: '34px', height: '34px', border: 'none', borderRadius: '6px', cursor: 'pointer', background: 'none' }}
               />
-              <input 
-                type="text" 
-                value={customPrimary} 
-                onChange={(e) => setCustomPrimary(e.target.value)} 
+              <input
+                type="text"
+                value={customPrimary}
+                onChange={(e) => setCustomPrimary(e.target.value)}
                 style={{ border: 'none', background: 'transparent', fontSize: '0.875rem', fontWeight: 700, width: '100%', outline: 'none', color: 'var(--color-text-primary)' }}
               />
             </div>
@@ -370,16 +370,16 @@ export const ThemeBrandingSettings = () => {
               Secondary Color (Highlights & Badges)
             </label>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'var(--color-subtle, var(--bg-subtle))', border: '1px solid var(--border-color)', borderRadius: '10px', padding: '0.4rem 0.6rem' }}>
-              <input 
-                type="color" 
-                value={customSecondary} 
-                onChange={(e) => setCustomSecondary(e.target.value)} 
+              <input
+                type="color"
+                value={customSecondary}
+                onChange={(e) => setCustomSecondary(e.target.value)}
                 style={{ width: '34px', height: '34px', border: 'none', borderRadius: '6px', cursor: 'pointer', background: 'none' }}
               />
-              <input 
-                type="text" 
-                value={customSecondary} 
-                onChange={(e) => setCustomSecondary(e.target.value)} 
+              <input
+                type="text"
+                value={customSecondary}
+                onChange={(e) => setCustomSecondary(e.target.value)}
                 style={{ border: 'none', background: 'transparent', fontSize: '0.875rem', fontWeight: 700, width: '100%', outline: 'none', color: 'var(--color-text-primary)' }}
               />
             </div>
@@ -390,16 +390,16 @@ export const ThemeBrandingSettings = () => {
               Accent Color (Glows & Borders)
             </label>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'var(--color-subtle, var(--bg-subtle))', border: '1px solid var(--border-color)', borderRadius: '10px', padding: '0.4rem 0.6rem' }}>
-              <input 
-                type="color" 
-                value={customAccent} 
-                onChange={(e) => setCustomAccent(e.target.value)} 
+              <input
+                type="color"
+                value={customAccent}
+                onChange={(e) => setCustomAccent(e.target.value)}
                 style={{ width: '34px', height: '34px', border: 'none', borderRadius: '6px', cursor: 'pointer', background: 'none' }}
               />
-              <input 
-                type="text" 
-                value={customAccent} 
-                onChange={(e) => setCustomAccent(e.target.value)} 
+              <input
+                type="text"
+                value={customAccent}
+                onChange={(e) => setCustomAccent(e.target.value)}
                 style={{ border: 'none', background: 'transparent', fontSize: '0.875rem', fontWeight: 700, width: '100%', outline: 'none', color: 'var(--color-text-primary)' }}
               />
             </div>

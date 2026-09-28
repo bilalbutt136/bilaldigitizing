@@ -20,6 +20,20 @@ function urlBase64ToUint8Array(base64String) {
   return outputArray;
 }
 
+function arrayBufferToUrlBase64(buffer) {
+  if (!buffer) return '';
+  const bytes = new Uint8Array(buffer);
+  let binary = '';
+  for (const byte of bytes) binary += String.fromCharCode(byte);
+  return window.btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
+}
+
+function subscriptionUsesVapidKey(subscription, publicKey) {
+  const currentKey = subscription?.options?.applicationServerKey;
+  if (!currentKey || !publicKey) return false;
+  return arrayBufferToUrlBase64(currentKey) === String(publicKey).replace(/=+$/g, '');
+}
+
 export function usePushNotifications(userContext = {}) {
   const { userEmail = '', role = 'client', userId = null } = userContext;
 
@@ -108,6 +122,10 @@ export function usePushNotifications(userContext = {}) {
 
       // 4. Register Push Subscription with Browser Push Service (FCM / APNs)
       let subscription = await registration.pushManager.getSubscription();
+      if (subscription && !subscriptionUsesVapidKey(subscription, keyData.publicKey)) {
+        await subscription.unsubscribe();
+        subscription = null;
+      }
       if (!subscription) {
         subscription = await registration.pushManager.subscribe({
           userVisibleOnly: true,

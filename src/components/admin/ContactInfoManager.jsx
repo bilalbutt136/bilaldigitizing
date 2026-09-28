@@ -2,23 +2,23 @@
 
 import React, { useState, useEffect } from 'react';
 import { useAppState } from '../../context/StateContext';
-import { 
-  Save, 
-  CheckCircle2, 
-  Mail, 
-  Phone, 
-  MapPin, 
-  Clock, 
-  Globe, 
+import {
+  Save,
+  CheckCircle2 as _CheckCircle2,
+  Mail,
+  Phone,
+  MapPin as _MapPin,
+  Clock as _Clock,
+  Globe as _Globe,
   ExternalLink,
   MessageSquare,
   Sparkles,
   Copy,
   Check,
   Share2,
-  Tv,
-  Camera,
-  Layers,
+  Tv as _Tv,
+  Camera as _Camera,
+  Layers as _Layers,
   Send
 } from 'lucide-react';
 
@@ -26,7 +26,7 @@ export const ContactInfoManager = () => {
   const { siteSettings, updateSiteSettings, showToast } = useAppState();
   const [loading, setLoading] = useState(false);
   const [copiedField, setCopiedField] = useState(null);
-  
+
   const [formData, setFormData] = useState({
     email: '',
     phone: '',
@@ -151,7 +151,7 @@ export const ContactInfoManager = () => {
 
   return (
     <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: '2rem', maxWidth: '1240px', margin: '0 auto', width: '100%' }}>
-      
+
       {/* 1. Header Banner */}
       <div className="card" style={{
         padding: '2rem',
@@ -195,7 +195,7 @@ export const ContactInfoManager = () => {
 
       {/* 2. Main 2-Column Grid */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 540px), 1fr))', gap: '1.75rem' }}>
-        
+
         {/* Column 1: Direct Support Channels */}
         <div className="card" style={{
           padding: '2rem',
@@ -374,7 +374,7 @@ export const ContactInfoManager = () => {
 
           {/* Social Inputs Grid */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
-            
+
             {/* Facebook */}
             <div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.35rem' }}>
@@ -544,12 +544,12 @@ export const ContactInfoManager = () => {
                 Customer Live Footer Preview
               </span>
               <span style={{ fontSize: '0.7rem', color: '#10b981', fontWeight: 700 }}>
-                {Object.values(formData.socials || {}).filter(Boolean).length > 0 
-                  ? `${Object.values(formData.socials || {}).filter(Boolean).length} Active Link(s)` 
+                {Object.values(formData.socials || {}).filter(Boolean).length > 0
+                  ? `${Object.values(formData.socials || {}).filter(Boolean).length} Active Link(s)`
                   : 'Auto-Clean Mode (Hidden)'}
               </span>
             </div>
-            
+
             {Object.values(formData.socials || {}).filter(Boolean).length > 0 ? (
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flexWrap: 'wrap' }}>
                 {formData.socials.facebook && <span style={{ fontSize: '0.75rem', background: 'rgba(24, 119, 242, 0.1)', color: '#1877f2', padding: '0.2rem 0.55rem', borderRadius: '6px', fontWeight: 700 }}>Facebook</span>}

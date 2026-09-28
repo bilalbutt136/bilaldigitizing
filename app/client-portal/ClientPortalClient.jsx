@@ -9,12 +9,12 @@ import { useNavigate } from '../../src/utils/navigation';
 
 export function ClientPortalClient() {
   const navigate = useNavigate();
-  const { 
-    isAuthenticated, 
-    isAuthInitialized, 
-    authUser, 
-    mobileMode, 
-    setMobileMode,
+  const {
+    isAuthenticated,
+    isAuthInitialized,
+    authUser,
+    mobileMode,
+    setMobileMode: _setMobileMode,
     currentView,
     setCurrentView
   } = useAppState();

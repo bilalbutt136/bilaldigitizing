@@ -1,14 +1,14 @@
 'use client';
 
 import React from 'react';
-import { 
+import {
   LayoutDashboard,
-  Layers, 
+  Layers,
   PenTool,
-  Package, 
-  User, 
-  Settings, 
-  LogOut, 
+  Package,
+  User,
+  Settings,
+  LogOut,
   Wallet,
   PlusCircle,
   Bell,
@@ -29,12 +29,12 @@ export const ClientSidebar = ({
   unreadNotifCount = 0,
   unreadInboxCount = 0,
   unreadSupportCount = 0,
-  unpaidCount = 0,
+  unpaidCount: _unpaidCount = 0,
   onOpenDepositModal,
-  onOpenLiveSupport,
+  onOpenLiveSupport: _onOpenLiveSupport,
   onLogout
 }) => {
-  const [mounted, setMounted] = React.useState(false);
+  const [_mounted, setMounted] = React.useState(false);
 
   React.useEffect(() => {
     setMounted(true);
@@ -60,16 +60,16 @@ export const ClientSidebar = ({
           icon: ClipboardList,
           badge: unreadOrdersCount > 0 ? unreadOrdersCount : null
         },
-        { 
-          id: 'inbox', 
-          label: 'Inbox & Offers', 
-          icon: MessageSquare, 
+        {
+          id: 'inbox',
+          label: 'Inbox & Offers',
+          icon: MessageSquare,
           badge: unreadInboxCount > 0 ? unreadInboxCount : null
         },
-        { 
-          id: 'support', 
-          label: '24/7 Live Support', 
-          icon: Headphones, 
+        {
+          id: 'support',
+          label: '24/7 Live Support',
+          icon: Headphones,
           badge: unreadSupportCount > 0 ? unreadSupportCount : null
         },
         {
@@ -84,23 +84,23 @@ export const ClientSidebar = ({
     {
       title: 'DIGITAL STUDIO SERVICES',
       items: [
-        { 
-          id: 'digitizing', 
-          label: 'Embroidery Digitizing', 
-          icon: Layers, 
-          badge: digitizingCount 
+        {
+          id: 'digitizing',
+          label: 'Embroidery Digitizing',
+          icon: Layers,
+          badge: digitizingCount
         },
-        { 
-          id: 'vector', 
-          label: 'Vector Art Conversion', 
-          icon: PenTool, 
-          badge: vectorCount 
+        {
+          id: 'vector',
+          label: 'Vector Art Conversion',
+          icon: PenTool,
+          badge: vectorCount
         },
-        { 
-          id: 'patches', 
-          label: 'Custom Patches & Goods', 
-          icon: Package, 
-          badge: patchCount 
+        {
+          id: 'patches',
+          label: 'Custom Patches & Goods',
+          icon: Package,
+          badge: patchCount
         }
       ]
     },
@@ -134,15 +134,15 @@ export const ClientSidebar = ({
         zIndex: 10
       }}
     >
-      <div 
+      <div
         className="client-sidebar-scrollable-content"
-        style={{ 
-          flex: 1, 
+        style={{
+          flex: 1,
           height: '100%',
           maxHeight: '100%',
-          display: 'flex', 
-          flexDirection: 'column', 
-          overflowY: 'auto', 
+          display: 'flex',
+          flexDirection: 'column',
+          overflowY: 'auto',
           overflowX: 'hidden',
           padding: '0.85rem 0.75rem 1.5rem',
           boxSizing: 'border-box'
@@ -190,22 +190,22 @@ export const ClientSidebar = ({
           </div>
 
           {/* Wallet Credit Box — Perfectly Fitted & High Contrast */}
-          <div style={{ 
-            display: 'flex', 
-            justifyContent: 'space-between', 
-            alignItems: 'center', 
-            background: 'rgba(255, 255, 255, 0.07)', 
-            padding: '0.35rem 0.5rem', 
-            borderRadius: '8px', 
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            background: 'rgba(255, 255, 255, 0.07)',
+            padding: '0.35rem 0.5rem',
+            borderRadius: '8px',
             border: '1px solid rgba(255, 255, 255, 0.12)',
             fontSize: '0.72rem'
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', minWidth: 0 }}>
               <Wallet size={12} style={{ color: 'var(--color-primary)', flexShrink: 0 }} />
               <span style={{ color: '#94a3b8', fontSize: '0.68rem', fontWeight: 600 }}>Wallet:</span>
-              <strong style={{ 
-                color: '#34d399', 
-                fontWeight: 900, 
+              <strong style={{
+                color: '#34d399',
+                fontWeight: 900,
                 fontSize: '0.8rem',
                 letterSpacing: '-0.01em',
                 background: 'rgba(52, 211, 153, 0.14)',
@@ -263,7 +263,7 @@ export const ClientSidebar = ({
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.12rem' }}>
               {sec.items.map(item => {
                 const IconComp = item.icon;
-                const isActive = activeTab === item.id || 
+                const isActive = activeTab === item.id ||
                   (item.id === 'inbox' && activeTab === 'chat') ||
                   (item.id === 'support' && activeTab === 'help-support');
 
@@ -284,8 +284,8 @@ export const ClientSidebar = ({
                       padding: '0.45rem 0.65rem',
                       borderRadius: 'var(--radius-md)',
                       border: isActive ? '1.5px solid var(--color-primary)' : '1px solid transparent',
-                      background: isActive 
-                        ? 'var(--color-primary-light)' 
+                      background: isActive
+                        ? 'var(--color-primary-light)'
                         : 'transparent',
                       color: isActive ? 'var(--color-primary)' : 'var(--color-text-primary)',
                       fontWeight: isActive ? 800 : 600,
@@ -301,12 +301,12 @@ export const ClientSidebar = ({
                     </div>
 
                     {item.badge !== undefined && item.badge !== null && item.badge !== 0 && item.badge !== '0' && (
-                      <span style={{ 
-                        fontSize: '0.68rem', 
-                        fontWeight: 800, 
-                        background: item.badgeColor || (isActive ? 'var(--color-primary)' : 'var(--color-primary-light)'), 
-                        color: (item.badgeColor || isActive) ? 'var(--color-text-on-primary, #ffffff)' : 'var(--color-primary)', 
-                        padding: '0.08rem 0.4rem', 
+                      <span style={{
+                        fontSize: '0.68rem',
+                        fontWeight: 800,
+                        background: item.badgeColor || (isActive ? 'var(--color-primary)' : 'var(--color-primary-light)'),
+                        color: (item.badgeColor || isActive) ? 'var(--color-text-on-primary, #ffffff)' : 'var(--color-primary)',
+                        padding: '0.08rem 0.4rem',
                         borderRadius: '9999px',
                         flexShrink: 0
                       }}>
@@ -315,10 +315,10 @@ export const ClientSidebar = ({
                     )}
 
                     {item.liveDot && (!item.badge || item.badge <= 0) && (
-                      <span style={{ 
-                        width: '7px', 
-                        height: '7px', 
-                        borderRadius: '50%', 
+                      <span style={{
+                        width: '7px',
+                        height: '7px',
+                        borderRadius: '50%',
                         background: '#10b981',
                         boxShadow: '0 0 8px rgba(16, 185, 129, 0.6)',
                         flexShrink: 0

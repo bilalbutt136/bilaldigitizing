@@ -1,36 +1,33 @@
 import { NextResponse } from 'next/server';
 import { createAdminClient } from '../../../../src/lib/supabase/admin';
+import { getServerAuthUser } from '../../../../src/lib/supabase/serverAuth';
+import { canAccessConversation } from '../../../../src/lib/chat/authorization';
 
 export const dynamic = 'force-dynamic';
 
-// In-process fallback cache for rapid queries within warm instances
 const localTypingCache = new Map();
 
 export async function GET(request) {
+  const { user, isAdmin } = await getServerAuthUser(request);
+  if (!user) return NextResponse.json({ error: 'Authentication required.' }, { status: 401 });
+
   const { searchParams } = new URL(request.url);
   const conversationId = searchParams.get('conversationId') || searchParams.get('conversation_id');
-  const forRole = searchParams.get('forRole') || 'admin'; // 'admin' wants to know if 'client' is typing, and vice versa
+  if (!conversationId) return NextResponse.json({ isTyping: false });
 
-  if (!conversationId) {
-    return NextResponse.json({ isTyping: false });
+  const supabase = createAdminClient();
+  if (!(await canAccessConversation(supabase, { user, isAdmin }, conversationId))) {
+    return NextResponse.json({ error: 'Conversation access denied.' }, { status: 403 });
   }
 
-  const otherRole = forRole === 'admin' ? 'client' : 'admin';
+  const otherRole = isAdmin ? 'client' : 'admin';
   const cacheKey = `${conversationId}:${otherRole}`;
   const localTs = localTypingCache.get(cacheKey);
-
-  // If locally recorded within 3.5s, return true immediately
-  if (localTs && (Date.now() - localTs < 3500)) {
-    return NextResponse.json({
-      isTyping: true,
-      role: otherRole,
-      conversationId
-    });
+  if (localTs && Date.now() - localTs < 3500) {
+    return NextResponse.json({ isTyping: true, role: otherRole, conversationId });
   }
 
-  // Query database for shared state across serverless instances
   try {
-    const supabase = createAdminClient();
     const field = otherRole === 'client' ? 'typing_client_at' : 'typing_admin_at';
     const { data: conv } = await supabase
       .from('conversations')
@@ -39,75 +36,54 @@ export async function GET(request) {
       .maybeSingle();
 
     const dbTs = conv?.[field];
-    const isTyping = Boolean(dbTs && (Date.now() - new Date(dbTs).getTime() < 3500));
-
-    return NextResponse.json({
-      isTyping,
-      role: otherRole,
-      conversationId
-    });
+    const isTyping = Boolean(dbTs && Date.now() - new Date(dbTs).getTime() < 3500);
+    return NextResponse.json({ isTyping, role: otherRole, conversationId });
   } catch {
-    return NextResponse.json({
-      isTyping: false,
-      role: otherRole,
-      conversationId
-    });
+    return NextResponse.json({ isTyping: false, role: otherRole, conversationId });
   }
 }
 
 export async function POST(request) {
   try {
-    const body = await request.json();
-    const { conversationId, senderRole = 'client', isTyping = true } = body;
+    const { user, isAdmin } = await getServerAuthUser(request);
+    if (!user) return NextResponse.json({ error: 'Authentication required.' }, { status: 401 });
 
-    if (!conversationId) {
-      return NextResponse.json({ error: 'Missing conversationId' }, { status: 400 });
+    const body = await request.json().catch(() => ({}));
+    const conversationId = body.conversationId;
+    const typingBool = Boolean(body.isTyping ?? true);
+    if (!conversationId) return NextResponse.json({ error: 'Missing conversationId' }, { status: 400 });
+
+    const supabase = createAdminClient();
+    if (!(await canAccessConversation(supabase, { user, isAdmin }, conversationId))) {
+      return NextResponse.json({ error: 'Conversation access denied.' }, { status: 403 });
     }
 
-    const typingBool = Boolean(isTyping);
+    const senderRole = isAdmin ? 'admin' : 'client';
     const cacheKey = `${conversationId}:${senderRole}`;
+    if (typingBool) localTypingCache.set(cacheKey, Date.now());
+    else localTypingCache.delete(cacheKey);
 
-    if (typingBool) {
-      localTypingCache.set(cacheKey, Date.now());
-    } else {
-      localTypingCache.delete(cacheKey);
-    }
-
-    // 1. Supabase Realtime REST broadcast: immediately pushes to all WebSocket listeners on the chat room
     try {
-      const supabase = createAdminClient();
       const channel = supabase.channel(`chat-room-${conversationId}`);
       await channel.send({
         type: 'broadcast',
         event: 'typing',
-        payload: {
-          role: senderRole,
-          isTyping: typingBool,
-          conversationId,
-          timestamp: Date.now()
-        }
+        payload: { role: senderRole, isTyping: typingBool, conversationId, timestamp: Date.now() }
       });
       supabase.removeChannel(channel);
     } catch (realtimeErr) {
       console.warn('[Typing API] Supabase broadcast notice:', realtimeErr.message);
     }
 
-    // 2. Database update: persists timestamp in conversations table for stateless lambdas
     try {
-      const supabase = createAdminClient();
       const field = senderRole === 'client' ? 'typing_client_at' : 'typing_admin_at';
-      await supabase
-        .from('conversations')
-        .update({
-          [field]: typingBool ? new Date().toISOString() : null
-        })
-        .eq('id', conversationId);
-    } catch (dbErr) {
-      // Non-blocking if table/column in transition
-    }
+      await supabase.from('conversations').update({
+        [field]: typingBool ? new Date().toISOString() : null
+      }).eq('id', conversationId);
+    } catch {}
 
     return NextResponse.json({ success: true, isTyping: typingBool });
-  } catch (err) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+  } catch {
+    return NextResponse.json({ error: 'Unable to update typing state.' }, { status: 500 });
   }
 }

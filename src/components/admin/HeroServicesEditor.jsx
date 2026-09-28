@@ -1,18 +1,18 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef as _useRef } from 'react';
 import { useAppState } from '../../context/StateContext';
-import { 
-  Save, 
-  Sparkles, 
-  Layers, 
-  PenTool, 
-  Tag, 
-  LayoutGrid, 
-  RotateCcw, 
-  CheckCircle2, 
-  Plus, 
-  Trash2, 
+import {
+  Save,
+  Sparkles,
+  Layers,
+  PenTool,
+  Tag,
+  LayoutGrid,
+  RotateCcw,
+  CheckCircle2,
+  Plus,
+  Trash2,
   Image as ImageIcon,
   Upload,
   RefreshCw,
@@ -145,7 +145,7 @@ export const HeroServicesEditor = () => {
       s => s.id?.toLowerCase() === selectedService || s.serviceKey?.toLowerCase() === selectedService
     );
     const defaults = DEFAULT_SERVICES[selectedService] || DEFAULT_SERVICES.all;
-    
+
     if (existing) {
       // Parse showcase images
       let rawImages = existing.showcase_images || existing.showcaseImages || existing.trust_points?.[0]?.showcase_images || [];
@@ -398,7 +398,7 @@ export const HeroServicesEditor = () => {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-      
+
       {/* 1. Header & Service Selector Tabs */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
@@ -419,7 +419,7 @@ export const HeroServicesEditor = () => {
           >
             <RotateCcw size={15} /> Reset Defaults
           </button>
-          
+
           <button
             type="button"
             className="btn btn-primary-orange btn-sm"
@@ -467,7 +467,7 @@ export const HeroServicesEditor = () => {
 
       {/* 3. Main Form Container */}
       <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-        
+
         {/* Section A: Headlines & Badges */}
         <div className="card" style={{ padding: '1.75rem', background: '#ffffff', border: '1px solid var(--border-color)', borderRadius: '16px' }}>
           <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--navy-950)', marginBottom: '1.25rem' }}>

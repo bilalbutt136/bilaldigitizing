@@ -1,10 +1,31 @@
-import { Resend } from 'resend';
 import { createAdminClient } from './supabase/admin.js';
 
 export const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 // Resend account owner verified on sandbox domain
 export const RESEND_VERIFIED_FALLBACK_EMAIL = 'bilalsadiq612@gmail.com';
+
+
+async function sendResendEmail(apiKey, payload) {
+  const response = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(payload)
+  });
+
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const error = new Error(data?.message || data?.error?.message || `Resend request failed with HTTP ${response.status}`);
+    error.status = response.status;
+    error.details = data;
+    throw error;
+  }
+
+  return data;
+}
 
 /**
  * Resolves destination admin email and notification preferences from Supabase site_config
@@ -176,9 +197,8 @@ export async function sendNotificationEmail(params = {}) {
   }
 
   try {
-    const resend = new Resend(resendApiKey);
     const { adminEmail: dynamicAdminEmail, adminEmails: dynamicAdminEmails, notificationPrefs } = await resolveAdminNotificationConfig();
-    
+
     let targetAdminEmails = [];
     if (Array.isArray(explicitAdminEmails) && explicitAdminEmails.length > 0) {
       targetAdminEmails = explicitAdminEmails.filter(e => typeof e === 'string' && EMAIL_REGEX.test(e.trim())).map(e => e.trim().toLowerCase());
@@ -207,7 +227,7 @@ export async function sendNotificationEmail(params = {}) {
     }
 
     try {
-      const response = await resend.emails.send({
+      const response = await sendResendEmail(resendApiKey, {
         from: configuredFrom,
         to,
         subject,
@@ -227,7 +247,7 @@ export async function sendNotificationEmail(params = {}) {
       // OR recipient is not the account owner, immediately failover to RESEND_VERIFIED_FALLBACK_EMAIL
       if (to !== RESEND_VERIFIED_FALLBACK_EMAIL) {
         console.log(`[emailService] Triggering guaranteed delivery fallback to ${RESEND_VERIFIED_FALLBACK_EMAIL}...`);
-        
+
         const fallbackNote = `
           <div style="background: #fef3c7; border: 1px solid #f59e0b; border-radius: 8px; padding: 12px 16px; margin: 0 0 16px 0; font-size: 12px; color: #92400e;">
             <strong>⚡ Delivery Note:</strong> This notification was routed to your verified Resend account (<strong>${RESEND_VERIFIED_FALLBACK_EMAIL}</strong>) because the target address (<strong>${to}</strong>) requires a custom verified domain in Resend.
@@ -235,7 +255,7 @@ export async function sendNotificationEmail(params = {}) {
         `;
 
         try {
-          const fallbackRes = await resend.emails.send({
+          const fallbackRes = await sendResendEmail(resendApiKey, {
             from: 'BDigitizing <onboarding@resend.dev>',
             to: RESEND_VERIFIED_FALLBACK_EMAIL,
             subject: `[STUDIO ALERT] ${subject}`,
@@ -343,12 +363,12 @@ export async function sendNotificationEmail(params = {}) {
   // 2. NEW ORDER SUBMITTED (Direct, Custom Offer, Stripe, or Studio Wallet)
   else if (type === 'NEW_ORDER') {
     if (notificationPrefs.orderAlerts !== false) {
-      const parsedNotes = typeof orderDetails?.notes === 'string' 
+      const parsedNotes = typeof orderDetails?.notes === 'string'
         ? (() => { try { return JSON.parse(orderDetails.notes); } catch { return { notes: orderDetails.notes }; } })()
         : (orderDetails?.notes || {});
 
-      const dimensionsText = (parsedNotes.patchWidth && parsedNotes.patchHeight) 
-        ? `${parsedNotes.patchWidth}" × ${parsedNotes.patchHeight}"` 
+      const dimensionsText = (parsedNotes.patchWidth && parsedNotes.patchHeight)
+        ? `${parsedNotes.patchWidth}" × ${parsedNotes.patchHeight}"`
         : (orderDetails?.dimensions || 'Standard Specification');
 
       const placementText = orderDetails?.placement || parsedNotes.placement || (Array.isArray(parsedNotes.placementItems) && parsedNotes.placementItems.length > 0 ? parsedNotes.placementItems.map(p => p.placement || p.label).join(', ') : 'Left Chest / Cap / Custom');
@@ -363,7 +383,7 @@ export async function sendNotificationEmail(params = {}) {
             ${emailHeader('NEW ORDER RECEIVED', `Order #${orderId || 'Direct'}`, '#ea580c')}
             <div style="padding: 24px 28px; color: #1e293b; line-height: 1.6;">
               <p style="font-size: 15px; margin-top: 0;">A new order has been placed on the website and is ready for production:</p>
-              
+
               <table style="width: 100%; border-collapse: collapse; margin: 18px 0; font-size: 13.5px;">
                 <tr style="background: #f8fafc; border-bottom: 1px solid #e2e8f0;">
                   <td style="padding: 10px 14px; font-weight: 700; color: #475569; width: 35%;">Order ID</td>
@@ -555,7 +575,7 @@ export async function sendNotificationEmail(params = {}) {
               <p style="font-size: 14px; color: #475569;">
                 This test confirms that your <strong>BDigitizing Studio</strong> notifications are fully operational and delivering directly to your inbox.
               </p>
-              
+
               <div style="background: #f1f5f9; border-radius: 8px; padding: 16px; margin: 20px 0; border-left: 4px solid #3b82f6;">
                 <div style="font-size: 13px; font-weight: 700; color: #0f172a; margin-bottom: 8px;">CONFIGURATION DETAILS</div>
                 <div style="font-size: 13px; color: #334155; margin-bottom: 4px;"><strong>Target Recipient:</strong> ${adminAddr}</div>
@@ -580,7 +600,7 @@ export async function sendNotificationEmail(params = {}) {
   }
 
     const resultsList = Object.entries(dispatchResults)
-      .flatMap(([k, v]) => (Array.isArray(v) ? v : [v]))
+      .flatMap(([_k, v]) => (Array.isArray(v) ? v : [v]))
       .filter(Boolean);
     const anyErrors = resultsList.some(r => r?.error && !r?.id && !r?.data?.id);
     const hasSuccessfulDeliveries = resultsList.some(r => r?.id || r?.data?.id);

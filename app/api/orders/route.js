@@ -11,7 +11,7 @@ export async function GET(request) {
     const action = searchParams.get('action');
     const orderId = searchParams.get('orderId');
     const supabase = createAdminClient();
-    
+
     const { user, isAdmin, isWorker, workerData } = await getServerAuthUser(request);
 
     if (action === 'fetchAll') {
@@ -19,7 +19,7 @@ export async function GET(request) {
       const userIdParam = searchParams.get('userId');
       const clientEmailFilter = searchParams.get('clientEmail');
       const workerIdParam = searchParams.get('workerId');
-      
+
       const configuredAdmins = [
         process.env.MASTER_ADMIN_EMAIL,
         process.env.ADMIN_EMAIL,
@@ -48,9 +48,9 @@ export async function GET(request) {
               .maybeSingle();
             if (clientRecord?.email) {
               // Param email is a verified registered client — synthesize minimal user object
-              effectiveUser = { 
-                email: clientRecord.email.toLowerCase().trim(), 
-                id: userIdParam || clientRecord.user_id || null 
+              effectiveUser = {
+                email: clientRecord.email.toLowerCase().trim(),
+                id: userIdParam || clientRecord.user_id || null
               };
             }
           } catch {}
@@ -94,7 +94,7 @@ export async function GET(request) {
           });
         }
       }
-      
+
       let data = null;
       try {
         let query = supabase.from('orders').select('id, title, client_name, client_email, service_category, service_type, fabric_type, requested_formats, is_rush, price, cost, status, payment_status, artwork_url, image_url, logo, user_id, worker_id, worker_status, worker_file_url, worker_file_name, worker_files, worker_notes, worker_payout, worker_payout_status, admin_worker_feedback, worker_assigned_at, worker_submitted_at, worker_reviewed_at, paid_at, output_file_url, notes, created_at, updated_at, order_files(id, file_name, file_format, file_type, public_url, file_url, uploaded_by, created_at)').order('created_at', { ascending: false });
@@ -165,7 +165,7 @@ export async function GET(request) {
         }
       });
     }
-    
+
     if (action === 'fetchPending') {
       if (!isAdmin) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
       const { data, error } = await supabase.from('orders').select('id, title, client_name, client_email, service_category, price, status, payment_status, is_rush, artwork_url, image_url, notes, created_at').eq('status', 'pending').order('created_at', { ascending: false });
@@ -284,11 +284,11 @@ export async function GET(request) {
         revisions: revisionsList
       };
 
-      return NextResponse.json({ 
+      return NextResponse.json({
         order: hydratedOrder,
-        orderFiles: orderFilesList, 
-        revisions: revisionsList, 
-        messages: [] 
+        orderFiles: orderFilesList,
+        revisions: revisionsList,
+        messages: []
       }, {
         headers: {
           'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
@@ -310,13 +310,13 @@ export async function POST(request) {
     const data = await request.json();
     const { action, payload } = data;
     const supabase = createAdminClient();
-    
+
     const { user, isAdmin } = await getServerAuthUser(request);
 
     if (action === 'createOrder') {
       const { primaryDbRow, orderFiles } = payload;
       const clientEmail = (user?.email || primaryDbRow.clientEmail || primaryDbRow.email || '').toLowerCase().trim();
-      
+
       if (!clientEmail) {
         return NextResponse.json({ error: 'Client email is required to submit an order' }, { status: 400 });
       }
@@ -335,13 +335,13 @@ export async function POST(request) {
           return NextResponse.json({ error: 'Minimum order requirement for Custom Patches is 50 pieces.' }, { status: 400 });
         }
       }
-      
-      const primaryArtworkUrl = 
-        primaryDbRow.artworkUrl || 
-        primaryDbRow.image_url || 
-        primaryDbRow.logo || 
-        (orderFiles && orderFiles[0]?.public_url) || 
-        (orderFiles && orderFiles[0]?.file_url) || 
+
+      const primaryArtworkUrl =
+        primaryDbRow.artworkUrl ||
+        primaryDbRow.image_url ||
+        primaryDbRow.logo ||
+        (orderFiles && orderFiles[0]?.public_url) ||
+        (orderFiles && orderFiles[0]?.file_url) ||
         null;
 
       // Enforce safe status and pricing validation (recognizing wallet-paid orders)
@@ -440,7 +440,7 @@ export async function POST(request) {
         // If discount columns are not yet in the DB schema, safely fallback without them
         if (orderErr.message && (orderErr.message.includes('discount_') || orderErr.message.includes('applied_promo_') || orderErr.message.includes('base_price'))) {
           console.warn('[Orders API] Retrying order insert without discount columns:', orderErr.message);
-          const { discount_amount, applied_promo_code, base_price, discount_breakdown, ...legacyDbRow } = mappedDbRow;
+          const { discount_amount: _discount_amount, applied_promo_code: _applied_promo_code, base_price: _base_price, discount_breakdown: _discount_breakdown, ...legacyDbRow } = mappedDbRow;
           const retryRes = await supabase.from('orders').insert([legacyDbRow]).select();
           if (retryRes.error) {
             console.error("Order Insert Error after retry:", retryRes.error);
@@ -454,7 +454,7 @@ export async function POST(request) {
       } else if (!insertedOrder) {
         insertedOrder = orderData;
       }
-      
+
       if (orderFiles && orderFiles.length > 0) {
         for (let file of orderFiles) {
           if (!file.file_url && !file.public_url) continue;
@@ -503,11 +503,11 @@ export async function POST(request) {
       // Automatically create notifications in public.notifications (Order Placed - Notification 1)
       try {
         const nowIso = new Date().toISOString();
-        const isFromOffer = primaryDbRow?.source === 'custom_offer' || 
-                            payload?.source === 'custom_offer' || 
-                            Boolean(payload?.offerId) || 
-                            Boolean(payload?.offer_id) || 
-                            Boolean(primaryDbRow?.offerId) || 
+        const isFromOffer = primaryDbRow?.source === 'custom_offer' ||
+                            payload?.source === 'custom_offer' ||
+                            Boolean(payload?.offerId) ||
+                            Boolean(payload?.offer_id) ||
+                            Boolean(primaryDbRow?.offerId) ||
                             Boolean(primaryDbRow?.offer_id) ||
                             (typeof primaryDbRow?.notes === 'string' && primaryDbRow.notes.includes('custom_offer'));
 
@@ -710,7 +710,7 @@ export async function POST(request) {
           updatePayload.paid_at = new Date().toISOString();
         }
       }
-      
+
       if (extraData?.deliveryNotes || extraData?.deliveryMessage || extraData?.deliveries || extraData?.uploadedMachineFiles) {
         let existingNotes = {};
         try {
@@ -771,7 +771,7 @@ export async function POST(request) {
         .in('id', Array.from(new Set([resolvedId, ...candidateIds])));
 
       if (error) throw error;
-      
+
       // Process uploaded machine files & deliveries files for delivery
       const allDeliveryFiles = [
         ...(Array.isArray(extraData?.uploadedMachineFiles) ? extraData.uploadedMachineFiles : []),
@@ -783,13 +783,13 @@ export async function POST(request) {
         for (const file of allDeliveryFiles) {
           const fUrl = file.url || file.fileUrl || file.public_url || file.file_url;
           if (!fUrl || file.error) continue;
-          
+
           const { data: existing } = await supabase
             .from('order_files')
             .select('id')
             .eq('file_url', fUrl)
             .maybeSingle();
-            
+
           if (!existing) {
             await supabase.from('order_files').insert([{
               order_id: resolvedOrderId,
@@ -892,7 +892,7 @@ export async function POST(request) {
                 recipientRole: notifRecord.recipient_role || 'client',
                 recipientEmail: notifRecord.recipient_email || null
               }).catch(err => console.warn('[Status Push Notice]:', err?.message));
-            } catch (pErr) {}
+            } catch {}
           } catch (e) { console.warn('[insertNotif notice]:', e.message); }
         };
 
@@ -931,16 +931,16 @@ export async function POST(request) {
             }
           } catch {}
 
-          const delivNum = extraData?.deliveryNumber || 
-            (Array.isArray(extraData?.deliveries) && extraData.deliveries.length > 0 
-              ? (extraData.deliveries[0]?.deliveryNumber || extraData.deliveries.length) 
+          const delivNum = extraData?.deliveryNumber ||
+            (Array.isArray(extraData?.deliveries) && extraData.deliveries.length > 0
+              ? (extraData.deliveries[0]?.deliveryNumber || extraData.deliveries.length)
               : (targetDeliveries.length > 0 ? (targetDeliveries[0]?.deliveryNumber || targetDeliveries.length) : 1));
 
           const delivNotifId = delivNum > 1 ? `ord-deliv-${resolvedOrderId}-v${delivNum}` : `ord-deliv-${resolvedOrderId}`;
-          const delivTitle = delivNum > 1 
+          const delivTitle = delivNum > 1
             ? `📦 Delivery #${delivNum} Ready: ${ordTitle}`
             : `📦 Order Files Ready: ${ordTitle}`;
-          const delivMsg = delivNum > 1 
+          const delivMsg = delivNum > 1
             ? `Updated production files (Delivery #${delivNum}) are ready for review and download.`
             : `Your production stitch files and preview documents are ready for inspection and download!`;
 
@@ -1022,7 +1022,7 @@ export async function POST(request) {
         }
       });
     }
-    
+
     if (action === 'requestRevision') {
       if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
       const { orderId, instructions } = payload;
@@ -1030,7 +1030,7 @@ export async function POST(request) {
       const cleanOrdId = rawOrderId.replace(/^#+/, '');
       const withHash = `#${cleanOrdId}`;
       const candidateIds = Array.from(new Set([rawOrderId, cleanOrdId, withHash])).filter(Boolean);
-      
+
       let orderData = null;
       const { data: byIn } = await supabase
         .from('orders')
@@ -1075,8 +1075,8 @@ export async function POST(request) {
       const ordTitle = orderData?.title || `Order #${canonicalOrderId}`;
 
       // Use 'revision' as canonical status (not 'revision_requested') for UI consistency
-      const revPayload = { 
-        order_id: canonicalOrderId, 
+      const revPayload = {
+        order_id: canonicalOrderId,
         requested_by: clientName,
         note: instructions || '',
         notes: instructions || '',
@@ -1110,10 +1110,10 @@ export async function POST(request) {
         updatedNotesStr = JSON.stringify(notesObj);
       } catch {}
 
-      await supabase.from('orders').update({ 
-        status: 'revision', 
+      await supabase.from('orders').update({
+        status: 'revision',
         notes: updatedNotesStr,
-        updated_at: nowIso 
+        updated_at: nowIso
       }).in('id', candidateIds);
 
       // Ensure conversation thread
@@ -1356,7 +1356,7 @@ export async function POST(request) {
       }
 
       const cancellation = notesObj.cancellation || {};
-      
+
       // Strict Idempotency Check: Never issue duplicate refund or double process
       if (cancellation.refund_issued === true) {
         return NextResponse.json({ error: 'A wallet refund has already been issued for this order cancellation.' }, { status: 400 });
@@ -1438,8 +1438,8 @@ export async function POST(request) {
       // Customer Notification
       if (orderData.client_email) {
         try {
-          const refundText = refundSuccess 
-            ? ` $${refundAmount.toFixed(2)} has been credited to your Studio Wallet.` 
+          const refundText = refundSuccess
+            ? ` $${refundAmount.toFixed(2)} has been credited to your Studio Wallet.`
             : '';
           await supabase.from('notifications').insert([{
             id: `notif-approved-cancel-${cleanOrdId}-${Date.now()}`,
@@ -1647,8 +1647,8 @@ export async function POST(request) {
 
     if (action === 'assignWorker') {
       if (!isAdmin) return NextResponse.json({ error: 'Unauthorized: Admin privileges required.' }, { status: 403 });
-      const { orderId, workerId, workerName, workerEmail, instructions, payoutAmount } = payload;
-      
+      const { orderId, workerId, workerName: _workerName, workerEmail, instructions, payoutAmount } = payload;
+
       const { data: targetOrder, error: orderFetchErr } = await supabase
         .from('orders')
         .select('id, title, status, client_name, client_email, notes, worker_payout, quoted_price, quoted_price_pkr')
@@ -1746,7 +1746,7 @@ export async function POST(request) {
       }
 
       if (!isAdmin) {
-        const { isWorker, workerData } = await getServerAuthUser(request);
+        const { isWorker: _isWorker, workerData } = await getServerAuthUser(request);
         const currentWorkerId = workerData?.id || user.id;
         if (targetOrder.worker_id && targetOrder.worker_id !== currentWorkerId && targetOrder.worker_id !== user.id) {
           return NextResponse.json({ error: 'Forbidden: You are not the assigned worker for this order.' }, { status: 403 });
@@ -1829,10 +1829,10 @@ export async function POST(request) {
         });
       } catch {}
 
-      return NextResponse.json({ 
-        success: true, 
-        worker_status: 'In_Progress', 
-        quoted_price_pkr: pkrAmount 
+      return NextResponse.json({
+        success: true,
+        worker_status: 'In_Progress',
+        quoted_price_pkr: pkrAmount
       }, {
         headers: {
           'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
@@ -1861,7 +1861,7 @@ export async function POST(request) {
       }
 
       if (!isAdmin) {
-        const { isWorker, workerData } = await getServerAuthUser(request);
+        const { isWorker: _isWorker, workerData } = await getServerAuthUser(request);
         const currentWorkerId = workerData?.id || user.id;
         if (targetOrder.worker_id && targetOrder.worker_id !== currentWorkerId && targetOrder.worker_id !== user.id) {
           return NextResponse.json({ error: 'Forbidden: You are not assigned to this order.' }, { status: 403 });

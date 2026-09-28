@@ -120,7 +120,7 @@ describe('Complete Interaction and Navigation Audit', () => {
         if (orphanNode.parentNode) {
           orphanNode.parentNode.removeChild(orphanNode);
         }
-      } catch (e) {
+      } catch {
         threwError = true;
       }
 
@@ -132,8 +132,8 @@ describe('Complete Interaction and Navigation Audit', () => {
     test('Normalizes various service parameter aliases to canonical wizard types', () => {
       const normalizeService = (rawService) => {
         const raw = rawService || 'all';
-        return raw === 'vector-art' || raw === 'vector-tracing' 
-          ? 'vector' 
+        return raw === 'vector-art' || raw === 'vector-tracing'
+          ? 'vector'
           : (raw === 'patches' || raw === 'custom-patches' ? 'patch' : raw);
       };
 

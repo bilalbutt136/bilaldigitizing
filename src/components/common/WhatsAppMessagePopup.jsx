@@ -1,9 +1,9 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { MessageSquare, X, ArrowRight, Bell } from 'lucide-react';
+import { MessageSquare, X, ArrowRight, Bell as _Bell } from 'lucide-react';
 import { useAppState } from '../../context/StateContext';
-import { playNotificationSound, playAdminChime, playCustomerChime } from '../../utils/audioNotification';
+import { playNotificationSound as _playNotificationSound, playAdminChime, playCustomerChime } from '../../utils/audioNotification';
 import { useRouter } from 'next/navigation';
 
 export const WhatsAppMessagePopup = () => {
@@ -113,8 +113,8 @@ export const WhatsAppMessagePopup = () => {
     ? 'BDigitizing Support'
     : (activeMessage.sender_name || activeMessage.client_email?.split('@')[0] || 'Customer');
 
-  const textPreview = activeMessage.text 
-    ? activeMessage.text 
+  const textPreview = activeMessage.text
+    ? activeMessage.text
     : (activeMessage.attachments?.length ? `📎 ${activeMessage.attachments[0].name || 'Attachment'}` : 'New message');
 
   return (

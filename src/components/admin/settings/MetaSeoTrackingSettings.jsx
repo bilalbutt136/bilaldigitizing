@@ -2,21 +2,21 @@
 
 import React, { useState, useEffect } from 'react';
 import { useAppState } from '../../../context/StateContext';
-import { 
-  Megaphone, 
-  Radio, 
-  Search, 
-  Globe, 
-  BarChart2, 
-  CheckCircle2, 
-  ShieldCheck, 
-  Save, 
-  RefreshCw, 
-  Share2, 
-  ExternalLink,
-  Layers,
+import {
+  Megaphone,
+  Radio,
+  Search,
+  Globe,
+  BarChart2 as _BarChart2,
+  CheckCircle2 as _CheckCircle2,
+  ShieldCheck as _ShieldCheck,
+  Save,
+  RefreshCw,
+  Share2 as _Share2,
+  ExternalLink as _ExternalLink,
+  Layers as _Layers,
   Activity,
-  Code,
+  Code as _Code,
   Eye
 } from 'lucide-react';
 import { VisitorDetailsModal } from '../tracking/VisitorDetailsModal';
@@ -160,7 +160,7 @@ export const MetaSeoTrackingSettings = () => {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-      
+
       {/* 1. Header Card & Sub-navigation */}
       <div className="card" style={{ padding: '2rem', background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '20px', boxShadow: 'var(--shadow-sm)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1.25rem' }}>
@@ -261,7 +261,7 @@ export const MetaSeoTrackingSettings = () => {
                 {metaPixelId ? '● Live & Connected' : '○ Not Configured'}
               </span>
             </div>
-            
+
             <p style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)', marginBottom: '1.25rem', lineHeight: 1.55 }}>
               Automatically tracks <code>PageView</code>, <code>InitiateCheckout</code>, <code>Lead</code>, and <code>Purchase</code> events to optimize ad conversion and retarget visitors.
             </p>
@@ -323,10 +323,10 @@ export const MetaSeoTrackingSettings = () => {
           </div>
 
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', flexWrap: 'wrap' }}>
-            <button 
-              type="button" 
-              onClick={handleSendTestEvent} 
-              className="btn btn-outline btn-lg" 
+            <button
+              type="button"
+              onClick={handleSendTestEvent}
+              className="btn btn-outline btn-lg"
               style={{ fontWeight: 700, padding: '0.85rem 1.5rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}
             >
               <Activity size={18} style={{ color: '#3b82f6' }} /> Test Tracking Ping
@@ -482,7 +482,7 @@ export const MetaSeoTrackingSettings = () => {
       {/* TAB 3: Real-time Event Stream Log (Matches media_1787330161134.png) */}
       {activeSubTab === 'logs' && (
         <div className="card" style={{ padding: '2rem', background: 'var(--bg-card, #ffffff)', border: '1px solid var(--border-color, #e2e8f0)', borderRadius: '20px', boxShadow: 'var(--shadow-sm)' }}>
-          
+
           {/* Top Header */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
@@ -625,11 +625,11 @@ export const MetaSeoTrackingSettings = () => {
                     const tel = ev.telemetry || {};
                     const whoDisplay = ev.user_role || (ev.user_email ? `Customer (${ev.user_email})` : 'Guest Visitor');
                     const whatDisplay = ev.event_name || 'PageView';
-                    
+
                     const deviceDisplay = tel.os ? `${tel.browser || 'Browser'} / ${tel.os} (${tel.deviceType || 'Desktop'})` : (ev.source || 'Desktop');
                     const trafficChannel = tel.trafficChannel || (ev.traffic_source?.startsWith('{') ? 'Direct' : (ev.traffic_source || 'Direct'));
-                    const locationDisplay = tel.city && tel.city !== 'Unknown' 
-                      ? `${tel.city}, ${tel.country || ''}` 
+                    const locationDisplay = tel.city && tel.city !== 'Unknown'
+                      ? `${tel.city}, ${tel.country || ''}`
                       : (tel.country && tel.country !== 'Unknown' ? tel.country : '—');
                     const pageDisplay = ev.page_path || ev.page_url || '/';
                     const isReturning = Boolean(tel.isReturningVisitor || (tel.visitCount && tel.visitCount > 1));
@@ -648,11 +648,11 @@ export const MetaSeoTrackingSettings = () => {
                           )}
                         </td>
                         <td style={{ padding: '1rem', fontSize: '0.88rem' }}>
-                          <span style={{ 
-                            display: 'inline-block', 
-                            padding: '3px 8px', 
-                            borderRadius: '6px', 
-                            fontWeight: 700, 
+                          <span style={{
+                            display: 'inline-block',
+                            padding: '3px 8px',
+                            borderRadius: '6px',
+                            fontWeight: 700,
                             fontSize: '0.75rem',
                             background: whatDisplay === 'PageView' ? '#e0f2fe' : (whatDisplay === 'InitiateCheckout' || whatDisplay === 'Purchase' ? '#dcfce7' : '#f3e8ff'),
                             color: whatDisplay === 'PageView' ? '#0369a1' : (whatDisplay === 'InitiateCheckout' || whatDisplay === 'Purchase' ? '#15803d' : '#7e22ce')

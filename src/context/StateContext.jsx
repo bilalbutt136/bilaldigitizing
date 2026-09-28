@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef as _useRef, useCallback } from 'react';
 import { supabase, isSupabaseConfigured } from '../lib/supabase/client';
 import {
   createOrderInSupabase,
@@ -9,7 +9,7 @@ import {
   addRevisionInSupabase,
   upsertClientInSupabase,
   signInWithGoogleIdToken,
-  signInWithGoogleOAuth,
+  signInWithGoogleOAuth as _signInWithGoogleOAuth,
   promptGoogleIdentitySignIn,
   signInWithSupabaseAuth,
   signUpWithSupabaseAuth,
@@ -24,7 +24,7 @@ import {
   fetchAdminUsers,
   addAdminUserInSupabase,
   resetAdminPasswordInSupabase,
-  removeAdminUserInSupabase,
+  removeAdminUserInSupabase as _removeAdminUserInSupabase,
   depositWalletViaApi,
   deductWalletViaApi,
   fetchWalletBalanceFromSupabase,
@@ -48,23 +48,23 @@ import {
 } from '../services/supabaseService';
 import { trackUserPresence, untrackUserPresence } from '../services/presenceService';
 
-import { 
-  playNotificationSound, 
-  playCustomerNotificationSound, 
-  playAdminNotificationSound, 
-  configureAudioNotification, 
-  playMessageChime, 
-  playMessageChimeForMessage, 
-  playCustomerChime, 
-  playAdminChime, 
+import {
+  playNotificationSound as _playNotificationSound,
+  playCustomerNotificationSound,
+  playAdminNotificationSound,
+  configureAudioNotification,
+  playMessageChime as _playMessageChime,
+  playMessageChimeForMessage,
+  playCustomerChime as _playCustomerChime,
+  playAdminChime as _playAdminChime,
   stopNotificationSound,
   markNotificationSoundPlayed
 } from '../utils/audioNotification';
 import { THEME_PRESETS, applyThemePresetToDOM } from '../utils/themePresets';
 import { formatOrderId, formatDimensions, formatFabric, formatDesignTitle } from '../utils/formatters';
-import { 
-  filterAndSanitizeNotifications, 
-  isOrderPlacedNotification, 
+import {
+  filterAndSanitizeNotifications,
+  isOrderPlacedNotification,
   isOrderPaymentConfirmedNotification,
   isOrderDeliveredNotification
 } from '../utils/notificationRouter';
@@ -135,7 +135,7 @@ export const StateProvider = ({ children }) => {
     }
     return 'dashboard';
   });
-  
+
   const [activeCustomerTabState, setActiveCustomerTabState] = useState(() => {
     if (typeof window !== 'undefined') {
       const urlParams = new URLSearchParams(window.location.search);
@@ -184,7 +184,7 @@ export const StateProvider = ({ children }) => {
   const [colorTheme, setColorThemeState] = useState('studio-orange');
   const [customBrandColors, setCustomBrandColorsState] = useState(null);
 
-  const applyThemeToDOM = (tMode = theme, cPreset = colorTheme, cBrand = customBrandColors) => {
+  const _applyThemeToDOM = (tMode = theme, cPreset = colorTheme, cBrand = customBrandColors) => {
     if (typeof window === 'undefined') return;
     applyThemePresetToDOM(cPreset, tMode, cBrand);
   };
@@ -252,7 +252,7 @@ export const StateProvider = ({ children }) => {
         if (urlWeb) return 'website';
         if (urlApp) return 'app';
 
-        const isStandalone = window.matchMedia('(display-mode: standalone)').matches || 
+        const isStandalone = window.matchMedia('(display-mode: standalone)').matches ||
                              window.navigator.standalone === true ||
                              (document.referrer && document.referrer.includes('android-app://'));
         if (isStandalone) return 'app';
@@ -269,7 +269,7 @@ export const StateProvider = ({ children }) => {
   const [isStandaloneApp, setIsStandaloneApp] = useState(() => {
     if (typeof window !== 'undefined') {
       try {
-        return window.matchMedia('(display-mode: standalone)').matches || 
+        return window.matchMedia('(display-mode: standalone)').matches ||
                window.navigator.standalone === true ||
                (document.referrer && document.referrer.includes('android-app://'));
       } catch {}
@@ -296,8 +296,8 @@ export const StateProvider = ({ children }) => {
       try {
         localStorage.setItem('bdigi_mobile_active_tab', newTab);
         const url = new URL(window.location.href);
-        const isApp = url.searchParams.get('app') === 'true' || 
-                      window.matchMedia('(display-mode: standalone)').matches || 
+        const isApp = url.searchParams.get('app') === 'true' ||
+                      window.matchMedia('(display-mode: standalone)').matches ||
                       window.navigator.standalone === true;
         if (isApp) {
           url.searchParams.set('app', 'true');
@@ -315,11 +315,11 @@ export const StateProvider = ({ children }) => {
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const isStandalone = window.matchMedia('(display-mode: standalone)').matches || 
+      const isStandalone = window.matchMedia('(display-mode: standalone)').matches ||
                            window.navigator.standalone === true ||
                            (document.referrer && document.referrer.includes('android-app://'));
       setIsStandaloneApp(isStandalone);
-      
+
       const urlParams = new URLSearchParams(window.location.search);
       const urlApp = urlParams.get('app') === 'true' || urlParams.get('mode') === 'app';
       const urlWeb = urlParams.get('web') === 'true' || urlParams.get('mode') === 'web';
@@ -384,7 +384,7 @@ export const StateProvider = ({ children }) => {
     applyThemePresetToDOM(colorTheme, theme, brandOverrides);
     showToast('Brand colors updated successfully!', 'success');
   };
-  
+
   // Checkout & Payment states
   const [isCheckoutModalOpen, setIsCheckoutModalOpen] = useState(false);
   const [checkoutSession, setCheckoutSession] = useState(null);
@@ -601,6 +601,7 @@ export const StateProvider = ({ children }) => {
     } catch {}
   };
 
+  /* oxlint-disable react-hooks/exhaustive-deps -- storage helper closes over the same auth identity already listed below */
   const refreshNotifications = React.useCallback(async (forcedEmail = null, forcedIsAdmin = null) => {
     try {
       const emailToUse = (forcedEmail || authUser?.email || '').toLowerCase().trim();
@@ -625,6 +626,7 @@ export const StateProvider = ({ children }) => {
       console.warn('refreshNotifications notice:', err);
     }
   }, [authUser?.email, authUser?.role, currentView]);
+  /* oxlint-enable react-hooks/exhaustive-deps */
 
   const addNotification = (notif, syncToBackend = true) => {
     if (!notif) return;
@@ -634,8 +636,6 @@ export const StateProvider = ({ children }) => {
       id: notif.id || `notif-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
       timestamp: notif.timestamp || notif.created_at || nowIso,
       created_at: notif.created_at || notif.timestamp || nowIso,
-      read: isAlreadyRead,
-      is_read: isAlreadyRead,
       title: notif.title || 'Notification',
       message: notif.message || notif.description || '',
       type: notif.type || 'info',
@@ -651,7 +651,7 @@ export const StateProvider = ({ children }) => {
 
     // Check whether this notification already exists in the current list
     const alreadyExists = Array.isArray(notifications) && notifications.some(n => String(n.id) === String(newNotif.id));
-    
+
     setNotifications(prev => {
       const safePrev = Array.isArray(prev) ? prev : [];
       const filtered = safePrev.filter(n => String(n.id) !== String(newNotif.id));
@@ -667,13 +667,13 @@ export const StateProvider = ({ children }) => {
 
     // Sound should ONLY play for genuinely new, unread notifications
     // Order delivery notification sound is completely disabled per specification
-    const isDeliveryNotification = notif.playSound === false || 
-      notif.isDelivery === true || 
+    const isDeliveryNotification = notif.playSound === false ||
+      notif.isDelivery === true ||
       notif.soundType === 'delivery' ||
       Boolean(notif.deliveryNumber) ||
       (typeof notif.title === 'string' && (
         notif.title.toLowerCase().includes('delivery') ||
-        notif.title.toLowerCase().includes('order files ready') || 
+        notif.title.toLowerCase().includes('order files ready') ||
         notif.title.toLowerCase().includes('files ready') ||
         notif.title.toLowerCase().includes('delivered')
       ));
@@ -766,7 +766,7 @@ export const StateProvider = ({ children }) => {
       setSelectedOrderForDrawer(found);
       return;
     }
-    
+
     // NO FAKE MOCK OBJECT: Set loading state and fetch live from Supabase DB
     setSelectedOrderForDrawer({ id: `#${cleanId}`, _isLoading: true });
     (async () => {
@@ -846,7 +846,8 @@ export const StateProvider = ({ children }) => {
     return () => window.removeEventListener('bdigi_orders_read_sync', handleOrdersReadSync);
   }, []);
 
-  // Global Realtime Listeners for Notifications
+  // Global Realtime Listeners for Notifications.
+  /* oxlint-disable react-hooks/exhaustive-deps -- subscription lifecycle is auth-keyed; mutable order/toast helper identities must not churn sockets */
   useEffect(() => {
     if (!isAuthenticated && !authUser) {
       return;
@@ -938,6 +939,7 @@ export const StateProvider = ({ children }) => {
       if (typeof unsubNotifs === 'function') unsubNotifs();
     };
   }, [isAuthenticated, authUser, refreshNotifications]);
+  /* oxlint-enable react-hooks/exhaustive-deps */
 
   // 4. Real-time synchronization for orders across tabs & events (e.g., custom offer acceptances)
   useEffect(() => {
@@ -1011,7 +1013,7 @@ export const StateProvider = ({ children }) => {
         } catch {}
       }
     };
-  }, []);
+  }, [authUser?.email, authUser?.id, authUser?.role]);
 
   // Build the app-facing user record from a Supabase session user + role
   const buildAuthUser = (sbUser, role) => {
@@ -1086,7 +1088,8 @@ export const StateProvider = ({ children }) => {
     return 'customer';
   };
 
-  // Load catalog + admin whitelist + database clients + wallet on mount
+  // Load catalog + admin whitelist + database clients + wallet on mount.
+  /* oxlint-disable react-hooks/exhaustive-deps -- single application bootstrap/subscription lifecycle; callback identities are intentionally not lifecycle keys */
   useEffect(() => {
     let cancelled = false;
 
@@ -1286,13 +1289,13 @@ export const StateProvider = ({ children }) => {
     let catalogChannel = null;
     if (isSupabaseConfigured && supabase) {
       catalogChannel = supabase.channel(`catalog-sync-channel-${Date.now()}`);
-      
+
       const tablesToSync = [
-        'services', 'pricing_tiers', 'patch_cards', 'store_products', 
+        'services', 'pricing_tiers', 'patch_cards', 'store_products',
         'portfolio', 'portfolio_items', 'sew_outs', 'hero_slides', 'digitizers', 'cms_content',
         'faqs', 'testimonials', 'site_config', 'home_page_settings'
       ];
-      
+
       tablesToSync.forEach(table => {
         catalogChannel.on('postgres_changes', { event: '*', schema: 'public', table: table }, async () => {
           try {
@@ -1325,7 +1328,7 @@ export const StateProvider = ({ children }) => {
           }
         });
       });
-      
+
       catalogChannel.subscribe();
     }
 
@@ -1608,6 +1611,7 @@ export const StateProvider = ({ children }) => {
       }
     };
   }, []);
+  /* oxlint-enable react-hooks/exhaustive-deps */
 
   // Synchronize notification audio configuration from siteSettings (Admin & Customer)
   useEffect(() => {
@@ -1615,27 +1619,27 @@ export const StateProvider = ({ children }) => {
       // Admin sound configuration
       const soundUrl = siteSettings.notificationSoundUrl || siteSettings.notification_sound_url || siteSettings.notification_sound_settings?.url || null;
       const soundName = siteSettings.notificationSoundName || siteSettings.notification_sound_name || siteSettings.notification_sound_settings?.name || null;
-      const soundActive = siteSettings.notificationSoundActive !== false && 
-        siteSettings.notification_sound_active !== false && 
+      const soundActive = siteSettings.notificationSoundActive !== false &&
+        siteSettings.notification_sound_active !== false &&
         siteSettings.notificationSoundEnabled !== false &&
         siteSettings.notification_sound_enabled !== false &&
         siteSettings.notification_sound_settings?.enabled !== false;
-      const soundVolume = siteSettings.notificationSoundVolume !== undefined 
-        ? siteSettings.notificationSoundVolume 
-        : (siteSettings.notification_sound_volume !== undefined 
-            ? siteSettings.notification_sound_volume 
+      const soundVolume = siteSettings.notificationSoundVolume !== undefined
+        ? siteSettings.notificationSoundVolume
+        : (siteSettings.notification_sound_volume !== undefined
+            ? siteSettings.notification_sound_volume
             : (siteSettings.notification_sound_settings?.volume ?? 1.0));
       const soundPreset = siteSettings.notificationSoundPreset || siteSettings.notification_sound_preset || siteSettings.notification_sound_settings?.preset || 'custom';
 
       // Customer gentle sound configuration
       const custPreset = siteSettings.customerSoundPreset || siteSettings.customer_sound_preset || siteSettings.notification_sound_settings?.customerPreset || 'basic_ping';
-      const custVol = siteSettings.customerSoundVolume !== undefined 
-        ? siteSettings.customerSoundVolume 
-        : (siteSettings.customer_sound_volume !== undefined 
-            ? siteSettings.customer_sound_volume 
+      const custVol = siteSettings.customerSoundVolume !== undefined
+        ? siteSettings.customerSoundVolume
+        : (siteSettings.customer_sound_volume !== undefined
+            ? siteSettings.customer_sound_volume
             : (siteSettings.notification_sound_settings?.customerVolume ?? 0.50));
-      const custActive = siteSettings.customerSoundEnabled !== false && 
-        siteSettings.customer_sound_enabled !== false && 
+      const custActive = siteSettings.customerSoundEnabled !== false &&
+        siteSettings.customer_sound_enabled !== false &&
         siteSettings.notification_sound_settings?.customerEnabled !== false;
 
       configureAudioNotification({
@@ -1746,7 +1750,7 @@ export const StateProvider = ({ children }) => {
         role = data.role || 'customer';
         balance = data.balance || 0;
       }
-    } catch (e) {
+    } catch {
       console.warn("Error fetching user data from api");
     }
 
@@ -2052,7 +2056,7 @@ export const StateProvider = ({ children }) => {
   const createOrder = async (newOrderData) => {
     const localId = newOrderData.id || `#${Math.floor(10000 + Math.random() * 90000)}`;
     const isAlreadyPaid = String(newOrderData.payment_status || newOrderData.paymentStatus || '').toLowerCase() === 'paid';
-    
+
     const fullOrderPayload = {
       id: localId,
       ...newOrderData,
@@ -2111,10 +2115,10 @@ export const StateProvider = ({ children }) => {
         }
       } catch {}
     }
-        
-    const isFromOffer = canonicalOrder.source === 'custom_offer' || 
-                        Boolean(canonicalOrder.offerId) || 
-                        Boolean(canonicalOrder.offer_id) || 
+
+    const isFromOffer = canonicalOrder.source === 'custom_offer' ||
+                        Boolean(canonicalOrder.offerId) ||
+                        Boolean(canonicalOrder.offer_id) ||
                         Boolean(fullOrderPayload.offerId) ||
                         Boolean(fullOrderPayload.offer_id) ||
                         (typeof canonicalOrder.notes === 'string' && canonicalOrder.notes.includes('custom_offer'));
@@ -2124,7 +2128,7 @@ export const StateProvider = ({ children }) => {
       addNotification({
         id: `ord-created-${assignedId}`,
         title: `🎉 Order ${formatOrderId(assignedId)} Placed!`,
-        message: isAlreadyPaid 
+        message: isAlreadyPaid
           ? `Your digitizing order has been created and production has started.`
           : `Order created. Waiting for payment of $${parseFloat(canonicalOrder.totalPrice || canonicalOrder.price || 15).toFixed(2)} to start production.`,
         type: isAlreadyPaid ? 'success' : 'warning',
@@ -2174,7 +2178,7 @@ export const StateProvider = ({ children }) => {
       const custIdentity = canonicalOrder.clientEmail
         ? `${canonicalOrder.clientName || 'Customer'} (${canonicalOrder.clientEmail})`
         : (authUser?.email ? `${authUser.name || 'Customer'} (${authUser.email})` : 'Customer');
-      
+
       const orderAmount = parseFloat(canonicalOrder.price || 15);
       const { logTrackingEventToSupabase } = await import('../services/supabaseService');
       logTrackingEventToSupabase({
@@ -2191,8 +2195,8 @@ export const StateProvider = ({ children }) => {
   };
 
   const updateOrderStatus = async (orderId, newStatus, extraData = {}) => {
-    const safeExtraData = typeof extraData === 'string' 
-      ? { paymentStatus: extraData, payment_status: extraData } 
+    const safeExtraData = typeof extraData === 'string'
+      ? { paymentStatus: extraData, payment_status: extraData }
       : (extraData || {});
 
     const cleanTargetId = String(orderId || '').trim().replace(/^#+/, '');
@@ -2201,7 +2205,7 @@ export const StateProvider = ({ children }) => {
       const oClean = String(o.id || '').trim().replace(/^#+/, '');
       return oClean === cleanTargetId || o.id === orderId || o.id === targetWithHash;
     });
-    
+
     if (isSupabaseConfigured) {
       try {
         const clientEmailForApi = (targetOrder?.clientEmail || targetOrder?.client_email || safeExtraData?.clientEmail || safeExtraData?.client_email || '').toLowerCase().trim();
@@ -2281,13 +2285,13 @@ export const StateProvider = ({ children }) => {
     // Notifications and Email triggers based on new status
     if (newStatus === 'delivered') {
       const clientEmail = (targetOrder?.clientEmail || targetOrder?.client_email || safeExtraData?.clientEmail || safeExtraData?.client_email || '').toLowerCase().trim();
-      const delivNum = safeExtraData?.deliveryNumber || 
-        (Array.isArray(safeExtraData?.deliveries) && safeExtraData.deliveries.length > 0 
-          ? (safeExtraData.deliveries[0]?.deliveryNumber || safeExtraData.deliveries.length) 
+      const delivNum = safeExtraData?.deliveryNumber ||
+        (Array.isArray(safeExtraData?.deliveries) && safeExtraData.deliveries.length > 0
+          ? (safeExtraData.deliveries[0]?.deliveryNumber || safeExtraData.deliveries.length)
           : (Array.isArray(targetOrder?.deliveries) && targetOrder.deliveries.length > 0 ? (targetOrder.deliveries[0]?.deliveryNumber || targetOrder.deliveries.length) : 1));
 
       const delivNotifId = delivNum > 1 ? `ord-deliv-${cleanTargetId}-v${delivNum}` : `ord-deliv-${cleanTargetId}`;
-      const delivTitle = delivNum > 1 
+      const delivTitle = delivNum > 1
         ? `📦 Delivery #${delivNum} Ready: ${targetOrder?.title || safeExtraData?.title || `Order #${cleanTargetId}`}`
         : `📦 Order Files Ready: ${targetOrder?.title || safeExtraData?.title || `Order #${cleanTargetId}`}`;
       const delivMsg = delivNum > 1
@@ -2316,11 +2320,11 @@ export const StateProvider = ({ children }) => {
     }
   };
 
-  const assignDigitizer = async (orderId, digitizerId) => {
+  const _assignDigitizer = async (orderId, digitizerId) => {
     await updateOrderStatus(orderId, 'assigned', { digitizerId });
   };
 
-  const completeOrder = async (orderId) => {
+  const _completeOrder = async (orderId) => {
     const order = orders.find(o => o.id === orderId);
     if (order && !validateStatusTransition(order.status, ORDER_STATUSES.COMPLETED)) {
       showToast(`Cannot complete order — current status is '${order.status}'. Order must be in 'delivered' status first.`, 'error');
@@ -2346,7 +2350,7 @@ export const StateProvider = ({ children }) => {
             payload: { orderId: cleanId, instructions: revisionNote }
           })
         });
-      } catch (sbErr) {
+      } catch {
         // Fallback: direct Supabase update
         try {
           await addRevisionInSupabase(cleanId, revisionNote, authUser?.name || 'Client');
@@ -2395,10 +2399,10 @@ export const StateProvider = ({ children }) => {
       return oClean === cleanId || o.id === orderId || o.id === withHash;
     });
 
-    triggerEmailNotification('ORDER_REVISION', { 
-      id: cleanId, 
+    triggerEmailNotification('ORDER_REVISION', {
+      id: cleanId,
       clientEmail: targetOrder?.clientEmail || authUser?.email,
-      revisionNotes: revisionNote 
+      revisionNotes: revisionNote
     });
   };
 
@@ -2518,7 +2522,7 @@ export const StateProvider = ({ children }) => {
     }
   };
 
-  const deleteOrder = async (orderId) => {
+  const _deleteOrder = async (orderId) => {
     setOrders(prev => prev.filter(o => o.id !== orderId));
     await deleteOrderInSupabase(orderId);
     showToast(`Order ${formatOrderId(orderId)} DELETED`, 'error');
@@ -2686,7 +2690,7 @@ export const StateProvider = ({ children }) => {
     upsertCatalogDataToSupabase('patch_cards', newCards);
   };
 
-  const updateStoreProducts = (newProducts) => {
+  const _updateStoreProducts = (newProducts) => {
     setStoreProducts(newProducts);
     upsertCatalogDataToSupabase('store_products', newProducts);
   };
@@ -2758,7 +2762,7 @@ export const StateProvider = ({ children }) => {
             promoBc.postMessage(merged);
             promoBc.close();
           }
-        } catch (e) {}
+        } catch {}
       }
 
       return merged;
@@ -2949,13 +2953,13 @@ export const StateProvider = ({ children }) => {
       ...prev,
       settings: { ...prev.settings, ...newSettingsObject }
     }));
-    
+
     // Transform into payload array for the API: [{key: '...', value: '...'}, ...]
     const payloadArray = Object.keys(newSettingsObject).map(k => ({
       key: k,
       value: newSettingsObject[k]
     }));
-    
+
     const res = await updateHomePageSettingsInSupabase(payloadArray);
     if (res.success) {
       showToast('Service banners updated successfully!', 'success');

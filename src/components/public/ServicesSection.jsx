@@ -3,11 +3,11 @@
 import React, { useState } from 'react';
 import { useAppState } from '../../context/StateContext';
 import {
-  LayoutGrid,
+  LayoutGrid as _LayoutGrid,
   Layers,
   PenTool,
   Tag,
-  CheckCircle,
+  CheckCircle as _CheckCircle,
   Sparkles,
   ArrowRight,
   Clock,
@@ -20,10 +20,10 @@ import { normalizeCategory, matchCategory } from '../../utils/categoryUtils';
 import { PackageCard } from './PackageCard';
 
 export const ServicesSection = () => {
-  const { 
-    activeHomeServiceTab = 'all', 
-    setActiveHomeServiceTab, 
-    openOrderWizard, 
+  const {
+    activeHomeServiceTab = 'all',
+    setActiveHomeServiceTab,
+    openOrderWizard,
     protectedNavigate,
     dynamicPricingTiers = []
   } = useAppState();
@@ -31,7 +31,7 @@ export const ServicesSection = () => {
   const activeTab = normalizeCategory(activeHomeServiceTab || 'all');
   const [openFaqIndex, setOpenFaqIndex] = useState(null);
 
-  const handleSelectTab = (tabId) => {
+  const _handleSelectTab = (tabId) => {
     if (setActiveHomeServiceTab) {
       setActiveHomeServiceTab(tabId);
     }
@@ -52,10 +52,10 @@ export const ServicesSection = () => {
   };
 
   const handleLaunchOrder = (serviceType, tierKey = 'standard', pkgData = null) => {
-    const sType = serviceType === 'patch' || serviceType === 'patches' 
-      ? 'patch' 
-      : (serviceType === 'vector' || serviceType === 'vector-art' || serviceType === 'vector_art') 
-        ? 'vector' 
+    const sType = serviceType === 'patch' || serviceType === 'patches'
+      ? 'patch'
+      : (serviceType === 'vector' || serviceType === 'vector-art' || serviceType === 'vector_art')
+        ? 'vector'
         : 'embroidery';
 
     if (openOrderWizard) {
@@ -160,10 +160,10 @@ export const ServicesSection = () => {
   };
 
   return (
-    <section id="services" style={{ 
-      padding: '5.5rem 0 6rem', 
-      background: 'var(--bg-main)', 
-      color: 'var(--text-main)', 
+    <section id="services" style={{
+      padding: '5.5rem 0 6rem',
+      background: 'var(--bg-main)',
+      color: 'var(--text-main)',
       fontFamily: 'var(--font-body, "Inter", sans-serif)',
       position: 'relative',
       borderTop: '1px solid var(--border-color)',
@@ -225,7 +225,7 @@ export const ServicesSection = () => {
             alignItems: 'stretch'
           }}>
             {/* Service 1: Embroidery Digitizing (Flagship) */}
-            <div 
+            <div
               className="capability-card"
               style={{
                 position: 'relative',
@@ -392,7 +392,7 @@ export const ServicesSection = () => {
                 </div>
 
                 <div style={{ display: 'flex', gap: '0.6rem' }}>
-                  <button 
+                  <button
                     type="button"
                     style={{
                       flex: 1,
@@ -418,7 +418,7 @@ export const ServicesSection = () => {
                     <span>Order Now</span>
                     <ArrowRight size={15} />
                   </button>
-                  <button 
+                  <button
                     type="button"
                     style={{
                       background: 'var(--color-surface, #ffffff)',
@@ -442,7 +442,7 @@ export const ServicesSection = () => {
             </div>
 
             {/* Service 2: Vector Art Conversion */}
-            <div 
+            <div
               className="capability-card"
               style={{
                 position: 'relative',
@@ -609,7 +609,7 @@ export const ServicesSection = () => {
                 </div>
 
                 <div style={{ display: 'flex', gap: '0.6rem' }}>
-                  <button 
+                  <button
                     type="button"
                     style={{
                       flex: 1,
@@ -635,7 +635,7 @@ export const ServicesSection = () => {
                     <span>Order Now</span>
                     <ArrowRight size={15} />
                   </button>
-                  <button 
+                  <button
                     type="button"
                     style={{
                       background: 'var(--color-surface, #ffffff)',
@@ -659,7 +659,7 @@ export const ServicesSection = () => {
             </div>
 
             {/* Service 3: Custom Physical Patches */}
-            <div 
+            <div
               className="capability-card"
               style={{
                 position: 'relative',
@@ -826,7 +826,7 @@ export const ServicesSection = () => {
                 </div>
 
                 <div style={{ display: 'flex', gap: '0.6rem' }}>
-                  <button 
+                  <button
                     type="button"
                     style={{
                       flex: 1,
@@ -852,7 +852,7 @@ export const ServicesSection = () => {
                     <span>Order Now</span>
                     <ArrowRight size={15} />
                   </button>
-                  <button 
+                  <button
                     type="button"
                     style={{
                       background: 'var(--color-surface, #ffffff)',

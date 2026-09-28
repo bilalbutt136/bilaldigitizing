@@ -7,10 +7,10 @@ import { stopNotificationSound, markNotificationSoundPlayed } from './audioNotif
  */
 export function parseNotificationTarget(notif, orders = []) {
   if (!notif) {
-    return { 
-      type: 'unknown', 
-      orderId: null, 
-      conversationId: null, 
+    return {
+      type: 'unknown',
+      orderId: null,
+      conversationId: null,
       targetTab: 'orders',
       adminTab: 'orders',
       customerTab: 'orders',
@@ -34,15 +34,15 @@ export function parseNotificationTarget(notif, orders = []) {
     try {
       const urlObj = new URL(notif.link, 'https://dummy.local');
       if (!orderId) {
-        orderId = urlObj.searchParams.get('trackOrder') || 
-                  urlObj.searchParams.get('orderId') || 
-                  urlObj.searchParams.get('order_id') || 
+        orderId = urlObj.searchParams.get('trackOrder') ||
+                  urlObj.searchParams.get('orderId') ||
+                  urlObj.searchParams.get('order_id') ||
                   urlObj.searchParams.get('order');
       }
       if (!conversationId) {
-        conversationId = urlObj.searchParams.get('chatId') || 
-                         urlObj.searchParams.get('conversation_id') || 
-                         urlObj.searchParams.get('conversationId') || 
+        conversationId = urlObj.searchParams.get('chatId') ||
+                         urlObj.searchParams.get('conversation_id') ||
+                         urlObj.searchParams.get('conversationId') ||
                          urlObj.searchParams.get('convId');
       }
     } catch {}
@@ -95,21 +95,21 @@ export function parseNotificationTarget(notif, orders = []) {
   }
 
   // 6. Detect type: 'order' | 'offer' | 'general'
-  const isOffer = titleLower.includes('offer') || 
-                  titleLower.includes('quote') || 
+  const isOffer = titleLower.includes('offer') ||
+                  titleLower.includes('quote') ||
                   typeLower.includes('offer');
 
-  const isOrder = Boolean(orderId) || 
-                  titleLower.includes('order') || 
-                  titleLower.includes('delivered') || 
-                  titleLower.includes('revision') || 
-                  titleLower.includes('modification') || 
-                  titleLower.includes('submitted') || 
-                  titleLower.includes('payment') || 
-                  titleLower.includes('paid') || 
-                  titleLower.includes('production') || 
-                  titleLower.includes('digitiz') || 
-                  titleLower.includes('vector') || 
+  const isOrder = Boolean(orderId) ||
+                  titleLower.includes('order') ||
+                  titleLower.includes('delivered') ||
+                  titleLower.includes('revision') ||
+                  titleLower.includes('modification') ||
+                  titleLower.includes('submitted') ||
+                  titleLower.includes('payment') ||
+                  titleLower.includes('paid') ||
+                  titleLower.includes('production') ||
+                  titleLower.includes('digitiz') ||
+                  titleLower.includes('vector') ||
                   titleLower.includes('patch');
 
   if (isOffer || isOrder || orderId) {
@@ -290,10 +290,10 @@ export function isOrderPlacedNotification(notif) {
     return true;
   }
   if (
-    title.includes('order placed') || 
-    title.includes('order received') || 
-    title.includes('order submitted') || 
-    title.includes('placed successfully') || 
+    title.includes('order placed') ||
+    title.includes('order received') ||
+    title.includes('order submitted') ||
+    title.includes('placed successfully') ||
     title.includes('placed!')
   ) {
     return true;
@@ -314,16 +314,16 @@ export function isOrderPaymentConfirmedNotification(notif) {
     return true;
   }
   if (
-    title.includes('payment confirmed') || 
-    title.includes('payment received') || 
-    title.includes('offer paid') || 
+    title.includes('payment confirmed') ||
+    title.includes('payment received') ||
+    title.includes('offer paid') ||
     title.includes('in production!')
   ) {
     return true;
   }
   if (
-    message.includes('payment confirmed') || 
-    message.includes('payment has been received') || 
+    message.includes('payment confirmed') ||
+    message.includes('payment has been received') ||
     message.includes('payment received')
   ) {
     return true;
@@ -348,17 +348,17 @@ export function isOrderDeliveredNotification(notif) {
   }
   if (
     title.includes('delivery') ||
-    title.includes('delivered') || 
-    title.includes('files ready') || 
-    title.includes('files are ready') || 
-    title.includes('order files ready') || 
+    title.includes('delivered') ||
+    title.includes('files ready') ||
+    title.includes('files are ready') ||
+    title.includes('order files ready') ||
     title.includes('order delivered')
   ) {
     return true;
   }
   if (
-    message.includes('files are ready for download') || 
-    message.includes('files delivered') || 
+    message.includes('files are ready for download') ||
+    message.includes('files delivered') ||
     message.includes('ready for inspection and download') ||
     message.includes('deliveries') ||
     message.includes('delivery #')
@@ -373,7 +373,7 @@ export function isOrderDeliveredNotification(notif) {
  */
 export function isCustomOfferNotification(notif) {
   if (!notif) return false;
-  const id = String(notif.id || '').toLowerCase();
+  const _id = String(notif.id || '').toLowerCase();
   const title = String(notif.title || '').toLowerCase();
   const msg = String(notif.message || notif.body || '').toLowerCase();
 
@@ -381,14 +381,14 @@ export function isCustomOfferNotification(notif) {
     return true;
   }
   if (
-    title.includes('custom offer') || 
-    title.includes('offer received') || 
+    title.includes('custom offer') ||
+    title.includes('offer received') ||
     title.includes('new offer')
   ) {
     return true;
   }
   if (
-    msg.includes('sent you a custom offer') || 
+    msg.includes('sent you a custom offer') ||
     msg.includes('custom offer:')
   ) {
     return true;
@@ -560,9 +560,9 @@ export function filterAndSanitizeNotifications(notifications, { currentUserEmail
     orders.forEach(ord => {
       if (!ord) return;
       const cleanId = String(ord.id || '').replace(/^#+/, '').trim();
-      const isFromOffer = ord.source === 'custom_offer' || 
-                          Boolean(ord.offer_id) || 
-                          Boolean(ord.offerId) || 
+      const isFromOffer = ord.source === 'custom_offer' ||
+                          Boolean(ord.offer_id) ||
+                          Boolean(ord.offerId) ||
                           (typeof ord.notes === 'string' && ord.notes.includes('custom_offer'));
       if (isFromOffer && cleanId) {
         customOfferOrderIds.add(cleanId);
@@ -579,7 +579,7 @@ export function filterAndSanitizeNotifications(notifications, { currentUserEmail
     const isOfferSource = rawNotif.source === 'custom_offer' || Boolean(rawNotif.offer_id) || Boolean(rawNotif.offerId);
     const msg = String(rawNotif.message || rawNotif.body || '').toLowerCase();
     const title = String(rawNotif.title || '').toLowerCase();
-    const isOfferPaid = (title.includes('payment confirmed') || title.includes('payment received')) && 
+    const isOfferPaid = (title.includes('payment confirmed') || title.includes('payment received')) &&
                         (msg.includes('offer') || msg.includes('custom offer'));
 
     if (isOfferSource || isOfferPaid) {
@@ -715,10 +715,10 @@ export function formatNotificationExactTime(notif, orders = []) {
   const now = new Date();
   const diffMs = now.getTime() - dateObj.getTime();
 
-  const timeStr = dateObj.toLocaleTimeString([], { 
-    hour: 'numeric', 
-    minute: '2-digit', 
-    hour12: true 
+  const timeStr = dateObj.toLocaleTimeString([], {
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true
   });
 
   const isToday = now.toDateString() === dateObj.toDateString();

@@ -4,13 +4,13 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from '../../utils/navigation';
 import { useAppState, formatOrderId, formatDesignTitle } from '../../context/StateContext';
 import { ArtworkLightboxModal } from '../common/ArtworkLightboxModal';
-import { 
-  PlusCircle, 
-  Clock, 
-  CheckCircle2, 
-  RotateCcw, 
-  Search, 
-  FileText, 
+import {
+  PlusCircle,
+  Clock,
+  CheckCircle2,
+  RotateCcw,
+  Search,
+  FileText,
   ChevronRight,
   DollarSign,
   ZoomIn,
@@ -33,7 +33,7 @@ import {
   MessageSquare,
   Download,
   Smartphone,
-  XCircle
+  XCircle as _XCircle
 } from 'lucide-react';
 import { ClientSidebar } from './ClientSidebar';
 import { MobileSimpleOrderModal } from './MobileSimpleOrderModal';
@@ -51,12 +51,12 @@ import { matchCategory } from '../../utils/categoryUtils';
 
 export const CustomerDashboard = () => {
   const navigate = useNavigate();
-  const { 
-    orders = [], 
+  const {
+    orders = [],
     authUser,
-    currentUser, 
+    currentUser,
     isAuthInitialized,
-    setIsOrderWizardOpen, 
+    setIsOrderWizardOpen,
     openOrderWizard,
     setSelectedOrderForDrawer,
     openOrderTrackerDrawer,
@@ -206,13 +206,13 @@ export const CustomerDashboard = () => {
     }
   };
 
-  const isOrderCancellable = (o) => {
+  const _isOrderCancellable = (o) => {
     if (!o) return false;
     const s = String(o.status || 'submitted').toLowerCase();
     return s !== 'delivered' && s !== 'completed' && s !== 'cancelled' && s !== 'cancellation_requested';
   };
 
-  const handleOpenCancellation = (order) => {
+  const _handleOpenCancellation = (order) => {
     if (!order) return;
     setSelectedOrderForDrawer(order);
     setTimeout(() => {
@@ -409,7 +409,7 @@ export const CustomerDashboard = () => {
       isMounted = false;
       if (typeof unsubscribe === 'function') unsubscribe();
     };
-  }, [mounted, refreshNotifications, userEmail]);
+  }, [mounted, refreshNotifications, userEmail, refreshOrders]);
 
   // Strict Category Helper Functions
   const isStoreOrder = (o) => {
@@ -498,12 +498,12 @@ export const CustomerDashboard = () => {
   const storeOrders = myOrders.filter(isStoreOrder);
 
   // Orders to display on the current tab (on Studio Dashboard, show ALL client orders)
-  const currentTabOrders = activeTab === 'digitizing' 
-    ? digitizingOrders 
-    : activeTab === 'vector' 
-      ? vectorOrders 
-      : activeTab === 'patches' 
-        ? patchOrders 
+  const currentTabOrders = activeTab === 'digitizing'
+    ? digitizingOrders
+    : activeTab === 'vector'
+      ? vectorOrders
+      : activeTab === 'patches'
+        ? patchOrders
         : myOrders;
 
   const activeOrders = currentTabOrders.filter(o => o?.status !== 'completed' && o?.status !== 'cancelled');
@@ -523,26 +523,26 @@ export const CustomerDashboard = () => {
   const patchMinPrice = patchTiers.length > 0 ? Math.min(...patchTiers.map(t => Number(t?.price) || 1.5)) : 1.5;
 
   const studioServiceList = [
-    { 
-      id: 'embroidery', 
-      title: 'Embroidery Digitizing', 
-      desc: 'DST, PES, EMB files with wilcom native stitch pathing', 
-      icon: Layers, 
-      price: `$${embMinPrice % 1 === 0 ? embMinPrice : embMinPrice.toFixed(2)}` 
+    {
+      id: 'embroidery',
+      title: 'Embroidery Digitizing',
+      desc: 'DST, PES, EMB files with wilcom native stitch pathing',
+      icon: Layers,
+      price: `$${embMinPrice % 1 === 0 ? embMinPrice : embMinPrice.toFixed(2)}`
     },
-    { 
-      id: 'vector', 
-      title: 'Vector Art Tracing', 
-      desc: 'Crisp vector AI, EPS, SVG for printing & engraving', 
-      icon: PenTool, 
-      price: `$${vecMinPrice % 1 === 0 ? vecMinPrice : vecMinPrice.toFixed(2)}` 
+    {
+      id: 'vector',
+      title: 'Vector Art Tracing',
+      desc: 'Crisp vector AI, EPS, SVG for printing & engraving',
+      icon: PenTool,
+      price: `$${vecMinPrice % 1 === 0 ? vecMinPrice : vecMinPrice.toFixed(2)}`
     },
-    { 
-      id: 'patch', 
-      title: 'Custom Physical Patches', 
-      desc: 'Manufactured custom patches with velcro/iron-on backing', 
-      icon: Package, 
-      price: patchMinPrice < 10 ? `$${patchMinPrice.toFixed(2)} / pc` : `$${patchMinPrice}` 
+    {
+      id: 'patch',
+      title: 'Custom Physical Patches',
+      desc: 'Manufactured custom patches with velcro/iron-on backing',
+      icon: Package,
+      price: patchMinPrice < 10 ? `$${patchMinPrice.toFixed(2)} / pc` : `$${patchMinPrice}`
     }
   ];
 
@@ -560,7 +560,7 @@ export const CustomerDashboard = () => {
     const idMatch = (o?.id || '').toLowerCase().includes(searchTerm.toLowerCase());
     const matchesSearch = titleMatch || idMatch;
     const isPaid = isOrderPaid(o);
-    
+
     if (filterStatus === 'unpaid' || filterStatus === 'awaiting_payment') return matchesSearch && !isPaid && o?.status !== 'cancelled';
     if (filterStatus === 'active') return matchesSearch && o?.status !== 'completed' && o?.status !== 'cancelled';
     if (filterStatus === 'delivered') return matchesSearch && (o?.status === 'delivered' || (Array.isArray(o?.uploadedMachineFiles) && o.uploadedMachineFiles.length > 0 && o?.status !== 'completed'));
@@ -577,18 +577,18 @@ export const CustomerDashboard = () => {
   const paginatedCustOrders = filteredDigitizingOrders.slice(custStartIndex, custEndIndex);
 
   const getPaymentStatusBadge = (statusOrOrder) => {
-    const isPaidComputed = typeof statusOrOrder === 'object' && statusOrOrder !== null 
-      ? isOrderPaid(statusOrOrder) 
+    const isPaidComputed = typeof statusOrOrder === 'object' && statusOrOrder !== null
+      ? isOrderPaid(statusOrOrder)
       : isOrderPaid({ payment_status: statusOrOrder });
 
     if (isPaidComputed) {
       return (
-        <span 
-          className="badge" 
-          style={{ 
-            background: '#dcfce7', 
-            color: '#15803d', 
-            border: '1px solid #bbf7d0', 
+        <span
+          className="badge"
+          style={{
+            background: '#dcfce7',
+            color: '#15803d',
+            border: '1px solid #bbf7d0',
             fontWeight: 800,
             fontSize: '0.725rem',
             padding: '0.2rem 0.55rem',
@@ -604,12 +604,12 @@ export const CustomerDashboard = () => {
       );
     }
     return (
-      <span 
-        className="badge" 
-        style={{ 
-          background: 'linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%)', 
-          color: '#c2410c', 
-          border: '1.5px solid #fdba74', 
+      <span
+        className="badge"
+        style={{
+          background: 'linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%)',
+          color: '#c2410c',
+          border: '1.5px solid #fdba74',
           fontWeight: 900,
           fontSize: '0.725rem',
           padding: '0.2rem 0.6rem',
@@ -786,11 +786,11 @@ export const CustomerDashboard = () => {
     const isChatTab = activeTab === 'inbox' || activeTab === 'chat' || activeTab === 'support' || activeTab === 'help-support';
 
     return (
-    <div 
+    <div
       className={`dashboard-main-container client-portal-wrapper ${isChatTab ? 'client-portal-chat-mode' : ''} ${isChatTab && isChatInputFocused ? 'chat-input-focused' : ''}`}
-      style={{ 
-        background: 'var(--bg-main)', 
-        position: 'relative', 
+      style={{
+        background: 'var(--bg-main)',
+        position: 'relative',
         width: '100%',
         minHeight: isChatTab ? 'calc(100dvh - 65px)' : 'calc(100vh - 65px)',
         height: isChatTab ? 'calc(100dvh - 65px)' : 'calc(100vh - 65px)',
@@ -942,24 +942,24 @@ export const CustomerDashboard = () => {
         }
       `}} />
 
-      <div 
-        className="client-portal-body" 
-        style={{ 
-          display: 'flex', 
+      <div
+        className="client-portal-body"
+        style={{
+          display: 'flex',
           flexDirection: 'row',
-          flex: 1, 
-          width: '100%', 
-          minHeight: 0, 
-          height: '100%', 
-          position: 'relative', 
-          overflow: 'hidden' 
+          flex: 1,
+          width: '100%',
+          minHeight: 0,
+          height: '100%',
+          position: 'relative',
+          overflow: 'hidden'
         }}
       >
 
         {/* ==================================================================
             LEFT VERTICAL SIDEBAR NAVIGATION MENU (STATIONARY SAAS PANEL)
            ================================================================== */}
-        <ClientSidebar 
+        <ClientSidebar
           activeTab={activeTab}
           setActiveTab={setActiveTab}
           activeUser={activeUser}
@@ -984,9 +984,9 @@ export const CustomerDashboard = () => {
         {/* ==================================================================
             RIGHT CONTENT WORKSPACE PANE (INDEPENDENTLY SCROLLABLE)
            ================================================================== */}
-        <main 
+        <main
           className={`client-main-content ${(activeTab === 'inbox' || activeTab === 'chat' || activeTab === 'support' || activeTab === 'help-support') ? 'client-main-chat-tab' : ''}`}
-          style={{ 
+          style={{
             flex: 1,
             minWidth: 0,
             width: '100%',
@@ -1002,7 +1002,7 @@ export const CustomerDashboard = () => {
         >
           {/* Optional App Mode / PWA Install Banner for Mobile Screens - Only on Dashboard */}
           {activeTab === 'dashboard' && !isStandaloneApp && !isAppPromptDismissed && (
-            <div 
+            <div
               className="mobile-only"
               style={{
                 background: isDark ? 'rgba(30, 41, 59, 0.75)' : 'linear-gradient(135deg, rgba(249, 115, 22, 0.08) 0%, rgba(249, 115, 22, 0.02) 100%)',
@@ -1080,7 +1080,7 @@ export const CustomerDashboard = () => {
               </div>
             </div>
           )}
-            
+
             {/* TAB 0: MAIN CLIENT DASHBOARD */}
             {activeTab === 'dashboard' && (
               <>
@@ -1111,7 +1111,7 @@ export const CustomerDashboard = () => {
                   </div>
 
                   <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
-                    <button 
+                    <button
                       type="button"
                       className="btn btn-outline btn-sm"
                       onClick={() => setIsDepositModalOpen(true)}
@@ -1129,7 +1129,7 @@ export const CustomerDashboard = () => {
                       <Wallet size={14} style={{ color: 'var(--color-primary)' }} /> Top-Up Wallet
                     </button>
 
-                    <button 
+                    <button
                       type="button"
                       className="btn btn-primary-orange"
                       onClick={() => setIsServiceSelectorOpen(true)}
@@ -1151,7 +1151,7 @@ export const CustomerDashboard = () => {
                 </div>
 
                 {/* Summary Stat Cards - Compact & High Information Density */}
-                <div 
+                <div
                   className="customer-stat-cards-grid"
                   style={{
                     display: 'grid',
@@ -1161,11 +1161,11 @@ export const CustomerDashboard = () => {
                   }}
                 >
                   {/* Card 1: Wallet Balance */}
-                  <div 
-                    className="card" 
-                    style={{ 
-                      padding: '0.85rem 1rem', 
-                      borderLeft: '4px solid var(--color-primary)', 
+                  <div
+                    className="card"
+                    style={{
+                      padding: '0.85rem 1rem',
+                      borderLeft: '4px solid var(--color-primary)',
                       background: 'var(--bg-card)',
                       borderRadius: 'var(--radius-lg, 12px)',
                       display: 'flex',
@@ -1213,11 +1213,11 @@ export const CustomerDashboard = () => {
                   </div>
 
                   {/* Card 2: Active Jobs */}
-                  <div 
-                    className="card" 
-                    style={{ 
-                      padding: '0.85rem 1rem', 
-                      borderLeft: '4px solid #3b82f6', 
+                  <div
+                    className="card"
+                    style={{
+                      padding: '0.85rem 1rem',
+                      borderLeft: '4px solid #3b82f6',
                       background: 'var(--bg-card)',
                       borderRadius: 'var(--radius-lg, 12px)',
                       display: 'flex',
@@ -1241,11 +1241,11 @@ export const CustomerDashboard = () => {
                   </div>
 
                   {/* Card 3: Completed Downloads */}
-                  <div 
-                    className="card" 
-                    style={{ 
-                      padding: '0.85rem 1rem', 
-                      borderLeft: '4px solid #10b981', 
+                  <div
+                    className="card"
+                    style={{
+                      padding: '0.85rem 1rem',
+                      borderLeft: '4px solid #10b981',
                       background: 'var(--bg-card)',
                       borderRadius: 'var(--radius-lg, 12px)',
                       display: 'flex',
@@ -1269,11 +1269,11 @@ export const CustomerDashboard = () => {
                   </div>
 
                   {/* Card 4: Revisions Requested */}
-                  <div 
-                    className="card" 
-                    style={{ 
-                      padding: '0.85rem 1rem', 
-                      borderLeft: '4px solid #8b5cf6', 
+                  <div
+                    className="card"
+                    style={{
+                      padding: '0.85rem 1rem',
+                      borderLeft: '4px solid #8b5cf6',
                       background: 'var(--bg-card)',
                       borderRadius: 'var(--radius-lg, 12px)',
                       display: 'flex',
@@ -1297,11 +1297,11 @@ export const CustomerDashboard = () => {
                   </div>
 
                   {/* Card 5: Total Spend */}
-                  <div 
-                    className="card" 
-                    style={{ 
-                      padding: '0.85rem 1rem', 
-                      borderLeft: '4px solid #ec4899', 
+                  <div
+                    className="card"
+                    style={{
+                      padding: '0.85rem 1rem',
+                      borderLeft: '4px solid #ec4899',
                       background: 'var(--bg-card)',
                       borderRadius: 'var(--radius-lg, 12px)',
                       display: 'flex',
@@ -1438,7 +1438,7 @@ export const CustomerDashboard = () => {
 
                 {/* Orders Section Container */}
                 <div id="orders-table-wrapper" className="card orders-table-container" style={{ padding: '1.25rem' }}>
-                  
+
                   {/* Table Header Controls */}
                   <div style={{
                     display: 'flex',
@@ -1449,7 +1449,7 @@ export const CustomerDashboard = () => {
                     gap: '0.5rem'
                   }}>
                     <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap' }}>
-                      <button 
+                      <button
                         type="button"
                         onClick={() => setFilterStatus('all')}
                         style={{
@@ -1471,7 +1471,7 @@ export const CustomerDashboard = () => {
                       </button>
 
                       {unpaidCount > 0 && (
-                        <button 
+                        <button
                           type="button"
                           onClick={() => setFilterStatus('unpaid')}
                           style={{
@@ -1495,7 +1495,7 @@ export const CustomerDashboard = () => {
                         </button>
                       )}
 
-                      <button 
+                      <button
                         type="button"
                         onClick={() => setFilterStatus('active')}
                         style={{
@@ -1516,7 +1516,7 @@ export const CustomerDashboard = () => {
                         Active ({activeOrders.length})
                       </button>
 
-                      <button 
+                      <button
                         type="button"
                         onClick={() => setFilterStatus('delivered')}
                         style={{
@@ -1537,7 +1537,7 @@ export const CustomerDashboard = () => {
                         Delivered ({deliveredOrders.length})
                       </button>
 
-                      <button 
+                      <button
                         type="button"
                         onClick={() => setFilterStatus('revision')}
                         style={{
@@ -1558,7 +1558,7 @@ export const CustomerDashboard = () => {
                         In Revision ({revisionOrders.length})
                       </button>
 
-                      <button 
+                      <button
                         type="button"
                         onClick={() => setFilterStatus('completed')}
                         style={{
@@ -1583,8 +1583,8 @@ export const CustomerDashboard = () => {
                     {/* Search input */}
                     <div style={{ position: 'relative', width: '100%', maxWidth: '240px' }}>
                       <Search size={14} style={{ position: 'absolute', left: '9px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-light)' }} />
-                      <input 
-                        type="text" 
+                      <input
+                        type="text"
                         className="form-control"
                         placeholder="Search order ID or title..."
                         value={searchTerm}
@@ -1603,10 +1603,10 @@ export const CustomerDashboard = () => {
                   ) : (
                     <>
                       {/* A. DESKTOP DATA TABLE (Screens > 768px) */}
-                      <div className="desktop-table-view" style={{ 
-                        maxHeight: '680px', 
-                        overflowY: 'auto', 
-                        overflowX: 'auto', 
+                      <div className="desktop-table-view" style={{
+                        maxHeight: '680px',
+                        overflowY: 'auto',
+                        overflowX: 'auto',
                         border: '1px solid var(--border-color)',
                         borderRadius: '10px',
                         background: 'var(--bg-card)',
@@ -1630,12 +1630,12 @@ export const CustomerDashboard = () => {
                               const isPaid = isOrderPaid(ord);
                               const isDelivered = ord?.status === 'delivered' || (Array.isArray(ord?.uploadedMachineFiles) && ord.uploadedMachineFiles.length > 0 && ord?.status !== 'completed');
                               return (
-                                <tr 
+                                <tr
                                   key={ord?.id || Math.random()}
-                                  style={{ 
-                                    borderBottom: isPaid ? '1px solid var(--border-color)' : '1px solid #fed7aa', 
+                                  style={{
+                                    borderBottom: isPaid ? '1px solid var(--border-color)' : '1px solid #fed7aa',
                                     background: isDelivered ? 'rgba(16, 185, 129, 0.08)' : (isPaid ? 'var(--bg-card)' : 'rgba(249, 115, 22, 0.04)'),
-                                    transition: 'background 0.15s' 
+                                    transition: 'background 0.15s'
                                   }}
                                   onMouseEnter={(e) => e.currentTarget.style.background = isDelivered ? 'rgba(16, 185, 129, 0.15)' : 'rgba(249, 115, 22, 0.08)'}
                                   onMouseLeave={(e) => e.currentTarget.style.background = isDelivered ? 'rgba(16, 185, 129, 0.08)' : (isPaid ? 'var(--bg-card)' : 'rgba(249, 115, 22, 0.04)')}
@@ -1643,26 +1643,26 @@ export const CustomerDashboard = () => {
                                   {/* Title & Interactive Lightbox Artwork Thumbnail */}
                                   <td style={{ padding: '0.5rem 0.75rem' }}>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-                                      <div 
+                                      <div
                                         style={{ position: 'relative', cursor: 'pointer', flexShrink: 0 }}
                                         onClick={() => setLightboxOrder(ord)}
                                         title="Click to inspect full high-res artwork"
                                       >
-                                        <img 
+                                        <img
                                           src={
-                                            ord?.artworkUrl || 
-                                            ord?.image_url || 
-                                            ord?.logo || 
-                                            ord?.uploadedFiles?.[0]?.url || 
-                                            ord?.uploadedFiles?.[0]?.public_url || 
-                                            ord?.placementItems?.[0]?.files?.[0]?.url || 
-                                            ord?.patchItems?.[0]?.files?.[0]?.url || 
-                                            ord?.order_files?.[0]?.public_url || 
-                                            ord?.file_url || 
-                                            ord?.file_path || 
+                                            ord?.artworkUrl ||
+                                            ord?.image_url ||
+                                            ord?.logo ||
+                                            ord?.uploadedFiles?.[0]?.url ||
+                                            ord?.uploadedFiles?.[0]?.public_url ||
+                                            ord?.placementItems?.[0]?.files?.[0]?.url ||
+                                            ord?.patchItems?.[0]?.files?.[0]?.url ||
+                                            ord?.order_files?.[0]?.public_url ||
+                                            ord?.file_url ||
+                                            ord?.file_path ||
                                             'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=120&q=80'
-                                          } 
-                                          alt={ord?.title || 'Design'} 
+                                          }
+                                          alt={ord?.title || 'Design'}
                                           onError={(e) => {
                                             e.currentTarget.onerror = null;
                                             e.currentTarget.src = 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=120&q=80';
@@ -1734,14 +1734,14 @@ export const CustomerDashboard = () => {
 
                                   {/* Invoice */}
                                   <td style={{ padding: '0.5rem 0.75rem', textAlign: 'center' }}>
-                                    <button 
+                                    <button
                                       type="button"
                                       className="btn btn-outline btn-sm"
                                       onClick={() => setInvoiceModalOrder(ord)}
-                                      style={{ 
-                                        padding: '0.32rem 0.65rem', 
-                                        fontSize: '0.74rem', 
-                                        fontWeight: 700, 
+                                      style={{
+                                        padding: '0.32rem 0.65rem',
+                                        fontSize: '0.74rem',
+                                        fontWeight: 700,
                                         borderRadius: '6px',
                                         whiteSpace: 'nowrap',
                                         display: 'inline-flex',
@@ -1803,14 +1803,14 @@ export const CustomerDashboard = () => {
                                       )}
 
 
-                                      <button 
+                                      <button
                                         type="button"
                                         className="btn btn-outline btn-sm"
                                         onClick={() => setSelectedOrderForDrawer(ord)}
-                                        style={{ 
-                                          padding: '0.32rem 0.65rem', 
-                                          fontSize: '0.74rem', 
-                                          fontWeight: 700, 
+                                        style={{
+                                          padding: '0.32rem 0.65rem',
+                                          fontSize: '0.74rem',
+                                          fontWeight: 700,
                                           borderRadius: '6px',
                                           whiteSpace: 'nowrap',
                                           display: 'inline-flex',
@@ -1838,17 +1838,17 @@ export const CustomerDashboard = () => {
                           const isRevision = ordStatus === 'revision' || ordStatus === 'revision_requested';
                           const isCompleted = ordStatus === 'completed';
 
-                          const primaryImg = 
-                            ord?.artworkUrl || 
-                            ord?.image_url || 
-                            ord?.logo || 
-                            ord?.uploadedFiles?.[0]?.url || 
-                            ord?.uploadedFiles?.[0]?.public_url || 
-                            ord?.placementItems?.[0]?.files?.[0]?.url || 
+                          const primaryImg =
+                            ord?.artworkUrl ||
+                            ord?.image_url ||
+                            ord?.logo ||
+                            ord?.uploadedFiles?.[0]?.url ||
+                            ord?.uploadedFiles?.[0]?.public_url ||
+                            ord?.placementItems?.[0]?.files?.[0]?.url ||
                             'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=120&q=80';
 
                           return (
-                            <div 
+                            <div
                               key={ord?.id || Math.random()}
                               className="mobile-order-card"
                               style={{
@@ -1886,12 +1886,12 @@ export const CustomerDashboard = () => {
 
                               <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-start' }}>
                                 {/* Thumbnail */}
-                                <div 
+                                <div
                                   style={{ position: 'relative', flexShrink: 0, cursor: 'pointer' }}
                                   onClick={() => setLightboxOrder(ord)}
                                 >
-                                  <img 
-                                    src={primaryImg} 
+                                  <img
+                                    src={primaryImg}
                                     alt={ord?.title || 'Design'}
                                     onError={(e) => {
                                       e.currentTarget.onerror = null;
@@ -2574,7 +2574,7 @@ export const CustomerDashboard = () => {
             {/* TAB 5: SETTINGS */}
             {activeTab === 'settings' && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-                
+
                 {/* 1. APPEARANCE & THEME CUSTOMIZATION CARD */}
                 <div className="card" style={{ padding: '2rem', background: 'var(--bg-card)', border: '1.5px solid var(--border-color)', borderRadius: '20px', boxShadow: 'var(--shadow-sm)' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.5rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '1rem' }}>
@@ -2700,9 +2700,9 @@ export const CustomerDashboard = () => {
 
       {/* Lightbox Inspection Modal */}
       {lightboxOrder && (
-        <ArtworkLightboxModal 
-          order={lightboxOrder} 
-          onClose={() => setLightboxOrder(null)} 
+        <ArtworkLightboxModal
+          order={lightboxOrder}
+          onClose={() => setLightboxOrder(null)}
         />
       )}
 
@@ -2716,7 +2716,7 @@ export const CustomerDashboard = () => {
       )}
 
       {/* 3. FIXED NATIVE APP BOTTOM NAVIGATION BAR (Fiverr Standard Equal-Divide) */}
-      <nav 
+      <nav
         className={`mobile-only mobile-bottom-nav ${isChatTab && isChatInputFocused ? 'bottom-nav-hidden' : ''}`}
         style={{
           position: 'fixed',
@@ -2964,7 +2964,7 @@ export const CustomerDashboard = () => {
 
       {/* SERVICE SELECTOR MODAL (3 Core Services Choice Dialog) */}
       {isServiceSelectorOpen && (
-        <div 
+        <div
           style={{
             position: 'fixed',
             inset: 0,
@@ -2978,7 +2978,7 @@ export const CustomerDashboard = () => {
           }}
           onClick={() => setIsServiceSelectorOpen(false)}
         >
-          <div 
+          <div
             style={{
               background: 'var(--color-surface, #ffffff)',
               borderRadius: '20px',
@@ -3028,7 +3028,7 @@ export const CustomerDashboard = () => {
 
             {/* 3 Service Choice Cards */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
-              
+
               {/* Choice 1: Embroidery Digitizing */}
               <button
                 type="button"

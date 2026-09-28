@@ -5,22 +5,22 @@ import { useAppState } from '../../context/StateContext';
 import { createClient } from '../../lib/supabase/client';
 import OfferCardMessage from '../common/OfferCardMessage';
 import { downloadFileDirectly, openFileInNewTab } from '../../utils/fileDownloader';
-import { playMessageChime, playMessageChimeForMessage, playCustomerChime, stopNotificationSound, unlockAudioContext } from '../../utils/audioNotification';
+import { playMessageChime as _playMessageChime, playMessageChimeForMessage, playCustomerChime, stopNotificationSound, unlockAudioContext } from '../../utils/audioNotification';
 import { trackUserPresence, untrackUserPresence } from '../../services/presenceService';
 import {
   Send,
   Paperclip,
   X,
   Loader2,
-  FileText,
+  FileText as _FileText,
   Download,
-  Check,
+  Check as _Check,
   CheckCheck,
   Headphones,
   RefreshCw,
   Sparkles,
   ShieldCheck,
-  Clock,
+  Clock as _Clock,
   MessageSquare,
   ExternalLink,
   Volume2,
@@ -49,8 +49,8 @@ const formatChatDateHeader = (dateStr) => {
   }
 };
 
-export default function CustomerSupportChat({ 
-  defaultOrderId = null, 
+export default function CustomerSupportChat({
+  defaultOrderId = null,
   initialTopic = '',
   chatType = 'inbox' // 'inbox' | 'support'
 }) {
@@ -279,6 +279,7 @@ export default function CustomerSupportChat({
     }
   };
 
+  /* oxlint-disable react-hooks/exhaustive-deps -- initialize only when account/channel keys change, not helper identity */
   useEffect(() => {
     const prefix = chatType === 'support' ? 'support' : 'inbox';
     const nextId = userEmail ? `${prefix}-${userEmail.replace(/[^a-zA-Z0-9]/g, '_')}` : `${prefix}-guest`;
@@ -287,8 +288,10 @@ export default function CustomerSupportChat({
     setIsLoading(true);
     initConversation(nextId);
   }, [userEmail, chatType]);
+  /* oxlint-enable react-hooks/exhaustive-deps */
 
-  // Handle return from Stripe or Gateway payment
+  // Handle return from Stripe or Gateway payment.
+  /* oxlint-disable react-hooks/exhaustive-deps -- payment callback is keyed by conversation; fetch helper identity is not a lifecycle key */
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const params = new URLSearchParams(window.location.search);
@@ -329,6 +332,7 @@ export default function CustomerSupportChat({
       window.history.replaceState({}, '', newUrl.toString());
     }
   }, [conversationId]);
+  /* oxlint-enable react-hooks/exhaustive-deps */
 
   // Realtime Polling & Silent Sync
   useEffect(() => {
@@ -355,10 +359,10 @@ export default function CustomerSupportChat({
         if (Array.isArray(mData?.messages)) {
           setMessages(prev => {
             // Keep any pending optimistic messages that the server hasn't saved yet
-            const pendingMessages = prev.filter(m => 
+            const pendingMessages = prev.filter(m =>
               (m.isPending || String(m.id).startsWith('temp-')) &&
-              !mData.messages.some(sm => 
-                sm.id === m.id || 
+              !mData.messages.some(sm =>
+                sm.id === m.id ||
                 (sm.sender === m.sender && (sm.text || '').trim() === (m.text || '').trim())
               )
             );
@@ -415,7 +419,7 @@ export default function CustomerSupportChat({
 
             // 2. If this is a client message, check if there is an optimistic pending message to reconcile
             if (payload.new.sender === 'client') {
-              const pendingIdx = prev.findIndex(m => 
+              const pendingIdx = prev.findIndex(m =>
                 (m.isPending || String(m.id).startsWith('temp-')) &&
                 (m.text || '').trim() === (payload.new.text || '').trim()
               );
@@ -850,7 +854,7 @@ export default function CustomerSupportChat({
       )}
 
       {/* CHAT HEADER */}
-      <div 
+      <div
         style={{
           padding: '0.75rem 1rem',
           background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
@@ -911,7 +915,7 @@ export default function CustomerSupportChat({
               </span>
             </div>
             <p style={{ fontSize: '0.72rem', color: '#94a3b8', margin: '0.1rem 0 0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-              {chatType === 'support' 
+              {chatType === 'support'
                 ? 'Active 24/7 • Orders & Revision Assistance'
                 : 'Direct with Digitizers • Custom Offers & Stitch Quotes'}
             </p>
@@ -966,7 +970,7 @@ export default function CustomerSupportChat({
       </div>
 
       {/* CHAT MESSAGES STREAM */}
-      <div 
+      <div
         className="customer-chat-stream"
         style={{
           flex: 1,

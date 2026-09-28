@@ -1,12 +1,12 @@
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
-import { 
-  filterAndSanitizeNotifications, 
-  isOrderPlacedNotification, 
+import {
+  filterAndSanitizeNotifications,
+  isOrderPlacedNotification,
   isOrderPaymentConfirmedNotification,
   isOrderDeliveredNotification,
   isCustomOfferNotification,
-  getDeliveryVersionKey,
+  getDeliveryVersionKey as _getDeliveryVersionKey,
   resolveNotificationDate,
   formatNotificationExactTime,
   getNotificationFullDateTime
@@ -163,7 +163,7 @@ describe('Notification Privacy Isolation & Two-Notifications-Per-Order Enforceme
 
     // Extract Order #1001 notifications
     const order1001Notifs = aliceResult.filter(n => String(n.order_id) === '1001');
-    
+
     // Exactly 3 clean lifecycle notifications (Placed, Paid, and Delivered)
     assert.equal(order1001Notifs.length, 3, 'Order #1001 must have 3 clean notifications (Placed, Paid, and Delivered)');
 
@@ -415,7 +415,7 @@ describe('Notification Privacy Isolation & Two-Notifications-Per-Order Enforceme
 
     // Exactly 2 notifications: Custom Offer Received and Payment Confirmed
     assert.equal(result.length, 2, 'Must contain exactly 2 notifications for custom offer order flow');
-    
+
     const hasOffer = result.some(n => isCustomOfferNotification(n));
     const hasPaid = result.some(n => isOrderPaymentConfirmedNotification(n));
     const hasPlaced = result.some(n => isOrderPlacedNotification(n));

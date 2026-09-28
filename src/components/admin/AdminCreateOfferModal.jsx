@@ -1,23 +1,23 @@
 'use client';
 
 import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { 
-  Sparkles, 
-  X, 
-  Clock, 
-  RotateCcw, 
-  DollarSign, 
-  CheckSquare, 
-  Square, 
-  Send, 
+import {
+  Sparkles as _Sparkles,
+  X,
+  Clock as _Clock,
+  RotateCcw as _RotateCcw,
+  DollarSign as _DollarSign,
+  CheckSquare,
+  Square,
+  Send,
   Loader2,
-  Scissors,
-  Layers,
-  ShieldCheck,
-  Zap,
+  Scissors as _Scissors,
+  Layers as _Layers,
+  ShieldCheck as _ShieldCheck,
+  Zap as _Zap,
   Tag,
-  User,
-  Mail
+  User as _User,
+  Mail as _Mail
 } from 'lucide-react';
 import { createCustomOffer } from '../../services/supabaseService';
 

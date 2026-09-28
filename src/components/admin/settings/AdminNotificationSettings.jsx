@@ -2,19 +2,19 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useAppState } from '../../../context/StateContext';
-import { 
-  Mail, 
-  Send, 
-  CheckCircle2, 
-  AlertCircle, 
-  Save, 
-  Sparkles, 
-  Bell, 
-  ShieldCheck, 
-  RefreshCw, 
-  Layers, 
-  ShoppingBag, 
-  HelpCircle, 
+import {
+  Mail,
+  Send,
+  CheckCircle2,
+  AlertCircle,
+  Save,
+  Sparkles as _Sparkles,
+  Bell,
+  ShieldCheck,
+  RefreshCw,
+  Layers as _Layers,
+  ShoppingBag,
+  HelpCircle as _HelpCircle,
   RotateCcw,
   CheckCheck,
   Volume2,
@@ -34,14 +34,14 @@ import {
   Users
 } from 'lucide-react';
 import { uploadFileToCloudinaryFull } from '../../../services/supabaseService';
-import { 
-  testAudioTune, 
-  testCustomerAudioTune, 
-  configureAudioNotification, 
-  playMessageChime, 
+import {
+  testAudioTune,
+  testCustomerAudioTune,
+  configureAudioNotification,
+  playMessageChime as _playMessageChime,
   playNotificationSound,
-  playAdminChime,
-  playCustomerChime
+  playAdminChime as _playAdminChime,
+  playCustomerChime as _playCustomerChime
 } from '../../../utils/audioNotification';
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -116,12 +116,12 @@ export const AdminNotificationSettings = () => {
         }
       }
 
-      const singleEmail = siteSettings?.admin_notification_email || 
-        siteSettings?.notification_settings?.adminEmail || 
-        siteSettings?.adminEmail || 
-        siteSettings?.contactInfo?.email || 
-        siteSettings?.supportEmail || 
-        authUser?.email || 
+      const singleEmail = siteSettings?.admin_notification_email ||
+        siteSettings?.notification_settings?.adminEmail ||
+        siteSettings?.adminEmail ||
+        siteSettings?.contactInfo?.email ||
+        siteSettings?.supportEmail ||
+        authUser?.email ||
         '';
 
       if (singleEmail && EMAIL_REGEX.test(singleEmail.trim())) {
@@ -148,45 +148,45 @@ export const AdminNotificationSettings = () => {
       const sUrl = siteSettings?.notificationSoundUrl || siteSettings?.notification_sound_url || siteSettings?.notification_sound_settings?.url || '';
       const sName = siteSettings?.notificationSoundName || siteSettings?.notification_sound_name || siteSettings?.notification_sound_settings?.name || '';
       const sSize = siteSettings?.notificationSoundSize || siteSettings?.notification_sound_size || siteSettings?.notification_sound_settings?.size || '';
-      const sVol = siteSettings?.notificationSoundVolume !== undefined 
-        ? siteSettings?.notificationSoundVolume 
-        : (siteSettings?.notification_sound_volume !== undefined 
-            ? siteSettings?.notification_sound_volume 
+      const sVol = siteSettings?.notificationSoundVolume !== undefined
+        ? siteSettings?.notificationSoundVolume
+        : (siteSettings?.notification_sound_volume !== undefined
+            ? siteSettings?.notification_sound_volume
             : (siteSettings?.notification_sound_settings?.volume ?? 1.0));
       const sPreset = siteSettings?.notificationSoundPreset || siteSettings?.notification_sound_preset || siteSettings?.notification_sound_settings?.preset || (sUrl ? 'custom' : 'crystal_bell');
-      const sEnabled = siteSettings?.notificationSoundEnabled !== undefined 
-        ? siteSettings?.notificationSoundEnabled 
-        : (siteSettings?.notification_sound_enabled !== undefined 
-            ? siteSettings?.notification_sound_enabled 
+      const sEnabled = siteSettings?.notificationSoundEnabled !== undefined
+        ? siteSettings?.notificationSoundEnabled
+        : (siteSettings?.notification_sound_enabled !== undefined
+            ? siteSettings?.notification_sound_enabled
             : (typeof window !== 'undefined' ? localStorage.getItem('bdigi_audio_enabled') !== 'false' : true));
 
       setSoundUrl(sUrl);
       setSoundName(sName);
       setSoundSize(sSize);
-      setSoundVolume(Number(sVol) !== undefined && !isNaN(Number(sVol)) ? Number(sVol) : 1.0);
+      setSoundVolume(Number.isFinite(Number(sVol)) ? Number(sVol) : 1.0);
       setSoundPreset(sPreset);
       setAudioEnabled(Boolean(sEnabled));
 
       // Customer audio settings
       const cPreset = siteSettings?.customerSoundPreset || siteSettings?.customer_sound_preset || siteSettings?.notification_sound_settings?.customerPreset || 'basic_ping';
-      const cVol = siteSettings?.customerSoundVolume !== undefined 
-        ? siteSettings?.customerSoundVolume 
-        : (siteSettings?.customer_sound_volume !== undefined 
-            ? siteSettings?.customer_sound_volume 
+      const cVol = siteSettings?.customerSoundVolume !== undefined
+        ? siteSettings?.customerSoundVolume
+        : (siteSettings?.customer_sound_volume !== undefined
+            ? siteSettings?.customer_sound_volume
             : (siteSettings?.notification_sound_settings?.customerVolume ?? 0.50));
-      const cEnabled = siteSettings?.customerSoundEnabled !== undefined 
-        ? siteSettings?.customerSoundEnabled 
-        : (siteSettings?.customer_sound_enabled !== undefined 
-            ? siteSettings?.customer_sound_enabled 
+      const cEnabled = siteSettings?.customerSoundEnabled !== undefined
+        ? siteSettings?.customerSoundEnabled
+        : (siteSettings?.customer_sound_enabled !== undefined
+            ? siteSettings?.customer_sound_enabled
             : (siteSettings?.notification_sound_settings?.customerEnabled ?? true));
 
       setCustomerSoundPreset(cPreset);
-      setCustomerSoundVolume(Number(cVol) !== undefined && !isNaN(Number(cVol)) ? Number(cVol) : 0.50);
+      setCustomerSoundVolume(Number.isFinite(Number(cVol)) ? Number(cVol) : 0.50);
       setCustomerAudioEnabled(Boolean(cEnabled));
     }
   }, [siteSettings, authUser]);
 
-  const primaryAdminEmail = adminEmails[0] || 'bilalsadiq612@gmail.com';
+  const _primaryAdminEmail = adminEmails[0] || 'bilalsadiq612@gmail.com';
   const isValidEmail = adminEmails.length > 0 && adminEmails.every(e => EMAIL_REGEX.test(e));
 
   const handleAddEmail = (e) => {
@@ -328,13 +328,13 @@ export const AdminNotificationSettings = () => {
       const data = await res.json();
       if (res.ok && data?.success) {
         const typeLabel = testType === 'NEW_ORDER' ? 'Order' : testType === 'NEW_MESSAGE' ? 'Customer Message' : 'Configuration';
-        const recipientListStr = Array.isArray(data.recipients) && data.recipients.length > 0 
-          ? data.recipients.join(', ') 
+        const recipientListStr = Array.isArray(data.recipients) && data.recipients.length > 0
+          ? data.recipients.join(', ')
           : (data.recipient || targetEmails.join(', '));
-        
-        setTestResult({ 
-          success: true, 
-          message: `Test ${typeLabel} email dispatched to ${recipientListStr}! ${data.fallbackApplied ? '(Auto-routed to verified inbox bilalsadiq612@gmail.com)' : ''}` 
+
+        setTestResult({
+          success: true,
+          message: `Test ${typeLabel} email dispatched to ${recipientListStr}! ${data.fallbackApplied ? '(Auto-routed to verified inbox bilalsadiq612@gmail.com)' : ''}`
         });
         showToast(`Test ${typeLabel} email dispatched to ${targetEmails.length} recipient${targetEmails.length > 1 ? 's' : ''}!`, 'success');
       } else {
@@ -385,7 +385,7 @@ export const AdminNotificationSettings = () => {
         };
 
         await audio.play();
-      } catch (err) {
+      } catch {
         setIsPlayingPreview(false);
         activeAudioRef.current = null;
         testAudioTune(null, safeVol, 'bell');
@@ -424,8 +424,8 @@ export const AdminNotificationSettings = () => {
       if (uploaded && (uploaded.url || uploaded.secure_url)) {
         const directUrl = uploaded.url || uploaded.secure_url;
         const cleanName = file.name;
-        const formattedSize = file.size > 1024 * 1024 
-          ? `${(file.size / (1024 * 1024)).toFixed(1)} MB` 
+        const formattedSize = file.size > 1024 * 1024
+          ? `${(file.size / (1024 * 1024)).toFixed(1)} MB`
           : `${Math.round(file.size / 1024)} KB`;
 
         setSoundUrl(directUrl);
@@ -554,7 +554,7 @@ export const AdminNotificationSettings = () => {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem', width: '100%' }}>
-      
+
       {/* Header Banner */}
       <div style={{
         background: 'linear-gradient(135deg, var(--bg-card) 0%, rgba(249, 115, 22, 0.05) 100%)',
@@ -759,7 +759,7 @@ export const AdminNotificationSettings = () => {
               const isThisTesting = isSendingTest && testingTarget === email;
 
               return (
-                <div 
+                <div
                   key={`${email}-${idx}`}
                   style={{
                     display: 'flex',
@@ -999,7 +999,7 @@ export const AdminNotificationSettings = () => {
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            
+
             {/* Toggle 1: New Order Placement */}
             <div style={{
               display: 'flex',
@@ -1180,7 +1180,7 @@ export const AdminNotificationSettings = () => {
         flexDirection: 'column',
         gap: '1.5rem'
       }}>
-        
+
         {/* Section Header */}
         <div style={{
           display: 'flex',
@@ -1274,7 +1274,7 @@ export const AdminNotificationSettings = () => {
 
           {/* Column 1: Sound Source & Upload */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-            
+
             {/* Tune Mode Selection */}
             <div>
               <label style={{ display: 'block', fontSize: '0.825rem', fontWeight: 700, color: 'var(--text-main)', marginBottom: '0.5rem' }}>
@@ -1530,7 +1530,7 @@ export const AdminNotificationSettings = () => {
 
           {/* Column 2: Test Playground & Verification */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', justifyContent: 'space-between' }}>
-            
+
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               <div style={{ fontSize: '0.825rem', fontWeight: 700, color: 'var(--text-main)' }}>
                 Live Audio Alert Test Playground:

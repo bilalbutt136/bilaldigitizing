@@ -2,11 +2,11 @@
 
 import React, { useEffect } from 'react';
 import { formatOrderId } from '../../context/StateContext';
-import { triggerFileDownload } from '../../utils/fileDownloader';
-import { 
-  X, 
-  Printer, 
-  Download, 
+import { triggerFileDownload as _triggerFileDownload } from '../../utils/fileDownloader';
+import {
+  X,
+  Printer,
+  Download,
   FileText
 } from 'lucide-react';
 import { useModalBackNavigation } from '../../hooks/useModalBackNavigation';
@@ -55,17 +55,17 @@ export const ProductionWorksheetModal = ({ order, onClose }) => {
   ];
 
   return (
-    <div 
-      className="modal-overlay" 
+    <div
+      className="modal-overlay"
       onClick={handleSafeClose}
       style={{ zIndex: 99999, background: 'rgba(15, 23, 42, 0.85)', backdropFilter: 'blur(8px)' }}
     >
-      <div 
-        className="modal-content printable-worksheet-modal" 
+      <div
+        className="modal-content printable-worksheet-modal"
         onClick={(e) => e.stopPropagation()}
-        style={{ 
-          maxWidth: '920px', 
-          background: 'var(--color-surface, #ffffff)', 
+        style={{
+          maxWidth: '920px',
+          background: 'var(--color-surface, #ffffff)',
           color: 'var(--color-text-primary, var(--navy-900))',
           maxHeight: '94vh',
           overflowY: 'auto'
@@ -95,7 +95,7 @@ export const ProductionWorksheetModal = ({ order, onClose }) => {
         `}</style>
 
         {/* Modal Top Bar (Hidden during window.print) */}
-        <div 
+        <div
           className="no-print"
           style={{
             padding: '1.25rem 1.75rem',
@@ -120,20 +120,20 @@ export const ProductionWorksheetModal = ({ order, onClose }) => {
           </div>
 
           <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
-            <button 
+            <button
               className="btn btn-outline btn-sm"
               style={{ color: '#ffffff', borderColor: 'rgba(255,255,255,0.3)' }}
               onClick={handlePrint}
             >
               <Printer size={15} /> Print Worksheet
             </button>
-            <button 
+            <button
               className="btn btn-primary-orange btn-sm"
               onClick={handleDownloadPDF}
             >
               <Download size={15} /> Download PDF
             </button>
-            <button 
+            <button
               onClick={handleSafeClose}
               style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer', marginLeft: '0.5rem' }}
               aria-label="Close"
@@ -145,7 +145,7 @@ export const ProductionWorksheetModal = ({ order, onClose }) => {
 
         {/* PRINTABLE WORKSHEET CONTAINER */}
         <div style={{ padding: '2rem' }}>
-          
+
           {/* Studio Header & Branding */}
           <div style={{
             display: 'flex',
@@ -231,7 +231,7 @@ export const ProductionWorksheetModal = ({ order, onClose }) => {
 
           {/* Design Mockup & Operator Notes Layout */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.75rem', marginBottom: '1.75rem' }}>
-            
+
             {/* Design Mockup Frame */}
             <div style={{
               border: '2px dashed var(--border-color)',
@@ -243,8 +243,8 @@ export const ProductionWorksheetModal = ({ order, onClose }) => {
               <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--color-text-primary, #0f172a)', marginBottom: '0.75rem', textTransform: 'uppercase' }}>
                 📷 Artwork Production Preview
               </div>
-              <img 
-                src={order.artworkUrl} 
+              <img
+                src={order.artworkUrl}
                 alt={order.title}
                 style={{
                   maxHeight: '220px',

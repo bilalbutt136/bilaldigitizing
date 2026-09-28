@@ -123,14 +123,14 @@ export async function signUpWithSupabaseAuth(name, email, password, company) {
 
     // Detect duplicate email
     if (createdUser && Array.isArray(createdUser.identities) && createdUser.identities.length === 0) {
-      return { 
-        success: false, 
-        error: 'An account with this email address already exists. Please sign in instead.' 
+      return {
+        success: false,
+        error: 'An account with this email address already exists. Please sign in instead.'
       };
     }
 
-    return { 
-      success: true, 
+    return {
+      success: true,
       user: createdUser,
       session: authData?.session
     };
@@ -228,7 +228,7 @@ export async function fetchOrdersFromSupabase(customEmail = null, customOrderIds
     const qs = params.toString();
     if (qs) url += `&${qs}`;
 
-    const res = await fetch(url, { 
+    const res = await fetch(url, {
       headers: {
         ...headers,
         'Cache-Control': 'no-cache, no-store, must-revalidate',
@@ -239,12 +239,12 @@ export async function fetchOrdersFromSupabase(customEmail = null, customOrderIds
     });
     const data = await res.json();
     const orders = data.orders || [];
-    
+
     // Map snake_case database columns back to camelCase frontend properties
     return orders.map(order => mapDatabaseOrderToClientOrder(order)).filter(Boolean);
-  } catch (err) { 
+  } catch (err) {
     console.warn('fetchOrdersFromSupabase error notice:', err?.message);
-    return []; 
+    return [];
   }
 }
 
@@ -255,10 +255,10 @@ export function mapDatabaseOrderToClientOrder(order) {
         if (order.notes) {
           notesData = typeof order.notes === 'string' ? JSON.parse(order.notes) : order.notes;
         }
-      } catch (e) {
+      } catch {
         notesData.notes = order.notes;
       }
-      
+
       const allFiles = order.order_files || [];
       const clientFiles = allFiles.filter(f => f.file_type === 'client_artwork').map(f => ({
         id: f.id,
@@ -269,7 +269,7 @@ export function mapDatabaseOrderToClientOrder(order) {
         public_id: f.file_path,
         uploadedAt: f.created_at
       }));
-      
+
       const machineFiles = allFiles.filter(f => f.file_type === 'machine_file').map(f => ({
         id: f.id,
         name: f.file_name,
@@ -320,13 +320,13 @@ export function mapDatabaseOrderToClientOrder(order) {
         }
       }
 
-      const resolvedOutputFileUrl = 
-        order.output_file_url || 
-        order.outputFileUrl || 
-        combinedMachineFiles[0]?.url || 
-        workerFiles[0]?.url || 
-        order.worker_file_url || 
-        notesData.outputFileUrl || 
+      const resolvedOutputFileUrl =
+        order.output_file_url ||
+        order.outputFileUrl ||
+        combinedMachineFiles[0]?.url ||
+        workerFiles[0]?.url ||
+        order.worker_file_url ||
+        notesData.outputFileUrl ||
         null;
 
       const rawOrderMessages = order.order_messages || [];
@@ -342,21 +342,21 @@ export function mapDatabaseOrderToClientOrder(order) {
       }));
 
       // Extract primary artwork URL with comprehensive fallback chain
-      const primaryArtworkUrl = 
-        (order.artwork_url && typeof order.artwork_url === 'string' && order.artwork_url.trim()) || 
-        (order.image_url && typeof order.image_url === 'string' && order.image_url.trim()) || 
-        (order.logo && typeof order.logo === 'string' && order.logo.trim()) || 
-        clientFiles[0]?.url || 
-        notesData.placementItems?.[0]?.files?.[0]?.url || 
-        notesData.patchItems?.[0]?.files?.[0]?.url || 
+      const primaryArtworkUrl =
+        (order.artwork_url && typeof order.artwork_url === 'string' && order.artwork_url.trim()) ||
+        (order.image_url && typeof order.image_url === 'string' && order.image_url.trim()) ||
+        (order.logo && typeof order.logo === 'string' && order.logo.trim()) ||
+        clientFiles[0]?.url ||
+        notesData.placementItems?.[0]?.files?.[0]?.url ||
+        notesData.patchItems?.[0]?.files?.[0]?.url ||
         null;
 
       const pStatusLower = String(order.payment_status || order.paymentStatus || '').toLowerCase().trim();
       const oStatusLower = String(order.status || '').toLowerCase().trim();
-      const isPaidComputed = pStatusLower === 'paid' || 
-                             pStatusLower === 'completed' || 
-                             pStatusLower === 'settled' || 
-                             pStatusLower === 'verified' || 
+      const isPaidComputed = pStatusLower === 'paid' ||
+                             pStatusLower === 'completed' ||
+                             pStatusLower === 'settled' ||
+                             pStatusLower === 'verified' ||
                              pStatusLower === 'wallet' ||
                              Boolean(order.paid_at) ||
                              ['in_progress', 'digitizing', 'assigned', 'qc', 'delivered', 'completed'].includes(oStatusLower);
@@ -1004,7 +1004,7 @@ export async function fetchCatalogFromSupabase() {
       }
     });
     const data = await res.json();
-    
+
     // Parse site_config array into a map with robust JSON parsing
     const siteConfig = data.site_config || [];
     const configMap = {};
@@ -1013,7 +1013,7 @@ export async function fetchCatalogFromSupabase() {
         if (typeof item.value === 'string') {
           try {
             configMap[item.key] = JSON.parse(item.value);
-          } catch (e) {
+          } catch {
             configMap[item.key] = item.value;
           }
         } else {
@@ -1024,16 +1024,16 @@ export async function fetchCatalogFromSupabase() {
 
     // Extract site_settings composite or direct config rows
     const rawSettings = typeof configMap['site_settings'] === 'object' ? configMap['site_settings'] : {};
-    const parsedAnnouncement = typeof configMap['announcement'] === 'object' 
-      ? configMap['announcement'] 
+    const parsedAnnouncement = typeof configMap['announcement'] === 'object'
+      ? configMap['announcement']
       : (typeof rawSettings?.announcement === 'object' ? rawSettings.announcement : null);
 
-    const parsedPromotionalBanner = typeof configMap['promotionalBanner'] === 'object' 
-      ? configMap['promotionalBanner'] 
+    const _parsedPromotionalBanner = typeof configMap['promotionalBanner'] === 'object'
+      ? configMap['promotionalBanner']
       : (typeof rawSettings?.promotionalBanner === 'object' ? rawSettings.promotionalBanner : null);
 
-    const parsedPromoCodes = Array.isArray(configMap['promoCodes']) 
-      ? configMap['promoCodes'] 
+    const parsedPromoCodes = Array.isArray(configMap['promoCodes'])
+      ? configMap['promoCodes']
       : (Array.isArray(rawSettings?.promoCodes) ? rawSettings.promoCodes : null);
 
     const parsedPromotions = Array.isArray(configMap['promotions'])
@@ -1054,7 +1054,7 @@ export async function fetchCatalogFromSupabase() {
       site_config: siteConfig,
       faqs: data.faqs || [],
       testimonials: data.testimonials || [],
-      
+
       // CamelCase aliases and config parsings required by StateContext.jsx
       servicesList: data.services || [],
       dynamicPricingTiers: data.pricing_tiers || [],
@@ -1111,7 +1111,7 @@ export async function fetchCatalogFromSupabase() {
           promoCode: currentActivePromo.promoCode || `SAVE${currentActivePromo.discountPercent || maxPromoDiscount}`,
           theme: (parsedAnnouncement?.theme === 'emerald' ? 'orange' : parsedAnnouncement?.theme) || 'orange',
           bgColor: (parsedAnnouncement?.bgColor && !parsedAnnouncement.bgColor.includes('065f46'))
-            ? parsedAnnouncement.bgColor 
+            ? parsedAnnouncement.bgColor
             : 'linear-gradient(90deg, #ea580c 0%, #f97316 50%, #ea580c 100%)',
           textColor: '#ffffff',
           showCodeBadge: true,
@@ -1122,7 +1122,7 @@ export async function fetchCatalogFromSupabase() {
           ...parsedAnnouncement,
           theme: (parsedAnnouncement.theme === 'emerald' ? 'orange' : parsedAnnouncement.theme) || 'orange',
           bgColor: (parsedAnnouncement.bgColor && !parsedAnnouncement.bgColor.includes('065f46'))
-            ? parsedAnnouncement.bgColor 
+            ? parsedAnnouncement.bgColor
             : 'linear-gradient(90deg, #ea580c 0%, #f97316 50%, #ea580c 100%)'
         } : {
           enabled: false,
@@ -1166,7 +1166,7 @@ export async function fetchCatalogFromSupabase() {
         order_wizard_formats: configMap['order_wizard_formats'] || []
       }
     };
-  } catch (err) {
+  } catch {
     return null;
   }
 }
@@ -1393,7 +1393,7 @@ export function broadcastLiveOrder(order, eventType = 'INSERT') {
   } catch {}
 
   orderListeners.forEach(listener => {
-    try { listener({ eventType, new: order, record: order }); } catch (err) {}
+    try { listener({ eventType, new: order, record: order }); } catch {}
   });
 }
 
@@ -1554,7 +1554,7 @@ export function getSharedChatChannel() {
     globalChatChannel.on('broadcast', { event: 'new_notification' }, (event) => {
       if (event.payload) {
         notificationListeners.forEach(listener => {
-          try { listener({ eventType: 'INSERT', new: event.payload, record: event.payload }); } catch (err) {}
+          try { listener({ eventType: 'INSERT', new: event.payload, record: event.payload }); } catch {}
         });
       }
     });
@@ -1565,7 +1565,7 @@ export function getSharedChatChannel() {
       { event: '*', schema: 'public', table: 'notifications' },
       (payload) => {
         notificationListeners.forEach(listener => {
-          try { listener(payload); } catch (err) {}
+          try { listener(payload); } catch {}
         });
       }
     );
@@ -1575,7 +1575,7 @@ export function getSharedChatChannel() {
       { event: '*', schema: 'public', table: 'orders' },
       (payload) => {
         orderListeners.forEach(listener => {
-          try { listener(payload); } catch (err) {}
+          try { listener(payload); } catch {}
         });
       }
     );
@@ -1603,7 +1603,7 @@ export function getSharedChatChannel() {
         window.dispatchEvent(new CustomEvent('bdigi_order_change', { detail: { order: orderData, eventType: event.payload.eventType || 'UPDATE' } }));
         if (orderData) {
           orderListeners.forEach(listener => {
-            try { listener({ eventType: event.payload.eventType || 'UPDATE', new: orderData, record: orderData }); } catch (err) {}
+            try { listener({ eventType: event.payload.eventType || 'UPDATE', new: orderData, record: orderData }); } catch {}
           });
         }
       }
@@ -1615,7 +1615,7 @@ export function getSharedChatChannel() {
         window.dispatchEvent(new CustomEvent('bdigi_order_change', { detail: { order: orderData, eventType: event.payload.eventType || 'UPDATE' } }));
         if (orderData) {
           orderListeners.forEach(listener => {
-            try { listener({ eventType: event.payload.eventType || 'UPDATE', new: orderData, record: orderData }); } catch (err) {}
+            try { listener({ eventType: event.payload.eventType || 'UPDATE', new: orderData, record: orderData }); } catch {}
           });
         }
       }
@@ -1694,7 +1694,7 @@ export function broadcastLiveNotification(notificationPayload) {
   if (!notificationPayload) return;
 
   notificationListeners.forEach(listener => {
-    try { listener({ eventType: 'INSERT', new: notificationPayload, record: notificationPayload }); } catch (err) {}
+    try { listener({ eventType: 'INSERT', new: notificationPayload, record: notificationPayload }); } catch {}
   });
 
   try {
@@ -1715,7 +1715,7 @@ export function broadcastLiveOrderUpdate(orderPayload, eventType = 'UPDATE') {
   if (!orderPayload) return;
   const orderObj = orderPayload.order || orderPayload;
   orderListeners.forEach(listener => {
-    try { listener({ eventType, new: orderObj, record: orderObj }); } catch (err) {}
+    try { listener({ eventType, new: orderObj, record: orderObj }); } catch {}
   });
   if (typeof window !== 'undefined') {
     window.dispatchEvent(new CustomEvent('bdigi_order_change', { detail: { order: orderObj, eventType } }));
@@ -1833,7 +1833,7 @@ export function subscribeToNotifications({ onNewNotification, onNotificationUpda
       }
     } else {
       const recipientEmail = (notif.recipient_email || notif.client_email || notif.clientEmail || '').toLowerCase().trim();
-      
+
       // If notification is explicitly for admin or worker, do not show to client
       if (notif.recipient_role === 'admin' || notif.recipient_role === 'worker') return;
 
@@ -1883,7 +1883,7 @@ export async function createNotificationInSupabase(notif) {
       created_at: notif.created_at || new Date().toISOString(),
       updated_at: new Date().toISOString()
     };
-    const { data, error } = await supabase.from('notifications').insert(item).select().single();
+    const { data, error: _error } = await supabase.from('notifications').insert(item).select().single();
     const result = data || item;
     broadcastLiveNotification(result);
     return result;
@@ -1964,12 +1964,12 @@ export async function fetchTrackingEventsFromSupabase() {
       .select('*')
       .order('event_time', { ascending: false })
       .limit(150);
-      
+
     if (error) {
       console.warn('Supabase fetch tracking events error:', error.message);
       return [];
     }
-    
+
     return (data || []).map(row => {
       let telemetry = null;
       if (row.metadata && typeof row.metadata === 'object') {
@@ -2033,7 +2033,7 @@ export async function uploadFileToCloudinaryFull(fileObj, bucketName = 'client-u
         formData.append('signature', sigData.signature);
 
         const cloudinaryUrl = `https://api.cloudinary.com/v1_1/${sigData.cloud_name}/auto/upload`;
-        
+
         const data = await new Promise((resolve, reject) => {
           const xhr = new XMLHttpRequest();
           xhr.open('POST', cloudinaryUrl, true);
@@ -2042,8 +2042,8 @@ export async function uploadFileToCloudinaryFull(fileObj, bucketName = 'client-u
               const percent = Math.round((event.loaded / event.total) * 100);
               onProgress(percent);
               if (typeof window !== 'undefined') {
-                window.dispatchEvent(new CustomEvent('upload:progress', { 
-                  detail: { progress: percent, fileName: fileObj.name } 
+                window.dispatchEvent(new CustomEvent('upload:progress', {
+                  detail: { progress: percent, fileName: fileObj.name }
                 }));
               }
             }

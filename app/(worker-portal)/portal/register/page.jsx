@@ -2,18 +2,18 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { 
-  Scissors, 
-  User, 
-  Mail, 
-  Lock, 
-  Phone, 
-  Briefcase, 
-  Cpu, 
-  UploadCloud, 
-  CheckCircle2, 
-  AlertCircle, 
-  ArrowRight, 
+import {
+  Scissors as _Scissors,
+  User,
+  Mail,
+  Lock,
+  Phone,
+  Briefcase,
+  Cpu,
+  UploadCloud,
+  CheckCircle2,
+  AlertCircle,
+  ArrowRight,
   Clock,
   Sparkles,
   ShieldCheck
@@ -39,9 +39,9 @@ export default function PortalRegisterPage() {
   const [experienceYears, setExperienceYears] = useState('3');
   const [primarySoftware, setPrimarySoftware] = useState(SOFTWARE_OPTIONS[0]);
   const [bio, setBio] = useState('');
-  
+
   // File upload state
-  const [uploadedFile, setUploadedFile] = useState(null);
+  const [_uploadedFile, setUploadedFile] = useState(null);
   const [uploadedFileUrl, setUploadedFileUrl] = useState('');
   const [uploadedFileName, setUploadedFileName] = useState('');
   const [isUploadingFile, setIsUploadingFile] = useState(false);
@@ -478,7 +478,7 @@ export default function PortalRegisterPage() {
             <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: '#cbd5e1', marginBottom: '0.4rem' }}>
               Portfolio Samples or CV (PDF, ZIP, DST, PES, PNG)
             </label>
-            
+
             <div style={{
               border: uploadedFileUrl ? '1.5px solid #22c55e' : '1.5px dashed #334155',
               borderRadius: '12px',

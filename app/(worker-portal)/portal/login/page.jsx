@@ -4,26 +4,26 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { supabaseClient } from '../../../../src/lib/supabaseClient';
-import { 
-  Scissors, 
-  Lock, 
-  Mail, 
-  ArrowRight, 
-  AlertCircle, 
-  Clock, 
-  UserPlus, 
+import {
+  Scissors as _Scissors,
+  Lock,
+  Mail,
+  ArrowRight,
+  AlertCircle,
+  Clock,
+  UserPlus,
   ShieldAlert,
   XCircle
 } from 'lucide-react';
 
 export default function PortalLoginPage() {
-  const router = useRouter();
+  const _router = useRouter();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
-  
+
   // Status modal state: 'pending' | 'suspended' | 'rejected'
   const [workerStatusState, setWorkerStatusState] = useState(null);
   const [applicantName, setApplicantName] = useState('');

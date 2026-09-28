@@ -43,10 +43,10 @@ export function getOrderFormatsString(order) {
 
 export function getOrderTurnaroundTier(order) {
   const isRush = Boolean(
-    order?.isRush || 
-    order?.is_rush || 
-    order?.turnaround === 'rush' || 
-    order?.turnaround === '2-4 hours' || 
+    order?.isRush ||
+    order?.is_rush ||
+    order?.turnaround === 'rush' ||
+    order?.turnaround === '2-4 hours' ||
     order?.turnaroundHours === 4 ||
     String(order?.notes || '').toLowerCase().includes('rush') ||
     String(order?.title || '').toLowerCase().includes('rush')
@@ -69,11 +69,11 @@ export function isOrderPaidStatus(order) {
   const pStatus = String(order.payment_status || order.paymentStatus || '').toLowerCase().trim();
   const oStatus = String(order.status || '').toLowerCase().trim();
   const isPaidFlag = order.isPaid === true || order.paid === true || Boolean(order.paid_at);
-  return isPaidFlag || 
-         pStatus === 'paid' || 
-         pStatus === 'completed' || 
-         pStatus === 'settled' || 
-         pStatus === 'verified' || 
+  return isPaidFlag ||
+         pStatus === 'paid' ||
+         pStatus === 'completed' ||
+         pStatus === 'settled' ||
+         pStatus === 'verified' ||
          pStatus === 'wallet' ||
          ['in_progress', 'digitizing', 'assigned', 'qc', 'delivered', 'completed'].includes(oStatus);
 }
@@ -120,8 +120,8 @@ async function loadJsPdf() {
   } catch (err) {
     if (typeof window !== 'undefined') {
       if (window.jspdf && window.jspdf.jsPDF) {
-        return { 
-          jsPDF: window.jspdf.jsPDF, 
+        return {
+          jsPDF: window.jspdf.jsPDF,
           autoTable: (doc, opts) => {
             if (typeof doc.autoTable === 'function') return doc.autoTable(opts);
           }
@@ -142,8 +142,8 @@ async function loadJsPdf() {
         document.head.appendChild(script);
       });
 
-      return { 
-        jsPDF: window.jspdf.jsPDF, 
+      return {
+        jsPDF: window.jspdf.jsPDF,
         autoTable: (doc, opts) => {
           if (typeof doc.autoTable === 'function') return doc.autoTable(opts);
         }
@@ -156,7 +156,7 @@ async function loadJsPdf() {
 export async function generateCustomerTaxInvoicePdf({
   order,
   client = null,
-  studioSettings = {}
+  studioSettings: _studioSettings = {}
 }) {
   const lib = await loadJsPdf();
   if (!lib || !lib.jsPDF) {
@@ -214,8 +214,8 @@ export async function generateCustomerTaxInvoicePdf({
   const rushFee = Math.max(0, parseFloat(order?.rush_fee || order?.rushFee || 0));
   const subtotal = discountAmount > 0 ? (price + discountAmount - rushFee) : price;
   const designTitle = order?.title || order?.design_name || order?.name || '';
-  const customerNotes = typeof order?.notes === 'string' && order.notes.trim() !== '[object Object]' 
-    ? order.notes.trim() 
+  const customerNotes = typeof order?.notes === 'string' && order.notes.trim() !== '[object Object]'
+    ? order.notes.trim()
     : (order?.special_instructions || order?.customer_notes || '');
 
   // 1. Top Accent Stripe
@@ -271,7 +271,7 @@ export async function generateCustomerTaxInvoicePdf({
 
   // 4. Billed To & Order Details (Clean 2-Column Grid)
   const infoY = 52;
-  
+
   // Left: Billed To
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(8);
@@ -397,8 +397,8 @@ export async function generateCustomerTaxInvoicePdf({
   let tableRendered = false;
 
   // Execute autoTable plugin if available
-  const autoTableRunner = (typeof doc.autoTable === 'function') 
-    ? (opts) => doc.autoTable(opts) 
+  const autoTableRunner = (typeof doc.autoTable === 'function')
+    ? (opts) => doc.autoTable(opts)
     : (typeof loadedAutoTable === 'function' ? (opts) => loadedAutoTable(doc, opts) : null);
 
   if (autoTableRunner) {
@@ -444,7 +444,7 @@ export async function generateCustomerTaxInvoicePdf({
     const tableX = 16;
     const tableW = 210 - 32; // 178mm
     const rowH = 16;
-    
+
     // Header background
     doc.setFillColor(248, 250, 252);
     doc.rect(tableX, tableStartY, tableW, 8, 'F');

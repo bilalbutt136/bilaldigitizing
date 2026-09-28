@@ -1,23 +1,30 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { 
-  getVapidKeys, 
-  getPublicVapidKey, 
-  DEFAULT_VAPID_PUBLIC_KEY,
-  DEFAULT_VAPID_PRIVATE_KEY,
-  savePushSubscription
-} from '../lib/pushService.js';
+import { getVapidKeys, savePushSubscription } from '../lib/pushService.js';
 
-test('Push Service - VAPID Keys Initialization', () => {
-  const keys = getVapidKeys();
-  assert.ok(keys.publicKey, 'Public VAPID key must be defined');
-  assert.ok(keys.privateKey, 'Private VAPID key must be defined');
-  assert.equal(typeof keys.publicKey, 'string');
-  assert.equal(typeof keys.privateKey, 'string');
+test('Push Service - VAPID credentials must come from secure server configuration', async () => {
+  const previousPublic = process.env.VAPID_PUBLIC_KEY;
+  const previousNextPublic = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+  const previousPrivate = process.env.VAPID_PRIVATE_KEY;
+  const previousSupabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const previousServiceRole = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-  const pubKey = getPublicVapidKey();
-  assert.equal(pubKey, keys.publicKey);
-  assert.ok(pubKey.length > 50, 'Public VAPID key must be a valid base64url string');
+  delete process.env.VAPID_PUBLIC_KEY;
+  delete process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+  delete process.env.VAPID_PRIVATE_KEY;
+  delete process.env.NEXT_PUBLIC_SUPABASE_URL;
+  delete process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  await assert.rejects(
+    async () => getVapidKeys(),
+    /VAPID credentials are not configured/
+  );
+
+  if (previousPublic !== undefined) process.env.VAPID_PUBLIC_KEY = previousPublic;
+  if (previousNextPublic !== undefined) process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY = previousNextPublic;
+  if (previousPrivate !== undefined) process.env.VAPID_PRIVATE_KEY = previousPrivate;
+  if (previousSupabaseUrl !== undefined) process.env.NEXT_PUBLIC_SUPABASE_URL = previousSupabaseUrl;
+  if (previousServiceRole !== undefined) process.env.SUPABASE_SERVICE_ROLE_KEY = previousServiceRole;
 });
 
 test('Push Service - Validation of Subscription Input', async () => {

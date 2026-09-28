@@ -3,12 +3,12 @@
 import React from 'react';
 import { useNavigate } from '../../utils/navigation';
 import { useAppState } from '../../context/StateContext';
-import { Upload, ArrowRight, Shield, Globe, Zap, CheckCircle2, Sparkles, Lock } from 'lucide-react';
+import { Upload, ArrowRight, Shield, Globe, Zap, CheckCircle2 as _CheckCircle2, Sparkles, Lock } from 'lucide-react';
 
 export const FinalCTA = () => {
   const navigate = useNavigate();
   const { activeHomeServiceTab, openOrderWizard, protectedNavigate, homePageConfig = {} } = useAppState();
-  
+
   const dbSettings = homePageConfig?.settings || {};
 
   const handleCtaClick = () => {
@@ -74,7 +74,7 @@ export const FinalCTA = () => {
         pointerEvents: 'none',
         zIndex: 0,
       }} />
-      
+
       <div className="container" style={{
         position: 'relative',
         zIndex: 1,
@@ -89,7 +89,7 @@ export const FinalCTA = () => {
           <Sparkles size={15} style={{ color: 'var(--orange-500)' }} />
           <span>{ctaBadge}</span>
         </div>
-        
+
         <h2 style={{
           color: 'var(--cta-title)',
           fontFamily: 'var(--font-heading)',
@@ -105,7 +105,7 @@ export const FinalCTA = () => {
             content.title
           )}
         </h2>
-        
+
         <p style={{
           color: 'var(--cta-desc)',
           fontSize: '1.125rem',
@@ -115,7 +115,7 @@ export const FinalCTA = () => {
         }}>
           {content.desc}
         </p>
-        
+
         <div className="hero-cta-buttons-row" style={{
           display: 'flex',
           flexWrap: 'wrap',
@@ -124,7 +124,7 @@ export const FinalCTA = () => {
           marginBottom: '3.5rem',
           width: '100%'
         }}>
-          <button 
+          <button
             type="button"
             className="btn btn-primary-orange btn-lg"
             onClick={handleCtaClick}
@@ -137,8 +137,8 @@ export const FinalCTA = () => {
             <Upload size={18} />
             {content.btnText}
           </button>
-          
-          <button 
+
+          <button
             type="button"
             className="btn btn-outline btn-lg"
             onClick={() => navigate('/pricing')}
@@ -154,7 +154,7 @@ export const FinalCTA = () => {
             <ArrowRight size={18} />
           </button>
         </div>
-        
+
         <div style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 150px), 1fr))',

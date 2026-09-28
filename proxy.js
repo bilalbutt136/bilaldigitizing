@@ -29,7 +29,7 @@ const PUBLIC_AUTH_PATHS = [
   '/auth/callback'
 ];
 
-export async function middleware(request) {
+export async function proxy(request) {
   const { pathname } = request.nextUrl;
 
   // 0. Fast Path: Immediately pass public authentication routes to prevent any redirect chains
@@ -77,7 +77,10 @@ export async function middleware(request) {
     const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
     if (!supabaseUrl || !supabaseAnonKey) {
-      return NextResponse.next();
+      return NextResponse.json(
+        { error: 'Authentication service is unavailable.' },
+        { status: 503, headers: { 'Cache-Control': 'no-store', 'Retry-After': '30' } }
+      );
     }
 
     const supabase = createServerClient(
@@ -146,12 +149,10 @@ export async function middleware(request) {
 
     // Check worker authorization if visiting worker portal
     if (isWorkerRoute && user) {
-      const isWorkerMeta = 
-        user.user_metadata?.role === 'worker' || 
-        user.app_metadata?.role === 'worker' || 
-        user.user_metadata?.role === 'admin' ||
-        user.app_metadata?.role === 'admin' ||
-        (user.user_metadata?.worker_status || '').toLowerCase() === 'active';
+      // Only server-controlled app_metadata can grant privileged route access.
+      const isWorkerMeta =
+        user.app_metadata?.role === 'worker' ||
+        user.app_metadata?.role === 'admin';
 
       if (!isWorkerMeta) {
         const workerPromise = supabase.from('workers').select('id, status').eq('email', user.email).maybeSingle();
@@ -185,9 +186,12 @@ export async function middleware(request) {
 
     return supabaseResponse;
   } catch (err) {
-    // If Supabase times out or throws at the edge, allow request through to client-side auth verification
-    console.warn('Middleware auth verification fallback:', err?.message || err);
-    return supabaseResponse;
+    // Protected routes fail closed when server-side authentication cannot be verified.
+    console.warn('Middleware auth verification failed closed:', err?.message || err);
+    return NextResponse.json(
+      { error: 'Authentication verification is temporarily unavailable.' },
+      { status: 503, headers: { 'Cache-Control': 'no-store', 'Retry-After': '15' } }
+    );
   }
 }
 

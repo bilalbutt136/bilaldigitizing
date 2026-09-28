@@ -3,12 +3,12 @@
 import React, { useEffect } from 'react';
 import { useNavigate } from '../../utils/navigation';
 import { useAppState } from '../../context/StateContext';
-import { 
-  ShoppingBag, 
-  CheckCircle2, 
-  ArrowRight, 
-  ChevronRight, 
-  Layers 
+import {
+  ShoppingBag,
+  CheckCircle2,
+  ArrowRight,
+  ChevronRight as _ChevronRight,
+  Layers
 } from 'lucide-react';
 
 export const CustomApparelPage = () => {
@@ -41,7 +41,7 @@ export const CustomApparelPage = () => {
 
   return (
     <div style={{ background: 'var(--bg-main)', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-      
+
       {/* 1. Hero Header Banner */}
       <div className="theme-hero-section" style={{
         background: 'var(--hero-bg)',
@@ -64,16 +64,16 @@ export const CustomApparelPage = () => {
         }} />
 
         <div className="container">
-          <div style={{ 
-            display: 'flex', 
-            alignItems: 'center', 
-            gap: '0.5rem', 
-            fontSize: '0.85rem', 
-            color: 'var(--text-muted)', 
-            marginBottom: '1.25rem' 
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+            fontSize: '0.85rem',
+            color: 'var(--text-muted)',
+            marginBottom: '1.25rem'
           }}>
-            <button 
-              onClick={() => navigate('/')} 
+            <button
+              onClick={() => navigate('/')}
               style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: 0, fontWeight: 600 }}
             >
               Home
@@ -101,11 +101,11 @@ export const CustomApparelPage = () => {
               <ShoppingBag size={15} /> Commercial Custom Apparel Manufacturing
             </div>
 
-            <h1 style={{ 
-              fontSize: '2.85rem', 
-              fontFamily: 'var(--font-heading)', 
-              fontWeight: 800, 
-              color: 'var(--hero-text-primary)', 
+            <h1 style={{
+              fontSize: '2.85rem',
+              fontFamily: 'var(--font-heading)',
+              fontWeight: 800,
+              color: 'var(--hero-text-primary)',
               marginBottom: '1rem',
               lineHeight: 1.15,
               letterSpacing: '-0.02em'
@@ -143,7 +143,7 @@ export const CustomApparelPage = () => {
       {/* 2. Apparel Products Showcase */}
       <section style={{ padding: '4.5rem 0 5.5rem' }}>
         <div className="container">
-          
+
           <div style={{ textAlign: 'center', maxWidth: '720px', margin: '0 auto 3.5rem' }}>
             <h2 style={{ fontSize: '2.4rem', color: 'var(--navy-900)', fontWeight: 800, marginBottom: '0.75rem' }}>
               Apparel Catalog & Pricing Options
@@ -177,9 +177,9 @@ export const CustomApparelPage = () => {
               >
                 <div>
                   <div style={{ position: 'relative', height: '260px', overflow: 'hidden', background: '#0f172a' }}>
-                    <img 
-                      src={product.image} 
-                      alt={product.title} 
+                    <img
+                      src={product.image}
+                      alt={product.title}
                       style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                     />
                     {product.badge && (

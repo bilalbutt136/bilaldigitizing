@@ -2,16 +2,16 @@
 
 import React, { useState, useEffect } from 'react';
 import {
-  Gift, Plus, Trash2, Calendar, Play, Pause, X, ArrowRight,
-  Sparkles, CheckCircle2, ShieldCheck, Tag, Layers, PenTool,
-  Check, Sliders, RefreshCw, AlertCircle, Percent
+  Gift, Plus, Trash2, Calendar, Play, Pause, X, ArrowRight as _ArrowRight,
+  Sparkles as _Sparkles, CheckCircle2, ShieldCheck, Tag, Layers, PenTool,
+  Check as _Check, Sliders as _Sliders, RefreshCw, AlertCircle as _AlertCircle, Percent
 } from 'lucide-react';
 import { useAppState } from '../../context/StateContext';
 import {
-  normalizeServiceKey,
-  getServiceDisplayName,
-  formatServiceDiscountsSummary,
-  DEFAULT_SERVICE_DISCOUNTS
+  normalizeServiceKey as _normalizeServiceKey,
+  getServiceDisplayName as _getServiceDisplayName,
+  formatServiceDiscountsSummary as _formatServiceDiscountsSummary,
+  DEFAULT_SERVICE_DISCOUNTS as _DEFAULT_SERVICE_DISCOUNTS
 } from '../../utils/promoUtils';
 
 export const PromotionsManager = () => {
@@ -298,7 +298,7 @@ export const PromotionsManager = () => {
   const handleConfirmPromotion = async () => {
     const promoId = `promo_${Date.now()}`;
     const isGranular = promoForm.discountMode === 'granular';
-    
+
     const emb = isGranular ? Number(promoForm.serviceDiscounts.embroidery) || 0 : Number(promoForm.discountPercent) || 10;
     const vec = isGranular ? Number(promoForm.serviceDiscounts.vector) || 0 : Number(promoForm.discountPercent) || 10;
     const pch = isGranular ? Number(promoForm.serviceDiscounts.patch) || 0 : Number(promoForm.discountPercent) || 10;
@@ -323,7 +323,7 @@ export const PromotionsManager = () => {
       status: 'active', // starts active
       maxOrdersLimit: Number(promoForm.maxOrdersLimit) || 50,
       ordersCount: 0,
-      servicesIncluded: isGranular 
+      servicesIncluded: isGranular
         ? `Embroidery: ${emb}% | Vector: ${vec}% | Patches: ${pch}%`
         : `All Studio Services (${maxDiscount}%)`,
       promoCode: cleanCode,
@@ -435,7 +435,7 @@ export const PromotionsManager = () => {
   const handleDeletePromotion = async (promoId) => {
     if (!confirm('Are you sure you want to delete this promotion?')) return;
     const updatedPromotions = promotions.filter(p => p.id !== promoId);
-    
+
     const remainingActive = updatedPromotions.find(p => p.status === 'active');
     const updatedAnnouncement = buildDynamicAnnouncement(remainingActive);
     const updatedBanner = { enabled: false };
@@ -516,7 +516,7 @@ export const PromotionsManager = () => {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', width: '100%', maxWidth: '1200px', margin: '0 auto' }}>
-      
+
       {/* Clean Top Header Card */}
       <div style={{
         background: 'var(--color-surface, #ffffff)',
@@ -927,7 +927,7 @@ export const PromotionsManager = () => {
         gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
         gap: '1.25rem'
       }}>
-        
+
         {/* Card 1: New buyer promotion */}
         <div style={{
           background: 'var(--color-surface, #ffffff)',
@@ -1141,7 +1141,7 @@ export const PromotionsManager = () => {
 
                   return (
                     <tr key={promo.id} style={{ borderBottom: '1px solid var(--color-border)' }}>
-                      
+
                       {/* Name & Code */}
                       <td style={{ padding: '1rem' }}>
                         <div style={{ fontWeight: 800, color: 'var(--color-text-primary, #0f172a)', fontSize: '0.95rem' }}>
@@ -1152,7 +1152,7 @@ export const PromotionsManager = () => {
                             {promo.servicesIncluded || 'All Studio Services'}
                           </span>
                           {promo.promoCode && (
-                            <span 
+                            <span
                               onClick={() => handleCopyCode(promo.promoCode)}
                               title="Click to copy promo code"
                               style={{ fontSize: '0.72rem', background: 'var(--color-primary-light)', color: 'var(--color-primary)', padding: '0.1rem 0.45rem', borderRadius: '6px', fontWeight: 800, cursor: 'pointer', fontFamily: 'monospace' }}
@@ -1268,7 +1268,7 @@ export const PromotionsManager = () => {
                       {/* INSTANT START / PAUSE & DELETE */}
                       <td style={{ padding: '1rem', textAlign: 'right' }}>
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '0.5rem' }}>
-                          
+
                           {/* START / PAUSE BUTTON */}
                           <button
                             type="button"
@@ -1359,11 +1359,11 @@ export const PromotionsManager = () => {
             overflow: 'hidden',
             animation: 'fadeIn 0.15s ease-out'
           }}>
-            
+
             {/* STEP 1: ADD PROMOTION DETAILS (Exact match of reference image 2) */}
             {promoWizardStep === 1 && (
               <form onSubmit={handleReviewPromoDetails}>
-                
+
                 <div style={{
                   padding: '1.5rem 1.5rem 1rem',
                   display: 'flex',
@@ -1389,7 +1389,7 @@ export const PromotionsManager = () => {
                 </div>
 
                 <div style={{ padding: '0 1.5rem 1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem', maxHeight: 'calc(80vh - 120px)', overflowY: 'auto' }}>
-                  
+
                   {/* Field 1: Promotion name */}
                   <div>
                     <label style={{ display: 'block', fontSize: '0.95rem', fontWeight: 800, color: 'var(--color-text-primary, #1e293b)', marginBottom: '0.15rem' }}>
@@ -1707,7 +1707,7 @@ export const PromotionsManager = () => {
             {/* STEP 2: CONFIRM PROMOTION (Exact match of reference image 3) */}
             {promoWizardStep === 2 && (
               <div>
-                
+
                 <div style={{
                   padding: '1.5rem 1.5rem 0.5rem',
                   display: 'flex',
@@ -1738,7 +1738,7 @@ export const PromotionsManager = () => {
                 </div>
 
                 <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.15rem' }}>
-                  
+
                   <div style={{ display: 'grid', gridTemplateColumns: '150px 1fr', gap: '0.5rem' }}>
                     <span style={{ fontSize: '0.92rem', fontWeight: 700, color: 'var(--color-text-primary, #1e293b)' }}>
                       Promotion name

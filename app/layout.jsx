@@ -1,6 +1,6 @@
 import '../src/index.css';
 import './globals.css';
-import { Suspense } from 'react';
+import { Suspense as _Suspense } from 'react';
 import { StateProvider } from '../src/context/StateContext';
 import { ErrorBoundary } from '../src/components/ErrorBoundary';
 import { ClientLayoutShell } from '../src/components/layout/ClientLayoutShell';
@@ -141,13 +141,13 @@ export default function RootLayout({ children }) {
             __html: `
               (function() {
                 try {
-                  var isStandalone = window.matchMedia('(display-mode: standalone)').matches || 
-                                     window.navigator.standalone === true || 
+                  var isStandalone = window.matchMedia('(display-mode: standalone)').matches ||
+                                     window.navigator.standalone === true ||
                                      (document.referrer && document.referrer.indexOf('android-app://') !== -1);
                   var params = new URLSearchParams(window.location.search);
                   var urlApp = params.get('app') === 'true' || params.get('mode') === 'app';
                   var urlWeb = params.get('web') === 'true' || params.get('mode') === 'web';
-                  
+
                   // Only standalone/installed app or explicit app URL opens app mode. Mobile browsers show the responsive website.
                   if (!urlWeb && (isStandalone || urlApp)) {
                     document.documentElement.classList.add('mobile-app-active');
@@ -215,9 +215,9 @@ export default function RootLayout({ children }) {
           }}
         />
       </head>
-      <body 
-        suppressHydrationWarning 
-        className="font-sans antialiased text-slate-900 bg-slate-50 dark:bg-slate-950 dark:text-slate-100" 
+      <body
+        suppressHydrationWarning
+        className="font-sans antialiased text-slate-900 bg-slate-50 dark:bg-slate-950 dark:text-slate-100"
         style={{ fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" }}
       >
         <StateProvider>

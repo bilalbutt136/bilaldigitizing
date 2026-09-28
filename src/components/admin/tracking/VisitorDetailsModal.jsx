@@ -1,25 +1,25 @@
 'use client';
 
 import React, { useState } from 'react';
-import { 
-  X, 
-  User, 
-  Globe, 
-  Monitor, 
-  Smartphone, 
-  Tablet, 
-  MapPin, 
-  Activity, 
-  Code, 
-  Copy, 
-  Check, 
-  ExternalLink,
+import {
+  X,
+  User,
+  Globe as _Globe,
+  Monitor,
+  Smartphone,
+  Tablet,
+  MapPin,
+  Activity,
+  Code,
+  Copy,
+  Check,
+  ExternalLink as _ExternalLink,
   ShieldCheck,
-  Clock,
-  Radio,
-  Tag,
+  Clock as _Clock,
+  Radio as _Radio,
+  Tag as _Tag,
   Share2,
-  Layers
+  Layers as _Layers
 } from 'lucide-react';
 
 export const VisitorDetailsModal = ({ event, onClose }) => {
@@ -58,11 +58,11 @@ export const VisitorDetailsModal = ({ event, onClose }) => {
   };
 
   return (
-    <div 
+    <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-sm animate-fadeIn"
       onClick={onClose}
     >
-      <div 
+      <div
         className="relative w-full max-w-4xl max-h-[90vh] flex flex-col bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden text-slate-800 dark:text-slate-100"
         onClick={(e) => e.stopPropagation()}
       >
@@ -93,8 +93,8 @@ export const VisitorDetailsModal = ({ event, onClose }) => {
               </p>
             </div>
           </div>
-          
-          <button 
+
+          <button
             onClick={onClose}
             className="p-2 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-200/50 dark:hover:bg-slate-800 transition-colors"
           >
@@ -128,7 +128,7 @@ export const VisitorDetailsModal = ({ event, onClose }) => {
 
         {/* Modal Body */}
         <div className="p-6 overflow-y-auto max-h-[calc(90vh-140px)] space-y-6">
-          
+
           {/* TAB 1: OVERVIEW & IDENTITY */}
           {activeTab === 'overview' && (
             <div className="space-y-6">

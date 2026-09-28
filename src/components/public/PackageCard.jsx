@@ -3,7 +3,7 @@
 import React from 'react';
 import { CheckCircle, Zap, Trophy, Sparkles, Clock, ArrowRight, Layers, PenTool, Tag } from 'lucide-react';
 import { useAppState } from '../../context/StateContext';
-import { getServiceDiscountPercent, normalizeServiceKey } from '../../utils/promoUtils';
+import { getServiceDiscountPercent, normalizeServiceKey as _normalizeServiceKey } from '../../utils/promoUtils';
 
 const PALETTES = [
   {
@@ -46,7 +46,7 @@ const PALETTES = [
 const getTierTheme = (idx = 0, serviceType = '') => {
   const pal = PALETTES[idx % PALETTES.length];
   const sType = (serviceType || '').toLowerCase().replace('-', '_');
-  
+
   let defaultIcon = Layers;
   let serviceLabel = 'EMBROIDERY DIGITIZING';
 
@@ -71,7 +71,7 @@ export const PackageCard = ({ cat = {}, idx = 0, onSelect, forceCategory = '' })
   const rawService = cat.service_type || cat.category || forceCategory || '';
   const tierTheme = getTierTheme(idx, rawService);
   const IconComp = cat.icon || (idx === 0 ? Zap : idx === 1 ? Trophy : Sparkles);
-  
+
   const { siteSettings } = useAppState?.() || {};
   const activePromo = Array.isArray(siteSettings?.promotions) ? siteSettings.promotions.find(p => p.status === 'active') : null;
   const promoPercent = getServiceDiscountPercent(rawService, activePromo, siteSettings);
@@ -101,7 +101,7 @@ export const PackageCard = ({ cat = {}, idx = 0, onSelect, forceCategory = '' })
       displayStrikePrice = `$${parsedOrig.toFixed(2)}`;
     }
   }
-  
+
   const unitText = cat.price_unit || cat.unit || (rawService.toLowerCase().includes('patch') ? '/ PIECE' : '/ DESIGN');
   const badgeText = cat.badge_text || cat.badge || cat.discountTag || (isPopular ? 'MOST POPULAR' : (idx === 0 ? 'BASIC' : 'PRO'));
   const descriptionText = cat.subtitle || cat.subTitle || cat.description || '';
@@ -223,18 +223,18 @@ export const PackageCard = ({ cat = {}, idx = 0, onSelect, forceCategory = '' })
 
       {/* Bottom Order CTA */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
-        <button 
+        <button
           type="button"
           onClick={(e) => {
             e.stopPropagation();
             if (onSelect) onSelect(cat);
           }}
-          style={{ 
-            width: '100%', 
-            justifyContent: 'center', 
-            fontWeight: 800, 
-            fontSize: '0.9rem', 
-            padding: '0.75rem 1rem', 
+          style={{
+            width: '100%',
+            justifyContent: 'center',
+            fontWeight: 800,
+            fontSize: '0.9rem',
+            padding: '0.75rem 1rem',
             borderRadius: '10px',
             display: 'flex',
             alignItems: 'center',

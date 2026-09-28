@@ -1,26 +1,26 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { 
-  X, 
-  Download, 
-  Printer, 
-  FileText, 
-  CheckCircle2, 
-  Clock, 
-  Copy, 
-  Check, 
+import {
+  X,
+  Download,
+  Printer,
+  FileText,
+  CheckCircle2,
+  Clock,
+  Copy,
+  Check,
   ShieldCheck,
-  Sparkles
+  Sparkles as _Sparkles
 } from 'lucide-react';
-import { 
-  generateCustomerTaxInvoicePdf, 
-  generateInvoiceNumber, 
-  formatOrderId, 
-  getOrderServiceTitle, 
-  getOrderFormatsString, 
+import {
+  generateCustomerTaxInvoicePdf,
+  generateInvoiceNumber,
+  formatOrderId,
+  getOrderServiceTitle,
+  getOrderFormatsString,
   getOrderTurnaroundTier,
-  getOrderPriceNumeric, 
+  getOrderPriceNumeric,
   isOrderPaidStatus,
   formatFabricSpec,
   formatDimensionsSpec
@@ -94,13 +94,13 @@ export const CustomerInvoiceModal = ({
   const dimensions = formatDimensionsSpec(order?.dimensions || order?.size);
   const placement = order?.placement || order?.placementType || order?.placement_type || '';
   const quantity = Math.max(1, parseInt(order?.quantity || order?.qty || 1, 10) || 1);
-  const unitPrice = quantity > 1 ? parseFloat((price / quantity).toFixed(2)) : price;
+  const _unitPrice = quantity > 1 ? parseFloat((price / quantity).toFixed(2)) : price;
   const discountAmount = Math.max(0, parseFloat(order?.discount_amount || order?.discountAmount || 0));
   const rushFee = Math.max(0, parseFloat(order?.rush_fee || order?.rushFee || 0));
   const subtotal = discountAmount > 0 ? (price + discountAmount - rushFee) : price;
   const designTitle = order?.title || order?.design_name || order?.name || '';
-  const customerNotes = typeof order?.notes === 'string' && order.notes.trim() !== '[object Object]' 
-    ? order.notes.trim() 
+  const customerNotes = typeof order?.notes === 'string' && order.notes.trim() !== '[object Object]'
+    ? order.notes.trim()
     : (order?.special_instructions || order?.customer_notes || '');
 
   const specsParts = [];
@@ -210,8 +210,8 @@ export const CustomerInvoiceModal = ({
   };
 
   return (
-    <div 
-      className="modal-overlay customer-invoice-overlay" 
+    <div
+      className="modal-overlay customer-invoice-overlay"
       onClick={handleSafeClose}
       style={{
         position: 'fixed',
@@ -273,7 +273,7 @@ export const CustomerInvoiceModal = ({
         }
       `}</style>
 
-      <div 
+      <div
         className="modal-content customer-invoice-container"
         onClick={(e) => e.stopPropagation()}
         style={{
@@ -290,7 +290,7 @@ export const CustomerInvoiceModal = ({
         }}
       >
         {/* TOP ACTION BAR (Hidden from print) */}
-        <div 
+        <div
           className="customer-invoice-action-bar no-print"
           style={{
             display: 'flex',
@@ -406,7 +406,7 @@ export const CustomerInvoiceModal = ({
         </div>
 
         {/* INVOICE CONTENT (Clean Executive Sheet) */}
-        <div 
+        <div
           id="customer-invoice-print-content"
           className="printable-tax-invoice-sheet"
           style={{
@@ -469,7 +469,7 @@ export const CustomerInvoiceModal = ({
 
           {/* Billed To & Order Details (Clean 2-Column Text) */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.5rem', marginBottom: '1.5rem' }}>
-            
+
             {/* Left: Billed To */}
             <div>
               <div style={{ fontSize: '0.72rem', fontWeight: 800, color: '#ea580c', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '0.35rem' }}>

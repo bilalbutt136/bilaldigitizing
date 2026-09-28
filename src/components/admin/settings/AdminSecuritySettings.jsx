@@ -2,18 +2,18 @@
 
 import React, { useState, useEffect } from 'react';
 import { useAppState } from '../../../context/StateContext';
-import { 
-  ShieldCheck, 
-  UserPlus, 
-  Trash2, 
-  Lock, 
-  Clock, 
-  AlertTriangle, 
-  Save, 
-  X, 
-  CheckCircle2, 
+import {
+  ShieldCheck,
+  UserPlus,
+  Trash2,
+  Lock as _Lock,
+  Clock as _Clock,
+  AlertTriangle,
+  Save,
+  X,
+  CheckCircle2,
   KeyRound,
-  Users,
+  Users as _Users,
   Power,
   Eye,
   EyeOff,
@@ -59,7 +59,7 @@ export const AdminSecuritySettings = () => {
 
   // Live Admins State from API
   const [liveAdmins, setLiveAdmins] = useState([]);
-  const [loadingAdmins, setLoadingAdmins] = useState(false);
+  const [_loadingAdmins, setLoadingAdmins] = useState(false);
 
   useEffect(() => {
     if (siteSettings?.adminEmail) {
@@ -291,7 +291,7 @@ export const AdminSecuritySettings = () => {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-      
+
       {/* 1. Header Card */}
       <div className="card" style={{ padding: '2rem', background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '20px', boxShadow: 'var(--shadow-sm)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', marginBottom: '0.35rem' }}>
@@ -666,7 +666,7 @@ export const AdminSecuritySettings = () => {
 
       {/* 1. ADD NEW ADMIN MODAL DIALOG */}
       {showAddAdminModal && (
-        <div 
+        <div
           className="modal-overlay"
           onClick={() => setShowAddAdminModal(false)}
           style={{
@@ -681,7 +681,7 @@ export const AdminSecuritySettings = () => {
             padding: '1.25rem'
           }}
         >
-          <div 
+          <div
             className="modal-content"
             style={{
               maxWidth: '460px',
@@ -702,9 +702,9 @@ export const AdminSecuritySettings = () => {
                   Add New Administrator
                 </h3>
               </div>
-              <button 
-                type="button" 
-                onClick={() => setShowAddAdminModal(false)} 
+              <button
+                type="button"
+                onClick={() => setShowAddAdminModal(false)}
                 style={{ background: 'var(--color-subtle)', color: 'var(--color-text-primary)', border: 'none', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
               >
                 <X size={16} />
@@ -716,13 +716,13 @@ export const AdminSecuritySettings = () => {
                 <label style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--color-text-primary)', marginBottom: '0.25rem', display: 'block' }}>
                   Admin Full Name *
                 </label>
-                <input 
-                  type="text" 
-                  className="form-control" 
-                  placeholder="e.g. Bilal Butt" 
-                  value={newAdminName} 
-                  onChange={(e) => setNewAdminName(e.target.value)} 
-                  required 
+                <input
+                  type="text"
+                  className="form-control"
+                  placeholder="e.g. Bilal Butt"
+                  value={newAdminName}
+                  onChange={(e) => setNewAdminName(e.target.value)}
+                  required
                 />
               </div>
 
@@ -730,13 +730,13 @@ export const AdminSecuritySettings = () => {
                 <label style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--color-text-primary)', marginBottom: '0.25rem', display: 'block' }}>
                   Admin Email Address *
                 </label>
-                <input 
-                  type="email" 
-                  className="form-control" 
-                  placeholder="admin@bdigitizing-pro.com" 
-                  value={newAdminEmail} 
-                  onChange={(e) => setNewAdminEmail(e.target.value)} 
-                  required 
+                <input
+                  type="email"
+                  className="form-control"
+                  placeholder="admin@bdigitizing-pro.com"
+                  value={newAdminEmail}
+                  onChange={(e) => setNewAdminEmail(e.target.value)}
+                  required
                 />
               </div>
 
@@ -745,13 +745,13 @@ export const AdminSecuritySettings = () => {
                   Set Admin Password *
                 </label>
                 <div style={{ position: 'relative' }}>
-                  <input 
-                    type={showAddAdminPass ? 'text' : 'password'} 
-                    className="form-control" 
-                    placeholder="Enter password (min 6 characters)" 
-                    value={newAdminPassword} 
-                    onChange={(e) => setNewAdminPassword(e.target.value)} 
-                    required 
+                  <input
+                    type={showAddAdminPass ? 'text' : 'password'}
+                    className="form-control"
+                    placeholder="Enter password (min 6 characters)"
+                    value={newAdminPassword}
+                    onChange={(e) => setNewAdminPassword(e.target.value)}
+                    required
                     minLength={6}
                     style={{ paddingRight: '2.75rem' }}
                   />
@@ -794,7 +794,7 @@ export const AdminSecuritySettings = () => {
 
       {/* 2. RESET ADMIN PASSWORD MODAL DIALOG */}
       {showResetPasswordModal && (
-        <div 
+        <div
           className="modal-overlay"
           onClick={() => setShowResetPasswordModal(false)}
           style={{
@@ -809,7 +809,7 @@ export const AdminSecuritySettings = () => {
             padding: '1.25rem'
           }}
         >
-          <div 
+          <div
             className="modal-content"
             style={{
               maxWidth: '460px',
@@ -830,9 +830,9 @@ export const AdminSecuritySettings = () => {
                   Reset Admin Password
                 </h3>
               </div>
-              <button 
-                type="button" 
-                onClick={() => setShowResetPasswordModal(false)} 
+              <button
+                type="button"
+                onClick={() => setShowResetPasswordModal(false)}
                 style={{ background: 'var(--color-subtle)', color: 'var(--color-text-primary)', border: 'none', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
               >
                 <X size={16} />
@@ -854,13 +854,13 @@ export const AdminSecuritySettings = () => {
                   New Password *
                 </label>
                 <div style={{ position: 'relative' }}>
-                  <input 
-                    type={showResetPassText ? 'text' : 'password'} 
-                    className="form-control" 
-                    placeholder="Enter new password (min 6 characters)" 
-                    value={newResetPassword} 
-                    onChange={(e) => setNewResetPassword(e.target.value)} 
-                    required 
+                  <input
+                    type={showResetPassText ? 'text' : 'password'}
+                    className="form-control"
+                    placeholder="Enter new password (min 6 characters)"
+                    value={newResetPassword}
+                    onChange={(e) => setNewResetPassword(e.target.value)}
+                    required
                     minLength={6}
                     style={{ paddingRight: '2.75rem' }}
                   />
@@ -889,13 +889,13 @@ export const AdminSecuritySettings = () => {
                 <label style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--color-text-primary)', marginBottom: '0.25rem', display: 'block' }}>
                   Confirm New Password *
                 </label>
-                <input 
-                  type={showResetPassText ? 'text' : 'password'} 
-                  className="form-control" 
-                  placeholder="Re-enter new password" 
-                  value={confirmResetPassword} 
-                  onChange={(e) => setConfirmResetPassword(e.target.value)} 
-                  required 
+                <input
+                  type={showResetPassText ? 'text' : 'password'}
+                  className="form-control"
+                  placeholder="Re-enter new password"
+                  value={confirmResetPassword}
+                  onChange={(e) => setConfirmResetPassword(e.target.value)}
+                  required
                   minLength={6}
                 />
               </div>

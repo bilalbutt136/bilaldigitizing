@@ -3,9 +3,9 @@
 import React, { useState, useEffect } from 'react';
 import { useAppState } from '../../context/StateContext';
 import { matchCategory } from '../../utils/categoryUtils';
-import { 
-  CheckCircle, Zap, Trophy, Sparkles, Layers, Search, 
-  Upload, Scissors, ArrowRight, Star, Quote, ChevronRight 
+import {
+  CheckCircle, Zap, Trophy, Sparkles, Layers, Search as _Search,
+  Upload as _Upload, Scissors as _Scissors, ArrowRight, Star as _Star, Quote as _Quote, ChevronRight as _ChevronRight
 } from 'lucide-react';
 import { PackageCard } from './PackageCard';
 import { ServiceProcessTimelineSection } from './ServiceProcessTimelineSection';
@@ -14,7 +14,7 @@ export const EmbroideryDigitizingPage = ({ hideHero = false }) => {
   const { setIsOrderWizardOpen, openOrderWizard, dynamicPricingTiers = [], homePageConfig = {} } = useAppState();
   const dbSettings = homePageConfig?.settings || {};
 
-  const [selectedTier, setSelectedTier] = useState('standard');
+  const [_selectedTier, setSelectedTier] = useState('standard');
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' });
@@ -143,12 +143,12 @@ export const EmbroideryDigitizingPage = ({ hideHero = false }) => {
 
   return (
     <div style={{ background: 'var(--bg-main)', color: 'var(--color-text-primary)', minHeight: '100vh', paddingBottom: '5rem' }}>
-      
+
       {/* Hero Banner */}
       {!hideHero && (
-        <section style={{ 
-          padding: 'clamp(2.5rem, 5vh, 3.5rem) 0', 
-          background: 'var(--hero-bg, linear-gradient(135deg, #0b1329 0%, #0f172a 60%, #1e1b4b 100%))', 
+        <section style={{
+          padding: 'clamp(2.5rem, 5vh, 3.5rem) 0',
+          background: 'var(--hero-bg, linear-gradient(135deg, #0b1329 0%, #0f172a 60%, #1e1b4b 100%))',
           borderBottom: '1px solid var(--border-color)',
           position: 'relative',
           overflow: 'hidden'
@@ -176,7 +176,7 @@ export const EmbroideryDigitizingPage = ({ hideHero = false }) => {
         }} />
 
         <div className="container" style={{ textAlign: 'center', maxWidth: '850px', position: 'relative', zIndex: 1 }}>
-          
+
           <div style={{
             display: 'inline-flex',
             alignItems: 'center',
@@ -227,7 +227,7 @@ export const EmbroideryDigitizingPage = ({ hideHero = false }) => {
           </div>
 
           <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', flexWrap: 'wrap' }}>
-            <button 
+            <button
               className="btn btn-primary-orange btn-lg"
               onClick={handleStartOrder}
               style={{ fontWeight: 800, padding: '0.85rem 2rem', fontSize: '1.05rem' }}
@@ -235,8 +235,8 @@ export const EmbroideryDigitizingPage = ({ hideHero = false }) => {
               {dbSettings.emb_hero_btn_primary || 'Order Digitizing Design'} <ArrowRight size={20} />
             </button>
 
-            <a 
-              href="#pricing-tiers" 
+            <a
+              href="#pricing-tiers"
               className="btn btn-outline btn-lg"
               style={{ fontWeight: 700, padding: '0.85rem 1.75rem', color: 'var(--hero-text-primary, var(--color-text-primary))', borderColor: 'var(--border-color)' }}
             >

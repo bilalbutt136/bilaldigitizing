@@ -3,31 +3,31 @@
 import React, { useState } from 'react';
 import { useAppState } from '../../context/StateContext';
 import { normalizeCategory } from '../../utils/categoryUtils';
-import { 
-  Plus, 
-  Trash2, 
-  Edit3, 
-  Save, 
-  Clock, 
-  Sparkles, 
-  DollarSign,
+import {
+  Plus,
+  Trash2,
+  Edit3,
+  Save as _Save,
+  Clock,
+  Sparkles,
+  DollarSign as _DollarSign,
   Check,
   X
 } from 'lucide-react';
 
 export const ServiceManagementEditor = () => {
-  const { 
-    pricing, 
-    updatePricing, 
-    pricingCards = [], 
-    updatePricingCards, 
-    patchCards = [], 
-    updatePatchCards, 
-    storeProducts = [],
-    updateStoreProducts, 
-    servicesList = [], 
+  const {
+    pricing,
+    updatePricing,
+    pricingCards = [],
+    updatePricingCards,
+    patchCards = [],
+    updatePatchCards,
+    storeProducts: _storeProducts = [],
+    updateStoreProducts: _updateStoreProducts,
+    servicesList = [],
     updateServicesList,
-    showToast 
+    showToast
   } = useAppState();
 
   const [activeCategory, setActiveCategory] = useState('embroidery'); // 'embroidery' | 'vector' | 'patches' | 'store'
@@ -51,7 +51,7 @@ export const ServiceManagementEditor = () => {
   });
 
   // Base Pricing Settings State (Rates per placement/redraw)
-  const [basePricing, setBasePricing] = useState({
+  const [basePricing, _setBasePricing] = useState({
     minOrderFee: pricing?.minOrderFee || 10.00,
     vectorSimpleRate: pricing?.vectorSimpleRate || 15.00,
     vectorComplexRate: pricing?.vectorComplexRate || 25.00,
@@ -60,7 +60,7 @@ export const ServiceManagementEditor = () => {
     patchBaseRate: 2.50
   });
 
-  const handleBasePricingSave = (e) => {
+  const _handleBasePricingSave = (e) => {
     e.preventDefault();
     const next = { ...pricing, ...basePricing };
     if (updatePricing) updatePricing(next);
@@ -336,7 +336,7 @@ export const ServiceManagementEditor = () => {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
-      
+
       {/* Service Management Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
@@ -352,9 +352,9 @@ export const ServiceManagementEditor = () => {
       {/* 2. CATEGORY SELECTOR TABS & ACTION BUTTON */}
       <div className="card" style={{ padding: '1.5rem', background: '#ffffff' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
-          
+
           <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap' }}>
-            <button 
+            <button
               type="button"
               className={`btn btn-sm ${activeCategory === 'embroidery' ? 'btn-primary-orange' : 'btn-outline'}`}
               onClick={() => setActiveCategory('embroidery')}
@@ -363,7 +363,7 @@ export const ServiceManagementEditor = () => {
               🧵 Embroidery Digitizing Tiers ({pricingCards.length})
             </button>
 
-            <button 
+            <button
               type="button"
               className={`btn btn-sm ${activeCategory === 'vector' ? 'btn-primary-orange' : 'btn-outline'}`}
               onClick={() => setActiveCategory('vector')}
@@ -372,7 +372,7 @@ export const ServiceManagementEditor = () => {
               📐 Vector Redraw Services ({servicesList.length})
             </button>
 
-            <button 
+            <button
               type="button"
               className={`btn btn-sm ${activeCategory === 'patches' ? 'btn-primary-orange' : 'btn-outline'}`}
               onClick={() => setActiveCategory('patches')}
@@ -382,7 +382,7 @@ export const ServiceManagementEditor = () => {
             </button>
           </div>
 
-          <button 
+          <button
             type="button"
             className="btn btn-navy btn-sm"
             onClick={handleOpenCreate}
@@ -395,7 +395,7 @@ export const ServiceManagementEditor = () => {
         {/* SERVICE CARDS GRID */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.25rem' }}>
           {currentList.map(item => (
-            <div 
+            <div
               key={item.id}
               style={{
                 border: item.popular ? '2px solid var(--orange-500)' : '1px solid var(--border-color)',
@@ -424,7 +424,7 @@ export const ServiceManagementEditor = () => {
                   </span>
 
                   <div style={{ display: 'flex', gap: '0.35rem' }}>
-                    <button 
+                    <button
                       type="button"
                       onClick={() => handleOpenEdit(item, activeCategory)}
                       style={{ background: '#f1f5f9', border: 'none', color: 'var(--navy-700)', padding: '0.35rem', borderRadius: '6px', cursor: 'pointer' }}
@@ -432,7 +432,7 @@ export const ServiceManagementEditor = () => {
                     >
                       <Edit3 size={15} />
                     </button>
-                    <button 
+                    <button
                       type="button"
                       onClick={() => handleDeleteItem(item.id)}
                       style={{ background: '#fee2e2', border: 'none', color: '#dc2626', padding: '0.35rem', borderRadius: '6px', cursor: 'pointer' }}
@@ -480,8 +480,8 @@ export const ServiceManagementEditor = () => {
                 <span style={{ fontSize: '0.72rem', fontWeight: 700, color: item.status === 'disabled' ? '#dc2626' : '#10b981' }}>
                   ● {item.status === 'disabled' ? 'Disabled' : 'Active Live'}
                 </span>
-                <button 
-                  type="button" 
+                <button
+                  type="button"
                   className="btn btn-outline btn-sm"
                   onClick={() => handleOpenEdit(item, activeCategory)}
                   style={{ fontSize: '0.75rem', fontWeight: 700 }}
@@ -503,8 +503,8 @@ export const ServiceManagementEditor = () => {
                 <Sparkles size={20} style={{ color: 'var(--orange-500)' }} />
                 {editingItem ? `Edit Service: ${editingItem.title}` : `Create New Service Package`}
               </h3>
-              <button 
-                type="button" 
+              <button
+                type="button"
                 onClick={() => { setEditingItem(null); setIsCreateModalOpen(false); }}
                 style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}
               >
@@ -515,7 +515,7 @@ export const ServiceManagementEditor = () => {
             <form onSubmit={handleSaveItem} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               <div>
                 <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, marginBottom: '0.3rem' }}>Service / Package Category *</label>
-                <select 
+                <select
                   className="form-control"
                   value={formData.category}
                   onChange={(e) => setFormData(p => ({ ...p, category: e.target.value }))}
@@ -529,7 +529,7 @@ export const ServiceManagementEditor = () => {
 
               <div>
                 <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, marginBottom: '0.3rem' }}>Service Title *</label>
-                <input 
+                <input
                   type="text"
                   required
                   className="form-control"
@@ -542,7 +542,7 @@ export const ServiceManagementEditor = () => {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.85rem' }}>
                 <div>
                   <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, marginBottom: '0.3rem' }}>Price Rate ($) *</label>
-                  <input 
+                  <input
                     type="text"
                     required
                     className="form-control"
@@ -554,7 +554,7 @@ export const ServiceManagementEditor = () => {
 
                 <div>
                   <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, marginBottom: '0.3rem' }}>Rate Unit</label>
-                  <input 
+                  <input
                     type="text"
                     className="form-control"
                     value={formData.unit}
@@ -567,7 +567,7 @@ export const ServiceManagementEditor = () => {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.85rem' }}>
                 <div>
                   <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, marginBottom: '0.3rem' }}>Badge Tag</label>
-                  <input 
+                  <input
                     type="text"
                     className="form-control"
                     value={formData.badge}
@@ -578,7 +578,7 @@ export const ServiceManagementEditor = () => {
 
                 <div>
                   <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, marginBottom: '0.3rem' }}>Turnaround Time</label>
-                  <input 
+                  <input
                     type="text"
                     className="form-control"
                     value={formData.turnaround}
@@ -590,7 +590,7 @@ export const ServiceManagementEditor = () => {
 
               <div>
                 <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, marginBottom: '0.3rem' }}>Description</label>
-                <textarea 
+                <textarea
                   rows={2}
                   className="form-control"
                   value={formData.description}
@@ -601,7 +601,7 @@ export const ServiceManagementEditor = () => {
 
               <div>
                 <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, marginBottom: '0.3rem' }}>Features Checkmarks (1 per line)</label>
-                <textarea 
+                <textarea
                   rows={3}
                   className="form-control"
                   value={formData.featuresStr}
@@ -612,7 +612,7 @@ export const ServiceManagementEditor = () => {
 
               <div>
                 <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, marginBottom: '0.3rem' }}>Add-on Options & Upgrades (1 per line)</label>
-                <textarea 
+                <textarea
                   rows={3}
                   className="form-control"
                   value={formData.addOnsStr}
@@ -624,7 +624,7 @@ export const ServiceManagementEditor = () => {
               {(activeCategory === 'store' || activeCategory === 'patches') && (
                 <div>
                   <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, marginBottom: '0.3rem' }}>Product / Patch Preview Image URL</label>
-                  <input 
+                  <input
                     type="url"
                     className="form-control"
                     value={formData.image}
@@ -636,7 +636,7 @@ export const ServiceManagementEditor = () => {
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.85rem', alignItems: 'center', marginTop: '0.25rem' }}>
                 <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.825rem', fontWeight: 700, cursor: 'pointer' }}>
-                  <input 
+                  <input
                     type="checkbox"
                     checked={formData.popular}
                     onChange={(e) => setFormData(p => ({ ...p, popular: e.target.checked }))}
@@ -646,7 +646,7 @@ export const ServiceManagementEditor = () => {
 
                 <div>
                   <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, marginBottom: '0.2rem' }}>Service Live Status</label>
-                  <select 
+                  <select
                     className="form-control"
                     value={formData.status}
                     onChange={(e) => setFormData(p => ({ ...p, status: e.target.value }))}
@@ -659,15 +659,15 @@ export const ServiceManagementEditor = () => {
               </div>
 
               <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end', marginTop: '1rem' }}>
-                <button 
-                  type="button" 
+                <button
+                  type="button"
                   className="btn btn-outline"
                   onClick={() => { setEditingItem(null); setIsCreateModalOpen(false); }}
                 >
                   Cancel
                 </button>
-                <button 
-                  type="submit" 
+                <button
+                  type="submit"
                   className="btn btn-primary-orange"
                   style={{ fontWeight: 800 }}
                 >

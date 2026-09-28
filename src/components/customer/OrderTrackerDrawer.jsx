@@ -5,39 +5,39 @@ import { useAppState, formatOrderId, formatDimensions, formatFabric } from '../.
 import { ArtworkLightboxModal } from '../common/ArtworkLightboxModal';
 import { ProductionWorksheetModal } from '../common/ProductionWorksheetModal';
 import { PdfPreviewModal } from '../common/PdfPreviewModal';
-import { triggerFileDownload, downloadFileDirectly, openPdfInNewTab, openFileInNewTab } from '../../utils/fileDownloader';
+import { triggerFileDownload as _triggerFileDownload, downloadFileDirectly, openPdfInNewTab, openFileInNewTab } from '../../utils/fileDownloader';
 import { useModalBackNavigation } from '../../hooks/useModalBackNavigation';
-import { 
-  X, 
-  CheckCircle2, 
-  Clock, 
-  Download, 
-  RotateCcw, 
-  Send, 
-  Sparkles, 
-  FileCheck, 
-  UploadCloud, 
-  Trash2, 
-  Printer, 
-  Package, 
-  PackageCheck, 
-  Zap, 
-  CreditCard, 
-  FileText, 
-  Layers, 
-  ZoomIn, 
-  Check, 
-  ChevronRight,
+import {
+  X,
+  CheckCircle2,
+  Clock,
+  Download,
+  RotateCcw,
+  Send,
+  Sparkles,
+  FileCheck,
+  UploadCloud,
+  Trash2,
+  Printer as _Printer,
+  Package as _Package,
+  PackageCheck,
+  Zap,
+  CreditCard,
+  FileText,
+  Layers,
+  ZoomIn,
+  Check,
+  ChevronRight as _ChevronRight,
   ChevronDown,
   ChevronUp,
-  HelpCircle,
-  FileCode,
-  ShieldCheck,
+  HelpCircle as _HelpCircle,
+  FileCode as _FileCode,
+  ShieldCheck as _ShieldCheck,
   ArrowLeft,
   Palette,
   Scissors,
   UserCheck,
-  AlertCircle,
+  AlertCircle as _AlertCircle,
   AlertTriangle,
   Receipt,
   ExternalLink,
@@ -50,7 +50,7 @@ import { ReviewWorkerUploadModal } from '../admin/ReviewWorkerUploadModal';
 import { CustomerInvoiceModal } from '../common/CustomerInvoiceModal';
 
 // Supported machine formats mapping
-const MACHINE_FORMAT_EXTENSIONS = {
+const _MACHINE_FORMAT_EXTENSIONS = {
   dst: { name: 'Tajima (.DST)', desc: 'Universal Commercial Machine Format', icon: '🧵', type: 'Embroidery' },
   pes: { name: 'Brother / Deco (.PES)', desc: 'Home & Commercial Brother Embroidery', icon: '🧵', type: 'Embroidery' },
   emb: { name: 'Wilcom Source File (.EMB)', desc: 'Full Object Density & Stitch Native Data', icon: '💎', type: 'Source File' },
@@ -65,8 +65,8 @@ const MACHINE_FORMAT_EXTENSIONS = {
 };
 
 export const OrderTrackerDrawer = () => {
-  const { 
-    selectedOrderForDrawer, 
+  const {
+    selectedOrderForDrawer,
     setSelectedOrderForDrawer,
     addRevisionRequest,
     updateOrderStatus,
@@ -77,8 +77,8 @@ export const OrderTrackerDrawer = () => {
     authUser,
     currentView,
     showToast,
-    assignDigitizer,
-    digitizers,
+    assignDigitizer: _assignDigitizer,
+    digitizers: _digitizers,
     setIsCheckoutModalOpen,
     setCheckoutSession,
     mobileMode,
@@ -108,7 +108,7 @@ export const OrderTrackerDrawer = () => {
   const [revisionImage, setRevisionImage] = useState(null);
   const [deliveryMessage, setDeliveryMessage] = useState('');
   const [isDelivering, setIsDelivering] = useState(false);
-  const [showLightbox, setShowLightbox] = useState(false);
+  const [_showLightbox, _setShowLightbox] = useState(false);
   const [lightboxArtwork, setLightboxArtwork] = useState(null);
   const [showWorksheetModal, setShowWorksheetModal] = useState(false);
   const [activePdfPreview, setActivePdfPreview] = useState(null);
@@ -117,7 +117,7 @@ export const OrderTrackerDrawer = () => {
 
   // Admin Multiple File Upload Array State
   const [adminFilesList, setAdminFilesList] = useState([]);
-  const [adminDragOver, setAdminDragOver] = useState(false);
+  const [_adminDragOver, _setAdminDragOver] = useState(false);
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
 
@@ -129,7 +129,7 @@ export const OrderTrackerDrawer = () => {
   // Cancellation Workflow States
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
   const [cancelReason, setCancelReason] = useState('');
-  const [isSubmittingCancel, setIsSubmittingCancel] = useState(false);
+  const [_isSubmittingCancel, setIsSubmittingCancel] = useState(false);
   const [isProcessingAdminCancel, setIsProcessingAdminCancel] = useState(false);
 
   // Section Refs for smooth scrolling on the single page
@@ -160,7 +160,7 @@ export const OrderTrackerDrawer = () => {
     modalId: 'order_tracker_drawer'
   });
 
-  const { handleSafeClose: handleSafeCloseCancelModal } = useModalBackNavigation({
+  const { handleSafeClose: _handleSafeCloseCancelModal } = useModalBackNavigation({
     isOpen: isCancelModalOpen,
     onClose: () => setIsCancelModalOpen(false),
     modalId: 'order_cancel_modal'
@@ -242,7 +242,7 @@ export const OrderTrackerDrawer = () => {
       });
       return () => { isMounted = false; };
     }
-  }, [cleanSelId, ord.status, ord.title, ord._isLoading, isFetchingOrder]);
+  }, [cleanSelId, ord.status, ord.title, ord._isLoading, isFetchingOrder, setSelectedOrderForDrawer]);
 
   const isOrderPaid = (o) => {
     const pStatus = String(o?.payment_status || o?.paymentStatus || '').toLowerCase().trim();
@@ -280,7 +280,7 @@ export const OrderTrackerDrawer = () => {
             refreshOrders().catch(() => {});
           }
         }
-      } catch (err) {
+      } catch {
         // Non-blocking background verification
       }
     };
@@ -311,8 +311,8 @@ export const OrderTrackerDrawer = () => {
   const isActuallyLoading = Boolean(ord._isLoading || (!ord.status && !ord.title && isFetchingOrder));
   if (isActuallyLoading) {
     return (
-      <div 
-        className="order-tracker-drawer-backdrop" 
+      <div
+        className="order-tracker-drawer-backdrop"
         onClick={handleSafeCloseDrawer}
         style={{
           position: 'fixed',
@@ -328,8 +328,8 @@ export const OrderTrackerDrawer = () => {
           alignItems: 'stretch'
         }}
       >
-        <div 
-          className="order-tracker-drawer" 
+        <div
+          className="order-tracker-drawer"
           onClick={e => e.stopPropagation()}
           style={{
             width: '100%',
@@ -366,7 +366,7 @@ export const OrderTrackerDrawer = () => {
   const isDelivered = normalizedStatus === 'delivered' || normalizedStatus === 'completed';
   const isCompleted = normalizedStatus === 'completed';
   const isInRevision = normalizedStatus === 'revision';
-  const isCancellable = !isDelivered && !isCompleted && ord.status !== 'cancelled' && ord.status !== 'cancellation_requested';
+  const _isCancellable = !isDelivered && !isCompleted && ord.status !== 'cancelled' && ord.status !== 'cancellation_requested';
 
 
   const isCurrentlyOnAdminPortal = currentView === 'admin' || (typeof window !== 'undefined' && (window.location.pathname.includes('admin') || window.location.pathname.includes('admin-portal')));
@@ -425,15 +425,15 @@ export const OrderTrackerDrawer = () => {
     }
   }
 
-  const primaryArtworkSrc = 
-    ord.artwork_url || 
-    ord.artworkUrl || 
-    ord.image_url || 
-    ord.logo || 
-    ord.file_url || 
-    uniqueArtworkFiles[0]?.url || 
-    uniqueArtworkFiles[0]?.public_url || 
-    (ord.file_path && ord.file_path.startsWith('http') ? ord.file_path : null) || 
+  const primaryArtworkSrc =
+    ord.artwork_url ||
+    ord.artworkUrl ||
+    ord.image_url ||
+    ord.logo ||
+    ord.file_url ||
+    uniqueArtworkFiles[0]?.url ||
+    uniqueArtworkFiles[0]?.public_url ||
+    (ord.file_path && ord.file_path.startsWith('http') ? ord.file_path : null) ||
     'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=600&q=80';
 
   if (uniqueArtworkFiles.length === 0 && primaryArtworkSrc && !primaryArtworkSrc.includes('images.unsplash.com')) {
@@ -475,7 +475,7 @@ export const OrderTrackerDrawer = () => {
     showToast('Modification request sent to master digitizer desk.', 'success');
   };
 
-  const handleCustomerSubmitCancellation = async (e) => {
+  const _handleCustomerSubmitCancellation = async (e) => {
     if (e && e.preventDefault) e.preventDefault();
     const cleanR = cancelReason.trim();
     if (!cleanR) {
@@ -749,7 +749,7 @@ export const OrderTrackerDrawer = () => {
   const handleOpenFileAsset = (fileObj, fallbackFormatKey) => {
     let target = fileObj;
     const formatKey = (fileObj?.format || fallbackFormatKey || 'dst').toLowerCase();
-    
+
     if (!target || !target.url) {
       target = uniqueMachineFiles.find(f => (f.format || '').toLowerCase() === formatKey) ||
                uniqueMachineFiles.find(f => (f.name || '').toLowerCase().endsWith(`.${formatKey}`)) ||
@@ -778,7 +778,7 @@ export const OrderTrackerDrawer = () => {
   const handleDownloadFileAsset = async (fileObj, fallbackFormatKey) => {
     let target = fileObj;
     const formatKey = (fileObj?.format || fallbackFormatKey || 'dst').toLowerCase();
-    
+
     if (!target || !target.url) {
       target = uniqueMachineFiles.find(f => (f.format || '').toLowerCase() === formatKey) ||
                uniqueMachineFiles.find(f => (f.name || '').toLowerCase().endsWith(`.${formatKey}`)) ||
@@ -812,8 +812,8 @@ export const OrderTrackerDrawer = () => {
   };
 
   const handleDownloadDeliveryFiles = async (filesList) => {
-    const list = Array.isArray(filesList) && filesList.length > 0 
-      ? filesList 
+    const list = Array.isArray(filesList) && filesList.length > 0
+      ? filesList
       : (uniqueMachineFiles.length > 0 ? uniqueMachineFiles : allDownloadFormats.map(fmt => ({ name: null, format: fmt })));
     showToast(`Starting batch download of ${list.length} files...`, 'info');
     for (let i = 0; i < list.length; i++) {
@@ -895,13 +895,13 @@ export const OrderTrackerDrawer = () => {
 
   return (
     <>
-      <div 
+      <div
         className={isMobileLayout ? "mobile-fullscreen-modal" : "modal-overlay"}
         onClick={handleSafeCloseDrawer}
-      style={{ 
-        zIndex: 99990, 
-        background: isMobileLayout ? (isDark ? 'var(--color-background, #090d16)' : '#ffffff') : 'rgba(11, 19, 41, 0.85)', 
-        backdropFilter: 'blur(10px)', 
+      style={{
+        zIndex: 99990,
+        background: isMobileLayout ? (isDark ? 'var(--color-background, #090d16)' : '#ffffff') : 'rgba(11, 19, 41, 0.85)',
+        backdropFilter: 'blur(10px)',
         padding: isMobileLayout ? '0' : 'clamp(0.5rem, 2vw, 1.5rem)',
         position: 'fixed',
         inset: 0,
@@ -912,15 +912,15 @@ export const OrderTrackerDrawer = () => {
         height: '100dvh'
       }}
     >
-      <div 
-        className="modal-content order-tracker-drawer" 
+      <div
+        className="modal-content order-tracker-drawer"
         onClick={(e) => e.stopPropagation()}
-        style={{ 
-          maxWidth: isMobileLayout ? '100vw' : '960px', 
+        style={{
+          maxWidth: isMobileLayout ? '100vw' : '960px',
           width: '100%',
           height: isMobileLayout ? '100dvh' : 'auto',
-          maxHeight: isMobileLayout ? '100dvh' : '94vh', 
-          display: 'flex', 
+          maxHeight: isMobileLayout ? '100dvh' : '94vh',
+          display: 'flex',
           flexDirection: 'column',
           borderRadius: isMobileLayout ? '0px' : '20px',
           border: isMobileLayout ? 'none' : '1px solid rgba(255, 255, 255, 0.12)',
@@ -930,7 +930,7 @@ export const OrderTrackerDrawer = () => {
           margin: 0
         }}
       >
-        
+
         {/* ==================================================================
             1. TOP HEADER (COMPACT & SAFE AREA OPTIMIZED)
            ================================================================== */}
@@ -988,13 +988,13 @@ export const OrderTrackerDrawer = () => {
                 <h3 className="order-drawer-title" style={{ fontSize: isMobileLayout ? '1.05rem' : '1.2rem', fontWeight: 900, color: '#ffffff', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                   {ord.title || `Order ${formatOrderId(ord.id)}`}
                 </h3>
-                <span style={{ 
-                  background: 'rgba(255, 255, 255, 0.14)', 
-                  color: '#f8fafc', 
-                  fontSize: '0.72rem', 
-                  fontWeight: 800, 
-                  padding: '0.12rem 0.45rem', 
-                  borderRadius: '6px' 
+                <span style={{
+                  background: 'rgba(255, 255, 255, 0.14)',
+                  color: '#f8fafc',
+                  fontSize: '0.72rem',
+                  fontWeight: 800,
+                  padding: '0.12rem 0.45rem',
+                  borderRadius: '6px'
                 }}>
                   {formatOrderId(ord.id)}
                 </span>
@@ -1019,13 +1019,13 @@ export const OrderTrackerDrawer = () => {
             </div>
           </div>
 
-          <button 
+          <button
             type="button"
             onClick={handleSafeCloseDrawer}
-            style={{ 
-              background: 'rgba(255, 255, 255, 0.08)', 
-              border: 'none', 
-              color: '#cbd5e1', 
+            style={{
+              background: 'rgba(255, 255, 255, 0.08)',
+              border: 'none',
+              color: '#cbd5e1',
               borderRadius: '10px',
               width: '34px',
               height: '34px',
@@ -1082,9 +1082,9 @@ export const OrderTrackerDrawer = () => {
             type="button"
             onClick={() => scrollToSection(deliveryRef, 'delivery')}
             className={`btn btn-sm ${activeSection === 'delivery' ? 'btn-primary-orange' : 'btn-outline'}`}
-            style={{ 
-              fontWeight: 800, 
-              fontSize: '0.8rem', 
+            style={{
+              fontWeight: 800,
+              fontSize: '0.8rem',
               gap: '0.35rem',
               borderColor: (isCompleted || isDelivered) ? '#10b981' : undefined,
               color: (isCompleted || isDelivered) && activeSection !== 'delivery' ? '#047857' : undefined,
@@ -1122,11 +1122,11 @@ export const OrderTrackerDrawer = () => {
             type="button"
             onClick={() => setShowInvoiceModal(true)}
             className="btn btn-sm btn-outline"
-            style={{ 
-              fontWeight: 800, 
-              fontSize: '0.8rem', 
-              gap: '0.35rem', 
-              marginLeft: 'auto', 
+            style={{
+              fontWeight: 800,
+              fontSize: '0.8rem',
+              gap: '0.35rem',
+              marginLeft: 'auto',
               whiteSpace: 'nowrap',
               background: 'var(--color-surface, #ffffff)',
               borderColor: 'var(--border-color, #e2e8f0)'
@@ -1450,7 +1450,7 @@ export const OrderTrackerDrawer = () => {
           {/* ================================================================
               SECTION A: DELIVERED FILES & DELIVERY ACTIONS (TOP PRIORITY)
              ================================================================ */}
-          <div 
+          <div
             ref={deliveryRef}
             style={{
               background: 'var(--bg-card)',
@@ -1602,8 +1602,8 @@ export const OrderTrackerDrawer = () => {
                 </div>
 
                 <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                  <button 
-                    type="submit" 
+                  <button
+                    type="submit"
                     className="btn btn-primary-orange"
                     disabled={isDelivering || (adminFilesList.length === 0 && (!ord.uploadedMachineFiles || ord.uploadedMachineFiles.length === 0))}
                     style={{ fontWeight: 800, gap: '0.4rem' }}
@@ -1699,7 +1699,7 @@ export const OrderTrackerDrawer = () => {
 
                 {/* Selected Delivery Card */}
                 {activeDelivery ? (
-                  <div 
+                  <div
                     key={activeDelivery.id || selectedDeliveryIndex}
                     style={{
                       background: selectedDeliveryIndex === 0 ? '#f0fdf4' : '#f8fafc',
@@ -1951,7 +1951,7 @@ export const OrderTrackerDrawer = () => {
           {/* ================================================================
               SECTION B: ORDER REQUIREMENTS & SOURCE ARTWORK (COLLAPSIBLE ACCORDION)
              ================================================================ */}
-          <div 
+          <div
             ref={requirementsRef}
             style={{
               background: 'var(--bg-card)',
@@ -1962,16 +1962,16 @@ export const OrderTrackerDrawer = () => {
             }}
           >
             {/* Accordion Toggle Header Bar */}
-            <div 
+            <div
               onClick={() => setIsRequirementsOpen(prev => !prev)}
-              style={{ 
-                display: 'flex', 
-                justifyContent: 'space-between', 
-                alignItems: 'center', 
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
                 cursor: 'pointer',
                 userSelect: 'none',
                 gap: '0.75rem',
-                borderBottom: isRequirementsOpen ? '1px solid var(--border-color)' : 'none', 
+                borderBottom: isRequirementsOpen ? '1px solid var(--border-color)' : 'none',
                 paddingBottom: isRequirementsOpen ? '0.75rem' : '0'
               }}
             >
@@ -1999,8 +1999,8 @@ export const OrderTrackerDrawer = () => {
                     )}
                   </div>
                   <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)', marginTop: '0.1rem' }}>
-                    {isRequirementsOpen 
-                      ? 'Customer instructions, dimensions, target fabric, and source logo files' 
+                    {isRequirementsOpen
+                      ? 'Customer instructions, dimensions, target fabric, and source logo files'
                       : 'Click to expand customer instructions, dimensions, and artwork'}
                   </div>
                 </div>
@@ -2045,23 +2045,23 @@ export const OrderTrackerDrawer = () => {
 
             <div style={{ display: 'flex', gap: isMobileLayout ? '1rem' : '1.5rem', flexDirection: isMobileLayout ? 'column' : 'row', alignItems: 'stretch' }}>
               {/* Artwork Box */}
-              <div 
+              <div
                 onClick={() => setLightboxArtwork({ url: primaryArtworkSrc, name: ord.title })}
-                style={{ 
-                  width: isMobileLayout ? '100%' : '180px', 
-                  flexShrink: 0, 
-                  cursor: 'pointer', 
-                  background: 'var(--bg-surface)', 
-                  border: '1.5px solid var(--border-color)', 
-                  borderRadius: '12px', 
+                style={{
+                  width: isMobileLayout ? '100%' : '180px',
+                  flexShrink: 0,
+                  cursor: 'pointer',
+                  background: 'var(--bg-surface)',
+                  border: '1.5px solid var(--border-color)',
+                  borderRadius: '12px',
                   padding: '0.65rem',
                   textAlign: 'center',
                   boxSizing: 'border-box'
                 }}
               >
                 <div style={{ height: isMobileLayout ? '180px' : '150px', background: 'var(--bg-card)', borderRadius: '8px', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid var(--border-color)' }}>
-                  <img 
-                    src={primaryArtworkSrc} 
+                  <img
+                    src={primaryArtworkSrc}
                     alt="Design"
                     onError={(e) => {
                       e.currentTarget.onerror = null;
@@ -2187,7 +2187,7 @@ export const OrderTrackerDrawer = () => {
               SECTION B.2: ADMIN WORKER ASSIGNMENT & QA REVIEW DESK
              ================================================================ */}
           {isAdmin && (
-            <div 
+            <div
               ref={workerDeskRef}
               style={{
                 background: 'var(--bg-card)',
@@ -2325,7 +2325,7 @@ export const OrderTrackerDrawer = () => {
               SECTION C: MODIFICATION / REVISIONS REQUEST (CUSTOMER ONLY, READ-ONLY LOGS FOR ADMIN)
              ================================================================ */}
           {(!isAdmin ? (normalizedStatus === 'delivered' || isInRevision || (isCompleted && Array.isArray(ord.revisions) && ord.revisions.length > 0)) : (Array.isArray(ord.revisions) && ord.revisions.length > 0 || isInRevision)) && (
-            <div 
+            <div
               ref={modificationRef}
               style={{
                 background: 'var(--bg-card)',
@@ -2364,7 +2364,7 @@ export const OrderTrackerDrawer = () => {
                       {isAdmin ? 'Order In Revision Status' : 'Modification Currently Under Production'}
                     </div>
                     <div style={{ fontSize: '0.78rem', color: '#be123c', marginTop: '0.2rem', lineHeight: 1.4 }}>
-                      {isAdmin 
+                      {isAdmin
                         ? 'Customer has requested changes on this order. Deliver updated stitch files to fulfill revision.'
                         : 'Our master digitizer team is working on your requested changes. You will receive an instant notification as soon as updated stitch files are uploaded.'}
                     </div>
@@ -2393,12 +2393,12 @@ export const OrderTrackerDrawer = () => {
                   <label style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--text-main)' }}>
                     Describe Required Changes:
                   </label>
-                  <textarea 
-                    className="form-control" 
-                    rows="2" 
-                    placeholder="Type instructions..." 
-                    value={revisionNote} 
-                    onChange={e => setRevisionNote(e.target.value)} 
+                  <textarea
+                    className="form-control"
+                    rows="2"
+                    placeholder="Type instructions..."
+                    value={revisionNote}
+                    onChange={e => setRevisionNote(e.target.value)}
                     style={{ fontSize: '0.85rem' }}
                   />
 
@@ -2408,9 +2408,9 @@ export const OrderTrackerDrawer = () => {
                       <input type="file" style={{ display: 'none' }} accept="*/*" onChange={(e) => { if(e.target.files && e.target.files[0]) setRevisionImage(e.target.files[0]); }} />
                     </label>
 
-                    <button 
-                      type="submit" 
-                      className="btn btn-primary-orange btn-sm" 
+                    <button
+                      type="submit"
+                      className="btn btn-primary-orange btn-sm"
                       disabled={!revisionNote.trim()}
                       style={{ fontWeight: 800 }}
                     >
@@ -2578,7 +2578,7 @@ export const OrderTrackerDrawer = () => {
             artworkUrl: lightboxArtwork.url || lightboxArtwork.public_url || lightboxArtwork.previewUrl || ord.artworkUrl,
             image_url: lightboxArtwork.url || lightboxArtwork.public_url || lightboxArtwork.previewUrl || ord.artworkUrl,
             logo: lightboxArtwork.url || lightboxArtwork.public_url || lightboxArtwork.previewUrl || ord.artworkUrl
-          } : ord} 
+          } : ord}
           onClose={() => setLightboxArtwork(null)}
         />
       )}
@@ -2642,7 +2642,7 @@ export const OrderTrackerDrawer = () => {
         />
       )}
 
-    
+
     </>
   );
 };

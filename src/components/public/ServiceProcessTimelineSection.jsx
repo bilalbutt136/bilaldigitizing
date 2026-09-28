@@ -2,14 +2,14 @@
 
 import React, { useState, useEffect } from 'react';
 import { useAppState } from '../../context/StateContext';
-import { 
-  FileCheck, 
-  Clock, 
-  Sparkles, 
-  Layers, 
-  PenTool, 
-  Truck, 
-  Zap, 
+import {
+  FileCheck,
+  Clock,
+  Sparkles,
+  Layers,
+  PenTool,
+  Truck as _Truck,
+  Zap,
   ArrowRight,
   ShieldCheck
 } from 'lucide-react';
@@ -204,8 +204,8 @@ export const ServiceProcessTimelineSection = ({
 }) => {
   const { openOrderWizard, setIsOrderWizardOpen } = useAppState();
 
-  const normalizedService = (serviceType || 'embroidery').toLowerCase().includes('vec') 
-    ? 'vector' 
+  const normalizedService = (serviceType || 'embroidery').toLowerCase().includes('vec')
+    ? 'vector'
     : ((serviceType || '').toLowerCase().includes('patch') ? 'patches' : 'embroidery');
 
   const defaultData = DEFAULT_SERVICE_DATA[normalizedService] || DEFAULT_SERVICE_DATA.embroidery;
@@ -288,7 +288,7 @@ export const ServiceProcessTimelineSection = ({
   const displayTimelineTitle = overrideTimelineTitle || customTitles.timelineTitle || defaultData.timelineTitle;
 
   return (
-    <section 
+    <section
       className="service-process-timeline-section"
       style={{
         padding: '4.5rem 0 3.5rem',
@@ -297,7 +297,7 @@ export const ServiceProcessTimelineSection = ({
       }}
     >
       <div className="container" style={{ maxWidth: '1240px', margin: '0 auto', padding: '0 1rem' }}>
-        
+
         {/* Main 2-Column Responsive Grid */}
         <div style={{
           display: 'grid',
@@ -444,8 +444,8 @@ export const ServiceProcessTimelineSection = ({
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
                 {timeline.map((spec, sIdx) => (
-                  <div 
-                    key={sIdx} 
+                  <div
+                    key={sIdx}
                     style={{
                       background: 'var(--color-subtle, #f8fafc)',
                       border: '1px solid var(--border-color)',

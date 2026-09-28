@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { X, Flame, Tag, ArrowRight, Check, Clock, Sparkles } from 'lucide-react';
+import { X, Flame, Tag, ArrowRight, Check as _Check, Clock, Sparkles as _Sparkles } from 'lucide-react';
 import { useAppState } from '../../context/StateContext';
 import { useNavigate } from '../../utils/navigation';
 
@@ -22,7 +22,7 @@ export const AnnouncementBar = () => {
   const [timeLeft, setTimeLeft] = useState({ hours: 14, minutes: 35, seconds: 48 });
 
   const rawAnnouncement = siteSettings?.announcement;
-  const activePromo = Array.isArray(siteSettings?.promotions) 
+  const activePromo = Array.isArray(siteSettings?.promotions)
     ? siteSettings.promotions.find(p => p.status === 'active')
     : null;
 
@@ -293,7 +293,7 @@ export const AnnouncementBar = () => {
   );
 
   return (
-    <aside 
+    <aside
       aria-label="Promotional announcement"
       style={{
         background: backgroundStyle,

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
-import { ChevronDown, MessageCircle, Search, Sparkles, HelpCircle, Layers, PenTool, Tag, CreditCard, ShieldCheck, Mail, ArrowRight } from 'lucide-react';
+import { ChevronDown, MessageCircle, Search, Sparkles, HelpCircle, Layers, PenTool as _PenTool, Tag as _Tag, CreditCard as _CreditCard, ShieldCheck as _ShieldCheck, Mail, ArrowRight } from 'lucide-react';
 import { useAppState } from '../../src/context/StateContext';
 
 const MASTER_DEFAULT_FAQS = [
@@ -129,7 +129,7 @@ export default function FAQsPage() {
         acc[cat].push({ q: faq.question || faq.q, a: faq.answer || faq.a });
         return acc;
       }, {});
-      
+
       setFaqs(Object.keys(groupedFaqs).map(cat => ({
         category: cat,
         questions: groupedFaqs[cat]
@@ -188,7 +188,7 @@ export default function FAQsPage() {
         />
       )}
       <div className="container" style={{ maxWidth: '980px', margin: '0 auto', padding: '0 1rem' }}>
-        
+
         {/* Hero Section Header */}
         <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
           <div style={{
@@ -391,18 +391,18 @@ export default function FAQsPage() {
                     {section.category}
                   </h2>
                 </div>
-                
+
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
                   {section.questions.map((faq, qIdx) => {
                     const idx = `${sIdx}-${qIdx}`;
                     const isOpen = openIndex === idx;
-                    
+
                     return (
-                      <div 
-                        key={qIdx} 
-                        style={{ 
-                          background: 'var(--bg-card)', 
-                          borderRadius: '14px', 
+                      <div
+                        key={qIdx}
+                        style={{
+                          background: 'var(--bg-card)',
+                          borderRadius: '14px',
                           border: isOpen ? '1.5px solid var(--orange-400)' : '1px solid var(--border-color)',
                           overflow: 'hidden',
                           boxShadow: isOpen ? '0 10px 25px rgba(249, 115, 22, 0.08)' : 'var(--shadow-sm)',
@@ -439,21 +439,21 @@ export default function FAQsPage() {
                             flexShrink: 0,
                             transition: 'all 0.2s ease'
                           }}>
-                            <ChevronDown 
-                              size={18} 
-                              style={{ 
-                                transform: isOpen ? 'rotate(180deg)' : 'rotate(0)', 
+                            <ChevronDown
+                              size={18}
+                              style={{
+                                transform: isOpen ? 'rotate(180deg)' : 'rotate(0)',
                                 transition: 'transform 0.25s ease',
                                 color: isOpen ? '#ffffff' : 'var(--color-text-muted)'
-                              }} 
+                              }}
                             />
                           </div>
                         </button>
-                        
-                        <div 
-                          style={{ 
-                            maxHeight: isOpen ? '600px' : '0', 
-                            overflow: 'hidden', 
+
+                        <div
+                          style={{
+                            maxHeight: isOpen ? '600px' : '0',
+                            overflow: 'hidden',
                             transition: 'max-height 0.3s ease-in-out',
                             background: 'var(--bg-card)'
                           }}
@@ -477,7 +477,7 @@ export default function FAQsPage() {
             ))}
           </div>
         )}
-        
+
         {/* Support & Quote CTA Card (High-Contrast Professional Theme) */}
         <div style={{
           marginTop: '4.5rem',
@@ -534,7 +534,7 @@ export default function FAQsPage() {
             gap: '1rem',
             flexWrap: 'wrap'
           }}>
-            <Link 
+            <Link
               href="/contact"
               style={{
                 background: 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)',

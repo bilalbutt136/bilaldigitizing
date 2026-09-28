@@ -36,9 +36,10 @@ const AnimatedNumber = ({ end, duration = 2000, suffix = '', isStatic = false, s
       { threshold: 0.1 }
     );
 
-    if (ref.current) observer.observe(ref.current);
+    const observedNode = ref.current;
+    if (observedNode) observer.observe(observedNode);
     return () => {
-      if (ref.current) observer.unobserve(ref.current);
+      if (observedNode) observer.unobserve(observedNode);
     };
   }, []);
 
@@ -47,7 +48,7 @@ const AnimatedNumber = ({ end, duration = 2000, suffix = '', isStatic = false, s
 
     let startTime = null;
     const endNum = parseInt(end.toString().replace(/,/g, ''), 10);
-    
+
     if (isNaN(endNum)) return;
 
     const easeOutQuart = (x) => 1 - Math.pow(1 - x, 4);
@@ -55,7 +56,7 @@ const AnimatedNumber = ({ end, duration = 2000, suffix = '', isStatic = false, s
     const animate = (currentTime) => {
       if (!startTime) startTime = currentTime;
       const progress = Math.min((currentTime - startTime) / duration, 1);
-      
+
       const currentCount = Math.floor(easeOutQuart(progress) * endNum);
       setCount(currentCount);
 
@@ -111,7 +112,7 @@ export const TrustStatsBar = () => {
   }
 
   return (
-    <section 
+    <section
       className="theme-trust-stats-bar"
       style={{
         backgroundColor: 'var(--stats-bar-bg)',
@@ -132,14 +133,14 @@ export const TrustStatsBar = () => {
       <div className="container" style={{ position: 'relative', zIndex: 1 }}>
         <div className="grid-responsive-4" style={{ alignItems: 'center' }}>
           {displayStats.map((stat) => (
-            <div 
-              key={stat.id} 
+            <div
+              key={stat.id}
               className="theme-stat-item"
-              style={{ 
-                display: 'flex', 
-                flexDirection: 'column', 
-                alignItems: 'center', 
-                textAlign: 'center', 
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                textAlign: 'center',
                 padding: '1.35rem 1rem',
                 background: 'var(--stats-card-bg)',
                 border: '1px solid var(--stats-card-border)',
@@ -148,27 +149,27 @@ export const TrustStatsBar = () => {
                 transition: 'all 0.3s ease'
               }}
             >
-              <div style={{ 
-                background: 'rgba(255, 122, 0, 0.1)', 
-                padding: '0.75rem', 
-                borderRadius: '14px', 
-                marginBottom: '0.85rem', 
-                display: 'inline-flex', 
-                alignItems: 'center', 
-                justifyContent: 'center', 
-                boxShadow: '0 0 16px rgba(255, 122, 0, 0.15)' 
+              <div style={{
+                background: 'rgba(255, 122, 0, 0.1)',
+                padding: '0.75rem',
+                borderRadius: '14px',
+                marginBottom: '0.85rem',
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '0 0 16px rgba(255, 122, 0, 0.15)'
               }}>
                 {stat.icon}
               </div>
               <AnimatedNumber end={stat.value} suffix={stat.suffix} isStatic={stat.isStatic} staticText={stat.staticText} />
-              <span style={{ 
-                color: 'var(--stats-label-color)', 
-                fontSize: '0.85rem', 
-                fontWeight: '700', 
-                marginTop: '0.4rem', 
-                textTransform: 'uppercase', 
-                letterSpacing: '0.06em', 
-                fontFamily: 'var(--font-heading)' 
+              <span style={{
+                color: 'var(--stats-label-color)',
+                fontSize: '0.85rem',
+                fontWeight: '700',
+                marginTop: '0.4rem',
+                textTransform: 'uppercase',
+                letterSpacing: '0.06em',
+                fontFamily: 'var(--font-heading)'
               }}>
                 {stat.label}
               </span>

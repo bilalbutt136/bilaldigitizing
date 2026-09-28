@@ -69,7 +69,7 @@ export async function getServerAuthUser(request) {
         if (!cookieError && cookieAuthData?.user) {
           user = cookieAuthData.user;
         }
-      } catch (cookieErr) {
+      } catch  {
         // Continue if cookie resolution fails
       }
     }
@@ -93,9 +93,9 @@ export async function getServerAuthUser(request) {
       return { user, isAdmin: true, error: null };
     }
 
-    // 4. Metadata Role Check (Supabase auth user_metadata or app_metadata)
-    if (user.user_metadata?.role === 'admin' || user.app_metadata?.role === 'admin' || user.user_metadata?.is_admin === true) {
-      return { user, isAdmin: true, error: null };
+    // 4. Only app_metadata is trusted for privileged roles. user_metadata is user-editable.
+    if (user.app_metadata?.role === 'admin' || user.app_metadata?.is_admin === true) {
+      return { user, isAdmin: true, isWorker: false, error: null };
     }
 
     // 5. Database Admins Whitelist Check using service role or admin client
@@ -123,9 +123,9 @@ export async function getServerAuthUser(request) {
           return { user, isAdmin: true, isWorker: false, error: null };
         }
 
-        // 6. Check Worker status
-        if (user.user_metadata?.role === 'worker' || user.app_metadata?.role === 'worker') {
-          return { user, isAdmin: false, isWorker: true, workerData: user.user_metadata, error: null };
+        // 6. Check Worker status. Only server-controlled app_metadata may short-circuit DB checks.
+        if (user.app_metadata?.role === 'worker') {
+          return { user, isAdmin: false, isWorker: true, workerData: user.app_metadata, error: null };
         }
 
         // Check worker_profiles table first
@@ -157,7 +157,7 @@ export async function getServerAuthUser(request) {
       }
     }
 
-    const isWorkerMeta = user.user_metadata?.role === 'worker' || user.app_metadata?.role === 'worker';
+    const isWorkerMeta = user.app_metadata?.role === 'worker';
     return { user, isAdmin: false, isWorker: isWorkerMeta, error: null };
   } catch (err) {
     console.error('[getServerAuthUser Exception]:', err);

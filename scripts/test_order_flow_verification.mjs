@@ -22,10 +22,10 @@ function mapDatabaseOrderToClientOrder(order) {
     if (order.notes) {
       notesData = typeof order.notes === 'string' ? JSON.parse(order.notes) : order.notes;
     }
-  } catch (e) {
+  } catch {
     notesData.notes = order.notes;
   }
-  
+
   const allFiles = order.order_files || order.orderFiles || [];
   const clientFiles = allFiles.filter(f => f && f.file_type === 'client_artwork').map(f => ({
     id: f.id,
@@ -33,8 +33,8 @@ function mapDatabaseOrderToClientOrder(order) {
     format: f.file_format || f.file_name?.split('.').pop() || 'png',
     url: f.public_url || f.file_url
   }));
-  
-  const machineFiles = allFiles.filter(f => f && f.file_type === 'machine_file').map(f => ({
+
+  const _machineFiles = allFiles.filter(f => f && f.file_type === 'machine_file').map(f => ({
     id: f.id,
     name: f.file_name,
     format: f.file_format || f.file_name?.split('.').pop() || 'dst',
@@ -137,10 +137,10 @@ async function runTests() {
     // Scenario 4, 5, 13 & 14: Admin Delivers Order (Delivery #1)
     // ----------------------------------------------------
     console.log('\n--- TEST 2: Admin Marks Order as Delivered (Delivery #1) ---');
-    
+
     // Simulate what app/api/orders/route.js updateStatus does
     const candidateIds = [testOrderId, testOrderId.replace(/^#+/, ''), `#${testOrderId}`];
-    
+
     // Check: Does selecting without 'deliveries' column succeed?
     const { data: fetchedTarget, error: queryErr } = await supabase
       .from('orders')
@@ -209,7 +209,7 @@ async function runTests() {
     // ----------------------------------------------------
     console.log('\n--- TEST 3: Customer Hydration & Mapping ---');
     const mappedClientOrder = mapDatabaseOrderToClientOrder(orderAfterDeliv1);
-    
+
     assert(mappedClientOrder.status === 'delivered', 'Mapped order status is delivered');
     assert(mappedClientOrder.isPaid === true, 'Mapped order payment status is paid');
     assert(Array.isArray(mappedClientOrder.deliveries) && mappedClientOrder.deliveries.length === 1, 'Mapped order contains deliveries array');

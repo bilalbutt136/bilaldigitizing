@@ -1,11 +1,11 @@
 'use client';
 
 import React, { useState } from 'react';
-import { 
-  Zap, 
-  Clock, 
-  RotateCcw, 
-  CheckCircle2, 
+import {
+  Zap,
+  Clock,
+  RotateCcw,
+  CheckCircle2,
   ShieldCheck,
   Loader2,
   CreditCard,
@@ -118,13 +118,13 @@ export default function OfferCardMessage({
         showToast(data.error, 'error');
       } else {
         const resultingOrderId = data.orderId || data.order?.id || data.offer?.order_id || orderId;
-        const updatedOffer = data.offer || { 
-          ...offer, 
-          status: 'accepted', 
+        const updatedOffer = data.offer || {
+          ...offer,
+          status: 'accepted',
           order_id: resultingOrderId,
-          payment_status: 'pending' 
+          payment_status: 'pending'
         };
-        
+
         onOfferAccepted(updatedOffer);
         showToast(`✓ Offer accepted! Order #${resultingOrderId || ''} created. Please complete payment to start production.`, 'success');
 
@@ -138,7 +138,7 @@ export default function OfferCardMessage({
           refreshOrders().catch(() => {});
         }
       }
-    } catch (err) {
+    } catch {
       showToast('Failed to accept offer. Please try again.', 'error');
     } finally {
       setIsProcessing(false);
@@ -165,7 +165,7 @@ export default function OfferCardMessage({
         showToast('Custom offer declined.', 'info');
         onOfferDeclined({ ...offer, status: 'declined' });
       }
-    } catch (err) {
+    } catch {
       showToast('Failed to update offer status.', 'error');
     } finally {
       setIsProcessing(false);

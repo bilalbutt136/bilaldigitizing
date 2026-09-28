@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback as _useCallback } from 'react';
 
 /**
  * Custom hook to track Visual Viewport changes (iOS Safari & Android Chrome virtual keyboard events).

@@ -14,26 +14,26 @@ import { AdminExecutiveDashboard } from './AdminExecutiveDashboard';
 import { PromotionsManager } from './PromotionsManager';
 import { ContactInfoManager } from './ContactInfoManager';
 import { PortfolioManager } from './PortfolioManager';
-import { isSupabaseConfigured, supabase } from '../../lib/supabase/client';
-import { stopNotificationSound, playMessageChime, playMessageChimeForMessage, playAdminChime } from '../../utils/audioNotification';
-import { 
-  LayoutDashboard, 
-  ClipboardList, 
-  Sliders, 
-  Users, 
-  Image, 
-  Settings, 
-  LogOut, 
+import { isSupabaseConfigured as _isSupabaseConfigured, supabase } from '../../lib/supabase/client';
+import { stopNotificationSound, playMessageChime as _playMessageChime, playMessageChimeForMessage, playAdminChime } from '../../utils/audioNotification';
+import {
+  LayoutDashboard,
+  ClipboardList,
+  Sliders,
+  Users,
+  Image,
+  Settings as _Settings,
+  LogOut,
   TrendingUp,
-  Layers, 
-  AlertCircle, 
+  Layers as _Layers,
+  AlertCircle,
   RefreshCw,
   Menu,
   X,
-  DollarSign,
+  DollarSign as _DollarSign,
   Phone,
-  Type,
-  LayoutTemplate,
+  Type as _Type,
+  LayoutTemplate as _LayoutTemplate,
   Palette,
   Megaphone,
   ShieldCheck,
@@ -45,9 +45,9 @@ import {
 } from 'lucide-react';
 
 export const AdminDashboard = () => {
-  const { 
-    orders = [], 
-    clients = [], 
+  const {
+    orders = [],
+    clients = [],
     portfolioSamples = [],
     setIsPricingSettingsOpen,
     resetAllData,
@@ -148,11 +148,11 @@ export const AdminDashboard = () => {
   }, [activeAdminTab]);
 
   const activeTab = activeTabState;
-  const setActiveTab = (tab) => {
+  const setActiveTab = React.useCallback((tab) => {
     stopNotificationSound();
     setActiveTabState(tab);
     if (setActiveAdminTab) setActiveAdminTab(tab);
-  };
+  }, [setActiveAdminTab]);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [mounted, setMounted] = React.useState(false);
   const initialTrackSyncedRef = React.useRef(false);
@@ -180,7 +180,7 @@ export const AdminDashboard = () => {
         }
       }
     }
-  }, []);
+  }, [orders, openOrderTrackerDrawer, setSelectedOrderForDrawer, setActiveTab]);
 
   React.useEffect(() => {
     if (!mounted) return;
@@ -210,7 +210,7 @@ export const AdminDashboard = () => {
       window.removeEventListener('bdigi_switch_admin_tab', handleAdminTabSwitch);
       window.removeEventListener('bdigi_switch_tab', handleAdminTabSwitch);
     };
-  }, [mounted, orders, openOrderTrackerDrawer, setSelectedOrderForDrawer]);
+  }, [mounted, orders, openOrderTrackerDrawer, setSelectedOrderForDrawer, setActiveTab]);
 
   const configuredAdminEmail = (siteSettings?.adminEmail || authUser?.email || '').toLowerCase().trim();
   const isMasterAdmin = mounted && isAuthenticated && authUser?.role === 'admin';
@@ -221,7 +221,7 @@ export const AdminDashboard = () => {
       if (refreshOrders) refreshOrders();
       if (refreshClients) refreshClients();
     }
-  }, [mounted, isMasterAdmin]);
+  }, [mounted, isMasterAdmin, refreshOrders, refreshClients]);
 
   if (!mounted) {
     return (
@@ -252,7 +252,7 @@ export const AdminDashboard = () => {
           <p style={{ fontSize: '0.9rem', color: 'var(--navy-900)', lineHeight: 1.6, marginBottom: '1.75rem' }}>
             The Operations Desk is strictly restricted to Master Administrator <strong>{configuredAdminEmail}</strong>.
           </p>
-          <button 
+          <button
             className="btn btn-primary-orange btn-lg"
             style={{ width: '100%' }}
             onClick={() => protectedNavigate('customer')}
@@ -269,9 +269,9 @@ export const AdminDashboard = () => {
   const safeClients = Array.isArray(clients) ? clients : [];
   const safePortfolio = Array.isArray(portfolioSamples) ? portfolioSamples : [];
 
-  const totalRevenue = safeOrders.reduce((acc, curr) => acc + (parseFloat(curr?.price) || 0), 0);
+  const _totalRevenue = safeOrders.reduce((acc, curr) => acc + (parseFloat(curr?.price) || 0), 0);
   const activeJobsCount = safeOrders.filter(o => o?.status !== 'completed').length;
-  const completedJobsCount = safeOrders.filter(o => o?.status === 'completed').length;
+  const _completedJobsCount = safeOrders.filter(o => o?.status === 'completed').length;
 
   const handleSignOut = () => {
     logout();
@@ -286,25 +286,25 @@ export const AdminDashboard = () => {
       items: [
         { id: 'dashboard', label: 'Executive Dashboard', icon: LayoutDashboard },
         { id: 'orders', label: 'Orders & Production', icon: ClipboardList, badge: activeJobsCount },
-        { 
-          id: 'inbox', 
-          label: 'Client Inbox & Offers', 
-          icon: MessageSquare, 
+        {
+          id: 'inbox',
+          label: 'Client Inbox & Offers',
+          icon: MessageSquare,
           badge: unreadChatCount > 0 ? unreadChatCount : null,
           isUnread: unreadChatCount > 0
         },
-        { 
-          id: 'support', 
-          label: '24/7 Support Desk', 
-          icon: Headphones, 
+        {
+          id: 'support',
+          label: '24/7 Support Desk',
+          icon: Headphones,
           badge: unreadSupportCount > 0 ? unreadSupportCount : null,
           isUnread: unreadSupportCount > 0
         },
         { id: 'clients', label: 'Accounts & Wallets', icon: Users, badge: safeClients.length },
-        { 
-          id: 'workers', 
-          label: 'Digitizers & Staff', 
-          icon: Scissors, 
+        {
+          id: 'workers',
+          label: 'Digitizers & Staff',
+          icon: Scissors,
           badge: pendingWorkersCount > 0 ? pendingWorkersCount : null,
           isUnread: pendingWorkersCount > 0
         }
@@ -339,21 +339,21 @@ export const AdminDashboard = () => {
   ];
 
   return (
-    <div 
-      className="admin-portal-wrapper" 
-      style={{ 
-        display: 'flex', 
-        flexDirection: 'column', 
-        height: 'calc(100vh - 104px)', 
-        maxHeight: 'calc(100vh - 104px)', 
-        minHeight: 'calc(100vh - 104px)', 
-        width: '100%', 
-        background: 'var(--bg-main)', 
-        position: 'relative', 
-        overflow: 'hidden' 
+    <div
+      className="admin-portal-wrapper"
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        height: 'calc(100vh - 104px)',
+        maxHeight: 'calc(100vh - 104px)',
+        minHeight: 'calc(100vh - 104px)',
+        width: '100%',
+        background: 'var(--bg-main)',
+        position: 'relative',
+        overflow: 'hidden'
       }}
     >
-      
+
       {/* Desktop Independent Layout Styles */}
       <style dangerouslySetInnerHTML={{__html: `
         @media (min-width: 1025px) {
@@ -419,7 +419,7 @@ export const AdminDashboard = () => {
       `}} />
 
       {/* MOBILE STICKY HEADER BAR FOR ADMIN PORTAL */}
-      <div 
+      <div
         className="mobile-only"
         style={{
           position: 'sticky',
@@ -454,7 +454,7 @@ export const AdminDashboard = () => {
           >
             {isMobileSidebarOpen ? <X size={20} /> : <Menu size={20} />}
           </button>
-          
+
           <div>
             <span style={{ fontSize: '0.68rem', fontWeight: 800, color: 'var(--orange-600)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block' }}>
               Operations Desk
@@ -477,7 +477,7 @@ export const AdminDashboard = () => {
 
       {/* MOBILE SLIDE-OUT DRAWER OVERLAY */}
       {isMobileSidebarOpen && (
-        <div 
+        <div
           className="mobile-only"
           style={{
             position: 'fixed',
@@ -489,7 +489,7 @@ export const AdminDashboard = () => {
           }}
           onClick={() => setIsMobileSidebarOpen(false)}
         >
-          <div 
+          <div
             style={{
               width: '285px',
               maxHeight: '100vh',
@@ -506,8 +506,8 @@ export const AdminDashboard = () => {
             <div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', paddingBottom: '0.75rem', borderBottom: '1px solid var(--border-color)' }}>
                 <span style={{ fontWeight: 800, fontSize: '1rem', color: 'var(--text-main)' }}>Admin Navigation</span>
-                <button 
-                  type="button" 
+                <button
+                  type="button"
                   onClick={() => setIsMobileSidebarOpen(false)}
                   style={{ background: 'var(--bg-surface)', color: 'var(--text-main)', border: 'none', borderRadius: '8px', padding: '0.35rem', cursor: 'pointer' }}
                 >
@@ -672,11 +672,11 @@ export const AdminDashboard = () => {
                         padding: '0.65rem 0.75rem',
                         borderRadius: 'var(--radius-md)',
                         border: isActive ? '1.5px solid var(--color-primary)' : '1px solid transparent',
-                        background: isActive 
-                          ? 'var(--color-primary-light)' 
+                        background: isActive
+                          ? 'var(--color-primary-light)'
                           : item.danger ? 'rgba(220, 38, 38, 0.08)' : 'transparent',
-                        color: isActive 
-                          ? 'var(--color-primary)' 
+                        color: isActive
+                          ? 'var(--color-primary)'
                           : item.danger ? '#dc2626' : 'var(--color-text-secondary)',
                         fontWeight: isActive ? 800 : 600,
                         fontSize: '0.85rem',
@@ -783,7 +783,7 @@ export const AdminDashboard = () => {
             </div>
 
             <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
-              <button 
+              <button
                 type="button"
                 className="btn btn-outline btn-sm"
                 onClick={resetAllData}
@@ -793,7 +793,7 @@ export const AdminDashboard = () => {
                 <RefreshCw size={13} /> Refresh Catalog
               </button>
 
-              <button 
+              <button
                 type="button"
                 className="btn btn-navy btn-sm"
                 onClick={() => setIsPricingSettingsOpen(true)}

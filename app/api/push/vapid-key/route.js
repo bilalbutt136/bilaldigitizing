@@ -6,7 +6,7 @@ export const revalidate = 0;
 
 export async function GET() {
   try {
-    const publicKey = getPublicVapidKey();
+    const publicKey = await getPublicVapidKey();
     return NextResponse.json({
       success: true,
       publicKey

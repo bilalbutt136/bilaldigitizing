@@ -31,9 +31,9 @@ export async function POST(request) {
     }
 
     const raw = await request.text();
-    const sig = request.headers.get('x-boltpayouts-signature') || 
-                request.headers.get('x-signature') || 
-                request.headers.get('signature') || 
+    const sig = request.headers.get('x-boltpayouts-signature') ||
+                request.headers.get('x-signature') ||
+                request.headers.get('signature') ||
                 request.headers.get('x-bolt-signature') || '';
     const apiKeyHeader = request.headers.get('x-api-key') || '';
 
@@ -68,7 +68,7 @@ export async function POST(request) {
     let payload;
     try {
       payload = JSON.parse(raw);
-    } catch (e) {
+    } catch {
       return NextResponse.json({ success: false, error: 'Invalid JSON payload' }, { status: 400 });
     }
 
@@ -95,7 +95,7 @@ export async function POST(request) {
       // 2. Mark invoice as paid
       await supabaseAdmin
         .from('invoices')
-        .update({ 
+        .update({
           status: 'paid',
           paid_at: new Date().toISOString()
         })
@@ -146,7 +146,7 @@ export async function POST(request) {
           }])
           .select()
           .single();
-          
+
         if (depositTx) {
           transactionId = depositTx.id;
         }
@@ -158,7 +158,7 @@ export async function POST(request) {
             p_amount: amount,
             p_order_id: String(invoice.order_id)
           });
-          
+
           if (deductError) {
             console.warn('[Bolt Webhook] deduct_wallet_balance RPC notice, updating order status directly:', deductError.message);
             const { data: clientRow } = await supabaseAdmin
@@ -191,8 +191,8 @@ export async function POST(request) {
 
           await supabaseAdmin
             .from('orders')
-            .update({ 
-              status: targetStatus, 
+            .update({
+              status: targetStatus,
               payment_status: 'paid',
               paid_at: currentOrd?.paid_at || new Date().toISOString(),
               updated_at: new Date().toISOString()

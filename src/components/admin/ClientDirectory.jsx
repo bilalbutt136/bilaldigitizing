@@ -8,11 +8,13 @@ export const ClientDirectory = () => {
   const { clients = [], orders = [], refreshClients } = useAppState();
   const [isRefreshing, setIsRefreshing] = useState(false);
 
+  /* oxlint-disable react-hooks/exhaustive-deps -- mount-only directory sync; avoid refresh loops from callback identity changes */
   React.useEffect(() => {
     if (refreshClients) {
       refreshClients();
     }
   }, []);
+  /* oxlint-enable react-hooks/exhaustive-deps */
 
   const handleRefresh = async () => {
     if (isRefreshing) return;
@@ -78,7 +80,7 @@ export const ClientDirectory = () => {
                 const tierStr = c.tier || 'Standard Client';
                 const companyName = c.company || c.company_name || c.name || c.email?.split('@')[0] || 'Client Account';
                 const contactName = c.contact || c.full_name || c.name || 'Primary Contact';
-                
+
                 // Match client's real production orders
                 const clientEmail = (c.email || '').toLowerCase().trim();
                 const matchedOrders = (orders || []).filter(o => {

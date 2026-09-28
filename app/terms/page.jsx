@@ -1,5 +1,6 @@
 import React from 'react';
 import { createAdminClient } from '../../src/lib/supabase/admin';
+import { sanitizeCmsHtml } from '../../src/lib/sanitizeHtml';
 
 export const dynamic = 'force-dynamic'; // Fetch live DB content on every request, never pre-render statically
 
@@ -16,7 +17,13 @@ export default async function TermsAndConditionsPage() {
   try {
     const { data } = await supabase.from('home_page_settings').select('*').eq('key', 'terms_html').single();
     if (data && data.value) {
-      termsContent = typeof data.value === 'string' ? JSON.parse(data.value) : data.value;
+      const rawContent = typeof data.value === 'string' ? data.value : String(data.value || '');
+      let parsedContent = rawContent;
+      try {
+        const parsed = JSON.parse(rawContent);
+        if (typeof parsed === 'string') parsedContent = parsed;
+      } catch {}
+      termsContent = sanitizeCmsHtml(parsedContent);
       const dateStr = new Date(data.updated_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
       lastUpdated = dateStr;
     }
@@ -27,7 +34,7 @@ export default async function TermsAndConditionsPage() {
   return (
     <div style={{ background: 'var(--bg-main)', color: 'var(--color-text-primary)', minHeight: '100vh', paddingTop: '4rem', paddingBottom: '6rem' }}>
       <div className="container" style={{ maxWidth: '900px', margin: '0 auto', padding: '0 1.5rem' }}>
-        
+
         <div style={{ marginBottom: '3rem' }}>
           <h1 style={{ fontSize: '2.5rem', fontWeight: 900, color: 'var(--color-text-primary)', marginBottom: '1rem', letterSpacing: '-0.02em' }}>
             Terms & Conditions
@@ -37,11 +44,11 @@ export default async function TermsAndConditionsPage() {
           </p>
         </div>
 
-        <div 
-          style={{ 
-            background: 'var(--bg-card)', 
-            padding: '3rem', 
-            borderRadius: '16px', 
+        <div
+          style={{
+            background: 'var(--bg-card)',
+            padding: '3rem',
+            borderRadius: '16px',
             border: '1px solid var(--border-color)',
             boxShadow: 'var(--shadow-sm)',
             color: 'var(--color-text-secondary)',
@@ -50,7 +57,7 @@ export default async function TermsAndConditionsPage() {
           }}
         >
           {termsContent ? (
-            <div dangerouslySetInnerHTML={{ __html: termsContent }} />
+            <div style={{ whiteSpace: 'pre-wrap' }}>{termsContent}</div>
           ) : (
             <>
               <section style={{ marginBottom: '2.5rem' }}>

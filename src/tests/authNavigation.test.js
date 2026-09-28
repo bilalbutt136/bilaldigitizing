@@ -25,7 +25,7 @@ describe('Auth Navigation & Single Popup Architecture', () => {
 
     const setAuthModalMode = (mode) => { modalMode = mode; };
     const setIsAuthModalOpen = (open) => { isModalOpen = open; };
-    const navigate = (to) => { navigatedTo = to; };
+    const _navigate = (to) => { navigatedTo = to; };
 
     const handleDesktopLogin = () => {
       setAuthModalMode('login');
@@ -48,7 +48,7 @@ describe('Auth Navigation & Single Popup Architecture', () => {
     const setAuthModalMode = (mode) => { modalMode = mode; };
     const setIsAuthModalOpen = (open) => { isModalOpen = open; };
     const setIsMobileMenuOpen = (open) => { isMobileMenuOpen = open; };
-    const navigate = (to) => { navigatedTo = to; };
+    const _navigate = (to) => { navigatedTo = to; };
 
     const handleMobileSignIn = () => {
       setAuthModalMode('login');
@@ -87,7 +87,7 @@ describe('Auth Navigation & Single Popup Architecture', () => {
       redirectOptions = options;
     };
     const setCurrentView = (v) => { currentView = v; };
-    const setIsAuthModalOpen = (o) => { isAuthModalOpened = o; };
+    const _setIsAuthModalOpen = (o) => { isAuthModalOpened = o; };
 
     const handleClientPortalAuthGuard = (isUserLoggedIn) => {
       if (!isUserLoggedIn) {
@@ -105,7 +105,7 @@ describe('Auth Navigation & Single Popup Architecture', () => {
   });
 
   test('5. Post-login Order Wizard ONLY opens when orderWizardInitialData is present', () => {
-    const simulatePostLogin = (orderWizardInitialData, authModalTarget) => {
+    const simulatePostLogin = (orderWizardInitialData, _authModalTarget) => {
       let wizardOpened = false;
       if (orderWizardInitialData) {
         wizardOpened = true;
@@ -114,14 +114,14 @@ describe('Auth Navigation & Single Popup Architecture', () => {
     };
 
     assert.equal(
-      simulatePostLogin(null, 'customer'), 
-      false, 
+      simulatePostLogin(null, 'customer'),
+      false,
       'Standard customer login must NOT pop up the Order Wizard'
     );
 
     assert.equal(
-      simulatePostLogin({ type: 'embroidery', serviceCategory: 'left_chest' }, 'customer'), 
-      true, 
+      simulatePostLogin({ type: 'embroidery', serviceCategory: 'left_chest' }, 'customer'),
+      true,
       'Must open Order Wizard if the customer had configured order data'
     );
   });
@@ -129,11 +129,11 @@ describe('Auth Navigation & Single Popup Architecture', () => {
   test('6. Safe redirect destination parsing prevents open redirect vulnerabilities', () => {
     const resolveTargetRoute = (redirectParam, role) => {
       const defaultRoute = (role === 'admin') ? '/admin-portal' : '/client-portal';
-      const isValidRedirect = redirectParam && 
-        redirectParam.startsWith('/') && 
-        !redirectParam.startsWith('/login') && 
+      const isValidRedirect = redirectParam &&
+        redirectParam.startsWith('/') &&
+        !redirectParam.startsWith('/login') &&
         !redirectParam.startsWith('//');
-      
+
       return isValidRedirect ? redirectParam : defaultRoute;
     };
 

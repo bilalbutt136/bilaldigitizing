@@ -3,17 +3,17 @@
 import React from 'react';
 import { useAppState } from '../../context/StateContext';
 import { normalizeCategory } from '../../utils/categoryUtils';
-import { 
-  Upload, 
-  Layers, 
-  Cpu, 
-  Download, 
-  Sparkles, 
-  CheckCircle2, 
-  FileCheck, 
-  Truck, 
-  PenTool, 
-  Palette, 
+import {
+  Upload,
+  Layers,
+  Cpu,
+  Download,
+  Sparkles,
+  CheckCircle2,
+  FileCheck,
+  Truck,
+  PenTool,
+  Palette,
   ShieldCheck,
   Award,
   MousePointer2,
@@ -32,8 +32,8 @@ const IconRenderer = ({ iconName, size = 24, fallbackIcon = Award }) => {
 };
 
 export const WhyChooseUs = () => {
-  const { 
-    activeHomeServiceTab = 'all', 
+  const {
+    activeHomeServiceTab = 'all',
     homePageConfig = {}
   } = useAppState();
 
@@ -48,18 +48,18 @@ export const WhyChooseUs = () => {
   let rawTrustFeatures = [];
   try {
     rawTrustFeatures = typeof allFeaturesStr === 'string' ? JSON.parse(allFeaturesStr) : (allFeaturesStr || []);
-  } catch(e) {
+  } catch {
     rawTrustFeatures = [];
   }
-  
+
   // Try to find features matching the current service
   let trustFeatures = rawTrustFeatures.filter(f => f.service_key === currentKey && f.is_active !== false).sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
-  
+
   // Fallback to 'all' if no features exist for current service
   if (trustFeatures.length === 0) {
     trustFeatures = rawTrustFeatures.filter(f => (!f.service_key || f.service_key === 'all') && f.is_active !== false).sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
   }
-  
+
   // Hardcoded fallback if DB is empty
   if (trustFeatures.length === 0) {
     trustFeatures = [
@@ -122,7 +122,7 @@ export const WhyChooseUs = () => {
   return (
     <section id="why-choose-us" style={{ padding: '5.5rem 0', background: 'var(--bg-main)', borderTop: '1px solid var(--border-color)' }}>
       <div className="container">
-        
+
         {/* Trust Grid Section Header */}
         <div style={{ textAlign: 'center', maxWidth: '750px', margin: '0 auto 3.5rem' }}>
           <div className="badge-pill-glow" style={{ marginBottom: '1rem' }}>
@@ -150,10 +150,10 @@ export const WhyChooseUs = () => {
         }}>
           {trustFeatures.map((item, idx) => {
             return (
-              <div 
-                key={item.id || idx} 
+              <div
+                key={item.id || idx}
                 className="card"
-                style={{ 
+                style={{
                   padding: '2.25rem 1.75rem',
                   background: 'var(--bg-card)',
                   border: '1.5px solid var(--border-color)',
@@ -217,12 +217,12 @@ export const WhyChooseUs = () => {
         <div className="grid-responsive-4">
           {stepsToRender.map((item, idx) => {
             return (
-              <div 
-                key={item.id || idx} 
+              <div
+                key={item.id || idx}
                 className="card"
-                style={{ 
-                  padding: '2.25rem 1.75rem', 
-                  textAlign: 'left', 
+                style={{
+                  padding: '2.25rem 1.75rem',
+                  textAlign: 'left',
                   background: 'var(--color-surface, var(--bg-card))',
                   border: '1.5px solid var(--color-border)',
                   borderRadius: '20px',

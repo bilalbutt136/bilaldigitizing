@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Download, X, Sparkles, Smartphone, Share, PlusSquare, MoreVertical, CheckCircle2 } from 'lucide-react';
+import { Download, X, Sparkles as _Sparkles, Smartphone, Share, PlusSquare, MoreVertical, CheckCircle2 as _CheckCircle2 } from 'lucide-react';
 import { useAppState } from '../../context/StateContext';
 
 const AUTO_DISMISS_SECONDS = 10;
@@ -19,10 +19,11 @@ export const PWAInstallBanner = () => {
   const [isPaused, setIsPaused] = useState(false);
 
   const dismissTimerRef = useRef(null);
+  const deferredPromptRef = useRef(null);
 
   useEffect(() => {
     // 1. Check if already running in standalone PWA / Mobile App mode
-    const isApp = window.matchMedia('(display-mode: standalone)').matches || 
+    const isApp = window.matchMedia('(display-mode: standalone)').matches ||
                   window.navigator.standalone === true ||
                   (document.referrer && document.referrer.includes('android-app://'));
     setIsStandalone(isApp);
@@ -60,7 +61,7 @@ export const PWAInstallBanner = () => {
     const isIOSDevice = /iphone|ipad|ipod/.test(userAgent);
     const isAndroidDevice = /android/.test(userAgent);
     const isMobileViewport = typeof window !== 'undefined' && (window.innerWidth <= 820 || /mobile|android|iphone|ipad|ipod/.test(userAgent));
-    
+
     setIsIOS(isIOSDevice);
     setIsAndroid(isAndroidDevice);
 
@@ -68,6 +69,7 @@ export const PWAInstallBanner = () => {
     const handleBeforeInstall = (e) => {
       e.preventDefault();
       setDeferredPrompt(e);
+      deferredPromptRef.current = e;
       if (typeof window !== 'undefined') {
         window.deferredPWAInstallPrompt = e;
       }
@@ -95,8 +97,9 @@ export const PWAInstallBanner = () => {
 
     // 7. Manual trigger listener from profile / header menus
     const handleManualTrigger = () => {
-      if (deferredPrompt) {
-        deferredPrompt.prompt();
+      const promptEvent = deferredPromptRef.current;
+      if (promptEvent) {
+        promptEvent.prompt();
       } else if (isIOSDevice) {
         setShowIOSInstructions(true);
       } else if (isAndroidDevice) {
@@ -131,7 +134,7 @@ export const PWAInstallBanner = () => {
   const handleDismiss = () => {
     setShowBanner(false);
     clearTimeout(dismissTimerRef.current);
-    
+
     // Save in sessionStorage so user is not prompted again during this session
     if (typeof sessionStorage !== 'undefined') {
       sessionStorage.setItem('bdigi_pwa_dismissed', 'true');
@@ -207,7 +210,7 @@ export const PWAInstallBanner = () => {
       `}} />
 
       {/* Floating Mobile App Installation Popup */}
-      <div 
+      <div
         role="alert"
         aria-live="polite"
         onMouseEnter={() => setIsPaused(true)}
@@ -237,7 +240,7 @@ export const PWAInstallBanner = () => {
       >
         {/* Top Content Row */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.65rem' }}>
-          
+
           {/* App Icon & Details */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', minWidth: 0 }}>
             <div style={{
@@ -368,19 +371,19 @@ export const PWAInstallBanner = () => {
           background: 'rgba(255, 255, 255, 0.08)',
           overflow: 'hidden'
         }}>
-          <div 
+          <div
             className={`bdigi-install-popup-progress ${isPaused ? 'paused' : ''}`}
             style={{
               height: '100%',
               background: 'linear-gradient(90deg, #f97316, #ea580c)'
-            }} 
+            }}
           />
         </div>
       </div>
 
       {/* iOS Safari Add to Home Screen Instructions Modal */}
       {showIOSInstructions && (
-        <div 
+        <div
           style={{
             position: 'fixed',
             inset: 0,
@@ -394,7 +397,7 @@ export const PWAInstallBanner = () => {
           }}
           onClick={() => setShowIOSInstructions(false)}
         >
-          <div 
+          <div
             style={{
               background: '#ffffff',
               borderRadius: '20px',
@@ -482,7 +485,7 @@ export const PWAInstallBanner = () => {
 
       {/* Android Chrome Manual Instructions Modal (Fallback if beforeinstallprompt was suppressed) */}
       {showAndroidInstructions && (
-        <div 
+        <div
           style={{
             position: 'fixed',
             inset: 0,
@@ -496,7 +499,7 @@ export const PWAInstallBanner = () => {
           }}
           onClick={() => setShowAndroidInstructions(false)}
         >
-          <div 
+          <div
             style={{
               background: '#ffffff',
               borderRadius: '20px',

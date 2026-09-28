@@ -5,17 +5,17 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAppState } from '../../src/context/StateContext';
 import { supabaseClient } from '../../src/lib/supabaseClient';
-import { 
-  Scissors, 
-  Lock, 
-  Mail, 
-  ArrowRight, 
-  Home, 
-  AlertCircle, 
-  Clock, 
-  CheckCircle2, 
-  UserPlus, 
-  ShieldAlert 
+import {
+  Scissors as _Scissors,
+  Lock,
+  Mail,
+  ArrowRight,
+  Home,
+  AlertCircle,
+  Clock,
+  CheckCircle2 as _CheckCircle2,
+  UserPlus,
+  ShieldAlert
 } from 'lucide-react';
 
 export default function WorkerLoginPage() {
@@ -26,7 +26,7 @@ export default function WorkerLoginPage() {
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
-  
+
   // Pending review & account status screens
   const [workerStatusState, setWorkerStatusState] = useState(null); // 'pending' | 'suspended' | 'rejected'
   const [applicantName, setApplicantName] = useState('');

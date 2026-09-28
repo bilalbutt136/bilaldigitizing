@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { formatOrderId } from '../../context/StateContext';
 import { downloadFileDirectly, openPdfInNewTab, openFileInNewTab } from '../../utils/fileDownloader';
-import { X, Download, Scissors, ExternalLink, Loader2 } from 'lucide-react';
+import { X, Download, Scissors as _Scissors, ExternalLink, Loader2 } from 'lucide-react';
 import { useModalBackNavigation } from '../../hooks/useModalBackNavigation';
 
 export const ArtworkLightboxModal = ({ order, onClose }) => {
@@ -44,28 +44,28 @@ export const ArtworkLightboxModal = ({ order, onClose }) => {
     }
   } catch {}
 
-  const imageSrc = 
-    order.artwork_url || 
-    order.artworkUrl || 
-    order.image_url || 
-    order.logo || 
-    order.file_url || 
-    order.public_url || 
-    order.url || 
-    order.uploadedFiles?.[0]?.url || 
-    order.uploadedFiles?.[0]?.public_url || 
-    notesFiles[0]?.url || 
-    notesFiles[0]?.public_url || 
-    (order.file_path && order.file_path.startsWith('http') ? order.file_path : null) || 
+  const imageSrc =
+    order.artwork_url ||
+    order.artworkUrl ||
+    order.image_url ||
+    order.logo ||
+    order.file_url ||
+    order.public_url ||
+    order.url ||
+    order.uploadedFiles?.[0]?.url ||
+    order.uploadedFiles?.[0]?.public_url ||
+    notesFiles[0]?.url ||
+    notesFiles[0]?.public_url ||
+    (order.file_path && order.file_path.startsWith('http') ? order.file_path : null) ||
     'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=600&q=80';
 
-  const rawFileName = 
-    order.artworkFileName || 
-    order.fileName || 
-    order.name || 
-    order.file_name || 
-    notesFiles[0]?.name || 
-    (typeof imageSrc === 'string' && imageSrc.startsWith('http') ? decodeURIComponent(imageSrc.split('/').pop()?.split('?')[0] || '') : null) || 
+  const rawFileName =
+    order.artworkFileName ||
+    order.fileName ||
+    order.name ||
+    order.file_name ||
+    notesFiles[0]?.name ||
+    (typeof imageSrc === 'string' && imageSrc.startsWith('http') ? decodeURIComponent(imageSrc.split('/').pop()?.split('?')[0] || '') : null) ||
     `${(order.title || 'Artwork').replace(/\s+/g, '_')}_source.png`;
 
   const isPdf = Boolean(
@@ -95,17 +95,17 @@ export const ArtworkLightboxModal = ({ order, onClose }) => {
   };
 
   return (
-    <div 
-      className="modal-overlay" 
+    <div
+      className="modal-overlay"
       onClick={handleSafeClose}
       style={{ zIndex: 99999, background: 'rgba(15, 23, 42, 0.85)', backdropFilter: 'blur(8px)' }}
     >
-      <div 
-        className="modal-content" 
+      <div
+        className="modal-content"
         onClick={(e) => e.stopPropagation()}
         style={{ maxWidth: '900px', background: 'var(--bg-card)', color: 'var(--color-text-primary)', border: '1px solid var(--border-color)' }}
       >
-        
+
         {/* Header */}
         <div style={{
           padding: '1.25rem 1.75rem',
@@ -126,7 +126,7 @@ export const ArtworkLightboxModal = ({ order, onClose }) => {
             </div>
           </div>
 
-          <button 
+          <button
             onClick={handleSafeClose}
             style={{ background: 'var(--color-subtle)', border: 'none', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--color-text-primary)', cursor: 'pointer' }}
             aria-label="Close"
@@ -137,7 +137,7 @@ export const ArtworkLightboxModal = ({ order, onClose }) => {
 
         {/* Modal Body */}
         <div style={{ padding: '1.75rem' }}>
-          
+
           {/* Main Enlarged Image or PDF View */}
           <div style={{
             background: '#090d16',
@@ -164,8 +164,8 @@ export const ArtworkLightboxModal = ({ order, onClose }) => {
                 }}
               />
             ) : (
-              <img 
-                src={imageSrc} 
+              <img
+                src={imageSrc}
                 alt={order.title || 'Artwork'}
                 style={{
                   maxHeight: '460px',
@@ -218,7 +218,7 @@ export const ArtworkLightboxModal = ({ order, onClose }) => {
             >
               <ExternalLink size={16} /> Open in New Tab
             </button>
-            <button 
+            <button
               type="button"
               disabled={isDownloading}
               onClick={handleDownloadArtwork}

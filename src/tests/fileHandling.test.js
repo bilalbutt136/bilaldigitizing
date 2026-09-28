@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 function extractFileMetadata(filename, fileUrl) {
   const cleanUrl = (fileUrl || '').split('?')[0];
   const ext = (filename.split('.').pop() || cleanUrl.split('.').pop() || 'bin').toLowerCase();
-  const base = filename.replace(/\.[^/.]+$/, '').replace(/[^a-zA-Z0-9_\-]/g, '_').substring(0, 60);
+  const base = filename.replace(/\.[^/.]+$/, '').replace(/[^a-zA-Z0-9_-]/g, '_').substring(0, 60);
   return { ext, base, sanitizedName: `${base}.${ext}` };
 }
 

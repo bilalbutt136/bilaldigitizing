@@ -98,7 +98,7 @@ async function run() {
   console.log('--- STEP 16: Confirm Original Order Requirements / Specifications ---');
   // Ensure requirements accordion is expanded (click only if currently collapsed)
   await custPage.evaluate(() => {
-    const viewBtn = Array.from(document.querySelectorAll('button')).find(b => 
+    const viewBtn = Array.from(document.querySelectorAll('button')).find(b =>
       b.innerText && b.innerText.includes('View Requirements')
     );
     if (viewBtn) viewBtn.click();
@@ -121,7 +121,7 @@ async function run() {
   console.log('--- STEP 17: Confirm Delivered Files Visible & Accessible ---');
   // Switch back to Delivered Files view
   await custPage.evaluate(() => {
-    const btn = Array.from(document.querySelectorAll('button')).find(b => 
+    const btn = Array.from(document.querySelectorAll('button')).find(b =>
       b.innerText && b.innerText.includes('Delivered Files')
     );
     if (btn) btn.click();
@@ -143,7 +143,7 @@ async function run() {
   // STEP 18: Close the order
   console.log('--- STEP 18: Close the Order Drawer ---');
   await custPage.evaluate(() => {
-    const closeBtn = Array.from(document.querySelectorAll('button')).find(b => 
+    const closeBtn = Array.from(document.querySelectorAll('button')).find(b =>
       b.innerText && b.innerText.trim() === 'Close'
     );
     if (closeBtn) closeBtn.click();
@@ -186,8 +186,8 @@ async function run() {
 
   await custPage.screenshot({ path: 'scratch/verification_screenshots/20_reopened_order.png' });
   const reopenedText = await custPage.innerText('body');
-  const reopenedValid = (reopenedText.includes('1208') || reopenedText.includes('#1208')) && 
-                        reopenedText.includes('Delivered') && 
+  const reopenedValid = (reopenedText.includes('1208') || reopenedText.includes('#1208')) &&
+                        reopenedText.includes('Delivered') &&
                         reopenedText.includes('test_embroidery.dst');
   console.log('STEPS 19 & 20 Check: Reopened valid =', reopenedValid);
   if (!reopenedValid) throw new Error('Step 20 Failed: Reopened drawer did not load files!');
@@ -210,7 +210,7 @@ async function run() {
   console.log('\n--- STEP 22a: Customer Submits Modification / Revision Request ---');
   // Click "Request Modification" button
   await custPage.evaluate(() => {
-    const btn = Array.from(document.querySelectorAll('button')).find(b => 
+    const btn = Array.from(document.querySelectorAll('button')).find(b =>
       b.innerText && b.innerText.includes('Request Modification')
     );
     if (btn) btn.click();
@@ -225,7 +225,7 @@ async function run() {
   // Submit modification form
   console.log('Submitting modification request...');
   await custPage.evaluate(() => {
-    const submitBtn = Array.from(document.querySelectorAll('button')).find(b => 
+    const submitBtn = Array.from(document.querySelectorAll('button')).find(b =>
       b.innerText && b.innerText.includes('Submit Modification Request')
     );
     if (submitBtn) submitBtn.click();
@@ -338,7 +338,7 @@ async function run() {
 }
 
 run()
-  .then(res => {
+  .then(_res => {
     console.log('\n===============================================================');
     console.log('E2E VERIFICATION COMPLETED SUCCESSFULLY WITH 100% PASS RATE!');
     console.log('===============================================================');

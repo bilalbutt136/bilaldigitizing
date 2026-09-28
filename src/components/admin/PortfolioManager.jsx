@@ -2,27 +2,27 @@
 
 import React, { useState } from 'react';
 import { useAppState } from '../../context/StateContext';
-import { 
-  FolderPlus, 
-  Plus, 
-  Trash2, 
-  Edit3, 
-  Eye, 
-  EyeOff, 
-  Upload, 
-  RefreshCw, 
-  ChevronUp, 
-  ChevronDown, 
-  Layers, 
-  PenTool, 
-  Tag, 
-  Sparkles, 
-  Search, 
-  CheckCircle2, 
+import {
+  FolderPlus,
+  Plus,
+  Trash2,
+  Edit3,
+  Eye,
+  EyeOff,
+  Upload,
+  RefreshCw,
+  ChevronUp,
+  ChevronDown,
+  Layers,
+  PenTool,
+  Tag,
+  Sparkles,
+  Search,
+  CheckCircle2 as _CheckCircle2,
   X,
   Maximize2
 } from 'lucide-react';
-import { savePortfolioItemViaApi, deletePortfolioItemViaApi, getAuthHeaders, fetchCatalogFromSupabase } from '../../services/supabaseService';
+import { savePortfolioItemViaApi, deletePortfolioItemViaApi, getAuthHeaders, fetchCatalogFromSupabase as _fetchCatalogFromSupabase } from '../../services/supabaseService';
 
 const CATEGORY_OPTIONS = [
   { value: 'Embroidery', label: 'Embroidery Digitizing', icon: Layers, color: '#f97316' },
@@ -180,7 +180,7 @@ export const PortfolioManager = () => {
       if (result.success || result.data) {
         const savedItem = result.data || payload;
         showToast(`Portfolio item "${formState.title}" saved successfully!`, 'success');
-        
+
         // Update local StateContext & broadcast immediately
         if (setPortfolioSamples) {
           setPortfolioSamples(prev => {
@@ -300,7 +300,7 @@ export const PortfolioManager = () => {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-      
+
       {/* 1. Header & Quick Actions */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
@@ -439,7 +439,7 @@ export const PortfolioManager = () => {
               >
                 <div>
                   {/* Image Container with Preview & Inspect Trigger */}
-                  <div 
+                  <div
                     style={{ position: 'relative', width: '100%', height: '210px', background: 'var(--color-surface-elevated, #f1f5f9)', overflow: 'hidden', cursor: 'pointer' }}
                     onClick={() => {
                       setLightboxItem(item);
@@ -632,7 +632,7 @@ export const PortfolioManager = () => {
             boxShadow: '0 25px 60px rgba(0,0,0,0.3)',
             border: '1px solid var(--border-color)'
           }}>
-            
+
             {/* Modal Header */}
             <div style={{ padding: '1.5rem 1.75rem', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f8fafc', borderTopLeftRadius: '20px', borderTopRightRadius: '20px' }}>
               <div>
@@ -654,7 +654,7 @@ export const PortfolioManager = () => {
 
             {/* Modal Form */}
             <form onSubmit={handleSaveModal} style={{ padding: '1.75rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-              
+
               {/* Category Selector */}
               <div>
                 <label style={{ fontWeight: 800, fontSize: '0.85rem', color: 'var(--navy-900)', display: 'block', marginBottom: '0.4rem' }}>
@@ -1038,8 +1038,8 @@ export const PortfolioManager = () => {
               position: 'relative'
             }}>
               {(() => {
-                const targetImg = lightboxMode === 'before' && lightboxItem.original_image 
-                  ? lightboxItem.original_image 
+                const targetImg = lightboxMode === 'before' && lightboxItem.original_image
+                  ? lightboxItem.original_image
                   : (lightboxItem.digitized_image || lightboxItem.digitizedImage || lightboxItem.afterImg || lightboxItem.image || lightboxItem.original_image);
 
                 return targetImg ? (

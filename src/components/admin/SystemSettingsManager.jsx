@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useAppState } from '../../context/StateContext';
-import { Palette, Megaphone, ShieldCheck, Building2, Settings, Mail, Bell } from 'lucide-react';
+import { useAppState as _useAppState } from '../../context/StateContext';
+import { Palette, Megaphone, ShieldCheck, Building2, Settings as _Settings, Mail as _Mail, Bell } from 'lucide-react';
 import { ThemeBrandingSettings } from './settings/ThemeBrandingSettings';
 import { MetaSeoTrackingSettings } from './settings/MetaSeoTrackingSettings';
 import { AdminSecuritySettings } from './settings/AdminSecuritySettings';
@@ -28,7 +28,7 @@ export const SystemSettingsManager = ({ activeSubTab = 'theme' }) => {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem', width: '100%', maxWidth: '1240px', margin: '0 auto' }}>
-      
+
       {/* Top Main Categorized Sub-Navigation Bar */}
       <div style={{
         background: 'var(--bg-card)',

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { X, Scissors, UserCheck, AlertCircle, CheckCircle, Send, Sparkles, Palette, Layers, Clock, FileText } from 'lucide-react';
+import { X, Scissors, UserCheck, AlertCircle, CheckCircle as _CheckCircle, Send as _Send, Sparkles, Palette, Layers as _Layers, Clock as _Clock, FileText } from 'lucide-react';
 import { formatOrderId } from '../../context/StateContext';
 import { formatPlacementTiming, parseOrderInstructions } from '../worker/WorkerOrderWorkspaceModal';
 
@@ -126,7 +126,7 @@ export const AssignWorkerModal = ({ order, isOpen, onClose, onAssigned, showToas
   };
 
   return (
-    <div 
+    <div
       onClick={(e) => {
         e.stopPropagation();
         onClose();
@@ -143,7 +143,7 @@ export const AssignWorkerModal = ({ order, isOpen, onClose, onAssigned, showToas
         padding: '1.25rem'
       }}
     >
-      <div 
+      <div
         onClick={(e) => e.stopPropagation()}
         style={{
           background: 'var(--bg-card, #ffffff)',

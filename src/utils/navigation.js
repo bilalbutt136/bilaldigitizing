@@ -24,7 +24,7 @@ export function useNavigate() {
         } else {
           router.push(path);
         }
-      } catch (err) {
+      } catch {
         if (typeof window !== 'undefined') {
           window.location.href = path;
         }

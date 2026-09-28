@@ -2,15 +2,15 @@
 
 import React, { useState, useEffect } from 'react';
 import { useAppState } from '../../context/StateContext';
-import { 
-  X, 
-  CheckCircle, 
-  Loader2, 
-  Copy, 
-  Check, 
-  ShieldCheck, 
-  ExternalLink, 
-  Zap, 
+import {
+  X,
+  CheckCircle,
+  Loader2,
+  Copy,
+  Check,
+  ShieldCheck,
+  ExternalLink,
+  Zap,
   Coins,
   ArrowLeft,
   ArrowRight,
@@ -127,10 +127,10 @@ const CashAppBrandIcon = () => (
 );
 
 export const CheckoutModal = () => {
-  const { 
-    isCheckoutModalOpen, 
-    setIsCheckoutModalOpen, 
-    checkoutSession, 
+  const {
+    isCheckoutModalOpen,
+    setIsCheckoutModalOpen,
+    checkoutSession,
     setCheckoutSession,
     updateOrderStatus,
     showToast,
@@ -156,37 +156,37 @@ export const CheckoutModal = () => {
   const [hasCopied, setHasCopied] = useState(false);
 
   const paymentMethods = [
-    { 
-      id: 'studio_wallet', 
-      name: 'Studio Wallet', 
+    {
+      id: 'studio_wallet',
+      name: 'Studio Wallet',
       subtext: `Available Balance: $${(walletBalance || 0).toFixed(2)}`,
       icon: <WalletBrandIcon />,
       badge: 'INSTANT'
     },
-    { 
-      id: 'card', 
-      name: 'Credit / Debit Card', 
+    {
+      id: 'card',
+      name: 'Credit / Debit Card',
       subtext: 'Visa, Mastercard, Amex, Discover',
       icon: <CardBrandIcon />,
       badge: 'POPULAR'
     },
-    { 
-      id: 'google_pay', 
-      name: 'Google Pay', 
+    {
+      id: 'google_pay',
+      name: 'Google Pay',
       subtext: 'Google Wallet & Saved Cards',
       icon: <GooglePayBrandIcon />,
       badge: 'FAST'
     },
-    { 
-      id: 'paypal', 
-      name: 'PayPal', 
+    {
+      id: 'paypal',
+      name: 'PayPal',
       subtext: 'PYUSD / PayPal Crypto',
       icon: <PayPalBrandIcon />,
       badge: 'PYUSD'
     },
-    { 
-      id: 'cashapp', 
-      name: 'Cash App Pay', 
+    {
+      id: 'cashapp',
+      name: 'Cash App Pay',
       subtext: 'Bitcoin Lightning ⚡ Instant',
       icon: <CashAppBrandIcon />,
       badge: 'LIGHTNING'
@@ -208,7 +208,7 @@ export const CheckoutModal = () => {
         }, custRole);
       }).catch(() => {});
     }
-  }, [isCheckoutModalOpen, checkoutSession?.amount, authUser]);
+  }, [isCheckoutModalOpen, checkoutSession?.amount, checkoutSession?.orderId, authUser]);
 
   const handleSelectMethod = async (methodId) => {
     const rawAmount = parseFloat(checkoutSession?.amount ?? checkoutSession?.price ?? checkoutSession?.totalPrice ?? 15.00);
@@ -230,7 +230,7 @@ export const CheckoutModal = () => {
     // 1. Handle Studio Wallet payment directly
     if (methodId === 'studio_wallet') {
       const currentBalance = parseFloat(walletBalance || 0);
-      
+
       if (currentBalance < amount) {
         showToast(`Insufficient wallet balance. You have $${currentBalance.toFixed(2)} but need $${amount.toFixed(2)}.`, 'error');
         return;
@@ -258,7 +258,7 @@ export const CheckoutModal = () => {
               num_items: 1
             }, custRole);
           }).catch(() => {});
-          
+
           if (checkoutSession?.offerId) {
             try {
               await acceptCustomOffer(checkoutSession.offerId);
@@ -300,17 +300,15 @@ export const CheckoutModal = () => {
     // If card payment is selected, attempt Stripe checkout first if available
     if (methodId === 'card') {
       try {
+        const stripeHeaders = await getAuthHeaders();
         const stripeRes = await fetch('/api/checkout', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: stripeHeaders,
+          credentials: 'same-origin',
           body: JSON.stringify({
-            amount: amount,
-            clientEmail: checkoutSession?.clientEmail || authUser?.email || currentUser?.email,
             type: checkoutSession?.offerId ? 'custom_offer' : 'order_payment',
             orderId: checkoutSession?.orderId || null,
             offerId: checkoutSession?.offerId || null,
-            conversationId: checkoutSession?.conversationId || null,
-            title: checkoutSession?.title || checkoutSession?.orderTitle || 'Custom Design Order',
             isApp: mobileMode === 'app'
           })
         });
@@ -362,7 +360,7 @@ export const CheckoutModal = () => {
         solanaAddress: solana,
         lightningInvoice: lightning
       }));
-      
+
       // Transition to the target view - modern browsers require direct user tap to open links without blocking
       if (methodId === 'card') {
         setActiveView('card');
@@ -426,7 +424,7 @@ export const CheckoutModal = () => {
 
   useEffect(() => {
     let intervalId;
-    
+
     if (isCheckoutModalOpen && (checkoutSession?.invoiceId || checkoutSession?.orderId) && !isPaid) {
       intervalId = setInterval(async () => {
         try {
@@ -439,7 +437,7 @@ export const CheckoutModal = () => {
           if (data.success && (data.status === 'paid' || data.status === 'completed')) {
             setIsPaid(true);
             showToast('Payment confirmed! Order assigned to design desk.', 'success');
-            
+
             if (checkoutSession?.offerId) {
               try {
                 await acceptCustomOffer(checkoutSession.offerId);
@@ -462,9 +460,9 @@ export const CheckoutModal = () => {
         }
       }, 3000);
     }
-    
+
     return () => clearInterval(intervalId);
-  }, [isCheckoutModalOpen, checkoutSession, isPaid, showToast, updateOrderStatus]);
+  }, [isCheckoutModalOpen, checkoutSession, isPaid, showToast, updateOrderStatus, refreshOrders]);
 
   const copyToClipboard = (text, label = 'Address') => {
     if (text) {
@@ -482,7 +480,7 @@ export const CheckoutModal = () => {
   const formattedSessionAmount = `$${safeSessionAmount.toFixed(2)}`;
 
   return (
-    <div 
+    <div
       className="modal-overlay"
       onClick={handleSafeClose}
       style={{
@@ -509,7 +507,7 @@ export const CheckoutModal = () => {
         `}
       </style>
 
-      <div 
+      <div
         className="modal-dialog"
         onClick={(e) => e.stopPropagation()}
         style={{
@@ -527,13 +525,13 @@ export const CheckoutModal = () => {
           animation: 'scaleUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards'
         }}
       >
-        
+
         {/* Header */}
-        <div style={{ 
-          padding: 'clamp(0.85rem, 2vw, 1.25rem) clamp(1rem, 2vw, 1.5rem)', 
-          borderBottom: '1px solid #334155', 
-          display: 'flex', 
-          justifyContent: 'space-between', 
+        <div style={{
+          padding: 'clamp(0.85rem, 2vw, 1.25rem) clamp(1rem, 2vw, 1.5rem)',
+          borderBottom: '1px solid #334155',
+          display: 'flex',
+          justifyContent: 'space-between',
           alignItems: 'center',
           background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
           flexShrink: 0
@@ -564,8 +562,8 @@ export const CheckoutModal = () => {
                 <ArrowLeft size={18} />
               </button>
             ) : (
-              <div style={{ 
-                width: '36px', height: '36px', borderRadius: '50%', 
+              <div style={{
+                width: '36px', height: '36px', borderRadius: '50%',
                 background: isPaid ? 'rgba(16, 185, 129, 0.2)' : 'rgba(249, 115, 22, 0.2)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 color: isPaid ? '#10b981' : 'var(--orange-400)',
@@ -616,13 +614,13 @@ export const CheckoutModal = () => {
               </button>
             )}
 
-            <button 
+            <button
               onClick={handleSafeClose}
-              style={{ 
-                background: 'rgba(255, 255, 255, 0.1)', border: '1px solid rgba(255, 255, 255, 0.15)', color: '#cbd5e1', 
-                width: '32px', height: '32px', borderRadius: '50%', 
-                display: 'flex', alignItems: 'center', justifyContent: 'center', 
-                cursor: 'pointer', transition: 'all 0.2s ease' 
+              style={{
+                background: 'rgba(255, 255, 255, 0.1)', border: '1px solid rgba(255, 255, 255, 0.15)', color: '#cbd5e1',
+                width: '32px', height: '32px', borderRadius: '50%',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                cursor: 'pointer', transition: 'all 0.2s ease'
               }}
               onMouseOver={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.2)'; e.currentTarget.style.color = '#fff'; }}
               onMouseOut={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; e.currentTarget.style.color = '#cbd5e1'; }}
@@ -634,23 +632,23 @@ export const CheckoutModal = () => {
         </div>
 
         {/* Content */}
-        <div style={{ 
-          position: 'relative', 
-          width: '100%', 
-          display: 'flex', 
-          flexDirection: 'column', 
-          background: isDark ? 'var(--color-surface, #111827)' : '#f8fafc', 
-          overflowY: 'auto', 
-          flex: '1 1 auto', 
-          minHeight: 0, 
+        <div style={{
+          position: 'relative',
+          width: '100%',
+          display: 'flex',
+          flexDirection: 'column',
+          background: isDark ? 'var(--color-surface, #111827)' : '#f8fafc',
+          overflowY: 'auto',
+          flex: '1 1 auto',
+          minHeight: 0,
           WebkitOverflowScrolling: 'touch',
           color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a'
         }}>
-          
+
           {isPaid ? (
             /* Success View */
-            <div style={{ 
-              flex: 1, display: 'flex', flexDirection: 'column', 
+            <div style={{
+              flex: 1, display: 'flex', flexDirection: 'column',
               alignItems: 'center', justifyContent: 'center', padding: '3rem 2rem', textAlign: 'center',
               background: isDark ? 'var(--color-surface, #111827)' : '#ffffff'
             }}>
@@ -659,20 +657,20 @@ export const CheckoutModal = () => {
               <p style={{ color: isDark ? 'var(--color-text-secondary, #cbd5e1)' : '#475569', fontSize: '0.925rem', marginBottom: '2rem', maxWidth: '340px' }}>
                 We've received your payment. Your design order has been assigned to our master digitizing desk.
               </p>
-              <button 
+              <button
                 onClick={handleSafeClose}
-                style={{ 
-                  background: 'linear-gradient(135deg, #059669 0%, #047857 100%)', 
-                  color: '#ffffff', 
-                  border: 'none', 
-                  padding: '0.95rem 2.25rem', 
-                  borderRadius: '12px', 
-                  fontSize: '1rem', 
-                  fontWeight: 900, 
-                  cursor: 'pointer', 
+                style={{
+                  background: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
+                  color: '#ffffff',
+                  border: 'none',
+                  padding: '0.95rem 2.25rem',
+                  borderRadius: '12px',
+                  fontSize: '1rem',
+                  fontWeight: 900,
+                  cursor: 'pointer',
                   boxShadow: '0 8px 24px rgba(5, 150, 105, 0.35)',
-                  display: 'inline-flex', 
-                  alignItems: 'center', 
+                  display: 'inline-flex',
+                  alignItems: 'center',
                   gap: '0.5rem'
                 }}
               >
@@ -1214,7 +1212,7 @@ export const CheckoutModal = () => {
               <h3 style={{ fontSize: '1.25rem', fontWeight: 900, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a', margin: '0 0 0.35rem' }}>
                 Pay with Google Pay
               </h3>
-              
+
               <p style={{ fontSize: '0.85rem', color: isDark ? 'var(--color-text-secondary, #cbd5e1)' : '#475569', margin: '0 0 1.5rem', maxWidth: '320px' }}>
                 Total: <strong style={{ color: isDark ? '#34d399' : '#047857', fontSize: '1.1rem' }}>{formattedSessionAmount}</strong>. Tap the button below to authorize payment.
               </p>
@@ -1279,16 +1277,16 @@ export const CheckoutModal = () => {
           ) : (
             /* 5. METHOD SELECTION VIEW */
             <div style={{ padding: '1.5rem', overflowY: 'auto', flex: '1 1 auto', minHeight: 0, WebkitOverflowScrolling: 'touch', background: isDark ? 'var(--color-surface, #111827)' : '#f8fafc' }}>
-              
+
               {/* Total Due Card */}
-              <div style={{ 
-                background: isDark ? 'var(--color-subtle, #1e293b)' : '#ffffff', 
-                border: isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid #cbd5e1', 
-                borderRadius: '16px', 
-                padding: '1.25rem', 
-                textAlign: 'center', 
-                marginBottom: '1.25rem', 
-                boxShadow: '0 4px 14px rgba(0,0,0,0.04)' 
+              <div style={{
+                background: isDark ? 'var(--color-subtle, #1e293b)' : '#ffffff',
+                border: isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid #cbd5e1',
+                borderRadius: '16px',
+                padding: '1.25rem',
+                textAlign: 'center',
+                marginBottom: '1.25rem',
+                boxShadow: '0 4px 14px rgba(0,0,0,0.04)'
               }}>
                 <div style={{ fontSize: '0.78rem', color: isDark ? 'var(--color-text-muted, #94a3b8)' : '#64748b', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
                   TOTAL AMOUNT DUE
@@ -1300,11 +1298,11 @@ export const CheckoutModal = () => {
                   ✓ Instant production dispatch upon confirmation
                 </div>
               </div>
-              
+
               <p style={{ color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a', fontSize: '0.9rem', fontWeight: 900, marginBottom: '0.85rem', textAlign: 'center' }}>
                 Select your payment method:
               </p>
-              
+
               <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '0.65rem' }}>
                 {paymentMethods.map(method => {
                   const isWallet = method.id === 'studio_wallet';
@@ -1332,7 +1330,7 @@ export const CheckoutModal = () => {
                       }}
                     >
                       {method.icon}
-                      
+
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
                           <span style={{ color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a', fontWeight: 900, fontSize: '0.95rem' }}>

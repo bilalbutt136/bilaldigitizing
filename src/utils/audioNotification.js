@@ -1,6 +1,6 @@
 /**
  * Premium Web Audio API Harmonic Bell Synthesizer & Segregated Audio Tune Engine
- * 
+ *
  * Strict Dual-Role Architecture:
  * 1. ADMIN SIDE: High, prominent custom uploaded audio tune (MP3, WAV, OGG, M4A)
  *    or crystal studio bell alerts at full admin volume so no order or message is ever missed.
@@ -11,7 +11,6 @@
  */
 
 let audioContextInstance = null;
-let hasUserInteracted = false;
 let lastSoundPlayedTime = 0;
 const SOUND_DEBOUNCE_MS = 1400; // Prevent duplicate rapid ringing while allowing crisp single alerts
 
@@ -361,7 +360,6 @@ export const isNotificationSoundPlaying = () => {
  * Unlocks Web Audio API and HTMLAudio on modern browsers requiring user gesture.
  */
 export const unlockAudioContext = () => {
-  hasUserInteracted = true;
   try {
     const AudioCtx = (typeof window !== 'undefined') && (window.AudioContext || window.webkitAudioContext);
     if (AudioCtx && (!audioContextInstance || audioContextInstance.state === 'closed')) {
@@ -815,7 +813,7 @@ export const playAdminChime = (force = false) => {
  */
 export const playNotificationSound = (type = 'chat', force = false, messageId = null, context = {}) => {
   let resolvedContext = context;
-  let resolvedMsgId = messageId;
+  let _resolvedMsgId = messageId;
 
   if (messageId && typeof messageId === 'object' && (!context || Object.keys(context).length === 0)) {
     resolvedContext = messageId;

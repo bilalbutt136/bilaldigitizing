@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { supabaseClient } from '../../../src/lib/supabaseClient';
-import { Scissors, Lock, CheckCircle2, AlertCircle, ArrowRight, Clock, RefreshCw } from 'lucide-react';
+import { Scissors as _Scissors, Lock, CheckCircle2, AlertCircle, ArrowRight, Clock, RefreshCw } from 'lucide-react';
 
 export default function WorkerResetPasswordPage() {
   const router = useRouter();

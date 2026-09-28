@@ -27,7 +27,7 @@ test('Chat System & Fiverr-Style Inbox Architecture', async (t) => {
   });
 
   await t.test('2. Multi-format attachment normalization handles machine files and artwork', () => {
-    const supportedFormats = [
+    const _supportedFormats = [
       { name: 'logo.dst', type: 'application/octet-stream', size: '42.18 KB' },
       { name: 'cap_design.pes', type: 'application/octet-stream', size: '85.68 KB' },
       { name: 'master.emb', type: 'application/octet-stream', size: '681.16 KB' },
@@ -187,7 +187,7 @@ test('Chat System & Fiverr-Style Inbox Architecture', async (t) => {
     const shouldSendNotification = (eventType, title = '', sender = 'client') => {
       const type = (eventType || '').toLowerCase();
       const t = (title || '').toLowerCase();
-      
+
       // Admin messages to client do not notify admin
       if (sender === 'admin') return false;
 
@@ -195,7 +195,7 @@ test('Chat System & Fiverr-Style Inbox Architecture', async (t) => {
       if (type === 'chat' || type === 'message' || t.includes('new message')) {
         return true;
       }
-      return type === 'order' || type === 'delivery' || type === 'offer' || 
+      return type === 'order' || type === 'delivery' || type === 'offer' ||
              t.includes('order') || t.includes('placed') || t.includes('delivered') || t.includes('accepted');
     };
 
@@ -242,17 +242,17 @@ test('Chat System & Fiverr-Style Inbox Architecture', async (t) => {
     const filterConversationsByChannel = (convs, channel) => {
       const active = resolveChannel(channel);
       if (active === 'support') {
-        return convs.filter(c => 
-          (c.id || '').startsWith('support-') || 
-          c.id === 'general-support' || 
+        return convs.filter(c =>
+          (c.id || '').startsWith('support-') ||
+          c.id === 'general-support' ||
           c.id === 'help-support' ||
           (Array.isArray(c.tags) && c.tags.includes('support')) ||
           (c.order_title || '').toLowerCase().includes('support')
         );
       } else {
-        return convs.filter(c => 
-          !(c.id || '').startsWith('support-') && 
-          c.id !== 'general-support' && 
+        return convs.filter(c =>
+          !(c.id || '').startsWith('support-') &&
+          c.id !== 'general-support' &&
           c.id !== 'help-support' &&
           (!Array.isArray(c.tags) || !c.tags.includes('support')) &&
           !(c.order_title || '').toLowerCase().includes('support')
@@ -323,7 +323,7 @@ test('Chat System & Fiverr-Style Inbox Architecture', async (t) => {
       const isPaid = status === 'paid' || paymentStatus === 'paid';
       const isAcceptedUnpaid = status === 'accepted' && !isPaid;
       const isPending = (status === 'pending' || status === 'sent' || status === 'viewed') && !isPaid && !isAcceptedUnpaid;
-      
+
       if (isPaid) {
         return { badge: 'Paid & In Production', canPay: false, hasOrderLink: true, requiresPayment: false };
       }
@@ -612,7 +612,7 @@ test('Chat System & Fiverr-Style Inbox Architecture', async (t) => {
       if (currentMessages.some(m => m.id === payload.new.id)) return currentMessages;
 
       if (payload.new.sender === 'client') {
-        const pendingIdx = currentMessages.findIndex(m => 
+        const pendingIdx = currentMessages.findIndex(m =>
           (m.isPending || String(m.id).startsWith('temp-')) &&
           (m.text || '').trim() === (payload.new.text || '').trim()
         );
