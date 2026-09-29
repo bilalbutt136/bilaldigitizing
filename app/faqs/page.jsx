@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { ChevronDown, MessageCircle, Search, Sparkles, HelpCircle, Layers, PenTool as _PenTool, Tag as _Tag, CreditCard as _CreditCard, ShieldCheck as _ShieldCheck, Mail, ArrowRight } from 'lucide-react';
 import { useAppState } from '../../src/context/StateContext';
@@ -116,16 +116,15 @@ const MASTER_DEFAULT_FAQS = [
 
 export default function FAQsPage() {
   const { faqs: dbFaqs = [] } = useAppState() || {};
-  const [faqs, setFaqs] = useState(MASTER_DEFAULT_FAQS);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [openIndex, setOpenIndex] = useState('0-0');
 
-  useEffect(() => {
-    if (!dbFaqs || dbFaqs.length === 0) return;
+  // CMS data is already server-preloaded through StateProvider. Merge it during
+  // render so the server HTML and hydrated client have identical FAQ heights.
+  const faqs = useMemo(() => {
+    if (!dbFaqs || dbFaqs.length === 0) return MASTER_DEFAULT_FAQS;
 
-    // Preserve the first-paint taxonomy so live CMS data cannot reorder visible layout.
-    // Matching questions update their answers in place; new questions/categories append.
     const merged = MASTER_DEFAULT_FAQS.map(section => ({
       ...section,
       questions: section.questions.map(item => ({ ...item }))
@@ -151,7 +150,7 @@ export default function FAQsPage() {
       }
     });
 
-    setFaqs(merged);
+    return merged;
   }, [dbFaqs]);
 
   const categories = useMemo(() => {

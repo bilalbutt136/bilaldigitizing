@@ -35,14 +35,7 @@ export const ClientLayoutShell = ({ children }) => {
       <div className="stealth-worker-portal min-h-screen bg-slate-950 text-slate-100 font-sans antialiased">
         <DynamicFavicon />
         <main style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-          <Suspense fallback={
-            <div style={{ padding: '3rem 1.5rem', maxWidth: '800px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '1rem', alignItems: 'center' }}>
-              <div style={{ height: '36px', width: '50%', background: '#1e293b', borderRadius: '8px' }} />
-              <div style={{ height: '20px', width: '75%', background: '#334155', borderRadius: '6px' }} />
-            </div>
-          }>
-            {children}
-          </Suspense>
+          {children}
         </main>
         <ToastContainer />
       </div>
@@ -64,14 +57,7 @@ export const ClientLayoutShell = ({ children }) => {
 
       {/* Main Content Area */}
       <main className="website-main-zone" style={{ flex: 1, minWidth: 0 }}>
-        <Suspense fallback={
-          <div style={{ padding: '3rem 1.5rem', maxWidth: '800px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '1rem', alignItems: 'center' }}>
-            <div style={{ height: '36px', width: '50%', background: '#e2e8f0', borderRadius: '8px' }} />
-            <div style={{ height: '20px', width: '75%', background: '#f1f5f9', borderRadius: '6px' }} />
-          </div>
-        }>
-          {children}
-        </Suspense>
+        {children}
       </main>
 
       {/* Website Footer & Desktop Widgets (Hidden in Standalone 5-Tab App Mode) */}

@@ -2,8 +2,8 @@ import React from 'react';
 
 export default function Loading() {
   return (
-    <div style={{
-      minHeight: '70vh',
+    <div className="route-loading-shell" style={{
+      minHeight: 'calc(100svh - 101px)',
       display: 'flex',
       flexDirection: 'column',
       alignItems: 'center',

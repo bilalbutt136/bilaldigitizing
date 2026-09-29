@@ -1854,3 +1854,12 @@ body, .site-shell { min-height: 100svh; }
   .faq-category-filter::-webkit-scrollbar { display: none; }
   .faq-category-filter > button { flex: 0 0 auto; scroll-snap-align: start; }
 }
+
+/* DESKTOP STREAMING STABILITY */
+.auth-route-shell .route-loading-shell {
+  min-height: calc(100svh - 63px) !important;
+}
+
+.stealth-worker-portal .route-loading-shell {
+  min-height: 100svh !important;
+}

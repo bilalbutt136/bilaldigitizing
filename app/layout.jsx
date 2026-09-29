@@ -10,14 +10,14 @@ import { fetchPublicCatalogServer } from '../src/lib/catalog/serverCatalog';
 const interFont = Inter({
   subsets: ['latin'],
   variable: '--font-inter',
-  display: 'swap',
+  display: 'optional',
   adjustFontFallback: true
 });
 
 const headingFont = Plus_Jakarta_Sans({
   subsets: ['latin'],
   variable: '--font-plus-jakarta',
-  display: 'swap',
+  display: 'optional',
   adjustFontFallback: true
 });
 
