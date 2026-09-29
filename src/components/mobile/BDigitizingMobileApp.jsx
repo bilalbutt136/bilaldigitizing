@@ -3661,12 +3661,12 @@ export const BDigitizingMobileApp = ({ initialTab = 'home' }) => {
               </button>
               <div>
                 <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 900, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a' }}>
-                  Studio Inbox
+                  Messages
                 </h3>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', marginTop: '0.1rem' }}>
                   <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#10b981', display: 'inline-block' }} />
                   <span style={{ fontSize: '0.72rem', color: isDark ? '#34d399' : '#059669', fontWeight: 700 }}>
-                    Digitizers & Support Active
+                    Inbox & Help Desk
                   </span>
                 </div>
               </div>
@@ -3702,8 +3702,9 @@ export const BDigitizingMobileApp = ({ initialTab = 'home' }) => {
             overflow: 'hidden'
           }}>
             <CustomerSupportChat
-              chatType="inbox"
-              key="mobile-chat-screen-inbox"
+              chatType={mobileTab === "support" ? "support" : "inbox"}
+              key={`mobile-chat-screen-${mobileTab === "support" ? "support" : "inbox"}`}
+              onSwitchChannel={(channel) => setMobileTab(channel === "support" ? "support" : "inbox", true)}
             />
           </div>
         </div>

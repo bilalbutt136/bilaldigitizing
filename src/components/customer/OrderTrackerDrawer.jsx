@@ -122,8 +122,8 @@ export const OrderTrackerDrawer = () => {
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
 
-  // Requirements Collapsible Accordion State (default open so specifications are immediately visible)
-  const [isRequirementsOpen, setIsRequirementsOpen] = useState(true);
+  // Detailed specifications stay collapsed by default so customers see the essentials first.
+  const [isRequirementsOpen, setIsRequirementsOpen] = useState(false);
   // Multi-Delivery Version Tab / Dropdown State
   const [selectedDeliveryIndex, setSelectedDeliveryIndex] = useState(0);
 
@@ -1067,7 +1067,7 @@ export const OrderTrackerDrawer = () => {
             className={`btn btn-sm ${activeSection === 'requirements' ? 'btn-primary-orange' : 'btn-outline'}`}
             style={{ fontWeight: 800, fontSize: '0.8rem', gap: '0.35rem' }}
           >
-            <FileText size={14} /> Order Requirements
+            <FileText size={14} /> Details
           </button>
 
           {isAdmin && (
@@ -1094,7 +1094,7 @@ export const OrderTrackerDrawer = () => {
               background: (isCompleted || isDelivered) && activeSection !== 'delivery' ? '#ecfdf5' : undefined
             }}
           >
-            <PackageCheck size={14} /> {isAdmin ? 'Deliver Order / Files' : (isCompleted ? '✅ Final Deliverables' : (isDelivered ? '✨ Delivered Files' : 'Deliverables'))}
+            <PackageCheck size={14} /> {isAdmin ? 'Delivery Desk' : 'Files'}
           </button>
 
           {/* Request Modification Tab: ONLY visible to CUSTOMER when delivered or in revision, NEVER to admin and NEVER when completed */}
@@ -1136,7 +1136,7 @@ export const OrderTrackerDrawer = () => {
             }}
             title="View & Download Official International Tax Invoice"
           >
-            <Receipt size={14} style={{ color: 'var(--orange-500, #ea580c)' }} /> Tax Invoice (PDF)
+            <Receipt size={14} style={{ color: 'var(--orange-500, #ea580c)' }} /> Invoice
           </button>
 
 
@@ -2018,7 +2018,7 @@ export const OrderTrackerDrawer = () => {
                 <div style={{ minWidth: 0 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
                     <h4 style={{ fontSize: isMobileLayout ? '0.95rem' : '1.05rem', fontWeight: 800, color: 'var(--text-main)', margin: 0 }}>
-                      Order Requirements & Specifications
+                      Order Details
                     </h4>
                     {/* Compact preview pills when collapsed */}
                     {!isRequirementsOpen && (
@@ -2038,8 +2038,8 @@ export const OrderTrackerDrawer = () => {
                   </div>
                   <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)', marginTop: '0.1rem' }}>
                     {isRequirementsOpen
-                      ? 'Customer instructions, dimensions, target fabric, and source logo files'
-                      : 'Click to expand customer instructions, dimensions, and artwork'}
+                      ? 'Size, fabric, placement, instructions, and source artwork'
+                      : 'Show size, fabric, placement, instructions, and artwork'}
                   </div>
                 </div>
               </div>
@@ -2066,12 +2066,12 @@ export const OrderTrackerDrawer = () => {
                 {isRequirementsOpen ? (
                   <>
                     <ChevronUp size={15} />
-                    <span>Hide Requirements</span>
+                    <span>Hide</span>
                   </>
                 ) : (
                   <>
                     <ChevronDown size={15} />
-                    <span>View Requirements</span>
+                    <span>Show</span>
                   </>
                 )}
               </button>
@@ -2148,10 +2148,10 @@ export const OrderTrackerDrawer = () => {
                 {/* Customer Instructions Text */}
                 <div style={{ background: 'var(--bg-surface)', padding: '0.85rem 1rem', borderRadius: '10px', border: '1px solid var(--border-color)' }}>
                   <div style={{ fontSize: '0.72rem', fontWeight: 800, textTransform: 'uppercase', color: 'var(--orange-500)', marginBottom: '0.25rem' }}>
-                    📝 Customer Notes & Instructions:
+                    Special Instructions
                   </div>
                   <div style={{ fontSize: '0.85rem', color: 'var(--text-main)', lineHeight: 1.45, whiteSpace: 'pre-wrap' }}>
-                    {parsedNotes.notes || parsedNotes.customerNotes || (typeof ord.notes === 'string' && !ord.notes.trim().startsWith('{') ? ord.notes : null) || ord.description || 'Standard high-density stitch pathing with underlay and pull compensation applied for commercial production.'}
+                    {parsedNotes.notes || parsedNotes.customerNotes || (typeof ord.notes === 'string' && !ord.notes.trim().startsWith('{') ? ord.notes : null) || 'No special instructions were provided.'}
                   </div>
                 </div>
               </div>

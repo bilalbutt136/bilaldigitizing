@@ -100,6 +100,83 @@ export function formatDimensionsSpec(dim) {
   return String(dim);
 }
 
+export function getCustomerInstructionText(order) {
+  if (!order) return '';
+
+  const readInstructionValue = (value) => {
+    if (value === null || value === undefined) return '';
+
+    if (typeof value === 'string') {
+      const trimmed = value.trim();
+      if (!trimmed || trimmed === '[object Object]') return '';
+
+      if (
+        (trimmed.startsWith('{') && trimmed.endsWith('}')) ||
+        (trimmed.startsWith('[') && trimmed.endsWith(']'))
+      ) {
+        try {
+          return readInstructionValue(JSON.parse(trimmed));
+        } catch {
+          return trimmed;
+        }
+      }
+
+      return trimmed;
+    }
+
+    if (Array.isArray(value)) {
+      return value
+        .map(readInstructionValue)
+        .filter(Boolean)
+        .join('\n');
+    }
+
+    if (typeof value === 'object') {
+      const direct = value.customerNotes
+        ?? value.customer_notes
+        ?? value.specialInstructions
+        ?? value.special_instructions
+        ?? value.instructions
+        ?? value.notes
+        ?? value.description;
+
+      const directText = readInstructionValue(direct);
+      if (directText) return directText;
+
+      if (Array.isArray(value.placementItems)) {
+        return value.placementItems
+          .map((item) => readInstructionValue(
+            item?.customerNotes
+            ?? item?.customer_notes
+            ?? item?.specialInstructions
+            ?? item?.special_instructions
+            ?? item?.instructions
+            ?? item?.notes
+          ))
+          .filter(Boolean)
+          .join('\n');
+      }
+    }
+
+    return '';
+  };
+
+  const candidates = [
+    order.special_instructions,
+    order.specialInstructions,
+    order.customer_notes,
+    order.customerNotes,
+    order.notes
+  ];
+
+  for (const candidate of candidates) {
+    const text = readInstructionValue(candidate);
+    if (text) return text;
+  }
+
+  return '';
+}
+
 async function loadJsPdf() {
   try {
     const jspdfModule = await import('jspdf');
@@ -214,9 +291,7 @@ export async function generateCustomerTaxInvoicePdf({
   const rushFee = Math.max(0, parseFloat(order?.rush_fee || order?.rushFee || 0));
   const subtotal = discountAmount > 0 ? (price + discountAmount - rushFee) : price;
   const designTitle = order?.title || order?.design_name || order?.name || '';
-  const customerNotes = typeof order?.notes === 'string' && order.notes.trim() !== '[object Object]'
-    ? order.notes.trim()
-    : (order?.special_instructions || order?.customer_notes || '');
+  const customerNotes = getCustomerInstructionText(order);
 
   // 1. Top Accent Stripe
   doc.setFillColor(...brandOrange);
@@ -549,30 +624,67 @@ export async function generateCustomerTaxInvoicePdf({
   doc.setTextColor(...(isPaid ? paidGreen : brandOrange));
   doc.text(`$${price.toFixed(2)} USD`, valX, curSumY, { align: 'right' });
 
-  // 8. Optional Customer Notes Box
+  // 8. Customer reference / special instructions
   let noteBoxY = curSumY + 14;
   if (customerNotes) {
-    const cleanNote = customerNotes.slice(0, 180);
-    doc.setFillColor(248, 250, 252);
-    doc.roundedRect(16, noteBoxY, 210 - 32, 12, 1.5, 1.5, 'F');
-    doc.setDrawColor(...borderLight);
-    doc.setLineWidth(0.3);
-    doc.roundedRect(16, noteBoxY, 210 - 32, 12, 1.5, 1.5, 'S');
+    const allNoteLines = doc.splitTextToSize(customerNotes, 166);
+    const lineHeight = 4.1;
+    const maxLinesPerBox = 48;
+    let remainingLines = [...allNoteLines];
+    let partNumber = 1;
 
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(7.5);
-    doc.setTextColor(...brandOrange);
-    doc.text('INSTRUCTIONS / NOTES:', 19, noteBoxY + 4.5);
+    while (remainingLines.length > 0) {
+      const pageLines = remainingLines.splice(0, maxLinesPerBox);
+      const boxHeight = 14 + (pageLines.length * lineHeight);
 
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(7.5);
-    doc.setTextColor(...textDark);
-    doc.text(cleanNote, 19, noteBoxY + 9);
-    noteBoxY += 16;
+      if (noteBoxY + boxHeight > 272) {
+        doc.addPage();
+        noteBoxY = 18;
+      }
+
+      doc.setFillColor(248, 250, 252);
+      doc.setDrawColor(...borderLight);
+      doc.setLineWidth(0.35);
+      doc.roundedRect(16, noteBoxY, 210 - 32, boxHeight, 1.5, 1.5, 'FD');
+
+      doc.setFillColor(...brandOrange);
+      doc.rect(16, noteBoxY, 1.6, boxHeight, 'F');
+
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(7.7);
+      doc.setTextColor(...primaryNavy);
+      doc.text(
+        partNumber === 1
+          ? 'CUSTOMER REFERENCE / SPECIAL INSTRUCTIONS'
+          : 'CUSTOMER REFERENCE / SPECIAL INSTRUCTIONS (CONTINUED)',
+        21,
+        noteBoxY + 5
+      );
+
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(7.2);
+      doc.setTextColor(...textMuted);
+      doc.text('Provided by customer • Applies to this order and production requirements', 21, noteBoxY + 9);
+
+      doc.setFontSize(8.2);
+      doc.setTextColor(...textDark);
+      doc.text(pageLines, 21, noteBoxY + 14);
+      noteBoxY += boxHeight + 5;
+      partNumber += 1;
+
+      if (remainingLines.length > 0) {
+        doc.addPage();
+        noteBoxY = 18;
+      }
+    }
   }
 
   // 9. Minimalist System-Generated Notice (No signature required)
   const noteBoxH = 8;
+  if (noteBoxY + noteBoxH > 276) {
+    doc.addPage();
+    noteBoxY = 18;
+  }
   doc.setFillColor(248, 250, 252);
   doc.roundedRect(16, noteBoxY, 210 - 32, noteBoxH, 1.5, 1.5, 'F');
   doc.setDrawColor(...borderLight);

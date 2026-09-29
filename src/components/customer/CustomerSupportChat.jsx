@@ -53,7 +53,8 @@ const formatChatDateHeader = (dateStr) => {
 export default function CustomerSupportChat({
   defaultOrderId = null,
   initialTopic = '',
-  chatType = 'inbox' // 'inbox' | 'support'
+  chatType = 'inbox', // 'inbox' | 'support'
+  onSwitchChannel = null
 }) {
   const { authUser, currentUser } = useAppState();
 
@@ -897,7 +898,7 @@ export default function CustomerSupportChat({
           <div style={{ minWidth: 0 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', flexWrap: 'nowrap' }}>
               <h3 style={{ fontSize: '0.92rem', fontWeight: 800, margin: 0, color: '#ffffff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                {chatType === 'support' ? '24/7 Studio Support Desk' : 'Studio Digitizing Desk'}
+                {chatType === 'support' ? 'Help Desk' : 'Inbox'}
               </h3>
               <ShieldCheck size={14} color="#38bdf8" style={{ flexShrink: 0 }} />
               <span style={{
@@ -910,18 +911,64 @@ export default function CustomerSupportChat({
                 letterSpacing: '0.03em',
                 flexShrink: 0
               }}>
-                ONLINE
+                Online
               </span>
             </div>
             <p style={{ fontSize: '0.72rem', color: '#94a3b8', margin: '0.1rem 0 0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
               {chatType === 'support'
-                ? 'Active 24/7 • Orders & Revision Assistance'
-                : 'Direct with Digitizers • Custom Offers & Stitch Quotes'}
+                ? 'Order help & revisions'
+                : 'Offers & studio messages'}
             </p>
           </div>
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexShrink: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.2rem', padding: '2px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px' }}>
+            <button
+              type="button"
+              onClick={() => onSwitchChannel?.('inbox')}
+              disabled={chatType === 'inbox' || !onSwitchChannel}
+              style={{
+                border: 'none',
+                borderRadius: '6px',
+                padding: '5px 7px',
+                background: chatType === 'inbox' ? '#ffffff' : 'transparent',
+                color: chatType === 'inbox' ? '#0f172a' : '#cbd5e1',
+                cursor: chatType === 'inbox' || !onSwitchChannel ? 'default' : 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.25rem',
+                fontSize: '0.68rem',
+                fontWeight: 800
+              }}
+              title="Open Inbox"
+            >
+              <MessageSquare size={12} />
+              <span>Inbox</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => onSwitchChannel?.('support')}
+              disabled={chatType === 'support' || !onSwitchChannel}
+              style={{
+                border: 'none',
+                borderRadius: '6px',
+                padding: '5px 7px',
+                background: chatType === 'support' ? '#ffffff' : 'transparent',
+                color: chatType === 'support' ? '#0f172a' : '#cbd5e1',
+                cursor: chatType === 'support' || !onSwitchChannel ? 'default' : 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.25rem',
+                fontSize: '0.68rem',
+                fontWeight: 800
+              }}
+              title="Open Help Desk"
+            >
+              <Headphones size={12} />
+              <span>Help Desk</span>
+            </button>
+          </div>
           <button
             type="button"
             onClick={handleToggleSound}
@@ -942,7 +989,7 @@ export default function CustomerSupportChat({
             title={isAudioEnabled ? "Sound enabled (Click to test chime or mute)" : "Sound muted (Click to enable)"}
           >
             {isAudioEnabled ? <Volume2 size={13} /> : <VolumeX size={13} />}
-            <span>{isAudioEnabled ? 'Sound ON' : 'Muted'}</span>
+
           </button>
 
           <button

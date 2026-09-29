@@ -2807,14 +2807,14 @@ export const CustomerDashboard = () => {
             {/* TAB: STUDIO INBOX & CUSTOM OFFERS */}
             {(activeTab === 'inbox' || activeTab === 'chat') && (
               <div style={{ width: '100%', height: '100%', minHeight: 0, flex: 1, display: 'flex', flexDirection: 'column' }}>
-                <CustomerSupportChat chatType="inbox" key="client-inbox" />
+                <CustomerSupportChat chatType="inbox" key="client-inbox" onSwitchChannel={(channel) => setActiveTab(channel === "support" ? "support" : "inbox")} />
               </div>
             )}
 
             {/* TAB: 24/7 CUSTOMER SUPPORT DESK */}
             {(activeTab === 'support' || activeTab === 'help-support') && (
               <div style={{ width: '100%', height: '100%', minHeight: 0, flex: 1, display: 'flex', flexDirection: 'column' }}>
-                <CustomerSupportChat chatType="support" key="client-support" />
+                <CustomerSupportChat chatType="support" key="client-support" onSwitchChannel={(channel) => setActiveTab(channel === "support" ? "support" : "inbox")} />
               </div>
             )}
 

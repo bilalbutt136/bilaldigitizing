@@ -23,7 +23,8 @@ import {
   getOrderPriceNumeric,
   isOrderPaidStatus,
   formatFabricSpec,
-  formatDimensionsSpec
+  formatDimensionsSpec,
+  getCustomerInstructionText
 } from '../../utils/customerInvoicePdfGenerator';
 import { useModalBackNavigation } from '../../hooks/useModalBackNavigation';
 
@@ -99,9 +100,9 @@ export const CustomerInvoiceModal = ({
   const rushFee = Math.max(0, parseFloat(order?.rush_fee || order?.rushFee || 0));
   const subtotal = discountAmount > 0 ? (price + discountAmount - rushFee) : price;
   const designTitle = order?.title || order?.design_name || order?.name || '';
-  const customerNotes = typeof order?.notes === 'string' && order.notes.trim() !== '[object Object]'
-    ? order.notes.trim()
-    : (order?.special_instructions || order?.customer_notes || '');
+  const customerNotes = getCustomerInstructionText(order);
+
+
 
   const specsParts = [];
   if (fabric) specsParts.push(`Fabric: ${fabric}`);
@@ -228,6 +229,31 @@ export const CustomerInvoiceModal = ({
     >
       {/* Print isolation styles for native Ctrl+P triggers */}
       <style>{`
+        @media (max-width: 640px) {
+          .customer-invoice-overlay {
+            padding: 0 !important;
+            align-items: stretch !important;
+          }
+          .customer-invoice-container {
+            height: 100dvh !important;
+            max-height: 100dvh !important;
+            border-radius: 0 !important;
+            border: none !important;
+          }
+          .customer-invoice-action-bar {
+            padding: 0.65rem 0.75rem !important;
+            flex-wrap: wrap !important;
+            gap: 0.5rem !important;
+          }
+          .customer-invoice-action-bar > div:last-child {
+            width: 100%;
+            overflow-x: auto;
+            padding-bottom: 2px;
+          }
+          #customer-invoice-print-content {
+            padding: 1rem !important;
+          }
+        }
         @media print {
           body * {
             visibility: hidden !important;
@@ -632,19 +658,20 @@ export const CustomerInvoiceModal = ({
             </div>
           </div>
 
-          {/* Optional Customer Instructions & Notes */}
+          {/* Customer reference / special instructions */}
           {customerNotes && (
             <div style={{
               background: '#f8fafc',
               border: '1px solid #e2e8f0',
-              borderRadius: '8px',
-              padding: '0.65rem 0.95rem',
+              borderRadius: '10px',
+              padding: '0.9rem 1rem',
+              borderLeft: '4px solid #ea580c',
               marginBottom: '1.25rem'
             }}>
               <div style={{ fontSize: '0.72rem', fontWeight: 800, color: '#ea580c', marginBottom: '0.2rem', textTransform: 'uppercase', letterSpacing: '0.03em' }}>
-                📝 Customer Notes & Instructions:
+                Customer Reference / Special Instructions
               </div>
-              <div style={{ fontSize: '0.76rem', color: '#334155', lineHeight: 1.45, whiteSpace: 'pre-wrap' }}>
+              <div style={{ fontSize: '0.82rem', color: '#334155', lineHeight: 1.6, whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>
                 {customerNotes}
               </div>
             </div>
