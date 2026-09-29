@@ -38,6 +38,9 @@ import {
 import { ClientSidebar } from './ClientSidebar';
 import CustomerMobileCommandCenter from './CustomerMobileCommandCenter';
 import MobileOrderTrackingCard from './MobileOrderTrackingCard';
+import CustomerProfilePanel from './CustomerProfilePanel';
+import OrdersManagementHeader from './OrdersManagementHeader';
+import OrdersReadyBanner from './OrdersReadyBanner';
 import OrderThumbnail from './OrderThumbnail';
 import { getStableOrderKey, resolveOrderPreviewImage } from '../../utils/orderImageUtils';
 import { MobileSimpleOrderModal } from './MobileSimpleOrderModal';
@@ -1121,7 +1124,7 @@ export const CustomerDashboard = () => {
                   alignItems: 'center',
                   justifyContent: 'center',
                   fontWeight: 900,
-                  fontSize: '0.9rem',
+                  fontSize: '0.8rem',
                   flexShrink: 0,
                   cursor: 'pointer'
                 }}
@@ -2405,221 +2408,33 @@ export const CustomerDashboard = () => {
 
             {/* TAB 4: ACCOUNT & PROFILE */}
             {activeTab === 'profile' && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                <div className="card" style={{ padding: '2rem', background: isDark ? 'var(--color-surface, #111827)' : '#ffffff', border: isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid var(--border-color)', borderRadius: '16px' }}>
-                  <h2 style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--navy-900)', marginBottom: '1.5rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.75rem' }}>
-                    Client Profile & Studio Account
-                  </h2>
-
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.5rem' }}>
-                    <div>
-                      <label style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Account Name</label>
-                      <div style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--navy-900)', marginTop: '0.2rem' }}>{activeUser?.name || 'Client'}</div>
-                    </div>
-
-                    <div>
-                      <label style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Email Address</label>
-                      <div style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--navy-900)', marginTop: '0.2rem' }}>{activeUser?.email || '—'}</div>
-                    </div>
-
-                    <div>
-                      <label style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Company / Brand</label>
-                      <div style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--navy-900)', marginTop: '0.2rem' }}>{activeUser?.company || '—'}</div>
-                    </div>
-
-                    <div>
-                      <label style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Studio Deposit Credit</label>
-                      <div style={{ fontSize: '1.3rem', fontWeight: 900, color: 'var(--orange-600)', marginTop: '0.2rem' }}>${walletBalance.toFixed(2)}</div>
-                    </div>
-                  </div>
-
-                  <div style={{ marginTop: '2rem', borderTop: '1px dashed var(--border-color)', paddingTop: '1.5rem', display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-                    <button className="btn btn-primary-orange" onClick={() => setIsDepositModalOpen(true)}>
-                      <Wallet size={18} /> Top-Up Studio Wallet Funds
-                    </button>
-                    <button className="btn btn-outline" onClick={() => setIsServiceSelectorOpen(true)}>
-                      <PlusCircle size={18} /> Order Now
-                    </button>
-                  </div>
-                </div>
-              </div>
+              <CustomerProfilePanel
+                user={activeUser}
+                walletBalance={walletBalance}
+                onDeposit={() => setIsDepositModalOpen(true)}
+                onNewOrder={() => setIsServiceSelectorOpen(true)}
+                onOpenSettings={() => setActiveTab('settings')}
+              />
             )}
 
             {/* TAB: MY ORDERS (Clean, high-performance order management) */}
             {activeTab === 'orders' && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                {/* Header & Controls (Responsive Desktop & Mobile Chrome layout) */}
-                {(() => {
-                  const { activeCount: activeOrdersCount, completedCount: completedOrdersCount, deliveredOrdersList } = ordersManagement;
+                <OrdersManagementHeader
+                  activeCount={ordersManagement.activeCount}
+                  completedCount={ordersManagement.completedCount}
+                  totalCount={myOrders.length}
+                  activeFilter={orderFilterTab}
+                  onFilterChange={setOrderFilterTab}
+                  onNewOrder={() => setIsServiceSelectorOpen(true)}
+                />
 
-                  return (
-                    <>
-                      <div className="orders-management-header">
-                        {/* Top Bar on mobile / Left side on desktop */}
-                        <div className="orders-management-top-bar">
-                          <div>
-                            <h2 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 900, color: 'var(--navy-950)' }}>
-                              My Orders
-                            </h2>
-                            <p className="desktop-only" style={{ margin: '0.1rem 0 0', fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-                              Track artwork production, machine files, quotes & revisions
-                            </p>
-                          </div>
-
-                          {/* Mobile-only + New Order button placed in top row so it never overflows */}
-                          <div className="mobile-only">
-                            <button
-                              type="button"
-                              onClick={() => setIsServiceSelectorOpen(true)}
-                              className="btn btn-primary-orange"
-                              style={{
-                                padding: '0.45rem 0.85rem',
-                                fontSize: '0.82rem',
-                                fontWeight: 800,
-                                borderRadius: '10px',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '0.35rem',
-                                whiteSpace: 'nowrap',
-                                minHeight: '36px'
-                              }}
-                            >
-                              <PlusCircle size={15} /> + New Order
-                            </button>
-                          </div>
-                        </div>
-
-                        {/* Actions & Filters */}
-                        <div className="orders-header-actions-group">
-                          <div className="orders-segmented-filter-bar">
-                            <button
-                              type="button"
-                              onClick={() => setOrderFilterTab('active')}
-                              className="orders-segmented-filter-btn"
-                              style={{
-                                background: orderFilterTab === 'active' ? (isDark ? '#1e293b' : '#ffffff') : 'transparent',
-                                color: orderFilterTab === 'active' ? '#ea580c' : 'var(--text-muted)',
-                                fontWeight: orderFilterTab === 'active' ? 900 : 700,
-                                boxShadow: orderFilterTab === 'active' ? '0 2px 6px rgba(0,0,0,0.06)' : 'none'
-                              }}
-                            >
-                              Active ({activeOrdersCount})
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => setOrderFilterTab('completed')}
-                              className="orders-segmented-filter-btn"
-                              style={{
-                                background: orderFilterTab === 'completed' ? (isDark ? '#1e293b' : '#ffffff') : 'transparent',
-                                color: orderFilterTab === 'completed' ? '#16a34a' : 'var(--text-muted)',
-                                fontWeight: orderFilterTab === 'completed' ? 900 : 700,
-                                boxShadow: orderFilterTab === 'completed' ? '0 2px 6px rgba(0,0,0,0.06)' : 'none'
-                              }}
-                            >
-                              Completed ({completedOrdersCount})
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => setOrderFilterTab('all')}
-                              className="orders-segmented-filter-btn"
-                              style={{
-                                background: orderFilterTab === 'all' ? (isDark ? '#1e293b' : '#ffffff') : 'transparent',
-                                color: orderFilterTab === 'all' ? (isDark ? '#f8fafc' : 'var(--navy-900)') : 'var(--text-muted)',
-                                fontWeight: orderFilterTab === 'all' ? 900 : 700,
-                                boxShadow: orderFilterTab === 'all' ? '0 2px 6px rgba(0,0,0,0.06)' : 'none'
-                              }}
-                            >
-                              All ({myOrders.length})
-                            </button>
-                          </div>
-
-                          {/* Desktop-only + New Order button placed side-by-side with filters */}
-                          <div className="desktop-only">
-                            <button
-                              type="button"
-                              onClick={() => setIsServiceSelectorOpen(true)}
-                              className="btn btn-primary-orange"
-                              style={{
-                                padding: '0.45rem 1rem',
-                                fontSize: '0.85rem',
-                                fontWeight: 800,
-                                borderRadius: '10px',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '0.35rem',
-                                whiteSpace: 'nowrap'
-                              }}
-                            >
-                              <PlusCircle size={16} /> + New Order
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* DELIVERED PRODUCTION FILES READY ALERT BANNER */}
-                      {deliveredOrdersList.length > 0 && orderFilterTab !== 'completed' && (
-                        <div style={{
-                          background: isDark ? 'rgba(22, 163, 74, 0.12)' : 'linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)',
-                          border: '1.5px solid #86efac',
-                          borderRadius: '14px',
-                          padding: '0.75rem 1rem',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                          gap: '0.75rem',
-                          flexWrap: 'wrap',
-                          boxShadow: '0 2px 8px rgba(22, 163, 74, 0.08)'
-                        }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-                            <div style={{
-                              background: '#16a34a',
-                              color: '#ffffff',
-                              width: '34px',
-                              height: '34px',
-                              borderRadius: '50%',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              flexShrink: 0,
-                              boxShadow: '0 2px 6px rgba(22, 163, 74, 0.3)'
-                            }}>
-                              <Download size={16} />
-                            </div>
-                            <div>
-                              <div style={{ fontSize: '0.85rem', fontWeight: 900, color: isDark ? '#4ade80' : '#14532d' }}>
-                                🎉 {deliveredOrdersList.length} Order{deliveredOrdersList.length > 1 ? 's' : ''} Ready for Download!
-                              </div>
-                              <div style={{ fontSize: '0.74rem', color: isDark ? '#cbd5e1' : '#166534' }}>
-                                Production machine files (DST, PES, EMB, Vector) are ready.
-                              </div>
-                            </div>
-                          </div>
-
-                          <button
-                            type="button"
-                            onClick={() => setOrderFilterTab('completed')}
-                            style={{
-                              background: '#16a34a',
-                              color: '#ffffff',
-                              border: 'none',
-                              borderRadius: '8px',
-                              padding: '0.45rem 0.85rem',
-                              fontSize: '0.78rem',
-                              fontWeight: 800,
-                              cursor: 'pointer',
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '0.35rem',
-                              whiteSpace: 'nowrap'
-                            }}
-                          >
-                            View Delivered Files <ArrowRight size={14} />
-                          </button>
-                        </div>
-                      )}
-                    </>
-                  );
-                })()}
+                {orderFilterTab !== 'completed' && (
+                  <OrdersReadyBanner
+                    count={ordersManagement.deliveredOrdersList.length}
+                    onView={() => setOrderFilterTab('completed')}
+                  />
+                )}
 
                 {/* Orders List / Cards */}
                 {(() => {
