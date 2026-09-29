@@ -18,7 +18,6 @@ export const AnnouncementBar = () => {
   const navigate = useNavigate();
   const [isDismissed, setIsDismissed] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [mounted, setMounted] = useState(false);
   const [timeLeft, setTimeLeft] = useState({ hours: 14, minutes: 35, seconds: 48 });
 
   const rawAnnouncement = siteSettings?.announcement;
@@ -57,12 +56,6 @@ export const AnnouncementBar = () => {
 
   // Real-time Countdown Timer calculation & Live promotions listener
   useEffect(() => {
-    setMounted(true);
-    if (announcement?.text) {
-      const dismissKey = 'announcement_dismissed_' + encodeURIComponent(announcement.text);
-      setIsDismissed(sessionStorage.getItem(dismissKey) === 'true');
-    }
-
     const timer = setInterval(() => {
       setTimeLeft(prev => {
         if (prev.seconds > 0) {
@@ -103,7 +96,7 @@ export const AnnouncementBar = () => {
     };
   }, [announcement?.text, announcement?.enabled, activePromo?.discountPercent, activePromo?.id]);
 
-  if (!mounted || isDismissed || !announcement?.enabled || !announcement?.text) {
+  if (isDismissed || !announcement?.enabled || !announcement?.text) {
     return null;
   }
 
@@ -313,7 +306,8 @@ export const AnnouncementBar = () => {
         alignItems: 'center',
         userSelect: 'none',
         cursor: 'pointer',
-        transition: 'background 0.3s ease, color 0.3s ease'
+        transition: 'background 0.3s ease, color 0.3s ease',
+        fontVariantNumeric: 'tabular-nums'
       }}
       onClick={handleStripClick}
     >

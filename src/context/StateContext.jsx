@@ -74,37 +74,13 @@ export { formatOrderId, formatDimensions, formatFabric, formatDesignTitle };
 const StateContext = createContext();
 
 
-export const StateProvider = ({ children }) => {
-  // Synchronous session hydration from localStorage to prevent flash/redirect on refresh
-  const getInitialAuth = () => {
-    if (typeof window === 'undefined') {
-      return { user: null, isAuth: false, view: 'public' };
-    }
-    try {
-      const savedUserStr = localStorage.getItem('bdigi_auth_user');
-      const savedView = localStorage.getItem('bdigi_current_view') || 'public';
-      if (savedUserStr) {
-        const parsed = JSON.parse(savedUserStr);
-        if (parsed && parsed.email) {
-          const isAdmin = parsed.role === 'admin';
-          return {
-            user: parsed,
-            isAuth: true,
-            view: isAdmin ? 'admin' : (savedView === 'admin' ? 'admin' : 'customer')
-          };
-        }
-      }
-    } catch {}
-    return { user: null, isAuth: false, view: 'public' };
-  };
-
-  const initialAuth = getInitialAuth();
-
-  // Navigation & Authentication state
-  const [currentView, setCurrentView] = useState(initialAuth.view);
-  const [isAuthenticated, setIsAuthenticated] = useState(initialAuth.isAuth);
+export const StateProvider = ({ children, initialCatalog = null }) => {
+  // Keep SSR and hydration identical. Cached browser data never counts as authenticated;
+  // Supabase verification below is the only source of truth for the signed-in session.
+  const [currentView, setCurrentView] = useState('public');
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isAuthInitialized, setIsAuthInitialized] = useState(false);
-  const [authUser, setAuthUser] = useState(initialAuth.user);
+  const [authUser, setAuthUser] = useState(null);
 
   // Global Toast Notification State - hoisted early so all callbacks/effects can safely access it
   const [toast, setToast] = useState(null);
@@ -129,30 +105,26 @@ export const StateProvider = ({ children }) => {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [authModalMode, setAuthModalMode] = useState('login');
   const [authModalTarget, setAuthModalTarget] = useState('customer');
-  const [activeAdminTabState, setActiveAdminTabState] = useState(() => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('bdigi_admin_tab') || 'dashboard';
-    }
-    return 'dashboard';
-  });
+  const [activeAdminTabState, setActiveAdminTabState] = useState('dashboard');
+  const [activeCustomerTabState, setActiveCustomerTabState] = useState('dashboard');
 
-  const [activeCustomerTabState, setActiveCustomerTabState] = useState(() => {
-    if (typeof window !== 'undefined') {
+  // Browser-only tab preferences are applied after hydration so SSR and the
+  // first client render stay identical.
+  useEffect(() => {
+    try {
       const urlParams = new URLSearchParams(window.location.search);
       const tabParam = urlParams.get('tab');
+      const savedAdminTab = localStorage.getItem('bdigi_admin_tab');
+      const savedCustomerTab = localStorage.getItem('bdigi_customer_tab');
+
+      if (savedAdminTab) setActiveAdminTabState(savedAdminTab);
       if (tabParam) {
-        if (tabParam === 'chat') return 'inbox';
-        return tabParam;
+        setActiveCustomerTabState(tabParam === 'chat' ? 'inbox' : tabParam);
+      } else if (savedCustomerTab) {
+        setActiveCustomerTabState(savedCustomerTab === 'chat' ? 'inbox' : savedCustomerTab);
       }
-      const savedTab = localStorage.getItem('bdigi_customer_tab');
-      if (savedTab) {
-        if (savedTab === 'chat') return 'inbox';
-        return savedTab;
-      }
-      return 'dashboard';
-    }
-    return 'dashboard';
-  });
+    } catch {}
+  }, []);
 
   // Strict Session Guard: If an active authenticated session exists, ensure the login modal stays closed
   useEffect(() => {
@@ -242,53 +214,10 @@ export const StateProvider = ({ children }) => {
     showToast(`Theme updated to ${THEME_PRESETS.find(t => t.id === targetPreset)?.name || 'New Theme'} ✨`, 'success');
   };
 
-  // Mobile View Mode: 'app' (standalone PWA/installed app) | 'website' (responsive website for mobile & desktop browsers)
-  const getInitialMobileMode = () => {
-    if (typeof window !== 'undefined') {
-      try {
-        const urlParams = new URLSearchParams(window.location.search);
-        const urlApp = urlParams.get('app') === 'true' || urlParams.get('mode') === 'app';
-        const urlWeb = urlParams.get('web') === 'true' || urlParams.get('mode') === 'web';
-        if (urlWeb) return 'website';
-        if (urlApp) return 'app';
-
-        const isStandalone = window.matchMedia('(display-mode: standalone)').matches ||
-                             window.navigator.standalone === true ||
-                             (document.referrer && document.referrer.includes('android-app://'));
-        if (isStandalone) return 'app';
-
-        // When opened in mobile Chrome, Safari, or any browser, always default to responsive website
-        return 'website';
-      } catch {}
-    }
-    return 'website';
-  };
-
-  const [mobileMode, setMobileModeState] = useState(getInitialMobileMode);
-
-  const [isStandaloneApp, setIsStandaloneApp] = useState(() => {
-    if (typeof window !== 'undefined') {
-      try {
-        return window.matchMedia('(display-mode: standalone)').matches ||
-               window.navigator.standalone === true ||
-               (document.referrer && document.referrer.includes('android-app://'));
-      } catch {}
-    }
-    return false;
-  });
-
-  const [mobileActiveTab, setMobileActiveTab] = useState(() => {
-    if (typeof window !== 'undefined') {
-      try {
-        const urlParams = new URLSearchParams(window.location.search);
-        const tabParam = urlParams.get('tab');
-        if (tabParam) return tabParam;
-        const storedTab = localStorage.getItem('bdigi_mobile_active_tab');
-        if (storedTab) return storedTab;
-      } catch {}
-    }
-    return 'home';
-  });
+  // Mobile view starts deterministically for SSR/hydration; browser display mode is resolved after mount.
+  const [mobileMode, setMobileModeState] = useState('website');
+  const [isStandaloneApp, setIsStandaloneApp] = useState(false);
+  const [mobileActiveTab, setMobileActiveTab] = useState('home');
 
   const setMobileTab = useCallback((newTab) => {
     setMobileActiveTab(prev => (prev === newTab ? prev : newTab));
@@ -389,68 +318,25 @@ export const StateProvider = ({ children }) => {
   const [isCheckoutModalOpen, setIsCheckoutModalOpen] = useState(false);
   const [checkoutSession, setCheckoutSession] = useState(null);
 
-  const readCachedArray = (key) => {
-    if (typeof window !== 'undefined') {
-      try {
-        const saved = localStorage.getItem(key);
-        if (saved) {
-          const parsed = JSON.parse(saved);
-          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-        }
-      } catch {}
-    }
-    return [];
-  };
-
   // Core Data Arrays (seeded from cached storage immediately, updated live from DB)
   const [orders, setOrders] = useState([]);
   const [clients, setClients] = useState([]);
-  const [pricing, setPricing] = useState({});
-  const [pricingCards, setPricingCards] = useState(() => readCachedArray('bdigi_pricing_cards'));
-  const [dynamicPricingTiers, setDynamicPricingTiers] = useState(() => readCachedArray('bdigi_dynamic_pricing_tiers'));
-  const [portfolioSamples, setPortfolioSamples] = useState(() => readCachedArray('portfolio_samples_live'));
-  const [sewOuts, setSewOuts] = useState(() => readCachedArray('bdigi_sew_outs'));
-  const [patchCards, setPatchCards] = useState(() => readCachedArray('bdigi_patch_cards'));
-  const [storeProducts, setStoreProducts] = useState(() => readCachedArray('bdigi_store_products'));
-  const [servicesList, setServicesList] = useState(() => readCachedArray('bdigi_services_list'));
-  const [heroSlides, setHeroSlides] = useState(() => readCachedArray('bdigi_hero_slides'));
-  const [heroGlobalSettings, setHeroGlobalSettings] = useState({
+  const [pricing, setPricing] = useState(initialCatalog?.pricing || {});
+  const [pricingCards, setPricingCards] = useState(initialCatalog?.pricingCards || []);
+  const [dynamicPricingTiers, setDynamicPricingTiers] = useState(initialCatalog?.dynamicPricingTiers || []);
+  const [portfolioSamples, setPortfolioSamples] = useState(initialCatalog?.portfolioSamples || []);
+  const [sewOuts, setSewOuts] = useState(initialCatalog?.sewOuts || []);
+  const [patchCards, setPatchCards] = useState(initialCatalog?.patchCards || []);
+  const [storeProducts, setStoreProducts] = useState(initialCatalog?.storeProducts || []);
+  const [servicesList, setServicesList] = useState(initialCatalog?.servicesList || []);
+  const [heroSlides, setHeroSlides] = useState(initialCatalog?.heroSlides || []);
+  const [heroGlobalSettings, setHeroGlobalSettings] = useState(initialCatalog?.heroGlobalSettings || {
     title: 'Premium Embroidery, Vector Art & Patches',
     rotatingTexts: 'Commercial Embroidery, Scalable Vector Art, Custom Physical Patches'
   });
-  const [heroServiceText, setHeroServiceText] = useState({});
+  const [heroServiceText, setHeroServiceText] = useState(initialCatalog?.heroServiceText || {});
   const [siteSettings, setSiteSettings] = useState(() => {
-    if (typeof window !== 'undefined') {
-      try {
-        const saved = localStorage.getItem('site_settings_live');
-        if (saved) {
-          const parsed = JSON.parse(saved);
-          if (parsed && typeof parsed === 'object') {
-            // Sanitize: eliminate any obsolete brand strings from local storage cache
-            if (parsed.studioName && /bilal\s*digitizing/i.test(parsed.studioName)) {
-              parsed.studioName = parsed.studioName.replace(/bilal\s*digitizing/gi, 'BDigitizing');
-            }
-            if (parsed.metaTitle && /bilal\s*digitizing/i.test(parsed.metaTitle)) {
-              parsed.metaTitle = parsed.metaTitle.replace(/bilal\s*digitizing/gi, 'BDigitizing');
-            }
-            if (parsed.invoiceFooterNote && /bilal\s*digitizing/i.test(parsed.invoiceFooterNote)) {
-              parsed.invoiceFooterNote = parsed.invoiceFooterNote.replace(/bilal\s*digitizing/gi, 'BDigitizing');
-            }
-            if (parsed.supportEmail && /bilaldigitizing\.com/i.test(parsed.supportEmail)) {
-              parsed.supportEmail = 'support@bdigitizing.com';
-            }
-            // Sanitize: eliminate any obsolete emerald/green gradient or 20% cached announcement
-            if (parsed.announcement) {
-              if (parsed.announcement.theme === 'emerald' || (parsed.announcement.bgColor && parsed.announcement.bgColor.includes('065f46'))) {
-                parsed.announcement.theme = 'orange';
-                parsed.announcement.bgColor = 'linear-gradient(90deg, #ea580c 0%, #f97316 50%, #ea580c 100%)';
-              }
-            }
-            return parsed;
-          }
-        }
-      } catch {}
-    }
+    if (initialCatalog?.siteSettings) return initialCatalog.siteSettings;
     return {
       studioName: 'BDigitizing Studio',
       studioTagline: 'Premier Commercial Embroidery Digitizing & Vector Art Lab',
@@ -531,15 +417,15 @@ export const StateProvider = ({ children }) => {
       ]
     };
   });
-  const [digitizers, setDigitizers] = useState([]);
+  const [digitizers, setDigitizers] = useState(initialCatalog?.digitizers || []);
 
   // Admin whitelist (server-managed via public.admins table)
   const [adminUsers, setAdminUsers] = useState([]);
 
   // Dynamic Service-Driven Homepage & CMS Content State
   const [activeHomeServiceTab, setActiveHomeServiceTab] = useState('all');
-  const [serviceCmsContent, setServiceCmsContent] = useState({});
-  const [homePageConfig, setHomePageConfig] = useState({
+  const [serviceCmsContent, setServiceCmsContent] = useState(initialCatalog?.serviceCms || {});
+  const [homePageConfig, setHomePageConfig] = useState(initialCatalog?.homePageConfig || {
     settings: {},
     trustStats: [],
     trustFeatures: [],
@@ -547,8 +433,8 @@ export const StateProvider = ({ children }) => {
     pricingStaticCards: [],
     pricingTiers: []
   });
-  const [testimonials, setTestimonials] = useState([]);
-  const [faqs, setFaqs] = useState([]);
+  const [testimonials, setTestimonials] = useState(initialCatalog?.testimonials || []);
+  const [faqs, setFaqs] = useState(initialCatalog?.faqs || []);
 
   // Wallet & Modals State
   const [walletBalance, setWalletBalance] = useState(0);
@@ -566,28 +452,7 @@ export const StateProvider = ({ children }) => {
   };
 
   // Global Order Notification System State with Per-User Persistence & Live Sync
-  const [notifications, setNotifications] = useState(() => {
-    try {
-      if (typeof window !== 'undefined') {
-        const savedUserStr = localStorage.getItem('bdigi_auth_user');
-        if (savedUserStr) {
-          const parsedUser = JSON.parse(savedUserStr);
-          const email = (parsedUser?.email || '').toLowerCase().trim();
-          const role = parsedUser?.role || 'customer';
-          const key = getNotificationStorageKey(email);
-          if (key) {
-            const saved = localStorage.getItem(key);
-            if (saved) {
-              const parsed = JSON.parse(saved);
-              return filterAndSanitizeNotifications(parsed, { currentUserEmail: email, isAdmin: role === 'admin' });
-            }
-          }
-        }
-        try { localStorage.removeItem('bdigi_notifications'); } catch {}
-      }
-    } catch {}
-    return [];
-  });
+  const [notifications, setNotifications] = useState([]);
 
   const saveNotificationsToStorage = (updatedList, targetEmail = null) => {
     try {
@@ -792,14 +657,7 @@ export const StateProvider = ({ children }) => {
   const unreadNotificationsCount = Array.isArray(notifications) ? notifications.filter(n => !n.read && !n.is_read).length : 0;
 
   // Unread Orders tracking (Badge clears once customer views Orders tab/screen)
-  const [lastOrdersViewedTime, setLastOrdersViewedTime] = useState(() => {
-    if (typeof window !== 'undefined') {
-      const email = authUser?.email || 'guest';
-      const saved = localStorage.getItem(`bdigi_last_orders_viewed_${email}`);
-      return saved ? parseInt(saved, 10) || 0 : 0;
-    }
-    return 0;
-  });
+  const [lastOrdersViewedTime, setLastOrdersViewedTime] = useState(0);
 
   const [unreadOrdersCount, setUnreadOrdersCount] = useState(0);
 

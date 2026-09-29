@@ -427,7 +427,7 @@ export const AuthModal = ({ isStandalonePage = false, initialMode = null }) => {
         className={isStandalonePage ? "auth-standalone-page" : "modal-overlay"}
         onClick={isStandalonePage ? undefined : handleSafeClose}
         style={isStandalonePage ? {
-          minHeight: 'calc(100vh - 120px)',
+          minHeight: 'calc(100svh - 63px)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -449,7 +449,7 @@ export const AuthModal = ({ isStandalonePage = false, initialMode = null }) => {
         style={{
           maxWidth: '920px',
           width: '100%',
-          maxHeight: isStandalonePage ? 'none' : 'calc(100vh - 40px)',
+          maxHeight: isStandalonePage ? 'none' : 'calc(100dvh - 40px)',
           borderRadius: '24px',
           overflow: 'hidden',
           boxShadow: isStandalonePage ? '0 20px 60px rgba(15, 23, 42, 0.12)' : '0 25px 70px rgba(15, 23, 42, 0.35)',
@@ -648,7 +648,7 @@ export const AuthModal = ({ isStandalonePage = false, initialMode = null }) => {
           </div>
         </div>
         {/* RIGHT PANEL: AUTHENTICATION FORMS (COMPACT ZERO-SCROLL FITTING) */}
-        <div style={{ padding: 'clamp(1rem, 3vw, 1.75rem)', overflowY: 'auto', maxHeight: 'calc(100vh - 40px)', boxSizing: 'border-box' }}>
+        <div className="auth-form-panel" style={{ padding: 'clamp(1rem, 3vw, 1.75rem)', overflowY: isStandalonePage ? 'visible' : 'auto', maxHeight: isStandalonePage ? 'none' : 'calc(100dvh - 40px)', boxSizing: 'border-box' }}>
 
           {/* Header section with title and quick toggle */}
           <div style={{ marginBottom: '0.9rem' }}>

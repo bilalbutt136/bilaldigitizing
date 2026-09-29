@@ -1,9 +1,25 @@
 import '../src/index.css';
 import './globals.css';
+import { Inter, Plus_Jakarta_Sans } from 'next/font/google';
 import { Suspense as _Suspense } from 'react';
 import { StateProvider } from '../src/context/StateContext';
 import { ErrorBoundary } from '../src/components/ErrorBoundary';
 import { ClientLayoutShell } from '../src/components/layout/ClientLayoutShell';
+import { fetchPublicCatalogServer } from '../src/lib/catalog/serverCatalog';
+
+const interFont = Inter({
+  subsets: ['latin'],
+  variable: '--font-inter',
+  display: 'swap',
+  adjustFontFallback: true
+});
+
+const headingFont = Plus_Jakarta_Sans({
+  subsets: ['latin'],
+  variable: '--font-plus-jakarta',
+  display: 'swap',
+  adjustFontFallback: true
+});
 
 const getMetadataBase = () => {
   const envUrl = (process.env.NEXT_PUBLIC_SITE_URL || '').trim();
@@ -108,14 +124,12 @@ export const viewport = {
   ]
 };
 
-export default function RootLayout({ children }) {
+export default async function RootLayout({ children }) {
+  const initialCatalog = await fetchPublicCatalogServer();
+
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, interactive-widget=resizes-content" />
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
@@ -217,10 +231,9 @@ export default function RootLayout({ children }) {
       </head>
       <body
         suppressHydrationWarning
-        className="font-sans antialiased text-slate-900 bg-slate-50 dark:bg-slate-950 dark:text-slate-100"
-        style={{ fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" }}
+        className={`${interFont.variable} ${headingFont.variable} font-sans antialiased text-slate-900 bg-slate-50 dark:bg-slate-950 dark:text-slate-100`}
       >
-        <StateProvider>
+        <StateProvider initialCatalog={initialCatalog}>
           <ErrorBoundary>
             <ClientLayoutShell>
               {children}

@@ -90,7 +90,7 @@ import { GoogleCustomSignInButton } from '../auth/GoogleCustomSignInButton';
 
 const GOOGLE_CLIENT_ID = (process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '421520521310-7appibeh1m7cdd90iid17lsq8thlq2oc.apps.googleusercontent.com').trim();
 
-export const BDigitizingMobileApp = () => {
+export const BDigitizingMobileApp = ({ initialTab = 'home' }) => {
   const _navigate = useNavigate();
   const {
     orders = [],
@@ -145,22 +145,9 @@ export const BDigitizingMobileApp = () => {
 
   const validTabs = ['home', 'categories', 'orders', 'wallet', 'profile', 'chat', 'support', 'inbox', 'login', 'signup', 'auth'];
 
-  // Active Tab: 'home' | 'categories' | 'orders' | 'wallet' | 'profile' | 'chat' | 'support' | 'inbox' | 'login' | 'signup' | 'auth'
-  const getInitialMobileTab = () => {
-    if (typeof window !== 'undefined') {
-      try {
-        const urlParams = new URLSearchParams(window.location.search);
-        const tabParam = urlParams.get('tab');
-        if (tabParam && validTabs.includes(tabParam)) return tabParam;
-
-        const storedTab = localStorage.getItem('bdigi_mobile_active_tab');
-        if (storedTab && validTabs.includes(storedTab)) return storedTab;
-      } catch {}
-    }
-    return 'home';
-  };
-
-  const [mobileTab, setMobileTabState] = useState(getInitialMobileTab);
+  // The server-provided query tab keeps the installed app's first render identical to hydration.
+  const safeInitialTab = validTabs.includes(initialTab) ? initialTab : 'home';
+  const [mobileTab, setMobileTabState] = useState(safeInitialTab);
   const [_mobileChatMode, setMobileChatMode] = useState('inbox'); // Default to unified Inbox
 
   const [unreadInboxCount, setUnreadInboxCount] = useState(0);
@@ -937,7 +924,7 @@ export const BDigitizingMobileApp = () => {
   if (!isAuthInitialized) {
     return (
       <div style={{
-        minHeight: '100dvh',
+        minHeight: '100svh',
         width: '100vw',
         background: isDark ? 'var(--color-background, #090d16)' : '#ffffff',
         display: 'flex',
@@ -984,7 +971,7 @@ export const BDigitizingMobileApp = () => {
       className="mobile-app-root"
       style={{
         background: 'var(--color-background, #ffffff)',
-        minHeight: '100dvh',
+        minHeight: '100svh',
         maxWidth: '100vw',
         display: 'flex',
         flexDirection: 'column',
@@ -1002,7 +989,7 @@ export const BDigitizingMobileApp = () => {
           ========================================================================= */}
       {['login', 'signup', 'auth', 'forgot'].includes(mobileTab) && (
         <div style={{
-          minHeight: '100dvh',
+          minHeight: '100svh',
           width: '100%',
           background: isDark ? 'var(--color-background, #090d16)' : '#ffffff',
           display: 'flex',

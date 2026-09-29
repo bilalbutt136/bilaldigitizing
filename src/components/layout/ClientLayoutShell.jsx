@@ -25,6 +25,8 @@ export const ClientLayoutShell = ({ children }) => {
   const pathname = usePathname() || '';
   const isAppMode = mobileMode === 'app';
   const isDedicatedAuthRoute = ['/login', '/signup', '/reset-password', '/secure-admin-login'].includes(pathname);
+  const isPortalRoute = pathname.startsWith('/client-portal') || pathname.startsWith('/admin-portal') || pathname === '/client' || pathname === '/admin';
+  const isCompactShell = isDedicatedAuthRoute || isPortalRoute;
   const isWorkerPortal = pathname.startsWith('/portal') || pathname.startsWith('/worker');
 
   // Complete stealth mode isolation for Worker Portal
@@ -48,22 +50,20 @@ export const ClientLayoutShell = ({ children }) => {
   }
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+    <div className={isCompactShell ? 'site-shell auth-route-shell' : 'site-shell'} style={{ minHeight: '100svh', display: 'flex', flexDirection: 'column', minWidth: 0 }}>
       {/* Dynamic favicon — overrides static server-rendered icon link on every page load */}
       <DynamicFavicon />
 
       {/* Website Top Header (Hidden in Standalone 5-Tab App Mode) */}
-      {!isAppMode && (
-        <div className="website-header-zone">
-          <AnnouncementBar />
-          <Suspense fallback={<header style={{ minHeight: '60px', background: '#ffffff' }} />}>
-            <HeaderNav />
-          </Suspense>
-        </div>
-      )}
+      <div className="website-header-zone">
+        {!isCompactShell && <AnnouncementBar />}
+        <Suspense fallback={<header style={{ minHeight: '63px', background: '#ffffff' }} />}>
+          <HeaderNav />
+        </Suspense>
+      </div>
 
       {/* Main Content Area */}
-      <main style={{ flex: 1 }}>
+      <main className="website-main-zone" style={{ flex: 1, minWidth: 0 }}>
         <Suspense fallback={
           <div style={{ padding: '3rem 1.5rem', maxWidth: '800px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '1rem', alignItems: 'center' }}>
             <div style={{ height: '36px', width: '50%', background: '#e2e8f0', borderRadius: '8px' }} />
@@ -75,7 +75,7 @@ export const ClientLayoutShell = ({ children }) => {
       </main>
 
       {/* Website Footer & Desktop Widgets (Hidden in Standalone 5-Tab App Mode) */}
-      {!isAppMode && (
+      {!isCompactShell && (
         <div className="website-footer-zone">
           <Footer />
         </div>
@@ -93,7 +93,7 @@ export const ClientLayoutShell = ({ children }) => {
       <MetaPixelTracker />
       
       {/* PWA Prompt Banner (Visible on mobile website to offer App installation or launch) */}
-      {!isAppMode && <PWAInstallBanner />}
+      {!isAppMode && !isCompactShell && <PWAInstallBanner />}
       <PWARegistrar />
       {!isAppMode && <WhatsAppMessagePopup />}
     </div>

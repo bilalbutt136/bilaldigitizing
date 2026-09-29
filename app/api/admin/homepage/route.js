@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { revalidatePath } from 'next/cache';
+import { revalidatePath, revalidateTag } from 'next/cache';
 import { createAdminClient } from '../../../../src/lib/supabase/admin';
 import { getServerAuthUser } from '../../../../src/lib/supabase/serverAuth';
 
@@ -15,6 +15,7 @@ function revalidateAllSitePages() {
     revalidatePath('/custom-patches');
     revalidatePath('/portfolio');
     revalidatePath('/');
+    revalidateTag('homepage');
   } catch (e) {
     console.warn('[Revalidate Error]:', e);
   }

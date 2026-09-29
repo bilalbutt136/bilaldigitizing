@@ -309,7 +309,7 @@ export const HeaderNav = () => {
             <img
               src={siteSettings.logoUrl}
               alt="BDigitizing Logo"
-              style={{ height: '36px', width: 'auto', maxHeight: '42px', objectFit: 'contain', display: 'block', flexShrink: 0 }}
+              style={{ width: '38px', height: '38px', objectFit: 'contain', display: 'block', flexShrink: 0 }}
             />
           ) : (
             <div style={{
@@ -1315,7 +1315,7 @@ export const HeaderNav = () => {
                   <img
                     src={siteSettings.logoUrl}
                     alt="BDigitizing Logo"
-                    style={{ height: '32px', width: 'auto', maxHeight: '36px', objectFit: 'contain', display: 'block', flexShrink: 0 }}
+                    style={{ width: '34px', height: '34px', objectFit: 'contain', display: 'block', flexShrink: 0 }}
                   />
                 ) : (
                   <div style={{

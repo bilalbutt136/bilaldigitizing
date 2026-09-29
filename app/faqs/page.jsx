@@ -122,19 +122,36 @@ export default function FAQsPage() {
   const [openIndex, setOpenIndex] = useState('0-0');
 
   useEffect(() => {
-    if (dbFaqs && dbFaqs.length > 0) {
-      const groupedFaqs = dbFaqs.reduce((acc, faq) => {
-        const cat = faq.category || 'General';
-        if (!acc[cat]) acc[cat] = [];
-        acc[cat].push({ q: faq.question || faq.q, a: faq.answer || faq.a });
-        return acc;
-      }, {});
+    if (!dbFaqs || dbFaqs.length === 0) return;
 
-      setFaqs(Object.keys(groupedFaqs).map(cat => ({
-        category: cat,
-        questions: groupedFaqs[cat]
-      })));
-    }
+    // Preserve the first-paint taxonomy so live CMS data cannot reorder visible layout.
+    // Matching questions update their answers in place; new questions/categories append.
+    const merged = MASTER_DEFAULT_FAQS.map(section => ({
+      ...section,
+      questions: section.questions.map(item => ({ ...item }))
+    }));
+
+    dbFaqs.forEach((faq) => {
+      const category = (faq.category || 'General').trim() || 'General';
+      const question = (faq.question || faq.q || '').trim();
+      const answer = (faq.answer || faq.a || '').trim();
+      if (!question || !answer) return;
+
+      let target = merged.find(section => section.category.toLowerCase() === category.toLowerCase());
+      if (!target) {
+        target = { category, questions: [] };
+        merged.push(target);
+      }
+
+      const existing = target.questions.findIndex(item => item.q.toLowerCase() === question.toLowerCase());
+      if (existing >= 0) {
+        target.questions[existing] = { ...target.questions[existing], a: answer };
+      } else {
+        target.questions.push({ q: question, a: answer });
+      }
+    });
+
+    setFaqs(merged);
   }, [dbFaqs]);
 
   const categories = useMemo(() => {
@@ -292,7 +309,7 @@ export default function FAQsPage() {
         </div>
 
         {/* Interactive Category Filter Pills */}
-        <div style={{
+        <div className="faq-category-filter" style={{
           display: 'flex',
           justifyContent: 'center',
           gap: '0.5rem',

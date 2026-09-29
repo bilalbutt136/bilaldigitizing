@@ -1,6 +1,7 @@
 import { supabase, isSupabaseConfigured } from '../lib/supabase/client.js';
 import { getSiteUrl } from '../utils/siteUrl.js';
 import { filterAndSanitizeNotifications } from '../utils/notificationRouter.js';
+import { normalizePublicCatalog } from '../lib/catalog/normalizePublicCatalog.js';
 
 export { isSupabaseConfigured };
 
@@ -1003,169 +1004,9 @@ export async function fetchCatalogFromSupabase() {
         'Pragma': 'no-cache'
       }
     });
+    if (!res.ok) return null;
     const data = await res.json();
-
-    // Parse site_config array into a map with robust JSON parsing
-    const siteConfig = data.site_config || [];
-    const configMap = {};
-    siteConfig.forEach(item => {
-      if (item && item.key) {
-        if (typeof item.value === 'string') {
-          try {
-            configMap[item.key] = JSON.parse(item.value);
-          } catch {
-            configMap[item.key] = item.value;
-          }
-        } else {
-          configMap[item.key] = item.value;
-        }
-      }
-    });
-
-    // Extract site_settings composite or direct config rows
-    const rawSettings = typeof configMap['site_settings'] === 'object' ? configMap['site_settings'] : {};
-    const parsedAnnouncement = typeof configMap['announcement'] === 'object'
-      ? configMap['announcement']
-      : (typeof rawSettings?.announcement === 'object' ? rawSettings.announcement : null);
-
-    const _parsedPromotionalBanner = typeof configMap['promotionalBanner'] === 'object'
-      ? configMap['promotionalBanner']
-      : (typeof rawSettings?.promotionalBanner === 'object' ? rawSettings.promotionalBanner : null);
-
-    const parsedPromoCodes = Array.isArray(configMap['promoCodes'])
-      ? configMap['promoCodes']
-      : (Array.isArray(rawSettings?.promoCodes) ? rawSettings.promoCodes : null);
-
-    const parsedPromotions = Array.isArray(configMap['promotions'])
-      ? configMap['promotions']
-      : (Array.isArray(rawSettings?.promotions) ? rawSettings.promotions : null);
-
-    return {
-      // Original snake_case/raw keys
-      services: data.services || [],
-      pricing_tiers: data.pricing_tiers || [],
-      patch_cards: data.patch_cards || [],
-      store_products: data.store_products || [],
-      portfolio: data.portfolio || [],
-      sew_outs: data.sew_outs || [],
-      hero_slides: data.hero_slides || [],
-      digitizers: data.digitizers || [],
-      pricing_cards: data.pricing_cards || [],
-      site_config: siteConfig,
-      faqs: data.faqs || [],
-      testimonials: data.testimonials || [],
-
-      // CamelCase aliases and config parsings required by StateContext.jsx
-      servicesList: data.services || [],
-      dynamicPricingTiers: data.pricing_tiers || [],
-      patchCards: data.patch_cards || [],
-      storeProducts: data.store_products || [],
-      portfolioSamples: data.portfolio || [],
-      sewOuts: data.sew_outs || [],
-      heroSlides: (configMap['hero_slides'] && Array.isArray(configMap['hero_slides']) && configMap['hero_slides'].length > 0)
-        ? configMap['hero_slides']
-        : (data.hero_slides || []),
-      pricingCards: data.pricing_cards || [],
-      heroGlobalSettings: configMap['hero_global_settings'] || null,
-      heroServiceText: configMap['hero_service_text'] || null,
-      siteSettings: (() => {
-        const safePromotions = parsedPromotions || [];
-        const currentActivePromo = safePromotions.find(p => p.status === 'active');
-        const parsedServiceDiscounts = configMap['service_discounts'] || configMap['serviceDiscounts'] || currentActivePromo?.serviceDiscounts || {
-          embroidery: 20,
-          vector: 10,
-          patch: 5,
-          enabled: true
-        };
-
-        const hasGranular = currentActivePromo?.serviceDiscounts && (
-          currentActivePromo.serviceDiscounts.embroidery !== currentActivePromo.serviceDiscounts.vector ||
-          currentActivePromo.serviceDiscounts.vector !== currentActivePromo.serviceDiscounts.patch
-        );
-
-        const promoTitleText = currentActivePromo ? (
-          hasGranular ? (
-            `Special Studio Promo: ${currentActivePromo.serviceDiscounts.embroidery || 20}% OFF Digitizing, ${currentActivePromo.serviceDiscounts.vector || 10}% OFF Vector, ${currentActivePromo.serviceDiscounts.patch || 5}% OFF Patches!`
-          ) : (
-            `Get ${currentActivePromo.discountPercent}% OFF on All Custom Embroidery Digitizing & Vector Art Orders!`
-          )
-        ) : '';
-
-        const maxPromoDiscount = currentActivePromo ? (
-          currentActivePromo.serviceDiscounts ? (
-            Math.max(
-              currentActivePromo.serviceDiscounts.embroidery || 0,
-              currentActivePromo.serviceDiscounts.vector || 0,
-              currentActivePromo.serviceDiscounts.patch || 0,
-              currentActivePromo.discountPercent || 0
-            )
-          ) : currentActivePromo.discountPercent
-        ) : 0;
-
-        const dynamicAnnouncement = currentActivePromo ? {
-          enabled: parsedAnnouncement?.enabled !== false,
-          badge: (currentActivePromo.name || 'SALE').toUpperCase(),
-          text: promoTitleText,
-          linkText: `Claim ${maxPromoDiscount}% Off`,
-          linkUrl: parsedAnnouncement?.linkUrl || '/order',
-          promoCode: currentActivePromo.promoCode || `SAVE${currentActivePromo.discountPercent || maxPromoDiscount}`,
-          theme: (parsedAnnouncement?.theme === 'emerald' ? 'orange' : parsedAnnouncement?.theme) || 'orange',
-          bgColor: (parsedAnnouncement?.bgColor && !parsedAnnouncement.bgColor.includes('065f46'))
-            ? parsedAnnouncement.bgColor
-            : 'linear-gradient(90deg, #ea580c 0%, #f97316 50%, #ea580c 100%)',
-          textColor: '#ffffff',
-          showCodeBadge: true,
-          showCountdown: true,
-          countdownHours: 24,
-          discountValue: maxPromoDiscount
-        } : (parsedAnnouncement ? {
-          ...parsedAnnouncement,
-          theme: (parsedAnnouncement.theme === 'emerald' ? 'orange' : parsedAnnouncement.theme) || 'orange',
-          bgColor: (parsedAnnouncement.bgColor && !parsedAnnouncement.bgColor.includes('065f46'))
-            ? parsedAnnouncement.bgColor
-            : 'linear-gradient(90deg, #ea580c 0%, #f97316 50%, #ea580c 100%)'
-        } : {
-          enabled: false,
-          badge: '',
-          text: '',
-          promoCode: '',
-          linkText: '',
-          linkUrl: '/order'
-        });
-
-        return {
-          ...rawSettings,
-          admin_notification_email: configMap['admin_notification_email'] || rawSettings?.admin_notification_email || null,
-          admin_notification_emails: configMap['admin_notification_emails'] || rawSettings?.admin_notification_emails || null,
-          notification_settings: configMap['notification_settings'] || rawSettings?.notification_settings || null,
-          notification_sound_settings: configMap['notification_sound_settings'] || rawSettings?.notification_sound_settings || null,
-          metaPixelId: rawSettings?.metaPixelId || configMap['meta_pixel_id'] || configMap['metaPixelId'] || null,
-          googleAnalyticsId: rawSettings?.googleAnalyticsId || configMap['google_analytics_id'] || configMap['googleAnalyticsId'] || null,
-          tiktokPixelId: rawSettings?.tiktokPixelId || configMap['tiktok_pixel_id'] || configMap['tiktokPixelId'] || null,
-          promotions: safePromotions,
-          service_discounts: parsedServiceDiscounts,
-          serviceDiscounts: parsedServiceDiscounts,
-          announcement: dynamicAnnouncement,
-          promotionalBanner: {
-            enabled: false,
-            title: '',
-            description: '',
-            promoCode: '',
-            ctaText: 'Claim Offer',
-            ctaLink: '/order'
-          },
-          promoCodes: parsedPromoCodes || []
-        };
-      })(),
-      pricing: configMap['pricing'] || null,
-      serviceCms: {
-        trust_features: configMap['trust_features'] || [],
-        why_choose_us_steps: configMap['why_choose_us_steps'] || [],
-        vector_format_options: configMap['vector_format_options'] || [],
-        portfolio_categories: configMap['portfolio_categories'] || [],
-        order_wizard_formats: configMap['order_wizard_formats'] || []
-      }
-    };
+    return normalizePublicCatalog(data);
   } catch {
     return null;
   }
