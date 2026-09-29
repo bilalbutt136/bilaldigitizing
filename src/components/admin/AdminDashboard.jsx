@@ -14,7 +14,7 @@ import { AdminExecutiveDashboard } from './AdminExecutiveDashboard';
 import { PromotionsManager } from './PromotionsManager';
 import { ContactInfoManager } from './ContactInfoManager';
 import { PortfolioManager } from './PortfolioManager';
-import { isSupabaseConfigured as _isSupabaseConfigured, supabase } from '../../lib/supabase/client';
+import { subscribeToChatMessages } from '../../services/supabaseService';
 import { stopNotificationSound, playMessageChime as _playMessageChime, playMessageChimeForMessage, playAdminChime } from '../../utils/audioNotification';
 import {
   LayoutDashboard,
@@ -99,33 +99,19 @@ export const AdminDashboard = () => {
     fetchUnreadChats();
     const interval = setInterval(fetchUnreadChats, 8000);
 
-    // Global Realtime listener so message chime rings INSTANTLY across any Admin Dashboard tab
-    let channel = null;
-    try {
-      if (supabase) {
-        channel = supabase
-          .channel('admin-dashboard-global-chime')
-          .on('postgres_changes', {
-            event: 'INSERT',
-            schema: 'public',
-            table: 'messages'
-          }, (payload) => {
-            if (payload.new && payload.new.sender === 'client') {
-              playMessageChimeForMessage(payload.new.id, false, { role: 'admin', isAdmin: true });
-              fetchUnreadChats();
-            }
-          })
-          .subscribe();
+    // Reuse the application-wide realtime hub instead of opening another
+    // postgres_changes socket just for the admin chime.
+    const unsubscribeChatMessages = subscribeToChatMessages((payload) => {
+      const msg = payload?.new || payload?.record;
+      if (msg?.sender === 'client') {
+        playMessageChimeForMessage(msg.id, false, { role: 'admin', isAdmin: true });
+        fetchUnreadChats();
       }
-    } catch {}
+    });
 
     return () => {
       clearInterval(interval);
-      if (channel && supabase) {
-        try {
-          supabase.removeChannel(channel);
-        } catch {}
-      }
+      unsubscribeChatMessages();
     };
   }, []);
 

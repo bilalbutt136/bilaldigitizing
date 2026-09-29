@@ -1332,6 +1332,8 @@ export async function fetchCustomOffer(offerId) {
 let globalChatChannel = null;
 const notificationListeners = new Set();
 const orderListeners = new Set();
+const chatMessageListeners = new Set();
+const conversationListeners = new Set();
 
 export function getSharedChatChannel() {
   if (!isSupabaseConfigured || !supabase) return null;
@@ -1415,11 +1417,11 @@ export function getSharedChatChannel() {
 
     // 3. Instant WhatsApp-style Chat Message Realtime Dispatch (Guaranteed Single-Dispatch)
     const seenMessageDispatches = new Set();
-    const dispatchUniqueChatMessage = (msg) => {
-      if (!msg || typeof window === 'undefined') return;
-      const msgId = msg.id || `${msg.conversation_id}-${msg.created_at || ''}`;
+    const dispatchUniqueChatMessage = (msg, sourcePayload = null) => {
+      if (!msg) return;
+      const msgId = msg.id || String(msg.conversation_id || '') + '-' + String(msg.created_at || '');
       if (msgId && seenMessageDispatches.has(msgId)) {
-        return; // Dropped duplicate dispatch
+        return;
       }
       if (msgId) {
         seenMessageDispatches.add(msgId);
@@ -1428,7 +1430,20 @@ export function getSharedChatChannel() {
           seenMessageDispatches.delete(first);
         }
       }
-      window.dispatchEvent(new CustomEvent('bdigi_new_chat_message', { detail: msg }));
+
+      const listenerPayload = sourcePayload || {
+        eventType: 'INSERT',
+        new: msg,
+        record: msg
+      };
+
+      chatMessageListeners.forEach(listener => {
+        try { listener(listenerPayload); } catch {}
+      });
+
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('bdigi_new_chat_message', { detail: msg }));
+      }
     };
 
     globalChatChannel.on('broadcast', { event: 'new_chat_message' }, (event) => {
@@ -1443,11 +1458,20 @@ export function getSharedChatChannel() {
       (payload) => {
         const msg = payload.new || payload.record;
         if (msg) {
-          dispatchUniqueChatMessage(msg);
+          dispatchUniqueChatMessage(msg, payload);
         }
       }
     );
 
+    globalChatChannel.on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'conversations' },
+      (payload) => {
+        conversationListeners.forEach(listener => {
+          try { listener(payload); } catch {}
+        });
+      }
+    );
     globalChatChannel.subscribe((status, err) => {
       if (status === 'SUBSCRIBED') {
         // Channel connected
@@ -1563,6 +1587,22 @@ export function subscribeToOrders(onOrderChange) {
   getSharedChatChannel();
   return () => {
     if (onOrderChange) orderListeners.delete(onOrderChange);
+  };
+}
+
+export function subscribeToChatMessages(onMessageChange) {
+  if (onMessageChange) chatMessageListeners.add(onMessageChange);
+  getSharedChatChannel();
+  return () => {
+    if (onMessageChange) chatMessageListeners.delete(onMessageChange);
+  };
+}
+
+export function subscribeToConversations(onConversationChange) {
+  if (onConversationChange) conversationListeners.add(onConversationChange);
+  getSharedChatChannel();
+  return () => {
+    if (onConversationChange) conversationListeners.delete(onConversationChange);
   };
 }
 

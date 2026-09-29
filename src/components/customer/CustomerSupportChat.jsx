@@ -7,6 +7,7 @@ import OfferCardMessage from '../common/OfferCardMessage';
 import { downloadFileDirectly, openFileInNewTab } from '../../utils/fileDownloader';
 import { playMessageChime as _playMessageChime, playMessageChimeForMessage, playCustomerChime, stopNotificationSound, unlockAudioContext } from '../../utils/audioNotification';
 import { trackUserPresence, untrackUserPresence } from '../../services/presenceService';
+import { subscribeToChatMessages } from '../../services/supabaseService';
 import {
   Send,
   Paperclip,
@@ -392,7 +393,8 @@ export default function CustomerSupportChat({
     return () => clearInterval(interval);
   }, [conversationId, messages.length, userEmail]);
 
-  // Supabase Realtime Subscription & Broadcast Channel
+  // Realtime DB changes use the shared app hub; this room remains broadcast-only
+  // for low-latency typing signals.
   useEffect(() => {
     if (!conversationId) return;
 
@@ -402,38 +404,6 @@ export default function CustomerSupportChat({
     const channel = supabase
       .channel(`chat-room-${conversationId}`, {
         config: { broadcast: { self: false } }
-      })
-      .on('postgres_changes', {
-        event: 'INSERT',
-        schema: 'public',
-        table: 'messages',
-        filter: `conversation_id=eq.${conversationId}`
-      }, (payload) => {
-        if (payload.new) {
-          if (payload.new.sender !== 'client') {
-            playMessageChimeForMessage(payload.new.id, false, { role: 'customer', isAdmin: false });
-          }
-          setMessages(prev => {
-            // 1. If already present by real DB id, do nothing
-            if (prev.some(m => m.id === payload.new.id)) return prev;
-
-            // 2. If this is a client message, check if there is an optimistic pending message to reconcile
-            if (payload.new.sender === 'client') {
-              const pendingIdx = prev.findIndex(m =>
-                (m.isPending || String(m.id).startsWith('temp-')) &&
-                (m.text || '').trim() === (payload.new.text || '').trim()
-              );
-              if (pendingIdx !== -1) {
-                const next = [...prev];
-                next[pendingIdx] = payload.new;
-                return next;
-              }
-            }
-
-            return [...prev, payload.new];
-          });
-          scrollToBottom();
-        }
       })
       .on('broadcast', { event: 'typing' }, ({ payload }) => {
         if (payload?.role === 'admin') {
@@ -449,11 +419,40 @@ export default function CustomerSupportChat({
       })
       .subscribe();
 
+    const unsubscribeMessages = subscribeToChatMessages((payload) => {
+      const msg = payload?.new || payload?.record;
+      if (!msg || msg.conversation_id !== conversationId) return;
+
+      if (msg.sender !== 'client') {
+        playMessageChimeForMessage(msg.id, false, { role: 'customer', isAdmin: false });
+      }
+
+      setMessages(prev => {
+        if (prev.some(existing => existing.id === msg.id)) return prev;
+
+        if (msg.sender === 'client') {
+          const pendingIdx = prev.findIndex(existing =>
+            (existing.isPending || String(existing.id).startsWith('temp-')) &&
+            (existing.text || '').trim() === (msg.text || '').trim()
+          );
+          if (pendingIdx !== -1) {
+            const next = [...prev];
+            next[pendingIdx] = msg;
+            return next;
+          }
+        }
+
+        return [...prev, msg];
+      });
+      scrollToBottom();
+    });
+
     channelRef.current = channel;
 
     return () => {
       clearTimeout(adminTypingDismissRef.current);
       channelRef.current = null;
+      unsubscribeMessages();
       supabase.removeChannel(channel);
     };
   }, [conversationId]);

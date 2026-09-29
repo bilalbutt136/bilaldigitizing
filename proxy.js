@@ -1,43 +1,69 @@
 import { NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 
-// Protected paths that require authentication strictly at the edge level
 const PROTECTED_PREFIXES = ['/admin', '/admin-portal', '/worker', '/worker-portal', '/portal'];
-
-// Admin paths that require admin authorization
 const ADMIN_PREFIXES = ['/admin', '/admin-portal'];
-
-// Worker paths that require worker authorization
 const WORKER_PREFIXES = ['/worker', '/worker-portal', '/portal'];
 
-// Public authentication routes that MUST NEVER be intercepted or redirected to login
 const PUBLIC_AUTH_PATHS = [
-  '/login', 
-  '/signup', 
-  '/reset-password', 
-  '/secure-admin-login', 
-  '/worker-login', 
-  '/worker/register', 
-  '/worker-register', 
-  '/worker/forgot-password', 
-  '/worker/reset-password', 
+  '/login',
+  '/signup',
+  '/reset-password',
+  '/secure-admin-login',
+  '/worker-login',
+  '/worker/register',
+  '/worker-register',
+  '/worker/forgot-password',
+  '/worker/reset-password',
   '/portal/login',
   '/portal/register',
   '/portal/forgot-password',
   '/portal/reset-password',
-  '/auth', 
+  '/auth',
   '/auth/callback'
 ];
+
+function withTimeout(promise, timeoutMs = 1500) {
+  let timer = null;
+
+  return Promise.race([
+    promise,
+    new Promise((_, reject) => {
+      timer = setTimeout(() => reject(new Error('Supabase Auth Timeout')), timeoutMs);
+    })
+  ]).finally(() => {
+    if (timer) clearTimeout(timer);
+  });
+}
+
+function isConfiguredAdmin(email) {
+  const cleanEmail = String(email || '').toLowerCase().trim();
+  if (!cleanEmail) return false;
+
+  return [
+    process.env.MASTER_ADMIN_EMAIL,
+    process.env.ADMIN_EMAIL,
+    process.env.NEXT_PUBLIC_ADMIN_EMAIL
+  ]
+    .filter(Boolean)
+    .some(value => String(value).toLowerCase().trim() === cleanEmail);
+}
+
+function hasTrustedAdminMetadata(user) {
+  return Boolean(
+    user?.app_metadata?.role === 'admin' ||
+    user?.app_metadata?.is_admin === true ||
+    isConfiguredAdmin(user?.email)
+  );
+}
 
 export async function proxy(request) {
   const { pathname } = request.nextUrl;
 
-  // 0. Fast Path: Immediately pass public authentication routes to prevent any redirect chains
   if (PUBLIC_AUTH_PATHS.some(prefix => pathname === prefix || pathname.startsWith(`${prefix}/`))) {
     return NextResponse.next();
   }
 
-  // 1. Fast Path: Immediately pass all public routes, API routes, and static assets with 0ms latency
   const isProtectedRoute = PROTECTED_PREFIXES.some(
     prefix => pathname === prefix || pathname.startsWith(`${prefix}/`)
   );
@@ -46,10 +72,13 @@ export async function proxy(request) {
     return NextResponse.next();
   }
 
-  // 2. Fast Cookie Check: If requesting a protected route but has no auth cookies at all, redirect immediately
   const allCookies = request.cookies.getAll();
   const hasAuthCookie = allCookies.some(
-    c => c.name.includes('sb-') || c.name.includes('auth-token') || c.name.includes('supabase') || c.name.includes('bdigi_auth')
+    cookie =>
+      cookie.name.includes('sb-') ||
+      cookie.name.includes('auth-token') ||
+      cookie.name.includes('supabase') ||
+      cookie.name.includes('bdigi_auth')
   );
 
   const isWorkerRoute = WORKER_PREFIXES.some(
@@ -58,6 +87,7 @@ export async function proxy(request) {
 
   if (!hasAuthCookie) {
     const loginUrl = request.nextUrl.clone();
+
     if (pathname === '/portal' || pathname.startsWith('/portal/')) {
       loginUrl.pathname = '/portal/login';
     } else if (isWorkerRoute) {
@@ -65,11 +95,11 @@ export async function proxy(request) {
     } else {
       loginUrl.pathname = '/login';
     }
+
     loginUrl.searchParams.set('redirect', pathname);
     return NextResponse.redirect(loginUrl);
   }
 
-  // 3. For protected routes with auth cookies, initialize Supabase with a fail-safe timeout
   let supabaseResponse = NextResponse.next({ request });
 
   try {
@@ -97,21 +127,18 @@ export async function proxy(request) {
             cookiesToSet.forEach(({ name, value, options }) =>
               supabaseResponse.cookies.set(name, value, options)
             );
-          },
-        },
+          }
+        }
       }
     );
 
-    // Timeout helper to guarantee middleware never hangs beyond 1.5 seconds
-    const timeoutPromise = new Promise((_, reject) =>
-      setTimeout(() => reject(new Error('Supabase Auth Timeout')), 1500)
-    );
-
-    const userPromise = supabase.auth.getUser();
-    const { data: { user } = {} } = await Promise.race([userPromise, timeoutPromise]);
+    const {
+      data: { user } = {}
+    } = await withTimeout(supabase.auth.getUser());
 
     if (!user) {
       const loginUrl = request.nextUrl.clone();
+
       if (pathname === '/portal' || pathname.startsWith('/portal/')) {
         loginUrl.pathname = '/portal/login';
       } else if (isWorkerRoute) {
@@ -119,6 +146,7 @@ export async function proxy(request) {
       } else {
         loginUrl.pathname = '/login';
       }
+
       loginUrl.searchParams.set('redirect', pathname);
       const redirectResponse = NextResponse.redirect(loginUrl);
       supabaseResponse.cookies.getAll().forEach(cookie => {
@@ -127,14 +155,18 @@ export async function proxy(request) {
       return redirectResponse;
     }
 
-    // Check admin authorization if visiting admin portal
     const isAdminRoute = ADMIN_PREFIXES.some(
       prefix => pathname === prefix || pathname.startsWith(`${prefix}/`)
     );
 
-    if (isAdminRoute && user) {
-      const adminPromise = supabase.from('admins').select('email').eq('email', user.email).maybeSingle();
-      const { data: adminData } = await Promise.race([adminPromise, timeoutPromise]).catch(() => ({ data: null }));
+    if (isAdminRoute && !hasTrustedAdminMetadata(user)) {
+      const { data: adminData } = await withTimeout(
+        supabase
+          .from('admins')
+          .select('email')
+          .ilike('email', user.email)
+          .maybeSingle()
+      ).catch(() => ({ data: null }));
 
       if (!adminData) {
         const clientUrl = request.nextUrl.clone();
@@ -147,46 +179,59 @@ export async function proxy(request) {
       }
     }
 
-    // Check worker authorization if visiting worker portal
-    if (isWorkerRoute && user) {
-      // Only server-controlled app_metadata can grant privileged route access.
-      const isWorkerMeta =
+    if (isWorkerRoute) {
+      const hasTrustedMetadata =
         user.app_metadata?.role === 'worker' ||
-        user.app_metadata?.role === 'admin';
+        user.app_metadata?.role === 'admin' ||
+        user.app_metadata?.is_admin === true ||
+        isConfiguredAdmin(user.email);
 
-      if (!isWorkerMeta) {
-        const workerPromise = supabase.from('workers').select('id, status').eq('email', user.email).maybeSingle();
-        const { data: workerData } = await Promise.race([workerPromise, timeoutPromise]).catch(() => ({ data: null }));
-        const workerStatus = (workerData?.status || '').toLowerCase();
+      if (!hasTrustedMetadata) {
+        const [workerResult, profileResult, adminResult] = await Promise.all([
+          withTimeout(
+            supabase
+              .from('workers')
+              .select('id, status')
+              .ilike('email', user.email)
+              .maybeSingle()
+          ).catch(() => ({ data: null })),
+          withTimeout(
+            supabase
+              .from('worker_profiles')
+              .select('id, status')
+              .ilike('email', user.email)
+              .maybeSingle()
+          ).catch(() => ({ data: null })),
+          withTimeout(
+            supabase
+              .from('admins')
+              .select('email')
+              .ilike('email', user.email)
+              .maybeSingle()
+          ).catch(() => ({ data: null }))
+        ]);
 
-        if (!workerData || workerStatus !== 'active') {
-          // Check worker_profiles
-          const profilePromise = supabase.from('worker_profiles').select('id, status').eq('email', user.email).maybeSingle();
-          const { data: profileData } = await Promise.race([profilePromise, timeoutPromise]).catch(() => ({ data: null }));
-          const profileStatus = (profileData?.status || '').toLowerCase();
+        const workerStatus = String(workerResult?.data?.status || '').toLowerCase();
+        const profileStatus = String(profileResult?.data?.status || '').toLowerCase();
+        const isAuthorized =
+          workerStatus === 'active' ||
+          profileStatus === 'active' ||
+          Boolean(adminResult?.data);
 
-          if (!profileData || profileStatus !== 'active') {
-            // Check if admin
-            const adminPromise = supabase.from('admins').select('email').eq('email', user.email).maybeSingle();
-            const { data: adminData } = await Promise.race([adminPromise, timeoutPromise]).catch(() => ({ data: null }));
-
-            if (!adminData) {
-              const redirectUrl = request.nextUrl.clone();
-              redirectUrl.pathname = pathname.startsWith('/portal') ? '/portal/login' : '/client-portal';
-              const redirectResponse = NextResponse.redirect(redirectUrl);
-              supabaseResponse.cookies.getAll().forEach(cookie => {
-                redirectResponse.cookies.set(cookie.name, cookie.value, cookie);
-              });
-              return redirectResponse;
-            }
-          }
+        if (!isAuthorized) {
+          const redirectUrl = request.nextUrl.clone();
+          redirectUrl.pathname = pathname.startsWith('/portal') ? '/portal/login' : '/client-portal';
+          const redirectResponse = NextResponse.redirect(redirectUrl);
+          supabaseResponse.cookies.getAll().forEach(cookie => {
+            redirectResponse.cookies.set(cookie.name, cookie.value, cookie);
+          });
+          return redirectResponse;
         }
       }
     }
 
     return supabaseResponse;
   } catch (err) {
-    // Protected routes fail closed when server-side authentication cannot be verified.
     console.warn('Middleware auth verification failed closed:', err?.message || err);
     return NextResponse.json(
       { error: 'Authentication verification is temporarily unavailable.' },
@@ -197,9 +242,6 @@ export async function proxy(request) {
 
 export const config = {
   matcher: [
-    /*
-     * Match only application pages, excluding static files, images, icons, and API routes
-     */
-    '/((?!_next/static|_next/image|favicon.ico|api/|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|css|js)$).*)',
-  ],
+    '/((?!_next/static|_next/image|favicon.ico|api/|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|css|js)$).*)'
+  ]
 };

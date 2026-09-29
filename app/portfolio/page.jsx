@@ -1,9 +1,9 @@
 import React from 'react';
 import { PortfolioClient } from './PortfolioClient';
 
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
-export const fetchCache = 'force-no-store';
+// Portfolio is ISR-backed. Catalog mutations call revalidatePath('/portfolio')
+// and revalidateTag('portfolio'), while this interval provides a safe fallback.
+export const revalidate = 300;
 
 export const metadata = {
   title: 'Embroidery & Vector Portfolio Showcase | B Digitizing Studio',

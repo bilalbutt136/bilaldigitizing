@@ -3,6 +3,8 @@ import { cookies } from 'next/headers';
 import { supabaseAdmin, hasServiceRole } from '../supabaseAdmin';
 import { createAdminClient } from './admin';
 
+const requestAuthCache = new WeakMap();
+
 function getConfiguredAdminEmails() {
   return [
     process.env.MASTER_ADMIN_EMAIL,
@@ -13,10 +15,24 @@ function getConfiguredAdminEmails() {
     .map(email => String(email).toLowerCase().trim());
 }
 
+function normalizeTrustedAccess(data) {
+  if (!data || typeof data !== 'object') return null;
+
+  return {
+    isAdmin: Boolean(data.is_admin ?? data.isAdmin),
+    isWorker: Boolean(data.is_worker ?? data.isWorker),
+    workerData: data.worker_data ?? data.workerData ?? null
+  };
+}
+
 /**
  * Resolve privileged roles for a Supabase Auth user using only trusted,
  * server-controlled sources. user_metadata is intentionally never used
  * for authorization because account owners can edit it themselves.
+ *
+ * The primary path is one server-only RPC, replacing several independent
+ * PostgREST role lookups. The parallel query fallback keeps deployments safe
+ * while a new migration is rolling out.
  */
 export async function resolveTrustedUserAccess(user, dbClientOverride = null) {
   if (!user?.email) {
@@ -48,41 +64,63 @@ export async function resolveTrustedUserAccess(user, dbClientOverride = null) {
   }
 
   try {
-    const { data: adminRecord } = await dbClient
-      .from('admins')
-      .select('email')
-      .ilike('email', email)
-      .maybeSingle();
+    if (typeof dbClient.rpc === 'function') {
+      const { data: rpcData, error: rpcError } = await dbClient.rpc(
+        'resolve_trusted_user_access',
+        { p_email: email }
+      );
+
+      if (!rpcError) {
+        const normalized = normalizeTrustedAccess(rpcData);
+        if (normalized) return normalized;
+      } else if (rpcError.code !== 'PGRST202' && rpcError.code !== '42883') {
+        console.warn('[resolveTrustedUserAccess RPC Warning]:', rpcError.message);
+      }
+    }
+  } catch (rpcErr) {
+    console.warn('[resolveTrustedUserAccess RPC Fallback]:', rpcErr?.message);
+  }
+
+  try {
+    const [adminResult, clientResult, profileResult, workerResult] = await Promise.all([
+      dbClient
+        .from('admins')
+        .select('email')
+        .ilike('email', email)
+        .maybeSingle(),
+      dbClient
+        .from('clients')
+        .select('id, email, role')
+        .ilike('email', email)
+        .maybeSingle(),
+      dbClient
+        .from('worker_profiles')
+        .select('*')
+        .ilike('email', email)
+        .maybeSingle(),
+      dbClient
+        .from('workers')
+        .select('*')
+        .ilike('email', email)
+        .maybeSingle()
+    ]);
+
+    const adminRecord = adminResult?.data || null;
+    const clientRecord = clientResult?.data || null;
+    const profileRecord = profileResult?.data || null;
+    const workerRecord = workerResult?.data || null;
 
     if (adminRecord) {
       return { isAdmin: true, isWorker: false, workerData: null };
     }
 
-    const { data: clientRecord } = await dbClient
-      .from('clients')
-      .select('id, email, role')
-      .ilike('email', email)
-      .maybeSingle();
-
     if (clientRecord && (clientRecord.role === 'admin' || clientRecord.role === 'staff')) {
       return { isAdmin: true, isWorker: false, workerData: null };
     }
 
-    const { data: profileRecord } = await dbClient
-      .from('worker_profiles')
-      .select('*')
-      .ilike('email', email)
-      .maybeSingle();
-
     if (profileRecord && String(profileRecord.status || '').toLowerCase() === 'active') {
       return { isAdmin: false, isWorker: true, workerData: profileRecord };
     }
-
-    const { data: workerRecord } = await dbClient
-      .from('workers')
-      .select('*')
-      .ilike('email', email)
-      .maybeSingle();
 
     if (workerRecord && String(workerRecord.status || '').toLowerCase() === 'active') {
       return { isAdmin: false, isWorker: true, workerData: workerRecord };
@@ -98,11 +136,7 @@ export async function resolveTrustedUserAccess(user, dbClientOverride = null) {
   return { isAdmin: false, isWorker: false, workerData: null };
 }
 
-/**
- * Retrieves and validates the authenticated user and trusted role server-side.
- * Inspects both Authorization Bearer tokens and Supabase SSR cookies.
- */
-export async function getServerAuthUser(request) {
+async function getServerAuthUserUncached(request) {
   try {
     let user = null;
 
@@ -180,4 +214,28 @@ export async function getServerAuthUser(request) {
       error: err.message
     };
   }
+}
+
+/**
+ * Request-scoped auth memoization.
+ *
+ * Next route handlers frequently call getServerAuthUser(request) more than once
+ * through nested helpers. Caching the in-flight Promise against the Request
+ * object guarantees only one Supabase Auth verification and one trusted-role
+ * resolution for that request lifecycle. WeakMap avoids cross-request identity
+ * leakage and allows automatic garbage collection after the request completes.
+ */
+export async function getServerAuthUser(request) {
+  const cacheable = request && (typeof request === 'object' || typeof request === 'function');
+
+  if (!cacheable) {
+    return getServerAuthUserUncached(request);
+  }
+
+  const cached = requestAuthCache.get(request);
+  if (cached) return cached;
+
+  const authPromise = getServerAuthUserUncached(request);
+  requestAuthCache.set(request, authPromise);
+  return authPromise;
 }

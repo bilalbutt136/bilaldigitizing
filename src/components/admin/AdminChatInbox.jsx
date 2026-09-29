@@ -8,6 +8,7 @@ import AdminCreateOfferModal from './AdminCreateOfferModal';
 import { downloadFileDirectly, openFileInNewTab as _openFileInNewTab } from '../../utils/fileDownloader';
 import { playMessageChime as _playMessageChime, playMessageChimeForMessage, playAdminChime, stopNotificationSound, unlockAudioContext } from '../../utils/audioNotification';
 import { subscribeToPresence, syncPresenceFromRest } from '../../services/presenceService';
+import { subscribeToChatMessages, subscribeToConversations } from '../../services/supabaseService';
 import {
   Search,
   ChevronDown,
@@ -383,35 +384,18 @@ export default function AdminChatInbox({ initialChannel = 'inbox' }) {
     return () => clearInterval(interval);
   }, [activeConversationId, messages.length, activeChannel, activeFilter, searchQuery, fetchChannelUnreadCounts]);
 
-  // Global Realtime Supabase Channel Subscription for instant push & broadcast.
+  // Realtime DB changes are consolidated through the shared app hub.
+  // The per-conversation channel is broadcast-only for typing latency.
   /* oxlint-disable react-hooks/exhaustive-deps -- resubscribe on channel/filter state only; helper identity would churn sockets */
   useEffect(() => {
     const supabase = createClient();
     if (!supabase) return;
 
-    // 1. Dedicated active room channel for instant messages and typing
     let activeChannelSub = null;
     if (activeConversationId) {
       activeChannelSub = supabase
         .channel(`chat-room-${activeConversationId}`, {
           config: { broadcast: { self: false } }
-        })
-        .on('postgres_changes', {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'messages',
-          filter: `conversation_id=eq.${activeConversationId}`
-        }, (payload) => {
-          if (payload.new) {
-            if (payload.new.sender === 'client') {
-              playMessageChimeForMessage(payload.new.id, false, { role: 'admin', isAdmin: true });
-            }
-            setMessages(prev => {
-              if (prev.some(m => m.id === payload.new.id)) return prev;
-              return [...prev, payload.new];
-            });
-            scrollToBottom();
-          }
         })
         .on('broadcast', { event: 'typing' }, ({ payload }) => {
           if (payload?.role === 'client') {
@@ -430,47 +414,48 @@ export default function AdminChatInbox({ initialChannel = 'inbox' }) {
       channelRef.current = activeChannelSub;
     }
 
-    // 2. Global listener across ALL messages & conversations
-    // Strictly plays ONLY ONE chime per message and stops immediately if active thread is viewed
-    const globalSub = supabase
-      .channel('admin-global-chat-monitor')
-      .on('postgres_changes', {
-        event: 'INSERT',
-        schema: 'public',
-        table: 'messages'
-      }, (payload) => {
-        if (payload.new && payload.new.sender === 'client') {
-          // Always ring for incoming customer message (admin high alert)
-          playMessageChimeForMessage(payload.new.id, false, { role: 'admin', isAdmin: true });
+    const unsubscribeMessages = subscribeToChatMessages((payload) => {
+      const msg = payload?.new || payload?.record;
+      if (!msg) return;
 
-          if (payload.new.conversation_id === activeConversationId) {
-            fetch('/api/chat/conversations', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ action: 'markRead', conversationId: activeConversationId })
-            }).catch(() => {});
-          }
+      const isActiveConversation = msg.conversation_id === activeConversationId;
+      if (msg.sender === 'client') {
+        playMessageChimeForMessage(msg.id, false, { role: 'admin', isAdmin: true });
+      }
 
-          // Refresh conversations and unread badges immediately
-          fetchConversations(activeFilter, searchQuery, activeChannel, true);
-          fetchChannelUnreadCounts();
+      if (isActiveConversation) {
+        setMessages(prev => {
+          if (prev.some(existing => existing.id === msg.id)) return prev;
+          return [...prev, msg];
+        });
+        scrollToBottom();
+
+        if (msg.sender === 'client') {
+          fetch('/api/chat/conversations', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'markRead', conversationId: activeConversationId })
+          }).catch(() => {});
         }
-      })
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'conversations'
-      }, () => {
+      }
+
+      if (msg.sender === 'client') {
         fetchConversations(activeFilter, searchQuery, activeChannel, true);
         fetchChannelUnreadCounts();
-      })
-      .subscribe();
+      }
+    });
+
+    const unsubscribeConversations = subscribeToConversations(() => {
+      fetchConversations(activeFilter, searchQuery, activeChannel, true);
+      fetchChannelUnreadCounts();
+    });
 
     return () => {
       clearTimeout(clientTypingDismissRef.current);
       channelRef.current = null;
       if (activeChannelSub) supabase.removeChannel(activeChannelSub);
-      supabase.removeChannel(globalSub);
+      unsubscribeMessages();
+      unsubscribeConversations();
     };
   }, [activeConversationId, activeChannel, activeFilter, searchQuery, fetchChannelUnreadCounts]);
   /* oxlint-enable react-hooks/exhaustive-deps */

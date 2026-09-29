@@ -92,6 +92,6 @@ export const fetchPublicCatalogServer = unstable_cache(
   ['bdigitizing-public-catalog-v1'],
   {
     revalidate: 300,
-    tags: ['catalog', 'homepage']
+    tags: ['catalog', 'homepage', 'portfolio']
   }
 );
