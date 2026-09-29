@@ -997,13 +997,7 @@ export async function updateHomePageSettingsInSupabase(payloadArray) {
 // and the cms_content key/value store). Returns null when not configured.
 export async function fetchCatalogFromSupabase() {
   try {
-    const res = await fetch(`/api/catalog?action=fetchAll&_t=${Date.now()}`, {
-      cache: 'no-store',
-      headers: {
-        'Cache-Control': 'no-cache, no-store, must-revalidate',
-        'Pragma': 'no-cache'
-      }
-    });
+    const res = await fetch('/api/catalog?action=fetchAll');
     if (!res.ok) return null;
     const data = await res.json();
     return normalizePublicCatalog(data);

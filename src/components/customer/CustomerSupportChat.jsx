@@ -387,7 +387,7 @@ export default function CustomerSupportChat({
           });
         }
       } catch {}
-    }, 3500);
+    }, 15000);
 
     return () => clearInterval(interval);
   }, [conversationId, messages.length, userEmail]);

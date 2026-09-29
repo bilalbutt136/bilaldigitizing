@@ -1,12 +1,10 @@
 import { NextResponse } from 'next/server';
-import { revalidatePath, revalidateTag } from 'next/cache';
+import { revalidatePath, revalidateTag, unstable_cache } from 'next/cache';
 import { createAdminClient } from '../../../src/lib/supabase/admin';
 import { getServerAuthUser } from '../../../src/lib/supabase/serverAuth';
 import crypto from 'crypto';
 
 export const dynamic = 'force-dynamic';
-export const revalidate = 0;
-export const fetchCache = 'force-no-store';
 
 const ALLOWED_TABLES = [
   'services', 'pricing_cards', 'patch_cards', 'store_products',
@@ -24,6 +22,7 @@ function revalidateAllSitePages() {
     revalidatePath('/services/embroidery-digitizing', 'page');
     revalidatePath('/services/vector-tracing', 'page');
     revalidatePath('/custom-patches', 'page');
+    revalidatePath('/api/catalog');
     revalidateTag('portfolio');
     revalidateTag('catalog');
   } catch (e) {
@@ -31,48 +30,71 @@ function revalidateAllSitePages() {
   }
 }
 
+const fetchPublicCatalogBundle = unstable_cache(
+  async () => {
+    const supabase = createAdminClient();
+    const results = await Promise.all([
+      supabase.from('services').select('*').order('sort_order', { ascending: true }),
+      supabase.from('pricing_cards').select('*').order('sort_order', { ascending: true }),
+      supabase.from('patch_cards').select('*').order('sort_order', { ascending: true }),
+      supabase.from('store_products').select('*').order('sort_order', { ascending: true }),
+      supabase.from('pricing_tiers').select('*').order('display_order', { ascending: true }),
+      supabase.from('portfolio').select('*').order('sort_order', { ascending: true }),
+      supabase.from('sew_outs').select('*').order('sort_order', { ascending: true }),
+      supabase.from('hero_slides').select('*').order('sort_order', { ascending: true }),
+      supabase.from('digitizers').select('*').order('sort_order', { ascending: true }),
+      supabase.from('site_config').select('key, value'),
+      supabase.from('faqs').select('*').order('sort_order', { ascending: true }),
+      supabase.from('testimonials').select('*').order('created_at', { ascending: false })
+    ]);
+
+    const firstError = results.find(result => result.error)?.error;
+    if (firstError) throw firstError;
+
+    const [
+      services,
+      pricing_cards,
+      patch_cards,
+      store_products,
+      pricing_tiers,
+      portfolio,
+      sew_outs,
+      hero_slides,
+      digitizers,
+      site_config,
+      faqs,
+      testimonials
+    ] = results.map(result => result.data || []);
+
+    return {
+      services,
+      pricing_cards,
+      patch_cards,
+      store_products,
+      pricing_tiers,
+      portfolio,
+      sew_outs,
+      hero_slides,
+      digitizers,
+      site_config,
+      faqs,
+      testimonials
+    };
+  },
+  ['public-catalog-bundle-v1'],
+  { revalidate: 300, tags: ['catalog', 'portfolio'] }
+);
+
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
     const action = searchParams.get('action');
-    const supabase = createAdminClient();
 
     if (action === 'fetchAll') {
-      const [
-        { data: services },
-        { data: pricing_cards },
-        { data: patch_cards },
-        { data: store_products },
-        { data: pricing_tiers },
-        { data: portfolio },
-        { data: sew_outs },
-        { data: hero_slides },
-        { data: digitizers },
-        { data: site_config },
-        { data: faqs },
-        { data: testimonials }
-      ] = await Promise.all([
-        supabase.from('services').select('*').order('sort_order', { ascending: true }),
-        supabase.from('pricing_cards').select('*').order('sort_order', { ascending: true }),
-        supabase.from('patch_cards').select('*').order('sort_order', { ascending: true }),
-        supabase.from('store_products').select('*').order('sort_order', { ascending: true }),
-        supabase.from('pricing_tiers').select('*').order('display_order', { ascending: true }),
-        supabase.from('portfolio').select('*').order('sort_order', { ascending: true }),
-        supabase.from('sew_outs').select('*').order('sort_order', { ascending: true }),
-        supabase.from('hero_slides').select('*').order('sort_order', { ascending: true }),
-        supabase.from('digitizers').select('*').order('sort_order', { ascending: true }),
-        supabase.from('site_config').select('key, value'),
-        supabase.from('faqs').select('*').order('sort_order', { ascending: true }),
-        supabase.from('testimonials').select('*').order('created_at', { ascending: false })
-      ]);
-      return NextResponse.json({
-        services, pricing_cards, patch_cards, store_products, pricing_tiers,
-        portfolio, sew_outs, hero_slides, digitizers, site_config, faqs, testimonials
-      }, {
+      const catalog = await fetchPublicCatalogBundle();
+      return NextResponse.json(catalog, {
         headers: {
-          'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0',
-          'Pragma': 'no-cache',
-          'Expires': '0'
+          'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300'
         }
       });
     }

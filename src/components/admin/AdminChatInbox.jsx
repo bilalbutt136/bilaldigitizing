@@ -378,7 +378,7 @@ export default function AdminChatInbox({ initialChannel = 'inbox' }) {
 
       // 3. Keep badges fresh
       fetchChannelUnreadCounts();
-    }, 4000);
+    }, 20000);
 
     return () => clearInterval(interval);
   }, [activeConversationId, messages.length, activeChannel, activeFilter, searchQuery, fetchChannelUnreadCounts]);

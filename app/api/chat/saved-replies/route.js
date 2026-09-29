@@ -4,8 +4,13 @@ import { getServerAuthUser } from '../../../../src/lib/supabase/serverAuth';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET() {
+export async function GET(request) {
   try {
+    const { isAdmin } = await getServerAuthUser(request);
+    if (!isAdmin) {
+      return NextResponse.json({ error: 'Unauthorized. Admin access required.' }, { status: 403 });
+    }
+
     const supabase = createAdminClient();
     const { data: replies, error } = await supabase
       .from('saved_replies')

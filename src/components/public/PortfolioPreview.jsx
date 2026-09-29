@@ -6,7 +6,6 @@ import { useAppState } from '../../context/StateContext';
 import { useNavigate } from '../../utils/navigation';
 import { normalizeCategory } from '../../utils/categoryUtils';
 
-import { supabase } from '../../lib/supabase/client';
 
 export const PortfolioPreview = () => {
   const { portfolioSamples = [], setPortfolioSamples, activeHomeServiceTab, homePageConfig = {} } = useAppState();
@@ -24,17 +23,7 @@ export const PortfolioPreview = () => {
     let isMounted = true;
     const syncFreshPortfolio = async () => {
       try {
-        if (supabase) {
-          const { data, error } = await supabase
-            .from('portfolio')
-            .select('*')
-            .order('sort_order', { ascending: true });
-          if (!error && data && data.length > 0 && isMounted) {
-            if (setPortfolioSamples) setPortfolioSamples(data);
-            return;
-          }
-        }
-        const res = await fetch(`/api/catalog?action=fetchAll&_t=${Date.now()}`, { cache: 'no-store' });
+        const res = await fetch('/api/catalog?action=fetchAll');
         const json = await res.json();
         if (json?.portfolio && isMounted) {
           if (setPortfolioSamples) setPortfolioSamples(json.portfolio);
