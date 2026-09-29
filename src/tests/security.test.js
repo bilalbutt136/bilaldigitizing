@@ -96,7 +96,7 @@ describe('Cross-Account Order Isolation & Access Control', () => {
     { id: 'ord-301', user_id: 'user-ccc', client_email: 'charlie@example.com', title: 'Charlie Order 1' }
   ];
 
-  function filterUserOrders(orders, authenticatedUser, localOrderIds = []) {
+  function filterUserOrders(orders, authenticatedUser, _localOrderIds = []) {
     const userEmail = (authenticatedUser?.email || '').toLowerCase().trim();
     const currentUserId = String(authenticatedUser?.id || '').toLowerCase().trim();
     const isAdmin = authenticatedUser?.role === 'admin';
@@ -113,8 +113,7 @@ describe('Cross-Account Order Isolation & Access Control', () => {
         return false;
       }
 
-      const cleanId = String(o?.id || '').trim().replace(/^#+/, '');
-      return localOrderIds.some(lid => String(lid).trim().replace(/^#+/, '') === cleanId);
+      return false;
     });
   }
 
@@ -134,11 +133,10 @@ describe('Cross-Account Order Isolation & Access Control', () => {
     assert.equal(bobVisible[0].id, 'ord-201');
   });
 
-  test('unauthenticated guest can only see localOrderIds from their own session', () => {
+  test('unauthenticated guests cannot retrieve orders by remembered local order IDs', () => {
     const guestLocalIds = ['ord-301'];
     const guestVisible = filterUserOrders(mockOrders, null, guestLocalIds);
-    assert.equal(guestVisible.length, 1);
-    assert.equal(guestVisible[0].id, 'ord-301');
+    assert.equal(guestVisible.length, 0);
   });
 
   test('platform admin can view all orders across accounts', () => {

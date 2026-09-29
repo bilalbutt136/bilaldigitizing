@@ -3,6 +3,7 @@ import { createClient } from '../../../../src/lib/supabase/server';
 import { createAdminClient } from '../../../../src/lib/supabase/admin';
 import { supabaseAdmin, hasServiceRole } from '../../../../src/lib/supabaseAdmin';
 import { checkDistributedRateLimit, getClientIp, getRateLimitHeaders } from '../../../../src/lib/rateLimit';
+import { resolveTrustedUserAccess } from '../../../../src/lib/supabase/serverAuth';
 
 export async function POST(request) {
   try {
@@ -115,9 +116,9 @@ export async function POST(request) {
 
     const user = authData.user;
 
-    // 3. Admin user bypass
-    const isAdmin = user.user_metadata?.role === 'admin' || user.app_metadata?.role === 'admin';
-    if (isAdmin) {
+    // 3. Privileged roles must come only from trusted server-controlled sources.
+    const trustedAccess = await resolveTrustedUserAccess(user, adminClient);
+    if (trustedAccess.isAdmin) {
       return NextResponse.json({
         success: true,
         isAdmin: true,
@@ -155,7 +156,7 @@ export async function POST(request) {
       } catch {}
     }
 
-    const rawStatus = profile?.status || user.user_metadata?.worker_status || user.user_metadata?.status || 'Pending';
+    const rawStatus = profile?.status || 'Pending';
     const normalizedStatus = (rawStatus || '').toLowerCase();
     const displayName = profile?.name || user.user_metadata?.full_name || user.user_metadata?.name || resolvedEmail.split('@')[0];
 
@@ -192,15 +193,14 @@ export async function POST(request) {
       }, { status: 403 });
     }
 
-    // Active worker: Ensure user metadata in Auth has role: 'worker' and status: 'Active'
-    if (user.user_metadata?.role !== 'worker' || user.user_metadata?.status !== 'Active') {
+    // Persist role only in app_metadata, which is server-controlled and cannot be edited by the user.
+    if (user.app_metadata?.role !== 'worker' || user.app_metadata?.worker_status !== 'active') {
       try {
         await adminClient.auth.admin.updateUserById(user.id, {
-          user_metadata: {
-            ...user.user_metadata,
+          app_metadata: {
+            ...user.app_metadata,
             role: 'worker',
-            status: 'Active',
-            worker_status: 'Active'
+            worker_status: 'active'
           }
         });
       } catch {}

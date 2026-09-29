@@ -1,36 +1,35 @@
 import { NextResponse } from 'next/server';
 import { createAdminClient } from '../../../src/lib/supabase/admin';
 import { getServerAuthUser } from '../../../src/lib/supabase/serverAuth';
+import { canAccessOfferRecord } from '../../../src/lib/offers/authorization';
 
 export const dynamic = 'force-dynamic';
 
 
-async function findOffer(supabase, offerId, fallbackOffer = null) {
-  if (!offerId && !fallbackOffer) return null;
+async function findOffer(supabase, offerId) {
+  if (!offerId) return null;
 
-  let offer = null;
+  for (const column of ['id', 'stripe_session_id', 'order_id']) {
+    const { data, error } = await supabase
+      .from('custom_offers')
+      .select('*')
+      .eq(column, offerId)
+      .maybeSingle();
 
-  if (offerId) {
-    try {
-      const { data: offData } = await supabase
-        .from('custom_offers')
-        .select('*')
-        .or(`id.eq.${offerId},stripe_session_id.eq.${offerId},order_id.eq.${offerId}`)
-        .maybeSingle();
-      if (offData) offer = offData;
-    } catch {}
+    if (error) throw error;
+    if (data) return data;
   }
 
-  if (!offer && fallbackOffer) {
-    offer = typeof fallbackOffer === 'string' ? JSON.parse(fallbackOffer) : fallbackOffer;
-  }
-
-  return offer;
+  return null;
 }
 
 export async function GET(request) {
   try {
     const { user, isAdmin } = await getServerAuthUser(request);
+    if (!user?.email) {
+      return NextResponse.json({ error: 'Authentication required.' }, { status: 401 });
+    }
+
     const { searchParams } = new URL(request.url);
     const action = searchParams.get('action') || 'getOffer';
     const offerId = searchParams.get('offerId') || searchParams.get('id');
@@ -46,11 +45,20 @@ export async function GET(request) {
       if (!offer) {
         return NextResponse.json({ error: 'Offer not found' }, { status: 404 });
       }
+      if (!canAccessOfferRecord(offer, { user, isAdmin })) {
+        return NextResponse.json({ error: 'Offer access denied.' }, { status: 403 });
+      }
 
-      // Check auto-expiry if still marked sent or pending
-      if ((offer.status === 'sent' || offer.status === 'viewed' || offer.status === 'pending') && offer.expires_at && new Date(offer.expires_at).getTime() < Date.now()) {
+      if (
+        (offer.status === 'sent' || offer.status === 'viewed' || offer.status === 'pending') &&
+        offer.expires_at &&
+        new Date(offer.expires_at).getTime() < Date.now()
+      ) {
         try {
-          await supabase.from('custom_offers').update({ status: 'expired', updated_at: new Date().toISOString() }).eq('id', offer.id || offerId);
+          await supabase
+            .from('custom_offers')
+            .update({ status: 'expired', updated_at: new Date().toISOString() })
+            .eq('id', offer.id);
         } catch {}
         offer.status = 'expired';
       }
@@ -59,25 +67,34 @@ export async function GET(request) {
     }
 
     if (action === 'fetchOffers') {
-      let query = supabase.from('custom_offers').select('id, conversation_id, thread_id, client_name, client_email, title, description, service_type, price, discount_amount, final_price, delivery_time_text, delivery_days, revisions_allowed, expires_in_hours, expires_at, status, payment_status, order_id, created_by, created_at, updated_at').order('created_at', { ascending: false });
+      let query = supabase
+        .from('custom_offers')
+        .select('id, conversation_id, thread_id, customer_id, client_name, client_email, title, description, service_type, price, discount_amount, final_price, delivery_time_text, delivery_days, revisions_allowed, expires_in_hours, expires_at, status, payment_status, order_id, created_by, created_at, updated_at')
+        .order('created_at', { ascending: false });
 
-      if (conversationId) {
-        query = query.eq('conversation_id', conversationId);
-      } else if (!isAdmin && user?.email) {
+      if (isAdmin) {
+        if (conversationId) query = query.eq('conversation_id', conversationId);
+      } else {
         query = query.ilike('client_email', user.email.toLowerCase().trim());
+        if (conversationId) query = query.eq('conversation_id', conversationId);
       }
 
       const { data, error } = await query;
       if (error) {
+        console.warn('[Offers API GET] fetchOffers error:', error.message);
         return NextResponse.json({ offers: [] });
       }
 
       const nowTime = Date.now();
-      const updatedOffers = (data || []).map(off => {
-        if ((off.status === 'sent' || off.status === 'viewed') && new Date(off.expires_at).getTime() < nowTime) {
-          return { ...off, status: 'expired' };
+      const updatedOffers = (data || []).map(offer => {
+        if (
+          (offer.status === 'sent' || offer.status === 'viewed' || offer.status === 'pending') &&
+          offer.expires_at &&
+          new Date(offer.expires_at).getTime() < nowTime
+        ) {
+          return { ...offer, status: 'expired' };
         }
-        return off;
+        return offer;
       });
 
       return NextResponse.json({ offers: updatedOffers });
@@ -86,13 +103,17 @@ export async function GET(request) {
     return NextResponse.json({ error: 'Unknown action' }, { status: 400 });
   } catch (error) {
     console.error('[Offers API GET]', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: 'Unable to load offers.' }, { status: 500 });
   }
 }
 
 export async function POST(request) {
   try {
     const { user, isAdmin } = await getServerAuthUser(request);
+    if (!user?.email) {
+      return NextResponse.json({ error: 'Authentication required.' }, { status: 401 });
+    }
+
     let data = {};
     try {
       data = await request.json();
@@ -358,15 +379,17 @@ export async function POST(request) {
 
     // 2. ACTION: ACCEPT OFFER (Customer or Admin on behalf of customer)
     if (action === 'acceptOffer') {
-      const { offerId, offer: clientOffer } = payload;
-      if (!offerId && !clientOffer) {
+      const { offerId } = payload;
+      if (!offerId) {
         return NextResponse.json({ error: 'Missing offerId' }, { status: 400 });
       }
 
-      // 1. Infallible multi-source lookup (custom_offers, messages, order_messages, client payload)
-      const offer = await findOffer(supabase, offerId, clientOffer);
+      const offer = await findOffer(supabase, offerId);
       if (!offer) {
         return NextResponse.json({ error: 'Offer not found' }, { status: 404 });
+      }
+      if (!canAccessOfferRecord(offer, { user, isAdmin })) {
+        return NextResponse.json({ error: 'Offer access denied.' }, { status: 403 });
       }
 
       if (offer.status === 'accepted' || offer.status === 'paid') {
@@ -391,7 +414,7 @@ export async function POST(request) {
       }
 
       // 2. Create authoritative order in orders table
-      const cleanEmail = (user?.email || offer.client_email || 'client@studio.com').toLowerCase().trim();
+      const cleanEmail = (offer.client_email || user.email).toLowerCase().trim();
       const rawOrderNum = Math.random().toString(36).substring(2, 7).toUpperCase();
       const generatedOrderId = `ORD-${Date.now().toString().slice(-4)}${rawOrderNum}`;
 
@@ -531,14 +554,17 @@ export async function POST(request) {
 
     // 3. ACTION: DECLINE OFFER (Customer)
     if (action === 'declineOffer' || action === 'rejectOffer') {
-      const { offerId, offer: clientOffer } = payload;
-      if (!offerId && !clientOffer) {
+      const { offerId } = payload;
+      if (!offerId) {
         return NextResponse.json({ error: 'Missing offerId' }, { status: 400 });
       }
 
-      const offer = await findOffer(supabase, offerId, clientOffer);
+      const offer = await findOffer(supabase, offerId);
       if (!offer) {
         return NextResponse.json({ error: 'Offer not found' }, { status: 404 });
+      }
+      if (!canAccessOfferRecord(offer, { user, isAdmin })) {
+        return NextResponse.json({ error: 'Offer access denied.' }, { status: 403 });
       }
 
       const targetOfferId = offer.id || offerId;
@@ -586,12 +612,12 @@ export async function POST(request) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
       }
 
-      const { offerId, offer: clientOffer } = payload;
-      if (!offerId && !clientOffer) {
+      const { offerId } = payload;
+      if (!offerId) {
         return NextResponse.json({ error: 'Missing offerId' }, { status: 400 });
       }
 
-      const offer = await findOffer(supabase, offerId, clientOffer);
+      const offer = await findOffer(supabase, offerId);
       if (!offer) {
         return NextResponse.json({ error: 'Offer not found' }, { status: 404 });
       }
@@ -623,9 +649,12 @@ export async function POST(request) {
       if (!offer) {
         return NextResponse.json({ error: 'Offer not found' }, { status: 404 });
       }
+      if (!canAccessOfferRecord(offer, { user, isAdmin })) {
+        return NextResponse.json({ error: 'Offer access denied.' }, { status: 403 });
+      }
 
       const targetOfferId = offer.id || offerId;
-      const targetOrderId = orderId || offer.order_id;
+      const targetOrderId = isAdmin ? (orderId || offer.order_id) : offer.order_id;
       const conversationId = offer.conversation_id || offer.thread_id || 'general-support';
       const cleanEmail = (offer.client_email || user?.email || '').toLowerCase().trim();
 
@@ -641,6 +670,10 @@ export async function POST(request) {
           .maybeSingle();
 
         const isOrderPaid = dbOrder?.payment_status === 'paid';
+        const ownsOrder = dbOrder && String(dbOrder.client_email || '').toLowerCase().trim() === String(user.email || '').toLowerCase().trim();
+        if (!ownsOrder) {
+          return NextResponse.json({ error: 'Order access denied.' }, { status: 403 });
+        }
         if (!isOrderPaid) {
           return NextResponse.json({ 
             error: 'Unauthorized. Unpaid offers cannot be marked as paid directly. Please complete checkout.' 

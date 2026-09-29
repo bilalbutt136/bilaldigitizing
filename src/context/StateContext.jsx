@@ -899,26 +899,13 @@ export const StateProvider = ({ children, initialCatalog = null }) => {
       const res = await verifyAdminSession(cleanEmail);
       if (res?.isAdmin) return 'admin';
     } catch {}
-
-    // 1. Check user metadata
-    if (sbUser?.user_metadata?.role === 'worker' || sbUser?.app_metadata?.role === 'worker') {
+    // Only server-controlled app_metadata may provide an immediate worker role.
+    // user_metadata and localStorage are user-controlled and must never grant privileges.
+    if (sbUser?.app_metadata?.role === 'worker') {
       return 'worker';
     }
 
-    // 2. Check cached localStorage
-    try {
-      if (typeof window !== 'undefined') {
-        const saved = localStorage.getItem('bdigi_auth_user');
-        if (saved) {
-          const parsed = JSON.parse(saved);
-          if (parsed?.email?.toLowerCase() === cleanEmail && parsed?.role === 'worker') {
-            return 'worker';
-          }
-        }
-      }
-    } catch {}
-
-    // 3. Check worker directory in Supabase
+    // Check worker directory records using the verified authenticated email.
     if (supabase) {
       try {
         const { data: worker } = await supabase

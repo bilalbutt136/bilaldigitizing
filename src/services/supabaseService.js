@@ -180,54 +180,12 @@ export async function updateUserPassword(newPassword) {
 
 
 
-// Fetch all orders from Supabase DB
-export async function fetchOrdersFromSupabase(customEmail = null, customOrderIds = null, customUserId = null) {
+// Fetch orders using only verified Supabase cookie/bearer authentication.
+// Legacy parameters are retained for call-site compatibility but are never sent as identity signals.
+export async function fetchOrdersFromSupabase(_customEmail = null, _customOrderIds = null, _customUserId = null) {
   try {
     const headers = await getAuthHeaders();
-    let url = `/api/orders?action=fetchAll&_t=${Date.now()}`;
-    const params = new URLSearchParams();
-
-    let resolvedEmail = customEmail;
-    let resolvedUserId = customUserId;
-
-    if (supabase && (!resolvedEmail || !resolvedUserId)) {
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session?.user) {
-          if (!resolvedEmail) resolvedEmail = session.user.email;
-          if (!resolvedUserId) resolvedUserId = session.user.id;
-        }
-      } catch {}
-    }
-
-    if (!resolvedEmail && typeof window !== 'undefined') {
-      try {
-        const authSaved = JSON.parse(localStorage.getItem('bdigi_auth_user') || 'null');
-        const clientSaved = JSON.parse(localStorage.getItem('bdigi_client_user') || 'null');
-        // Do NOT auto-restrict to admin email: admin views all orders across the studio
-        if (authSaved?.role !== 'admin') {
-          resolvedEmail = authSaved?.email || clientSaved?.email || localStorage.getItem('bdigi_user_email') || null;
-          if (!resolvedUserId) resolvedUserId = authSaved?.id || null;
-        }
-      } catch {}
-    }
-    let localOrderIds = customOrderIds;
-    if (!localOrderIds && typeof window !== 'undefined') {
-      try {
-        const stored = JSON.parse(localStorage.getItem('bdigi_my_order_ids') || '[]');
-        if (Array.isArray(stored) && stored.length > 0) {
-          localOrderIds = stored.slice(0, 50);
-        }
-      } catch {}
-    }
-    if (resolvedEmail) params.append('email', resolvedEmail);
-    if (resolvedUserId) params.append('userId', resolvedUserId);
-    if (Array.isArray(localOrderIds) && localOrderIds.length > 0) {
-      params.append('orderIds', localOrderIds.join(','));
-    }
-
-    const qs = params.toString();
-    if (qs) url += `&${qs}`;
+    const url = `/api/orders?action=fetchAll&_t=${Date.now()}`;
 
     const res = await fetch(url, {
       headers: {
@@ -241,7 +199,6 @@ export async function fetchOrdersFromSupabase(customEmail = null, customOrderIds
     const data = await res.json();
     const orders = data.orders || [];
 
-    // Map snake_case database columns back to camelCase frontend properties
     return orders.map(order => mapDatabaseOrderToClientOrder(order)).filter(Boolean);
   } catch (err) {
     console.warn('fetchOrdersFromSupabase error notice:', err?.message);

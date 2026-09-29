@@ -3,18 +3,109 @@ import { cookies } from 'next/headers';
 import { supabaseAdmin, hasServiceRole } from '../supabaseAdmin';
 import { createAdminClient } from './admin';
 
+function getConfiguredAdminEmails() {
+  return [
+    process.env.MASTER_ADMIN_EMAIL,
+    process.env.ADMIN_EMAIL,
+    process.env.NEXT_PUBLIC_ADMIN_EMAIL
+  ]
+    .filter(Boolean)
+    .map(email => String(email).toLowerCase().trim());
+}
+
 /**
- * Retrieves and validates the authenticated user and admin status server-side.
- * Inspects both 'Authorization: Bearer <token>' headers and HTTP-only session cookies.
- *
- * @param {Request} request - The incoming Next.js Request object
- * @returns {Promise<{ user: import('@supabase/supabase-js').User | null, isAdmin: boolean, error: string | null }>}
+ * Resolve privileged roles for a Supabase Auth user using only trusted,
+ * server-controlled sources. user_metadata is intentionally never used
+ * for authorization because account owners can edit it themselves.
+ */
+export async function resolveTrustedUserAccess(user, dbClientOverride = null) {
+  if (!user?.email) {
+    return { isAdmin: false, isWorker: false, workerData: null };
+  }
+
+  const email = String(user.email).toLowerCase().trim();
+  const configuredAdmins = getConfiguredAdminEmails();
+
+  if (configuredAdmins.includes(email)) {
+    return { isAdmin: true, isWorker: false, workerData: null };
+  }
+
+  if (user.app_metadata?.role === 'admin' || user.app_metadata?.is_admin === true) {
+    return { isAdmin: true, isWorker: false, workerData: null };
+  }
+
+  let dbClient = dbClientOverride;
+  if (!dbClient) {
+    try {
+      dbClient = (hasServiceRole && supabaseAdmin) ? supabaseAdmin : createAdminClient();
+    } catch {
+      dbClient = null;
+    }
+  }
+
+  if (!dbClient) {
+    return { isAdmin: false, isWorker: false, workerData: null };
+  }
+
+  try {
+    const { data: adminRecord } = await dbClient
+      .from('admins')
+      .select('email')
+      .ilike('email', email)
+      .maybeSingle();
+
+    if (adminRecord) {
+      return { isAdmin: true, isWorker: false, workerData: null };
+    }
+
+    const { data: clientRecord } = await dbClient
+      .from('clients')
+      .select('id, email, role')
+      .ilike('email', email)
+      .maybeSingle();
+
+    if (clientRecord && (clientRecord.role === 'admin' || clientRecord.role === 'staff')) {
+      return { isAdmin: true, isWorker: false, workerData: null };
+    }
+
+    const { data: profileRecord } = await dbClient
+      .from('worker_profiles')
+      .select('*')
+      .ilike('email', email)
+      .maybeSingle();
+
+    if (profileRecord && String(profileRecord.status || '').toLowerCase() === 'active') {
+      return { isAdmin: false, isWorker: true, workerData: profileRecord };
+    }
+
+    const { data: workerRecord } = await dbClient
+      .from('workers')
+      .select('*')
+      .ilike('email', email)
+      .maybeSingle();
+
+    if (workerRecord && String(workerRecord.status || '').toLowerCase() === 'active') {
+      return { isAdmin: false, isWorker: true, workerData: workerRecord };
+    }
+
+    if (clientRecord?.role === 'worker') {
+      return { isAdmin: false, isWorker: true, workerData: clientRecord };
+    }
+  } catch (dbErr) {
+    console.warn('[resolveTrustedUserAccess DB Check Warning]:', dbErr?.message);
+  }
+
+  return { isAdmin: false, isWorker: false, workerData: null };
+}
+
+/**
+ * Retrieves and validates the authenticated user and trusted role server-side.
+ * Inspects both Authorization Bearer tokens and Supabase SSR cookies.
  */
 export async function getServerAuthUser(request) {
   try {
     let user = null;
 
-    // 1. Check Authorization Bearer Header (Mobile, CLI, direct API calls)
     const authHeader = request?.headers?.get('Authorization') || request?.headers?.get('authorization');
     if (authHeader && authHeader.toLowerCase().startsWith('bearer ')) {
       const token = authHeader.substring(7).trim();
@@ -22,26 +113,20 @@ export async function getServerAuthUser(request) {
         if (hasServiceRole && supabaseAdmin) {
           try {
             const { data: userData, error: userError } = await supabaseAdmin.auth.getUser(token);
-            if (!userError && userData?.user) {
-              user = userData.user;
-            }
+            if (!userError && userData?.user) user = userData.user;
           } catch {}
         }
+
         if (!user) {
           try {
             const adminSb = createAdminClient();
-            if (adminSb) {
-              const { data: fallbackUserData, error: fallbackError } = await adminSb.auth.getUser(token);
-              if (!fallbackError && fallbackUserData?.user) {
-                user = fallbackUserData.user;
-              }
-            }
+            const { data: fallbackUserData, error: fallbackError } = await adminSb.auth.getUser(token);
+            if (!fallbackError && fallbackUserData?.user) user = fallbackUserData.user;
           } catch {}
         }
       }
     }
 
-    // 2. Check Next.js Cookies via @supabase/ssr
     if (!user) {
       try {
         const cookieStore = await cookies();
@@ -59,108 +144,40 @@ export async function getServerAuthUser(request) {
                     cookieStore.set(name, value, options);
                   });
                 } catch {
-                  // Ignore setAll in Server Components / Route Handlers if headers already sent
+                  // Ignore cookie refresh failures after headers have been committed.
                 }
-              },
-            },
+              }
+            }
           }
         );
+
         const { data: cookieAuthData, error: cookieError } = await supabase.auth.getUser();
-        if (!cookieError && cookieAuthData?.user) {
-          user = cookieAuthData.user;
-        }
-      } catch  {
-        // Continue if cookie resolution fails
+        if (!cookieError && cookieAuthData?.user) user = cookieAuthData.user;
+      } catch {
+        // Bearer authentication may still have succeeded above.
       }
     }
 
-    if (!user || !user.email) {
-      return { user: null, isAdmin: false, error: 'Unauthenticated' };
+    if (!user?.email) {
+      return {
+        user: null,
+        isAdmin: false,
+        isWorker: false,
+        workerData: null,
+        error: 'Unauthenticated'
+      };
     }
 
-    const email = user.email.toLowerCase().trim();
-
-    // 3. Master Admin & Configured Admin Email Check
-    const configuredAdmins = [
-      process.env.MASTER_ADMIN_EMAIL,
-      process.env.ADMIN_EMAIL,
-      process.env.NEXT_PUBLIC_ADMIN_EMAIL
-    ]
-      .filter(Boolean)
-      .map(e => e.toLowerCase().trim());
-
-    if (configuredAdmins.length > 0 && configuredAdmins.includes(email)) {
-      return { user, isAdmin: true, error: null };
-    }
-
-    // 4. Only app_metadata is trusted for privileged roles. user_metadata is user-editable.
-    if (user.app_metadata?.role === 'admin' || user.app_metadata?.is_admin === true) {
-      return { user, isAdmin: true, isWorker: false, error: null };
-    }
-
-    // 5. Database Admins Whitelist Check using service role or admin client
-    const dbClient = (hasServiceRole && supabaseAdmin) ? supabaseAdmin : createAdminClient();
-    if (dbClient) {
-      try {
-        const { data: adminRecord } = await dbClient
-          .from('admins')
-          .select('email')
-          .ilike('email', email)
-          .maybeSingle();
-
-        if (adminRecord) {
-          return { user, isAdmin: true, error: null };
-        }
-
-        // Also check clients table if role === 'admin' or 'staff'
-        const { data: clientRecord } = await dbClient
-          .from('clients')
-          .select('role')
-          .ilike('email', email)
-          .maybeSingle();
-
-        if (clientRecord && (clientRecord.role === 'admin' || clientRecord.role === 'staff')) {
-          return { user, isAdmin: true, isWorker: false, error: null };
-        }
-
-        // 6. Check Worker status. Only server-controlled app_metadata may short-circuit DB checks.
-        if (user.app_metadata?.role === 'worker') {
-          return { user, isAdmin: false, isWorker: true, workerData: user.app_metadata, error: null };
-        }
-
-        // Check worker_profiles table first
-        const { data: profileRecord } = await dbClient
-          .from('worker_profiles')
-          .select('*')
-          .ilike('email', email)
-          .maybeSingle();
-
-        if (profileRecord && profileRecord.status === 'active') {
-          return { user, isAdmin: false, isWorker: true, workerData: profileRecord, error: null };
-        }
-
-        const { data: workerRecord } = await dbClient
-          .from('workers')
-          .select('*')
-          .ilike('email', email)
-          .maybeSingle();
-
-        if (workerRecord && workerRecord.status === 'active') {
-          return { user, isAdmin: false, isWorker: true, workerData: workerRecord, error: null };
-        }
-
-        if (clientRecord && clientRecord.role === 'worker') {
-          return { user, isAdmin: false, isWorker: true, workerData: clientRecord, error: null };
-        }
-      } catch (dbErr) {
-        console.warn('[getServerAuthUser DB Check Warning]:', dbErr?.message);
-      }
-    }
-
-    const isWorkerMeta = user.app_metadata?.role === 'worker';
-    return { user, isAdmin: false, isWorker: isWorkerMeta, error: null };
+    const access = await resolveTrustedUserAccess(user);
+    return { user, ...access, error: null };
   } catch (err) {
     console.error('[getServerAuthUser Exception]:', err);
-    return { user: null, isAdmin: false, isWorker: false, error: err.message };
+    return {
+      user: null,
+      isAdmin: false,
+      isWorker: false,
+      workerData: null,
+      error: err.message
+    };
   }
 }
