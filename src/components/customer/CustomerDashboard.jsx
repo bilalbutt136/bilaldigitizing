@@ -38,6 +38,8 @@ import {
 import { ClientSidebar } from './ClientSidebar';
 import CustomerMobileCommandCenter from './CustomerMobileCommandCenter';
 import MobileOrderTrackingCard from './MobileOrderTrackingCard';
+import OrderThumbnail from './OrderThumbnail';
+import { getStableOrderKey, resolveOrderPreviewImage } from '../../utils/orderImageUtils';
 import { MobileSimpleOrderModal } from './MobileSimpleOrderModal';
 import { ClientNotificationsView } from './ClientNotificationsView';
 import { CustomerInvoiceModal } from '../common/CustomerInvoiceModal';
@@ -95,6 +97,32 @@ export const CustomerDashboard = () => {
   };
   const userEmail = activeUser?.email || '';
 
+  const refreshOrdersRef = React.useRef(refreshOrders);
+  const refreshNotificationsRef = React.useRef(refreshNotifications);
+  const markAllNotificationsAsReadRef = React.useRef(markAllNotificationsAsRead);
+  const markOrdersAsReadRef = React.useRef(markOrdersAsRead);
+  const ordersRef = React.useRef(orders);
+  const openOrderTrackerDrawerRef = React.useRef(openOrderTrackerDrawer);
+  const setSelectedOrderForDrawerRef = React.useRef(setSelectedOrderForDrawer);
+
+  React.useEffect(() => {
+    refreshOrdersRef.current = refreshOrders;
+    refreshNotificationsRef.current = refreshNotifications;
+    markAllNotificationsAsReadRef.current = markAllNotificationsAsRead;
+    markOrdersAsReadRef.current = markOrdersAsRead;
+    ordersRef.current = orders;
+    openOrderTrackerDrawerRef.current = openOrderTrackerDrawer;
+    setSelectedOrderForDrawerRef.current = setSelectedOrderForDrawer;
+  }, [
+    refreshOrders,
+    refreshNotifications,
+    markAllNotificationsAsRead,
+    markOrdersAsRead,
+    orders,
+    openOrderTrackerDrawer,
+    setSelectedOrderForDrawer
+  ]);
+
   const isDark = theme === 'dark';
 
   const [activeTab, setActiveTabLocal] = useState(() => {
@@ -135,20 +163,19 @@ export const CustomerDashboard = () => {
     return () => window.removeEventListener('bdigi_chat_focus', handleChatFocusEvent);
   }, []);
 
-  // Ensure customer orders are fresh and synced from Supabase on mount and on real-time order changes
+  // Fetch once per authenticated customer and refresh only on actual order events.
   React.useEffect(() => {
-    if (typeof refreshOrders === 'function') {
-      refreshOrders().catch(err => console.warn('Customer orders sync notice:', err));
-    }
-
-    const handleLiveOrderUpdate = () => {
-      if (typeof refreshOrders === 'function') {
-        refreshOrders().catch(() => {});
+    const runRefresh = () => {
+      const action = refreshOrdersRef.current;
+      if (typeof action === 'function') {
+        action().catch(err => console.warn('Customer orders sync notice:', err));
       }
     };
-    window.addEventListener('bdigi_order_change', handleLiveOrderUpdate);
-    return () => window.removeEventListener('bdigi_order_change', handleLiveOrderUpdate);
-  }, [refreshOrders, userEmail]);
+
+    runRefresh();
+    window.addEventListener('bdigi_order_change', runRefresh);
+    return () => window.removeEventListener('bdigi_order_change', runRefresh);
+  }, [userEmail]);
 
   // Track whether customer has installed the PWA mobile app
   const [isAppInstalled, setIsAppInstalled] = useState(false);
@@ -267,56 +294,47 @@ export const CustomerDashboard = () => {
     }
   }, [activeCustomerTab, activeTab]);
 
-  // Listen for direct tab switch events (e.g. from Notifications or Orders)
+  // Listen for direct tab switches without resubscribing on each order refresh.
   React.useEffect(() => {
-    const handleTabSwitch = (e) => {
-      const targetTab = e.detail?.tab;
-      if (targetTab) {
-        setActiveTab(targetTab);
+    const openTrackedOrder = (rawOrderId) => {
+      if (!rawOrderId) return;
+      const cleanId = String(rawOrderId).trim().replace(/^#+/, '');
+      const openTracker = openOrderTrackerDrawerRef.current;
+      if (typeof openTracker === 'function') {
+        openTracker(cleanId);
+        return;
       }
 
-      if (e.detail?.orderId) {
-        const rawOrderId = String(e.detail.orderId).trim();
-        const cleanId = rawOrderId.replace(/^#+/, '');
-        if (openOrderTrackerDrawer) {
-          openOrderTrackerDrawer(cleanId);
-        } else if (setSelectedOrderForDrawer) {
-          const found = (orders || []).find(o => {
-            const oClean = String(o?.id || '').trim().replace(/^#+/, '');
-            return oClean === cleanId || o?.id === e.detail.orderId || formatOrderId(o?.id) === String(e.detail.orderId);
-          });
-          if (found) setSelectedOrderForDrawer(found);
-        }
-      }
+      const selectOrder = setSelectedOrderForDrawerRef.current;
+      if (typeof selectOrder !== 'function') return;
+      const found = (ordersRef.current || []).find(o => {
+        const oClean = String(o?.id || '').trim().replace(/^#+/, '');
+        return oClean === cleanId ||
+          String(o?.id || '') === String(rawOrderId) ||
+          formatOrderId(o?.id) === String(rawOrderId);
+      });
+      if (found) selectOrder(found);
     };
+
+    const handleTabSwitch = (event) => {
+      const targetTab = event.detail?.tab;
+      if (targetTab) setActiveTab(targetTab);
+      openTrackedOrder(event.detail?.orderId);
+    };
+
     window.addEventListener('bdigi_switch_tab', handleTabSwitch);
 
-    // Sync tab and trackOrder from URL query params on initial mount
     if (typeof window !== 'undefined' && !initialTabSyncedRef.current) {
       initialTabSyncedRef.current = true;
       const urlParams = new URLSearchParams(window.location.search);
       const tabParam = urlParams.get('tab');
       const trackId = urlParams.get('trackOrder') || urlParams.get('orderId');
-      if (tabParam) {
-        const cleanTab = tabParam === 'chat' ? 'inbox' : tabParam;
-        setActiveTab(cleanTab);
-      }
-      if (trackId) {
-        const cleanTrackId = String(trackId).trim().replace(/^#+/, '');
-        if (openOrderTrackerDrawer) {
-          openOrderTrackerDrawer(cleanTrackId);
-        } else if (setSelectedOrderForDrawer) {
-          const found = (orders || []).find(o => {
-            const oClean = String(o?.id || '').trim().replace(/^#+/, '');
-            return oClean === cleanTrackId || String(o?.id) === String(trackId) || formatOrderId(o?.id) === trackId;
-          });
-          if (found) setSelectedOrderForDrawer(found);
-        }
-      }
+      if (tabParam) setActiveTab(tabParam === 'chat' ? 'inbox' : tabParam);
+      openTrackedOrder(trackId);
     }
 
     return () => window.removeEventListener('bdigi_switch_tab', handleTabSwitch);
-  }, [orders, setSelectedOrderForDrawer, openOrderTrackerDrawer, setActiveTab]);
+  }, [setActiveTab]);
 
   React.useEffect(() => {
     setMounted(true);
@@ -367,29 +385,28 @@ export const CustomerDashboard = () => {
 
   React.useEffect(() => {
     if (activeTab === 'notifications') {
-      if (typeof markAllNotificationsAsRead === 'function') {
-        markAllNotificationsAsRead();
-      }
+      markAllNotificationsAsReadRef.current?.();
     }
     if (activeTab === 'orders' || activeTab === 'digitizing' || activeTab === 'vector' || activeTab === 'patches') {
-      if (typeof markOrdersAsRead === 'function') {
-        markOrdersAsRead();
-      }
+      markOrdersAsReadRef.current?.();
     }
-  }, [activeTab, markAllNotificationsAsRead, markOrdersAsRead]);
+  }, [activeTab]);
 
-  // Live Notifications Count Loader & Real-time Subscription
+  // Keep one notification listener per mounted customer; use refs for unstable context actions.
   React.useEffect(() => {
-    if (!mounted) return;
+    if (!mounted || !userEmail) return;
     let isMounted = true;
+
+    const refreshNotificationState = () => {
+      if (!isMounted) return;
+      refreshNotificationsRef.current?.();
+    };
 
     const loadNotificationsCount = async () => {
       try {
         if (isSupabaseConfigured) {
           const notifs = await fetchNotificationsFromSupabase(userEmail);
-          if (notifs && isMounted) {
-            refreshNotifications();
-          }
+          if (notifs && isMounted) refreshNotificationState();
         }
       } catch {}
     };
@@ -398,11 +415,13 @@ export const CustomerDashboard = () => {
 
     const unsubscribe = subscribeToNotificationListeners((payload) => {
       if (!isMounted) return;
-      refreshNotifications();
+      refreshNotificationState();
+
       const notif = payload?.new || payload?.record;
       if (notif?.order_id || notif?.orderId) {
-        if (typeof refreshOrders === 'function') {
-          refreshOrders().catch(() => {});
+        const action = refreshOrdersRef.current;
+        if (typeof action === 'function') {
+          action().catch(() => {});
         }
       }
     });
@@ -411,109 +430,107 @@ export const CustomerDashboard = () => {
       isMounted = false;
       if (typeof unsubscribe === 'function') unsubscribe();
     };
-  }, [mounted, refreshNotifications, userEmail, refreshOrders]);
+  }, [mounted, userEmail]);
 
-  // Strict Category Helper Functions
-  const isStoreOrder = (o) => {
+  const isStoreOrder = React.useCallback((o) => {
     const typeStr = (o?.type || '').toLowerCase();
     const catStr = (o?.serviceCategory || '').toLowerCase();
     return typeStr === 'store' || typeStr === 'digital_product' || Boolean(o?.isStoreItem) || catStr.includes('store') || catStr.includes('download') || catStr.includes('merchandise');
-  };
+  }, []);
 
-  const isPatchOrder = (o) => {
+  const isPatchOrder = React.useCallback((o) => {
     const typeStr = (o?.type || '').toLowerCase();
     const catStr = (o?.serviceCategory || '').toLowerCase();
     return typeStr === 'patch' || typeStr === 'patches' || typeStr === 'apparel' || typeStr === 'headwear' || catStr.includes('patch') || catStr.includes('t-shirt') || catStr.includes('headwear');
-  };
+  }, []);
 
-  const isVectorOrder = (o) => {
+  const isVectorOrder = React.useCallback((o) => {
     const typeStr = (o?.type || '').toLowerCase();
     const catStr = (o?.serviceCategory || '').toLowerCase();
     return typeStr === 'vector' || catStr.includes('vector');
-  };
+  }, []);
 
-  const isEmbroideryOrder = (o) => {
+  const isEmbroideryOrder = React.useCallback((o) => {
     const typeStr = (o?.type || '').toLowerCase();
     if (isStoreOrder(o) || isPatchOrder(o) || isVectorOrder(o)) return false;
     return typeStr === 'embroidery' || typeStr === 'digitizing' || typeStr === '' || !o?.type;
-  };
+  }, [isStoreOrder, isPatchOrder, isVectorOrder]);
 
-  // Filter client's orders strictly by authenticated identity
-  const myOrders = (orders || []).filter(o => {
-    const cEmail = (o?.clientEmail || o?.client_email || '').toLowerCase().trim();
-    const uEmail = (userEmail || '').toLowerCase().trim();
-    const oUserId = String(o?.user_id || o?.clientId || o?.client_id || o?.created_by || '').toLowerCase().trim();
-    const curUserId = String(activeUser?.id || '').toLowerCase().trim();
-
-    const cleanId = String(o?.id || '').trim().replace(/^#+/, '');
-    let isLocalMatch = false;
-    if (typeof window !== 'undefined') {
-      try {
-        const localOrderIds = JSON.parse(localStorage.getItem('bdigi_my_order_ids') || '[]');
-        isLocalMatch = localOrderIds.some(lid => String(lid).trim().replace(/^#+/, '') === cleanId);
-      } catch {}
-    }
-
-    if (uEmail && cEmail && cEmail === uEmail) return true;
-    if (curUserId && oUserId && oUserId === curUserId) return true;
-    if (isLocalMatch) return true;
-    return false;
-  });
-
-  const isOrderPaid = (o) => {
+  const isOrderPaid = React.useCallback((o) => {
     const pStatus = String(o?.payment_status || o?.paymentStatus || '').toLowerCase().trim();
     const oStatus = String(o?.status || '').toLowerCase().trim();
     const isPaidFlag = o?.isPaid === true || o?.paid === true || Boolean(o?.paid_at);
-    return isPaidFlag ||
-           pStatus === 'paid' || pStatus === 'completed' || pStatus === 'settled' || pStatus === 'verified' || pStatus === 'wallet' ||
-           ['in_progress', 'digitizing', 'assigned', 'qc', 'delivered', 'completed'].includes(oStatus);
-  };
+    return isPaidFlag || pStatus === 'paid' || pStatus === 'completed' || pStatus === 'settled' || pStatus === 'verified' || pStatus === 'wallet' || ['in_progress', 'digitizing', 'assigned', 'qc', 'delivered', 'completed'].includes(oStatus);
+  }, []);
 
-  // All pending payment orders across all categories
-  const unpaidOrders = myOrders.filter(o => {
-    const isPaid = isOrderPaid(o);
-    const oStatus = String(o?.status || '').toLowerCase().trim();
-    return !isPaid && oStatus !== 'cancelled';
-  });
+  const myOrders = React.useMemo(() => {
+    const normalizedEmail = String(userEmail || '').toLowerCase().trim();
+    const normalizedUserId = String(activeUser?.id || '').toLowerCase().trim();
+    let localOrderIds = new Set();
+    if (typeof window !== 'undefined') {
+      try {
+        const savedIds = JSON.parse(localStorage.getItem('bdigi_my_order_ids') || '[]');
+        localOrderIds = new Set((Array.isArray(savedIds) ? savedIds : []).map(id => String(id).trim().replace(/^#+/, '')).filter(Boolean));
+      } catch {}
+    }
+    return (Array.isArray(orders) ? orders : []).filter(order => {
+      const clientEmail = String(order?.clientEmail || order?.client_email || '').toLowerCase().trim();
+      const orderUserId = String(order?.user_id || order?.clientId || order?.client_id || order?.created_by || '').toLowerCase().trim();
+      const cleanId = String(order?.id || '').trim().replace(/^#+/, '');
+      return Boolean((normalizedEmail && clientEmail === normalizedEmail) || (normalizedUserId && orderUserId === normalizedUserId) || (cleanId && localOrderIds.has(cleanId)));
+    });
+  }, [orders, userEmail, activeUser?.id]);
 
-  const handlePayOrder = (order) => {
+  const orderBuckets = React.useMemo(() => {
+    const unpaid = []; const digitizing = []; const vector = []; const patches = []; const store = [];
+    for (const order of myOrders) {
+      const status = String(order?.status || '').toLowerCase().trim();
+      if (!isOrderPaid(order) && status !== 'cancelled') unpaid.push(order);
+      if (isStoreOrder(order)) store.push(order);
+      else if (isPatchOrder(order)) patches.push(order);
+      else if (isVectorOrder(order)) vector.push(order);
+      else if (isEmbroideryOrder(order)) digitizing.push(order);
+    }
+    return { unpaid, digitizing, vector, patches, store };
+  }, [myOrders, isOrderPaid, isStoreOrder, isPatchOrder, isVectorOrder, isEmbroideryOrder]);
+
+  const unpaidOrders = orderBuckets.unpaid;
+  const digitizingOrders = orderBuckets.digitizing;
+  const vectorOrders = orderBuckets.vector;
+  const patchOrders = orderBuckets.patches;
+  const storeOrders = orderBuckets.store;
+
+  const handlePayOrder = React.useCallback((order) => {
     if (!order) return;
     const finalAmount = parseFloat(order.price || order.totalPrice || 15.00);
-    setCheckoutSession({
-      amount: finalAmount,
-      orderId: order.id,
-      orderTitle: order.title || 'Studio Design Order'
-    });
+    setCheckoutSession({ amount: finalAmount, orderId: order.id, orderTitle: order.title || 'Studio Design Order' });
     setIsCheckoutModalOpen(true);
-  };
+  }, [setCheckoutSession, setIsCheckoutModalOpen]);
 
-  // 1. Strictly Embroidery Digitizing Orders ONLY
-  const digitizingOrders = myOrders.filter(isEmbroideryOrder);
+  const currentTabOrders = React.useMemo(() => {
+    if (activeTab === 'digitizing') return digitizingOrders;
+    if (activeTab === 'vector') return vectorOrders;
+    if (activeTab === 'patches') return patchOrders;
+    return myOrders;
+  }, [activeTab, digitizingOrders, vectorOrders, patchOrders, myOrders]);
 
-  // 2. Strictly Vector Art Conversion Orders
-  const vectorOrders = myOrders.filter(isVectorOrder);
+  const orderStats = React.useMemo(() => {
+    const active = []; const delivered = []; const revision = []; const completed = [];
+    for (const order of currentTabOrders) {
+      const status = String(order?.status || '').toLowerCase();
+      if (status !== 'completed' && status !== 'cancelled') active.push(order);
+      if (status === 'delivered' || (Array.isArray(order?.uploadedMachineFiles) && order.uploadedMachineFiles.length > 0 && status !== 'completed')) delivered.push(order);
+      if (status === 'revision' || status === 'revision_requested') revision.push(order);
+      if (status === 'completed') completed.push(order);
+    }
+    return { active, delivered, revision, completed, totalSpent: myOrders.reduce((sum, order) => sum + (parseFloat(order?.price) || 0), 0) };
+  }, [currentTabOrders, myOrders]);
 
-  // 3. Strictly Custom Patches & Physical Manufactured Goods
-  const patchOrders = myOrders.filter(isPatchOrder);
-
-  // 4. Strictly Store & Digital Product Purchases
-  const storeOrders = myOrders.filter(isStoreOrder);
-
-  // Orders to display on the current tab (on Studio Dashboard, show ALL client orders)
-  const currentTabOrders = activeTab === 'digitizing'
-    ? digitizingOrders
-    : activeTab === 'vector'
-      ? vectorOrders
-      : activeTab === 'patches'
-        ? patchOrders
-        : myOrders;
-
-  const activeOrders = currentTabOrders.filter(o => o?.status !== 'completed' && o?.status !== 'cancelled');
-  const deliveredOrders = currentTabOrders.filter(o => o?.status === 'delivered' || (Array.isArray(o?.uploadedMachineFiles) && o.uploadedMachineFiles.length > 0 && o?.status !== 'completed'));
-  const revisionOrders = currentTabOrders.filter(o => o?.status === 'revision' || o?.status === 'revision_requested');
-  const completedOrders = currentTabOrders.filter(o => o?.status === 'completed');
-
-  const totalSpent = myOrders.reduce((acc, curr) => acc + (parseFloat(curr?.price) || 0), 0);
+  const activeOrders = orderStats.active;
+  const deliveredOrders = orderStats.delivered;
+  const revisionOrders = orderStats.revision;
+  const completedOrders = orderStats.completed;
+  const totalSpent = orderStats.totalSpent;
 
   // Live dynamic package tier starting prices from Supabase
   const embTiers = (dynamicPricingTiers || []).filter(t => matchCategory(t?.service_type, 'embroidery'));
@@ -555,28 +572,49 @@ export const CustomerDashboard = () => {
     setCustomerPage(1);
   }, [filterStatus, searchTerm, activeTab]);
 
-  const unpaidCount = currentTabOrders.filter(o => !isOrderPaid(o)).length;
+  const filteredOrderSummary = React.useMemo(() => {
+    const normalizedSearch = searchTerm.toLowerCase();
+    let unpaidCountValue = 0;
+    const filtered = currentTabOrders.filter(order => {
+      if (!isOrderPaid(order)) unpaidCountValue += 1;
+      const titleMatch = String(order?.title || '').toLowerCase().includes(normalizedSearch);
+      const idMatch = String(order?.id || '').toLowerCase().includes(normalizedSearch);
+      const matchesSearch = titleMatch || idMatch;
+      const paid = isOrderPaid(order);
+      const status = String(order?.status || '').toLowerCase();
+      if (filterStatus === 'unpaid' || filterStatus === 'awaiting_payment') return matchesSearch && !paid && status !== 'cancelled';
+      if (filterStatus === 'active') return matchesSearch && status !== 'completed' && status !== 'cancelled';
+      if (filterStatus === 'delivered') return matchesSearch && (status === 'delivered' || (Array.isArray(order?.uploadedMachineFiles) && order.uploadedMachineFiles.length > 0 && status !== 'completed'));
+      if (filterStatus === 'revision') return matchesSearch && (status === 'revision' || status === 'revision_requested');
+      if (filterStatus === 'completed') return matchesSearch && status === 'completed';
+      return matchesSearch;
+    });
+    return { unpaidCount: unpaidCountValue, filtered };
+  }, [currentTabOrders, searchTerm, filterStatus, isOrderPaid]);
 
-  const filteredDigitizingOrders = currentTabOrders.filter(o => {
-    const titleMatch = (o?.title || '').toLowerCase().includes(searchTerm.toLowerCase());
-    const idMatch = (o?.id || '').toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesSearch = titleMatch || idMatch;
-    const isPaid = isOrderPaid(o);
+  const unpaidCount = filteredOrderSummary.unpaidCount;
+  const filteredDigitizingOrders = filteredOrderSummary.filtered;
+  const pagination = React.useMemo(() => {
+    const totalCustOrders = filteredDigitizingOrders.length;
+    const totalCustPages = Math.max(1, Math.ceil(totalCustOrders / customerPageSize));
+    const validCustPage = Math.min(Math.max(1, customerPage), totalCustPages);
+    const custStartIndex = (validCustPage - 1) * customerPageSize;
+    const custEndIndex = Math.min(custStartIndex + customerPageSize, totalCustOrders);
+    return { totalCustOrders, totalCustPages, validCustPage, custStartIndex, custEndIndex, paginatedCustOrders: filteredDigitizingOrders.slice(custStartIndex, custEndIndex) };
+  }, [filteredDigitizingOrders, customerPage, customerPageSize]);
 
-    if (filterStatus === 'unpaid' || filterStatus === 'awaiting_payment') return matchesSearch && !isPaid && o?.status !== 'cancelled';
-    if (filterStatus === 'active') return matchesSearch && o?.status !== 'completed' && o?.status !== 'cancelled';
-    if (filterStatus === 'delivered') return matchesSearch && (o?.status === 'delivered' || (Array.isArray(o?.uploadedMachineFiles) && o.uploadedMachineFiles.length > 0 && o?.status !== 'completed'));
-    if (filterStatus === 'revision') return matchesSearch && (o?.status === 'revision' || o?.status === 'revision_requested');
-    if (filterStatus === 'completed') return matchesSearch && o?.status === 'completed';
-    return matchesSearch;
-  });
+  const { totalCustOrders, totalCustPages, validCustPage, custStartIndex, custEndIndex, paginatedCustOrders } = pagination;
 
-  const totalCustOrders = filteredDigitizingOrders.length;
-  const totalCustPages = Math.max(1, Math.ceil(totalCustOrders / customerPageSize));
-  const validCustPage = Math.min(Math.max(1, customerPage), totalCustPages);
-  const custStartIndex = (validCustPage - 1) * customerPageSize;
-  const custEndIndex = Math.min(custStartIndex + customerPageSize, totalCustOrders);
-  const paginatedCustOrders = filteredDigitizingOrders.slice(custStartIndex, custEndIndex);
+  const ordersManagement = React.useMemo(() => {
+    const active = []; const completed = [];
+    for (const order of myOrders) {
+      const status = String(order?.status || '').toLowerCase().trim();
+      if (status === 'completed' || status === 'delivered') completed.push(order);
+      else if (status !== 'cancelled') active.push(order);
+    }
+    const filtered = orderFilterTab === 'active' ? active : orderFilterTab === 'completed' ? completed : myOrders;
+    return { activeCount: active.length, completedCount: completed.length, deliveredOrdersList: completed, filtered };
+  }, [myOrders, orderFilterTab]);
 
   const getPaymentStatusBadge = (statusOrOrder) => {
     const isPaidComputed = typeof statusOrOrder === 'object' && statusOrOrder !== null
@@ -1471,13 +1509,17 @@ export const CustomerDashboard = () => {
 
                       {(() => {
                         const topOrd = activeOrders[0];
-                        const primaryImg = topOrd?.artworkUrl || topOrd?.image_url || topOrd?.logo || topOrd?.uploadedFiles?.[0]?.url || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=120&q=80';
+                        const primaryImg = resolveOrderPreviewImage(topOrd);
                         return (
                           <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
-                            <img
+                            <OrderThumbnail
                               src={primaryImg}
-                              alt={topOrd.title}
-                              style={{ width: '48px', height: '48px', borderRadius: '10px', objectFit: 'cover', border: '1.5px solid var(--color-border)', flexShrink: 0 }}
+                              alt={topOrd.title || 'Order artwork'}
+                              width={48}
+                              height={48}
+                              borderRadius={10}
+                              border="1.5px solid var(--color-border)"
+                              eager
                             />
                             <div style={{ flex: 1, minWidth: 0 }}>
                               <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
@@ -1742,12 +1784,12 @@ export const CustomerDashboard = () => {
                             </tr>
                           </thead>
                           <tbody>
-                            {paginatedCustOrders.map((ord) => {
+                            {paginatedCustOrders.map((ord, rowIndex) => {
                               const isPaid = isOrderPaid(ord);
                               const isDelivered = ord?.status === 'delivered' || (Array.isArray(ord?.uploadedMachineFiles) && ord.uploadedMachineFiles.length > 0 && ord?.status !== 'completed');
                               return (
                                 <tr
-                                  key={ord?.id || Math.random()}
+                                  key={getStableOrderKey(ord, rowIndex, 'table-order')}
                                   style={{
                                     borderBottom: isPaid ? '1px solid var(--border-color)' : '1px solid #fed7aa',
                                     background: isDelivered ? 'rgba(16, 185, 129, 0.08)' : (isPaid ? 'var(--bg-card)' : 'rgba(249, 115, 22, 0.04)'),
@@ -1764,26 +1806,13 @@ export const CustomerDashboard = () => {
                                         onClick={() => setLightboxOrder(ord)}
                                         title="Click to inspect full high-res artwork"
                                       >
-                                        <img
-                                          src={
-                                            ord?.artworkUrl ||
-                                            ord?.image_url ||
-                                            ord?.logo ||
-                                            ord?.uploadedFiles?.[0]?.url ||
-                                            ord?.uploadedFiles?.[0]?.public_url ||
-                                            ord?.placementItems?.[0]?.files?.[0]?.url ||
-                                            ord?.patchItems?.[0]?.files?.[0]?.url ||
-                                            ord?.order_files?.[0]?.public_url ||
-                                            ord?.file_url ||
-                                            ord?.file_path ||
-                                            'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=120&q=80'
-                                          }
+                                        <OrderThumbnail
+                                          src={resolveOrderPreviewImage(ord)}
                                           alt={ord?.title || 'Design'}
-                                          onError={(e) => {
-                                            e.currentTarget.onerror = null;
-                                            e.currentTarget.src = 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=120&q=80';
-                                          }}
-                                          style={{ width: '40px', height: '40px', borderRadius: '6px', objectFit: 'cover', border: isDelivered ? '2px solid #10b981' : '1.5px solid var(--orange-600)' }}
+                                          width={40}
+                                          height={40}
+                                          borderRadius={6}
+                                          border={isDelivered ? '2px solid #10b981' : '1.5px solid var(--orange-600)'}
                                         />
                                         <div style={{
                                           position: 'absolute',
@@ -1947,25 +1976,18 @@ export const CustomerDashboard = () => {
 
                       {/* B. MOBILE NATIVE APP ORDER CARDS (Screens <= 768px - Fiverr Standard) */}
                       <div className="mobile-cards-view">
-                        {paginatedCustOrders.map((ord) => {
+                        {paginatedCustOrders.map((ord, rowIndex) => {
                           const isPaid = isOrderPaid(ord);
                           const ordStatus = String(ord?.status || '').toLowerCase();
                           const isDelivered = ordStatus === 'delivered';
                           const isRevision = ordStatus === 'revision' || ordStatus === 'revision_requested';
                           const isCompleted = ordStatus === 'completed';
 
-                          const primaryImg =
-                            ord?.artworkUrl ||
-                            ord?.image_url ||
-                            ord?.logo ||
-                            ord?.uploadedFiles?.[0]?.url ||
-                            ord?.uploadedFiles?.[0]?.public_url ||
-                            ord?.placementItems?.[0]?.files?.[0]?.url ||
-                            'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=120&q=80';
+                          const primaryImg = resolveOrderPreviewImage(ord);
 
                           return (
                             <div
-                              key={ord?.id || Math.random()}
+                              key={getStableOrderKey(ord, rowIndex, 'mobile-order')}
                               className="mobile-order-card"
                               style={{
                                 border: isDelivered ? '1.5px solid #86efac' : (isPaid ? '1px solid var(--border-color)' : '1.5px solid #fed7aa'),
@@ -2006,14 +2028,13 @@ export const CustomerDashboard = () => {
                                   style={{ position: 'relative', flexShrink: 0, cursor: 'pointer' }}
                                   onClick={() => setLightboxOrder(ord)}
                                 >
-                                  <img
+                                  <OrderThumbnail
                                     src={primaryImg}
                                     alt={ord?.title || 'Design'}
-                                    onError={(e) => {
-                                      e.currentTarget.onerror = null;
-                                      e.currentTarget.src = 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=120&q=80';
-                                    }}
-                                    style={{ width: '58px', height: '58px', borderRadius: '10px', objectFit: 'cover', border: isDelivered ? '2px solid #10b981' : '1.5px solid var(--orange-500)' }}
+                                    width={58}
+                                    height={58}
+                                    borderRadius={10}
+                                    border={isDelivered ? '2px solid #10b981' : '1.5px solid var(--orange-500)'}
                                   />
                                   <div style={{ position: 'absolute', bottom: '2px', right: '2px', background: 'rgba(0,0,0,0.65)', borderRadius: '4px', padding: '1px 3px', color: '#fff', fontSize: '0.55rem', display: 'flex', alignItems: 'center' }}>
                                     <ZoomIn size={10} />
@@ -2429,20 +2450,7 @@ export const CustomerDashboard = () => {
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                 {/* Header & Controls (Responsive Desktop & Mobile Chrome layout) */}
                 {(() => {
-                  const activeOrdersCount = myOrders.filter(o => {
-                    const s = String(o?.status || '').toLowerCase().trim();
-                    return s !== 'completed' && s !== 'delivered' && s !== 'cancelled';
-                  }).length;
-
-                  const completedOrdersCount = myOrders.filter(o => {
-                    const s = String(o?.status || '').toLowerCase().trim();
-                    return s === 'completed' || s === 'delivered';
-                  }).length;
-
-                  const deliveredOrdersList = myOrders.filter(o => {
-                    const s = String(o?.status || '').toLowerCase().trim();
-                    return s === 'completed' || s === 'delivered';
-                  });
+                  const { activeCount: activeOrdersCount, completedCount: completedOrdersCount, deliveredOrdersList } = ordersManagement;
 
                   return (
                     <>
@@ -2615,13 +2623,7 @@ export const CustomerDashboard = () => {
 
                 {/* Orders List / Cards */}
                 {(() => {
-                  const filtered = myOrders.filter(o => {
-                    const s = String(o?.status || '').toLowerCase().trim();
-                    const isCompleted = s === 'completed' || s === 'delivered';
-                    if (orderFilterTab === 'active') return !isCompleted && s !== 'cancelled';
-                    if (orderFilterTab === 'completed') return isCompleted;
-                    return true;
-                  });
+                  const filtered = ordersManagement.filtered;
 
                   if (filtered.length === 0) {
                     return (
@@ -2656,9 +2658,9 @@ export const CustomerDashboard = () => {
                   return (
                     <>
                       <div className="mobile-only-flex customer-mobile-orders-list" style={{ display: 'flex', flexDirection: 'column', gap: '0.7rem', width: '100%', minWidth: 0 }}>
-                        {filtered.map(ord => (
+                        {filtered.map((ord, orderIndex) => (
                           <MobileOrderTrackingCard
-                            key={`mobile-${ord.id}`}
+                            key={getStableOrderKey(ord, orderIndex, 'orders-mobile')}
                             order={ord}
                             isDark={isDark}
                             onOpen={(order) => {
@@ -2671,14 +2673,14 @@ export const CustomerDashboard = () => {
                       </div>
 
                       <div className="desktop-only" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '1rem' }}>
-                      {filtered.map(ord => {
-                        const primaryImg = ord?.artworkUrl || ord?.image_url || ord?.logo || ord?.uploadedFiles?.[0]?.url || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=120&q=80';
+                      {filtered.map((ord, orderIndex) => {
+                        const primaryImg = resolveOrderPreviewImage(ord);
                         const statusObj = getOrderDeliveryStatusBadge(ord);
                         const isDelivered = String(ord.status).toLowerCase() === 'delivered' || String(ord.status).toLowerCase() === 'completed';
 
                         return (
                           <div
-                            key={ord.id}
+                            key={getStableOrderKey(ord, orderIndex, 'orders-grid')}
                             style={{
                               background: isDark ? 'var(--color-surface, #111827)' : '#ffffff',
                               border: isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid var(--border-color)',
@@ -2692,10 +2694,13 @@ export const CustomerDashboard = () => {
                             }}
                           >
                             <div style={{ display: 'flex', gap: '0.85rem', alignItems: 'center' }}>
-                              <img
+                              <OrderThumbnail
                                 src={primaryImg}
-                                alt={ord.title}
-                                style={{ width: '60px', height: '60px', borderRadius: '12px', objectFit: 'cover', border: '1.5px solid #fed7aa', flexShrink: 0 }}
+                                alt={ord.title || 'Order artwork'}
+                                width={60}
+                                height={60}
+                                borderRadius={12}
+                                border="1.5px solid #fed7aa"
                               />
                               <div style={{ flex: 1, minWidth: 0 }}>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
