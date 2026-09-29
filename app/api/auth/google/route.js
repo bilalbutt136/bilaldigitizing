@@ -1,3 +1,4 @@
+import { withApiObservability } from '../../../../src/lib/observability/apiObservability.js';
 import { NextResponse } from 'next/server';
 import { createAdminClient } from '../../../../src/lib/supabase/admin';
 import { checkDistributedRateLimit, getClientIp, getRateLimitHeaders } from '../../../../src/lib/rateLimit';
@@ -63,7 +64,7 @@ async function verifyGoogleAccessToken(accessToken) {
   };
 }
 
-export async function POST(request) {
+async function POST_impl(request) {
   try {
     const ip = getClientIp(request);
     const rateLimit = await checkDistributedRateLimit(`google-auth:${ip}`, 20, 5 * 60 * 1000);
@@ -210,3 +211,5 @@ export async function POST(request) {
     return NextResponse.json({ error: 'Internal authentication error.' }, { status: 500 });
   }
 }
+
+export const POST = withApiObservability(POST_impl);

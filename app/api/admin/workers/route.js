@@ -1,9 +1,10 @@
+import { withApiObservability, logServerCaughtError } from '../../../../src/lib/observability/apiObservability.js';
 import { NextResponse } from 'next/server';
 import { supabaseAdmin, hasServiceRole } from '../../../../src/lib/supabaseAdmin';
 import { createAdminClient } from '../../../../src/lib/supabase/admin';
 import { getServerAuthUser } from '../../../../src/lib/supabase/serverAuth';
 
-export async function GET(request) {
+async function GET_impl(request) {
   try {
     const { user, isAdmin, isWorker } = await getServerAuthUser(request);
     if (!user) {
@@ -148,7 +149,7 @@ export async function GET(request) {
           }], { onConflict: 'id' }).then(() => {});
         }
       }
-    } catch {}
+    } catch (error) { logServerCaughtError(error, { operation: 'workers.directory_sync_failed' }); }
 
     // Compute live order counts and earnings per worker if admin
     if (isAdmin) {
@@ -208,7 +209,7 @@ export async function GET(request) {
   }
 }
 
-export async function POST(request) {
+async function POST_impl(request) {
   try {
     const { user, isAdmin } = await getServerAuthUser(request);
     if (!user || !isAdmin) {
@@ -243,7 +244,7 @@ export async function POST(request) {
           if (pData.name) workerName = pData.name;
           if (pData.email) workerEmail = pData.email;
         }
-      } catch {}
+      } catch (error) { logServerCaughtError(error, { operation: 'workers.profile_lookup_failed' }); }
 
       // Update worker_profiles
       let query = adminClient
@@ -425,7 +426,7 @@ export async function POST(request) {
         const { data: authUserData } = await adminClient.auth.admin.listUsers();
         const matched = authUserData?.users?.find(u => u.email?.toLowerCase().trim() === cleanEmail);
         if (matched) userId = matched.id;
-      } catch {}
+      } catch (error) { logServerCaughtError(error, { operation: 'workers.auth_lookup_failed' }); }
 
       const workerRecord = {
         name: cleanName,
@@ -456,3 +457,6 @@ export async function POST(request) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
+
+export const GET = withApiObservability(GET_impl);
+export const POST = withApiObservability(POST_impl);

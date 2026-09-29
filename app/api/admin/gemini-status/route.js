@@ -1,3 +1,4 @@
+import { withApiObservability, logServerCaughtError } from '../../../../src/lib/observability/apiObservability.js';
 import { NextResponse } from 'next/server.js';
 import { supabaseAdmin, hasServiceRole } from '../../../../src/lib/supabaseAdmin.js';
 import { getServerAuthUser } from '../../../../src/lib/supabase/serverAuth.js';
@@ -95,14 +96,14 @@ async function testGeminiPing(key) {
           response: text.trim()
         };
       }
-    } catch {}
+    } catch (error) { logServerCaughtError(error, { operation: 'gemini.status_probe_failed' }); }
   }
 
   return { ok: false, latencyMs: Date.now() - start, error: 'Could not connect to Gemini models' };
 }
 
 // GET /api/admin/gemini-status
-export async function GET(request) {
+async function GET_impl(request) {
   try {
     const { user, isAdmin } = await getServerAuthUser(request);
     if (!user || !isAdmin) {
@@ -137,7 +138,7 @@ export async function GET(request) {
 }
 
 // POST /api/admin/gemini-status
-export async function POST(request) {
+async function POST_impl(request) {
   try {
     const { user, isAdmin } = await getServerAuthUser(request);
     if (!user || !isAdmin) {
@@ -284,3 +285,6 @@ export async function POST(request) {
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }
+
+export const GET = withApiObservability(GET_impl);
+export const POST = withApiObservability(POST_impl);

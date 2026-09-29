@@ -1,3 +1,4 @@
+import { withApiObservability, logServerCaughtError } from '../../../../src/lib/observability/apiObservability.js';
 import { NextResponse } from 'next/server';
 import { supabaseAdmin, hasServiceRole } from '../../../../src/lib/supabaseAdmin';
 import { getServerAuthUser } from '../../../../src/lib/supabase/serverAuth';
@@ -5,7 +6,7 @@ import { getServerAuthUser } from '../../../../src/lib/supabase/serverAuth';
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
-export async function GET(request) {
+async function GET_impl(request) {
   try {
     const { user, isAdmin } = await getServerAuthUser(request);
 
@@ -285,8 +286,10 @@ async function settleWalletDeposit(clientEmail, amount, invoice) {
         payment_method: depositMethod,
         description: `Studio Wallet Deposit Top-up (+ $${amount.toFixed(2)})`
       }])
-      .catch(() => {});
+      .catch((error) => { logServerCaughtError(error, { operation: 'bolt.wallet_transaction_insert_failed' }); });
   } catch (err) {
     console.error('[settleWalletDeposit] error:', err);
   }
 }
+
+export const GET = withApiObservability(GET_impl);

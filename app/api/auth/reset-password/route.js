@@ -1,9 +1,10 @@
+import { withApiObservability } from '../../../../src/lib/observability/apiObservability.js';
 import { NextResponse } from 'next/server';
 import { createClient } from '../../../../src/lib/supabase/server';
 import { createAdminClient } from '../../../../src/lib/supabase/admin';
 import { checkDistributedRateLimit, getClientIp, getRateLimitHeaders } from '../../../../src/lib/rateLimit';
 
-export async function POST(request) {
+async function POST_impl(request) {
   try {
     const ip = getClientIp(request);
     const rateLimit = await checkDistributedRateLimit(`reset-password:${ip}`, 10, 15 * 60 * 1000);
@@ -80,3 +81,5 @@ export async function POST(request) {
     }, { status: 500 });
   }
 }
+
+export const POST = withApiObservability(POST_impl);

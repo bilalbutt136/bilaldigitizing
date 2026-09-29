@@ -1,3 +1,4 @@
+import { withApiObservability } from '../../../../src/lib/observability/apiObservability.js';
 import { NextResponse } from 'next/server';
 import { revalidatePath, revalidateTag } from 'next/cache';
 import { createAdminClient } from '../../../../src/lib/supabase/admin';
@@ -21,7 +22,7 @@ function revalidateAllSitePages() {
   }
 }
 
-export async function GET() {
+async function GET_impl() {
   try {
     const supabase = createAdminClient();
 
@@ -80,7 +81,7 @@ export async function GET() {
   }
 }
 
-export async function POST(req) {
+async function POST_impl(req) {
   try {
     const { user, isAdmin } = await getServerAuthUser(req);
     if (!user || !isAdmin) {
@@ -119,3 +120,6 @@ export async function POST(req) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
+
+export const GET = withApiObservability(GET_impl);
+export const POST = withApiObservability(POST_impl);

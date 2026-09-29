@@ -1,3 +1,4 @@
+import { withApiObservability } from '../../../../src/lib/observability/apiObservability.js';
 import { NextResponse } from 'next/server';
 import { createAdminClient } from '../../../../src/lib/supabase/admin';
 import { getServerAuthUser } from '../../../../src/lib/supabase/serverAuth';
@@ -5,7 +6,7 @@ import { canAccessConversation } from '../../../../src/lib/chat/authorization';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET(request) {
+async function GET_impl(request) {
   try {
     const { user, isAdmin } = await getServerAuthUser(request);
     if (!user?.email) {
@@ -156,7 +157,7 @@ export async function GET(request) {
   }
 }
 
-export async function POST(request) {
+async function POST_impl(request) {
   try {
     const { user, isAdmin } = await getServerAuthUser(request);
     if (!user?.email) {
@@ -312,3 +313,6 @@ export async function POST(request) {
     return NextResponse.json({ error: 'Unable to update conversation.' }, { status: 500 });
   }
 }
+
+export const GET = withApiObservability(GET_impl);
+export const POST = withApiObservability(POST_impl);

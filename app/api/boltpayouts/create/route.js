@@ -1,3 +1,4 @@
+import { withApiObservability } from '../../../../src/lib/observability/apiObservability.js';
 import { NextResponse } from 'next/server';
 import { supabaseAdmin, hasServiceRole } from '../../../../src/lib/supabaseAdmin';
 import { getServerAuthUser } from '../../../../src/lib/supabase/serverAuth';
@@ -90,7 +91,7 @@ function extractLightningInvoice(url, boltData = {}) {
   return null;
 }
 
-export async function POST(request) {
+async function POST_impl(request) {
   try {
     const ip = getClientIp(request);
     const rateLimit = await checkDistributedRateLimit(`boltpayouts-create:${ip}`, 25, 60000);
@@ -331,3 +332,5 @@ export async function POST(request) {
     return NextResponse.json({ success: false, error: 'Payment initiation error' }, { status: 500 });
   }
 }
+
+export const POST = withApiObservability(POST_impl);

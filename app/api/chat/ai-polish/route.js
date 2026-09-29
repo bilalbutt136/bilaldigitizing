@@ -1,3 +1,4 @@
+import { withApiObservability } from '../../../../src/lib/observability/apiObservability.js';
 import { NextResponse } from 'next/server.js';
 import { GoogleGenAI } from '@google/genai';
 import { supabaseAdmin, hasServiceRole } from '../../../../src/lib/supabaseAdmin.js';
@@ -109,7 +110,7 @@ function cleanModelOutput(text) {
   return cleaned;
 }
 
-export async function POST(request) {
+async function POST_impl(request) {
   try {
     const { user } = await getServerAuthUser(request);
     if (!user?.email) {
@@ -282,3 +283,5 @@ ${rawInput}`;
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }
+
+export const POST = withApiObservability(POST_impl);

@@ -1,3 +1,4 @@
+import { withApiObservability } from '../../../src/lib/observability/apiObservability.js';
 import { NextResponse } from 'next/server';
 import { revalidatePath, revalidateTag, unstable_cache } from 'next/cache';
 import { createAdminClient } from '../../../src/lib/supabase/admin';
@@ -85,7 +86,7 @@ const fetchPublicCatalogBundle = unstable_cache(
   { revalidate: 300, tags: ['catalog', 'portfolio'] }
 );
 
-export async function GET(request) {
+async function GET_impl(request) {
   try {
     const { searchParams } = new URL(request.url);
     const action = searchParams.get('action');
@@ -106,7 +107,7 @@ export async function GET(request) {
   }
 }
 
-export async function POST(request) {
+async function POST_impl(request) {
   try {
     const data = await request.json();
     const { action, payload, tableName } = data;
@@ -193,3 +194,6 @@ export async function POST(request) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
+
+export const GET = withApiObservability(GET_impl);
+export const POST = withApiObservability(POST_impl);

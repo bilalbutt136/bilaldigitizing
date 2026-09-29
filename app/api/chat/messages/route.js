@@ -1,3 +1,4 @@
+import { withApiObservability, logServerCaughtError } from '../../../../src/lib/observability/apiObservability.js';
 import { NextResponse } from 'next/server';
 import { createAdminClient } from '../../../../src/lib/supabase/admin';
 import { getServerAuthUser } from '../../../../src/lib/supabase/serverAuth';
@@ -5,7 +6,7 @@ import { canAccessConversation } from '../../../../src/lib/chat/authorization';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET(request) {
+async function GET_impl(request) {
   try {
     const { user, isAdmin } = await getServerAuthUser(request);
     if (!user?.email) {
@@ -130,7 +131,7 @@ export async function GET(request) {
             syncedMessages.push(synthesizedMsg);
 
             // Safely backfill into messages table asynchronously
-            supabase.from('messages').insert([synthesizedMsg]).then(() => {}).catch(() => {});
+            supabase.from('messages').insert([synthesizedMsg]).then(() => {}).catch((error) => { logServerCaughtError(error, { operation: 'chat.offer_backfill_failed' }); });
           }
 
           // Sort messages by created_at ascending
@@ -148,7 +149,7 @@ export async function GET(request) {
   }
 }
 
-export async function POST(request) {
+async function POST_impl(request) {
   try {
     const { user, isAdmin } = await getServerAuthUser(request);
     if (!user?.email) {
@@ -364,3 +365,6 @@ export async function POST(request) {
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }
+
+export const GET = withApiObservability(GET_impl);
+export const POST = withApiObservability(POST_impl);

@@ -1,3 +1,4 @@
+import { withApiObservability } from '../../../../src/lib/observability/apiObservability.js';
 import { NextResponse } from 'next/server';
 import { createAdminClient } from '../../../../src/lib/supabase/admin';
 import { getServerAuthUser } from '../../../../src/lib/supabase/serverAuth';
@@ -16,7 +17,7 @@ function normalizeSessionId(value) {
   return SESSION_ID_REGEX.test(sessionId) ? sessionId : null;
 }
 
-export async function GET(request) {
+async function GET_impl(request) {
   try {
     const { user } = await getServerAuthUser(request);
     if (!user?.email) {
@@ -69,7 +70,7 @@ export async function GET(request) {
   }
 }
 
-export async function POST(request) {
+async function POST_impl(request) {
   try {
     const { user, isAdmin, isWorker } = await getServerAuthUser(request);
     if (!user?.email || !user?.id) {
@@ -174,3 +175,6 @@ export async function POST(request) {
     return NextResponse.json({ error: 'Unable to update presence.' }, { status: 500 });
   }
 }
+
+export const GET = withApiObservability(GET_impl);
+export const POST = withApiObservability(POST_impl);

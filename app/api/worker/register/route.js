@@ -1,3 +1,4 @@
+import { withApiObservability, logServerCaughtError } from '../../../../src/lib/observability/apiObservability.js';
 import { NextResponse } from 'next/server';
 import { createClient } from '../../../../src/lib/supabase/server';
 import { supabaseAdmin, hasServiceRole } from '../../../../src/lib/supabaseAdmin';
@@ -7,7 +8,7 @@ import { checkDistributedRateLimit, getClientIp, getRateLimitHeaders } from '../
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-export async function POST(request) {
+async function POST_impl(request) {
   try {
     const ip = getClientIp(request);
     const rateLimit = await checkDistributedRateLimit(`worker-register:${ip}`, 5, 60 * 60 * 1000);
@@ -103,7 +104,7 @@ export async function POST(request) {
       // Supabase intentionally obscures duplicate-email registration details.
       // Never try to "recover" by resetting that existing user's password.
       if (authData?.session) {
-        await supabaseServer.auth.signOut().catch(() => {});
+        await supabaseServer.auth.signOut().catch((error) => { logServerCaughtError(error, { operation: 'worker.registration_signout_failed' }); });
       }
       return NextResponse.json({
         error: 'An account with this email already exists. Please sign in instead.'
@@ -112,7 +113,7 @@ export async function POST(request) {
 
     if (authData?.session) {
       // A pending worker application should not automatically become an active session.
-      await supabaseServer.auth.signOut().catch(() => {});
+      await supabaseServer.auth.signOut().catch((error) => { logServerCaughtError(error, { operation: 'worker.registration_signout_failed' }); });
     }
 
     const authUserId = createdUser.id;
@@ -141,7 +142,7 @@ export async function POST(request) {
       console.error('[Worker Profile Insert Error]:', profileErr.message);
       // Roll back the newly-created Auth identity if the application record
       // could not be created, avoiding orphaned worker-applicant accounts.
-      await adminClient.auth.admin.deleteUser(authUserId).catch(() => {});
+      await adminClient.auth.admin.deleteUser(authUserId).catch((error) => { logServerCaughtError(error, { operation: 'worker.registration_rollback_failed' }); });
       return NextResponse.json({ error: 'Unable to save worker application.' }, { status: 500 });
     }
 
@@ -181,3 +182,5 @@ export async function POST(request) {
     return NextResponse.json({ error: 'Registration failed.' }, { status: 500 });
   }
 }
+
+export const POST = withApiObservability(POST_impl);

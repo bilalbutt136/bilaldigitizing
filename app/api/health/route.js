@@ -1,8 +1,9 @@
+import { withApiObservability } from '../../../src/lib/observability/apiObservability.js';
 import { createAdminClient } from '../../../src/lib/supabase/admin.js';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET() {
+async function GET_impl() {
   const startTime = Date.now();
   let databaseConnected = false;
 
@@ -34,3 +35,5 @@ export async function GET() {
     }
   );
 }
+
+export const GET = withApiObservability(GET_impl);

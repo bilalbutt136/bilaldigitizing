@@ -1,10 +1,11 @@
+import { withApiObservability } from '../../../../src/lib/observability/apiObservability.js';
 import { NextResponse } from 'next/server';
 import { supabaseAdmin, hasServiceRole } from '../../../../src/lib/supabaseAdmin';
 import { getServerAuthUser } from '../../../../src/lib/supabase/serverAuth';
 
 // GET /api/admin/users
 // Returns the whitelisted admin emails (server-side, verified admins only).
-export async function GET(request) {
+async function GET_impl(request) {
   try {
     if (!hasServiceRole || !supabaseAdmin) {
       return NextResponse.json(
@@ -43,7 +44,7 @@ export async function GET(request) {
 // POST /api/admin/users
 // Grants admin access by inserting an email into public.admins and sets/creates Auth account with password.
 // Only an authenticated whitelisted admin or master admin may add new admins or reset passwords.
-export async function POST(request) {
+async function POST_impl(request) {
   try {
     if (!hasServiceRole || !supabaseAdmin) {
       return NextResponse.json(
@@ -165,7 +166,7 @@ export async function POST(request) {
 
 // PATCH /api/admin/users
 // Resets password for an existing admin account
-export async function PATCH(request) {
+async function PATCH_impl(request) {
   try {
     if (!hasServiceRole || !supabaseAdmin) {
       return NextResponse.json(
@@ -236,7 +237,7 @@ export async function PATCH(request) {
 
 // DELETE /api/admin/users?email=...
 // Removes admin access. Master admin cannot be removed.
-export async function DELETE(request) {
+async function DELETE_impl(request) {
   try {
     if (!hasServiceRole || !supabaseAdmin) {
       return NextResponse.json(
@@ -281,3 +282,8 @@ export async function DELETE(request) {
     );
   }
 }
+
+export const GET = withApiObservability(GET_impl);
+export const POST = withApiObservability(POST_impl);
+export const PATCH = withApiObservability(PATCH_impl);
+export const DELETE = withApiObservability(DELETE_impl);

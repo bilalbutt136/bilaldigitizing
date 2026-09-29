@@ -1,3 +1,4 @@
+import { withApiObservability } from '../../../src/lib/observability/apiObservability.js';
 import { NextResponse } from 'next/server';
 import { safeFetchRemote } from '../../../src/lib/urlValidator';
 import { createAdminClient } from '../../../src/lib/supabase/admin';
@@ -513,15 +514,15 @@ async function handleFileRequest(request, isHead = false) {
   }
 }
 
-export async function GET(request) {
+async function GET_impl(request) {
   return handleFileRequest(request, false);
 }
 
-export async function HEAD(request) {
+async function HEAD_impl(request) {
   return handleFileRequest(request, true);
 }
 
-export async function OPTIONS() {
+async function OPTIONS_impl() {
   return new NextResponse(null, {
     status: 204,
     headers: {
@@ -533,3 +534,7 @@ export async function OPTIONS() {
     }
   });
 }
+
+export const GET = withApiObservability(GET_impl);
+export const OPTIONS = withApiObservability(OPTIONS_impl);
+export const HEAD = withApiObservability(HEAD_impl);

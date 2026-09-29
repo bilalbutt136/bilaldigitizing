@@ -61,7 +61,7 @@ describe('P0 Authentication & Authorization Regression Coverage', () => {
   });
 
   test('orders fetchAll derives customer and worker scope only from verified server identity', () => {
-    const source = fs.readFileSync('app/api/orders/route.js', 'utf8');
+    const source = fs.readFileSync('src/server/orders/handlers/get/fetchAll.js', 'utf8');
 
     assert.match(source, /if \(!user\?\.email\) \{\s*return NextResponse\.json\(\{ error: 'Authentication required\.'/s);
     assert.match(source, /targetWorkerId = workerData\?\.id \|\| user\.id/);

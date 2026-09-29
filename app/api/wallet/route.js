@@ -1,3 +1,4 @@
+import { withApiObservability, logServerCaughtError } from '../../../src/lib/observability/apiObservability.js';
 import { NextResponse } from 'next/server';
 import { supabaseAdmin, hasServiceRole } from '../../../src/lib/supabaseAdmin';
 import { getServerAuthUser } from '../../../src/lib/supabase/serverAuth';
@@ -5,7 +6,7 @@ import { getServerAuthUser } from '../../../src/lib/supabase/serverAuth';
 // POST /api/wallet { action: 'deposit' | 'deduct', amount, orderId, paymentMethod }
 // Server-side wallet ledger updates so wallet_balance can never be
 // spoofed from the client. Operates strictly on the authenticated user's record.
-export async function POST(request) {
+async function POST_impl(request) {
   try {
     if (!hasServiceRole || !supabaseAdmin) {
       return NextResponse.json(
@@ -209,7 +210,7 @@ export async function POST(request) {
               created_at: nowIso,
               updated_at: nowIso
             }], { onConflict: 'id' });
-          } catch {}
+          } catch (error) { logServerCaughtError(error, { operation: 'wallet.notification_upsert_failed' }); }
         }
       }
     } else if (action === 'deposit') {
@@ -255,7 +256,7 @@ export async function POST(request) {
 }
 
 // GET /api/wallet - Get current authenticated user's wallet balance and transaction history
-export async function GET(request) {
+async function GET_impl(request) {
   try {
     if (!hasServiceRole || !supabaseAdmin) {
       return NextResponse.json(
@@ -308,3 +309,5 @@ export async function GET(request) {
   }
 }
 
+export const GET = withApiObservability(GET_impl);
+export const POST = withApiObservability(POST_impl);

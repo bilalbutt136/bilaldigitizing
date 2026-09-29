@@ -1,3 +1,4 @@
+import { withApiObservability } from '../../../../src/lib/observability/apiObservability.js';
 import { NextResponse } from 'next/server';
 import { createAdminClient } from '../../../../src/lib/supabase/admin';
 import { getServerAuthUser } from '../../../../src/lib/supabase/serverAuth';
@@ -82,7 +83,7 @@ const ALLOWED_BUCKETS = new Set([
 
 const MAX_FILE_SIZE_BYTES = 50 * 1024 * 1024; // 50 MB
 
-export async function POST(request) {
+async function POST_impl(request) {
   try {
     const { user, isAdmin, isWorker } = await getServerAuthUser(request);
 
@@ -211,3 +212,5 @@ export async function POST(request) {
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
 }
+
+export const POST = withApiObservability(POST_impl);

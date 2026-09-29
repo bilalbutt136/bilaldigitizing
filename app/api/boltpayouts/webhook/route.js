@@ -1,8 +1,9 @@
+import { withApiObservability, logServerCaughtError } from '../../../../src/lib/observability/apiObservability.js';
 import { NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { supabaseAdmin, hasServiceRole } from '../../../../src/lib/supabaseAdmin';
 
-export async function POST(request) {
+async function POST_impl(request) {
   try {
     if (!hasServiceRole || !supabaseAdmin) {
       return NextResponse.json({ success: false, error: 'Server misconfiguration' }, { status: 500 });
@@ -211,7 +212,7 @@ export async function POST(request) {
               .or(`id.eq.${potentialOfferId},stripe_session_id.eq.${boltOrderId},payment_intent_id.eq.${boltOrderId}`)
               .maybeSingle();
             if (offRow) matchedOffer = offRow;
-          } catch {}
+          } catch (error) { logServerCaughtError(error, { operation: 'bolt.offer_lookup_failed' }); }
 
           if (!matchedOffer && potentialOfferId) {
             try {
@@ -223,7 +224,7 @@ export async function POST(request) {
               if (msgRow?.offer_data) {
                 matchedOffer = typeof msgRow.offer_data === 'string' ? JSON.parse(msgRow.offer_data) : msgRow.offer_data;
               }
-            } catch {}
+            } catch (error) { logServerCaughtError(error, { operation: 'bolt.offer_message_lookup_failed' }); }
           }
         }
 
@@ -314,7 +315,7 @@ export async function POST(request) {
               attachment: JSON.stringify(updatedOfferData),
               text: `📋 Custom Offer: ${offerTitle} ($${amount.toFixed(2)})\n\n[OFFER_DATA:${JSON.stringify(updatedOfferData)}]`
             }).or(`offer_id.eq.${targetOfferId},id.eq.${targetOfferId},offer_id.eq.${potentialOfferId},id.eq.${potentialOfferId}`);
-          } catch {}
+          } catch (error) { logServerCaughtError(error, { operation: 'bolt.offer_message_sync_failed' }); }
 
           // Post confirmation message in chat thread
           if (targetChatId) {
@@ -332,7 +333,7 @@ export async function POST(request) {
             };
             try {
               await supabaseAdmin.from('messages').insert([confirmMsg]);
-            } catch {}
+            } catch (error) { logServerCaughtError(error, { operation: 'bolt.confirmation_message_insert_failed' }); }
           }
         }
       }
@@ -358,3 +359,5 @@ export async function POST(request) {
     return NextResponse.json({ success: false, error: err.message }, { status: 500 });
   }
 }
+
+export const POST = withApiObservability(POST_impl);

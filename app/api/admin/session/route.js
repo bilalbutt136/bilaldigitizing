@@ -1,3 +1,4 @@
+import { withApiObservability } from '../../../../src/lib/observability/apiObservability.js';
 import { NextResponse } from 'next/server';
 import { getServerAuthUser } from '../../../../src/lib/supabase/serverAuth';
 
@@ -5,7 +6,7 @@ import { getServerAuthUser } from '../../../../src/lib/supabase/serverAuth';
 // Verifies that the caller is an authenticated Supabase user whose email
 // is whitelisted in the public.admins table or is the master admin.
 // Verified strictly server-side using tokens/cookies.
-export async function POST(request) {
+async function POST_impl(request) {
   try {
     const { user, isAdmin } = await getServerAuthUser(request);
 
@@ -28,3 +29,5 @@ export async function POST(request) {
     );
   }
 }
+
+export const POST = withApiObservability(POST_impl);

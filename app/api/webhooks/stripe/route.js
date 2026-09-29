@@ -1,3 +1,4 @@
+import { withApiObservability, logServerCaughtError } from '../../../../src/lib/observability/apiObservability.js';
 import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { createAdminClient } from '../../../../src/lib/supabase/admin';
@@ -119,7 +120,7 @@ async function verifyCheckoutAmount(supabase, session) {
   }
 }
 
-export async function POST(req) {
+async function POST_impl(req) {
   const stripeKey = process.env.STRIPE_SECRET_KEY;
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
@@ -200,7 +201,7 @@ export async function POST(req) {
             .or(`id.eq.${offerId},stripe_session_id.eq.${session.id}`)
             .maybeSingle();
           if (offData) matchedOffer = offData;
-        } catch {}
+        } catch (error) { logServerCaughtError(error, { operation: 'stripe.offer_lookup_failed' }); }
 
         if (!matchedOffer) {
           try {
@@ -212,7 +213,7 @@ export async function POST(req) {
             if (msgData?.offer_data) {
               matchedOffer = typeof msgData.offer_data === 'string' ? JSON.parse(msgData.offer_data) : msgData.offer_data;
             }
-          } catch {}
+          } catch (error) { logServerCaughtError(error, { operation: 'stripe.offer_message_lookup_failed' }); }
         }
 
         // 2. Reuse an already-created order or derive a stable ID from the Stripe session.
@@ -462,3 +463,4 @@ export async function POST(req) {
   return NextResponse.json({ received: true, status: 'success' }, { status: 200 });
 }
 
+export const POST = withApiObservability(POST_impl);

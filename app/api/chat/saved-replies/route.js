@@ -1,10 +1,11 @@
+import { withApiObservability } from '../../../../src/lib/observability/apiObservability.js';
 import { NextResponse } from 'next/server';
 import { createAdminClient } from '../../../../src/lib/supabase/admin';
 import { getServerAuthUser } from '../../../../src/lib/supabase/serverAuth';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET(request) {
+async function GET_impl(request) {
   try {
     const { isAdmin } = await getServerAuthUser(request);
     if (!isAdmin) {
@@ -28,7 +29,7 @@ export async function GET(request) {
   }
 }
 
-export async function POST(request) {
+async function POST_impl(request) {
   try {
     const { isAdmin } = await getServerAuthUser(request);
     if (!isAdmin) {
@@ -68,7 +69,7 @@ export async function POST(request) {
   }
 }
 
-export async function DELETE(request) {
+async function DELETE_impl(request) {
   try {
     const { isAdmin } = await getServerAuthUser(request);
     if (!isAdmin) {
@@ -94,3 +95,7 @@ export async function DELETE(request) {
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }
+
+export const GET = withApiObservability(GET_impl);
+export const POST = withApiObservability(POST_impl);
+export const DELETE = withApiObservability(DELETE_impl);

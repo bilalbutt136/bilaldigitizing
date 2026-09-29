@@ -1,3 +1,4 @@
+import { withApiObservability, logServerCaughtError } from '../../../../src/lib/observability/apiObservability.js';
 import { NextResponse } from 'next/server';
 import { createClient } from '../../../../src/lib/supabase/server';
 import { createAdminClient } from '../../../../src/lib/supabase/admin';
@@ -5,7 +6,7 @@ import { supabaseAdmin, hasServiceRole } from '../../../../src/lib/supabaseAdmin
 import { checkDistributedRateLimit, getClientIp, getRateLimitHeaders } from '../../../../src/lib/rateLimit';
 import { resolveTrustedUserAccess } from '../../../../src/lib/supabase/serverAuth';
 
-export async function POST(request) {
+async function POST_impl(request) {
   try {
     const ip = getClientIp(request);
     const rateLimit = await checkDistributedRateLimit(`worker-login:${ip}`, 10, 10 * 60 * 1000);
@@ -143,7 +144,7 @@ export async function POST(request) {
         .or(`id.eq.${user.id},email.eq.${resolvedEmail}`)
         .maybeSingle();
       profile = profData;
-    } catch {}
+    } catch (error) { logServerCaughtError(error, { operation: 'worker.profile_lookup_failed' }); }
 
     if (!profile) {
       try {
@@ -153,7 +154,7 @@ export async function POST(request) {
           .or(`id.eq.${user.id},email.eq.${resolvedEmail}`)
           .maybeSingle();
         if (workerData) profile = workerData;
-      } catch {}
+      } catch (error) { logServerCaughtError(error, { operation: 'worker.directory_lookup_failed' }); }
     }
 
     const rawStatus = profile?.status || 'Pending';
@@ -203,7 +204,7 @@ export async function POST(request) {
             worker_status: 'active'
           }
         });
-      } catch {}
+      } catch (error) { logServerCaughtError(error, { operation: 'worker.metadata_update_failed' }); }
     }
 
     return NextResponse.json({
@@ -228,3 +229,5 @@ export async function POST(request) {
     }, { status: 500 });
   }
 }
+
+export const POST = withApiObservability(POST_impl);

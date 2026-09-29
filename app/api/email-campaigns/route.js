@@ -1,3 +1,4 @@
+import { withApiObservability } from '../../../src/lib/observability/apiObservability.js';
 import { NextResponse } from 'next/server';
 import { Resend } from 'resend';
 import nodemailer from 'nodemailer';
@@ -197,7 +198,7 @@ async function dispatchSingleEmail({ from, to, subject, html }) {
 }
 
 // ─── GET: list all campaigns stored in Supabase ───────────────────────────────
-export async function GET(req) {
+async function GET_impl(req) {
   try {
     const { isAdmin } = await getServerAuthUser(req);
     if (!isAdmin) return NextResponse.json({ error: 'Unauthorized: Admin authentication required.' }, { status: 401 });
@@ -232,7 +233,7 @@ export async function GET(req) {
 }
 
 // ─── POST: create and send campaign ──────────────────────────────────────────
-export async function POST(req) {
+async function POST_impl(req) {
   try {
     const ip = getClientIp(req);
     const rateLimit = await checkDistributedRateLimit(`email-campaign:${ip}`, 10, 60000);
@@ -404,3 +405,6 @@ export async function POST(req) {
     return NextResponse.json({ error: err.message || 'Campaign processing failed.' }, { status: 500 });
   }
 }
+
+export const GET = withApiObservability(GET_impl);
+export const POST = withApiObservability(POST_impl);

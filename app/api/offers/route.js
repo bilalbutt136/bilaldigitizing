@@ -1,3 +1,4 @@
+import { withApiObservability, logServerCaughtError } from '../../../src/lib/observability/apiObservability.js';
 import { NextResponse } from 'next/server';
 import { createAdminClient } from '../../../src/lib/supabase/admin';
 import { getServerAuthUser } from '../../../src/lib/supabase/serverAuth';
@@ -23,7 +24,7 @@ async function findOffer(supabase, offerId) {
   return null;
 }
 
-export async function GET(request) {
+async function GET_impl(request) {
   try {
     const { user, isAdmin } = await getServerAuthUser(request);
     if (!user?.email) {
@@ -59,7 +60,7 @@ export async function GET(request) {
             .from('custom_offers')
             .update({ status: 'expired', updated_at: new Date().toISOString() })
             .eq('id', offer.id);
-        } catch {}
+        } catch (error) { logServerCaughtError(error, { operation: 'offers.expire_update_failed' }); }
         offer.status = 'expired';
       }
 
@@ -107,7 +108,7 @@ export async function GET(request) {
   }
 }
 
-export async function POST(request) {
+async function POST_impl(request) {
   try {
     const { user, isAdmin } = await getServerAuthUser(request);
     if (!user?.email) {
@@ -177,7 +178,7 @@ export async function POST(request) {
             if (ordRow?.client_email) {
               cleanClientEmail = ordRow.client_email.toLowerCase().trim();
             }
-          } catch {}
+          } catch (error) { logServerCaughtError(error, { operation: 'offers.order_owner_lookup_failed' }); }
         }
       }
 
@@ -220,7 +221,7 @@ export async function POST(request) {
               }
             });
           }
-        } catch {}
+        } catch (error) { logServerCaughtError(error, { operation: 'offers.existing_message_sync_failed' }); }
       }
 
       // 2. Check recent duplicate offer in same conversation within 15 seconds
@@ -251,7 +252,7 @@ export async function POST(request) {
             }
           });
         }
-      } catch {}
+      } catch (error) { logServerCaughtError(error, { operation: 'offers.duplicate_message_sync_failed' }); }
 
       const offerId = `off-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
 
@@ -409,7 +410,7 @@ export async function POST(request) {
       if (offer.expires_at && new Date(offer.expires_at).getTime() < Date.now()) {
         try {
           await supabase.from('custom_offers').update({ status: 'expired', updated_at: nowIso }).eq('id', offer.id || offerId);
-        } catch {}
+        } catch (error) { logServerCaughtError(error, { operation: 'offers.expired_update_failed' }); }
         return NextResponse.json({ error: 'This offer has expired.', offer: { ...offer, status: 'expired' } }, { status: 400 });
       }
 
@@ -474,7 +475,7 @@ export async function POST(request) {
         try {
           await supabase.from('orders').insert([baseOrderPayload]);
           orderPayload = baseOrderPayload;
-        } catch {}
+        } catch (error) { logServerCaughtError(error, { operation: 'offers.base_order_fallback_failed' }); }
       }
 
       // 3. Atomically upsert custom_offers table
@@ -542,7 +543,7 @@ export async function POST(request) {
           read: false,
           created_at: nowIso
         }]);
-      } catch {}
+      } catch (error) { logServerCaughtError(error, { operation: 'offers.accept_notification_failed' }); }
 
       return NextResponse.json({
         success: true,
@@ -578,7 +579,7 @@ export async function POST(request) {
       // 1. Update in custom_offers table
       try {
         await supabase.from('custom_offers').update({ status: 'declined', updated_at: nowIso }).or(`id.eq.${targetOfferId},id.eq.${offerId}`);
-      } catch {}
+      } catch (error) { logServerCaughtError(error, { operation: 'offers.decline_update_failed' }); }
 
       // 2. Also update messages table with declined status so both sides reflect immediately
       try {
@@ -601,7 +602,7 @@ export async function POST(request) {
           read: false,
           created_at: nowIso
         }]);
-      } catch {}
+      } catch (error) { logServerCaughtError(error, { operation: 'offers.decline_notification_failed' }); }
 
       return NextResponse.json({ success: true, offer: updatedOffer });
     }
@@ -633,7 +634,7 @@ export async function POST(request) {
       // 1. Update in custom_offers table
       try {
         await supabase.from('custom_offers').update({ status: 'cancelled', updated_at: nowIso }).or(`id.eq.${targetOfferId},id.eq.${offerId}`);
-      } catch {}
+      } catch (error) { logServerCaughtError(error, { operation: 'offers.cancel_update_failed' }); }
 
       return NextResponse.json({ success: true, status: 'cancelled', offer: updatedOffer });
     }
@@ -813,3 +814,6 @@ export async function POST(request) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
+
+export const GET = withApiObservability(GET_impl);
+export const POST = withApiObservability(POST_impl);

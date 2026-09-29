@@ -1,9 +1,10 @@
+import { withApiObservability, logServerCaughtError } from '../../../src/lib/observability/apiObservability.js';
 import { NextResponse } from 'next/server';
 import { createAdminClient } from '../../../src/lib/supabase/admin';
 import { checkDistributedRateLimit, getClientIp, getRateLimitHeaders } from '../../../src/lib/rateLimit';
 import { createHash } from 'node:crypto';
 
-export async function POST(request) {
+async function POST_impl(request) {
   try {
     const ip = getClientIp(request);
     const rateLimit = await checkDistributedRateLimit(`tracking:${ip}`, 120, 60 * 1000);
@@ -121,9 +122,9 @@ export async function POST(request) {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(capiPayload)
-          }).catch(() => {});
+          }).catch((error) => { logServerCaughtError(error, { operation: 'tracking.meta_capi_fetch_failed' }); });
         }
-      } catch {}
+      } catch (error) { logServerCaughtError(error, { operation: 'tracking.meta_capi_dispatch_failed' }); }
 
       return NextResponse.json({ success: true });
     }
@@ -134,3 +135,5 @@ export async function POST(request) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
+
+export const POST = withApiObservability(POST_impl);

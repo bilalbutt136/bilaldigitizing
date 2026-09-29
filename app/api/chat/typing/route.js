@@ -1,3 +1,4 @@
+import { withApiObservability, logServerCaughtError } from '../../../../src/lib/observability/apiObservability.js';
 import { NextResponse } from 'next/server';
 import { createAdminClient } from '../../../../src/lib/supabase/admin';
 import { getServerAuthUser } from '../../../../src/lib/supabase/serverAuth';
@@ -7,7 +8,7 @@ export const dynamic = 'force-dynamic';
 
 const localTypingCache = new Map();
 
-export async function GET(request) {
+async function GET_impl(request) {
   const { user, isAdmin } = await getServerAuthUser(request);
   if (!user) return NextResponse.json({ error: 'Authentication required.' }, { status: 401 });
 
@@ -43,7 +44,7 @@ export async function GET(request) {
   }
 }
 
-export async function POST(request) {
+async function POST_impl(request) {
   try {
     const { user, isAdmin } = await getServerAuthUser(request);
     if (!user) return NextResponse.json({ error: 'Authentication required.' }, { status: 401 });
@@ -80,10 +81,13 @@ export async function POST(request) {
       await supabase.from('conversations').update({
         [field]: typingBool ? new Date().toISOString() : null
       }).eq('id', conversationId);
-    } catch {}
+    } catch (error) { logServerCaughtError(error, { operation: 'chat.typing_db_fallback_failed' }); }
 
     return NextResponse.json({ success: true, isTyping: typingBool });
   } catch {
     return NextResponse.json({ error: 'Unable to update typing state.' }, { status: 500 });
   }
 }
+
+export const GET = withApiObservability(GET_impl);
+export const POST = withApiObservability(POST_impl);

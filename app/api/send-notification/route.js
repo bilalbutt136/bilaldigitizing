@@ -1,3 +1,4 @@
+import { withApiObservability, logServerCaughtError } from '../../../src/lib/observability/apiObservability.js';
 import { NextResponse } from 'next/server';
 import { checkDistributedRateLimit, getClientIp, getRateLimitHeaders } from '../../../src/lib/rateLimit.js';
 import { sendOrderNotification } from '../../../src/lib/email.js';
@@ -56,7 +57,7 @@ async function verifyWebhookSecret(req) {
   return false;
 }
 
-export async function POST(req) {
+async function POST_impl(req) {
   try {
     const ip = getClientIp(req);
     // Rate limit: Max 60 requests per minute per IP
@@ -151,7 +152,7 @@ export async function POST(req) {
           serviceName,
           status: 'submitted',
           role: 'admin'
-        }).catch(() => {});
+        }).catch((error) => { logServerCaughtError(error, { operation: 'notifications.async_dispatch_failed' }); });
         if (clientEmail) {
           dispatchOrderPush({
             orderId,
@@ -160,9 +161,9 @@ export async function POST(req) {
             status: 'submitted',
             role: 'client',
             recipientEmail: clientEmail
-          }).catch(() => {});
+          }).catch((error) => { logServerCaughtError(error, { operation: 'notifications.async_dispatch_failed' }); });
         }
-      } catch  {}
+      } catch (error) { logServerCaughtError(error, { operation: 'notifications.push_service_import_failed' }); }
 
       return NextResponse.json({
         success: result.success,
@@ -215,8 +216,8 @@ export async function POST(req) {
           recipientEmail: clientEmail,
           conversationId,
           orderId
-        }).catch(() => {});
-      } catch  {}
+        }).catch((error) => { logServerCaughtError(error, { operation: 'notifications.async_dispatch_failed' }); });
+      } catch (error) { logServerCaughtError(error, { operation: 'notifications.push_service_import_failed' }); }
 
       return NextResponse.json({
         success: result?.success !== false,
@@ -239,3 +240,5 @@ export async function POST(req) {
     );
   }
 }
+
+export const POST = withApiObservability(POST_impl);

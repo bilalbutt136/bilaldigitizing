@@ -1,3 +1,4 @@
+import { withApiObservability } from '../../../src/lib/observability/apiObservability.js';
 import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { getServerAuthUser } from '../../../src/lib/supabase/serverAuth';
@@ -5,7 +6,7 @@ import { createAdminClient } from '../../../src/lib/supabase/admin';
 import { checkDistributedRateLimit, getClientIp, getRateLimitHeaders } from '../../../src/lib/rateLimit';
 import { resolveAuthoritativePayment, PaymentAuthorizationError } from '../../../src/lib/payments/paymentAuthorization';
 
-export async function POST(req) {
+async function POST_impl(req) {
   try {
     const ip = getClientIp(req);
     const rateLimit = await checkDistributedRateLimit(`checkout:${ip}`, 25, 60000);
@@ -114,3 +115,5 @@ export async function POST(req) {
     return NextResponse.json({ success: false, error: 'Failed to create checkout session.' }, { status: 500 });
   }
 }
+
+export const POST = withApiObservability(POST_impl);

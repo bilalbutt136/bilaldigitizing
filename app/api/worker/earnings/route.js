@@ -1,8 +1,9 @@
+import { withApiObservability } from '../../../../src/lib/observability/apiObservability.js';
 import { NextResponse } from 'next/server';
 import { createAdminClient } from '../../../../src/lib/supabase/admin';
 import { getServerAuthUser } from '../../../../src/lib/supabase/serverAuth';
 
-export async function GET(request) {
+async function GET_impl(request) {
   try {
     const { user, isAdmin, isWorker } = await getServerAuthUser(request);
     if (!user || (!isAdmin && !isWorker)) {
@@ -59,3 +60,5 @@ export async function GET(request) {
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }
+
+export const GET = withApiObservability(GET_impl);

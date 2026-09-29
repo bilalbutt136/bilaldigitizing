@@ -1,8 +1,9 @@
+import { withApiObservability, logServerCaughtError } from '../../../../src/lib/observability/apiObservability.js';
 import { NextResponse } from 'next/server';
 import { createAdminClient } from '../../../../src/lib/supabase/admin';
 import { getServerAuthUser } from '../../../../src/lib/supabase/serverAuth';
 
-export async function GET(request) {
+async function GET_impl(request) {
   try {
     const { user, isAdmin, isWorker, workerData } = await getServerAuthUser(request);
 
@@ -55,7 +56,7 @@ export async function GET(request) {
             deniedName = worker.name || deniedName;
           }
         }
-      } catch {}
+      } catch (error) { logServerCaughtError(error, { operation: 'worker.denied_session_lookup_failed' }); }
 
       return NextResponse.json({
         authenticated: false,
@@ -86,3 +87,5 @@ export async function GET(request) {
     );
   }
 }
+
+export const GET = withApiObservability(GET_impl);

@@ -1,9 +1,10 @@
+import { withApiObservability, logServerCaughtError } from '../../../../src/lib/observability/apiObservability.js';
 import { NextResponse } from 'next/server';
 import { supabaseAdmin, hasServiceRole } from '../../../../src/lib/supabaseAdmin';
 import { createAdminClient } from '../../../../src/lib/supabase/admin';
 import { getServerAuthUser } from '../../../../src/lib/supabase/serverAuth';
 
-export async function GET(request) {
+async function GET_impl(request) {
   try {
     const { user, isAdmin, isWorker } = await getServerAuthUser(request);
     if (!user) {
@@ -182,7 +183,7 @@ export async function GET(request) {
         .order('created_at', { ascending: false })
         .limit(20);
       if (pData) recentPayouts = pData;
-    } catch {}
+    } catch (error) { logServerCaughtError(error, { operation: 'payouts.recent_query_failed' }); }
 
     return NextResponse.json({
       workers: Object.values(workerBalanceMap),
@@ -195,7 +196,7 @@ export async function GET(request) {
   }
 }
 
-export async function POST(request) {
+async function POST_impl(request) {
   try {
     const { user, isAdmin } = await getServerAuthUser(request);
     if (!user || !isAdmin) {
@@ -381,3 +382,6 @@ export async function POST(request) {
     return NextResponse.json({ error: error.message || 'Failed to process payout' }, { status: 500 });
   }
 }
+
+export const GET = withApiObservability(GET_impl);
+export const POST = withApiObservability(POST_impl);

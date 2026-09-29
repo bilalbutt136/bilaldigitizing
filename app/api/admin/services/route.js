@@ -1,3 +1,4 @@
+import { withApiObservability } from '../../../../src/lib/observability/apiObservability.js';
 import { NextResponse } from 'next/server';
 import { createAdminClient } from '../../../../src/lib/supabase/admin';
 import { getServerAuthUser } from '../../../../src/lib/supabase/serverAuth';
@@ -6,7 +7,7 @@ import { revalidatePath } from 'next/cache';
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
-export async function GET() {
+async function GET_impl() {
   try {
     const supabase = createAdminClient();
 
@@ -42,7 +43,7 @@ export async function GET() {
   }
 }
 
-export async function POST(request) {
+async function POST_impl(request) {
   try {
     const { isAdmin, user } = await getServerAuthUser(request);
     if (!user || !isAdmin) {
@@ -190,3 +191,6 @@ export async function POST(request) {
     }, { status: 500 });
   }
 }
+
+export const GET = withApiObservability(GET_impl);
+export const POST = withApiObservability(POST_impl);

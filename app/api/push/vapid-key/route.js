@@ -1,10 +1,11 @@
+import { withApiObservability } from '../../../../src/lib/observability/apiObservability.js';
 import { NextResponse } from 'next/server';
 import { getPublicVapidKey } from '../../../../src/lib/pushService.js';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
-export async function GET() {
+async function GET_impl() {
   try {
     const publicKey = await getPublicVapidKey();
     return NextResponse.json({
@@ -18,3 +19,5 @@ export async function GET() {
     }, { status: 500 });
   }
 }
+
+export const GET = withApiObservability(GET_impl);

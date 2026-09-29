@@ -1,3 +1,4 @@
+import { withApiObservability } from '../../../../src/lib/observability/apiObservability.js';
 import { NextResponse } from 'next/server';
 import { v2 as cloudinary } from 'cloudinary';
 import { getServerAuthUser } from '../../../../src/lib/supabase/serverAuth';
@@ -25,7 +26,7 @@ function normalizeFolder(value) {
     .join('/');
 }
 
-export async function GET(request) {
+async function GET_impl(request) {
   try {
     const { user, isAdmin, isWorker } = await getServerAuthUser(request);
     if (!user) {
@@ -72,3 +73,5 @@ export async function GET(request) {
     return NextResponse.json({ success: false, error: 'Unable to create upload signature.' }, { status: 500 });
   }
 }
+
+export const GET = withApiObservability(GET_impl);

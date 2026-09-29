@@ -1,3 +1,4 @@
+import { withApiObservability } from '../../../../src/lib/observability/apiObservability.js';
 import { NextResponse } from 'next/server';
 import { dispatchPushToDevices } from '../../../../src/lib/pushService.js';
 import { getServerAuthUser } from '../../../../src/lib/supabase/serverAuth.js';
@@ -6,7 +7,7 @@ import { checkDistributedRateLimit, getClientIp, getRateLimitHeaders } from '../
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
-export async function POST(req) {
+async function POST_impl(req) {
   try {
     const { user, isAdmin } = await getServerAuthUser(req);
     if (!user?.email) {
@@ -86,3 +87,5 @@ export async function POST(req) {
     return NextResponse.json({ success: false, error: 'Unable to send push notification.' }, { status: 500 });
   }
 }
+
+export const POST = withApiObservability(POST_impl);

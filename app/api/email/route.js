@@ -1,3 +1,4 @@
+import { withApiObservability } from '../../../src/lib/observability/apiObservability.js';
 import { NextResponse } from 'next/server';
 import { getServerAuthUser } from '../../../src/lib/supabase/serverAuth';
 import { checkDistributedRateLimit, getClientIp, getRateLimitHeaders } from '../../../src/lib/rateLimit';
@@ -15,7 +16,7 @@ const ALLOWED_TYPES = [
   'TEST_EMAIL'
 ];
 
-export async function POST(req) {
+async function POST_impl(req) {
   try {
     const ip = getClientIp(req);
     const rateLimit = await checkDistributedRateLimit(`email-dispatch:${ip}`, 30, 60000);
@@ -71,3 +72,5 @@ export async function POST(req) {
     return NextResponse.json({ success: false, error: 'Failed to send email notification', details: error.message }, { status: 500 });
   }
 }
+
+export const POST = withApiObservability(POST_impl);
