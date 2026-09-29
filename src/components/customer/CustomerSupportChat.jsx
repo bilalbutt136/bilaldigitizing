@@ -4,8 +4,6 @@ import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { useAppState } from '../../context/StateContext';
 import { createClient } from '../../lib/supabase/client';
 import OfferCardMessage from '../common/OfferCardMessage';
-import CustomerChatHeader from './CustomerChatHeader';
-import ChatAttachmentImage from './ChatAttachmentImage';
 import { downloadFileDirectly, openFileInNewTab } from '../../utils/fileDownloader';
 import { playMessageChime as _playMessageChime, playMessageChimeForMessage, playCustomerChime, stopNotificationSound, unlockAudioContext } from '../../utils/audioNotification';
 import { trackUserPresence, untrackUserPresence } from '../../services/presenceService';
@@ -20,10 +18,14 @@ import {
   Check as _Check,
   CheckCheck,
   Headphones,
+  RefreshCw,
   Sparkles,
+  ShieldCheck,
   Clock as _Clock,
   MessageSquare,
   ExternalLink,
+  Volume2,
+  VolumeX
 } from 'lucide-react';
 
 const formatChatTime = (dateStr) => {
@@ -82,18 +84,14 @@ export default function CustomerSupportChat({
   const fileInputRef = useRef(null);
   const textareaRef = useRef(null);
 
-  // Stable UI helpers: timers are owned by refs and cleared on unmount.
+  // Toast notifications
   const [toast, setToast] = useState(null);
-  const toastTimeoutRef = useRef(null);
-  const scrollTimeoutRef = useRef(null);
-  const blurTimeoutRef = useRef(null);
-
-  const showToast = useCallback((message, type = 'info') => {
-    clearTimeout(toastTimeoutRef.current);
+  const showToast = (message, type = 'info') => {
     setToast({ message, type });
-    toastTimeoutRef.current = setTimeout(() => setToast(null), 3500);
-  }, []);
+    setTimeout(() => setToast(null), 3500);
+  };
 
+  // Sound alert state & toggle
   const [isAudioEnabled, setIsAudioEnabled] = useState(() => {
     if (typeof window !== 'undefined') {
       return localStorage.getItem('bdigi_audio_enabled') !== 'false';
@@ -101,7 +99,7 @@ export default function CustomerSupportChat({
     return true;
   });
 
-  const handleToggleSound = useCallback(() => {
+  const handleToggleSound = () => {
     const nextVal = !isAudioEnabled;
     setIsAudioEnabled(nextVal);
     if (typeof window !== 'undefined') {
@@ -110,54 +108,58 @@ export default function CustomerSupportChat({
     if (nextVal) {
       unlockAudioContext();
       playCustomerChime(true);
-      showToast('Message sounds enabled.', 'success');
+      showToast('🔔 Gentle message chime active & tested!', 'success');
     } else {
-      showToast('Message sounds muted.', 'info');
+      showToast('🔕 Message chime muted.', 'info');
     }
-  }, [isAudioEnabled, showToast]);
+  };
 
   const [downloadingFileUrl, setDownloadingFileUrl] = useState(null);
 
-  const handleDownloadFile = useCallback(async (att, event) => {
-    if (event) {
-      event.preventDefault();
-      event.stopPropagation();
+  const handleDownloadFile = async (att, e) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
     }
     if (!att?.url) return;
     try {
       setDownloadingFileUrl(att.url);
-      showToast('Downloading ' + (att.name || 'file') + '...', 'info');
+      showToast(`Downloading ${att.name || 'file'}...`, 'info');
       await downloadFileDirectly(att.url, att.name);
-      showToast('Downloaded ' + (att.name || 'file') + ' successfully.', 'success');
+      showToast(`Downloaded ${att.name || 'file'} successfully!`, 'success');
     } catch (err) {
       console.error('[Chat] Download error:', err);
-      showToast('Failed to download ' + (att.name || 'file') + '.', 'error');
+      showToast(`Failed to download ${att.name || 'file'}.`, 'error');
     } finally {
       setDownloadingFileUrl(null);
     }
-  }, [showToast]);
+  };
 
-  const scrollToBottom = useCallback(() => {
-    clearTimeout(scrollTimeoutRef.current);
-    scrollTimeoutRef.current = setTimeout(() => {
-      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
-    }, 60);
-  }, []);
+  const scrollToBottom = () => {
+    setTimeout(() => {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }, 80);
+  };
 
-  const adjustTextareaHeight = useCallback((el) => {
+  const adjustTextareaHeight = (el) => {
     if (!el) return;
     el.style.height = 'auto';
-    const nextH = Math.min(Math.max(el.scrollHeight, 44), 132);
-    el.style.height = nextH + 'px';
-    el.style.overflowY = el.scrollHeight > 130 ? 'auto' : 'hidden';
-  }, []);
+    const nextH = Math.min(Math.max(el.scrollHeight, 42), 140);
+    el.style.height = `${nextH}px`;
+    // Prevent ugly scrollbars when text fits within bounds
+    if (el.scrollHeight > 138) {
+      el.style.overflowY = 'auto';
+    } else {
+      el.style.overflowY = 'hidden';
+    }
+  };
 
   // AI Polish Feature
   const [isPolishing, setIsPolishing] = useState(false);
-  const handleAiPolish = useCallback(async (event) => {
-    if (event) {
-      event.preventDefault();
-      event.stopPropagation();
+  const handleAiPolish = async (e) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
     }
     if (!inputText.trim() || isPolishing) return;
     setIsPolishing(true);
@@ -170,22 +172,27 @@ export default function CustomerSupportChat({
       const data = await res.json();
       if (data?.polishedText) {
         setInputText(data.polishedText);
-        showToast('Message polished.', 'success');
+        setTimeout(() => {
+          if (textareaRef.current) {
+            adjustTextareaHeight(textareaRef.current);
+          }
+        }, 50);
+        showToast('✨ Message polished with Google Gemini!', 'success');
       }
     } catch {
       showToast('Could not polish message.', 'error');
     } finally {
       setIsPolishing(false);
     }
-  }, [inputText, isPolishing, showToast]);
+  };
 
-  const handleInputFocus = useCallback(() => {
+  const handleInputFocus = () => {
     stopNotificationSound();
     scrollToBottom();
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new CustomEvent('bdigi_chat_focus', { detail: { focused: true } }));
     }
-  }, [scrollToBottom]);
+  };
 
   const handleInputBlur = () => {
     clearTimeout(typingTimeoutRef.current);
@@ -194,8 +201,7 @@ export default function CustomerSupportChat({
       broadcastTyping(false);
     }
     if (typeof window !== 'undefined') {
-      clearTimeout(blurTimeoutRef.current);
-      blurTimeoutRef.current = setTimeout(() => {
+      setTimeout(() => {
         if (!document.activeElement?.closest('.customer-chat-composer')) {
           window.dispatchEvent(new CustomEvent('bdigi_chat_focus', { detail: { focused: false } }));
         }
@@ -208,50 +214,23 @@ export default function CustomerSupportChat({
     if (textareaRef.current) {
       adjustTextareaHeight(textareaRef.current);
     }
-  }, [inputText, adjustTextareaHeight]);
-
-  useEffect(() => {
-    return () => {
-      clearTimeout(toastTimeoutRef.current);
-      clearTimeout(scrollTimeoutRef.current);
-      clearTimeout(blurTimeoutRef.current);
-      clearTimeout(typingTimeoutRef.current);
-      clearTimeout(adminTypingDismissRef.current);
-    };
-  }, []);
+  }, [inputText]);
 
   const isImageAttachment = (name = '', url = '') => {
     const check = (name || url || '').split('?')[0].toLowerCase();
     return /\.(png|jpe?g|webp|gif|svg|bmp)$/i.test(check);
   };
 
-  const fetchMessages = useCallback(async (convId) => {
-    if (!convId) return;
-    try {
-      const res = await fetch('/api/chat/messages?conversationId=' + encodeURIComponent(convId) + '&clientEmail=' + encodeURIComponent(userEmail));
-      const data = await res.json();
-      if (Array.isArray(data?.messages)) {
-        setMessages(data.messages);
-        scrollToBottom();
-      }
-      stopNotificationSound();
-      await fetch('/api/chat/conversations', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'markRead', conversationId: convId })
-      });
-    } catch (err) {
-      console.warn('[Customer Chat] Fetch messages error:', err);
-    }
-  }, [scrollToBottom, userEmail]);
-
-  const initConversation = useCallback(async (targetId) => {
+  // 1. Initialize or Fetch Conversation
+  const initConversation = async (targetId) => {
     if (!userEmail) {
       setIsLoading(false);
       return;
     }
+
     const prefix = chatType === 'support' ? 'support' : 'inbox';
-    const convIdToUse = targetId || (prefix + '-' + userEmail.replace(/[^a-zA-Z0-9]/g, '_'));
+    const convIdToUse = targetId || conversationId || (userEmail ? `${prefix}-${userEmail.replace(/[^a-zA-Z0-9]/g, '_')}` : `${prefix}-guest`);
+
     try {
       const res = await fetch('/api/chat/conversations', {
         method: 'POST',
@@ -267,19 +246,41 @@ export default function CustomerSupportChat({
       });
       const data = await res.json();
       const resolvedId = data?.conversation?.id || convIdToUse;
-      setConversationId(resolvedId);
-      await fetchMessages(resolvedId);
+      if (resolvedId) {
+        setConversationId(resolvedId);
+        fetchMessages(resolvedId);
+      }
     } catch (err) {
       console.warn('[Customer Chat] Init error:', err);
     } finally {
       setIsLoading(false);
     }
-  }, [chatType, defaultOrderId, fetchMessages, userEmail, userName]);
+  };
 
-  const handleRefreshMessages = useCallback(() => {
-    if (conversationId) fetchMessages(conversationId);
-  }, [conversationId, fetchMessages]);
+  // 2. Fetch Messages
+  const fetchMessages = async (convId) => {
+    if (!convId) return;
+    try {
+      const res = await fetch(`/api/chat/messages?conversationId=${encodeURIComponent(convId)}&clientEmail=${encodeURIComponent(userEmail)}`);
+      const data = await res.json();
+      if (data?.messages) {
+        setMessages(data.messages);
+        scrollToBottom();
+      }
 
+      // Mark messages as read for client
+      stopNotificationSound();
+      await fetch('/api/chat/conversations', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'markRead', conversationId: convId })
+      });
+    } catch (err) {
+      console.warn('[Customer Chat] Fetch messages error:', err);
+    }
+  };
+
+  /* oxlint-disable react-hooks/exhaustive-deps -- initialize only when account/channel keys change, not helper identity */
   useEffect(() => {
     const prefix = chatType === 'support' ? 'support' : 'inbox';
     const nextId = userEmail ? `${prefix}-${userEmail.replace(/[^a-zA-Z0-9]/g, '_')}` : `${prefix}-guest`;
@@ -287,9 +288,11 @@ export default function CustomerSupportChat({
     setMessages([]);
     setIsLoading(true);
     initConversation(nextId);
-  }, [userEmail, chatType, initConversation]);
+  }, [userEmail, chatType]);
+  /* oxlint-enable react-hooks/exhaustive-deps */
 
   // Handle return from Stripe or Gateway payment.
+  /* oxlint-disable react-hooks/exhaustive-deps -- payment callback is keyed by conversation; fetch helper identity is not a lifecycle key */
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const params = new URLSearchParams(window.location.search);
@@ -329,15 +332,14 @@ export default function CustomerSupportChat({
       newUrl.searchParams.delete('session_id');
       window.history.replaceState({}, '', newUrl.toString());
     }
-  }, [conversationId, fetchMessages, showToast]);
+  }, [conversationId]);
+  /* oxlint-enable react-hooks/exhaustive-deps */
 
   // Realtime Polling & Silent Sync
   useEffect(() => {
     if (!conversationId) return;
 
     const interval = setInterval(async () => {
-      if (typeof document !== 'undefined' && document.visibilityState === 'hidden') return;
-
       // Check admin typing as secondary fallback (only updates if actively typing)
       try {
         const tRes = await fetch(`/api/chat/typing?conversationId=${encodeURIComponent(conversationId)}&forRole=client`);
@@ -386,10 +388,10 @@ export default function CustomerSupportChat({
           });
         }
       } catch {}
-    }, 30000);
+    }, 15000);
 
     return () => clearInterval(interval);
-  }, [conversationId, userEmail]);
+  }, [conversationId, messages.length, userEmail]);
 
   // Realtime DB changes use the shared app hub; this room remains broadcast-only
   // for low-latency typing signals.
@@ -453,7 +455,7 @@ export default function CustomerSupportChat({
       unsubscribeMessages();
       supabase.removeChannel(channel);
     };
-  }, [conversationId, scrollToBottom]);
+  }, [conversationId]);
 
   // Real-time client presence tracking while chat session is open
   useEffect(() => {
@@ -850,12 +852,121 @@ export default function CustomerSupportChat({
         </div>
       )}
 
-      <CustomerChatHeader
-        chatType={chatType}
-        isAudioEnabled={isAudioEnabled}
-        onToggleSound={handleToggleSound}
-        onRefresh={handleRefreshMessages}
-      />
+      {/* CHAT HEADER */}
+      <div
+        style={{
+          padding: '0.75rem 1rem',
+          background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
+          color: '#ffffff',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          flexShrink: 0,
+          borderBottom: '1px solid rgba(255, 255, 255, 0.08)'
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', minWidth: 0 }}>
+          <div style={{ position: 'relative', flexShrink: 0 }}>
+            <div style={{
+              width: '40px',
+              height: '40px',
+              borderRadius: '12px',
+              background: 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)',
+              color: '#ffffff',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontWeight: 900,
+              fontSize: '1.05rem',
+              boxShadow: '0 2px 8px rgba(234, 88, 12, 0.3)'
+            }}>
+              BD
+            </div>
+            <span style={{
+              position: 'absolute',
+              bottom: '-1px',
+              right: '-1px',
+              width: '10px',
+              height: '10px',
+              borderRadius: '50%',
+              background: '#22c55e',
+              border: '2px solid #0f172a'
+            }} />
+          </div>
+
+          <div style={{ minWidth: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', flexWrap: 'nowrap' }}>
+              <h3 style={{ fontSize: '0.92rem', fontWeight: 800, margin: 0, color: '#ffffff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                {chatType === 'support' ? '24/7 Studio Support Desk' : 'Studio Digitizing Desk'}
+              </h3>
+              <ShieldCheck size={14} color="#38bdf8" style={{ flexShrink: 0 }} />
+              <span style={{
+                background: 'rgba(34, 197, 94, 0.18)',
+                color: '#4ade80',
+                fontSize: '0.58rem',
+                fontWeight: 900,
+                padding: '0.08rem 0.35rem',
+                borderRadius: '6px',
+                letterSpacing: '0.03em',
+                flexShrink: 0
+              }}>
+                ONLINE
+              </span>
+            </div>
+            <p style={{ fontSize: '0.72rem', color: '#94a3b8', margin: '0.1rem 0 0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              {chatType === 'support'
+                ? 'Active 24/7 • Orders & Revision Assistance'
+                : 'Direct with Digitizers • Custom Offers & Stitch Quotes'}
+            </p>
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexShrink: 0 }}>
+          <button
+            type="button"
+            onClick={handleToggleSound}
+            style={{
+              background: isAudioEnabled ? 'rgba(34, 197, 94, 0.15)' : 'rgba(255,255,255,0.08)',
+              border: isAudioEnabled ? '1px solid rgba(34, 197, 94, 0.35)' : '1px solid rgba(255,255,255,0.12)',
+              borderRadius: '8px',
+              padding: '6px 9px',
+              color: isAudioEnabled ? '#4ade80' : '#94a3b8',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.35rem',
+              fontSize: '0.72rem',
+              fontWeight: 700,
+              transition: 'all 0.15s ease'
+            }}
+            title={isAudioEnabled ? "Sound enabled (Click to test chime or mute)" : "Sound muted (Click to enable)"}
+          >
+            {isAudioEnabled ? <Volume2 size={13} /> : <VolumeX size={13} />}
+            <span>{isAudioEnabled ? 'Sound ON' : 'Muted'}</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => fetchMessages(conversationId)}
+            style={{
+              background: 'rgba(255,255,255,0.08)',
+              border: '1px solid rgba(255,255,255,0.12)',
+              borderRadius: '8px',
+              padding: '6px 8px',
+              color: '#ffffff',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.3rem',
+              fontSize: '0.72rem',
+              fontWeight: 700
+            }}
+            title="Refresh chat messages"
+          >
+            <RefreshCw size={13} />
+          </button>
+        </div>
+      </div>
 
       {/* CHAT MESSAGES STREAM */}
       <div
@@ -1010,14 +1121,14 @@ export default function CustomerSupportChat({
                   ) : (
                     /* REGULAR MESSAGE BUBBLE */
                     <div style={{
-                      maxWidth: 'min(82%, 560px)',
-                      background: isClient ? '#ea580c' : '#ffffff',
+                      maxWidth: '85%',
+                      background: isClient ? 'linear-gradient(135deg, #ff7a00 0%, #ea580c 100%)' : '#ffffff',
                       color: isClient ? '#ffffff' : '#0f172a',
                       padding: '0.65rem 0.95rem',
                       borderRadius: isClient
                         ? (isGrouped ? '16px 6px 6px 16px' : '16px 16px 4px 16px')
                         : (isGrouped ? '6px 16px 16px 6px' : '16px 16px 16px 4px'),
-                      boxShadow: isClient ? '0 3px 12px rgba(234, 88, 12, 0.14)' : '0 1px 3px rgba(15, 23, 42, 0.05)',
+                      boxShadow: isClient ? '0 2px 8px rgba(234, 88, 12, 0.22)' : '0 1px 4px rgba(15, 23, 42, 0.05)',
                       border: isClient ? 'none' : '1px solid #e2e8f0',
                       wordBreak: 'break-word',
                       fontSize: '0.88rem',
@@ -1058,9 +1169,17 @@ export default function CustomerSupportChat({
                                     title="Click to open full image directly"
                                     style={{ display: 'block', textDecoration: 'none', background: '#00000008' }}
                                   >
-                                    <ChatAttachmentImage
+                                    <img
                                       src={att.url}
-                                      alt={att.name || 'Image attachment'}
+                                      alt={att.name || 'Image'}
+                                      loading="lazy"
+                                      style={{
+                                        display: 'block',
+                                        width: '100%',
+                                        maxHeight: '220px',
+                                        objectFit: 'cover',
+                                        cursor: 'pointer'
+                                      }}
                                     />
                                   </a>
                                   <div style={{
@@ -1311,10 +1430,10 @@ export default function CustomerSupportChat({
               }}
             >
               {isImageAttachment(att.name, att.url) && (
-                <ChatAttachmentImage
+                <img
                   src={att.url}
-                  alt={att.name || 'Attachment preview'}
-                  compact
+                  alt=""
+                  style={{ width: '22px', height: '22px', borderRadius: '4px', objectFit: 'cover' }}
                 />
               )}
               <span style={{ fontWeight: 600, color: '#0f172a' }}>{att.name}</span>
