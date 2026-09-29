@@ -3,12 +3,50 @@ import { supabase, isSupabaseConfigured } from '../lib/supabase/client';
 let presenceChannel = null;
 let isChannelSubscribed = false;
 let currentTrackingPayload = null;
+let presenceSessionId = null;
 const presenceListeners = new Set();
-let cachedOnlineEmails = new Set();
+let realtimeOnlineEmails = new Set();
+let restOnlineEmails = new Set();
 
-/**
- * Extracts all valid lowercased emails from Supabase presence state
- */
+function isValidPresenceSessionId(value) {
+  return /^[a-zA-Z0-9_-]{8,128}$/.test(String(value || ''));
+}
+
+function getPresenceSessionId() {
+  if (presenceSessionId) return presenceSessionId;
+
+  if (typeof window !== 'undefined') {
+    try {
+      const existing = window.sessionStorage.getItem('bdigi_presence_session_id');
+      if (isValidPresenceSessionId(existing)) {
+        presenceSessionId = existing;
+        return presenceSessionId;
+      }
+    } catch {}
+
+    try {
+      if (globalThis.crypto?.randomUUID) {
+        presenceSessionId = globalThis.crypto.randomUUID();
+      }
+    } catch {}
+
+    if (!presenceSessionId) {
+      presenceSessionId = `presence_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 12)}`;
+    }
+
+    try {
+      window.sessionStorage.setItem('bdigi_presence_session_id', presenceSessionId);
+    } catch {}
+
+    return presenceSessionId;
+  }
+
+  if (!presenceSessionId) {
+    presenceSessionId = `presence_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 12)}`;
+  }
+  return presenceSessionId;
+}
+
 function extractOnlineEmails(state) {
   const set = new Set();
   if (!state || typeof state !== 'object') return set;
@@ -18,71 +56,87 @@ function extractOnlineEmails(state) {
       set.add(key.toLowerCase().trim());
     }
     if (Array.isArray(presences)) {
-      presences.forEach(p => {
-        const em = (p?.email || p?.key || '').toLowerCase().trim();
-        if (em && em.includes('@')) {
-          set.add(em);
-        }
+      presences.forEach(presence => {
+        const email = String(presence?.email || presence?.key || '').toLowerCase().trim();
+        if (email && email.includes('@')) set.add(email);
       });
     }
   });
+
   return set;
 }
 
-/**
- * Notifies all subscribers with the updated Set of online emails
- */
-function notifySubscribers() {
-  if (!presenceChannel) return;
+function getCombinedPresence() {
+  return new Set([...restOnlineEmails, ...realtimeOnlineEmails]);
+}
+
+function emitPresence() {
+  const snapshot = getCombinedPresence();
+  presenceListeners.forEach(listener => {
+    try {
+      listener(new Set(snapshot));
+    } catch (err) {
+      console.warn('[PresenceService] Listener notification error:', err);
+    }
+  });
+}
+
+function syncRealtimePresenceState() {
+  if (!presenceChannel) {
+    realtimeOnlineEmails = new Set();
+    emitPresence();
+    return;
+  }
+
   try {
-    const state = presenceChannel.presenceState();
-    cachedOnlineEmails = extractOnlineEmails(state);
-    presenceListeners.forEach(listener => {
-      try {
-        listener(new Set(cachedOnlineEmails));
-      } catch (err) {
-        console.warn('[PresenceService] Listener notification error:', err);
-      }
-    });
+    realtimeOnlineEmails = extractOnlineEmails(presenceChannel.presenceState());
+    emitPresence();
   } catch (err) {
     console.warn('[PresenceService] Error reading presence state:', err);
   }
 }
 
-/**
- * Ensures the singleton presence channel is initialized and subscribed exactly ONCE.
- * Safely purges any stale channel instance to prevent "callbacks after subscribe" error.
- */
+function resetRealtimeChannel() {
+  isChannelSubscribed = false;
+  realtimeOnlineEmails = new Set();
+
+  if (presenceChannel && supabase) {
+    try {
+      supabase.removeChannel(presenceChannel);
+    } catch {}
+  }
+
+  presenceChannel = null;
+  emitPresence();
+}
+
 function initPresenceChannel() {
   if (!isSupabaseConfigured || !supabase) return null;
   if (presenceChannel) return presenceChannel;
 
   try {
-    // Purge any stale pre-existing channel with this topic to guarantee fresh subscription
     if (typeof supabase.getChannels === 'function') {
-      const existing = supabase.getChannels().find(ch => ch.topic === 'realtime:bdigitizing-live-presence');
+      const existing = supabase.getChannels().find(
+        channel => channel.topic === 'realtime:bdigitizing-live-presence'
+      );
       if (existing) {
-        try { supabase.removeChannel(existing); } catch {}
+        try {
+          supabase.removeChannel(existing);
+        } catch {}
       }
     }
 
     presenceChannel = supabase.channel('bdigitizing-live-presence');
 
-    // Register all presence listeners BEFORE subscribe() is called
     presenceChannel
-      .on('presence', { event: 'sync' }, () => {
-        notifySubscribers();
-      })
-      .on('presence', { event: 'join' }, () => {
-        notifySubscribers();
-      })
-      .on('presence', { event: 'leave' }, () => {
-        notifySubscribers();
-      });
+      .on('presence', { event: 'sync' }, syncRealtimePresenceState)
+      .on('presence', { event: 'join' }, syncRealtimePresenceState)
+      .on('presence', { event: 'leave' }, syncRealtimePresenceState);
 
-    presenceChannel.subscribe(async (status) => {
+    presenceChannel.subscribe(async status => {
       if (status === 'SUBSCRIBED') {
         isChannelSubscribed = true;
+
         if (currentTrackingPayload) {
           try {
             await presenceChannel.track(currentTrackingPayload);
@@ -90,32 +144,35 @@ function initPresenceChannel() {
             console.warn('[PresenceService] Track error on subscribe:', trackErr);
           }
         }
-        notifySubscribers();
+
+        syncRealtimePresenceState();
+        return;
+      }
+
+      if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+        resetRealtimeChannel();
+        setTimeout(() => {
+          initPresenceChannel();
+        }, 2000);
       }
     });
 
     return presenceChannel;
   } catch (err) {
     console.warn('[PresenceService] Channel initialization error:', err);
+    resetRealtimeChannel();
     return null;
   }
 }
 
-/**
- * Subscribe to online presence changes across the application.
- * Returns an unsubscribe cleanup function.
- */
 export function subscribeToPresence(callback) {
   if (typeof callback !== 'function') return () => {};
 
   presenceListeners.add(callback);
-
-  // Initialize shared channel once
   initPresenceChannel();
 
-  // Immediately notify with currently cached online emails
   try {
-    callback(new Set(cachedOnlineEmails));
+    callback(getCombinedPresence());
   } catch {}
 
   return () => {
@@ -123,46 +180,59 @@ export function subscribeToPresence(callback) {
   };
 }
 
-/**
- * Broadcast current user presence (both via Realtime channel and REST heartbeat)
- */
-export async function trackUserPresence({ email, name = '', role = 'client', conversationId = null }) {
+export async function trackUserPresence({
+  email,
+  name = '',
+  role = 'client',
+  conversationId = null
+}) {
   if (!email || typeof email !== 'string') return;
+
   const cleanEmail = email.toLowerCase().trim();
+  const sessionId = getPresenceSessionId();
 
   currentTrackingPayload = {
     email: cleanEmail,
     name,
     role,
     conversation_id: conversationId,
+    session_id: sessionId,
     online_at: new Date().toISOString()
   };
 
-  const ch = initPresenceChannel();
-  if (ch && isChannelSubscribed) {
+  const channel = initPresenceChannel();
+  if (channel && isChannelSubscribed) {
     try {
-      await ch.track(currentTrackingPayload);
+      await channel.track(currentTrackingPayload);
     } catch (err) {
       console.warn('[PresenceService] Realtime track notice:', err);
     }
   }
 
-  // REST heartbeat fallback
   try {
-    fetch('/api/chat/presence', {
+    const response = await fetch('/api/chat/presence', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: cleanEmail, status: 'online', role })
-    }).catch(() => {});
+      credentials: 'include',
+      cache: 'no-store',
+      body: JSON.stringify({
+        status: 'online',
+        sessionId,
+        conversationId
+      })
+    });
+
+    if (!response.ok && response.status !== 401) {
+      console.warn('[PresenceService] REST heartbeat failed:', response.status);
+    }
   } catch {}
 }
 
-/**
- * Stop tracking user presence (on logout or tab close)
- */
 export async function untrackUserPresence(email) {
   if (!email) return;
+
   const cleanEmail = email.toLowerCase().trim();
+  const sessionId = getPresenceSessionId();
 
   if (currentTrackingPayload?.email === cleanEmail) {
     currentTrackingPayload = null;
@@ -174,36 +244,58 @@ export async function untrackUserPresence(email) {
     } catch {}
   }
 
-  // Send offline status via Beacon or fetch
+  const body = JSON.stringify({
+    status: 'offline',
+    sessionId
+  });
+
   try {
     if (typeof navigator !== 'undefined' && navigator.sendBeacon) {
-      navigator.sendBeacon('/api/chat/presence', JSON.stringify({ email: cleanEmail, status: 'offline' }));
+      const payload = typeof Blob !== 'undefined'
+        ? new Blob([body], { type: 'application/json' })
+        : body;
+      navigator.sendBeacon('/api/chat/presence', payload);
     } else {
       fetch('/api/chat/presence', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: cleanEmail, status: 'offline' })
+        credentials: 'include',
+        cache: 'no-store',
+        body,
+        keepalive: true
       }).catch(() => {});
     }
   } catch {}
 }
 
-/**
- * Poll REST endpoint for presence and merge into cache
- */
 export async function syncPresenceFromRest() {
   try {
-    const res = await fetch('/api/chat/presence');
-    const data = await res.json();
+    const response = await fetch('/api/chat/presence', {
+      credentials: 'include',
+      cache: 'no-store'
+    });
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        restOnlineEmails = new Set();
+        emitPresence();
+      }
+      return;
+    }
+
+    const data = await response.json();
+    const nextRestPresence = new Set();
+
     if (Array.isArray(data?.onlineUsers)) {
-      data.onlineUsers.forEach(em => {
-        if (em && em.includes('@')) {
-          cachedOnlineEmails.add(em.toLowerCase().trim());
+      data.onlineUsers.forEach(email => {
+        const cleanEmail = String(email || '').toLowerCase().trim();
+        if (cleanEmail && cleanEmail.includes('@')) {
+          nextRestPresence.add(cleanEmail);
         }
       });
-      presenceListeners.forEach(listener => {
-        try { listener(new Set(cachedOnlineEmails)); } catch {}
-      });
     }
+
+    restOnlineEmails = nextRestPresence;
+    emitPresence();
   } catch {}
 }
