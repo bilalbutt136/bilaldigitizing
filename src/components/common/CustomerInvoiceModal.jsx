@@ -505,7 +505,7 @@ export const CustomerInvoiceModal = ({
                 Commercial Embroidery Digitizing & Vector Art
               </p>
               <p style={{ margin: '0.1rem 0 0', fontSize: '0.78rem', color: '#94a3b8' }}>
-                billing@bdigitizing.com • www.bdigitizing.com
+                support@bdigitizing.com • www.bdigitizing.com
               </p>
               <div style={{ marginTop: '0.35rem', fontSize: '0.62rem', fontWeight: 900, color: '#ea580c', letterSpacing: '0.12em', textTransform: 'uppercase' }}>
                 Premium Client Document

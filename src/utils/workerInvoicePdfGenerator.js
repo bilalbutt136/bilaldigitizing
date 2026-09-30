@@ -80,7 +80,7 @@ export async function generateWorkerPayoutInvoicePdf({
   const isPaid = String(payout?.status || '').toLowerCase() === 'paid' || String(payout?.status || '').toLowerCase() === 'settled';
   const payoutNumber = payout?.payout_number || `PAY-PKR-${Date.now().toString().slice(-6)}`;
   const workerName = worker?.name || payout?.worker_name || 'Digitizer Worker';
-  const workerEmail = worker?.email || payout?.worker_email || (stealthMode ? 'digitizer@internal.station' : 'worker@bdigitizing.com');
+  const workerEmail = worker?.email || payout?.worker_email || (stealthMode ? 'digitizer@internal.station' : 'support@bdigitizing.com');
   const workerRole = worker?.specialty || worker?.worker_role || 'Embroidery Digitizer';
   const paymentMethod = payout?.payment_method || 'Bank Transfer / Mobile Wallet';
   const referenceNote = payout?.reference_note || (isPaid ? 'Direct off-platform settlement' : 'Awaiting settlement authorization');

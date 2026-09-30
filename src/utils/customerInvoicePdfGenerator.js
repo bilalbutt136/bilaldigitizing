@@ -320,7 +320,7 @@ export async function generateCustomerTaxInvoicePdf({
   doc.setFontSize(8.5);
   doc.setTextColor(...textMuted);
   doc.text('Commercial Embroidery Digitizing & Vector Art', marginX, 26);
-  doc.text('billing@bdigitizing.com • www.bdigitizing.com', marginX, 31);
+  doc.text('support@bdigitizing.com • www.bdigitizing.com', marginX, 31);
 
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(6.8);

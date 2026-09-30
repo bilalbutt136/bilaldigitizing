@@ -13,7 +13,7 @@ const getResendClient = () => {
 };
 
 const getFromAddress = () => {
-  return process.env.RESEND_FROM_ADDRESS || 'BDigitizing <orders@bdigitizing.com>';
+  return process.env.RESEND_FROM_ADDRESS || 'BDigitizing Support <support@bdigitizing.com>';
 };
 
 const getSiteUrl = () => {
@@ -264,7 +264,7 @@ export async function sendOrderNotification({
     }
   } catch {}
 
-  const defaultAdmin = (process.env.MASTER_ADMIN_EMAIL || process.env.ADMIN_EMAIL || process.env.NEXT_PUBLIC_ADMIN_EMAIL || 'orders@bdigitizing.com').toLowerCase().trim();
+  const defaultAdmin = (process.env.MASTER_ADMIN_EMAIL || process.env.ADMIN_EMAIL || process.env.NEXT_PUBLIC_ADMIN_EMAIL || 'support@bdigitizing.com').toLowerCase().trim();
   adminRecipients = Array.from(new Set(adminRecipients));
   if (adminRecipients.length === 0) {
     adminRecipients = [defaultAdmin];

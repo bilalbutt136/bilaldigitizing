@@ -209,7 +209,7 @@ export const AdminNotificationSettings = () => {
     }
 
     if (hasInvalid) {
-      setEmailInputError('Please enter valid email address(es) (e.g. manager@bdigitizing.com).');
+      setEmailInputError('Please enter valid email address(es) (e.g. support@bdigitizing.com).');
       showToast('One or more email addresses had an invalid format.', 'error');
       return;
     }
@@ -899,7 +899,7 @@ export const AdminNotificationSettings = () => {
                       handleAddEmail();
                     }
                   }}
-                  placeholder="e.g. manager@bdigitizing.com or partner@gmail.com"
+                  placeholder="e.g. support@bdigitizing.com or partner@gmail.com"
                   style={{
                     width: '100%',
                     padding: '0.7rem 1rem',
