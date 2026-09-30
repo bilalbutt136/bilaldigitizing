@@ -244,8 +244,21 @@ export async function generateCustomerTaxInvoicePdf({
   const doc = new jsPDF({
     orientation: 'portrait',
     unit: 'mm',
-    format: 'a4'
+    format: 'letter',
+    compress: true,
+    putOnlyUsedFonts: true
   });
+
+  // US Letter production geometry (8.5 × 11 in / 215.9 × 279.4 mm).
+  // All drawing coordinates derive from these values so print/download margins
+  // stay consistent and nothing is clipped by Letter-size printers.
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
+  const marginX = 14;
+  const contentRight = pageWidth - marginX;
+  const contentWidth = pageWidth - (marginX * 2);
+  const footerY = pageHeight - 8.5;
+  const safeContentBottom = pageHeight - 20;
 
   // Color Palette
   const primaryNavy = [15, 23, 42];     // #0f172a
@@ -295,54 +308,59 @@ export async function generateCustomerTaxInvoicePdf({
 
   // 1. Top Accent Stripe
   doc.setFillColor(...brandOrange);
-  doc.rect(0, 0, 210, 4, 'F');
+  doc.rect(0, 0, pageWidth, 4, 'F');
 
   // 2. Header Left: Studio Brand
   doc.setTextColor(...primaryNavy);
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(22);
-  doc.text('BDIGITIZING', 16, 20);
+  doc.text('BDIGITIZING', marginX, 20);
 
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(8.5);
   doc.setTextColor(...textMuted);
-  doc.text('Commercial Embroidery Digitizing & Vector Art', 16, 26);
-  doc.text('billing@bdigitizing.com • www.bdigitizing.com', 16, 31);
+  doc.text('Commercial Embroidery Digitizing & Vector Art', marginX, 26);
+  doc.text('billing@bdigitizing.com • www.bdigitizing.com', marginX, 31);
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(6.8);
+  doc.setTextColor(...brandOrange);
+  doc.text('PREMIUM CLIENT DOCUMENT', marginX, 37);
 
   // 3. Header Right: Invoice Title & Status
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(16);
   doc.setTextColor(...primaryNavy);
-  doc.text('TAX INVOICE', 210 - 16, 20, { align: 'right' });
+  doc.text('TAX INVOICE', contentRight, 20, { align: 'right' });
 
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(9);
   doc.setTextColor(...textMuted);
-  doc.text(`Invoice: ${invoiceNumber}`, 210 - 16, 26, { align: 'right' });
-  doc.text(`Date: ${issueDateFormatted}`, 210 - 16, 31, { align: 'right' });
+  doc.text(`Invoice: ${invoiceNumber}`, contentRight, 26, { align: 'right' });
+  doc.text(`Date: ${issueDateFormatted}`, contentRight, 31, { align: 'right' });
 
   // Paid / Unpaid Status Badge Pill
   if (isPaid) {
     const badgeText = `PAID (${paymentDateFormatted})`;
     doc.setFillColor(...paidGreen);
-    doc.roundedRect(210 - 16 - 44, 35, 44, 6, 1.5, 1.5, 'F');
+    doc.roundedRect(contentRight - 44, 35, 44, 6, 1.5, 1.5, 'F');
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(7.5);
     doc.setTextColor(255, 255, 255);
-    doc.text(badgeText, 210 - 16 - 22, 39.2, { align: 'center' });
+    doc.text(badgeText, contentRight - 22, 39.2, { align: 'center' });
   } else {
     doc.setFillColor(...brandOrange);
-    doc.roundedRect(210 - 16 - 32, 35, 32, 6, 1.5, 1.5, 'F');
+    doc.roundedRect(contentRight - 32, 35, 32, 6, 1.5, 1.5, 'F');
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(8);
     doc.setTextColor(255, 255, 255);
-    doc.text('PAYMENT DUE', 210 - 16 - 16, 39.2, { align: 'center' });
+    doc.text('PAYMENT DUE', contentRight - 16, 39.2, { align: 'center' });
   }
 
   // Divider
   doc.setDrawColor(...borderLight);
   doc.setLineWidth(0.4);
-  doc.line(16, 44, 210 - 16, 44);
+  doc.line(marginX, 44, contentRight, 44);
 
   // 4. Billed To & Order Details (Clean 2-Column Grid)
   const infoY = 52;
@@ -351,36 +369,36 @@ export async function generateCustomerTaxInvoicePdf({
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(8);
   doc.setTextColor(...brandOrange);
-  doc.text('BILLED TO', 16, infoY);
+  doc.text('BILLED TO', marginX, infoY);
 
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(10.5);
   doc.setTextColor(...primaryNavy);
-  doc.text(String(clientName).slice(0, 36), 16, infoY + 6);
+  doc.text(String(clientName).slice(0, 36), marginX, infoY + 6);
 
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(8.5);
   doc.setTextColor(...textMuted);
   let currentClientY = infoY + 11;
   if (clientCompany) {
-    doc.text(String(clientCompany).slice(0, 42), 16, currentClientY);
+    doc.text(String(clientCompany).slice(0, 42), marginX, currentClientY);
     currentClientY += 5;
   }
   if (clientEmail) {
-    doc.text(String(clientEmail).slice(0, 42), 16, currentClientY);
+    doc.text(String(clientEmail).slice(0, 42), marginX, currentClientY);
     currentClientY += 5;
   }
   if (clientPhone) {
-    doc.text(`Tel: ${String(clientPhone).slice(0, 24)}`, 16, currentClientY);
+    doc.text(`Tel: ${String(clientPhone).slice(0, 24)}`, marginX, currentClientY);
     currentClientY += 5;
   }
   if (clientAddress) {
-    doc.text(String(clientAddress).slice(0, 44), 16, currentClientY);
+    doc.text(String(clientAddress).slice(0, 44), marginX, currentClientY);
   }
 
   // Right: Order Details
-  const orderColX = 120;
-  const orderValX = 150;
+  const orderColX = pageWidth - 92;
+  const orderValX = pageWidth - 60;
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(8);
   doc.setTextColor(...brandOrange);
@@ -432,19 +450,19 @@ export async function generateCustomerTaxInvoicePdf({
   if (specsParts.length > 0) {
     const specsY = 82;
     doc.setFillColor(248, 250, 252);
-    doc.roundedRect(16, specsY, 210 - 32, 8, 1.5, 1.5, 'F');
+    doc.roundedRect(marginX, specsY, contentWidth, 8, 1.5, 1.5, 'F');
     doc.setDrawColor(...borderLight);
     doc.setLineWidth(0.3);
-    doc.roundedRect(16, specsY, 210 - 32, 8, 1.5, 1.5, 'S');
+    doc.roundedRect(marginX, specsY, contentWidth, 8, 1.5, 1.5, 'S');
 
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(7.5);
     doc.setTextColor(...brandOrange);
-    doc.text('PRODUCTION SPECS:', 19, specsY + 5.2);
+    doc.text('PRODUCTION SPECS:', marginX + 3, specsY + 5.2);
 
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(...textDark);
-    doc.text(specsParts.join('  •  '), 56, specsY + 5.2);
+    doc.text(specsParts.join('  •  '), marginX + 40, specsY + 5.2);
     tableStartY = 94;
   }
 
@@ -491,12 +509,12 @@ export async function generateCustomerTaxInvoicePdf({
           halign: 'left'
         },
         columnStyles: {
-          0: { cellWidth: 10, halign: 'center', textColor: textMuted },
-          1: { cellWidth: 80, fontStyle: 'bold', textColor: primaryNavy },
-          2: { cellWidth: 40, textColor: textMuted, fontSize: 8 },
-          3: { cellWidth: 12, halign: 'center', textColor: textDark },
-          4: { cellWidth: 18, halign: 'right', textColor: textMuted },
-          5: { cellWidth: 18, halign: 'right', fontStyle: 'bold', textColor: primaryNavy }
+          0: { halign: 'center', textColor: textMuted },
+          1: { fontStyle: 'bold', textColor: primaryNavy },
+          2: { textColor: textMuted, fontSize: 8 },
+          3: { halign: 'center', textColor: textDark },
+          4: { halign: 'right', textColor: textMuted },
+          5: { halign: 'right', fontStyle: 'bold', textColor: primaryNavy }
         },
         styles: {
           fontSize: 8.5,
@@ -504,7 +522,7 @@ export async function generateCustomerTaxInvoicePdf({
           lineColor: [226, 232, 240],
           lineWidth: { bottom: 0.3 }
         },
-        margin: { left: 16, right: 16 }
+        margin: { left: marginX, right: marginX }
       });
       finalY = doc.lastAutoTable?.finalY ? doc.lastAutoTable.finalY + 8 : (tableStartY + 28);
       tableRendered = true;
@@ -516,8 +534,8 @@ export async function generateCustomerTaxInvoicePdf({
 
   // Bulletproof Manual Vector Drawing Fallback (if autoTable plugin was absent or threw)
   if (!tableRendered) {
-    const tableX = 16;
-    const tableW = 210 - 32; // 178mm
+    const tableX = marginX;
+    const tableW = contentWidth;
     const rowH = 16;
 
     // Header background
@@ -574,8 +592,8 @@ export async function generateCustomerTaxInvoicePdf({
   }
 
   // 7. Right-Aligned Financial Summary
-  const sumX = 135;
-  const valX = 210 - 16;
+  const sumX = contentRight - 61;
+  const valX = contentRight;
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(8.5);
   doc.setTextColor(...textMuted);
@@ -627,7 +645,7 @@ export async function generateCustomerTaxInvoicePdf({
   // 8. Customer reference / special instructions
   let noteBoxY = curSumY + 14;
   if (customerNotes) {
-    const allNoteLines = doc.splitTextToSize(customerNotes, 166);
+    const allNoteLines = doc.splitTextToSize(customerNotes, contentWidth - 12);
     const lineHeight = 4.1;
     const maxLinesPerBox = 48;
     let remainingLines = [...allNoteLines];
@@ -637,7 +655,7 @@ export async function generateCustomerTaxInvoicePdf({
       const pageLines = remainingLines.splice(0, maxLinesPerBox);
       const boxHeight = 14 + (pageLines.length * lineHeight);
 
-      if (noteBoxY + boxHeight > 272) {
+      if (noteBoxY + boxHeight > safeContentBottom) {
         doc.addPage();
         noteBoxY = 18;
       }
@@ -645,10 +663,10 @@ export async function generateCustomerTaxInvoicePdf({
       doc.setFillColor(248, 250, 252);
       doc.setDrawColor(...borderLight);
       doc.setLineWidth(0.35);
-      doc.roundedRect(16, noteBoxY, 210 - 32, boxHeight, 1.5, 1.5, 'FD');
+      doc.roundedRect(marginX, noteBoxY, contentWidth, boxHeight, 1.5, 1.5, 'FD');
 
       doc.setFillColor(...brandOrange);
-      doc.rect(16, noteBoxY, 1.6, boxHeight, 'F');
+      doc.rect(marginX, noteBoxY, 1.6, boxHeight, 'F');
 
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(7.7);
@@ -657,18 +675,18 @@ export async function generateCustomerTaxInvoicePdf({
         partNumber === 1
           ? 'CUSTOMER REFERENCE / SPECIAL INSTRUCTIONS'
           : 'CUSTOMER REFERENCE / SPECIAL INSTRUCTIONS (CONTINUED)',
-        21,
+        marginX + 5,
         noteBoxY + 5
       );
 
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(7.2);
       doc.setTextColor(...textMuted);
-      doc.text('Provided by customer • Applies to this order and production requirements', 21, noteBoxY + 9);
+      doc.text('Provided by customer • Applies to this order and production requirements', marginX + 5, noteBoxY + 9);
 
       doc.setFontSize(8.2);
       doc.setTextColor(...textDark);
-      doc.text(pageLines, 21, noteBoxY + 14);
+      doc.text(pageLines, marginX + 5, noteBoxY + 14);
       noteBoxY += boxHeight + 5;
       partNumber += 1;
 
@@ -681,27 +699,27 @@ export async function generateCustomerTaxInvoicePdf({
 
   // 9. Minimalist System-Generated Notice (No signature required)
   const noteBoxH = 8;
-  if (noteBoxY + noteBoxH > 276) {
+  if (noteBoxY + noteBoxH > safeContentBottom + 4) {
     doc.addPage();
     noteBoxY = 18;
   }
   doc.setFillColor(248, 250, 252);
-  doc.roundedRect(16, noteBoxY, 210 - 32, noteBoxH, 1.5, 1.5, 'F');
+  doc.roundedRect(marginX, noteBoxY, contentWidth, noteBoxH, 1.5, 1.5, 'F');
   doc.setDrawColor(...borderLight);
   doc.setLineWidth(0.3);
-  doc.roundedRect(16, noteBoxY, 210 - 32, noteBoxH, 1.5, 1.5, 'S');
+  doc.roundedRect(marginX, noteBoxY, contentWidth, noteBoxH, 1.5, 1.5, 'S');
 
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(8);
   doc.setTextColor(...textMuted);
-  doc.text('This is a system-generated invoice. No signature required.', 105, noteBoxY + 5.2, { align: 'center' });
+  doc.text('This is a system-generated invoice. No signature required.', pageWidth / 2, noteBoxY + 5.2, { align: 'center' });
 
   // 10. Footer
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(7.5);
   doc.setTextColor(...textMuted);
-  doc.text(`Record ID: ${invoiceNumber} • Thank you for your business!`, 16, 285);
-  doc.text('BDigitizing Commercial Studio • www.bdigitizing.com', 210 - 16, 285, { align: 'right' });
+  doc.text(`Record ID: ${invoiceNumber} • Thank you for your business!`, marginX, footerY);
+  doc.text('BDigitizing Commercial Studio • www.bdigitizing.com', contentRight, footerY, { align: 'right' });
 
   // 11. Generate Output
   const blob = doc.output('blob');

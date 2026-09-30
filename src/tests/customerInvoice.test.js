@@ -128,6 +128,12 @@ describe('Customer Tax Invoice Generator & Legal Compliance', () => {
     assert.ok(result.blob);
     assert.ok(result.blob.size > 2000, `Expected PDF blob size > 2000 bytes, got ${result.blob.size}`);
     assert.equal(typeof result.downloadPdf, 'function');
+
+    const pageWidth = result.doc.internal.pageSize.getWidth();
+    const pageHeight = result.doc.internal.pageSize.getHeight();
+    assert.ok(Math.abs(pageWidth - 215.9) < 0.2, `Expected Letter width ~215.9mm, got ${pageWidth}`);
+    assert.ok(Math.abs(pageHeight - 279.4) < 0.2, `Expected Letter height ~279.4mm, got ${pageHeight}`);
+    assert.equal(result.doc.getNumberOfPages(), 1, 'A standard invoice should fit on one Letter page');
   });
 
   test('generateCustomerTaxInvoicePdf handles unauthenticated or minimal order safely', async () => {

@@ -132,7 +132,7 @@ export const CustomerInvoiceModal = ({
 
       // Create an isolated hidden iframe containing ONLY the invoice document
       const iframe = document.createElement('iframe');
-      iframe.setAttribute('style', 'position:fixed;top:-10000px;left:-10000px;width:820px;height:1100px;border:none;');
+      iframe.setAttribute('style', 'position:fixed;top:-10000px;left:-10000px;width:816px;height:1056px;border:none;background:#fff;');
       document.body.appendChild(iframe);
 
       const doc = iframe.contentWindow.document;
@@ -145,13 +145,17 @@ export const CustomerInvoiceModal = ({
             <meta charset="utf-8" />
             <style>
               @page {
-                size: A4 portrait;
-                margin: 12mm 15mm;
+                size: Letter portrait;
+                margin: 0.42in;
               }
               * {
                 box-sizing: border-box;
                 -webkit-print-color-adjust: exact !important;
                 print-color-adjust: exact !important;
+              }
+              html {
+                font-size: 12px;
+                background: #ffffff;
               }
               body {
                 margin: 0;
@@ -159,8 +163,20 @@ export const CustomerInvoiceModal = ({
                 background: #ffffff;
                 color: #0f172a;
                 font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-                font-size: 13px;
-                line-height: 1.5;
+                font-size: 10.5px;
+                line-height: 1.35;
+              }
+              #customer-invoice-print-content {
+                width: 100% !important;
+                max-width: none !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                overflow: visible !important;
+                background: #ffffff !important;
+              }
+              .invoice-print-keep {
+                break-inside: avoid-page;
+                page-break-inside: avoid;
               }
               .no-print {
                 display: none !important;
@@ -170,12 +186,16 @@ export const CustomerInvoiceModal = ({
                 border-collapse: collapse;
               }
               th, td {
-                padding: 8px 10px;
+                padding: 6px 7px !important;
+                overflow-wrap: anywhere;
+              }
+              table {
+                table-layout: fixed;
               }
             </style>
           </head>
           <body>
-            ${printSheet.innerHTML}
+            ${printSheet.outerHTML}
           </body>
         </html>
       `);
@@ -229,6 +249,10 @@ export const CustomerInvoiceModal = ({
     >
       {/* Print isolation styles for native Ctrl+P triggers */}
       <style>{`
+        @page {
+          size: Letter portrait;
+          margin: 0.42in;
+        }
         @media (max-width: 640px) {
           .customer-invoice-overlay {
             padding: 0 !important;
@@ -255,6 +279,13 @@ export const CustomerInvoiceModal = ({
           }
         }
         @media print {
+          html {
+            font-size: 12px !important;
+          }
+          body {
+            margin: 0 !important;
+            background: #ffffff !important;
+          }
           body * {
             visibility: hidden !important;
           }
@@ -292,9 +323,24 @@ export const CustomerInvoiceModal = ({
             left: 0 !important;
             top: 0 !important;
             width: 100% !important;
+            max-width: none !important;
             padding: 0 !important;
             margin: 0 !important;
             overflow: visible !important;
+            font-size: 10.5px !important;
+            line-height: 1.35 !important;
+          }
+          #customer-invoice-print-content table {
+            table-layout: fixed !important;
+          }
+          #customer-invoice-print-content th,
+          #customer-invoice-print-content td {
+            padding: 6px 7px !important;
+            overflow-wrap: anywhere !important;
+          }
+          .invoice-print-keep {
+            break-inside: avoid-page !important;
+            page-break-inside: avoid !important;
           }
         }
       `}</style>
@@ -450,7 +496,7 @@ export const CustomerInvoiceModal = ({
           <div style={{ height: '4px', background: '#ea580c', borderRadius: '2px', marginBottom: '1.5rem' }} />
 
           {/* Header Row */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem', borderBottom: '1px solid #e2e8f0', paddingBottom: '1.25rem', marginBottom: '1.5rem' }}>
+          <div className="invoice-print-keep" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem', borderBottom: '1px solid #e2e8f0', paddingBottom: '1.25rem', marginBottom: '1.5rem' }}>
             <div>
               <h1 style={{ margin: 0, fontSize: '1.6rem', fontWeight: 900, color: '#0f172a', letterSpacing: '-0.02em' }}>
                 BDIGITIZING
@@ -461,6 +507,9 @@ export const CustomerInvoiceModal = ({
               <p style={{ margin: '0.1rem 0 0', fontSize: '0.78rem', color: '#94a3b8' }}>
                 billing@bdigitizing.com • www.bdigitizing.com
               </p>
+              <div style={{ marginTop: '0.35rem', fontSize: '0.62rem', fontWeight: 900, color: '#ea580c', letterSpacing: '0.12em', textTransform: 'uppercase' }}>
+                Premium Client Document
+              </div>
             </div>
 
             <div style={{ textAlign: 'right' }}>
@@ -494,7 +543,7 @@ export const CustomerInvoiceModal = ({
           </div>
 
           {/* Billed To & Order Details (Clean 2-Column Text) */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.5rem', marginBottom: '1.5rem' }}>
+          <div className="invoice-print-keep" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.5rem', marginBottom: '1.5rem' }}>
 
             {/* Left: Billed To */}
             <div>
@@ -559,7 +608,7 @@ export const CustomerInvoiceModal = ({
 
           {/* Optional Production Specs Strip */}
           {specsParts.length > 0 && (
-            <div style={{
+            <div className="invoice-print-keep" style={{
               background: '#f8fafc',
               border: '1px solid #e2e8f0',
               borderRadius: '7px',
@@ -580,7 +629,7 @@ export const CustomerInvoiceModal = ({
           )}
 
           {/* Simple Clean Table */}
-          <div style={{ border: '1px solid #e2e8f0', borderRadius: '8px', overflow: 'hidden', marginBottom: '1.5rem' }}>
+          <div className="invoice-print-keep" style={{ border: '1px solid #e2e8f0', borderRadius: '8px', overflow: 'hidden', marginBottom: '1.5rem' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.825rem' }}>
               <thead>
                 <tr style={{ background: '#f8fafc', color: '#475569', fontSize: '0.74rem', fontWeight: 800, textTransform: 'uppercase', borderBottom: '1px solid #e2e8f0' }}>
@@ -624,7 +673,7 @@ export const CustomerInvoiceModal = ({
           </div>
 
           {/* Simple Right-Aligned Summary */}
-          <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1.5rem' }}>
+          <div className="invoice-print-keep" style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1.5rem' }}>
             <div style={{ width: '250px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.82rem', color: '#64748b', marginBottom: '0.35rem' }}>
                 <span>Subtotal:</span>
@@ -678,7 +727,7 @@ export const CustomerInvoiceModal = ({
           )}
 
           {/* System Generated Invoice - No signature required */}
-          <div style={{
+          <div className="invoice-print-keep" style={{
             background: '#f8fafc',
             border: '1px solid #e2e8f0',
             borderRadius: '8px',
@@ -697,7 +746,7 @@ export const CustomerInvoiceModal = ({
           </div>
 
           {/* Footer */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.7rem', color: '#94a3b8', borderTop: '1px solid #f1f5f9', paddingTop: '0.65rem' }}>
+          <div className="invoice-print-keep" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.7rem', color: '#94a3b8', borderTop: '1px solid #f1f5f9', paddingTop: '0.65rem' }}>
             <span>Record ID: {invoiceNumber}</span>
             <span>BDigitizing Commercial Studio</span>
           </div>
