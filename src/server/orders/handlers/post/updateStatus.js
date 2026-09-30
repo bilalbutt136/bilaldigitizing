@@ -224,7 +224,23 @@ export async function handleUpdateStatus(context) {
               updated_at: nowIso
             };
 
-            await supabase.from('notifications').upsert([notifRecord], { onConflict: 'id' });
+            const { data: existingNotif } = await supabase
+              .from('notifications')
+              .select('id')
+              .eq('id', notifRecord.id)
+              .maybeSingle();
+
+            if (existingNotif) {
+              return { created: false, record: existingNotif };
+            }
+
+            const { error: notifInsertError } = await supabase.from('notifications').insert([notifRecord]);
+            if (notifInsertError) {
+              if (notifInsertError.code === '23505') {
+                return { created: false, record: notifRecord };
+              }
+              throw notifInsertError;
+            }
 
             // Instant Realtime WebSocket broadcast to connected clients and admins
             try {
@@ -250,7 +266,12 @@ export async function handleUpdateStatus(context) {
                 recipientEmail: notifRecord.recipient_email || null
               }).catch(err => console.warn('[Status Push Notice]:', err?.message));
             } catch (error) { logServerCaughtError(error, { operation: 'orders.status_push_setup_failed' }); }
-          } catch (e) { console.warn('[insertNotif notice]:', e.message); }
+
+            return { created: true, record: notifRecord };
+          } catch (e) {
+            console.warn('[insertNotif notice]:', e.message);
+            return { created: false, error: e };
+          }
         };
 
         if (newStatus === 'in_progress') {
@@ -302,7 +323,7 @@ export async function handleUpdateStatus(context) {
             : `Your production stitch files and preview documents are ready for inspection and download!`;
 
           // Client Order Delivered Notification
-          await insertNotif({
+          const deliveryNotificationResult = await insertNotif({
             id: delivNotifId,
             recipient_role: 'client',
             recipient_email: clientEmail,
@@ -312,20 +333,22 @@ export async function handleUpdateStatus(context) {
             link: `/client-portal?tab=orders&trackOrder=${resolvedOrderId}`
           });
 
-          // Email trigger to client
-          try {
-            const { sendNotificationEmail } = await import('../../../../lib/emailService.js');
-            sendNotificationEmail({
-              type: 'ORDER_DELIVERED',
-              orderId: resolvedOrderId,
-              clientEmail,
-              clientName,
-              serviceName: targetOrder?.service || targetOrder?.title || 'Custom Digitizing',
-              deliveryMessage: extraData?.deliveryNotes || extraData?.deliveryMessage || 'Your production stitch files and preview documents are ready for download.',
-              outputFileUrl: extraData?.outputFileUrl || targetOrder?.output_file_url || ''
-            }).catch(e => console.warn('[Delivery Email Notice]:', e?.message));
-          } catch (emErr) {
-            console.warn('[Delivery Email Import Notice]:', emErr?.message);
+          // Email trigger to client: only for a newly-created delivery event.
+          if (deliveryNotificationResult?.created) {
+            try {
+              const { sendNotificationEmail } = await import('../../../../lib/emailService.js');
+              sendNotificationEmail({
+                type: 'ORDER_DELIVERED',
+                orderId: resolvedOrderId,
+                clientEmail,
+                clientName,
+                serviceName: targetOrder?.service || targetOrder?.title || 'Custom Digitizing',
+                deliveryMessage: extraData?.deliveryNotes || extraData?.deliveryMessage || 'Your production stitch files and preview documents are ready for download.',
+                outputFileUrl: extraData?.outputFileUrl || targetOrder?.output_file_url || ''
+              }).catch(e => console.warn('[Delivery Email Notice]:', e?.message));
+            } catch (emErr) {
+              console.warn('[Delivery Email Import Notice]:', emErr?.message);
+            }
           }
 
         } else if (newStatus === 'completed') {

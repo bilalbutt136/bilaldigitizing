@@ -190,7 +190,7 @@ describe('Granular Service-Specific Promotional Discounts Engine', () => {
       assert.equal(pricing.totalPrice, 23.50);
     });
 
-    test('calculates accurate pricing for 100 custom patches with 5% promo and volume tier', () => {
+    test('keeps the configured 5% patch promotion stable at quantity 100', () => {
       const pricing = calculateOrderPricing({
         service: 'patch',
         unitPrice: 2.50,
@@ -199,17 +199,33 @@ describe('Granular Service-Specific Promotional Discounts Engine', () => {
         activePromo
       });
 
-      // Base subtotal = 100 * 2.50 = 250.00
       assert.equal(pricing.baseSubtotal, 250.00);
-      // Volume tier for 100 patches = 5%
-      assert.equal(pricing.volumeDiscountPercent, 5);
-      assert.equal(pricing.volumeDiscountAmount, 12.50); // 5% of 250
-      // Subtotal after volume = 237.50
-      // Promo discount: 5% of 237.50 = 11.88
+      assert.equal(pricing.volumeDiscountPercent, 0);
+      assert.equal(pricing.volumeDiscountAmount, 0.00);
       assert.equal(pricing.promoDiscountPercent, 5);
-      assert.equal(pricing.promoDiscountAmount, 11.88);
-      // Final total = 237.50 - 11.88 = 225.62
-      assert.equal(pricing.totalPrice, 225.62);
+      assert.equal(pricing.promoDiscountAmount, 12.50);
+      assert.equal(pricing.totalPrice, 237.50);
+    });
+
+    test('does not change a 10% promotion when quantity changes from 1 to 3', () => {
+      const tenPercentPromo = {
+        id: 'promo_qty_stable',
+        status: 'active',
+        serviceDiscounts: { embroidery: 10, vector: 10, patch: 10 }
+      };
+
+      for (const quantity of [1, 2, 3]) {
+        const pricing = calculateOrderPricing({
+          service: 'embroidery',
+          unitPrice: 10,
+          quantity,
+          activePromo: tenPercentPromo
+        });
+
+        assert.equal(pricing.volumeDiscountPercent, 0);
+        assert.equal(pricing.promoDiscountPercent, 10);
+        assert.equal(pricing.totalPrice, Number((quantity * 9).toFixed(2)));
+      }
     });
 
     test('calculates accurate pricing for 50 custom patches @ $4.50 with 5% promo strictly preventing 15% override', () => {

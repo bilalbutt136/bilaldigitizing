@@ -374,7 +374,37 @@ describe('Notification Privacy Isolation & Two-Notifications-Per-Order Enforceme
     assert.equal(hasD3, true, 'Delivery 3 must be delivered');
   });
 
-  test('12. Custom offer notifications: Customer receives exactly 2 notifications (Offer + Payment Confirmed, suppressing redundant middle Placed notification)', () => {
+  test('12. Legacy first-delivery IDs are deduplicated with the canonical delivery notification', () => {
+    const deliveryNotifications = [
+      {
+        id: 'ord-deliv-4100',
+        recipient_role: 'client',
+        recipient_email: 'dan@studio.com',
+        title: 'Order Files Ready: Logo Digitizing',
+        message: 'Your production stitch files are ready for inspection and download!',
+        order_id: '4100',
+        created_at: '2026-09-24T12:00:00.000Z'
+      },
+      {
+        id: 'ord-deliv-4100-1727180000000',
+        recipient_role: 'client',
+        recipient_email: 'dan@studio.com',
+        title: 'Order Files Ready: Logo Digitizing',
+        message: 'Your production stitch files are ready for inspection and download!',
+        order_id: '4100',
+        created_at: '2026-09-24T12:00:01.000Z'
+      }
+    ];
+
+    const result = filterAndSanitizeNotifications(deliveryNotifications, {
+      currentUserEmail: 'dan@studio.com',
+      isAdmin: false
+    });
+
+    assert.equal(result.length, 1, 'Duplicate first-delivery rows must collapse to one notification');
+  });
+
+  test('13. Custom offer notifications: Customer receives exactly 2 notifications (Offer + Payment Confirmed, suppressing redundant middle Placed notification)', () => {
     const offerFlowNotifications = [
       {
         id: 'notif-offer-8089',

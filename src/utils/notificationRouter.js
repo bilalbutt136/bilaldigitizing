@@ -423,11 +423,8 @@ export function getDeliveryVersionKey(notif, cleanOrderId) {
   const msgMatch = rawMsg.match(/delivery\s*#?\s*(\d+)/i);
   if (msgMatch) return `${cleanOrderId}_v${msgMatch[1]}`;
 
-  // If id is explicitly non-standard (e.g., has timestamp/random hash), keep it unique
-  if (rawId.startsWith('ord-deliv-') && rawId !== `ord-deliv-${cleanOrderId.toLowerCase()}`) {
-    return `${cleanOrderId}_${rawId}`;
-  }
-
+  // Legacy first-delivery rows sometimes used timestamp/random IDs. They still represent
+  // the same first delivery unless an explicit version was found above.
   return `${cleanOrderId}_v1`;
 }
 

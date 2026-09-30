@@ -81,12 +81,35 @@ export async function handleAdminReviewWorker(context) {
           const clientName = targetOrder.client_name || 'Client';
           const ordTitle = targetOrder.title || `Order #${orderId}`;
 
+          const { data: existingDeliveryRows } = await supabase
+            .from('notifications')
+            .select('id')
+            .eq('order_id', orderId)
+            .eq('recipient_role', 'client')
+            .like('id', `ord-deliv-${orderId}%`);
+
+          const existingVersions = (existingDeliveryRows || []).map(row => {
+            const match = String(row.id || '').match(/-v(\d+)$/i);
+            return match ? Number(match[1]) : 1;
+          });
+          const latestVersion = existingVersions.length > 0 ? Math.max(...existingVersions) : 0;
+          const deliveryNumber = latestVersion === 0
+            ? 1
+            : (targetOrder.status === 'delivered' ? latestVersion : latestVersion + 1);
+          const clientDeliveryNotificationId = deliveryNumber > 1
+            ? `ord-deliv-${orderId}-v${deliveryNumber}`
+            : `ord-deliv-${orderId}`;
+
           const clientNotifRecord = {
-            id: `ord-deliv-${orderId}`,
+            id: clientDeliveryNotificationId,
             recipient_role: 'client',
             recipient_email: clientEmail,
-            title: `📦 Order Files Ready: ${ordTitle}`,
-            message: `Your production stitch files are ready for inspection and download!`,
+            title: deliveryNumber > 1
+              ? `📦 Delivery #${deliveryNumber} Ready: ${ordTitle}`
+              : `📦 Order Files Ready: ${ordTitle}`,
+            message: deliveryNumber > 1
+              ? `Updated production stitch files (Delivery #${deliveryNumber}) are ready for inspection and download!`
+              : `Your production stitch files are ready for inspection and download!`,
             type: 'success',
             link: `/client-portal?tab=orders&trackOrder=${orderId}`,
             order_id: orderId,
@@ -95,10 +118,23 @@ export async function handleAdminReviewWorker(context) {
             updated_at: nowIso
           };
 
-          await supabase.from('notifications').upsert([clientNotifRecord], { onConflict: 'id' });
+          const { data: existingClientDeliveryNotification } = await supabase
+            .from('notifications')
+            .select('id')
+            .eq('id', clientNotifRecord.id)
+            .maybeSingle();
 
-          try {
-            const liveChannel = supabase.channel('bdigitizing-live-hub-v2');
+          if (!existingClientDeliveryNotification) {
+            const { error: clientNotifInsertError } = await supabase.from('notifications').insert([clientNotifRecord]);
+            if (clientNotifInsertError && clientNotifInsertError.code !== '23505') {
+              throw clientNotifInsertError;
+            }
+            if (clientNotifInsertError?.code === '23505') {
+              return NextResponse.json({ success: true, worker_status: 'Completed', status: 'delivered' });
+            }
+
+            try {
+              const liveChannel = supabase.channel('bdigitizing-live-hub-v2');
             await liveChannel.send({
               type: 'broadcast',
               event: 'new_notification',
@@ -134,6 +170,7 @@ export async function handleAdminReviewWorker(context) {
               outputFileUrl: targetOrder.worker_file_url || ''
             }).catch((error) => { logServerCaughtError(error, { operation: 'orders.delivery_async_dispatch_failed' }); });
           } catch (error) { logServerCaughtError(error, { operation: 'orders.delivery_email_setup_failed' }); }
+          }
         } catch (clientNotifErr) {
           console.warn('[adminReviewWorker client notif error]:', clientNotifErr.message);
         }

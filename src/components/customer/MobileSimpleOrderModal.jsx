@@ -695,8 +695,12 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
         ? `${patchStyle} Patches (${quantity} Pcs)`
         : `${firstFileName} - ${cleanService} (Qty: ${quantity})`;
 
-      const finalClientEmail = clientEmail || authUser?.email || currentUser?.email || 'guest@bdigitizing.pro';
-      const finalClientName = clientName || authUser?.user_metadata?.full_name || authUser?.name || currentUser?.name || 'Studio Client';
+      const finalClientEmail = (clientEmail || authUser?.email || currentUser?.email || '').toLowerCase().trim();
+      if (!finalClientEmail) {
+        if (showToast) showToast('Your authenticated account email could not be verified. Please sign in again before placing the order.', 'error');
+        return;
+      }
+      const finalClientName = clientName || authUser?.user_metadata?.full_name || authUser?.name || currentUser?.name || finalClientEmail.split('@')[0];
       const primaryArtworkUrl = uploadedFiles[0]?.url || null;
 
       const orderPayload = {

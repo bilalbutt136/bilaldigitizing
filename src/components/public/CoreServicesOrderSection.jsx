@@ -408,12 +408,8 @@ export const CoreServicesOrderSection = ({ defaultService = 'digitizing', hideTa
     const totalPlacementItemsCount = placementBreakdown.reduce((sum, p) => sum + p.quantity, 0);
     const baseSubtotal = placementBreakdown.reduce((sum, p) => sum + p.subtotal, 0);
 
-    let discountPercent = 0;
-    if (totalPlacementItemsCount >= 25) discountPercent = 20;
-    else if (totalPlacementItemsCount >= 10) discountPercent = 15;
-    else if (totalPlacementItemsCount >= 5) discountPercent = 10;
-    else if (totalPlacementItemsCount >= 3) discountPercent = 5;
-
+    // Keep quantity pricing separate from the admin-controlled promotion percentage.
+    const discountPercent = 0;
     const discountAmount = (baseSubtotal * discountPercent) / 100;
     const subtotalAfterDiscount = baseSubtotal - discountAmount;
 

@@ -735,15 +735,21 @@ export default function AdminChatInbox({ initialChannel = 'inbox' }) {
     }
 
     try {
+      const clientEmail = (activeConversation?.client_email || '').toLowerCase().trim();
+      const adminEmail = (authUser?.email || '').toLowerCase().trim();
+      if (!clientEmail || !adminEmail) {
+        throw new Error('A verified client conversation and authenticated admin account are required to send messages.');
+      }
+
       const res = await fetch('/api/chat/messages', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           conversation_id: activeConversationId,
-          client_email: activeConversation?.client_email || 'client@studio.com',
+          client_email: clientEmail,
           sender: 'admin',
           sender_name: 'BDigitizing Support',
-          sender_email: authUser?.email || 'admin@bdigitizing.com',
+          sender_email: adminEmail,
           text: messageText,
           type: attachmentsToSend.length > 0 && !messageText ? 'attachment' : 'text',
           attachments: attachmentsToSend

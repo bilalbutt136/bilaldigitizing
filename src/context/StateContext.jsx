@@ -2128,7 +2128,7 @@ export const StateProvider = ({ children, initialCatalog = null }) => {
     }
 
     // Notifications and Email triggers based on new status
-    if (newStatus === 'delivered') {
+    if (newStatus === 'delivered' && !isSupabaseConfigured) {
       const clientEmail = (targetOrder?.clientEmail || targetOrder?.client_email || safeExtraData?.clientEmail || safeExtraData?.client_email || '').toLowerCase().trim();
       const delivNum = safeExtraData?.deliveryNumber ||
         (Array.isArray(safeExtraData?.deliveries) && safeExtraData.deliveries.length > 0

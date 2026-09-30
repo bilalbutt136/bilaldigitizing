@@ -1,7 +1,7 @@
 /**
  * Centralized Promotional Discount Engine for BDigitizing
- * Provides service-level discount resolution, volume tier calculations,
- * and deterministic pricing logic across all order channels.
+ * Provides service-level discount resolution and deterministic pricing logic
+ * across all order channels without hidden quantity-based promotion overrides.
  */
 
 export const SERVICE_KEYS = {
@@ -107,8 +107,8 @@ export function getServiceDiscountPercent(service, activePromo = null, siteSetti
 }
 
 /**
- * Calculates complete itemized order pricing including volume discount,
- * service-specific promo discount, and rush fees.
+ * Calculates complete itemized order pricing with service-specific promotional
+ * discounts and rush fees. Legacy volume fields remain zero for API compatibility.
  */
 export function calculateOrderPricing({
   service = 'embroidery',
@@ -125,19 +125,9 @@ export function calculateOrderPricing({
   const unit = Math.max(0, parseFloat(unitPrice) || 0);
   const baseSubtotal = parseFloat((unit * qty).toFixed(2));
 
-  // Volume discount tiers
-  let volumeDiscountPercent = 0;
-  if (serviceKey !== SERVICE_KEYS.PATCH) {
-    if (qty >= 25) volumeDiscountPercent = 25;
-    else if (qty >= 10) volumeDiscountPercent = 15;
-    else if (qty >= 5) volumeDiscountPercent = 10;
-    else if (qty >= 3) volumeDiscountPercent = 5;
-  } else {
-    // Custom patches bulk discount
-    if (qty >= 500) volumeDiscountPercent = 20;
-    else if (qty >= 250) volumeDiscountPercent = 12;
-    else if (qty >= 100) volumeDiscountPercent = 5;
-  }
+  // Quantity must not silently change the configured promotion percentage.
+  // Keep promotional pricing controlled by the active admin promotion only.
+  const volumeDiscountPercent = 0;
 
   const volumeDiscountAmount = parseFloat(((baseSubtotal * volumeDiscountPercent) / 100).toFixed(2));
   const subtotalAfterVolumeDiscount = Math.max(0, baseSubtotal - volumeDiscountAmount);
