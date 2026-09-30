@@ -65,6 +65,8 @@ describe('Login Stability & Mobile Order Tracking Regression', () => {
     assert.match(source, /mobileTrackingState\.progress/);
     assert.match(source, /SIMPLE ORDER STATUS/);
     assert.match(source, /mobileTrackingState\.helper/);
+    assert.match(source, /const \[isRequirementsOpen, setIsRequirementsOpen\] = useState\(false\)/);
+    assert.match(source, /setIsRequirementsOpen\(false\)/);
     assert.equal(source.includes("repeat(4, minmax(0, 1fr))"), false);
   });
 });

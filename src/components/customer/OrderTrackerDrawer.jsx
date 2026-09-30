@@ -290,14 +290,15 @@ export const OrderTrackerDrawer = () => {
     return () => { isSubscribed = false; };
   }, [selectedOrderForDrawer, ord?.id, isPaid, refreshOrders]);
 
-  // Requirements Collapsible Default: open for pending/in-progress orders, collapsed for delivered/completed orders
+  // Keep Order Details hidden whenever a new order is opened.
+  // Customers can reveal the section only by tapping Details or Show.
   const lastSetOrderIdRef = useRef(null);
   useEffect(() => {
     if (!selectedOrderForDrawer) return;
     const currentId = ord?.id || selectedOrderForDrawer;
     if (lastSetOrderIdRef.current !== currentId) {
       lastSetOrderIdRef.current = currentId;
-      setIsRequirementsOpen(true);
+      setIsRequirementsOpen(false);
     }
   }, [selectedOrderForDrawer, ord?.id]);
 
