@@ -43,6 +43,54 @@ export function getPreviewUrl(url, filename = 'preview') {
 }
 
 /**
+ * Builds a frame-safe PDF preview URL without routing trusted storage traffic
+ * through Vercel. Remote storage providers may send X-Frame-Options/CSP headers
+ * that block iframe embedding on mobile. Fetching the PDF in the browser and
+ * framing a local blob URL avoids that restriction while keeping transfer
+ * directly between the user's browser and Cloudinary/Supabase.
+ */
+export async function createFrameSafePdfPreviewUrl(url, filename = 'document.pdf', signal) {
+  const resolvedUrl = unwrapProxyUrl(url);
+  if (!resolvedUrl) {
+    throw new Error('Missing PDF URL');
+  }
+
+  if (resolvedUrl.startsWith('blob:') || resolvedUrl.startsWith('data:application/pdf')) {
+    return { url: resolvedUrl, revoke: false, source: 'local' };
+  }
+
+  if (isTrustedDirectAssetUrl(resolvedUrl)) {
+    try {
+      const response = await fetch(resolvedUrl, {
+        method: 'GET',
+        mode: 'cors',
+        credentials: 'omit',
+        cache: 'default',
+        signal
+      });
+
+      if (!response.ok) {
+        throw new Error(`PDF fetch failed with status ${response.status}`);
+      }
+
+      const buffer = await response.arrayBuffer();
+      const pdfBlob = new Blob([buffer], { type: 'application/pdf' });
+      const objectUrl = URL.createObjectURL(pdfBlob);
+      return { url: objectUrl, revoke: true, source: 'direct-blob' };
+    } catch (error) {
+      if (error?.name === 'AbortError') throw error;
+      console.warn('[FileDownloader] Direct PDF preview failed; using protected proxy fallback:', error?.message);
+    }
+  }
+
+  return {
+    url: `/api/download?url=${encodeURIComponent(resolvedUrl)}&filename=${encodeURIComponent(filename)}&preview=true`,
+    revoke: false,
+    source: 'proxy'
+  };
+}
+
+/**
  * Unwraps nested /api/download?url=... proxies to avoid double encoding loops
  */
 export function unwrapProxyUrl(rawUrl) {
@@ -423,5 +471,6 @@ export default {
   getCleanCloudinaryDownloadUrl,
   getCleanCloudinaryViewUrl,
   isTrustedDirectAssetUrl,
-  getPreviewUrl
+  getPreviewUrl,
+  createFrameSafePdfPreviewUrl
 };

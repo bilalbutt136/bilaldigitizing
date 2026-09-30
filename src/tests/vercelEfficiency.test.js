@@ -48,3 +48,15 @@ test('Vercel efficiency: hot chat endpoints have a cheap burst guard', () => {
     assert.match(source, /BurstLimit|checkRateLimit/);
   }
 });
+
+test('Mobile PDF preview uses a local blob URL so remote frame headers cannot block it', () => {
+  const downloader = read('src/utils/fileDownloader.js');
+  const modal = read('src/components/common/PdfPreviewModal.jsx');
+  const nextConfig = read('next.config.js');
+
+  assert.match(downloader, /createFrameSafePdfPreviewUrl/);
+  assert.match(downloader, /new Blob\(\[buffer\], \{ type: 'application\/pdf' \}\)/);
+  assert.match(modal, /createFrameSafePdfPreviewUrl/);
+  assert.match(modal, /src=\{previewUrl\}/);
+  assert.match(nextConfig, /frame-src 'self' blob:/);
+});

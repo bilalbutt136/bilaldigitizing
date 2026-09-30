@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState, useRef } from 'react';
-import { openPdfInNewTab, downloadFileDirectly, getPreviewUrl } from '../../utils/fileDownloader';
+import { openPdfInNewTab, downloadFileDirectly, createFrameSafePdfPreviewUrl } from '../../utils/fileDownloader';
 import { useModalBackNavigation } from '../../hooks/useModalBackNavigation';
 import { 
   X, 
@@ -23,9 +23,11 @@ export const PdfPreviewModal = ({
 }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState('');
   const iframeRef = useRef(null);
 
   const isModalActive = Boolean(isOpen && fileUrl);
+  const cleanName = fileName || 'Document.pdf';
 
   // Bind to mobile hardware back navigation so pressing Android back closes PDF without exiting app
   const { handleSafeClose } = useModalBackNavigation({
@@ -52,10 +54,57 @@ export const PdfPreviewModal = ({
     };
   }, [isModalActive, handleSafeClose]);
 
-  if (!isModalActive) return null;
+  useEffect(() => {
+    if (!isModalActive) {
+      setPreviewUrl('');
+      setIsLoading(false);
+      setHasError(false);
+      return;
+    }
 
-  const cleanName = fileName || 'Document.pdf';
-  const previewProxyUrl = getPreviewUrl(fileUrl, cleanName);
+    const controller = new AbortController();
+    let objectUrlToRevoke = '';
+    let disposed = false;
+
+    setPreviewUrl('');
+    setIsLoading(true);
+    setHasError(false);
+
+    createFrameSafePdfPreviewUrl(fileUrl, cleanName, controller.signal)
+      .then((result) => {
+        if (disposed) {
+          if (result?.revoke && result?.url?.startsWith('blob:')) {
+            URL.revokeObjectURL(result.url);
+          }
+          return;
+        }
+
+        objectUrlToRevoke = result?.revoke ? result.url : '';
+        setPreviewUrl(result?.url || '');
+        if (!result?.url) {
+          setIsLoading(false);
+          setHasError(true);
+        }
+      })
+      .catch((error) => {
+        if (error?.name === 'AbortError') return;
+        console.warn('[PdfPreviewModal] Unable to prepare PDF preview:', error?.message);
+        if (!disposed) {
+          setIsLoading(false);
+          setHasError(true);
+        }
+      });
+
+    return () => {
+      disposed = true;
+      controller.abort();
+      if (objectUrlToRevoke) {
+        URL.revokeObjectURL(objectUrlToRevoke);
+      }
+    };
+  }, [isModalActive, fileUrl, cleanName]);
+
+  if (!isModalActive) return null;
 
   const handlePrint = () => {
     try {
@@ -388,10 +437,10 @@ export const PdfPreviewModal = ({
                 </button>
               </div>
             </div>
-          ) : (
+          ) : previewUrl ? (
             <iframe
               ref={iframeRef}
-              src={previewProxyUrl}
+              src={previewUrl}
               title={`PDF Preview - ${cleanName}`}
               onLoad={() => setIsLoading(false)}
               onError={() => {
@@ -405,7 +454,7 @@ export const PdfPreviewModal = ({
                 display: 'block'
               }}
             />
-          )}
+          ) : null}
         </div>
       </div>
     </div>
