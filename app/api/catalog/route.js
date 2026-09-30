@@ -46,7 +46,13 @@ const fetchPublicCatalogBundle = unstable_cache(
       supabase.from('digitizers').select('*').order('sort_order', { ascending: true }),
       supabase.from('site_config').select('key, value'),
       supabase.from('faqs').select('*').order('sort_order', { ascending: true }),
-      supabase.from('testimonials').select('*').order('created_at', { ascending: false })
+      supabase.from('testimonials').select('*').order('created_at', { ascending: false }),
+      supabase.from('customer_reviews')
+        .select('id, display_name, rating, review_text, service_category, published_at, submitted_at')
+        .eq('is_published', true)
+        .eq('moderation_status', 'published')
+        .order('published_at', { ascending: false })
+        .limit(24)
     ]);
 
     const firstError = results.find(result => result.error)?.error;
@@ -64,8 +70,26 @@ const fetchPublicCatalogBundle = unstable_cache(
       digitizers,
       site_config,
       faqs,
-      testimonials
+      testimonials,
+      customerReviews
     ] = results.map(result => result.data || []);
+
+    const publishedCustomerTestimonials = (customerReviews || []).map(review => ({
+      id: `customer-review-${review.id}`,
+      client_name: review.display_name || 'Verified Customer',
+      role: 'Verified Customer',
+      rating: Number(review.rating) || 5,
+      review_text: review.review_text || '',
+      service_category: review.service_category || 'Embroidery',
+      is_active: true,
+      verified_order_review: true,
+      created_at: review.published_at || review.submitted_at
+    }));
+
+    const combinedTestimonials = [
+      ...publishedCustomerTestimonials,
+      ...(testimonials || [])
+    ];
 
     return {
       services,
@@ -79,7 +103,7 @@ const fetchPublicCatalogBundle = unstable_cache(
       digitizers,
       site_config,
       faqs,
-      testimonials
+      testimonials: combinedTestimonials
     };
   },
   ['public-catalog-bundle-v1'],

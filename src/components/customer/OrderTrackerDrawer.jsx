@@ -42,12 +42,14 @@ import {
   Receipt,
   ExternalLink,
   Loader2,
-  XCircle
+  XCircle,
+  Star
 } from 'lucide-react';
 import { uploadFileToCloudinaryFull, fetchOrderById } from '../../services/supabaseService';
 import { AssignWorkerModal } from '../admin/AssignWorkerModal';
 import { ReviewWorkerUploadModal } from '../admin/ReviewWorkerUploadModal';
 import { CustomerInvoiceModal } from '../common/CustomerInvoiceModal';
+import { CustomerReviewModal } from './CustomerReviewModal';
 import { getMobileOrderTrackingState } from '../../utils/orderTracking';
 
 // Supported machine formats mapping
@@ -114,6 +116,9 @@ export const OrderTrackerDrawer = () => {
   const [showWorksheetModal, setShowWorksheetModal] = useState(false);
   const [activePdfPreview, setActivePdfPreview] = useState(null);
   const [showInvoiceModal, setShowInvoiceModal] = useState(false);
+  const [showCustomerReviewModal, setShowCustomerReviewModal] = useState(false);
+  const [orderReview, setOrderReview] = useState(null);
+  const [isLoadingOrderReview, setIsLoadingOrderReview] = useState(false);
   const [downloadingFileKey, setDownloadingFileKey] = useState(null);
 
   // Admin Multiple File Upload Array State
@@ -289,6 +294,37 @@ export const OrderTrackerDrawer = () => {
     checkLivePaymentStatus();
     return () => { isSubscribed = false; };
   }, [selectedOrderForDrawer, ord?.id, isPaid, refreshOrders]);
+
+  // Load any existing customer review so completed orders can offer feedback later.
+  useEffect(() => {
+    let isCurrent = true;
+    const status = String(ord?.status || '').toLowerCase();
+
+    if (!selectedOrderForDrawer || !ord?.id || status !== 'completed' || !authUser?.email) {
+      setOrderReview(null);
+      setIsLoadingOrderReview(false);
+      return () => { isCurrent = false; };
+    }
+
+    setIsLoadingOrderReview(true);
+    fetch(`/api/reviews?orderId=${encodeURIComponent(ord.id)}`, { cache: 'no-store' })
+      .then(async (response) => {
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok || !data?.success) return null;
+        return data.review || null;
+      })
+      .then((review) => {
+        if (isCurrent) setOrderReview(review);
+      })
+      .catch(() => {
+        if (isCurrent) setOrderReview(null);
+      })
+      .finally(() => {
+        if (isCurrent) setIsLoadingOrderReview(false);
+      });
+
+    return () => { isCurrent = false; };
+  }, [selectedOrderForDrawer, ord?.id, ord?.status, authUser?.email]);
 
   // Keep Order Details hidden whenever a new order is opened.
   // Customers can reveal the section only by tapping Details or Show.
@@ -860,6 +896,7 @@ export const OrderTrackerDrawer = () => {
       setSelectedOrderForDrawer(prev => prev ? { ...prev, status: 'completed' } : prev);
     }
     showToast('🎉 Delivery approved! Thank you for choosing BDigitizing.', 'success');
+    setShowCustomerReviewModal(true);
   };
 
   const getStatusBadge = () => {
@@ -1865,6 +1902,34 @@ export const OrderTrackerDrawer = () => {
                   >
                     <Download size={14} /> Download All Files
                   </button>
+
+                  {!isLoadingOrderReview && !orderReview && (
+                    <button
+                      type="button"
+                      onClick={() => setShowCustomerReviewModal(true)}
+                      className="btn btn-outline btn-sm"
+                      style={{ fontWeight: 800, gap: '0.35rem', borderColor: '#f59e0b', color: '#b45309', background: '#fffbeb' }}
+                    >
+                      <Star size={14} /> Leave feedback
+                    </button>
+                  )}
+
+                  {orderReview && (
+                    <span style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '0.35rem',
+                      padding: '0.45rem 0.7rem',
+                      borderRadius: '8px',
+                      background: '#ffffff',
+                      border: '1px solid #bbf7d0',
+                      color: '#047857',
+                      fontSize: '0.76rem',
+                      fontWeight: 800
+                    }}>
+                      <CheckCircle2 size={14} /> Feedback submitted
+                    </span>
+                  )}
                 </div>
               </div>
             )}
@@ -2449,14 +2514,46 @@ export const OrderTrackerDrawer = () => {
                 </button>
               </>
             ) : isCompleted && !isAdmin ? (
-              <button
-                type="button"
-                onClick={handleDownloadAll}
-                className="btn btn-sm"
-                style={{ background: '#059669', color: '#ffffff', fontWeight: 800, border: 'none', padding: '0.5rem 1.15rem', borderRadius: '8px', gap: '0.35rem', cursor: 'pointer' }}
-              >
-                <Download size={14} /> Download Deliverables
-              </button>
+              <>
+                <button
+                  type="button"
+                  onClick={handleDownloadAll}
+                  className="btn btn-sm"
+                  style={{
+                    background: '#059669',
+                    color: '#ffffff',
+                    fontWeight: 800,
+                    border: 'none',
+                    padding: '0.5rem 1rem',
+                    borderRadius: '8px',
+                    gap: '0.35rem',
+                    cursor: 'pointer',
+                    flex: isMobileLayout ? 1 : undefined,
+                    justifyContent: 'center'
+                  }}
+                >
+                  <Download size={14} /> Download files
+                </button>
+
+                {!isLoadingOrderReview && !orderReview && (
+                  <button
+                    type="button"
+                    onClick={() => setShowCustomerReviewModal(true)}
+                    className="btn btn-outline btn-sm"
+                    style={{
+                      fontWeight: 800,
+                      gap: '0.35rem',
+                      flex: isMobileLayout ? 1 : undefined,
+                      justifyContent: 'center',
+                      borderColor: '#f59e0b',
+                      color: '#b45309',
+                      background: '#fffbeb'
+                    }}
+                  >
+                    <Star size={14} /> Leave feedback
+                  </button>
+                )}
+              </>
             ) : isInRevision && !isAdmin ? (
               <span style={{ background: '#fff1f2', color: '#e11d48', border: '1px solid #fecdd3', padding: '0.4rem 0.8rem', borderRadius: '8px', fontSize: '0.78rem', fontWeight: 800, display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
                 <RotateCcw size={13} /> Modification Under Production
@@ -2572,6 +2669,16 @@ export const OrderTrackerDrawer = () => {
         />
       )}
 
+      {/* Optional post-approval customer feedback */}
+      {showCustomerReviewModal && !isAdmin && (
+        <CustomerReviewModal
+          order={ord}
+          onClose={() => setShowCustomerReviewModal(false)}
+          onSubmitted={(review) => {
+            setOrderReview(review || { submitted_at: new Date().toISOString() });
+          }}
+        />
+      )}
 
     </>
   );

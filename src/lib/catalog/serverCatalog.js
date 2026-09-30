@@ -20,6 +20,7 @@ async function loadPublicCatalogRows() {
       { data: site_config },
       { data: faqs },
       { data: testimonials },
+      { data: customerReviews },
       { data: homePageSettings },
       { data: trustStats },
       { data: trustFeatures },
@@ -38,6 +39,12 @@ async function loadPublicCatalogRows() {
       supabase.from('site_config').select('key, value'),
       supabase.from('faqs').select('*').order('sort_order', { ascending: true }),
       supabase.from('testimonials').select('*').order('created_at', { ascending: false }),
+      supabase.from('customer_reviews')
+        .select('id, display_name, rating, review_text, service_category, published_at, submitted_at')
+        .eq('is_published', true)
+        .eq('moderation_status', 'published')
+        .order('published_at', { ascending: false })
+        .limit(24),
       supabase.from('home_page_settings').select('*'),
       supabase.from('trust_stats').select('*').order('sort_order', { ascending: true }),
       supabase.from('trust_features').select('*').order('sort_order', { ascending: true }),
@@ -55,6 +62,23 @@ async function loadPublicCatalogRows() {
       }
     }
 
+    const publishedCustomerTestimonials = (customerReviews || []).map(review => ({
+      id: `customer-review-${review.id}`,
+      client_name: review.display_name || 'Verified Customer',
+      role: 'Verified Customer',
+      rating: Number(review.rating) || 5,
+      review_text: review.review_text || '',
+      service_category: review.service_category || 'Embroidery',
+      is_active: true,
+      verified_order_review: true,
+      created_at: review.published_at || review.submitted_at
+    }));
+
+    const combinedTestimonials = [
+      ...publishedCustomerTestimonials,
+      ...(testimonials || [])
+    ];
+
     const catalog = normalizePublicCatalog({
       services,
       pricing_cards,
@@ -67,7 +91,7 @@ async function loadPublicCatalogRows() {
       digitizers,
       site_config,
       faqs,
-      testimonials
+      testimonials: combinedTestimonials
     });
 
     return {

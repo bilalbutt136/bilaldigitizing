@@ -9,6 +9,7 @@ import { SystemSettingsManager } from './SystemSettingsManager';
 import { WorkerManagementDesk } from './WorkerManagementDesk';
 import AdminChatInbox from './AdminChatInbox';
 import AdminEmailCampaigns from './AdminEmailCampaigns';
+import CustomerReviewsManager from './CustomerReviewsManager';
 
 import { AdminExecutiveDashboard } from './AdminExecutiveDashboard';
 import { PromotionsManager } from './PromotionsManager';
@@ -41,7 +42,8 @@ import {
   Mail,
   Scissors,
   MessageSquare,
-  Headphones
+  Headphones,
+  Star
 } from 'lucide-react';
 
 export const AdminDashboard = () => {
@@ -69,6 +71,7 @@ export const AdminDashboard = () => {
   const [pendingWorkersCount, setPendingWorkersCount] = useState(0);
   const [unreadChatCount, setUnreadChatCount] = useState(0);
   const [unreadSupportCount, setUnreadSupportCount] = useState(0);
+  const [pendingReviewsCount, setPendingReviewsCount] = useState(0);
 
   // Sync unread chat & support desk messages for admin badges and play alert chime
   const prevUnreadTotalRef = React.useRef(null);
@@ -125,6 +128,31 @@ export const AdminDashboard = () => {
         }
       })
       .catch(() => {});
+  }, []);
+
+  React.useEffect(() => {
+    let isMounted = true;
+
+    const fetchPendingReviews = async () => {
+      try {
+        const response = await fetch('/api/reviews?scope=admin', { cache: 'no-store' });
+        const data = await response.json();
+        if (isMounted && response.ok && data?.success) {
+          setPendingReviewsCount(Number(data?.counts?.pending || 0));
+        }
+      } catch {}
+    };
+
+    fetchPendingReviews();
+    const interval = setInterval(fetchPendingReviews, 30000);
+    const handleReviewsUpdated = () => fetchPendingReviews();
+    window.addEventListener('bdigi_reviews_updated', handleReviewsUpdated);
+
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+      window.removeEventListener('bdigi_reviews_updated', handleReviewsUpdated);
+    };
   }, []);
 
   React.useEffect(() => {
@@ -306,6 +334,7 @@ export const AdminDashboard = () => {
       title: 'STUDIO CONTENT & GALLERY',
       items: [
         { id: 'portfolio', label: 'Portfolio Gallery', icon: Image, badge: safePortfolio.length },
+        { id: 'reviews', label: 'Customer Reviews', icon: Star, badge: pendingReviewsCount > 0 ? pendingReviewsCount : null, isUnread: pendingReviewsCount > 0 },
         { id: 'promotions', label: 'Promotions', icon: TrendingUp },
         { id: 'email-campaigns', label: 'Email Campaigns', icon: Mail },
         { id: 'contact', label: 'Contact Info', icon: Phone }
@@ -333,6 +362,7 @@ export const AdminDashboard = () => {
     workers: 'Digitizers & Staff',
     services: 'Service Rates & Tiers',
     portfolio: 'Portfolio Gallery',
+    reviews: 'Customer Reviews',
     promotions: 'Promotions',
     'email-campaigns': 'Email Campaigns',
     contact: 'Contact Information',
@@ -872,6 +902,7 @@ export const AdminDashboard = () => {
 
         {activeTab === 'services' && <StudioServicesManager />}
         {activeTab === 'portfolio' && <PortfolioManager />}
+        {activeTab === 'reviews' && <CustomerReviewsManager showToast={showToast} />}
         {activeTab === 'clients' && <ClientDirectory />}
         {activeTab === 'promotions' && <PromotionsManager />}
         {activeTab === 'email-campaigns' && <AdminEmailCampaigns />}
