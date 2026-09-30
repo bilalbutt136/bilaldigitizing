@@ -21,6 +21,27 @@ export function getCleanCloudinaryViewUrl(url) {
   return url;
 }
 
+export function isTrustedDirectAssetUrl(rawUrl) {
+  if (!rawUrl || typeof rawUrl !== 'string') return false;
+  try {
+    const parsed = new URL(rawUrl, typeof window !== 'undefined' ? window.location.origin : 'https://bdigitizing.com');
+    const host = parsed.hostname.toLowerCase();
+    if (host === 'res.cloudinary.com') return true;
+    if (host.endsWith('.supabase.co') && parsed.pathname.startsWith('/storage/v1/object/')) return true;
+    return false;
+  } catch {
+    return false;
+  }
+}
+
+export function getPreviewUrl(url, filename = 'preview') {
+  const resolvedUrl = unwrapProxyUrl(url);
+  if (isTrustedDirectAssetUrl(resolvedUrl)) {
+    return getCleanCloudinaryViewUrl(resolvedUrl);
+  }
+  return `/api/download?url=${encodeURIComponent(resolvedUrl)}&filename=${encodeURIComponent(filename)}&preview=true`;
+}
+
 /**
  * Unwraps nested /api/download?url=... proxies to avoid double encoding loops
  */
@@ -137,10 +158,37 @@ export async function downloadFileDirectly(url, filename = 'download') {
     }
   }
 
-  // 3. High-speed, CORS-free server-side proxy URL with explicit download flag
+  // 3. Prefer direct storage/CDN transfer. This keeps large customer files off
+  // Vercel's origin and avoids charging Fast Origin Transfer for every download.
+  if (isTrustedDirectAssetUrl(resolvedUrl)) {
+    try {
+      const directUrl = getCleanCloudinaryDownloadUrl(resolvedUrl);
+      const response = await fetch(directUrl, { mode: 'cors' });
+      if (response.ok) {
+        const blob = await response.blob();
+        const safeBlob = new Blob([blob], { type: 'application/octet-stream' });
+        const blobUrl = window.URL.createObjectURL(safeBlob);
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = blobUrl;
+        a.download = cleanFilename;
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(() => {
+          window.URL.revokeObjectURL(blobUrl);
+          if (a.parentNode) a.parentNode.removeChild(a);
+        }, 4000);
+        return;
+      }
+    } catch (directErr) {
+      console.warn('[FileDownloader] Direct storage download failed; using protected proxy fallback:', directErr?.message);
+    }
+  }
+
+  // 4. Protected proxy fallback for non-CORS/private/legacy URLs.
   const proxyDownloadUrl = `/api/download?url=${encodeURIComponent(resolvedUrl)}&filename=${encodeURIComponent(cleanFilename)}&download=true`;
 
-  // 4. Reliable Blob fetch download (forces download without CORS or navigation freeze)
+  // 5. Reliable Blob fetch download (forces download without CORS or navigation freeze)
   try {
     const response = await fetch(proxyDownloadUrl);
     if (response.ok) {
@@ -242,8 +290,9 @@ export function openFileInNewTab(url, filename = '') {
     } catch {}
   }
 
-  // Use preview=true proxy so all files (including PDFs, cross-origin images, SVG) render inline without CORS blocks
-  const previewProxyUrl = `/api/download?url=${encodeURIComponent(resolvedUrl)}&filename=${encodeURIComponent(cleanName)}&preview=true`;
+  // Trusted storage/CDN URLs can render directly in the browser. Use the Vercel
+  // proxy only for legacy/private URLs that cannot be opened cross-origin.
+  const previewProxyUrl = getPreviewUrl(resolvedUrl, cleanName);
 
   try {
     const newTab = window.open(previewProxyUrl, '_blank', 'noopener,noreferrer');
@@ -343,8 +392,8 @@ export async function openPdfInNewTab(url, filename = 'document.pdf') {
     }
   }
 
-  // 3. High-speed server-side stream preview (/api/download?preview=true)
-  const previewProxyUrl = `/api/download?url=${encodeURIComponent(resolvedUrl)}&filename=${encodeURIComponent(cleanFilename)}&preview=true`;
+  // 3. Direct CDN/storage preview where possible; proxy only as fallback.
+  const previewProxyUrl = getPreviewUrl(resolvedUrl, cleanFilename);
 
   try {
     const a = document.createElement('a');
@@ -372,5 +421,7 @@ export default {
   openFileInNewTab,
   openFileDirectly,
   getCleanCloudinaryDownloadUrl,
-  getCleanCloudinaryViewUrl
+  getCleanCloudinaryViewUrl,
+  isTrustedDirectAssetUrl,
+  getPreviewUrl
 };

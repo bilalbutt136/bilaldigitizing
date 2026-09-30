@@ -202,32 +202,51 @@ export const DepositModal = () => {
     };
   }, [isDepositModalOpen, handleSafeClose]);
 
-  // Real-time polling for deposit completion
+  // Payment status fallback with exponential backoff. Stripe/Bolt webhooks remain
+  // authoritative; this only reconciles the UI when a payment provider is delayed.
   useEffect(() => {
-    let intervalId;
-    if (isDepositModalOpen && invoiceId && !isPaid) {
-      intervalId = setInterval(async () => {
-        try {
-          const headers = await getAuthHeaders();
-          const res = await fetch(`/api/boltpayouts/status?invoiceId=${invoiceId}`, { headers });
-          const data = await res.json();
-          if (data.success && (data.status === 'paid' || data.status === 'completed')) {
-            setIsPaid(true);
-            const creditedAmount = parseFloat(data.amount || depositAmount || 0);
-            setWalletBalance(prev => prev + creditedAmount);
-            showToast(`Successfully deposited $${creditedAmount.toFixed(2)} to your Studio Wallet!`, 'success');
-            
-            if (fetchUserWalletBalance && authUser?.email) {
-              fetchUserWalletBalance(authUser.email);
-            }
+    let timerId;
+    let cancelled = false;
+    let attempt = 0;
+
+    const scheduleNext = (delayMs) => {
+      if (!cancelled) timerId = setTimeout(checkDeposit, delayMs);
+    };
+
+    const checkDeposit = async () => {
+      if (cancelled || !isDepositModalOpen || !invoiceId || isPaid) return;
+      if (typeof document !== 'undefined' && document.visibilityState === 'hidden') {
+        scheduleNext(15000);
+        return;
+      }
+
+      try {
+        const headers = await getAuthHeaders();
+        const res = await fetch(`/api/boltpayouts/status?invoiceId=${encodeURIComponent(invoiceId)}`, { headers });
+        const data = await res.json();
+        if (data.success && (data.status === 'paid' || data.status === 'completed')) {
+          setIsPaid(true);
+          const creditedAmount = parseFloat(data.amount || depositAmount || 0);
+          setWalletBalance(prev => prev + creditedAmount);
+          showToast(`Successfully deposited $${creditedAmount.toFixed(2)} to your Studio Wallet!`, 'success');
+
+          if (fetchUserWalletBalance && authUser?.email) {
+            fetchUserWalletBalance(authUser.email);
           }
-        } catch (e) {
-          console.error("Deposit polling error:", e);
+          return;
         }
-      }, 3000);
-    }
+      } catch (e) {
+        console.error('Deposit status check error:', e);
+      }
+
+      attempt += 1;
+      scheduleNext(Math.min(5000 + attempt * 2000, 15000));
+    };
+
+    if (isDepositModalOpen && invoiceId && !isPaid) scheduleNext(4000);
     return () => {
-      if (intervalId) clearInterval(intervalId);
+      cancelled = true;
+      if (timerId) clearTimeout(timerId);
     };
   }, [isDepositModalOpen, invoiceId, isPaid, depositAmount, fetchUserWalletBalance, authUser, setWalletBalance, showToast]);
 

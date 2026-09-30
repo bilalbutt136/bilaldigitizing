@@ -43,6 +43,8 @@ import {
   formatNotificationExactTime,
   getNotificationFullDateTime
 } from '../utils/notificationRouter';
+import { subscribeToChatMessages, subscribeToConversations } from '../services/supabaseService';
+import { fetchChatUnreadCounts } from '../services/chatUnreadService';
 
 export const HeaderNav = () => {
   const navigate = useNavigate();
@@ -131,30 +133,46 @@ export const HeaderNav = () => {
     return () => window.removeEventListener('appinstalled', handleAppInstalled);
   }, []);
 
-  // Sync unread chat count for top header inbox button
+  // Sync unread chat count from the shared Realtime hub. The API is queried only
+  // on initial load, actual chat/conversation changes, or when the tab regains focus.
   useEffect(() => {
     if (!safeIsAuthenticated) {
       setUnreadChatCount(0);
       return;
     }
 
-    const fetchUnreadChats = async () => {
+    const email = (safeAuthUser?.email || '').toLowerCase().trim();
+    let mounted = true;
+    let lastRefreshAt = 0;
+
+    const refreshUnreadChats = async (force = false) => {
+      const now = Date.now();
+      if (!force && now - lastRefreshAt < 5000) return;
+      lastRefreshAt = now;
       try {
-        const emailQuery = !isAdmin && safeAuthUser?.email ? `&email=${encodeURIComponent(safeAuthUser.email)}` : '';
-        const res = await fetch(`/api/chat/conversations?filter=unread${emailQuery}`);
-        if (res.ok) {
-          const data = await res.json();
-          if (data?.conversations) {
-            const totalUnread = data.conversations.reduce((sum, c) => sum + (isAdmin ? (c.unread_admin_count || 0) : (c.unread_client_count || 0)), 0);
-            setUnreadChatCount(totalUnread);
-          }
-        }
+        const counts = await fetchChatUnreadCounts({ email, isAdmin, force });
+        if (mounted) setUnreadChatCount(counts.total);
       } catch {}
     };
 
-    fetchUnreadChats();
-    const interval = setInterval(fetchUnreadChats, 12000);
-    return () => clearInterval(interval);
+    refreshUnreadChats();
+    const unsubscribeMessages = subscribeToChatMessages(() => refreshUnreadChats(true));
+    const unsubscribeConversations = subscribeToConversations(() => refreshUnreadChats(true));
+
+    const handleFocus = () => refreshUnreadChats(true);
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') refreshUnreadChats(true);
+    };
+    window.addEventListener('focus', handleFocus);
+    document.addEventListener('visibilitychange', handleVisibility);
+
+    return () => {
+      mounted = false;
+      unsubscribeMessages();
+      unsubscribeConversations();
+      window.removeEventListener('focus', handleFocus);
+      document.removeEventListener('visibilitychange', handleVisibility);
+    };
   }, [safeIsAuthenticated, isAdmin, safeAuthUser?.email]);
 
   const handleInboxClick = () => {

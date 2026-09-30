@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { formatOrderId } from '../../context/StateContext';
-import { downloadFileDirectly, openPdfInNewTab, openFileInNewTab } from '../../utils/fileDownloader';
+import { downloadFileDirectly, openPdfInNewTab, openFileInNewTab, getPreviewUrl } from '../../utils/fileDownloader';
 import { X, Download, Scissors as _Scissors, ExternalLink, Loader2 } from 'lucide-react';
 import { useModalBackNavigation } from '../../hooks/useModalBackNavigation';
 
@@ -154,7 +154,7 @@ export const ArtworkLightboxModal = ({ order, onClose }) => {
           }}>
             {isPdf ? (
               <iframe
-                src={`/api/download?url=${encodeURIComponent(imageSrc)}&filename=${encodeURIComponent(fileName)}&preview=true`}
+                src={getPreviewUrl(imageSrc, fileName)}
                 title="Artwork PDF Preview"
                 style={{
                   width: '100%',

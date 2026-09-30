@@ -73,8 +73,11 @@ import {
   markNotificationAsReadInSupabase,
   markAllNotificationsAsReadInSupabase,
   upsertClientInSupabase,
-  createNotificationInSupabase as _createNotificationInSupabase
+  createNotificationInSupabase as _createNotificationInSupabase,
+  subscribeToChatMessages,
+  subscribeToConversations
 } from '../../services/supabaseService';
+import { fetchChatUnreadCounts } from '../../services/chatUnreadService';
 import MobileSimpleOrderModal from '../customer/MobileSimpleOrderModal';
 import MobileStudioHub from './MobileStudioHub';
 import { getMobileOrderTrackingState } from '../../utils/orderTracking';
@@ -181,32 +184,36 @@ export const BDigitizingMobileApp = ({ initialTab = 'home' }) => {
     }
   }, [mobileTab, fetchMobileWalletData]);
 
-  const fetchMobileChatUnread = React.useCallback(async () => {
+  const fetchMobileChatUnread = React.useCallback(async (force = false) => {
     const email = (activeUser?.email || userEmail || '').toLowerCase().trim();
     if (!email) return;
     try {
-      const [resInbox, resSupport] = await Promise.all([
-        fetch(`/api/chat/conversations?filter=unread&channel=inbox&email=${encodeURIComponent(email)}`),
-        fetch(`/api/chat/conversations?filter=unread&channel=support&email=${encodeURIComponent(email)}`)
-      ]);
-      if (resInbox.ok) {
-        const data = await resInbox.json();
-        const unreadTotal = (data.conversations || []).reduce((acc, c) => acc + (c.unread_client_count || 0), 0);
-        setUnreadInboxCount(unreadTotal);
-      }
-      if (resSupport.ok) {
-        const data = await resSupport.json();
-        const unreadTotal = (data.conversations || []).reduce((acc, c) => acc + (c.unread_client_count || 0), 0);
-        setUnreadSupportCount(unreadTotal);
-      }
+      const counts = await fetchChatUnreadCounts({ email, isAdmin: false, force });
+      setUnreadInboxCount(counts.inbox);
+      setUnreadSupportCount(counts.support);
     } catch {}
   }, [userEmail, activeUser?.email]);
 
   useEffect(() => {
+    if (!userEmail) return;
     fetchMobileChatUnread();
-    const interval = setInterval(fetchMobileChatUnread, 15000);
-    return () => clearInterval(interval);
-  }, [fetchMobileChatUnread]);
+
+    const unsubscribeMessages = subscribeToChatMessages(() => fetchMobileChatUnread(true));
+    const unsubscribeConversations = subscribeToConversations(() => fetchMobileChatUnread(true));
+    const handleFocus = () => fetchMobileChatUnread(true);
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') fetchMobileChatUnread(true);
+    };
+    window.addEventListener('focus', handleFocus);
+    document.addEventListener('visibilitychange', handleVisibility);
+
+    return () => {
+      unsubscribeMessages();
+      unsubscribeConversations();
+      window.removeEventListener('focus', handleFocus);
+      document.removeEventListener('visibilitychange', handleVisibility);
+    };
+  }, [userEmail, fetchMobileChatUnread]);
 
   useEffect(() => {
     if (mobileTab === 'chat' || mobileTab === 'support' || mobileTab === 'inbox') {

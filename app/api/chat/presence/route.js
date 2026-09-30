@@ -2,6 +2,7 @@ import { withApiObservability } from '../../../../src/lib/observability/apiObser
 import { NextResponse } from 'next/server';
 import { createAdminClient } from '../../../../src/lib/supabase/admin';
 import { getServerAuthUser } from '../../../../src/lib/supabase/serverAuth';
+import { enforceApiBurstLimit } from '../../../../src/lib/apiBurstGuard.js';
 
 export const dynamic = 'force-dynamic';
 
@@ -18,6 +19,9 @@ function normalizeSessionId(value) {
 }
 
 async function GET_impl(request) {
+  const burstResponse = enforceApiBurstLimit(request, 'chat-presence-get', 60, 60_000);
+  if (burstResponse) return burstResponse;
+
   try {
     const { user } = await getServerAuthUser(request);
     if (!user?.email) {
@@ -71,6 +75,9 @@ async function GET_impl(request) {
 }
 
 async function POST_impl(request) {
+  const burstResponse = enforceApiBurstLimit(request, 'chat-presence-post', 60, 60_000);
+  if (burstResponse) return burstResponse;
+
   try {
     const { user, isAdmin, isWorker } = await getServerAuthUser(request);
     if (!user?.email || !user?.id) {

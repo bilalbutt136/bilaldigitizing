@@ -15,7 +15,8 @@ import { AdminExecutiveDashboard } from './AdminExecutiveDashboard';
 import { PromotionsManager } from './PromotionsManager';
 import { ContactInfoManager } from './ContactInfoManager';
 import { PortfolioManager } from './PortfolioManager';
-import { subscribeToChatMessages } from '../../services/supabaseService';
+import { subscribeToChatMessages, subscribeToConversations } from '../../services/supabaseService';
+import { fetchChatUnreadCounts } from '../../services/chatUnreadService';
 import { fetchAdminReviews } from '../../services/reviewService';
 import { stopNotificationSound, playMessageChime as _playMessageChime, playMessageChimeForMessage, playAdminChime } from '../../utils/audioNotification';
 import {
@@ -74,50 +75,59 @@ export const AdminDashboard = () => {
   const [unreadSupportCount, setUnreadSupportCount] = useState(0);
   const [pendingReviewsCount, setPendingReviewsCount] = useState(0);
 
-  // Sync unread chat & support desk messages for admin badges and play alert chime
+  // Sync unread chat/support badges from Realtime changes instead of an 8-second poll.
   const prevUnreadTotalRef = React.useRef(null);
   React.useEffect(() => {
-    const fetchUnreadChats = async () => {
+    let mounted = true;
+    let lastRefreshAt = 0;
+
+    const fetchUnreadChats = async (force = false) => {
+      const now = Date.now();
+      if (!force && now - lastRefreshAt < 5000) return;
+      lastRefreshAt = now;
       try {
-        const [inboxRes, supportRes] = await Promise.all([
-          fetch('/api/chat/conversations?filter=unread&channel=inbox'),
-          fetch('/api/chat/conversations?filter=unread&channel=support')
-        ]);
-        const [inboxData, supportData] = await Promise.all([inboxRes.json(), supportRes.json()]);
+        const counts = await fetchChatUnreadCounts({
+          email: authUser?.email || '',
+          isAdmin: true,
+          force
+        });
+        if (!mounted) return;
 
-        const inboxTotal = (inboxData?.conversations || []).reduce((sum, c) => sum + (c.unread_admin_count || 0), 0);
-        const supportTotal = (supportData?.conversations || []).reduce((sum, c) => sum + (c.unread_admin_count || 0), 0);
-        const currentTotal = inboxTotal + supportTotal;
-
-        // If unread messages count increased, ring admin chime if not already rung
-        if (prevUnreadTotalRef.current !== null && currentTotal > prevUnreadTotalRef.current) {
+        if (prevUnreadTotalRef.current !== null && counts.total > prevUnreadTotalRef.current) {
           playAdminChime();
         }
-
-        setUnreadChatCount(inboxTotal);
-        setUnreadSupportCount(supportTotal);
-        prevUnreadTotalRef.current = currentTotal;
+        setUnreadChatCount(counts.inbox);
+        setUnreadSupportCount(counts.support);
+        prevUnreadTotalRef.current = counts.total;
       } catch {}
     };
 
     fetchUnreadChats();
-    const interval = setInterval(fetchUnreadChats, 8000);
 
-    // Reuse the application-wide realtime hub instead of opening another
-    // postgres_changes socket just for the admin chime.
     const unsubscribeChatMessages = subscribeToChatMessages((payload) => {
       const msg = payload?.new || payload?.record;
       if (msg?.sender === 'client') {
         playMessageChimeForMessage(msg.id, false, { role: 'admin', isAdmin: true });
-        fetchUnreadChats();
       }
+      fetchUnreadChats(true);
     });
+    const unsubscribeConversations = subscribeToConversations(() => fetchUnreadChats(true));
+
+    const handleFocus = () => fetchUnreadChats(true);
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') fetchUnreadChats(true);
+    };
+    window.addEventListener('focus', handleFocus);
+    document.addEventListener('visibilitychange', handleVisibility);
 
     return () => {
-      clearInterval(interval);
+      mounted = false;
       unsubscribeChatMessages();
+      unsubscribeConversations();
+      window.removeEventListener('focus', handleFocus);
+      document.removeEventListener('visibilitychange', handleVisibility);
     };
-  }, []);
+  }, [authUser?.email]);
 
   React.useEffect(() => {
     fetch('/api/admin/workers')
@@ -144,14 +154,20 @@ export const AdminDashboard = () => {
     };
 
     fetchPendingReviews();
-    const interval = setInterval(fetchPendingReviews, 30000);
     const handleReviewsUpdated = () => fetchPendingReviews();
+    const handleFocus = () => fetchPendingReviews();
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') fetchPendingReviews();
+    };
     window.addEventListener('bdigi_reviews_updated', handleReviewsUpdated);
+    window.addEventListener('focus', handleFocus);
+    document.addEventListener('visibilitychange', handleVisibility);
 
     return () => {
       isMounted = false;
-      clearInterval(interval);
       window.removeEventListener('bdigi_reviews_updated', handleReviewsUpdated);
+      window.removeEventListener('focus', handleFocus);
+      document.removeEventListener('visibilitychange', handleVisibility);
     };
   }, []);
 

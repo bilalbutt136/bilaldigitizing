@@ -330,59 +330,36 @@ export default function AdminChatInbox({ initialChannel = 'inbox' }) {
   }, [activeConversationId]);
   /* oxlint-enable react-hooks/exhaustive-deps */
 
-  // Real-time polling & silent sync
+  // Realtime subscriptions below are the primary transport. Only recover from a
+  // backgrounded/suspended tab when the user returns, instead of polling Vercel.
+  /* oxlint-disable react-hooks/exhaustive-deps -- helper identities are render-local; recovery is keyed by stable chat state */
   useEffect(() => {
-    const interval = setInterval(async () => {
-      // 1. Silent sync for active conversation messages
-      if (activeConversationId) {
-        try {
-          const tRes = await fetch(`/api/chat/typing?conversationId=${encodeURIComponent(activeConversationId)}&forRole=admin`);
-          const tData = await tRes.json();
-          if (tData?.isTyping) {
-            setIsClientTyping(true);
-            clearTimeout(clientTypingDismissRef.current);
-            clientTypingDismissRef.current = setTimeout(() => {
-              setIsClientTyping(false);
-            }, 3500);
-          }
-        } catch {}
+    let lastRecoveryAt = 0;
+    const recoverAfterBackground = () => {
+      if (typeof document !== 'undefined' && document.visibilityState === 'hidden') return;
+      const now = Date.now();
+      if (now - lastRecoveryAt < 15000) return;
+      lastRecoveryAt = now;
 
-        try {
-          const mRes = await fetch(`/api/chat/messages?conversationId=${encodeURIComponent(activeConversationId)}`);
-          const mData = await mRes.json();
-          if (mData?.messages && mData.messages.length > messages.length) {
-            const newArrivals = mData.messages.slice(messages.length);
-            const clientMsg = newArrivals.find(m => m.sender === 'client');
-            if (clientMsg) {
-              playMessageChimeForMessage(clientMsg.id, false, { role: 'admin', isAdmin: true });
-            }
-            setMessages(mData.messages);
-            scrollToBottom();
-          } else if (mData?.messages && mData.messages.length !== messages.length) {
-            setMessages(mData.messages);
-            scrollToBottom();
-          }
-        } catch {}
-      }
-
-      // 2. Silent sync for channel threads
-      try {
-        const targetChannel = activeChannel === 'support' ? 'support' : 'inbox';
-        let url = `/api/chat/conversations?filter=${activeFilter}&channel=${targetChannel}`;
-        if (searchQuery) url += `&q=${encodeURIComponent(searchQuery)}`;
-        const cRes = await fetch(url);
-        const cData = await cRes.json();
-        if (cData?.conversations) {
-          setConversations(cData.conversations);
-        }
-      } catch {}
-
-      // 3. Keep badges fresh
+      fetchConversations(activeFilter, searchQuery, activeChannel, true);
       fetchChannelUnreadCounts();
-    }, 20000);
+      if (activeConversationId) {
+        fetchActiveMessages(activeConversationId);
+      }
+    };
 
-    return () => clearInterval(interval);
-  }, [activeConversationId, messages.length, activeChannel, activeFilter, searchQuery, fetchChannelUnreadCounts]);
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') recoverAfterBackground();
+    };
+
+    window.addEventListener('focus', recoverAfterBackground);
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => {
+      window.removeEventListener('focus', recoverAfterBackground);
+      document.removeEventListener('visibilitychange', handleVisibility);
+    };
+  }, [activeConversationId, activeChannel, activeFilter, searchQuery, fetchChannelUnreadCounts]);
+  /* oxlint-enable react-hooks/exhaustive-deps */
 
   // Realtime DB changes are consolidated through the shared app hub.
   // The per-conversation channel is broadcast-only for typing latency.
@@ -466,12 +443,12 @@ export default function AdminChatInbox({ initialChannel = 'inbox' }) {
       setOnlineEmails(onlineSet);
     });
 
+    // One REST snapshot covers users connected before this tab subscribed.
+    // Ongoing presence is delivered by Supabase Realtime.
     syncPresenceFromRest();
-    const interval = setInterval(syncPresenceFromRest, 15000);
 
     return () => {
       unsubscribePresence();
-      clearInterval(interval);
     };
   }, []);
 
@@ -594,12 +571,14 @@ export default function AdminChatInbox({ initialChannel = 'inbox' }) {
       console.warn('Realtime admin typing broadcast notice:', err);
     }
 
-    // 2. Serverless API sync fallback
-    fetch('/api/chat/typing', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ conversationId: activeConversationId, senderRole: 'admin', isTyping: typingBool })
-    }).catch(() => {});
+    // 2. Use the serverless endpoint only when the Realtime room is unavailable.
+    if (!channelRef.current) {
+      fetch('/api/chat/typing', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ conversationId: activeConversationId, senderRole: 'admin', isTyping: typingBool })
+      }).catch(() => {});
+    }
   }, [activeConversationId]);
 
   // Handle Typing indicator broadcast

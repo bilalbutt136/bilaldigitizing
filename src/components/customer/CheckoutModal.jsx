@@ -423,45 +423,67 @@ export const CheckoutModal = () => {
   }, [isCheckoutModalOpen, handleSafeClose]);
 
   useEffect(() => {
-    let intervalId;
+    let timerId;
+    let cancelled = false;
+    let attempt = 0;
 
-    if (isCheckoutModalOpen && (checkoutSession?.invoiceId || checkoutSession?.orderId) && !isPaid) {
-      intervalId = setInterval(async () => {
-        try {
-          const headers = await getAuthHeaders();
-          const invParam = checkoutSession.invoiceId ? `invoiceId=${encodeURIComponent(checkoutSession.invoiceId)}` : '';
-          const ordParam = checkoutSession.orderId ? `orderId=${encodeURIComponent(checkoutSession.orderId)}` : '';
-          const queryStr = [invParam, ordParam].filter(Boolean).join('&');
-          const res = await fetch(`/api/boltpayouts/status?${queryStr}`, { headers });
-          const data = await res.json();
-          if (data.success && (data.status === 'paid' || data.status === 'completed')) {
-            setIsPaid(true);
-            showToast('Payment confirmed! Order assigned to design desk.', 'success');
+    const scheduleNext = (delayMs) => {
+      if (!cancelled) timerId = setTimeout(checkPayment, delayMs);
+    };
 
-            if (checkoutSession?.offerId) {
-              try {
-                await acceptCustomOffer(checkoutSession.offerId);
-                await payCustomOffer(checkoutSession.offerId, checkoutSession.orderId);
-              } catch (offErr) {
-                console.warn('Custom offer accept/pay on gateway checkout notice:', offErr);
-              }
-            }
+    const checkPayment = async () => {
+      if (cancelled || !isCheckoutModalOpen || isPaid) return;
 
-            if (checkoutSession?.orderId && updateOrderStatus) {
-              updateOrderStatus(checkoutSession.orderId, 'in_progress', { paymentStatus: 'paid', payment_status: 'paid' });
-            }
+      // Do not burn serverless invocations while the checkout tab is backgrounded.
+      if (typeof document !== 'undefined' && document.visibilityState === 'hidden') {
+        scheduleNext(15000);
+        return;
+      }
 
-            if (refreshOrders) {
-              refreshOrders().catch(() => {});
+      try {
+        const headers = await getAuthHeaders();
+        const invParam = checkoutSession?.invoiceId ? `invoiceId=${encodeURIComponent(checkoutSession.invoiceId)}` : '';
+        const ordParam = checkoutSession?.orderId ? `orderId=${encodeURIComponent(checkoutSession.orderId)}` : '';
+        const queryStr = [invParam, ordParam].filter(Boolean).join('&');
+        if (!queryStr) return;
+
+        const res = await fetch(`/api/boltpayouts/status?${queryStr}`, { headers });
+        const data = await res.json();
+        if (data.success && (data.status === 'paid' || data.status === 'completed')) {
+          setIsPaid(true);
+          showToast('Payment confirmed! Order assigned to design desk.', 'success');
+
+          if (checkoutSession?.offerId) {
+            try {
+              await acceptCustomOffer(checkoutSession.offerId);
+              await payCustomOffer(checkoutSession.offerId, checkoutSession.orderId);
+            } catch (offErr) {
+              console.warn('Custom offer accept/pay on gateway checkout notice:', offErr);
             }
           }
-        } catch (err) {
-          console.error('Polling error:', err);
+
+          if (checkoutSession?.orderId && updateOrderStatus) {
+            updateOrderStatus(checkoutSession.orderId, 'in_progress', { paymentStatus: 'paid', payment_status: 'paid' });
+          }
+          if (refreshOrders) refreshOrders().catch(() => {});
+          return;
         }
-      }, 3000);
+      } catch (err) {
+        console.error('Payment status check error:', err);
+      }
+
+      attempt += 1;
+      scheduleNext(Math.min(5000 + attempt * 2000, 15000));
+    };
+
+    if (isCheckoutModalOpen && (checkoutSession?.invoiceId || checkoutSession?.orderId) && !isPaid) {
+      scheduleNext(4000);
     }
 
-    return () => clearInterval(intervalId);
+    return () => {
+      cancelled = true;
+      if (timerId) clearTimeout(timerId);
+    };
   }, [isCheckoutModalOpen, checkoutSession, isPaid, showToast, updateOrderStatus, refreshOrders]);
 
   const copyToClipboard = (text, label = 'Address') => {

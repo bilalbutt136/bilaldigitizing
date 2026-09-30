@@ -1065,7 +1065,7 @@ export const StateProvider = ({ children, initialCatalog = null }) => {
       // 2. Fetch catalog & DB clients if Supabase is configured
       if (isSupabaseConfigured && supabase) {
         try {
-          const catalog = await fetchCatalogFromSupabase();
+          const catalog = initialCatalog || await fetchCatalogFromSupabase();
           if (!cancelled && catalog) {
             persistLiveCatalogToStorage(catalog);
             if (catalog.servicesList) setServicesList(catalog.servicesList);
@@ -1089,39 +1089,15 @@ export const StateProvider = ({ children, initialCatalog = null }) => {
             if (catalog.serviceCms) setServiceCmsContent(catalog.serviceCms);
           }
 
-          // Fetch new Home Page CMS
-          const hpContent = await fetchHomePageContentFromSupabase();
+          // The RootLayout already preloads Home Page CMS inside initialCatalog.
+          // Only hit the API when no server-preloaded value exists.
+          const hpContent = initialCatalog?.homePageConfig || await fetchHomePageContentFromSupabase();
           if (!cancelled && hpContent) {
             setHomePageConfig(hpContent);
           }
 
-          // Load DB clients from Supabase users table
-          const dbClients = await fetchClientsFromSupabase();
-          if (!cancelled && dbClients && dbClients.length > 0) {
-            setClients(prev => {
-              const mergedMap = new Map();
-              [...dbClients, ...prev].forEach(c => {
-                if (c && c.email) mergedMap.set(c.email.toLowerCase(), c);
-              });
-              return Array.from(mergedMap.values());
-            });
-          }
-
-          // Fetch orders from Supabase DB only for active authenticated session
-          const { data: { session: initSession } } = await supabase.auth.getSession();
-          if (initSession?.user) {
-            const initRole = await resolveRole(initSession.user.email, initSession.user);
-            const dbOrders = await fetchOrdersFromSupabase(
-              initRole === 'admin' ? null : initSession.user.email,
-              null,
-              initRole === 'admin' ? null : initSession.user.id
-            );
-            if (!cancelled && dbOrders) {
-              setOrders(dbOrders);
-            }
-          } else {
-            if (!cancelled) setOrders([]);
-          }
+          // Auth-scoped clients/orders are loaded by validateImmediateSession above.
+          // Avoid duplicate /api/orders and client-directory requests during hydration.
         } catch (err) {
           console.warn('Initial data load notice:', err);
         }
@@ -1289,14 +1265,8 @@ export const StateProvider = ({ children, initialCatalog = null }) => {
             showToast: isInsert && isUnread
           }, false);
 
-          // If the incoming notification is order-related, refresh orders immediately so tables and counters sync
-          const notifOrdId = notif.order_id || notif.orderId;
-          const isOrdPlaced = isOrderPlacedNotification(notif);
-          const isOrdPaid = isOrderPaymentConfirmedNotification(notif);
-          const isOrdDelivered = isOrderDeliveredNotification(notif);
-          if (notifOrdId || isOrdPlaced || isOrdPaid || isOrdDelivered) {
-            refreshOrders().catch(() => {});
-          }
+          // Order rows are synchronized by the shared orders Realtime subscription below.
+          // Do not refetch the entire order list for the accompanying notification event.
         }
       });
 
@@ -1345,11 +1315,8 @@ export const StateProvider = ({ children, initialCatalog = null }) => {
           }
         }
 
-        try {
-          await refreshOrders();
-        } catch (err) {
-          console.warn('Realtime order update fetch notice:', err);
-        }
+        // The Realtime row above is the source of truth for this change. A manual/focus
+        // refresh remains available as recovery without multiplying serverless invocations.
       });
     }
 
@@ -1542,14 +1509,6 @@ export const StateProvider = ({ children, initialCatalog = null }) => {
       role: authUser.role || 'client'
     });
 
-    const interval = setInterval(() => {
-      trackUserPresence({
-        email: cleanEmail,
-        name: authUser.name || '',
-        role: authUser.role || 'client'
-      });
-    }, 60000);
-
     const handleUnload = () => {
       untrackUserPresence(cleanEmail);
     };
@@ -1557,7 +1516,6 @@ export const StateProvider = ({ children, initialCatalog = null }) => {
     window.addEventListener('beforeunload', handleUnload);
 
     return () => {
-      clearInterval(interval);
       window.removeEventListener('beforeunload', handleUnload);
       untrackUserPresence(cleanEmail);
     };

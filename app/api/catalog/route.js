@@ -4,6 +4,7 @@ import { revalidatePath, revalidateTag, unstable_cache } from 'next/cache';
 import { createAdminClient } from '../../../src/lib/supabase/admin';
 import { getServerAuthUser } from '../../../src/lib/supabase/serverAuth';
 import crypto from 'crypto';
+import { PUBLIC_SITE_CONFIG_KEYS } from '../../../src/lib/catalog/publicCatalogConfig.js';
 
 export const dynamic = 'force-dynamic';
 
@@ -44,7 +45,7 @@ const fetchPublicCatalogBundle = unstable_cache(
       supabase.from('sew_outs').select('*').order('sort_order', { ascending: true }),
       supabase.from('hero_slides').select('*').order('sort_order', { ascending: true }),
       supabase.from('digitizers').select('*').order('sort_order', { ascending: true }),
-      supabase.from('site_config').select('key, value'),
+      supabase.from('site_config').select('key, value').in('key', PUBLIC_SITE_CONFIG_KEYS),
       supabase.from('faqs').select('*').order('sort_order', { ascending: true }),
       supabase.from('testimonials').select('*').order('created_at', { ascending: false }),
       supabase.from('customer_reviews')
@@ -119,7 +120,7 @@ async function GET_impl(request) {
       const catalog = await fetchPublicCatalogBundle();
       return NextResponse.json(catalog, {
         headers: {
-          'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300'
+          'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=86400'
         }
       });
     }

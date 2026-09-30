@@ -2,7 +2,9 @@ import React from 'react';
 import { createAdminClient } from '../../src/lib/supabase/admin';
 import { sanitizeCmsHtml } from '../../src/lib/sanitizeHtml';
 
-export const dynamic = 'force-dynamic'; // Fetch live DB content on every request, never pre-render statically
+// Legal CMS content changes rarely; ISR keeps reads fresh without invoking a
+// serverless render + database query for every visitor.
+export const revalidate = 3600;
 
 export const metadata = {
   title: 'Terms and Conditions | BDigitizing',

@@ -3,10 +3,14 @@ import { NextResponse } from 'next/server';
 import { createAdminClient } from '../../../../src/lib/supabase/admin';
 import { getServerAuthUser } from '../../../../src/lib/supabase/serverAuth';
 import { canAccessConversation } from '../../../../src/lib/chat/authorization';
+import { enforceApiBurstLimit } from '../../../../src/lib/apiBurstGuard.js';
 
 export const dynamic = 'force-dynamic';
 
 async function GET_impl(request) {
+  const burstResponse = enforceApiBurstLimit(request, 'chat-messages-get', 120, 60_000);
+  if (burstResponse) return burstResponse;
+
   try {
     const { user, isAdmin } = await getServerAuthUser(request);
     if (!user?.email) {
@@ -150,6 +154,9 @@ async function GET_impl(request) {
 }
 
 async function POST_impl(request) {
+  const burstResponse = enforceApiBurstLimit(request, 'chat-messages-post', 60, 60_000);
+  if (burstResponse) return burstResponse;
+
   try {
     const { user, isAdmin } = await getServerAuthUser(request);
     if (!user?.email) {

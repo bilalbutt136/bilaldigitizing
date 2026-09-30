@@ -3,6 +3,7 @@ import 'server-only';
 import { unstable_cache } from 'next/cache';
 import { createAdminClient } from '../supabase/admin';
 import { normalizePublicCatalog } from './normalizePublicCatalog';
+import { PUBLIC_SITE_CONFIG_KEYS } from './publicCatalogConfig.js';
 
 async function loadPublicCatalogRows() {
   try {
@@ -36,7 +37,7 @@ async function loadPublicCatalogRows() {
       supabase.from('sew_outs').select('*').order('sort_order', { ascending: true }),
       supabase.from('hero_slides').select('*').order('sort_order', { ascending: true }),
       supabase.from('digitizers').select('*').order('sort_order', { ascending: true }),
-      supabase.from('site_config').select('key, value'),
+      supabase.from('site_config').select('key, value').in('key', PUBLIC_SITE_CONFIG_KEYS),
       supabase.from('faqs').select('*').order('sort_order', { ascending: true }),
       supabase.from('testimonials').select('*').order('created_at', { ascending: false }),
       supabase.from('customer_reviews')

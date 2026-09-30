@@ -48,7 +48,13 @@ import { VectorArtPage } from '../public/VectorArtPage';
 import { CustomPatchesSection } from '../public/CustomPatchesSection';
 import ThemePreviewCard from '../common/ThemePreviewCard';
 import { THEME_PRESETS } from '../../utils/themePresets';
-import { fetchNotificationsFromSupabase, subscribeToNotificationListeners } from '../../services/supabaseService';
+import {
+  fetchNotificationsFromSupabase,
+  subscribeToNotificationListeners,
+  subscribeToChatMessages,
+  subscribeToConversations
+} from '../../services/supabaseService';
+import { fetchChatUnreadCounts } from '../../services/chatUnreadService';
 import { isSupabaseConfigured } from '../../lib/supabase/client';
 import CustomerSupportChat from './CustomerSupportChat';
 import { matchCategory } from '../../utils/categoryUtils';
@@ -346,23 +352,12 @@ export const CustomerDashboard = () => {
   const [unreadInboxCount, setUnreadInboxCount] = useState(0);
   const [unreadSupportCount, setUnreadSupportCount] = useState(0);
 
-  const fetchClientChatUnread = React.useCallback(async () => {
+  const fetchClientChatUnread = React.useCallback(async (force = false) => {
     if (!userEmail) return;
     try {
-      const [resInbox, resSupport] = await Promise.all([
-        fetch(`/api/chat/conversations?filter=unread&channel=inbox&email=${encodeURIComponent(userEmail)}`),
-        fetch(`/api/chat/conversations?filter=unread&channel=support&email=${encodeURIComponent(userEmail)}`)
-      ]);
-      if (resInbox.ok) {
-        const data = await resInbox.json();
-        const unreadTotal = (data.conversations || []).reduce((acc, c) => acc + (c.unread_client_count || 0), 0);
-        setUnreadInboxCount(unreadTotal);
-      }
-      if (resSupport.ok) {
-        const data = await resSupport.json();
-        const unreadTotal = (data.conversations || []).reduce((acc, c) => acc + (c.unread_client_count || 0), 0);
-        setUnreadSupportCount(unreadTotal);
-      }
+      const counts = await fetchChatUnreadCounts({ email: userEmail, isAdmin: false, force });
+      setUnreadInboxCount(counts.inbox);
+      setUnreadSupportCount(counts.support);
     } catch {
       // silent
     }
@@ -371,8 +366,22 @@ export const CustomerDashboard = () => {
   React.useEffect(() => {
     if (!mounted || !userEmail) return;
     fetchClientChatUnread();
-    const interval = setInterval(fetchClientChatUnread, 15000);
-    return () => clearInterval(interval);
+
+    const unsubscribeMessages = subscribeToChatMessages(() => fetchClientChatUnread(true));
+    const unsubscribeConversations = subscribeToConversations(() => fetchClientChatUnread(true));
+    const handleFocus = () => fetchClientChatUnread(true);
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') fetchClientChatUnread(true);
+    };
+    window.addEventListener('focus', handleFocus);
+    document.addEventListener('visibilitychange', handleVisibility);
+
+    return () => {
+      unsubscribeMessages();
+      unsubscribeConversations();
+      window.removeEventListener('focus', handleFocus);
+      document.removeEventListener('visibilitychange', handleVisibility);
+    };
   }, [mounted, userEmail, fetchClientChatUnread]);
 
   React.useEffect(() => {

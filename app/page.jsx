@@ -1,16 +1,12 @@
 import HomePageClient from '../src/components/public/HomePageClient';
 
-export default async function HomePage({ searchParams }) {
-  const params = await searchParams;
-  const appValue = params?.app;
-  const modeValue = params?.mode;
-  const initialAppMode = appValue === 'true' || modeValue === 'app';
-  const requestedTab = typeof params?.tab === 'string' ? params.tab : 'home';
+export const revalidate = 300;
 
+export default function HomePage() {
   return (
     <HomePageClient
-      initialAppMode={initialAppMode}
-      initialAppTab={requestedTab}
+      initialAppMode={false}
+      initialAppTab="home"
     />
   );
 }

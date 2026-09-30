@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState, useRef } from 'react';
-import { openPdfInNewTab, downloadFileDirectly } from '../../utils/fileDownloader';
+import { openPdfInNewTab, downloadFileDirectly, getPreviewUrl } from '../../utils/fileDownloader';
 import { useModalBackNavigation } from '../../hooks/useModalBackNavigation';
 import { 
   X, 
@@ -55,7 +55,7 @@ export const PdfPreviewModal = ({
   if (!isModalActive) return null;
 
   const cleanName = fileName || 'Document.pdf';
-  const previewProxyUrl = `/api/download?url=${encodeURIComponent(fileUrl)}&filename=${encodeURIComponent(cleanName)}&preview=true`;
+  const previewProxyUrl = getPreviewUrl(fileUrl, cleanName);
 
   const handlePrint = () => {
     try {

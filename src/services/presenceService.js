@@ -201,13 +201,19 @@ export async function trackUserPresence({
   };
 
   const channel = initPresenceChannel();
+  let realtimeTracked = false;
   if (channel && isChannelSubscribed) {
     try {
       await channel.track(currentTrackingPayload);
+      realtimeTracked = true;
     } catch (err) {
       console.warn('[PresenceService] Realtime track notice:', err);
     }
   }
+
+  // Supabase Presence is connection-based and already survives while the WebSocket is open.
+  // Do not invoke a Vercel function on every heartbeat when Realtime is healthy.
+  if (realtimeTracked) return;
 
   try {
     const response = await fetch('/api/chat/presence', {
@@ -238,11 +244,16 @@ export async function untrackUserPresence(email) {
     currentTrackingPayload = null;
   }
 
+  let realtimeUntracked = false;
   if (presenceChannel && isChannelSubscribed) {
     try {
       await presenceChannel.untrack();
+      realtimeUntracked = true;
     } catch {}
   }
+
+  // A successful Realtime untrack is authoritative; only use REST/beacon as fallback.
+  if (realtimeUntracked) return;
 
   const body = JSON.stringify({
     status: 'offline',

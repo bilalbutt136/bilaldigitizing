@@ -1,3 +1,5 @@
+import { filterPublicSiteConfig } from './publicCatalogConfig.js';
+
 export function parseCatalogConfigValue(value) {
   if (typeof value !== 'string') return value;
   try {
@@ -8,7 +10,7 @@ export function parseCatalogConfigValue(value) {
 }
 
 export function normalizePublicCatalog(data = {}) {
-  const siteConfig = Array.isArray(data.site_config) ? data.site_config : [];
+  const siteConfig = filterPublicSiteConfig(data.site_config);
   const configMap = {};
 
   for (const item of siteConfig) {
@@ -97,16 +99,9 @@ export function normalizePublicCatalog(data = {}) {
         });
 
   return {
-    services: data.services || [],
-    pricing_tiers: data.pricing_tiers || [],
-    patch_cards: data.patch_cards || [],
-    store_products: data.store_products || [],
-    portfolio: data.portfolio || [],
-    sew_outs: data.sew_outs || [],
-    hero_slides: data.hero_slides || [],
+    // Keep only the canonical frontend shape. Raw snake_case collections and
+    // site_config used to duplicate hundreds of KB in every RSC payload.
     digitizers: data.digitizers || [],
-    pricing_cards: data.pricing_cards || [],
-    site_config: siteConfig,
     faqs: data.faqs || [],
     testimonials: data.testimonials || [],
 

@@ -336,63 +336,33 @@ export default function CustomerSupportChat({
   }, [conversationId]);
   /* oxlint-enable react-hooks/exhaustive-deps */
 
-  // Realtime Polling & Silent Sync
+  // Realtime is the primary message/typing transport. Refresh once when a
+  // suspended/background tab becomes active again instead of polling every 15s.
+  /* oxlint-disable react-hooks/exhaustive-deps -- fetchMessages is render-local; recovery is keyed by conversationId */
   useEffect(() => {
     if (!conversationId) return;
+    let lastRecoveryAt = 0;
 
-    const interval = setInterval(async () => {
-      // Check admin typing as secondary fallback (only updates if actively typing)
-      try {
-        const tRes = await fetch(`/api/chat/typing?conversationId=${encodeURIComponent(conversationId)}&forRole=client`);
-        const tData = await tRes.json();
-        if (tData?.isTyping) {
-          setIsAdminTyping(true);
-          clearTimeout(adminTypingDismissRef.current);
-          adminTypingDismissRef.current = setTimeout(() => {
-            setIsAdminTyping(false);
-          }, 3500);
-        }
-      } catch {}
+    const recoverMessages = () => {
+      if (typeof document !== 'undefined' && document.visibilityState === 'hidden') return;
+      const now = Date.now();
+      if (now - lastRecoveryAt < 15000) return;
+      lastRecoveryAt = now;
+      fetchMessages(conversationId);
+    };
 
-      // Refresh messages quietly without clearing pending messages or flashing duplicates
-      try {
-        const mRes = await fetch(`/api/chat/messages?conversationId=${encodeURIComponent(conversationId)}&clientEmail=${encodeURIComponent(userEmail)}`);
-        const mData = await mRes.json();
-        if (Array.isArray(mData?.messages)) {
-          setMessages(prev => {
-            // Keep any pending optimistic messages that the server hasn't saved yet
-            const pendingMessages = prev.filter(m =>
-              (m.isPending || String(m.id).startsWith('temp-')) &&
-              !mData.messages.some(sm =>
-                sm.id === m.id ||
-                (sm.sender === m.sender && (sm.text || '').trim() === (m.text || '').trim())
-              )
-            );
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') recoverMessages();
+    };
 
-            const nonPendingPrev = prev.filter(m => !m.isPending && !String(m.id).startsWith('temp-'));
-            const isUnchanged = nonPendingPrev.length === mData.messages.length &&
-              mData.messages.every((sm, i) => nonPendingPrev[i]?.id === sm.id) &&
-              pendingMessages.length === (prev.length - nonPendingPrev.length);
-
-            if (isUnchanged) return prev;
-
-            if (mData.messages.length > nonPendingPrev.length) {
-              const newArrivals = mData.messages.slice(nonPendingPrev.length);
-              newArrivals.forEach(m => {
-                if (m.sender !== 'client') {
-                  playMessageChimeForMessage(m.id, false, { role: 'customer', isAdmin: false });
-                }
-              });
-            }
-
-            return [...mData.messages, ...pendingMessages];
-          });
-        }
-      } catch {}
-    }, 15000);
-
-    return () => clearInterval(interval);
-  }, [conversationId, messages.length, userEmail]);
+    window.addEventListener('focus', recoverMessages);
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => {
+      window.removeEventListener('focus', recoverMessages);
+      document.removeEventListener('visibilitychange', handleVisibility);
+    };
+  }, [conversationId]);
+  /* oxlint-enable react-hooks/exhaustive-deps */
 
   // Realtime DB changes use the shared app hub; this room remains broadcast-only
   // for low-latency typing signals.
@@ -470,17 +440,7 @@ export default function CustomerSupportChat({
       conversationId
     });
 
-    const interval = setInterval(() => {
-      trackUserPresence({
-        email: cleanEmail,
-        name: userName,
-        role: 'client',
-        conversationId
-      });
-    }, 45000);
-
     return () => {
-      clearInterval(interval);
       untrackUserPresence(cleanEmail);
     };
   }, [userEmail, userName, conversationId]);
@@ -508,12 +468,14 @@ export default function CustomerSupportChat({
       console.warn('Realtime client typing broadcast notice:', err);
     }
 
-    // 2. Serverless API sync fallback
-    fetch('/api/chat/typing', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ conversationId, senderRole: 'client', isTyping: typingBool })
-    }).catch(() => {});
+    // 2. Use the serverless endpoint only when the Realtime room is unavailable.
+    if (!channelRef.current) {
+      fetch('/api/chat/typing', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ conversationId, senderRole: 'client', isTyping: typingBool })
+      }).catch(() => {});
+    }
   }, [conversationId]);
 
   // Typing notification
