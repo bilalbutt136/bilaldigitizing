@@ -5,6 +5,9 @@ const PROTECTED_PREFIXES = ['/admin', '/admin-portal', '/worker', '/worker-porta
 const ADMIN_PREFIXES = ['/admin', '/admin-portal'];
 const WORKER_PREFIXES = ['/worker', '/worker-portal', '/portal'];
 
+const AUTH_VERIFY_TIMEOUT_MS = 5000;
+const ROLE_LOOKUP_TIMEOUT_MS = 3500;
+
 const PUBLIC_AUTH_PATHS = [
   '/login',
   '/signup',
@@ -19,17 +22,22 @@ const PUBLIC_AUTH_PATHS = [
   '/portal/register',
   '/portal/forgot-password',
   '/portal/reset-password',
+  '/auth-unavailable',
   '/auth',
   '/auth/callback'
 ];
 
-function withTimeout(promise, timeoutMs = 1500) {
+function withTimeout(promise, timeoutMs = AUTH_VERIFY_TIMEOUT_MS, label = 'Authentication request') {
   let timer = null;
 
   return Promise.race([
     promise,
     new Promise((_, reject) => {
-      timer = setTimeout(() => reject(new Error('Supabase Auth Timeout')), timeoutMs);
+      timer = setTimeout(() => {
+        const error = new Error(`${label} timed out after ${timeoutMs}ms`);
+        error.name = 'AuthenticationTimeoutError';
+        reject(error);
+      }, timeoutMs);
     })
   ]).finally(() => {
     if (timer) clearTimeout(timer);
@@ -55,6 +63,43 @@ function hasTrustedAdminMetadata(user) {
     user?.app_metadata?.is_admin === true ||
     isConfiguredAdmin(user?.email)
   );
+}
+
+function getLoginUrl(request, pathname, isWorkerRoute) {
+  const loginUrl = request.nextUrl.clone();
+
+  if (pathname === '/portal' || pathname.startsWith('/portal/')) {
+    loginUrl.pathname = '/portal/login';
+  } else if (isWorkerRoute) {
+    loginUrl.pathname = '/worker-login';
+  } else {
+    loginUrl.pathname = '/login';
+  }
+
+  loginUrl.search = '';
+  loginUrl.searchParams.set('redirect', pathname);
+  return loginUrl;
+}
+
+function copyResponseCookies(sourceResponse, targetResponse) {
+  sourceResponse?.cookies?.getAll?.().forEach(cookie => {
+    targetResponse.cookies.set(cookie.name, cookie.value, cookie);
+  });
+  return targetResponse;
+}
+
+function getAuthUnavailableResponse(request) {
+  const unavailableUrl = request.nextUrl.clone();
+  const originalTarget = `${request.nextUrl.pathname}${request.nextUrl.search || ''}`;
+
+  unavailableUrl.pathname = '/auth-unavailable';
+  unavailableUrl.search = '';
+  unavailableUrl.searchParams.set('redirect', originalTarget);
+
+  const response = NextResponse.redirect(unavailableUrl, 307);
+  response.headers.set('Cache-Control', 'no-store, max-age=0');
+  response.headers.set('Retry-After', '5');
+  return response;
 }
 
 export async function proxy(request) {
@@ -86,18 +131,7 @@ export async function proxy(request) {
   );
 
   if (!hasAuthCookie) {
-    const loginUrl = request.nextUrl.clone();
-
-    if (pathname === '/portal' || pathname.startsWith('/portal/')) {
-      loginUrl.pathname = '/portal/login';
-    } else if (isWorkerRoute) {
-      loginUrl.pathname = '/worker-login';
-    } else {
-      loginUrl.pathname = '/login';
-    }
-
-    loginUrl.searchParams.set('redirect', pathname);
-    return NextResponse.redirect(loginUrl);
+    return NextResponse.redirect(getLoginUrl(request, pathname, isWorkerRoute));
   }
 
   let supabaseResponse = NextResponse.next({ request });
@@ -107,10 +141,8 @@ export async function proxy(request) {
     const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
     if (!supabaseUrl || !supabaseAnonKey) {
-      return NextResponse.json(
-        { error: 'Authentication service is unavailable.' },
-        { status: 503, headers: { 'Cache-Control': 'no-store', 'Retry-After': '30' } }
-      );
+      console.error('Proxy authentication configuration is missing.');
+      return getAuthUnavailableResponse(request);
     }
 
     const supabase = createServerClient(
@@ -132,27 +164,16 @@ export async function proxy(request) {
       }
     );
 
-    const {
-      data: { user } = {}
-    } = await withTimeout(supabase.auth.getUser());
+    const authResult = await withTimeout(
+      supabase.auth.getUser(),
+      AUTH_VERIFY_TIMEOUT_MS,
+      'Supabase authentication verification'
+    );
+    const user = authResult?.data?.user || null;
 
     if (!user) {
-      const loginUrl = request.nextUrl.clone();
-
-      if (pathname === '/portal' || pathname.startsWith('/portal/')) {
-        loginUrl.pathname = '/portal/login';
-      } else if (isWorkerRoute) {
-        loginUrl.pathname = '/worker-login';
-      } else {
-        loginUrl.pathname = '/login';
-      }
-
-      loginUrl.searchParams.set('redirect', pathname);
-      const redirectResponse = NextResponse.redirect(loginUrl);
-      supabaseResponse.cookies.getAll().forEach(cookie => {
-        redirectResponse.cookies.set(cookie.name, cookie.value, cookie);
-      });
-      return redirectResponse;
+      const redirectResponse = NextResponse.redirect(getLoginUrl(request, pathname, isWorkerRoute));
+      return copyResponseCookies(supabaseResponse, redirectResponse);
     }
 
     const isAdminRoute = ADMIN_PREFIXES.some(
@@ -160,22 +181,26 @@ export async function proxy(request) {
     );
 
     if (isAdminRoute && !hasTrustedAdminMetadata(user)) {
-      const { data: adminData } = await withTimeout(
+      const adminResult = await withTimeout(
         supabase
           .from('admins')
           .select('email')
           .ilike('email', user.email)
-          .maybeSingle()
-      ).catch(() => ({ data: null }));
+          .maybeSingle(),
+        ROLE_LOOKUP_TIMEOUT_MS,
+        'Admin authorization verification'
+      );
 
-      if (!adminData) {
+      if (adminResult?.error) {
+        throw new Error('Admin authorization lookup failed.');
+      }
+
+      if (!adminResult?.data) {
         const clientUrl = request.nextUrl.clone();
         clientUrl.pathname = '/client-portal';
+        clientUrl.search = '';
         const redirectResponse = NextResponse.redirect(clientUrl);
-        supabaseResponse.cookies.getAll().forEach(cookie => {
-          redirectResponse.cookies.set(cookie.name, cookie.value, cookie);
-        });
-        return redirectResponse;
+        return copyResponseCookies(supabaseResponse, redirectResponse);
       }
     }
 
@@ -193,22 +218,28 @@ export async function proxy(request) {
               .from('workers')
               .select('id, status')
               .ilike('email', user.email)
-              .maybeSingle()
-          ).catch(() => ({ data: null })),
+              .maybeSingle(),
+            ROLE_LOOKUP_TIMEOUT_MS,
+            'Worker authorization verification'
+          ),
           withTimeout(
             supabase
               .from('worker_profiles')
               .select('id, status')
               .ilike('email', user.email)
-              .maybeSingle()
-          ).catch(() => ({ data: null })),
+              .maybeSingle(),
+            ROLE_LOOKUP_TIMEOUT_MS,
+            'Worker profile authorization verification'
+          ),
           withTimeout(
             supabase
               .from('admins')
               .select('email')
               .ilike('email', user.email)
-              .maybeSingle()
-          ).catch(() => ({ data: null }))
+              .maybeSingle(),
+            ROLE_LOOKUP_TIMEOUT_MS,
+            'Worker admin authorization verification'
+          )
         ]);
 
         const workerStatus = String(workerResult?.data?.status || '').toLowerCase();
@@ -218,14 +249,22 @@ export async function proxy(request) {
           profileStatus === 'active' ||
           Boolean(adminResult?.data);
 
+        const lookupFailed = Boolean(
+          workerResult?.error ||
+          profileResult?.error ||
+          adminResult?.error
+        );
+
+        if (!isAuthorized && lookupFailed) {
+          throw new Error('Worker authorization lookup failed.');
+        }
+
         if (!isAuthorized) {
           const redirectUrl = request.nextUrl.clone();
           redirectUrl.pathname = pathname.startsWith('/portal') ? '/portal/login' : '/client-portal';
+          redirectUrl.search = '';
           const redirectResponse = NextResponse.redirect(redirectUrl);
-          supabaseResponse.cookies.getAll().forEach(cookie => {
-            redirectResponse.cookies.set(cookie.name, cookie.value, cookie);
-          });
-          return redirectResponse;
+          return copyResponseCookies(supabaseResponse, redirectResponse);
         }
       }
     }
@@ -233,10 +272,7 @@ export async function proxy(request) {
     return supabaseResponse;
   } catch (err) {
     console.warn('Middleware auth verification failed closed:', err?.message || err);
-    return NextResponse.json(
-      { error: 'Authentication verification is temporarily unavailable.' },
-      { status: 503, headers: { 'Cache-Control': 'no-store', 'Retry-After': '15' } }
-    );
+    return getAuthUnavailableResponse(request);
   }
 }
 

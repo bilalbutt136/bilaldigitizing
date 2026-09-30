@@ -24,7 +24,7 @@ export const ClientLayoutShell = ({ children }) => {
   const { mobileMode } = useAppState();
   const pathname = usePathname() || '';
   const isAppMode = mobileMode === 'app';
-  const isDedicatedAuthRoute = ['/login', '/signup', '/reset-password', '/secure-admin-login'].includes(pathname);
+  const isDedicatedAuthRoute = ['/login', '/signup', '/reset-password', '/secure-admin-login', '/auth-unavailable'].includes(pathname);
   const isPortalRoute = pathname.startsWith('/client-portal') || pathname.startsWith('/admin-portal') || pathname === '/client' || pathname === '/admin';
   const isCompactShell = isDedicatedAuthRoute || isPortalRoute;
   const isWorkerPortal = pathname.startsWith('/portal') || pathname.startsWith('/worker');
