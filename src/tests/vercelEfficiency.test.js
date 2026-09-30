@@ -49,14 +49,19 @@ test('Vercel efficiency: hot chat endpoints have a cheap burst guard', () => {
   }
 });
 
-test('Mobile PDF preview uses a local blob URL so remote frame headers cannot block it', () => {
+test('Mobile PDF preview renders with PDF.js canvas instead of native iframe PDF embedding', () => {
   const downloader = read('src/utils/fileDownloader.js');
   const modal = read('src/components/common/PdfPreviewModal.jsx');
   const nextConfig = read('next.config.js');
 
   assert.match(downloader, /createFrameSafePdfPreviewUrl/);
-  assert.match(downloader, /new Blob\(\[buffer\], \{ type: 'application\/pdf' \}\)/);
-  assert.match(modal, /createFrameSafePdfPreviewUrl/);
-  assert.match(modal, /src=\{previewUrl\}/);
-  assert.match(nextConfig, /frame-src 'self' blob:/);
+  assert.match(modal, /pdfjs-dist\/build\/pdf\.mjs/);
+  assert.match(modal, /PDF_WORKER_SRC = '\/pdf\.worker\.min\.mjs'/);
+  assert.match(modal, /page\.render\(/);
+  assert.match(modal, /document\.createElement\('canvas'\)/);
+  assert.equal(modal.includes('<iframe'), false, 'PDF preview must not depend on mobile browser iframe PDF support');
+  assert.equal(fs.existsSync('public/pdf.worker.min.mjs'), true, 'Self-hosted PDF.js worker must ship with the app');
+  assert.equal(fs.existsSync('app/pdf-viewer/page.jsx'), true, 'Direct PDF opens must have a same-origin viewer route');
+  assert.match(downloader, /\/pdf-viewer\?url=/);
+  assert.match(nextConfig, /worker-src 'self' blob:/);
 });

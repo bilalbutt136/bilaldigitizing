@@ -440,12 +440,14 @@ export async function openPdfInNewTab(url, filename = 'document.pdf') {
     }
   }
 
-  // 3. Direct CDN/storage preview where possible; proxy only as fallback.
-  const previewProxyUrl = getPreviewUrl(resolvedUrl, cleanFilename);
+  // 3. Use the same-origin PDF.js viewer instead of the browser's native PDF
+  // plugin. Android Chrome and installed PWAs/WebViews do not reliably render
+  // PDF files inline, even when the file itself is valid.
+  const viewerUrl = `/pdf-viewer?url=${encodeURIComponent(resolvedUrl)}&filename=${encodeURIComponent(cleanFilename)}`;
 
   try {
     const a = document.createElement('a');
-    a.href = previewProxyUrl;
+    a.href = viewerUrl;
     a.target = '_blank';
     a.rel = 'noopener noreferrer';
     document.body.appendChild(a);
@@ -455,7 +457,7 @@ export async function openPdfInNewTab(url, filename = 'document.pdf') {
     }, 1000);
     return;
   } catch {
-    const newTab = window.open(previewProxyUrl, '_blank');
+    const newTab = window.open(viewerUrl, '_blank');
     if (newTab) newTab.opener = null;
   }
 }
