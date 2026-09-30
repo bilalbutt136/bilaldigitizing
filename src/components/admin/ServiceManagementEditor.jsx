@@ -629,7 +629,7 @@ export const ServiceManagementEditor = () => {
                     className="form-control"
                     value={formData.image}
                     onChange={(e) => setFormData(p => ({ ...p, image: e.target.value }))}
-                    placeholder="https://images.unsplash.com/..."
+                    placeholder="/service-preview-placeholder.svg"
                   />
                 </div>
               )}

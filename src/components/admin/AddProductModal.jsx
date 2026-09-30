@@ -25,7 +25,7 @@ export const AddProductModal = ({ isOpen, onClose }) => {
   const [badge, setBadge] = useState('NEW ARRIVAL');
   const [selectedSizes, setSelectedSizes] = useState(['S', 'M', 'L', 'XL', '2XL']);
   const [colorsText, setColorsText] = useState('Classic Black, Navy Blue, Heather Gray');
-  const [image, setImage] = useState('https://images.unsplash.com/photo-1556905055-8f358a7a47b2?auto=format&fit=crop&w=800&q=80');
+  const [image, setImage] = useState('/product-placeholder.svg');
   const [description, setDescription] = useState('Premium custom embroidered apparel with high stitch density artwork.');
   const [featuresText, setFeaturesText] = useState('100% Heavyweight Cotton\nHigh stitch count embroidery\nFree digital sew-out proof\nFast 5-7 day production');
   const [isUploading, setIsUploading] = useState(false);
@@ -91,7 +91,7 @@ export const AddProductModal = ({ isOpen, onClose }) => {
       minQuantity: parseInt(minQuantity, 10) || 1,
       badge: badge.trim() || 'NEW',
       status: 'active',
-      image: image.trim() || 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&w=800&q=80',
+      image: image.trim() || '/product-placeholder.svg',
       description: description.trim(),
       sizes: selectedSizes.length > 0 ? selectedSizes : ['Standard'],
       colors: colorsText.split(',').map(c => c.trim()).filter(Boolean),

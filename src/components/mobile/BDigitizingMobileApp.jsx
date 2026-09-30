@@ -2547,7 +2547,7 @@ export const BDigitizingMobileApp = ({ initialTab = 'home' }) => {
               }
 
               return filtered.map(ord => {
-                const primaryImg = ord?.artworkUrl || ord?.image_url || ord?.logo || ord?.uploadedFiles?.[0]?.url || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=120&q=80';
+                const primaryImg = ord?.artworkUrl || ord?.image_url || ord?.logo || ord?.uploadedFiles?.[0]?.url || '/artwork-placeholder.svg';
                 const isUnpaid = isOrderUnpaid(ord);
                 const s = String(ord?.status || '').toLowerCase().trim();
                 const isDelivered = (s === 'delivered' || (Array.isArray(ord?.uploadedMachineFiles) && ord.uploadedMachineFiles.length > 0)) && s !== 'completed';
@@ -2631,7 +2631,7 @@ export const BDigitizingMobileApp = ({ initialTab = 'home' }) => {
                         alt={ord.title}
                         onError={(e) => {
                           e.currentTarget.onerror = null;
-                          e.currentTarget.src = 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=120&q=80';
+                          e.currentTarget.src = '/artwork-placeholder.svg';
                         }}
                         style={{
                           width: '48px',

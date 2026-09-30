@@ -57,7 +57,7 @@ export const ArtworkLightboxModal = ({ order, onClose }) => {
     notesFiles[0]?.url ||
     notesFiles[0]?.public_url ||
     (order.file_path && order.file_path.startsWith('http') ? order.file_path : null) ||
-    'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=600&q=80';
+    '/artwork-placeholder.svg';
 
   const rawFileName =
     order.artworkFileName ||
@@ -167,6 +167,10 @@ export const ArtworkLightboxModal = ({ order, onClose }) => {
               <img
                 src={imageSrc}
                 alt={order.title || 'Artwork'}
+                onError={(e) => {
+                  e.currentTarget.onerror = null;
+                  e.currentTarget.src = '/artwork-placeholder.svg';
+                }}
                 style={{
                   maxHeight: '460px',
                   maxWidth: '100%',

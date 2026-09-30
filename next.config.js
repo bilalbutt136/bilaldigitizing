@@ -10,7 +10,7 @@ const contentSecurityPolicy = [
   "font-src 'self' data:",
   "img-src 'self' data: blob: https:",
   "media-src 'self' blob: https:",
-  "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.cloudinary.com https://res.cloudinary.com https://accounts.google.com https://www.facebook.com https://graph.facebook.com https://api.stripe.com https://checkout.stripe.com",
+  "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.cloudinary.com https://res.cloudinary.com https://images.unsplash.com https://accounts.google.com https://www.facebook.com https://graph.facebook.com https://api.stripe.com https://checkout.stripe.com",
   "frame-src 'self' https://accounts.google.com https://js.stripe.com https://hooks.stripe.com https://checkout.stripe.com",
   "worker-src 'self' blob:",
   "manifest-src 'self'",

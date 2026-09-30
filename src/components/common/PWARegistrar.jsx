@@ -91,7 +91,8 @@ export const PWARegistrar = () => {
 
     const registerSW = async () => {
       try {
-        const reg = await navigator.serviceWorker.register('/sw.js');
+        const reg = await navigator.serviceWorker.register('/sw.js', { updateViaCache: 'none' });
+        reg.update().catch(() => {});
         await setupPush(reg);
 
         // If permission is default, politely request on first user touch/click

@@ -242,7 +242,7 @@ export const HeroServicesEditor = () => {
     const newImageItem = {
       id: `img-${Date.now()}`,
       title: `Showcase Image #${images.length + 1}`,
-      image_url: 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&q=80&w=1000',
+      image_url: '/service-preview-placeholder.svg',
       display_order: maxOrder + 1,
       is_active: true
     };

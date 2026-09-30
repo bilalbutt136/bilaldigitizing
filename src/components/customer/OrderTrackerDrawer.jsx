@@ -469,9 +469,9 @@ export const OrderTrackerDrawer = () => {
     uniqueArtworkFiles[0]?.url ||
     uniqueArtworkFiles[0]?.public_url ||
     (ord.file_path && ord.file_path.startsWith('http') ? ord.file_path : null) ||
-    'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=600&q=80';
+    '/artwork-placeholder.svg';
 
-  if (uniqueArtworkFiles.length === 0 && primaryArtworkSrc && !primaryArtworkSrc.includes('images.unsplash.com')) {
+  if (uniqueArtworkFiles.length === 0 && primaryArtworkSrc && primaryArtworkSrc !== '/artwork-placeholder.svg') {
     const inferredExt = (primaryArtworkSrc.split('.').pop()?.split('?')[0] || 'png').toLowerCase();
     uniqueArtworkFiles.push({
       url: primaryArtworkSrc,
@@ -2048,7 +2048,7 @@ export const OrderTrackerDrawer = () => {
                     alt="Design"
                     onError={(e) => {
                       e.currentTarget.onerror = null;
-                      e.currentTarget.src = 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=600&q=80';
+                      e.currentTarget.src = '/artwork-placeholder.svg';
                     }}
                     style={{ width: '100%', height: '100%', objectFit: 'contain', padding: '6px' }}
                   />

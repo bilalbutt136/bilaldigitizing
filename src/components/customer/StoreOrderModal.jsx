@@ -152,7 +152,7 @@ export const StoreOrderModal = () => {
     }
 
     // Build store order object with explicit product image schema
-    const productImage = selectedStoreItem.image || selectedStoreItem.artworkUrl || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=600&q=80';
+    const productImage = selectedStoreItem.image || selectedStoreItem.artworkUrl || '/product-placeholder.svg';
 
     const newStoreOrder = {
       title: `${selectedStoreItem.title} (${quantity} pcs - ${selectedSize})`,

@@ -541,7 +541,7 @@ export const StoreManagementEditor = () => {
                     {/* Product Image Thumbnail */}
                     <div style={{ position: 'relative', flexShrink: 0 }}>
                       <img 
-                        src={order.productImage || order.details?.productImage || order.image_url || order.artworkUrl || order.logo || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=150&q=80'} 
+                        src={order.productImage || order.details?.productImage || order.image_url || order.artworkUrl || order.logo || '/product-placeholder.svg'}
                         alt={order.details?.itemTitle || order.title} 
                         style={{
                           width: '84px',
@@ -554,7 +554,7 @@ export const StoreManagementEditor = () => {
                         }}
                         onError={(e) => {
                           e.currentTarget.onerror = null;
-                          e.currentTarget.src = 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=150&q=80';
+                          e.currentTarget.src = '/product-placeholder.svg';
                         }}
                       />
                       <span style={{

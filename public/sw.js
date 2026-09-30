@@ -1,7 +1,10 @@
 // BDigitizing Studio PWA Service Worker with Native Push & Lock-Screen Alerts
-const CACHE_VERSION = 'bdigi-pwa-v4.0';
+const CACHE_VERSION = 'bdigi-pwa-v4.1';
 const STATIC_ASSETS = [
-  '/manifest.json'
+  '/manifest.json',
+  '/artwork-placeholder.svg',
+  '/service-preview-placeholder.svg',
+  '/product-placeholder.svg'
 ];
 
 self.addEventListener('install', (event) => {
@@ -36,60 +39,104 @@ self.addEventListener('message', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-  // Pass through non-GET, API requests, and Next.js chunks directly to network
+  const request = event.request;
+
+  if (request.method !== 'GET') return;
+
+  let requestUrl;
+  try {
+    requestUrl = new URL(request.url);
+  } catch {
+    return;
+  }
+
+  // Never proxy cross-origin resources through the service worker.
+  // External images/scripts use the document CSP and normal browser cache.
+  if (requestUrl.origin !== self.location.origin) {
+    return;
+  }
+
+  // API calls, Next.js chunks, and byte-range requests should bypass SW caching.
   if (
-    event.request.method !== 'GET' ||
-    event.request.url.includes('/api/') ||
-    event.request.url.includes('/_next/')
+    requestUrl.pathname.startsWith('/api/') ||
+    requestUrl.pathname.startsWith('/_next/') ||
+    request.headers.has('range')
   ) {
     return;
   }
 
-  // Favicons, uploaded images, and dynamic assets: always fetch network-first to reflect updates immediately
-  if (
-    event.request.url.includes('favicon') ||
-    event.request.url.includes('apple-touch-icon') ||
-    event.request.url.includes('icon-') ||
-    event.request.url.includes('cloudinary') ||
-    event.request.url.includes('supabase.co')
-  ) {
-    event.respondWith(
-      fetch(event.request).catch(() => caches.match(event.request))
-    );
-    return;
-  }
-
-  // Network-First Strategy for HTML Navigation to always load latest code from Vercel
-  if (event.request.mode === 'navigate' || event.request.headers.get('accept')?.includes('text/html')) {
-    event.respondWith(
-      fetch(event.request)
-        .catch(() => {
-          return caches.match('/');
-        })
-    );
-    return;
-  }
-
-  // Stale-while-revalidate for standalone static assets (icons, manifest)
-  event.respondWith(
-    caches.match(event.request).then((cachedResponse) => {
-      const fetchPromise = fetch(event.request)
-        .then((networkResponse) => {
-          if (networkResponse && networkResponse.status === 200) {
-            const responseToCache = networkResponse.clone();
-            caches.open(CACHE_VERSION).then((cache) => {
-              cache.put(event.request, responseToCache).catch(() => {});
-            });
-          }
-          return networkResponse;
-        })
-        .catch(() => cachedResponse);
-
-      return cachedResponse || fetchPromise;
-    })
+  const offlineHtmlResponse = () => new Response(
+    '<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>BDigitizing</title></head><body style="font-family:Arial,sans-serif;padding:2rem;color:#0f172a"><h1>You are offline</h1><p>Please reconnect and try again.</p></body></html>',
+    {
+      status: 503,
+      statusText: 'Offline',
+      headers: {
+        'Content-Type': 'text/html; charset=utf-8',
+        'Cache-Control': 'no-store'
+      }
+    }
   );
-});
 
+  const networkFirst = async () => {
+    try {
+      return await fetch(request);
+    } catch {
+      const cached = await caches.match(request);
+      return cached || offlineHtmlResponse();
+    }
+  };
+
+  // HTML navigation is network-first so layout and bundles never get stuck on stale markup.
+  if (request.mode === 'navigate' || request.headers.get('accept')?.includes('text/html')) {
+    event.respondWith(networkFirst());
+    return;
+  }
+
+  // Branding assets update immediately, with cached fallback only when offline.
+  if (
+    requestUrl.pathname.includes('favicon') ||
+    requestUrl.pathname.includes('apple-touch-icon') ||
+    requestUrl.pathname.includes('icon-')
+  ) {
+    event.respondWith(networkFirst());
+    return;
+  }
+
+  // Same-origin stale-while-revalidate. Always resolve to a Response so failed
+  // requests cannot create repeated 'Uncaught (in promise)' fetch loops.
+  event.respondWith((async () => {
+    const cached = await caches.match(request);
+
+    if (cached) {
+      event.waitUntil(
+        fetch(request)
+          .then(async (networkResponse) => {
+            if (networkResponse?.ok && networkResponse.type === 'basic') {
+              const cache = await caches.open(CACHE_VERSION);
+              await cache.put(request, networkResponse.clone());
+            }
+          })
+          .catch(() => {})
+      );
+      return cached;
+    }
+
+    try {
+      const networkResponse = await fetch(request);
+      if (networkResponse?.ok && networkResponse.type === 'basic') {
+        const cache = await caches.open(CACHE_VERSION);
+        await cache.put(request, networkResponse.clone());
+      }
+      return networkResponse;
+    } catch {
+      return new Response('', {
+        status: 503,
+        statusText: 'Offline',
+        headers: { 'Cache-Control': 'no-store' }
+      });
+    }
+  })());
+});
 // =============================================================================
 // NATIVE MOBILE PUSH NOTIFICATIONS (WHATSAPP-STYLE LOCK SCREEN POPUPS)
 // =============================================================================

@@ -822,7 +822,7 @@ export const WorkerDashboard = ({ worker, logoutRoute = '/portal/login' }) => {
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
             {filteredOrders.map(ord => {
-              const artworkSrc = ord.artworkUrl || ord.image_url || ord.logo || ord.uploadedFiles?.[0]?.url || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=120&q=80';
+              const artworkSrc = ord.artworkUrl || ord.image_url || ord.logo || ord.uploadedFiles?.[0]?.url || '/artwork-placeholder.svg';
               const dimensions = ord.dimensions || { width: '3.5', height: '3.0', unit: 'in' };
               const isRevision = ord.worker_status === 'Revisions Needed';
               const isPendingAcceptance = ord.worker_status === 'Pending_Worker_Acceptance';
@@ -859,6 +859,10 @@ export const WorkerDashboard = ({ worker, logoutRoute = '/portal/login' }) => {
                       <img
                         src={artworkSrc}
                         alt={ord.title}
+                        onError={(e) => {
+                          e.currentTarget.onerror = null;
+                          e.currentTarget.src = '/artwork-placeholder.svg';
+                        }}
                         style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                       />
                     </div>

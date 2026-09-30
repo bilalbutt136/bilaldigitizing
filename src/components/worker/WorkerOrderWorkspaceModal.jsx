@@ -189,7 +189,7 @@ export const WorkerOrderWorkspaceModal = ({ order, isOpen, onClose, onOrderUpdat
 
   if (!isOpen || !order) return null;
 
-  const artworkSrc = order.artworkUrl || order.image_url || order.logo || order.uploadedFiles?.[0]?.url || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=400&q=80';
+  const artworkSrc = order.artworkUrl || order.image_url || order.logo || order.uploadedFiles?.[0]?.url || '/artwork-placeholder.svg';
   const dimensions = order.dimensions || { width: '3.5', height: '3.0', unit: 'inches' };
   const requestedFormats = Array.isArray(order.requestedFormats) ? order.requestedFormats : (order.requested_formats || ['dst', 'pes']);
   const workerStatus = order.workerStatus || order.worker_status || 'Unassigned';
@@ -558,7 +558,7 @@ export const WorkerOrderWorkspaceModal = ({ order, isOpen, onClose, onOrderUpdat
                     style={{ width: '100%', height: '100%', objectFit: 'contain' }}
                     onError={(e) => {
                       e.currentTarget.onerror = null;
-                      e.currentTarget.src = 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=400&q=80';
+                      e.currentTarget.src = '/artwork-placeholder.svg';
                     }}
                   />
                   <div style={{

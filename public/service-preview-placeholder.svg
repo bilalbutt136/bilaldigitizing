@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800" viewBox="0 0 1200 800" role="img" aria-labelledby="title desc">
+  <title id="title">Service preview placeholder</title>
+  <desc id="desc">BDigitizing service preview placeholder</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#0f172a"/>
+      <stop offset="1" stop-color="#1e293b"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" x2="1">
+      <stop offset="0" stop-color="#f97316"/>
+      <stop offset="1" stop-color="#ea580c"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="800" fill="url(#bg)"/>
+  <circle cx="970" cy="150" r="250" fill="#f97316" opacity=".08"/>
+  <circle cx="210" cy="690" r="300" fill="#38bdf8" opacity=".06"/>
+  <rect x="110" y="140" width="980" height="520" rx="42" fill="#fff" opacity=".04" stroke="#334155" stroke-width="3"/>
+  <rect x="160" y="205" width="116" height="116" rx="30" fill="url(#accent)"/>
+  <text x="218" y="280" text-anchor="middle" font-family="Arial, sans-serif" font-size="52" font-weight="800" fill="#fff">BD</text>
+  <text x="160" y="400" font-family="Arial, sans-serif" font-size="56" font-weight="800" fill="#fff">Professional Digitizing</text>
+  <text x="160" y="470" font-family="Arial, sans-serif" font-size="30" fill="#cbd5e1">Production-ready embroidery, vector & patch services</text>
+  <rect x="160" y="535" width="330" height="70" rx="35" fill="url(#accent)"/>
+  <text x="325" y="579" text-anchor="middle" font-family="Arial, sans-serif" font-size="26" font-weight="700" fill="#fff">BDigitizing Studio</text>
+</svg>

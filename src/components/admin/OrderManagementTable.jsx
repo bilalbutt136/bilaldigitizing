@@ -734,7 +734,7 @@ export const OrderManagementTable = () => {
                   ord.order_files?.[0]?.public_url ||
                   ord.order_files?.[0]?.file_url ||
                   (ord.file_path && ord.file_path.startsWith('http') ? ord.file_path : null) ||
-                  'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=120&q=80';
+                  '/artwork-placeholder.svg';
 
                 const thumbnailSrc = (artworkImg.includes('cloudinary.com') && artworkImg.toLowerCase().includes('.pdf'))
                   ? artworkImg.replace(/\.pdf(\?.*)?$/i, '.jpg$1')
@@ -840,7 +840,7 @@ export const OrderManagementTable = () => {
                           decoding="async"
                           onError={(e) => {
                             e.currentTarget.onerror = null;
-                            e.currentTarget.src = 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=120&q=80';
+                            e.currentTarget.src = '/artwork-placeholder.svg';
                           }}
                           style={{
                             width: '38px',
