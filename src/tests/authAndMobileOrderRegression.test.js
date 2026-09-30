@@ -59,11 +59,12 @@ describe('Login Stability & Mobile Order Tracking Regression', () => {
     assert.match(source, /trackingState\.helper/);
   });
 
-  test('full order tracker uses the same mobile-safe progress model and compact labels', () => {
+  test('full order tracker uses the same mobile-safe progress model with a simplified status card', () => {
     const source = read('src/components/customer/OrderTrackerDrawer.jsx');
     assert.match(source, /getMobileOrderTrackingState\(ord\)/);
     assert.match(source, /mobileTrackingState\.progress/);
-    assert.match(source, /isMobileLayout \? 'QC' : 'Quality Check'/);
-    assert.match(source, /repeat\(4, minmax\(0, 1fr\)\)/);
+    assert.match(source, /SIMPLE ORDER STATUS/);
+    assert.match(source, /mobileTrackingState\.helper/);
+    assert.equal(source.includes("repeat(4, minmax(0, 1fr))"), false);
   });
 });

@@ -363,7 +363,6 @@ export const OrderTrackerDrawer = () => {
   // Normalize status — treat 'revision_requested' as 'revision' for all UI guards
   const normalizedStatus = (ord.status === 'revision_requested') ? 'revision' : (ord.status || 'submitted');
   const mobileTrackingState = getMobileOrderTrackingState(ord);
-  const trackerStage = mobileTrackingState.unpaid ? 1 : Math.max(1, mobileTrackingState.stage);
 
   // Files are considered ready ONLY when status is exactly 'delivered' or 'completed'
   const isDelivered = normalizedStatus === 'delivered' || normalizedStatus === 'completed';
@@ -1002,7 +1001,7 @@ export const OrderTrackerDrawer = () => {
                   {formatOrderId(ord.id)}
                 </span>
                 {getStatusBadge()}
-                {isPaid ? (
+                {!isMobileLayout && (isPaid ? (
                   <span style={{ background: 'rgba(16, 185, 129, 0.18)', color: '#10b981', border: '1px solid rgba(16, 185, 129, 0.4)', fontWeight: 800, padding: '0.12rem 0.45rem', borderRadius: '9999px', fontSize: '0.7rem', display: 'inline-flex', alignItems: 'center', gap: '0.2rem' }}>
                     <Check size={11} /> PAID
                   </span>
@@ -1010,14 +1009,13 @@ export const OrderTrackerDrawer = () => {
                   <span style={{ background: '#fef3c7', color: '#d97706', border: '1px solid #fde68a', fontWeight: 800, padding: '0.12rem 0.45rem', borderRadius: '9999px', fontSize: '0.7rem', display: 'inline-flex', alignItems: 'center', gap: '0.2rem' }}>
                     <Clock size={11} /> PENDING
                   </span>
-                )}
+                ))}
 
               </div>
               <div style={{ fontSize: '0.74rem', color: '#94a3b8', marginTop: '0.15rem', display: 'flex', alignItems: 'center', gap: '0.35rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 <span>{ord.serviceCategory || (ord.type === 'vector' ? 'Vector Art' : 'Embroidery Digitizing')}</span>
-                <span>•</span>
-                <span>{formattedSubmissionDate}</span>
-                {ord.clientName && <span>• Client: <strong style={{ color: '#ffffff' }}>{ord.clientName}</strong></span>}
+                {!isMobileLayout && <><span>•</span><span>{formattedSubmissionDate}</span></>}
+                {!isMobileLayout && ord.clientName && <span>• Client: <strong style={{ color: '#ffffff' }}>{ord.clientName}</strong></span>}
               </div>
             </div>
           </div>
@@ -1032,7 +1030,7 @@ export const OrderTrackerDrawer = () => {
               borderRadius: '10px',
               width: '34px',
               height: '34px',
-              display: 'flex',
+              display: isMobileLayout ? 'none' : 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               cursor: 'pointer',
@@ -1045,103 +1043,61 @@ export const OrderTrackerDrawer = () => {
         </div>
 
         {/* ==================================================================
-            2. QUICK NAV TOOLBAR ON SINGLE PAGE
+            2. PRIMARY ORDER NAVIGATION
            ================================================================== */}
         <div style={{
           display: 'flex',
           borderBottom: '1px solid var(--border-color)',
           background: 'var(--bg-surface)',
           padding: isMobileLayout ? '0.5rem 0.75rem' : '0.6rem 1.5rem',
-          gap: '0.4rem',
+          gap: '0.45rem',
           overflowX: 'auto',
           flexShrink: 0,
           WebkitOverflowScrolling: 'touch',
           scrollbarWidth: 'none'
         }}>
           <button
-            type="button"
+            type='button'
             onClick={() => {
               setIsRequirementsOpen(true);
               scrollToSection(requirementsRef, 'requirements');
             }}
-            className={`btn btn-sm ${activeSection === 'requirements' ? 'btn-primary-orange' : 'btn-outline'}`}
-            style={{ fontWeight: 800, fontSize: '0.8rem', gap: '0.35rem' }}
+            className={'btn btn-sm ' + (activeSection === 'requirements' ? 'btn-primary-orange' : 'btn-outline')}
+            style={{ flex: isMobileLayout ? 1 : undefined, justifyContent: 'center', fontWeight: 800, fontSize: '0.8rem', gap: '0.3rem', whiteSpace: 'nowrap' }}
           >
             <FileText size={14} /> Details
           </button>
 
           {isAdmin && (
             <button
-              type="button"
+              type='button'
               onClick={() => scrollToSection(workerDeskRef, 'worker')}
-              className={`btn btn-sm ${activeSection === 'worker' ? 'btn-primary-orange' : 'btn-outline'}`}
-              style={{ fontWeight: 800, fontSize: '0.8rem', gap: '0.35rem', borderColor: ord.worker_id ? '#38bdf8' : '#f59e0b' }}
+              className={'btn btn-sm ' + (activeSection === 'worker' ? 'btn-primary-orange' : 'btn-outline')}
+              style={{ fontWeight: 800, fontSize: '0.8rem', gap: '0.3rem', whiteSpace: 'nowrap' }}
             >
-              <UserCheck size={14} /> Worker & QA Desk
+              <UserCheck size={14} /> Worker & QA
             </button>
           )}
 
           <button
-            type="button"
+            type='button'
             onClick={() => scrollToSection(deliveryRef, 'delivery')}
-            className={`btn btn-sm ${activeSection === 'delivery' ? 'btn-primary-orange' : 'btn-outline'}`}
-            style={{
-              fontWeight: 800,
-              fontSize: '0.8rem',
-              gap: '0.35rem',
-              borderColor: (isCompleted || isDelivered) ? '#10b981' : undefined,
-              color: (isCompleted || isDelivered) && activeSection !== 'delivery' ? '#047857' : undefined,
-              background: (isCompleted || isDelivered) && activeSection !== 'delivery' ? '#ecfdf5' : undefined
-            }}
+            className={'btn btn-sm ' + (activeSection === 'delivery' ? 'btn-primary-orange' : 'btn-outline')}
+            style={{ flex: isMobileLayout ? 1 : undefined, justifyContent: 'center', fontWeight: 800, fontSize: '0.8rem', gap: '0.3rem', whiteSpace: 'nowrap' }}
           >
-            <PackageCheck size={14} /> {isAdmin ? 'Delivery Desk' : 'Files'}
+            <PackageCheck size={14} /> Files
           </button>
 
-          {/* Request Modification Tab: ONLY visible to CUSTOMER when delivered or in revision, NEVER to admin and NEVER when completed */}
-          {!isAdmin && !isCompleted && (normalizedStatus === 'delivered' || isInRevision) && (
-            <button
-              type="button"
-              onClick={() => scrollToSection(modificationRef, 'modification')}
-              className={`btn btn-sm ${activeSection === 'modification' ? 'btn-primary-orange' : 'btn-outline'}`}
-              style={{ fontWeight: 800, fontSize: '0.8rem', gap: '0.35rem' }}
-            >
-              <RotateCcw size={14} /> {isInRevision ? '🔄 In Revision' : 'Request Modification'}
-            </button>
-          )}
-
-          {/* Revision History Tab: visible when revisions exist (admin or completed customer) */}
-          {((!isAdmin && isCompleted) || isAdmin) && Array.isArray(ord.revisions) && ord.revisions.length > 0 && (
-            <button
-              type="button"
-              onClick={() => scrollToSection(modificationRef, 'modification')}
-              className={`btn btn-sm ${activeSection === 'modification' ? 'btn-primary-orange' : 'btn-outline'}`}
-              style={{ fontWeight: 800, fontSize: '0.8rem', gap: '0.35rem' }}
-            >
-              <RotateCcw size={14} /> Revision History ({ord.revisions.length})
-            </button>
-          )}
-
           <button
-            type="button"
+            type='button'
             onClick={() => setShowInvoiceModal(true)}
-            className="btn btn-sm btn-outline"
-            style={{
-              fontWeight: 800,
-              fontSize: '0.8rem',
-              gap: '0.35rem',
-              marginLeft: 'auto',
-              whiteSpace: 'nowrap',
-              background: 'var(--color-surface, #ffffff)',
-              borderColor: 'var(--border-color, #e2e8f0)'
-            }}
-            title="View & Download Official International Tax Invoice"
+            className='btn btn-sm btn-outline'
+            style={{ flex: isMobileLayout ? 1 : undefined, justifyContent: 'center', fontWeight: 800, fontSize: '0.8rem', gap: '0.3rem', whiteSpace: 'nowrap', background: 'var(--color-surface, #ffffff)', borderColor: 'var(--border-color, #e2e8f0)' }}
+            title='View invoice'
           >
             <Receipt size={14} style={{ color: 'var(--orange-500, #ea580c)' }} /> Invoice
           </button>
-
-
         </div>
-
         {/* ==================================================================
             3. MAIN SCROLLABLE CONTENT BODY (SINGLE PAGE)
            ================================================================== */}
@@ -1153,7 +1109,7 @@ export const OrderTrackerDrawer = () => {
           background: 'var(--bg-main)',
           display: 'flex',
           flexDirection: 'column',
-          gap: isMobileLayout ? '1rem' : '1.5rem',
+          gap: isMobileLayout ? '0.8rem' : '1.5rem',
           WebkitOverflowScrolling: 'touch'
         }}>
 
@@ -1374,20 +1330,33 @@ export const OrderTrackerDrawer = () => {
             </div>
           )}
 
-          {/* STEPPER PROGRESS TRACKER */}
+          {/* SIMPLE ORDER STATUS */}
           <div style={{
             background: 'var(--bg-card)',
-            border: '1.5px solid var(--border-color)',
-            borderRadius: isMobileLayout ? '13px' : '16px',
-            padding: isMobileLayout ? '0.75rem' : '1rem 1.4rem',
+            border: '1px solid var(--border-color)',
+            borderRadius: isMobileLayout ? '12px' : '14px',
+            padding: isMobileLayout ? '0.8rem 0.9rem' : '0.95rem 1.15rem',
             boxShadow: 'var(--shadow-sm)'
           }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.65rem', marginBottom: '0.55rem' }}>
-              <div style={{ minWidth: 0 }}>
-                <div style={{ fontSize: isMobileLayout ? '0.78rem' : '0.84rem', fontWeight: 900, color: 'var(--text-main)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <div style={{
+                width: '34px',
+                height: '34px',
+                borderRadius: '10px',
+                background: mobileTrackingState.ready ? '#ecfdf5' : (mobileTrackingState.unpaid ? '#fff7ed' : '#eff6ff'),
+                color: mobileTrackingState.ready ? '#059669' : (mobileTrackingState.unpaid ? '#ea580c' : '#2563eb'),
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0
+              }}>
+                {mobileTrackingState.ready ? <CheckCircle2 size={18} /> : <Clock size={18} />}
+              </div>
+              <div style={{ minWidth: 0, flex: 1 }}>
+                <div style={{ fontSize: '0.88rem', fontWeight: 900, color: 'var(--text-main)' }}>
                   {mobileTrackingState.label}
                 </div>
-                <div style={{ fontSize: isMobileLayout ? '0.65rem' : '0.72rem', color: 'var(--text-muted)', marginTop: '0.08rem', lineHeight: 1.3 }}>
+                <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '0.08rem', lineHeight: 1.35 }}>
                   {mobileTrackingState.helper}
                 </div>
               </div>
@@ -1395,8 +1364,7 @@ export const OrderTrackerDrawer = () => {
                 {mobileTrackingState.progress}%
               </span>
             </div>
-
-            <div style={{ height: '6px', borderRadius: '999px', overflow: 'hidden', background: 'var(--bg-subtle, #e2e8f0)', marginBottom: '0.7rem' }}>
+            <div style={{ height: '5px', borderRadius: '999px', overflow: 'hidden', background: 'var(--bg-subtle, #e2e8f0)', marginTop: '0.65rem' }}>
               <div style={{
                 width: String(mobileTrackingState.progress) + '%',
                 height: '100%',
@@ -1404,50 +1372,7 @@ export const OrderTrackerDrawer = () => {
                 background: mobileTrackingState.ready ? '#10b981' : (mobileTrackingState.unpaid ? '#ea580c' : '#2563eb')
               }} />
             </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: isMobileLayout ? '0.2rem' : '0.5rem', textAlign: 'center' }}>
-              {[
-                { step: 1, title: isMobileLayout ? (mobileTrackingState.unpaid ? 'Payment' : 'Received') : (mobileTrackingState.unpaid ? 'Pending Payment' : 'Order Received') },
-                { step: 2, title: isMobileLayout ? 'Production' : 'In Production' },
-                { step: 3, title: isMobileLayout ? 'QC' : 'Quality Check' },
-                { step: 4, title: isMobileLayout ? 'Ready' : (isCompleted ? 'Completed' : 'Ready Delivery') }
-              ].map(st => {
-                const passed = mobileTrackingState.ready ? true : trackerStage > st.step;
-                const current = !mobileTrackingState.ready && trackerStage === st.step;
-                return (
-                  <div key={st.step} style={{ minWidth: 0 }}>
-                    <div style={{
-                      width: isMobileLayout ? '26px' : '30px',
-                      height: isMobileLayout ? '26px' : '30px',
-                      borderRadius: '50%',
-                      margin: '0 auto 0.3rem auto',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontWeight: 900,
-                      fontSize: isMobileLayout ? '0.68rem' : '0.75rem',
-                      background: passed ? '#10b981' : current ? (mobileTrackingState.unpaid ? '#f59e0b' : 'var(--orange-500)') : 'var(--bg-subtle, #f1f5f9)',
-                      color: (passed || current) ? '#ffffff' : '#94a3b8'
-                    }}>
-                      {passed ? <Check size={isMobileLayout ? 13 : 15} /> : st.step}
-                    </div>
-                    <div style={{
-                      fontSize: isMobileLayout ? '0.6rem' : '0.75rem',
-                      lineHeight: 1.15,
-                      fontWeight: current ? 800 : 700,
-                      color: current ? 'var(--orange-600)' : passed ? '#10b981' : 'var(--text-muted)',
-                      whiteSpace: isMobileLayout ? 'nowrap' : 'normal',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis'
-                    }}>
-                      {st.title}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
           </div>
-
           {/* ADMIN UNPAID NOTICE */}
           {!isPaid && isAdmin && (
             <div style={{
@@ -1492,21 +1417,21 @@ export const OrderTrackerDrawer = () => {
             ref={deliveryRef}
             style={{
               background: 'var(--bg-card)',
-              borderRadius: '16px',
-              border: '1.5px solid var(--border-color)',
-              padding: '1.5rem',
+              borderRadius: isMobileLayout ? '12px' : '16px',
+              border: '1px solid var(--border-color)',
+              padding: isMobileLayout ? '1rem' : '1.5rem',
               boxShadow: 'var(--shadow-sm)'
             }}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '0.75rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.75rem' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <span style={{ fontSize: '1.3rem' }}>📦</span>
+                <PackageCheck size={20} style={{ color: isDelivered ? '#059669' : 'var(--orange-500)' }} />
                 <div>
                   <h4 style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--text-main)', margin: 0 }}>
-                    {isAdmin ? 'Deliver Order & Files (Admin Desk)' : 'Delivered Production Files'}
+                    {isAdmin ? 'Delivery Desk' : 'Your files'}
                   </h4>
                   <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-                    {isAdmin ? 'Upload finished machine stitch files and write delivery notes to client' : 'Download your finished machine deliverables and approve or request changes'}
+                    {isAdmin ? 'Upload finished files and delivery notes.' : (isDelivered ? 'Ready to download.' : 'Your finished files will appear here when ready.')}
                   </div>
                 </div>
               </div>
@@ -1518,7 +1443,7 @@ export const OrderTrackerDrawer = () => {
                   className="btn btn-primary-orange btn-sm"
                   style={{ gap: '0.35rem', fontWeight: 800 }}
                 >
-                  <Download size={14} /> Download All (.ZIP)
+                  <Download size={14} /> Download all
                 </button>
               )}
             </div>
@@ -1899,48 +1824,6 @@ export const OrderTrackerDrawer = () => {
                 <Clock size={24} style={{ color: 'var(--orange-500)', margin: '0 auto 0.4rem' }} />
                 <div style={{ fontWeight: 800, color: 'var(--navy-900)', fontSize: '0.92rem' }}>Order Currently in Master Digitizing Production</div>
                 <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>Files are being processed and tested. Once completed, your machine packages will appear here.</div>
-              </div>
-            )}
-
-            {/* CUSTOMER APPROVE & MODIFICATION ACTION ROW (WHEN DELIVERED) */}
-            {!isAdmin && isDelivered && !isCompleted && ord.status !== 'revision' && ord.status !== 'revision_requested' && (
-              <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', background: '#f8fafc', padding: '1rem', borderRadius: '12px', border: '1px solid #e2e8f0', alignItems: 'center', justifyContent: 'space-between' }}>
-                <div>
-                  <div style={{ fontWeight: 800, color: 'var(--navy-900)', fontSize: '0.88rem' }}>Satisfied with the result?</div>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Approve delivery to finalize order, or request a free modification if any adjustments are needed.</div>
-                </div>
-
-                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                  <button
-                    type="button"
-                    onClick={handleApproveDelivery}
-                    style={{
-                      background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-                      color: '#ffffff',
-                      border: 'none',
-                      padding: '0.55rem 1.25rem',
-                      borderRadius: '8px',
-                      fontWeight: 800,
-                      fontSize: '0.84rem',
-                      cursor: 'pointer',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '0.35rem',
-                      boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)'
-                    }}
-                  >
-                    <CheckCircle2 size={15} /> Approve Delivery
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => scrollToSection(modificationRef, 'modification')}
-                    className="btn btn-outline btn-sm"
-                    style={{ fontWeight: 800, color: '#b45309', borderColor: '#fde68a', background: '#fffbeb', gap: '0.3rem' }}
-                  >
-                    <RotateCcw size={14} /> Request Modification
-                  </button>
-                </div>
               </div>
             )}
 
@@ -2472,8 +2355,9 @@ export const OrderTrackerDrawer = () => {
         {/* ==================================================================
             4. STICKY ACTION FOOTER
            ================================================================== */}
+        {(!isMobileLayout || isAdmin || !isPaid || (isDelivered && !isCompleted && !isInRevision) || isCompleted) && (
         <div style={{
-          padding: isMobileLayout ? '0.75rem 1rem max(0.75rem, env(safe-area-inset-bottom, 0.75rem))' : '0.85rem 1.6rem',
+          padding: isMobileLayout ? '0.65rem 0.85rem max(0.65rem, env(safe-area-inset-bottom, 0.65rem))' : '0.85rem 1.6rem',
           background: isDark ? 'var(--color-surface, #111827)' : '#ffffff',
           borderTop: isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid var(--border-color)',
           display: 'flex',
@@ -2487,7 +2371,8 @@ export const OrderTrackerDrawer = () => {
           zIndex: 20,
           flexShrink: 0
         }}>
-          {/* Left: Total Price and Payment Badge */}
+          {/* Price is shown in the mobile footer only when payment is still required. */}
+          {(!isMobileLayout || !isPaid) && (
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
             <div>
               <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', fontWeight: 800, textTransform: 'uppercase' }}>Project Total</div>
@@ -2505,9 +2390,10 @@ export const OrderTrackerDrawer = () => {
               </span>
             )}
           </div>
+          )}
 
-          {/* Right: Quick Action Buttons */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+          {/* Primary actions */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', width: isMobileLayout ? '100%' : 'auto', marginLeft: isMobileLayout ? 0 : 'auto' }}>
             {!isPaid && !isAdmin ? (
               <button
                 type="button"
@@ -2543,20 +2429,22 @@ export const OrderTrackerDrawer = () => {
                     fontWeight: 800,
                     fontSize: '0.84rem',
                     cursor: 'pointer',
+                    flex: isMobileLayout ? 1 : undefined,
+                    justifyContent: 'center',
                     display: 'inline-flex',
                     alignItems: 'center',
                     gap: '0.35rem'
                   }}
                 >
-                  <CheckCircle2 size={15} /> Approve Delivery
+                  <CheckCircle2 size={15} /> Approve delivery
                 </button>
                 <button
                   type="button"
                   onClick={() => scrollToSection(modificationRef, 'modification')}
                   className="btn btn-outline btn-sm"
-                  style={{ fontWeight: 800 }}
+                  style={{ fontWeight: 800, flex: isMobileLayout ? 1 : undefined, justifyContent: 'center', padding: isMobileLayout ? '0.55rem 0.75rem' : undefined }}
                 >
-                  <RotateCcw size={14} /> Request Modification
+                  <RotateCcw size={14} /> Request changes
                 </button>
               </>
             ) : isCompleted && !isAdmin ? (
@@ -2593,16 +2481,19 @@ export const OrderTrackerDrawer = () => {
               </span>
             )}
 
-            <button
-              type="button"
-              onClick={handleSafeCloseDrawer}
-              className="btn btn-outline btn-sm"
-              style={{ padding: '0.5rem 1rem', fontSize: '0.82rem', fontWeight: 700 }}
-            >
-              Close
-            </button>
+            {!isMobileLayout && (
+              <button
+                type="button"
+                onClick={handleSafeCloseDrawer}
+                className="btn btn-outline btn-sm"
+                style={{ padding: '0.5rem 1rem', fontSize: '0.82rem', fontWeight: 700 }}
+              >
+                Close
+              </button>
+            )}
           </div>
         </div>
+        )}
 
       </div>
       </div>
