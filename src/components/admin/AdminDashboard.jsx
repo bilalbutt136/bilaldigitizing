@@ -16,6 +16,7 @@ import { PromotionsManager } from './PromotionsManager';
 import { ContactInfoManager } from './ContactInfoManager';
 import { PortfolioManager } from './PortfolioManager';
 import { subscribeToChatMessages } from '../../services/supabaseService';
+import { fetchAdminReviews } from '../../services/reviewService';
 import { stopNotificationSound, playMessageChime as _playMessageChime, playMessageChimeForMessage, playAdminChime } from '../../utils/audioNotification';
 import {
   LayoutDashboard,
@@ -135,9 +136,8 @@ export const AdminDashboard = () => {
 
     const fetchPendingReviews = async () => {
       try {
-        const response = await fetch('/api/reviews?scope=admin', { cache: 'no-store' });
-        const data = await response.json();
-        if (isMounted && response.ok && data?.success) {
+        const data = await fetchAdminReviews();
+        if (isMounted) {
           setPendingReviewsCount(Number(data?.counts?.pending || 0));
         }
       } catch {}

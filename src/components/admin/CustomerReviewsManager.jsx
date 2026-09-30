@@ -9,6 +9,7 @@ import {
   ShieldCheck,
   Star
 } from 'lucide-react';
+import { fetchAdminReviews, moderateCustomerReview } from '../../services/reviewService';
 
 const STATUS_META = {
   pending: {
@@ -74,12 +75,7 @@ export function CustomerReviewsManager({ showToast }) {
     setIsLoading(true);
     setError('');
     try {
-      const response = await fetch('/api/reviews?scope=admin', { cache: 'no-store' });
-      const data = await response.json().catch(() => ({}));
-
-      if (!response.ok || !data?.success) {
-        throw new Error(data?.error || 'Could not load customer reviews.');
-      }
+      const data = await fetchAdminReviews();
 
       setReviews(Array.isArray(data.reviews) ? data.reviews : []);
       setCounts(data.counts || { total: 0, pending: 0, published: 0, hidden: 0 });
@@ -104,16 +100,7 @@ export function CustomerReviewsManager({ showToast }) {
     setError('');
 
     try {
-      const response = await fetch('/api/reviews', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ reviewId, action })
-      });
-
-      const data = await response.json().catch(() => ({}));
-      if (!response.ok || !data?.success) {
-        throw new Error(data?.error || 'Could not update this review.');
-      }
+      await moderateCustomerReview(reviewId, action);
 
       await loadReviews();
       window.dispatchEvent(new CustomEvent('bdigi_reviews_updated'));

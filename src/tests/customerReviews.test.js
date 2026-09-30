@@ -30,13 +30,53 @@ describe('Customer Order Reviews & Publication Workflow', () => {
     assert.match(api, /revalidateTag\('catalog'\)/);
   });
 
+  test('all customer/admin review requests send the current Supabase access token', () => {
+    const service = read('src/services/reviewService.js');
+    const drawer = read('src/components/customer/OrderTrackerDrawer.jsx');
+    const modal = read('src/components/customer/CustomerReviewModal.jsx');
+    const dashboard = read('src/components/admin/AdminDashboard.jsx');
+    const manager = read('src/components/admin/CustomerReviewsManager.jsx');
+
+    assert.match(service, /getAuthHeaders\(\)/);
+    assert.match(service, /credentials: 'same-origin'/);
+    assert.match(service, /fetchOrderReview/);
+    assert.match(service, /submitOrderReview/);
+    assert.match(service, /fetchAdminReviews/);
+    assert.match(service, /moderateCustomerReview/);
+
+    assert.match(drawer, /fetchOrderReview\(ord\.id\)/);
+    assert.match(modal, /submitOrderReview\(/);
+    assert.match(dashboard, /fetchAdminReviews\(\)/);
+    assert.match(manager, /fetchAdminReviews\(\)/);
+    assert.match(manager, /moderateCustomerReview\(reviewId, action\)/);
+
+    assert.equal(drawer.includes('fetch(`/api/reviews'), false);
+    assert.equal(modal.includes("fetch('/api/reviews"), false);
+    assert.equal(manager.includes("fetch('/api/reviews"), false);
+  });
+
+  test('feedback modal always renders above the order tracker on desktop and mobile', () => {
+    const drawer = read('src/components/customer/OrderTrackerDrawer.jsx');
+    const modal = read('src/components/customer/CustomerReviewModal.jsx');
+
+    const drawerZIndexes = [...drawer.matchAll(/zIndex:\s*(\d+)/g)].map(match => Number(match[1]));
+    const modalZIndexes = [...modal.matchAll(/zIndex:\s*(\d+)/g)].map(match => Number(match[1]));
+
+    assert.ok(drawerZIndexes.length > 0, 'order tracker should declare z-index values');
+    assert.ok(modalZIndexes.length >= 2, 'both feedback modal states should declare z-index values');
+    assert.ok(
+      Math.min(...modalZIndexes) > Math.max(...drawerZIndexes),
+      'feedback modal must be above every order-tracker stacking layer'
+    );
+    assert.match(modal, /className="customer-review-modal-overlay"/);
+  });
+
   test('customer is invited after approval and can leave feedback later', () => {
     const drawer = read('src/components/customer/OrderTrackerDrawer.jsx');
     const modal = read('src/components/customer/CustomerReviewModal.jsx');
 
     assert.match(drawer, /setShowCustomerReviewModal\(true\)/);
     assert.match(drawer, /> Leave feedback/);
-    assert.match(drawer, /\/api\/reviews\?orderId=/);
     assert.match(drawer, /Feedback submitted/);
     assert.match(drawer, /<CustomerReviewModal/);
 
@@ -55,7 +95,8 @@ describe('Customer Order Reviews & Publication Workflow', () => {
     assert.match(manager, /Publish to website/);
     assert.match(manager, /Keep private/);
     assert.match(manager, /Unpublish/);
-    assert.match(manager, /\/api\/reviews\?scope=admin/);
+    assert.match(manager, /fetchAdminReviews/);
+    assert.match(manager, /moderateCustomerReview/);
   });
 
   test('only published customer reviews are merged into public testimonials', () => {

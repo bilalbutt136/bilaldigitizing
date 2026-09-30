@@ -50,6 +50,7 @@ import { AssignWorkerModal } from '../admin/AssignWorkerModal';
 import { ReviewWorkerUploadModal } from '../admin/ReviewWorkerUploadModal';
 import { CustomerInvoiceModal } from '../common/CustomerInvoiceModal';
 import { CustomerReviewModal } from './CustomerReviewModal';
+import { fetchOrderReview } from '../../services/reviewService';
 import { getMobileOrderTrackingState } from '../../utils/orderTracking';
 
 // Supported machine formats mapping
@@ -307,12 +308,7 @@ export const OrderTrackerDrawer = () => {
     }
 
     setIsLoadingOrderReview(true);
-    fetch(`/api/reviews?orderId=${encodeURIComponent(ord.id)}`, { cache: 'no-store' })
-      .then(async (response) => {
-        const data = await response.json().catch(() => ({}));
-        if (!response.ok || !data?.success) return null;
-        return data.review || null;
-      })
+    fetchOrderReview(ord.id)
       .then((review) => {
         if (isCurrent) setOrderReview(review);
       })

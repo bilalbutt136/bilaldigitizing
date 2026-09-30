@@ -3,6 +3,7 @@
 import React, { useMemo, useState } from 'react';
 import { CheckCircle2, MessageSquare, ShieldCheck, Star, X } from 'lucide-react';
 import { useModalBackNavigation } from '../../hooks/useModalBackNavigation';
+import { submitOrderReview } from '../../services/reviewService';
 
 function buildDefaultDisplayName(order) {
   const raw = String(order?.clientName || order?.client_name || '').trim();
@@ -54,21 +55,12 @@ export function CustomerReviewModal({ order, onClose, onSubmitted }) {
 
     setIsSubmitting(true);
     try {
-      const response = await fetch('/api/reviews', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          orderId: order?.id,
-          rating,
-          reviewText: comment,
-          displayName: displayName.trim()
-        })
+      const data = await submitOrderReview({
+        orderId: order?.id,
+        rating,
+        reviewText: comment,
+        displayName: displayName.trim()
       });
-
-      const data = await response.json().catch(() => ({}));
-      if (!response.ok || !data?.success) {
-        throw new Error(data?.error || 'Could not save your feedback.');
-      }
 
       setSubmittedReview(data.review || null);
       if (typeof onSubmitted === 'function') {
@@ -84,12 +76,12 @@ export function CustomerReviewModal({ order, onClose, onSubmitted }) {
   if (submittedReview) {
     return (
       <div
-        className="modal-overlay"
+        className="customer-review-modal-overlay"
         onClick={handleSafeClose}
         style={{
           position: 'fixed',
           inset: 0,
-          zIndex: 10050,
+          zIndex: 1000100,
           background: 'rgba(15, 23, 42, 0.62)',
           backdropFilter: 'blur(8px)',
           display: 'flex',
@@ -145,12 +137,12 @@ export function CustomerReviewModal({ order, onClose, onSubmitted }) {
 
   return (
     <div
-      className="modal-overlay"
+      className="customer-review-modal-overlay"
       onClick={handleSafeClose}
       style={{
         position: 'fixed',
         inset: 0,
-        zIndex: 10050,
+        zIndex: 1000100,
         background: 'rgba(15, 23, 42, 0.62)',
         backdropFilter: 'blur(8px)',
         display: 'flex',
