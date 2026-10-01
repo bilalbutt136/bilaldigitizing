@@ -30,14 +30,12 @@ const ASSETS = [
     field: 'app_icon_url',
     label: 'Mobile App / PWA Icon',
     recommended: '512 × 512 px · PNG',
-    tip: 'Keep at least 20% safe padding around the logo so circle/squircle masks never clip it. Use white (#FFFFFF) or transparent background.',
+    tip: 'Uploads are automatically placed on a 512×512 white canvas with 20% safe padding, so Android/iOS masks cannot crop the logo.',
     accept: '.png,image/png',
     allowed: ['image/png'],
     folder: 'branding/app-icon',
     preview: { width: 112, height: 112, background: '#ffffff', borderRadius: 24 },
-    strictSquare: true,
-    minWidth: 512,
-    minHeight: 512
+    normalizePwaIcon: true
   },
   {
     field: 'favicon_url',
@@ -92,6 +90,63 @@ function toClientSettings(branding) {
     themeColor: branding.theme_color,
     logoUrl: branding.header_logo_url
   };
+}
+
+async function createSafePwaIconFile(file) {
+  const sourceUrl = URL.createObjectURL(file);
+
+  try {
+    const image = await new Promise((resolve, reject) => {
+      const element = new Image();
+      element.onload = () => resolve(element);
+      element.onerror = () => reject(new Error('Could not read the PWA icon image.'));
+      element.src = sourceUrl;
+    });
+
+    const canvas = document.createElement('canvas');
+    canvas.width = 512;
+    canvas.height = 512;
+    const context = canvas.getContext('2d', { alpha: false });
+    if (!context) throw new Error('Could not prepare the PWA icon.');
+
+    context.fillStyle = '#ffffff';
+    context.fillRect(0, 0, 512, 512);
+
+    // Essential artwork stays inside the central 60%: 20% safe area on every edge.
+    const maxContent = Math.round(512 * 0.60);
+    const scale = Math.min(
+      maxContent / Math.max(image.naturalWidth, 1),
+      maxContent / Math.max(image.naturalHeight, 1)
+    );
+    const width = Math.max(1, Math.round(image.naturalWidth * scale));
+    const height = Math.max(1, Math.round(image.naturalHeight * scale));
+    const x = Math.round((512 - width) / 2);
+    const y = Math.round((512 - height) / 2);
+
+    context.imageSmoothingEnabled = true;
+    context.imageSmoothingQuality = 'high';
+    context.drawImage(image, x, y, width, height);
+
+    const blob = await new Promise((resolve, reject) => {
+      canvas.toBlob(
+        (result) => result ? resolve(result) : reject(new Error('Could not export the PWA icon.')),
+        'image/png',
+        1
+      );
+    });
+
+    const baseName = String(file.name || 'bdigitizing-icon')
+      .replace(/\.[^.]+$/, '')
+      .replace(/[^a-zA-Z0-9_-]+/g, '-');
+
+    return new File(
+      [blob],
+      `${baseName}-safe-512.png`,
+      { type: 'image/png', lastModified: Date.now() }
+    );
+  } finally {
+    URL.revokeObjectURL(sourceUrl);
+  }
 }
 
 async function getRasterDimensions(file) {
@@ -372,14 +427,14 @@ export const BrandingAssetManager = () => {
 
     try {
       const dimensions = await getRasterDimensions(file);
+      let uploadFile = file;
 
-      if (config.strictSquare && dimensions) {
-        if (dimensions.width !== dimensions.height) {
-          throw new Error('PWA icon must be square.');
+      if (config.normalizePwaIcon) {
+        if (dimensions && (dimensions.width < 256 || dimensions.height < 256)) {
+          showToast?.('For best launcher quality, use a source at least 512×512 px.', 'warning');
         }
-        if (dimensions.width < config.minWidth || dimensions.height < config.minHeight) {
-          throw new Error('PWA icon must be at least 512 × 512 px.');
-        }
+
+        uploadFile = await createSafePwaIconFile(file);
       }
 
       if (config.field === 'favicon_url' && dimensions && dimensions.width !== dimensions.height) {
@@ -395,7 +450,7 @@ export const BrandingAssetManager = () => {
 
       setUploadingField(config.field);
       const result = await uploadFileToCloudinaryFull(
-        file,
+        uploadFile,
         'media-gallery',
         config.folder
       );
@@ -404,7 +459,12 @@ export const BrandingAssetManager = () => {
       if (!url) throw new Error('Upload completed without a public URL.');
 
       setBranding(prev => ({ ...prev, [config.field]: url }));
-      showToast?.(`${config.label} uploaded. Save changes to publish it.`, 'success');
+      showToast?.(
+        config.normalizePwaIcon
+          ? 'PWA icon normalized to 512×512 with white background and 20% safe padding. Save changes to publish it.'
+          : `${config.label} uploaded. Save changes to publish it.`,
+        'success'
+      );
     } catch (error) {
       showToast?.(error?.message || `${config.label} upload failed.`, 'error');
     } finally {

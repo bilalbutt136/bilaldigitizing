@@ -1,5 +1,5 @@
 // BDigitizing Studio PWA Service Worker with Native Push & Lock-Screen Alerts
-const CACHE_VERSION = 'bdigi-pwa-v4.3';
+const CACHE_VERSION = 'bdigi-pwa-v4.4';
 const STATIC_ASSETS = [
   '/artwork-placeholder.svg',
   '/service-preview-placeholder.svg',

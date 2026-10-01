@@ -158,7 +158,7 @@ export default function WorkerForgotPasswordPage() {
                     required
                     value={email}
                     onChange={(e) => { setEmail(e.target.value); setErrorMessage(''); }}
-                    placeholder="digitizer@bdigitizing.pro"
+                    placeholder="digitizer@bdigitizing.com"
                     style={{
                       width: '100%',
                       padding: '0.75rem 1rem 0.75rem 2.6rem',

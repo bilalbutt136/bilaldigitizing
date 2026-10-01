@@ -2,9 +2,15 @@ import { getSiteBranding } from '../src/lib/branding/serverBranding';
 
 export const revalidate = 300;
 
+function versionAssetUrl(url, updatedAt) {
+  if (!url || !updatedAt) return url;
+  const separator = url.includes('?') ? '&' : '?';
+  return `${url}${separator}v=${encodeURIComponent(updatedAt)}`;
+}
+
 export default async function manifest() {
   const branding = await getSiteBranding();
-  const appIcon = branding.app_icon_url || '/icon-512x512.png';
+  const appIcon = versionAssetUrl(branding.app_icon_url || '/icon-512x512.png', branding.updated_at);
 
   return {
     name: 'BDigitizing – Embroidery & Vector Studio',

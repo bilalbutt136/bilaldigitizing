@@ -35,7 +35,7 @@ export default function AdminCreateOfferModal({
   // Auto-detect recipient email from conversationId if clientEmail is generic or empty
   const detectedEmail = useMemo(() => {
     let email = (clientEmail || '').trim();
-    if (!email || email === 'client@studio.com' || email.includes('guest@bdigitizing.pro')) {
+    if (!email || email === 'client@studio.com' || email.startsWith('guest@bdigitizing.')) {
       const cLower = String(conversationId || '').toLowerCase().trim();
       if (cLower.startsWith('inbox-') && !cLower.startsWith('inbox-guest')) {
         email = cLower.replace('inbox-', '');

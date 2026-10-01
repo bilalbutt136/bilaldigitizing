@@ -122,3 +122,53 @@ test('branding uploads forward admin auth and all branding folders are signed', 
     assert.equal(signature.includes("'" + folder + "'"), true, 'signature allowlist must include ' + folder);
   }
 });
+
+
+test('PWA icon uploads are normalized to a white 512 square with a 20 percent safe area', () => {
+  const source = read('src/components/admin/settings/BrandingAssetManager.jsx');
+  const manifest = read('app/manifest.js');
+
+  assert.match(source, /async function createSafePwaIconFile/);
+  assert.match(source, /canvas\.width = 512/);
+  assert.match(source, /canvas\.height = 512/);
+  assert.match(source, /context\.fillStyle = '#ffffff'/);
+  assert.match(source, /512 \* 0\.60/);
+  assert.match(source, /uploadFile = await createSafePwaIconFile\(file\)/);
+  assert.match(manifest, /function versionAssetUrl/);
+  assert.match(manifest, /branding\.updated_at/);
+});
+
+test('mobile app uses dynamic white-background branding and the bdigitizing.com identity', () => {
+  const source = read('src/components/mobile/BDigitizingMobileApp.jsx');
+
+  assert.match(source, /mobileAppIconUrl = siteSettings\?\.appIconUrl/);
+  assert.match(source, /src=\{mobileAppIconUrl\}/);
+  assert.match(source, /background: '#ffffff'/);
+  assert.match(source, />\.com<\/span>/);
+  assert.equal(source.includes('.PRO'), false);
+  assert.equal(source.includes('src="/favicon.png"'), false);
+});
+
+test('user-facing source no longer contains the obsolete bdigitizing.pro domain', () => {
+  const roots = ['app', 'src'];
+  const stack = roots.map(root => path.join(process.cwd(), root));
+  const stale = [];
+
+  while (stack.length) {
+    const current = stack.pop();
+    const stat = fs.statSync(current);
+    if (stat.isDirectory()) {
+      for (const entry of fs.readdirSync(current)) stack.push(path.join(current, entry));
+      continue;
+    }
+    if (!/\.(js|jsx|ts|tsx)$/i.test(current)) continue;
+    if (current.includes(path.join('src', 'tests'))) continue;
+
+    const content = fs.readFileSync(current, 'utf8');
+    if (/bdigitizing\.pro/i.test(content)) {
+      stale.push(path.relative(process.cwd(), current));
+    }
+  }
+
+  assert.deepEqual(stale, []);
+});

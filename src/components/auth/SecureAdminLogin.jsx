@@ -152,7 +152,7 @@ export const SecureAdminLogin = () => {
                 id="admin-email"
                 autoComplete="email"
                 className="form-control"
-                placeholder="admin@bdigitizing.pro"
+                placeholder="admin@bdigitizing.com"
                 value={adminEmail}
                 onChange={(e) => { setAdminEmail(e.target.value); setAdminError(''); }}
                 style={{ paddingLeft: '2.4rem' }}

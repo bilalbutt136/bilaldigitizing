@@ -781,7 +781,7 @@ export const OrderManagementTable = () => {
                       </div>
                       <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '1px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '160px', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
                         <Mail size={11} style={{ flexShrink: 0, opacity: 0.7 }} />
-                        <span>{ord.clientEmail || 'client@bdigitizing.pro'}</span>
+                        <span>{ord.clientEmail || 'client@bdigitizing.com'}</span>
                       </div>
                     </td>
 

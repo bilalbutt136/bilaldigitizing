@@ -139,6 +139,7 @@ export const BDigitizingMobileApp = ({ initialTab = 'home' }) => {
   const userInitial = (userName?.[0] || 'B').toUpperCase();
 
   const isDark = theme === 'dark';
+  const mobileAppIconUrl = siteSettings?.appIconUrl || '/icon-512x512.png';
 
   const mobileCi = siteSettings?.contactInfo || {};
   const mobileWhatsapp = (mobileCi.whatsapp !== undefined ? mobileCi.whatsapp : (siteSettings?.whatsapp || '')).trim();
@@ -953,25 +954,28 @@ export const BDigitizingMobileApp = ({ initialTab = 'home' }) => {
         fontFamily: "'Inter', system-ui, -apple-system, sans-serif"
       }}>
         <div style={{
-          width: '72px',
-          height: '72px',
-          borderRadius: '20px',
-          background: 'linear-gradient(135deg, #0f172a, #1e293b)',
-          border: '1.5px solid rgba(16, 185, 129, 0.4)',
+          width: '76px',
+          height: '76px',
+          borderRadius: '22px',
+          background: '#ffffff',
+          border: '1.5px solid #e2e8f0',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          boxShadow: '0 10px 28px rgba(16, 185, 129, 0.25)'
+          boxShadow: '0 10px 28px rgba(15, 23, 42, 0.12)',
+          overflow: 'hidden',
+          padding: '4px',
+          boxSizing: 'border-box'
         }}>
           <img
-            src="/favicon.png"
+            src={mobileAppIconUrl}
             alt="BDigitizing"
-            style={{ width: '42px', height: '48px', objectFit: 'contain', display: 'block' }}
+            style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block', borderRadius: '18px' }}
           />
         </div>
         <div style={{ textAlign: 'center' }}>
           <div style={{ fontSize: '1.35rem', fontWeight: 900, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a', letterSpacing: '-0.02em' }}>
-            BDigitizing<span style={{ color: '#059669' }}>.PRO</span>
+            BDigitizing<span style={{ color: '#059669' }}>.com</span>
           </div>
           <div style={{ fontSize: '0.8rem', color: isDark ? 'var(--color-text-muted, #94a3b8)' : '#64748b', fontWeight: 600, marginTop: '0.25rem' }}>
             Embroidery Digitizing & Vector Art Studio
@@ -1045,9 +1049,9 @@ export const BDigitizingMobileApp = ({ initialTab = 'home' }) => {
             </button>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
-              <img src="/favicon.png" alt="BDigitizing" style={{ width: '18px', height: '22px', objectFit: 'contain' }} />
+              <img src={mobileAppIconUrl} alt="BDigitizing" style={{ width: '24px', height: '24px', objectFit: 'contain', borderRadius: '6px', background: '#ffffff' }} />
               <div style={{ fontSize: '1.15rem', fontWeight: 900, color: '#047857', letterSpacing: '-0.02em' }}>
-                bdigitizing<span style={{ color: '#10b981' }}>.</span>
+                bdigitizing<span style={{ color: '#10b981' }}>.com</span>
               </div>
             </div>
 
@@ -1631,9 +1635,9 @@ export const BDigitizingMobileApp = ({ initialTab = 'home' }) => {
           {/* Top Brand Header */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: isDark ? 'var(--color-surface, #111827)' : '#ffffff', padding: '0.75rem 1rem', borderRadius: '16px', border: isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid #cbd5e1', boxShadow: '0 2px 8px rgba(0,0,0,0.02)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
-              <img src="/favicon.png" alt="BDigitizing" style={{ width: '22px', height: '26px', objectFit: 'contain' }} />
+              <img src={mobileAppIconUrl} alt="BDigitizing" style={{ width: '28px', height: '28px', objectFit: 'contain', borderRadius: '7px', background: '#ffffff' }} />
               <span style={{ fontSize: '1.45rem', fontWeight: 900, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a', letterSpacing: '-0.03em' }}>
-                bdigitizing<span style={{ color: '#ea580c' }}>.</span>
+                bdigitizing<span style={{ color: '#059669' }}>.com</span>
               </span>
               {isAuthenticated && (
                 <span style={{
