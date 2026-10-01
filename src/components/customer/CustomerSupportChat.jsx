@@ -24,7 +24,8 @@ import {
   MessageSquare,
   ExternalLink,
   Volume2,
-  VolumeX
+  VolumeX,
+  CornerUpLeft
 } from 'lucide-react';
 
 const formatChatTime = (dateStr) => {
@@ -47,6 +48,17 @@ const formatChatDateHeader = (dateStr) => {
   } else {
     return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: d.getFullYear() !== today.getFullYear() ? 'numeric' : undefined });
   }
+};
+
+const getReplyPreviewText = (message = {}) => {
+  const text = String(message?.text || '').trim();
+  if (text) return text.length > 180 ? `${text.slice(0, 180)}…` : text;
+
+  const attachmentName = message?.attachment_name || message?.attachments?.[0]?.name;
+  if (attachmentName) return `📎 ${attachmentName}`;
+
+  if (message?.type === 'custom_offer') return 'Custom offer';
+  return 'Message';
 };
 
 const CHAT_CONVERSATION_CACHE_TTL_MS = 60_000;
@@ -105,6 +117,7 @@ export default function CustomerSupportChat({
   const [isSending, setIsSending] = useState(false);
   const [inputText, setInputText] = useState(initialTopic ? `Hi, I have a question regarding: ${initialTopic}` : '');
   const [pendingAttachments, setPendingAttachments] = useState([]);
+  const [replyingTo, setReplyingTo] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
 
   // Typing state
@@ -515,32 +528,30 @@ export default function CustomerSupportChat({
     }
   };
 
+  const handleReplyToMessage = (message) => {
+    if (!message?.id || message?.isPending) return;
+
+    setReplyingTo({
+      id: message.id,
+      sender: message.sender,
+      sender_name: message.sender_name || (message.sender === 'admin' ? 'BDigitizing' : userName),
+      text: message.text || '',
+      type: message.type || 'text',
+      attachment_name: message.attachment_name || message.attachments?.[0]?.name || null
+    });
+
+    window.requestAnimationFrame(() => textareaRef.current?.focus());
+  };
+
+  const scrollToRepliedMessage = (reply) => {
+    if (!reply?.id) return;
+    document.getElementById(`chat-msg-${reply.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  };
+
   const handleKeyDown = (e) => {
-    // Detect mobile / touch devices (Android virtual keyboard, iOS, tablets)
-    const isTouchOrMobile = typeof window !== 'undefined' && (
-      window.innerWidth <= 768 ||
-      'ontouchstart' in window ||
-      (navigator.maxTouchPoints && navigator.maxTouchPoints > 0)
-    );
-
-    if (e.key === 'Enter') {
-      if (isTouchOrMobile) {
-        // On mobile virtual keyboards (the blue Return key):
-        // Allow default behavior to insert a newline instead of dispatching the message!
-        setTimeout(() => {
-          if (textareaRef.current) {
-            adjustTextareaHeight(textareaRef.current);
-          }
-        }, 10);
-        return;
-      }
-
-      // On desktop physical keyboard: Enter sends message, Shift+Enter inserts newline
-      if (!e.shiftKey) {
-        e.preventDefault();
-        handleSendMessage(e);
-      }
-    }
+    if (e.key !== 'Enter' || e.shiftKey || e.nativeEvent?.isComposing) return;
+    e.preventDefault();
+    handleSendMessage(e);
   };
 
   // Upload file
@@ -599,11 +610,13 @@ export default function CustomerSupportChat({
 
     const messageText = inputText.trim();
     const attachmentsToSend = [...pendingAttachments];
+    const replyToSend = replyingTo ? { ...replyingTo } : null;
 
     stopNotificationSound();
     setIsSending(true);
     setInputText('');
     setPendingAttachments([]);
+    setReplyingTo(null);
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto';
     }
@@ -620,6 +633,7 @@ export default function CustomerSupportChat({
       text: messageText,
       type: attachmentsToSend.length > 0 && !messageText ? 'attachment' : 'text',
       attachments: attachmentsToSend,
+      reply_to: replyToSend,
       created_at: new Date().toISOString(),
       is_read: false,
       isPending: true
@@ -640,7 +654,8 @@ export default function CustomerSupportChat({
           sender_email: userEmail,
           text: messageText,
           type: attachmentsToSend.length > 0 && !messageText ? 'attachment' : 'text',
-          attachments: attachmentsToSend
+          attachments: attachmentsToSend,
+          reply_to_message_id: replyToSend?.id || null
         })
       });
 
@@ -666,6 +681,7 @@ export default function CustomerSupportChat({
       setMessages(prev => prev.filter(m => m.id !== tempId));
       setInputText(messageText);
       setPendingAttachments(attachmentsToSend);
+      setReplyingTo(replyToSend);
     } finally {
       setIsSending(false);
     }
@@ -1108,6 +1124,7 @@ export default function CustomerSupportChat({
                 )}
 
                 <div
+                  id={msg.id ? `chat-msg-${msg.id}` : undefined}
                   style={{
                     display: 'flex',
                     flexDirection: 'column',
@@ -1164,6 +1181,33 @@ export default function CustomerSupportChat({
                       lineHeight: 1.45,
                       position: 'relative'
                     }}>
+                      {msg.reply_to && (
+                        <button
+                          type="button"
+                          onClick={() => scrollToRepliedMessage(msg.reply_to)}
+                          style={{
+                            width: '100%',
+                            textAlign: 'left',
+                            border: 0,
+                            borderLeft: isClient ? '3px solid rgba(255,255,255,0.9)' : '3px solid #ea580c',
+                            borderRadius: '7px',
+                            background: isClient ? 'rgba(255,255,255,0.13)' : '#fff7ed',
+                            color: isClient ? '#ffffff' : '#334155',
+                            padding: '0.42rem 0.55rem',
+                            margin: '0 0 0.5rem',
+                            cursor: 'pointer',
+                            fontFamily: 'inherit'
+                          }}
+                        >
+                          <div style={{ fontSize: '0.68rem', fontWeight: 800, marginBottom: '0.12rem', opacity: 0.9 }}>
+                            {msg.reply_to.sender === 'client' ? 'You' : 'BDigitizing'}
+                          </div>
+                          <div style={{ fontSize: '0.72rem', lineHeight: 1.35, opacity: 0.88, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {getReplyPreviewText(msg.reply_to)}
+                          </div>
+                        </button>
+                      )}
+
                       {msg.text && (
                         <div style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
                           {msg.text}
@@ -1410,6 +1454,28 @@ export default function CustomerSupportChat({
                       </div>
                     </div>
                   )}
+
+                  {!msg.isPending && (
+                    <button
+                      type="button"
+                      onClick={() => handleReplyToMessage(msg)}
+                      aria-label="Reply"
+                      title="Reply"
+                      style={{
+                        border: 0,
+                        background: 'transparent',
+                        color: '#94a3b8',
+                        padding: '0.18rem 0.3rem',
+                        marginTop: '0.08rem',
+                        cursor: 'pointer',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        alignSelf: isClient ? 'flex-end' : 'flex-start'
+                      }}
+                    >
+                      <CornerUpLeft size={14} />
+                    </button>
+                  )}
                 </div>
               </React.Fragment>
             );
@@ -1440,6 +1506,36 @@ export default function CustomerSupportChat({
 
         <div ref={messagesEndRef} />
       </div>
+
+      {replyingTo && (
+        <div style={{
+          padding: '0.45rem 0.9rem',
+          background: '#ffffff',
+          borderTop: '1px solid #e2e8f0',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.6rem',
+          flexShrink: 0
+        }}>
+          <div style={{ width: 3, alignSelf: 'stretch', borderRadius: 3, background: '#ea580c' }} />
+          <div style={{ minWidth: 0, flex: 1 }}>
+            <div style={{ fontSize: '0.7rem', fontWeight: 800, color: '#ea580c' }}>
+              {replyingTo.sender === 'client' ? 'You' : 'BDigitizing'}
+            </div>
+            <div style={{ fontSize: '0.75rem', color: '#64748b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              {getReplyPreviewText(replyingTo)}
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => setReplyingTo(null)}
+            aria-label="Cancel reply"
+            style={{ border: 0, background: 'transparent', color: '#94a3b8', padding: '0.2rem', cursor: 'pointer', display: 'flex' }}
+          >
+            <X size={15} />
+          </button>
+        </div>
+      )}
 
       {/* PENDING ATTACHMENTS PREVIEW */}
       {pendingAttachments.length > 0 && (
@@ -1544,7 +1640,7 @@ export default function CustomerSupportChat({
         <textarea
           ref={textareaRef}
           rows={1}
-          enterKeyHint="enter"
+          enterKeyHint="send"
           placeholder={chatType === 'support' ? "Describe your question or issue..." : "Type a message or inquiry..."}
           value={inputText}
           onChange={handleInputChange}

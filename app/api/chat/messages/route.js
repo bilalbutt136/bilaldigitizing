@@ -179,7 +179,9 @@ async function POST_impl(request) {
       attachment_size = null,
       attachment_type = null,
       offer_id = null,
-      offer_data = null
+      offer_data = null,
+      reply_to_message_id = null,
+      reply_to = null
     } = body;
 
     if (!conversation_id) {
@@ -246,6 +248,41 @@ async function POST_impl(request) {
       existingConversation = newConversation;
     }
 
+    // Resolve reply references on the server so clients cannot spoof quoted content
+    // or reference a message from a different conversation.
+    const requestedReplyId = String(reply_to_message_id || reply_to?.id || '').trim();
+    let resolvedReply = null;
+
+    if (requestedReplyId) {
+      const { data: repliedMessage, error: repliedMessageError } = await supabase
+        .from('messages')
+        .select('id, conversation_id, sender, sender_name, text, type, attachment_name, attachments')
+        .eq('id', requestedReplyId)
+        .eq('conversation_id', conversation_id)
+        .maybeSingle();
+
+      if (repliedMessageError) {
+        return NextResponse.json({ error: 'Unable to verify replied message.' }, { status: 500 });
+      }
+      if (!repliedMessage) {
+        return NextResponse.json({ error: 'The replied message is no longer available in this conversation.' }, { status: 400 });
+      }
+
+      const firstAttachment = Array.isArray(repliedMessage.attachments)
+        ? repliedMessage.attachments[0]
+        : null;
+      const replyText = String(repliedMessage.text || '').trim();
+
+      resolvedReply = {
+        id: repliedMessage.id,
+        sender: repliedMessage.sender,
+        sender_name: repliedMessage.sender_name || (repliedMessage.sender === 'admin' ? 'BDigitizing' : 'Client'),
+        text: replyText.substring(0, 500),
+        type: repliedMessage.type || 'text',
+        attachment_name: repliedMessage.attachment_name || firstAttachment?.name || null
+      };
+    }
+
     // 2. Prepare message record
     const messageId = `msg-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
     const normalizedAttachments = Array.isArray(attachments) ? attachments : (attachment_url ? [{
@@ -271,6 +308,7 @@ async function POST_impl(request) {
       attachment_type: attachment_type || (normalizedAttachments[0]?.type || null),
       offer_id: offer_id || null,
       offer_data: offer_data || null,
+      reply_to: resolvedReply,
       is_read: false,
       created_at: nowIso
     };

@@ -35,10 +35,22 @@ import {
   Undo2,
   ExternalLink,
   Volume2,
-  VolumeX
+  VolumeX,
+  CornerUpLeft
 } from 'lucide-react';
 
 const COMMON_EMOJIS = ['👋', '✅', '🧵', '✨', '👌', '🙏', '📁', '👕', '🧢', '🔥', '🚀', '💯'];
+
+const getReplyPreviewText = (message = {}) => {
+  const text = String(message?.text || '').trim();
+  if (text) return text.length > 180 ? `${text.slice(0, 180)}…` : text;
+
+  const attachmentName = message?.attachment_name || message?.attachments?.[0]?.name;
+  if (attachmentName) return `📎 ${attachmentName}`;
+
+  if (message?.type === 'custom_offer') return 'Custom offer';
+  return 'Message';
+};
 
 const formatChatDateHeader = (dateStr) => {
   if (!dateStr) return '';
@@ -79,6 +91,7 @@ export default function AdminChatInbox({ initialChannel = 'inbox' }) {
   // Input & Attachments
   const [inputText, setInputText] = useState('');
   const [pendingAttachments, setPendingAttachments] = useState([]);
+  const [replyingTo, setReplyingTo] = useState(null);
   const [isUploadingFiles, setIsUploadingFiles] = useState(false);
   const [isSendingMessage, setIsSendingMessage] = useState(false);
 
@@ -196,6 +209,10 @@ export default function AdminChatInbox({ initialChannel = 'inbox' }) {
       adjustTextareaHeight(textareaRef.current);
     }
   }, [inputText]);
+
+  useEffect(() => {
+    setReplyingTo(null);
+  }, [activeConversationId]);
 
   // Sound alert state & toggle
   const [isAudioEnabled, setIsAudioEnabled] = useState(() => {
@@ -703,6 +720,26 @@ export default function AdminChatInbox({ initialChannel = 'inbox' }) {
     setPendingAttachments(prev => prev.filter((_, i) => i !== index));
   };
 
+  const handleReplyToMessage = (message) => {
+    if (!message?.id) return;
+
+    setReplyingTo({
+      id: message.id,
+      sender: message.sender,
+      sender_name: message.sender_name || (message.sender === 'admin' ? 'BDigitizing Support' : (activeConversation?.client_name || 'Client')),
+      text: message.text || '',
+      type: message.type || 'text',
+      attachment_name: message.attachment_name || message.attachments?.[0]?.name || null
+    });
+
+    window.requestAnimationFrame(() => textareaRef.current?.focus());
+  };
+
+  const scrollToRepliedMessage = (reply) => {
+    if (!reply?.id) return;
+    document.getElementById(`admin-chat-msg-${reply.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  };
+
   // Send Message
   const handleSendMessage = async (e) => {
     e?.preventDefault();
@@ -717,11 +754,13 @@ export default function AdminChatInbox({ initialChannel = 'inbox' }) {
 
     const messageText = inputText.trim();
     const attachmentsToSend = [...pendingAttachments];
+    const replyToSend = replyingTo ? { ...replyingTo } : null;
 
     stopNotificationSound();
     setIsSendingMessage(true);
     setInputText('');
     setPendingAttachments([]);
+    setReplyingTo(null);
     setPreviousDraft(null);
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto';
@@ -745,7 +784,8 @@ export default function AdminChatInbox({ initialChannel = 'inbox' }) {
           sender_email: adminEmail,
           text: messageText,
           type: attachmentsToSend.length > 0 && !messageText ? 'attachment' : 'text',
-          attachments: attachmentsToSend
+          attachments: attachmentsToSend,
+          reply_to_message_id: replyToSend?.id || null
         })
       });
 
@@ -773,6 +813,7 @@ export default function AdminChatInbox({ initialChannel = 'inbox' }) {
       showToast('Failed to send message.', 'error');
       setInputText(messageText);
       setPendingAttachments(attachmentsToSend);
+      setReplyingTo(replyToSend);
     } finally {
       setIsSendingMessage(false);
     }
@@ -1613,6 +1654,7 @@ export default function AdminChatInbox({ initialChannel = 'inbox' }) {
 
                           {/* Message Row with Correct Flex Alignment & Spacing */}
                           <div
+                            id={msg.id ? `admin-chat-msg-${msg.id}` : undefined}
                             style={{
                               width: '100%',
                               display: 'flex',
@@ -1663,6 +1705,33 @@ export default function AdminChatInbox({ initialChannel = 'inbox' }) {
                                   position: 'relative'
                                 }}
                               >
+                                {msg.reply_to && (
+                                  <button
+                                    type="button"
+                                    onClick={() => scrollToRepliedMessage(msg.reply_to)}
+                                    style={{
+                                      width: '100%',
+                                      textAlign: 'left',
+                                      border: 0,
+                                      borderLeft: isAdminMsg ? '3px solid #34d399' : '3px solid #ea580c',
+                                      borderRadius: '7px',
+                                      background: isAdminMsg ? 'rgba(255,255,255,0.08)' : '#fff7ed',
+                                      color: isAdminMsg ? '#ffffff' : '#334155',
+                                      padding: '0.42rem 0.55rem',
+                                      margin: '0 0 0.5rem',
+                                      cursor: 'pointer',
+                                      fontFamily: 'inherit'
+                                    }}
+                                  >
+                                    <div style={{ fontSize: '0.68rem', fontWeight: 800, marginBottom: '0.12rem', opacity: 0.9 }}>
+                                      {msg.reply_to.sender === 'admin' ? 'BDigitizing Support' : (msg.reply_to.sender_name || activeConversation?.client_name || 'Client')}
+                                    </div>
+                                    <div style={{ fontSize: '0.72rem', lineHeight: 1.35, opacity: 0.88, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                      {getReplyPreviewText(msg.reply_to)}
+                                    </div>
+                                  </button>
+                                )}
+
                                 {/* Message Text */}
                                 {msg.text && (
                                   <div style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word', userSelect: 'text' }}>
@@ -1911,6 +1980,26 @@ export default function AdminChatInbox({ initialChannel = 'inbox' }) {
                                 </div>
                               </div>
                             )}
+
+                            <button
+                              type="button"
+                              onClick={() => handleReplyToMessage(msg)}
+                              aria-label="Reply"
+                              title="Reply"
+                              style={{
+                                border: 0,
+                                background: 'transparent',
+                                color: '#94a3b8',
+                                padding: '0.18rem 0.3rem',
+                                marginTop: '0.08rem',
+                                cursor: 'pointer',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                alignSelf: isAdminMsg ? 'flex-end' : 'flex-start'
+                              }}
+                            >
+                              <CornerUpLeft size={14} />
+                            </button>
                           </div>
                         </React.Fragment>
                       );
@@ -1945,6 +2034,37 @@ export default function AdminChatInbox({ initialChannel = 'inbox' }) {
                   background: '#ffffff',
                   flexShrink: 0
                 }}>
+                  {replyingTo && (
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.6rem',
+                      background: '#f8fafc',
+                      border: '1px solid #e2e8f0',
+                      borderRadius: '8px',
+                      padding: '0.45rem 0.65rem',
+                      marginBottom: '0.6rem'
+                    }}>
+                      <div style={{ width: 3, alignSelf: 'stretch', borderRadius: 3, background: '#ea580c' }} />
+                      <div style={{ minWidth: 0, flex: 1 }}>
+                        <div style={{ fontSize: '0.7rem', fontWeight: 800, color: '#ea580c' }}>
+                          {replyingTo.sender === 'admin' ? 'BDigitizing Support' : (replyingTo.sender_name || activeConversation?.client_name || 'Client')}
+                        </div>
+                        <div style={{ fontSize: '0.75rem', color: '#64748b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          {getReplyPreviewText(replyingTo)}
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setReplyingTo(null)}
+                        aria-label="Cancel reply"
+                        style={{ border: 0, background: 'transparent', color: '#94a3b8', padding: '0.2rem', cursor: 'pointer', display: 'flex' }}
+                      >
+                        <X size={15} />
+                      </button>
+                    </div>
+                  )}
+
                   {/* PENDING ATTACHMENTS PREVIEW WITH PHOTO THUMBNAIL */}
                   {pendingAttachments.length > 0 && (
                     <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '0.65rem' }}>
@@ -2012,16 +2132,16 @@ export default function AdminChatInbox({ initialChannel = 'inbox' }) {
                     <textarea
                       ref={textareaRef}
                       rows={1}
+                      enterKeyHint="send"
                       placeholder="Type a message..."
                       value={inputText}
                       onChange={handleInputChange}
                       onFocus={stopNotificationSound}
                       onClick={stopNotificationSound}
                       onKeyDown={(e) => {
-                        if (e.key === 'Enter' && !e.shiftKey) {
-                          e.preventDefault();
-                          handleSendMessage();
-                        }
+                        if (e.key !== 'Enter' || e.shiftKey || e.nativeEvent?.isComposing) return;
+                        e.preventDefault();
+                        handleSendMessage();
                       }}
                       style={{
                         width: '100%',
