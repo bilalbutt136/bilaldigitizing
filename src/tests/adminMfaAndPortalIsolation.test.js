@@ -60,7 +60,7 @@ test('client portal refuses administrator accounts on web and installed mobile a
 test('admin sessions enforce idle reauthentication and database RLS requires aal2', () => {
   const adminPortal = read('app/admin-portal/AdminPortalClient.jsx');
   const settings = read('src/components/admin/settings/AdminSecuritySettings.jsx');
-  const migration = read('supabase/migrations/20261001000006_admin_mfa_hardening.sql');
+  const migration = read('supabase/migrations/20261001000007_admin_mfa_hardening.sql');
 
   assert.match(adminPortal, /ADMIN_ACTIVITY_KEY/);
   assert.match(adminPortal, /parseAdminIdleTimeout/);
