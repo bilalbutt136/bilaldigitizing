@@ -1948,20 +1948,28 @@ export const OrderTrackerDrawer = () => {
             <div
               onClick={() => setIsRequirementsOpen(prev => !prev)}
               style={{
-                display: 'flex',
+                display: isMobileLayout ? 'grid' : 'flex',
+                gridTemplateColumns: isMobileLayout ? 'minmax(0, 1fr) auto' : undefined,
                 justifyContent: 'space-between',
-                alignItems: 'center',
+                alignItems: isMobileLayout ? 'start' : 'center',
                 cursor: 'pointer',
                 userSelect: 'none',
-                gap: '0.75rem',
+                gap: isMobileLayout ? '0.65rem' : '0.75rem',
                 borderBottom: isRequirementsOpen ? '1px solid var(--border-color)' : 'none',
                 paddingBottom: isRequirementsOpen ? '0.75rem' : '0'
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', minWidth: 0 }}>
-                <span style={{ fontSize: '1.25rem', flexShrink: 0 }}>📋</span>
-                <div style={{ minWidth: 0 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', alignItems: isMobileLayout ? 'flex-start' : 'center', gap: '0.65rem', minWidth: 0 }}>
+                <span style={{ fontSize: '1.25rem', flexShrink: 0, lineHeight: 1.2 }}>📋</span>
+                <div style={{ minWidth: 0, width: '100%' }}>
+                  <div style={{
+                    display: 'flex',
+                    alignItems: isMobileLayout ? 'flex-start' : 'center',
+                    flexDirection: isMobileLayout ? 'column' : 'row',
+                    gap: isMobileLayout ? '0.25rem' : '0.5rem',
+                    flexWrap: isMobileLayout ? 'nowrap' : 'wrap',
+                    minWidth: 0
+                  }}>
                     <h4 style={{ fontSize: isMobileLayout ? '0.95rem' : '1.05rem', fontWeight: 800, color: 'var(--text-main)', margin: 0 }}>
                       Order Details
                     </h4>
@@ -1975,13 +1983,24 @@ export const OrderTrackerDrawer = () => {
                         padding: '0.15rem 0.5rem',
                         borderRadius: '6px',
                         border: '1px solid var(--border-color)',
-                        whiteSpace: 'nowrap'
+                        whiteSpace: isMobileLayout ? 'normal' : 'nowrap',
+                        maxWidth: '100%',
+                        lineHeight: 1.35,
+                        overflowWrap: 'anywhere',
+                        wordBreak: 'break-word',
+                        boxSizing: 'border-box'
                       }}>
                         {ord.serviceCategory || (ord.type === 'vector' ? 'Vector Art' : 'Embroidery Digitizing')} • {formatDimensions(ord.dimensions || ord.size)}
                       </span>
                     )}
                   </div>
-                  <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)', marginTop: '0.1rem' }}>
+                  <div style={{
+                    fontSize: '0.74rem',
+                    color: 'var(--text-muted)',
+                    marginTop: isMobileLayout ? '0.25rem' : '0.1rem',
+                    lineHeight: 1.45,
+                    overflowWrap: 'anywhere'
+                  }}>
                     {isRequirementsOpen
                       ? 'Size, fabric, placement, instructions, and source artwork'
                       : 'Show size, fabric, placement, instructions, and artwork'}
@@ -2004,8 +2023,12 @@ export const OrderTrackerDrawer = () => {
                   alignItems: 'center',
                   gap: '0.35rem',
                   flexShrink: 0,
-                  padding: '0.35rem 0.75rem',
-                  borderRadius: '8px'
+                  alignSelf: isMobileLayout ? 'start' : 'center',
+                  justifyContent: 'center',
+                  minWidth: isMobileLayout ? '70px' : undefined,
+                  padding: isMobileLayout ? '0.4rem 0.65rem' : '0.35rem 0.75rem',
+                  borderRadius: '8px',
+                  whiteSpace: 'nowrap'
                 }}
               >
                 {isRequirementsOpen ? (

@@ -63,6 +63,18 @@ describe('Mobile Portal & App Experience Upgrade', () => {
     assert.match(hub, /Live Support/);
   });
 
+  test('order details accordion keeps text and action separated in mobile Chrome and installed app', () => {
+    const source = read('src/components/customer/OrderTrackerDrawer.jsx');
+
+    assert.match(source, /const isMobileLayout = isMobileScreen \|\| mobileMode === 'app'/);
+    assert.match(source, /display: isMobileLayout \? 'grid' : 'flex'/);
+    assert.match(source, /gridTemplateColumns: isMobileLayout \? 'minmax\(0, 1fr\) auto'/);
+    assert.match(source, /flexDirection: isMobileLayout \? 'column' : 'row'/);
+    assert.match(source, /whiteSpace: isMobileLayout \? 'normal' : 'nowrap'/);
+    assert.match(source, /overflowWrap: 'anywhere'/);
+    assert.match(source, /minWidth: isMobileLayout \? '70px' : undefined/);
+  });
+
   test('customer mobile command center gives first-time users a clear three-step onboarding path', () => {
     const source = read('src/components/customer/CustomerMobileCommandCenter.jsx');
     assert.match(source, /How your first order works/);
