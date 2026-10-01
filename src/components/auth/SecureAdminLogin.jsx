@@ -3,11 +3,24 @@
 import React, { useState } from 'react';
 import { useNavigate } from '../../utils/navigation';
 import { useAppState } from '../../context/StateContext';
-import { ShieldCheck, Lock, Mail, ArrowRight, Home, AlertCircle } from 'lucide-react';
+import { ShieldCheck, Lock, Mail, ArrowRight, Home, AlertCircle, Loader2 } from 'lucide-react';
 
 export const SecureAdminLogin = () => {
   const navigate = useNavigate();
-  const { login, showToast } = useAppState();
+  const {
+    login,
+    showToast,
+    isAuthInitialized,
+    isAuthenticated,
+    authUser
+  } = useAppState();
+
+  React.useEffect(() => {
+    if (!isAuthInitialized) return;
+    if (isAuthenticated && authUser?.role === 'admin') {
+      navigate('/admin-portal', { replace: true });
+    }
+  }, [isAuthInitialized, isAuthenticated, authUser?.role, navigate]);
 
   const [adminEmail, setAdminEmail] = useState('');
   const [adminPassword, setAdminPassword] = useState('');
@@ -37,13 +50,33 @@ export const SecureAdminLogin = () => {
         return;
       }
 
-      navigate('/admin-portal');
+      navigate('/admin-portal', { replace: true });
       showToast('Authenticated as Studio Administrator!', 'success');
     } catch {
       setIsLoading(false);
       setAdminError('An unexpected authentication error occurred.');
     }
   };
+
+  if (!isAuthInitialized || (isAuthenticated && authUser?.role === 'admin')) {
+    return (
+      <div style={{
+        minHeight: 'calc(100vh - 140px)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: 'var(--bg-main)',
+        color: 'var(--color-text-primary)'
+      }}>
+        <div style={{ textAlign: 'center' }}>
+          <Loader2 className="animate-spin" size={34} style={{ color: 'var(--color-primary)' }} />
+          <div style={{ marginTop: '0.8rem', fontSize: '0.875rem', color: 'var(--text-muted)', fontWeight: 600 }}>
+            Verifying administrator session...
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={{

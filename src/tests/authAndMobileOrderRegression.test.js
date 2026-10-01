@@ -15,6 +15,32 @@ describe('Login Stability & Mobile Order Tracking Regression', () => {
     assert.equal(source.includes('window.location.replace('), false);
   });
 
+  test('admin hard refresh restores INITIAL_SESSION before redirecting to login', () => {
+    const state = read('src/context/StateContext.jsx');
+    const portal = read('app/admin-portal/AdminPortalClient.jsx');
+    const adminLogin = read('src/components/auth/SecureAdminLogin.jsx');
+    const proxy = read('proxy.js');
+
+    assert.match(state, /authInitialSessionSeenRef/);
+    assert.match(state, /if \(event === 'INITIAL_SESSION'\)/);
+    assert.match(state, /authInitialSessionSeenRef\.current = true/);
+    assert.equal(
+      state.includes("if (event === 'INITIAL_SESSION' || event === 'TOKEN_REFRESHED') return;"),
+      false
+    );
+    assert.match(
+      state,
+      /Hard refresh can briefly report no session before Supabase emits its[\s\S]*authoritative INITIAL_SESSION event/
+    );
+    assert.match(portal, /if \(!isMounted \|\| !isAuthInitialized\) return;/);
+
+    assert.match(adminLogin, /isAuthInitialized/);
+    assert.match(adminLogin, /isAuthenticated && authUser\?\.role === 'admin'/);
+    assert.match(adminLogin, /navigate\('\/admin-portal', \{ replace: true \}\)/);
+
+    assert.match(proxy, /loginUrl\.pathname = '\/secure-admin-login'/);
+  });
+
   test('cached auth cannot suppress the standalone login form before session verification', () => {
     const source = read('src/components/auth/AuthModal.jsx');
     assert.match(source, /isStandalonePage && !isAuthInitialized && isUserLoggedIn/);

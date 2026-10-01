@@ -70,6 +70,8 @@ function getLoginUrl(request, pathname, isWorkerRoute) {
 
   if (pathname === '/portal' || pathname.startsWith('/portal/')) {
     loginUrl.pathname = '/portal/login';
+  } else if (ADMIN_PREFIXES.some(prefix => pathname === prefix || pathname.startsWith(`${prefix}/`))) {
+    loginUrl.pathname = '/secure-admin-login';
   } else if (isWorkerRoute) {
     loginUrl.pathname = '/worker-login';
   } else {

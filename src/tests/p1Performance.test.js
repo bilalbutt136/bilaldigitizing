@@ -88,7 +88,9 @@ describe('P1 Performance Regression Coverage', () => {
 
     assert.match(state, /const refreshOrders = useCallback/);
     assert.match(state, /const refreshClients = useCallback/);
-    assert.match(state, /event === 'INITIAL_SESSION' || event === 'TOKEN_REFRESHED'/);
+    assert.match(state, /event === 'INITIAL_SESSION'/);
+    assert.match(state, /event === 'TOKEN_REFRESHED'/);
+    assert.equal(state.includes("if (event === 'INITIAL_SESSION' || event === 'TOKEN_REFRESHED') return;"), false);
     assert.equal(adminDashboard.includes('refreshOrders'), false);
     assert.equal(adminDashboard.includes('refreshClients'), false);
 

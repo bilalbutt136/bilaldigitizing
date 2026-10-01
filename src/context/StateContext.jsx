@@ -82,6 +82,7 @@ export const StateProvider = ({ children, initialCatalog = null }) => {
   const [isAuthInitialized, setIsAuthInitialized] = useState(false);
   const [authUser, setAuthUser] = useState(null);
   const authHydrationGuardRef = _useRef({ userId: null, hydratedAt: 0 });
+  const authInitialSessionSeenRef = _useRef(false);
 
   // Global Toast Notification State - hoisted early so all callbacks/effects can safely access it
   const [toast, setToast] = useState(null);
@@ -947,9 +948,18 @@ export const StateProvider = ({ children, initialCatalog = null }) => {
       }
 
       try {
-        const { data: sessionData } = await supabase.auth.getSession();
+        const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+        if (sessionError) throw sessionError;
+
         const session = sessionData?.session;
         if (!cancelled && session?.user) {
+          // onAuthStateChange(INITIAL_SESSION) may win this race on hard refresh.
+          // If that path already hydrated the same user, do not duplicate all API reads.
+          if (authHydrationGuardRef.current.userId === session.user.id) {
+            setIsAuthInitialized(true);
+            return;
+          }
+
           const role = await resolveRole(session.user.email, session.user);
           authHydrationGuardRef.current = {
             userId: session.user.id,
@@ -998,7 +1008,11 @@ export const StateProvider = ({ children, initialCatalog = null }) => {
 
           upsertClientInSupabase({ ...uData, role }).catch(() => {});
         } else {
-          // If Supabase has no active session, strictly clear session and log out (Rule 3: Auth Enforcement)
+          // Hard refresh can briefly report no session before Supabase emits its
+          // authoritative INITIAL_SESSION event. Do not mark auth initialized yet,
+          // otherwise AdminPortalClient redirects a still-valid admin to login.
+          if (!authInitialSessionSeenRef.current) return;
+
           if (!cancelled) {
             setIsAuthenticated(false);
             setAuthUser(null);
@@ -1017,12 +1031,12 @@ export const StateProvider = ({ children, initialCatalog = null }) => {
                 }
               }
             } catch {}
+            setIsAuthInitialized(true);
           }
         }
       } catch (sessErr) {
         console.warn('Session verification notice:', sessErr);
-      } finally {
-        if (!cancelled) setIsAuthInitialized(true);
+        // INITIAL_SESSION remains the fallback source of truth.
       }
     };
 
@@ -1326,10 +1340,13 @@ export const StateProvider = ({ children, initialCatalog = null }) => {
         if (cancelled) return;
 
         try {
-          // Initial hydration is already handled by validateImmediateSession above.
+          if (event === 'INITIAL_SESSION') {
+            authInitialSessionSeenRef.current = true;
+          }
+
           // TOKEN_REFRESHED changes credentials, not application data; refetching
           // orders/clients here creates avoidable request bursts.
-          if (event === 'INITIAL_SESSION' || event === 'TOKEN_REFRESHED') return;
+          if (event === 'TOKEN_REFRESHED') return;
 
           if (event === 'PASSWORD_RECOVERY') {
             setAuthModalMode('update_password');
@@ -1365,10 +1382,16 @@ export const StateProvider = ({ children, initialCatalog = null }) => {
           if (session?.user) {
             const lastHydration = authHydrationGuardRef.current;
             if (
-              event === 'SIGNED_IN' &&
               lastHydration.userId === session.user.id &&
-              Date.now() - lastHydration.hydratedAt < 15_000
+              (
+                event === 'INITIAL_SESSION' ||
+                (
+                  event === 'SIGNED_IN' &&
+                  Date.now() - lastHydration.hydratedAt < 15_000
+                )
+              )
             ) {
+              setIsAuthInitialized(true);
               return;
             }
 
@@ -1418,11 +1441,35 @@ export const StateProvider = ({ children, initialCatalog = null }) => {
             } catch (err) {
               console.warn('Client upsert notice:', err);
             }
+          } else if (event === 'INITIAL_SESSION') {
+            // INITIAL_SESSION with no user is the authoritative "signed out"
+            // signal after browser storage/cookies have finished loading.
+            if (!authHydrationGuardRef.current.userId) {
+              setIsAuthenticated(false);
+              setAuthUser(null);
+              setCurrentView('public');
+              setWalletBalance(0);
+              setOrders([]);
+              try {
+                if (typeof window !== 'undefined') {
+                  localStorage.removeItem('bdigi_auth_user');
+                  localStorage.removeItem('bdigi_current_view');
+                  localStorage.removeItem('bdigi_user_email');
+                  if (typeof document !== 'undefined') {
+                    document.cookie = 'bdigi_auth=; path=/; max-age=0; SameSite=Lax';
+                    document.cookie = 'bdigi_user_email=; path=/; max-age=0; SameSite=Lax';
+                    document.cookie = 'bdigi_user_role=; path=/; max-age=0; SameSite=Lax';
+                  }
+                }
+              } catch {}
+            }
           }
         } catch (authErr) {
           console.warn('onAuthStateChange exception:', authErr);
         } finally {
-          if (!cancelled) setIsAuthInitialized(true);
+          if (!cancelled && event !== 'TOKEN_REFRESHED') {
+            setIsAuthInitialized(true);
+          }
         }
       });
       authSubscription = authListener?.subscription;
