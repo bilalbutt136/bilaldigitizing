@@ -48,7 +48,6 @@ export async function handleRequestRevision(context) {
       }
 
       const nowIso = new Date().toISOString();
-      const clientEmail = (orderData?.client_email || user.email || '').toLowerCase().trim();
       const clientName = orderData?.client_name || user.user_metadata?.full_name || 'Client';
       const ordTitle = orderData?.title || `Order #${canonicalOrderId}`;
 
@@ -94,21 +93,9 @@ export async function handleRequestRevision(context) {
         updated_at: nowIso
       }).in('id', candidateIds);
 
-      // Ensure conversation thread
-      const convId = `order-${canonicalOrderId}`;
-      const { data: existingConv } = await supabase.from('conversations').select('id, unread_admin_count').eq('id', convId).maybeSingle();
-      if (!existingConv) {
-        await supabase.from('conversations').insert([{
-          id: convId, order_id: canonicalOrderId, order_title: ordTitle,
-          client_email: clientEmail, client_name: clientName,
-          client_company: 'Studio Client', status: 'offline',
-          unread_admin_count: 1, unread_client_count: 0,
-          created_at: nowIso, updated_at: nowIso
-        }]).catch((error) => { logServerCaughtError(error, { operation: 'orders.revision_conversation_create_failed' }); });
-      } else {
-        // Bump admin unread
-        await supabase.from('conversations').update({ unread_admin_count: (existingConv?.unread_admin_count || 0) + 1, updated_at: nowIso }).eq('id', convId).catch((error) => { logServerCaughtError(error, { operation: 'orders.revision_conversation_unread_update_failed' }); });
-      }
+      // Revision requests use dedicated order notifications. Do not create
+      // or increment Inbox conversations unless an actual chat message is sent.
+
 
       // Admin: modification requested
       try {

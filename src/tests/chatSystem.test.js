@@ -1,5 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
+
+
+const read = relativePath => fs.readFileSync(path.join(process.cwd(), relativePath), 'utf8');
 
 test('Chat System & Fiverr-Style Inbox Architecture', async (t) => {
 
@@ -24,6 +29,30 @@ test('Chat System & Fiverr-Style Inbox Architecture', async (t) => {
     const starred = mockConversations.filter(c => c.is_starred);
     assert.equal(starred.length, 2);
     assert.deepEqual(starred.map(c => c.client_name), ['arthurs20', 'blkdlmd']);
+  });
+
+  await t.test('direct order lifecycle events never create fake unread Inbox conversations', () => {
+    const createOrder = read('src/server/orders/handlers/post/createOrder.js');
+    const updateStatus = read('src/server/orders/handlers/post/updateStatus.js');
+    const requestRevision = read('src/server/orders/handlers/post/requestRevision.js');
+    const conversationsRoute = read('app/api/chat/conversations/route.js');
+    const messagesRoute = read('app/api/chat/messages/route.js');
+    const cleanupMigration = read('supabase/migrations/20261001000004_remove_order_only_inbox_threads.sql');
+
+    assert.equal(createOrder.includes(".from('conversations')"), false);
+    assert.equal(updateStatus.includes(".from('conversations')"), false);
+    assert.equal(requestRevision.includes(".from('conversations')"), false);
+
+    assert.equal(conversationsRoute.includes('Admin-only bootstrap from existing studio orders'), false);
+    assert.equal(conversationsRoute.includes('placed for'), false);
+
+    // Real messages remain the canonical place that creates/increments chat threads.
+    assert.match(messagesRoute, /\.from\('conversations'\)/);
+    assert.match(messagesRoute, /unread_admin_count: effectiveSender === 'client' \? 1 : 0/);
+    assert.match(messagesRoute, /updatePayload\.unread_admin_count/);
+
+    assert.match(cleanupMigration, /NOT EXISTS \([\s\S]*FROM public\.messages/);
+    assert.match(cleanupMigration, /c\.id LIKE 'order-%'/);
   });
 
   await t.test('2. Multi-format attachment normalization handles machine files and artwork', () => {

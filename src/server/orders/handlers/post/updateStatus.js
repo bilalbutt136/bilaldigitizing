@@ -165,7 +165,7 @@ export async function handleUpdateStatus(context) {
         }
       }
 
-      // ── Comprehensive status-change notifications + auto-ensure conversation ──
+      // ── Comprehensive status-change notifications ──
       try {
         const nowIso = new Date().toISOString();
         let clientEmail = (targetOrder?.client_email || extraData?.clientEmail || extraData?.client_email || '').toLowerCase().trim();
@@ -189,25 +189,10 @@ export async function handleUpdateStatus(context) {
         const resolvedOrderId = targetOrder?.id || rawId;
         const ordTitle = targetOrder?.title || extraData?.title || `Order #${resolvedOrderId}`;
 
-        // Always ensure conversation thread exists
-        const convId = `order-${resolvedOrderId}`;
-        const { data: existingConv } = await supabase.from('conversations').select('id').eq('id', convId).maybeSingle();
-        if (!existingConv) {
-          await supabase.from('conversations').insert([{
-            id: convId,
-            order_id: resolvedOrderId,
-            order_title: ordTitle,
-            client_email: clientEmail,
-            client_name: clientName,
-            client_company: 'Studio Client',
-            status: 'offline',
-            unread_count: 0,
-            admin_unread_count: 0,
-            client_unread_count: 0,
-            created_at: nowIso,
-            updated_at: nowIso
-          }]);
-        }
+        // Do not auto-create Inbox conversations for order status changes.
+        // Order lifecycle alerts stay in the notification system; chat threads
+        // are reserved for actual messages.
+
 
         const insertNotif = async (notif) => {
           try {

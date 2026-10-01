@@ -51,58 +51,9 @@ async function GET_impl(request) {
       conversations = [];
     }
 
-    // Admin-only bootstrap from existing studio orders when the inbox is empty.
-    if (isAdmin && !requestedEmail && (!conversations || conversations.length === 0)) {
-      try {
-        const { data: recentOrders } = await supabase
-          .from('orders')
-          .select('id, client_name, client_email, client_company, service_name, created_at, status')
-          .order('created_at', { ascending: false })
-          .limit(10);
+    // Inbox contains real conversations only. Do not synthesize threads from
+    // orders; order events belong to the Orders/Notifications surfaces.
 
-        if (recentOrders?.length) {
-          const uniqueEmails = new Map();
-          for (const ord of recentOrders) {
-            const email = (ord.client_email || '').toLowerCase().trim();
-            if (email && !uniqueEmails.has(email)) uniqueEmails.set(email, ord);
-          }
-
-          const syncRows = [];
-          for (const [email, ord] of uniqueEmails.entries()) {
-            syncRows.push({
-              id: `inbox-${email.replace(/[^a-zA-Z0-9]/g, '_')}`,
-              client_email: email,
-              client_name: ord.client_name || email.split('@')[0] || 'Client',
-              client_company: ord.client_company || '',
-              order_id: ord.id ? String(ord.id) : null,
-              order_title: ord.service_name || 'Embroidery Digitizing Project',
-              status: 'offline',
-              tags: ['inbox'],
-              last_message: `Order #${String(ord.id).replace(/^#+/, '')} placed for ${ord.service_name || 'Embroidery Services'}.`,
-              last_message_at: ord.created_at || new Date().toISOString(),
-              unread_admin_count: 0,
-              unread_client_count: 0,
-              is_starred: false,
-              created_at: ord.created_at || new Date().toISOString(),
-              last_seen_at: ord.created_at || new Date().toISOString(),
-              updated_at: new Date().toISOString()
-            });
-          }
-
-          if (syncRows.length) {
-            await supabase.from('conversations').upsert(syncRows, { onConflict: 'id' });
-            const { data: refreshed } = await supabase
-              .from('conversations')
-              .select('*')
-              .order('last_message_at', { ascending: false })
-              .limit(500);
-            if (refreshed) conversations = refreshed;
-          }
-        }
-      } catch (syncErr) {
-        console.warn('[Chat Auto-Sync Notice]:', syncErr.message);
-      }
-    }
 
     let results = conversations || [];
     if (chatType === 'support') {

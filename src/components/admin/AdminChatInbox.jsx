@@ -1115,7 +1115,7 @@ export default function AdminChatInbox({ initialChannel = 'inbox' }) {
               <span style={{ fontSize: '0.78rem' }}>
                 {activeChannel === 'support'
                   ? 'Client inquiries submitted via 24/7 Support Desk will appear here.'
-                  : 'Direct client inquiries, orders, and custom offers will appear here.'}
+                  : 'Direct client messages and custom offer conversations will appear here.'}
               </span>
             </div>
           ) : (

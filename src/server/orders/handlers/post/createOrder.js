@@ -165,28 +165,10 @@ export async function handleCreateOrder(context) {
       }
 
 
-      // Auto-create inbox conversation thread so client always sees an entry
-      try {
-        const convId = `order-${mappedDbRow.id}`;
-        const { data: existingConv } = await supabase.from('conversations').select('id').eq('id', convId).maybeSingle();
-        if (!existingConv) {
-          await supabase.from('conversations').insert([{
-            id: convId,
-            order_id: mappedDbRow.id,
-            order_title: mappedDbRow.title,
-            client_email: clientEmail,
-            client_name: mappedDbRow.client_name,
-            client_company: 'Studio Client',
-            status: 'offline',
-            unread_admin_count: 1,
-            unread_client_count: 0,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          }]);
-        }
-      } catch (convErr) {
-        console.warn('Auto-create conversation notice:', convErr.message);
-      }
+      // Orders and chat are separate concerns. A direct order should create
+      // order/notification records only; Inbox threads are created when someone
+      // actually starts a conversation or sends a message.
+
 
       // Automatically create notifications in public.notifications (Order Placed - Notification 1)
       try {
