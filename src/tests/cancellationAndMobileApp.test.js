@@ -148,7 +148,7 @@ describe('2. Mobile VIP Architecture & Bottom Navigation Tabs', () => {
 
     // Confirms PWA install popup banner exists in common components
     const pwaContent = fs.readFileSync(path.join(process.cwd(), 'src/components/common/PWAInstallBanner.jsx'), 'utf-8');
-    assert.match(pwaContent, /Get the BDigitizing App/);
+    assert.match(pwaContent, /Install BDigitizing App/);
     assert.match(pwaContent, /bdigi_trigger_pwa_install/);
   });
 });
@@ -209,7 +209,8 @@ describe('3. Mobile Hygiene: WhatsApp Removal & Stat Cards Hidden on Mobile', ()
 
     // PWAInstallBanner Launch App
     assert.match(pwaContent, /<span>Launch App<\/span>/);
-    assert.match(pwaContent, /<span>Install App<\/span>/);
+    assert.match(pwaContent, /handleInstallClick/);
+    assert.match(pwaContent, /await promptObj\.prompt\(\)/);
   });
 });
 

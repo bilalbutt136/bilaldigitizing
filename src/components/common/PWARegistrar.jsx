@@ -95,21 +95,11 @@ export const PWARegistrar = () => {
         reg.update().catch(() => {});
         await setupPush(reg);
 
-        // If permission is default, politely request on first user touch/click
-        if ('Notification' in window && Notification.permission === 'default') {
-          const handleFirstInteraction = async () => {
-            window.removeEventListener('click', handleFirstInteraction);
-            window.removeEventListener('touchend', handleFirstInteraction);
-            try {
-              const res = await Notification.requestPermission();
-              if (res === 'granted') {
-                await setupPush(reg);
-              }
-            } catch {}
-          };
-          window.addEventListener('click', handleFirstInteraction, { once: true });
-          window.addEventListener('touchend', handleFirstInteraction, { once: true });
-        }
+        // Never request push-notification permission on an unrelated first tap.
+        // That browser prompt can collide with the native PWA install dialog and
+        // feels like two permissions at once. If permission was already granted,
+        // setupPush() above keeps the subscription current; new permission should
+        // only be requested from an explicit notifications control.
       } catch (error) {
         console.warn('[PWA] Service Worker registration notice:', error);
       }

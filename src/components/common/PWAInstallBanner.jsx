@@ -4,7 +4,10 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Download, X, Sparkles as _Sparkles, Smartphone, Share, PlusSquare, MoreVertical, CheckCircle2 as _CheckCircle2 } from 'lucide-react';
 import { useAppState } from '../../context/StateContext';
 
-const AUTO_DISMISS_SECONDS = 10;
+const AUTO_DISMISS_SECONDS = 14;
+const MOBILE_PROMPT_DELAY_MS = 1800;
+const ANDROID_FALLBACK_DELAY_MS = 3600;
+const EXPLICIT_DISMISS_COOLDOWN_MS = 24 * 60 * 60 * 1000;
 
 export const PWAInstallBanner = () => {
   const { setMobileMode } = useAppState();
@@ -17,90 +20,108 @@ export const PWAInstallBanner = () => {
   const [showAndroidInstructions, setShowAndroidInstructions] = useState(false);
   const [isAppInstalled, setIsAppInstalled] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
+  const [isInstalling, setIsInstalling] = useState(false);
 
   const dismissTimerRef = useRef(null);
   const deferredPromptRef = useRef(null);
 
   useEffect(() => {
-    // 1. Check if already running in standalone PWA / Mobile App mode
     const isApp = window.matchMedia('(display-mode: standalone)').matches ||
                   window.navigator.standalone === true ||
                   (document.referrer && document.referrer.includes('android-app://'));
     setIsStandalone(isApp);
     if (isApp) return;
 
-    // 2. Check if user already installed app
-    if (typeof navigator !== 'undefined' && 'getInstalledRelatedApps' in navigator) {
-      navigator.getInstalledRelatedApps().then(apps => {
-        if (Array.isArray(apps) && apps.length > 0) {
-          setIsAppInstalled(true);
-        }
-      }).catch(() => {});
-    }
-    if (typeof localStorage !== 'undefined' && localStorage.getItem('bdigi_pwa_installed') === 'true') {
-      setIsAppInstalled(true);
-    }
-
-    const handleAppInstalled = () => {
-      setIsAppInstalled(true);
-      if (typeof localStorage !== 'undefined') {
-        localStorage.setItem('bdigi_pwa_installed', 'true');
-      }
-      setShowBanner(false);
-      clearTimeout(dismissTimerRef.current);
-    };
-    window.addEventListener('appinstalled', handleAppInstalled);
-
-    // 3. Check session and local storage dismissal
-    const sessionDismissed = typeof sessionStorage !== 'undefined' && sessionStorage.getItem('bdigi_pwa_dismissed') === 'true';
-    const dismissedUntil = typeof localStorage !== 'undefined' ? localStorage.getItem('bdigi_pwa_dismissed_until') : null;
-    const isDismissed = sessionDismissed || (dismissedUntil && Number(dismissedUntil) > Date.now());
-
-    // 4. Detect platform
     const userAgent = window.navigator.userAgent.toLowerCase();
     const isIOSDevice = /iphone|ipad|ipod/.test(userAgent);
     const isAndroidDevice = /android/.test(userAgent);
-    const isMobileViewport = typeof window !== 'undefined' && (window.innerWidth <= 820 || /mobile|android|iphone|ipad|ipod/.test(userAgent));
+    const isMobileViewport = window.innerWidth <= 820 ||
+      /mobile|android|iphone|ipad|ipod/.test(userAgent);
 
     setIsIOS(isIOSDevice);
     setIsAndroid(isAndroidDevice);
 
-    // 5. Capture beforeinstallprompt event for Android / Chrome / Edge
-    const handleBeforeInstall = (e) => {
-      e.preventDefault();
-      setDeferredPrompt(e);
-      deferredPromptRef.current = e;
-      if (typeof window !== 'undefined') {
-        window.deferredPWAInstallPrompt = e;
-      }
-      if (!isDismissed && !isApp) {
-        setTimeout(() => {
-          setShowBanner(true);
-        }, 2200);
-      }
+    let showTimer = null;
+    let fallbackTimer = null;
+    let installedByBrowser = false;
+
+    const sessionDismissed =
+      sessionStorage.getItem('bdigi_pwa_dismissed') === 'true';
+    const dismissedUntil = localStorage.getItem('bdigi_pwa_dismissed_until');
+    const explicitDismissActive =
+      dismissedUntil && Number(dismissedUntil) > Date.now();
+    const isDismissed = sessionDismissed || explicitDismissActive;
+
+    const storedInstalled =
+      localStorage.getItem('bdigi_pwa_installed') === 'true';
+
+    const revealInstallNotice = (delay = MOBILE_PROMPT_DELAY_MS) => {
+      if (!isMobileViewport || isDismissed || installedByBrowser) return;
+      clearTimeout(showTimer);
+      showTimer = setTimeout(() => {
+        if (!installedByBrowser) setShowBanner(true);
+      }, delay);
     };
-    window.addEventListener('beforeinstallprompt', handleBeforeInstall);
 
-    // 6. If on mobile browser (Chrome/Safari) and not dismissed, show prompt after a smooth delay
-    if (isMobileViewport && !isDismissed && !isApp) {
-      const showTimer = setTimeout(() => {
-        setShowBanner(true);
-      }, 2600);
-
-      return () => {
-        clearTimeout(showTimer);
-        clearTimeout(dismissTimerRef.current);
-        window.removeEventListener('appinstalled', handleAppInstalled);
-        window.removeEventListener('beforeinstallprompt', handleBeforeInstall);
-      };
+    const existingPrompt = window.deferredPWAInstallPrompt || null;
+    if (existingPrompt) {
+      setDeferredPrompt(existingPrompt);
+      deferredPromptRef.current = existingPrompt;
     }
 
-    // 7. Manual trigger listener from profile / header menus
+    if (storedInstalled) {
+      setIsAppInstalled(true);
+    }
+
+    if ('getInstalledRelatedApps' in navigator) {
+      navigator.getInstalledRelatedApps()
+        .then((apps) => {
+          if (Array.isArray(apps) && apps.length > 0) {
+            installedByBrowser = true;
+            setIsAppInstalled(true);
+            setShowBanner(false);
+            localStorage.setItem('bdigi_pwa_installed', 'true');
+          }
+        })
+        .catch(() => {});
+    }
+
+    const handleAppInstalled = () => {
+      installedByBrowser = true;
+      setIsAppInstalled(true);
+      setIsInstalling(false);
+      setShowBanner(false);
+      clearTimeout(showTimer);
+      clearTimeout(fallbackTimer);
+      clearTimeout(dismissTimerRef.current);
+      localStorage.setItem('bdigi_pwa_installed', 'true');
+      sessionStorage.removeItem('bdigi_pwa_dismissed');
+      localStorage.removeItem('bdigi_pwa_dismissed_until');
+    };
+
+    const handleBeforeInstall = (event) => {
+      event.preventDefault();
+      // If the browser says the app is installable, that is more authoritative
+      // than an old localStorage flag left behind after an uninstall.
+      setIsAppInstalled(false);
+      localStorage.removeItem('bdigi_pwa_installed');
+      setDeferredPrompt(event);
+      deferredPromptRef.current = event;
+      window.deferredPWAInstallPrompt = event;
+      clearTimeout(fallbackTimer);
+      revealInstallNotice(existingPrompt ? 300 : MOBILE_PROMPT_DELAY_MS);
+    };
+
     const handleManualTrigger = () => {
-      const promptEvent = deferredPromptRef.current;
+      const promptEvent =
+        deferredPromptRef.current || window.deferredPWAInstallPrompt;
+
       if (promptEvent) {
-        promptEvent.prompt();
-      } else if (isIOSDevice) {
+        setShowBanner(true);
+        return;
+      }
+
+      if (isIOSDevice) {
         setShowIOSInstructions(true);
       } else if (isAndroidDevice) {
         setShowAndroidInstructions(true);
@@ -108,9 +129,32 @@ export const PWAInstallBanner = () => {
         setShowBanner(true);
       }
     };
+
+    window.addEventListener('appinstalled', handleAppInstalled);
+    window.addEventListener('beforeinstallprompt', handleBeforeInstall);
     window.addEventListener('bdigi_trigger_pwa_install', handleManualTrigger);
 
+    // Chromium: show only after we have a real native install event whenever possible.
+    if (isMobileViewport && !isDismissed && !storedInstalled) {
+      if (existingPrompt) {
+        revealInstallNotice();
+      } else if (isIOSDevice) {
+        // iOS has no beforeinstallprompt API, so show the lightweight guide entry.
+        revealInstallNotice();
+      } else if (isAndroidDevice) {
+        // Give Chrome time to emit beforeinstallprompt. If it does not, still offer
+        // a removable manual-install fallback instead of silently doing nothing.
+        fallbackTimer = setTimeout(() => {
+          if (!deferredPromptRef.current && !window.deferredPWAInstallPrompt) {
+            setShowBanner(true);
+          }
+        }, ANDROID_FALLBACK_DELAY_MS);
+      }
+    }
+
     return () => {
+      clearTimeout(showTimer);
+      clearTimeout(fallbackTimer);
       clearTimeout(dismissTimerRef.current);
       window.removeEventListener('appinstalled', handleAppInstalled);
       window.removeEventListener('beforeinstallprompt', handleBeforeInstall);
@@ -118,12 +162,16 @@ export const PWAInstallBanner = () => {
     };
   }, []);
 
-  // Auto-dismiss countdown effect: automatically closes the popup after 10 seconds if not hovered/interacted
+  // Auto-hide quietly if ignored. This only suppresses the card for the current
+  // browser session; the explicit X button applies the longer 24-hour cooldown.
   useEffect(() => {
     if (!showBanner || isPaused) return;
 
     dismissTimerRef.current = setTimeout(() => {
-      handleDismiss();
+      setShowBanner(false);
+      if (typeof sessionStorage !== 'undefined') {
+        sessionStorage.setItem('bdigi_pwa_dismissed', 'true');
+      }
     }, AUTO_DISMISS_SECONDS * 1000);
 
     return () => {
@@ -139,29 +187,51 @@ export const PWAInstallBanner = () => {
     if (typeof sessionStorage !== 'undefined') {
       sessionStorage.setItem('bdigi_pwa_dismissed', 'true');
     }
-    // Set a 24-hour cap in localStorage
+    // Explicit close means "not now": keep it quiet for 24 hours.
     if (typeof localStorage !== 'undefined') {
-      const oneDayMs = 24 * 60 * 60 * 1000;
-      localStorage.setItem('bdigi_pwa_dismissed_until', String(Date.now() + oneDayMs));
+      localStorage.setItem(
+        'bdigi_pwa_dismissed_until',
+        String(Date.now() + EXPLICIT_DISMISS_COOLDOWN_MS)
+      );
     }
   };
 
   const handleInstallClick = async () => {
     clearTimeout(dismissTimerRef.current);
-    const promptObj = deferredPrompt || (typeof window !== 'undefined' ? window.deferredPWAInstallPrompt : null);
+    const promptObj = deferredPrompt ||
+      (typeof window !== 'undefined' ? window.deferredPWAInstallPrompt : null);
 
     if (promptObj) {
-      promptObj.prompt();
-      const { outcome } = await promptObj.userChoice;
-      if (outcome === 'accepted') {
-        setIsAppInstalled(true);
-        if (typeof localStorage !== 'undefined') {
-          localStorage.setItem('bdigi_pwa_installed', 'true');
+      setIsInstalling(true);
+      try {
+        await promptObj.prompt();
+        const { outcome } = await promptObj.userChoice;
+
+        if (outcome === 'accepted') {
+          setIsAppInstalled(true);
+          setShowBanner(false);
+          if (typeof localStorage !== 'undefined') {
+            localStorage.setItem('bdigi_pwa_installed', 'true');
+          }
+        } else {
+          setShowBanner(false);
+          if (typeof sessionStorage !== 'undefined') {
+            sessionStorage.setItem('bdigi_pwa_dismissed', 'true');
+          }
         }
-        setShowBanner(false);
+      } catch {
+        if (isAndroid) {
+          setShowAndroidInstructions(true);
+          setShowBanner(false);
+        }
+      } finally {
+        setIsInstalling(false);
+        setDeferredPrompt(null);
+        deferredPromptRef.current = null;
+        if (typeof window !== 'undefined') {
+          window.deferredPWAInstallPrompt = null;
+        }
       }
-      setDeferredPrompt(null);
-      if (typeof window !== 'undefined') window.deferredPWAInstallPrompt = null;
     } else if (isIOS) {
       setShowIOSInstructions(true);
       setShowBanner(false);
@@ -207,11 +277,37 @@ export const PWAInstallBanner = () => {
         .bdigi-install-popup-progress.paused {
           animation-play-state: paused;
         }
+        .bdigi-install-card-main {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 0.65rem;
+        }
+        .bdigi-install-actions {
+          display: flex;
+          align-items: center;
+          gap: 0.45rem;
+          flex-shrink: 0;
+        }
+        @media (max-width: 420px) {
+          .bdigi-install-card-main {
+            align-items: flex-start;
+            flex-wrap: wrap;
+          }
+          .bdigi-install-actions {
+            width: 100%;
+            justify-content: flex-end;
+          }
+          .bdigi-install-title,
+          .bdigi-install-copy {
+            white-space: normal !important;
+          }
+        }
       `}} />
 
       {/* Floating Mobile App Installation Popup */}
       <div
-        role="alert"
+        role="status"
         aria-live="polite"
         onMouseEnter={() => setIsPaused(true)}
         onMouseLeave={() => setIsPaused(false)}
@@ -239,44 +335,48 @@ export const PWAInstallBanner = () => {
         }}
       >
         {/* Top Content Row */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.65rem' }}>
+        <div className="bdigi-install-card-main">
 
           {/* App Icon & Details */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', minWidth: 0 }}>
             <div style={{
-              width: '42px',
-              height: '42px',
-              borderRadius: '12px',
-              background: 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)',
+              width: '46px',
+              height: '46px',
+              borderRadius: '13px',
+              background: '#ffffff',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              color: '#ffffff',
-              fontWeight: 900,
-              fontSize: '1.15rem',
               flexShrink: 0,
-              boxShadow: '0 4px 14px rgba(249, 115, 22, 0.45)'
+              boxShadow: '0 4px 14px rgba(0, 0, 0, 0.22)',
+              overflow: 'hidden'
             }}>
-              B
+              <img
+                src="/icon-192x192.png"
+                alt=""
+                width="46"
+                height="46"
+                style={{ width: '46px', height: '46px', objectFit: 'contain', display: 'block' }}
+              />
             </div>
 
             <div style={{ minWidth: 0 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                <h4 style={{ margin: 0, fontSize: '0.88rem', fontWeight: 800, color: '#ffffff', whiteSpace: 'nowrap' }}>
-                  {isAppInstalled ? 'BDigitizing App' : 'Get the BDigitizing App'}
+                <h4 className="bdigi-install-title" style={{ margin: 0, fontSize: '0.88rem', fontWeight: 800, color: '#ffffff', whiteSpace: 'nowrap' }}>
+                  {isAppInstalled ? 'BDigitizing App' : 'Install BDigitizing App'}
                 </h4>
                 <span style={{ fontSize: '0.62rem', background: '#ea580c', color: '#ffffff', fontWeight: 900, padding: '0.1rem 0.4rem', borderRadius: '9999px', letterSpacing: '0.04em' }}>
                   {isAppInstalled ? 'INSTALLED' : 'FREE'}
                 </span>
               </div>
-              <p style={{ margin: '0.15rem 0 0', fontSize: '0.72rem', color: '#94a3b8', lineHeight: 1.25, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                Fast 1-tap ordering, push notifications & tracking
+              <p className="bdigi-install-copy" style={{ margin: '0.15rem 0 0', fontSize: '0.72rem', color: '#94a3b8', lineHeight: 1.3, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                Faster access, order tracking & studio chat • no app store needed
               </p>
             </div>
           </div>
 
           {/* Action Button & Cross Close Button */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', flexShrink: 0 }}>
+          <div className="bdigi-install-actions">
             {isAppInstalled ? (
               <button
                 type="button"
@@ -304,6 +404,8 @@ export const PWAInstallBanner = () => {
               <button
                 type="button"
                 onClick={handleInstallClick}
+                disabled={isInstalling}
+                aria-label={isIOS ? 'Show iPhone installation steps' : 'Install BDigitizing app'}
                 style={{
                   background: 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)',
                   color: '#ffffff',
@@ -312,7 +414,8 @@ export const PWAInstallBanner = () => {
                   padding: '0.45rem 0.85rem',
                   fontSize: '0.78rem',
                   fontWeight: 800,
-                  cursor: 'pointer',
+                  cursor: isInstalling ? 'wait' : 'pointer',
+                  opacity: isInstalling ? 0.75 : 1,
                   display: 'inline-flex',
                   alignItems: 'center',
                   gap: '0.35rem',
@@ -321,7 +424,7 @@ export const PWAInstallBanner = () => {
                 }}
               >
                 <Download size={13} />
-                <span>Install App</span>
+                <span>{isInstalling ? 'Opening…' : (isIOS ? 'How to Install' : 'Install App')}</span>
               </button>
             )}
 
@@ -434,20 +537,24 @@ export const PWAInstallBanner = () => {
             </button>
 
             <div style={{
-              width: '56px',
-              height: '56px',
-              borderRadius: '16px',
-              background: 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)',
-              color: '#ffffff',
+              width: '64px',
+              height: '64px',
+              borderRadius: '18px',
+              background: '#ffffff',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               margin: '0 auto 1rem',
-              fontWeight: 900,
-              fontSize: '1.5rem',
-              boxShadow: '0 8px 20px rgba(249, 115, 22, 0.35)'
+              boxShadow: '0 8px 20px rgba(15, 23, 42, 0.14)',
+              overflow: 'hidden'
             }}>
-              B
+              <img
+                src="/icon-192x192.png"
+                alt="BDigitizing"
+                width="64"
+                height="64"
+                style={{ width: '64px', height: '64px', objectFit: 'contain' }}
+              />
             </div>
 
             <h3 style={{ margin: '0 0 0.5rem', fontSize: '1.15rem', fontWeight: 900, color: '#0f172a' }}>
@@ -536,20 +643,24 @@ export const PWAInstallBanner = () => {
             </button>
 
             <div style={{
-              width: '56px',
-              height: '56px',
-              borderRadius: '16px',
-              background: 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)',
-              color: '#ffffff',
+              width: '64px',
+              height: '64px',
+              borderRadius: '18px',
+              background: '#ffffff',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               margin: '0 auto 1rem',
-              fontWeight: 900,
-              fontSize: '1.5rem',
-              boxShadow: '0 8px 20px rgba(249, 115, 22, 0.35)'
+              boxShadow: '0 8px 20px rgba(15, 23, 42, 0.14)',
+              overflow: 'hidden'
             }}>
-              B
+              <img
+                src="/icon-192x192.png"
+                alt="BDigitizing"
+                width="64"
+                height="64"
+                style={{ width: '64px', height: '64px', objectFit: 'contain' }}
+              />
             </div>
 
             <h3 style={{ margin: '0 0 0.5rem', fontSize: '1.15rem', fontWeight: 900, color: '#0f172a' }}>
