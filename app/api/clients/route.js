@@ -2,11 +2,15 @@ import { withApiObservability } from '../../../src/lib/observability/apiObservab
 import { NextResponse } from 'next/server';
 import { createAdminClient } from '../../../src/lib/supabase/admin';
 import { getServerAuthUser } from '../../../src/lib/supabase/serverAuth';
+import { enforceApiBurstLimit } from '../../../src/lib/apiBurstGuard.js';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 async function GET_impl(request) {
+  const burstResponse = enforceApiBurstLimit(request, 'clients-get', 60, 60_000);
+  if (burstResponse) return burstResponse;
+
   try {
     const { searchParams } = new URL(request.url);
     const action = searchParams.get('action');

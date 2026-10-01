@@ -75,10 +75,17 @@ export async function resolveTrustedUserAccess(user, dbClientOverride = null) {
         if (normalized) return normalized;
       } else if (rpcError.code !== 'PGRST202' && rpcError.code !== '42883') {
         console.warn('[resolveTrustedUserAccess RPC Warning]:', rpcError.message);
+        // The RPC exists in current production. If it fails because the database
+        // is saturated or a statement times out, do not amplify one failing auth
+        // check into four additional role queries. Fail closed on privileges.
+        return { isAdmin: false, isWorker: false, workerData: null };
       }
     }
   } catch (rpcErr) {
-    console.warn('[resolveTrustedUserAccess RPC Fallback]:', rpcErr?.message);
+    console.warn('[resolveTrustedUserAccess RPC Failure]:', rpcErr?.message);
+    // The RPC is deployed in production. A thrown network/database failure is
+    // not a reason to fan out into four more queries while the backend is unhealthy.
+    return { isAdmin: false, isWorker: false, workerData: null };
   }
 
   try {

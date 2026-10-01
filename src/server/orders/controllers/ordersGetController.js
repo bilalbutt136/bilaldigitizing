@@ -4,6 +4,7 @@ import { getServerAuthUser } from '../../../lib/supabase/serverAuth';
 import { handleFetchAll } from '../handlers/get/fetchAll.js';
 import { handleFetchPending } from '../handlers/get/fetchPending.js';
 import { handleFetchOne } from '../handlers/get/fetchOne.js';
+import { enforceApiBurstLimit } from '../../../lib/apiBurstGuard.js';
 
 const GET_HANDLERS = {
   fetchAll: handleFetchAll,
@@ -13,6 +14,9 @@ const GET_HANDLERS = {
 };
 
 export async function handleOrdersGet(request) {
+  const burstResponse = enforceApiBurstLimit(request, 'orders-get', 60, 60_000);
+  if (burstResponse) return burstResponse;
+
   try {
     const { searchParams } = new URL(request.url);
     const action = searchParams.get('action');

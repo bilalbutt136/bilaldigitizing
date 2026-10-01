@@ -617,7 +617,7 @@ export const StateProvider = ({ children, initialCatalog = null }) => {
     if (!orderOrId) return;
     if (typeof orderOrId === 'object' && (orderOrId.id || orderOrId.title)) {
       // If object already has full hydrated properties, use directly
-      if (orderOrId.status && (orderOrId.client_name || orderOrId.clientName || orderOrId.price !== undefined)) {
+      if (!orderOrId._summaryOnly && orderOrId.status && (orderOrId.client_name || orderOrId.clientName || orderOrId.price !== undefined)) {
         setSelectedOrderForDrawer(orderOrId);
         return;
       }
@@ -627,7 +627,7 @@ export const StateProvider = ({ children, initialCatalog = null }) => {
       const oClean = String(o?.id || '').trim().replace(/^#+/, '');
       return oClean === cleanId || o?.id === orderOrId || o?.id === `#${cleanId}`;
     });
-    if (found && found.status && (found.client_name || found.clientName || found.price !== undefined)) {
+    if (found && !found._summaryOnly && found.status && (found.client_name || found.clientName || found.price !== undefined)) {
       setSelectedOrderForDrawer(found);
       return;
     }
@@ -963,11 +963,6 @@ export const StateProvider = ({ children, initialCatalog = null }) => {
             fetchClientsFromSupabase().then(dbClients => {
               if (!cancelled && dbClients?.length) {
                 setClients(dbClients);
-              }
-            });
-            fetchOrdersFromSupabase().then(dbOrders => {
-              if (!cancelled && dbOrders) {
-                setOrders(dbOrders);
               }
             });
           } else if (role === 'worker') {
@@ -1326,6 +1321,9 @@ export const StateProvider = ({ children, initialCatalog = null }) => {
         if (cancelled) return;
 
         try {
+          // Initial hydration is already handled by validateImmediateSession above.
+          if (event === 'INITIAL_SESSION') return;
+
           if (event === 'PASSWORD_RECOVERY') {
             setAuthModalMode('update_password');
             setIsAuthModalOpen(true);

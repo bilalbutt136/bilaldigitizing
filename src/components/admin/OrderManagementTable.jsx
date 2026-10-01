@@ -27,6 +27,7 @@ import {
   X
 } from 'lucide-react';
 import { CustomerInvoiceModal } from '../common/CustomerInvoiceModal';
+import { fetchOrderById } from '../../services/supabaseService';
 
 const _getNextStatuses = (currentStatus) => {
   const transitions = {
@@ -62,7 +63,7 @@ const statusLabels = {
 export const OrderManagementTable = () => {
   const {
     orders = [],
-    setSelectedOrderForDrawer,
+    openOrderTrackerDrawer,
     ORDER_STATUSES: _ORDER_STATUSES,
     updateOrderStatus: _updateOrderStatus,
     refreshOrders,
@@ -85,6 +86,17 @@ export const OrderManagementTable = () => {
   const [rejectionReasonText, setRejectionReasonText] = useState('');
   const [showRejectForm, setShowRejectForm] = useState(false);
   const [isProcessingCancellation, setIsProcessingCancellation] = useState(false);
+
+  const hydrateOrderForAction = async (order, setter) => {
+    if (!order?._summaryOnly) {
+      setter(order);
+      return;
+    }
+
+    const fullOrder = await fetchOrderById(order.id);
+    setter(fullOrder || order);
+  };
+
 
   const handleAdminApproveOrderCancellation = async (order) => {
     if (!order) return;
@@ -899,7 +911,7 @@ export const OrderManagementTable = () => {
                         {(ord.worker_status === 'Review Pending' || ord.workerStatus === 'Review Pending') && (
                           <button
                             type="button"
-                            onClick={() => setReviewOrder(ord)}
+                            onClick={() => hydrateOrderForAction(ord, setReviewOrder)}
                             style={{
                               fontWeight: 800,
                               fontSize: '0.74rem',
@@ -925,7 +937,7 @@ export const OrderManagementTable = () => {
                           <button
                             type="button"
                             onClick={() => {
-                              setCancellationReviewOrder(ord);
+                              hydrateOrderForAction(ord, setCancellationReviewOrder);
                               setShowRejectForm(false);
                               setRejectionReasonText('');
                             }}
@@ -953,7 +965,7 @@ export const OrderManagementTable = () => {
                         {ord.status !== 'completed' && ord.status !== 'cancelled' && ord.status !== 'cancellation_requested' && (
                           <button
                             type="button"
-                            onClick={() => setSelectedOrderForDrawer(ord)}
+                            onClick={() => openOrderTrackerDrawer(ord)}
                             style={{
                               fontWeight: 800,
                               fontSize: '0.74rem',
@@ -977,7 +989,7 @@ export const OrderManagementTable = () => {
 
                         <button
                           className="btn btn-primary-orange btn-sm"
-                          onClick={() => setSelectedOrderForDrawer(ord)}
+                          onClick={() => openOrderTrackerDrawer(ord)}
                           style={{ fontWeight: 800, fontSize: '0.74rem', whiteSpace: 'nowrap', gap: '0.25rem', padding: '0.28rem 0.6rem', borderRadius: '6px' }}
                         >
                           Manage <ChevronRight size={12} />
@@ -1347,7 +1359,7 @@ export const OrderManagementTable = () => {
                     type="button"
                     onClick={() => {
                       setCancellationReviewOrder(null);
-                      setSelectedOrderForDrawer(ord);
+                      openOrderTrackerDrawer(ord);
                     }}
                     className="btn btn-outline btn-sm"
                     style={{ fontSize: '0.76rem', fontWeight: 700 }}

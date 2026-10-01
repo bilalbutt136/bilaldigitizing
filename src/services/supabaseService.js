@@ -28,6 +28,29 @@ export async function getAuthHeaders() {
   return headers;
 }
 
+const inFlightApiReads = new Map();
+
+function getAuthScopeKey(headers = {}) {
+  const auth = headers.Authorization || headers.authorization || 'cookie-session';
+  return String(auth).slice(-64);
+}
+
+function runDedupedApiRead(key, factory) {
+  const existing = inFlightApiReads.get(key);
+  if (existing) return existing;
+
+  const promise = Promise.resolve()
+    .then(factory)
+    .finally(() => {
+      if (inFlightApiReads.get(key) === promise) {
+        inFlightApiReads.delete(key);
+      }
+    });
+
+  inFlightApiReads.set(key, promise);
+  return promise;
+}
+
 // ============================================================
 // ORDER LIFECYCLE STATE MACHINE
 // ============================================================
@@ -185,27 +208,30 @@ export async function updateUserPassword(newPassword) {
 export async function fetchOrdersFromSupabase(_customEmail = null, _customOrderIds = null, _customUserId = null) {
   try {
     const headers = await getAuthHeaders();
-    const url = `/api/orders?action=fetchAll&_t=${Date.now()}`;
+    const requestKey = `orders:${getAuthScopeKey(headers)}`;
 
-    const res = await fetch(url, {
-      headers: {
-        ...headers,
-        'Cache-Control': 'no-cache, no-store, must-revalidate',
-        'Pragma': 'no-cache'
-      },
-      cache: 'no-store',
-      credentials: 'include'
+    return runDedupedApiRead(requestKey, async () => {
+      // Admin hydration uses a compact list projection. Customer/worker
+      // requests remain fully hydrated server-side.
+      const url = '/api/orders?action=fetchAll&view=summary';
+      const res = await fetch(url, {
+        headers: {
+          ...headers,
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache'
+        },
+        cache: 'no-store',
+        credentials: 'include'
+      });
+      const data = await res.json();
+      const orders = data.orders || [];
+      return orders.map(order => mapDatabaseOrderToClientOrder(order)).filter(Boolean);
     });
-    const data = await res.json();
-    const orders = data.orders || [];
-
-    return orders.map(order => mapDatabaseOrderToClientOrder(order)).filter(Boolean);
   } catch (err) {
     console.warn('fetchOrdersFromSupabase error notice:', err?.message);
     return [];
   }
 }
-
 export function mapDatabaseOrderToClientOrder(order) {
   if (!order) return null;
   let notesData = {};
@@ -514,12 +540,14 @@ export async function upsertClientInSupabase(userData) {
 export async function fetchClientsFromSupabase() {
   try {
     const headers = await getAuthHeaders();
-    const res = await fetch('/api/clients?action=fetchAll', { headers });
-    const data = await res.json();
-    return data.clients || [];
+    const requestKey = `clients:${getAuthScopeKey(headers)}`;
+    return runDedupedApiRead(requestKey, async () => {
+      const res = await fetch('/api/clients?action=fetchAll', { headers, cache: 'no-store' });
+      const data = await res.json();
+      return data.clients || [];
+    });
   } catch { return []; }
 }
-
 // Deposit Funds & Transaction Handler in Supabase
 export async function depositFundsInSupabase(clientEmail, depositAmount, paymentMethod = 'Credit Card') {
   if (!isSupabaseConfigured || !clientEmail) return null;
@@ -972,19 +1000,21 @@ export async function verifyAdminSession(email) {
 
   try {
     const headers = await getAuthHeaders();
-    const res = await fetch('/api/admin/session', {
-      method: 'POST',
-      headers,
-      body: JSON.stringify({ email })
+    const requestKey = `admin-session:${getAuthScopeKey(headers)}:${String(email).toLowerCase().trim()}`;
+    return runDedupedApiRead(requestKey, async () => {
+      const res = await fetch('/api/admin/session', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ email })
+      });
+      const json = await res.json();
+      return { success: Boolean(json?.success), isAdmin: Boolean(json?.isAdmin), admin: json?.admin || null };
     });
-    const json = await res.json();
-    return { success: Boolean(json?.success), isAdmin: Boolean(json?.isAdmin), admin: json?.admin || null };
   } catch (err) {
     console.warn('Admin session verification exception:', err);
     return { success: false, isAdmin: false };
   }
 }
-
 export async function fetchAdminUsers(_email = null) {
   try {
     const headers = await getAuthHeaders();

@@ -55,6 +55,28 @@ describe('P1 Performance Regression Coverage', () => {
     assert.match(adminDashboard, /subscribeToChatMessages/);
   });
 
+
+  test('order hydration avoids request storms and oversized admin list payloads', () => {
+    const controller = fs.readFileSync('src/server/orders/controllers/ordersGetController.js', 'utf8');
+    const fetchAll = fs.readFileSync('src/server/orders/handlers/get/fetchAll.js', 'utf8');
+    const service = fs.readFileSync('src/services/supabaseService.js', 'utf8');
+    const state = fs.readFileSync('src/context/StateContext.jsx', 'utf8');
+
+    assert.match(controller, /enforceApiBurstLimit\(request, 'orders-get'/);
+    assert.match(fetchAll, /ADMIN_SUMMARY_FIELDS/);
+    assert.match(fetchAll, /searchParams\.get\('view'\) === 'summary'/);
+    assert.match(fetchAll, /_summaryOnly: true/);
+    assert.match(fetchAll, /nestedErr\?\.code === '57014'/);
+
+    assert.match(service, /const inFlightApiReads = new Map\(\)/);
+    assert.match(service, /runDedupedApiRead\(requestKey/);
+    assert.match(service, /\/api\/orders\?action=fetchAll&view=summary/);
+    assert.equal(service.includes("action=fetchAll&_t=${Date.now()}"), false);
+
+    assert.match(state, /event === 'INITIAL_SESSION'/);
+    assert.match(state, /!orderOrId\._summaryOnly/);
+  });
+
   test('performance migration installs the auth RPC and drops only selected redundant indexes', () => {
     const migration = fs.readFileSync(
       'supabase/migrations/20260929000004_p1_performance_auth_and_index_cleanup.sql',

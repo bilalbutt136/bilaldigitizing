@@ -1,12 +1,16 @@
 import { withApiObservability } from '../../../../src/lib/observability/apiObservability.js';
 import { NextResponse } from 'next/server';
 import { getServerAuthUser } from '../../../../src/lib/supabase/serverAuth';
+import { enforceApiBurstLimit } from '../../../../src/lib/apiBurstGuard.js';
 
 // POST /api/admin/session
 // Verifies that the caller is an authenticated Supabase user whose email
 // is whitelisted in the public.admins table or is the master admin.
 // Verified strictly server-side using tokens/cookies.
 async function POST_impl(request) {
+  const burstResponse = enforceApiBurstLimit(request, 'admin-session-post', 60, 60_000);
+  if (burstResponse) return burstResponse;
+
   try {
     const { user, isAdmin } = await getServerAuthUser(request);
 
