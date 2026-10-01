@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAppState } from '../../src/context/StateContext';
 import { AdminDashboard } from '../../src/components/admin/AdminDashboard';
-import { getAdminMfaStatus } from '../../src/services/adminMfaService';
+import { getAdminMfaPolicy, getAdminMfaStatus } from '../../src/services/adminMfaService';
 import { useRouter } from 'next/navigation';
 
 const ADMIN_ACTIVITY_KEY = 'bdigi_admin_last_activity';
@@ -76,21 +76,30 @@ export function AdminPortalClient() {
     let active = true;
     setIsCheckingMfa(true);
 
-    getAdminMfaStatus()
-      .then(status => {
-        if (!active) return;
-        if (!status.success || status.currentLevel !== 'aal2') {
-          setMfaVerified(false);
-          router.replace('/secure-admin-login?mfa=required&redirect=/admin-portal');
-          return;
-        }
+    (async () => {
+      const policy = await getAdminMfaPolicy();
+      if (!active) return;
 
+      if (policy.success && policy.enabled === false) {
         setMfaVerified(true);
         if (currentView !== 'admin') setCurrentView('admin');
-      })
-      .finally(() => {
-        if (active) setIsCheckingMfa(false);
-      });
+        return;
+      }
+
+      const status = await getAdminMfaStatus();
+      if (!active) return;
+
+      if (!status.success || status.currentLevel !== 'aal2') {
+        setMfaVerified(false);
+        router.replace('/secure-admin-login?mfa=required&redirect=/admin-portal');
+        return;
+      }
+
+      setMfaVerified(true);
+      if (currentView !== 'admin') setCurrentView('admin');
+    })().finally(() => {
+      if (active) setIsCheckingMfa(false);
+    });
 
     return () => {
       active = false;

@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import {
   beginAdminMfaEnrollment,
+  getAdminMfaPolicy,
   getAdminMfaStatus,
   verifyAdminMfaCode
 } from '../../services/adminMfaService';
@@ -78,6 +79,12 @@ export const SecureAdminLogin = () => {
       setIsLoading(true);
       setAdminError('');
       setMfaStage('checking');
+
+      const policy = await getAdminMfaPolicy();
+      if (policy.success && policy.enabled === false) {
+        openVerifiedAdminArea();
+        return true;
+      }
 
       const status = await getAdminMfaStatus();
       if (!status.success) {

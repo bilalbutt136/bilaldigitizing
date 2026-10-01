@@ -4,6 +4,53 @@ import { supabaseAdmin, hasServiceRole } from '../supabaseAdmin';
 import { createAdminClient } from './admin';
 
 const requestAuthCache = new WeakMap();
+const ADMIN_MFA_POLICY_TTL_MS = 5000;
+let adminMfaPolicyCache = { value: true, expiresAt: 0 };
+
+export function invalidateAdminMfaPolicyCache() {
+  adminMfaPolicyCache = { value: true, expiresAt: 0 };
+}
+
+export async function getAdminMfaPolicy(dbClientOverride = null, { force = false } = {}) {
+  const now = Date.now();
+  if (!force && adminMfaPolicyCache.expiresAt > now) {
+    return adminMfaPolicyCache.value;
+  }
+
+  let dbClient = dbClientOverride;
+  if (!dbClient) {
+    try {
+      dbClient = (hasServiceRole && supabaseAdmin) ? supabaseAdmin : createAdminClient();
+    } catch {
+      dbClient = null;
+    }
+  }
+
+  if (!dbClient || typeof dbClient.rpc !== 'function') {
+    // Fail closed: if policy cannot be resolved, require MFA.
+    return true;
+  }
+
+  try {
+    const { data, error } = await dbClient.rpc('admin_mfa_required');
+    if (error) {
+      if (error.code !== 'PGRST202' && error.code !== '42883') {
+        console.warn('[Admin MFA Policy Warning]:', error.message);
+      }
+      return true;
+    }
+
+    const required = data !== false;
+    adminMfaPolicyCache = {
+      value: required,
+      expiresAt: now + ADMIN_MFA_POLICY_TTL_MS
+    };
+    return required;
+  } catch (error) {
+    console.warn('[Admin MFA Policy Failure]:', error?.message);
+    return true;
+  }
+}
 
 function getVerifiedJwtAal(token) {
   if (!token) return 'aal1';
@@ -234,6 +281,7 @@ async function getServerAuthUserUncached(request) {
         isWorker: false,
         workerData: null,
         authLevel: 'aal1',
+        mfaEnabled: false,
         mfaRequired: false,
         error: 'Unauthenticated'
       };
@@ -241,7 +289,8 @@ async function getServerAuthUserUncached(request) {
 
     const access = await resolveTrustedUserAccess(user);
     const isAdminIdentity = Boolean(access?.isAdmin);
-    const isAdmin = isAdminIdentity && authLevel === 'aal2';
+    const mfaEnabled = isAdminIdentity ? await getAdminMfaPolicy() : false;
+    const isAdmin = isAdminIdentity && (!mfaEnabled || authLevel === 'aal2');
 
     return {
       user,
@@ -249,7 +298,8 @@ async function getServerAuthUserUncached(request) {
       isAdminIdentity,
       isAdmin,
       authLevel,
-      mfaRequired: isAdminIdentity && authLevel !== 'aal2',
+      mfaEnabled,
+      mfaRequired: isAdminIdentity && mfaEnabled && authLevel !== 'aal2',
       error: null
     };
   } catch (err) {
@@ -261,6 +311,7 @@ async function getServerAuthUserUncached(request) {
       isWorker: false,
       workerData: null,
       authLevel: 'aal1',
+      mfaEnabled: false,
       mfaRequired: false,
       error: err.message
     };

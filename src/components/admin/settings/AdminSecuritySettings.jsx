@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useAppState } from '../../../context/StateContext';
+import { getAdminMfaPolicy, getAdminMfaStatus, updateAdminMfaPolicy } from '../../../services/adminMfaService';
 import {
   ShieldCheck,
   UserPlus,
@@ -40,6 +41,9 @@ export const AdminSecuritySettings = () => {
   const [maintenanceMode, setMaintenanceMode] = useState(siteSettings?.maintenanceMode === true);
   const [maintenanceNotice, setMaintenanceNotice] = useState(siteSettings?.maintenanceNotice || 'We are currently performing scheduled maintenance. The studio will be back online shortly.');
   const [isSaving, setIsSaving] = useState(false);
+  const [mfaEnabled, setMfaEnabled] = useState(true);
+  const [loadedMfaEnabled, setLoadedMfaEnabled] = useState(true);
+  const [isLoadingMfaPolicy, setIsLoadingMfaPolicy] = useState(true);
 
   // Add Admin Modal State
   const [showAddAdminModal, setShowAddAdminModal] = useState(false);
@@ -75,6 +79,25 @@ export const AdminSecuritySettings = () => {
       setMaintenanceNotice(siteSettings.maintenanceNotice);
     }
   }, [siteSettings]);
+
+  useEffect(() => {
+    let mounted = true;
+    setIsLoadingMfaPolicy(true);
+    getAdminMfaPolicy()
+      .then((result) => {
+        if (!mounted) return;
+        if (result?.success) {
+          const enabled = result.enabled !== false;
+          setMfaEnabled(enabled);
+          setLoadedMfaEnabled(enabled);
+        }
+      })
+      .finally(() => {
+        if (mounted) setIsLoadingMfaPolicy(false);
+      });
+
+    return () => { mounted = false; };
+  }, []);
 
   const loadAdminsFromApi = async () => {
     setLoadingAdmins(true);
@@ -184,17 +207,58 @@ export const AdminSecuritySettings = () => {
 
   const handleSaveSecurity = async (e) => {
     e?.preventDefault?.();
+
+    const mfaChanged = mfaEnabled !== loadedMfaEnabled;
+    if (mfaChanged && !mfaEnabled) {
+      const confirmed = window.confirm(
+        'Turn off two-factor authentication for all administrator logins? Existing authenticator factors will stay enrolled so you can turn MFA back on later.'
+      );
+      if (!confirmed) {
+        setMfaEnabled(loadedMfaEnabled);
+        return;
+      }
+    }
+
     setIsSaving(true);
     try {
+      // Persist the ordinary security settings first. This ordering matters
+      // when MFA is being enabled from an AAL1 session, because enabling MFA
+      // immediately makes later privileged browser writes require AAL2.
       await updateSiteSettings({
         adminEmail: adminEmail.trim().toLowerCase(),
         sessionTimeout,
         maintenanceMode,
         maintenanceNotice: maintenanceNotice.trim()
       });
-      showToast('Security and access configurations saved successfully!', 'success');
-    } catch {
-      showToast('Failed to save security settings.', 'error');
+
+      if (mfaChanged) {
+        const policyResult = await updateAdminMfaPolicy(mfaEnabled);
+        if (!policyResult?.success) {
+          throw new Error(policyResult?.error || 'Unable to update two-factor authentication policy.');
+        }
+
+        const enabledNow = policyResult.enabled !== false;
+        setLoadedMfaEnabled(enabledNow);
+        setMfaEnabled(enabledNow);
+
+        if (enabledNow) {
+          const status = await getAdminMfaStatus();
+          if (!status?.success || status.currentLevel !== 'aal2') {
+            showToast('Two-factor authentication is ON. Verify your authenticator code to continue.', 'success');
+            window.location.assign('/secure-admin-login?mfa=required&redirect=/admin-portal');
+            return;
+          }
+        }
+      }
+
+      showToast(
+        mfaChanged
+          ? `Security settings saved. Two-factor authentication is now ${mfaEnabled ? 'ON' : 'OFF'}.`
+          : 'Security and access configurations saved successfully!',
+        'success'
+      );
+    } catch (error) {
+      showToast(error?.message || 'Failed to save security settings.', 'error');
     } finally {
       setIsSaving(false);
     }
@@ -465,6 +529,62 @@ export const AdminSecuritySettings = () => {
                   When active, a friendly maintenance banner informs clients while preserving database records.
                 </span>
               </div>
+            </div>
+
+            <div style={{
+              padding: '1rem 1.1rem',
+              background: mfaEnabled ? 'rgba(16, 185, 129, 0.06)' : 'rgba(245, 158, 11, 0.08)',
+              borderRadius: '12px',
+              border: `1px solid ${mfaEnabled ? 'rgba(16, 185, 129, 0.28)' : 'rgba(245, 158, 11, 0.35)'}`,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '1rem',
+              flexWrap: 'wrap'
+            }}>
+              <div style={{ minWidth: 0, flex: '1 1 360px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.3rem' }}>
+                  <KeyRound size={17} style={{ color: mfaEnabled ? '#10b981' : '#d97706' }} />
+                  <span style={{ fontWeight: 900, fontSize: '0.92rem', color: 'var(--color-text-primary)' }}>
+                    Two-Factor Authentication (2FA)
+                  </span>
+                  <span style={{
+                    fontSize: '0.65rem',
+                    fontWeight: 900,
+                    padding: '0.18rem 0.48rem',
+                    borderRadius: '999px',
+                    background: mfaEnabled ? '#dcfce7' : '#fef3c7',
+                    color: mfaEnabled ? '#15803d' : '#b45309'
+                  }}>
+                    {isLoadingMfaPolicy ? 'CHECKING' : (mfaEnabled ? 'ON' : 'OFF')}
+                  </span>
+                </div>
+                <div style={{ fontSize: '0.75rem', lineHeight: 1.5, color: 'var(--color-text-muted)' }}>
+                  When ON, every administrator session must complete the authenticator code before privileged admin access is granted.
+                  Turning it OFF keeps existing authenticator enrollment saved, but password-only admin sessions are allowed.
+                </div>
+              </div>
+
+              <label style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.65rem',
+                fontSize: '0.8rem',
+                fontWeight: 800,
+                color: 'var(--color-text-primary)',
+                cursor: isLoadingMfaPolicy || isSaving ? 'not-allowed' : 'pointer'
+              }}>
+                <span>{mfaEnabled ? 'Required' : 'Optional'}</span>
+                <input
+                  type="checkbox"
+                  role="switch"
+                  aria-label="Require two-factor authentication for administrators"
+                  checked={mfaEnabled}
+                  disabled={isLoadingMfaPolicy || isSaving}
+                  onChange={(e) => setMfaEnabled(e.target.checked)}
+                  style={{ width: '20px', height: '20px', cursor: isLoadingMfaPolicy || isSaving ? 'not-allowed' : 'pointer' }}
+                />
+              </label>
             </div>
 
             {maintenanceMode && (

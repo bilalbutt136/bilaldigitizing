@@ -2,6 +2,77 @@
 
 import { supabase } from '../lib/supabase/client';
 
+async function getAdminAuthHeaders() {
+  try {
+    const { data } = await supabase.auth.getSession();
+    const token = data?.session?.access_token;
+    return token ? { Authorization: `Bearer ${token}` } : {};
+  } catch {
+    return {};
+  }
+}
+
+export async function getAdminMfaPolicy() {
+  try {
+    const authHeaders = await getAdminAuthHeaders();
+    const response = await fetch('/api/admin/mfa-policy', {
+      method: 'GET',
+      credentials: 'same-origin',
+      cache: 'no-store',
+      headers: authHeaders
+    });
+    const data = await response.json().catch(() => ({}));
+
+    if (!response.ok || data?.success === false) {
+      throw new Error(data?.error || 'Unable to load administrator MFA policy.');
+    }
+
+    return {
+      success: true,
+      enabled: data?.enabled !== false,
+      currentLevel: data?.currentLevel || 'aal1',
+      verified: data?.verified === true
+    };
+  } catch (error) {
+    return {
+      success: false,
+      enabled: true,
+      currentLevel: 'aal1',
+      verified: false,
+      error: error?.message || 'Unable to load administrator MFA policy.'
+    };
+  }
+}
+
+export async function updateAdminMfaPolicy(enabled) {
+  try {
+    const authHeaders = await getAdminAuthHeaders();
+    const response = await fetch('/api/admin/mfa-policy', {
+      method: 'PUT',
+      credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json', ...authHeaders },
+      body: JSON.stringify({ enabled: Boolean(enabled) })
+    });
+    const data = await response.json().catch(() => ({}));
+
+    if (!response.ok || data?.success === false) {
+      throw new Error(data?.error || 'Unable to update administrator MFA policy.');
+    }
+
+    return {
+      success: true,
+      enabled: data?.enabled !== false,
+      message: data?.message || ''
+    };
+  } catch (error) {
+    return {
+      success: false,
+      enabled: Boolean(enabled),
+      error: error?.message || 'Unable to update administrator MFA policy.'
+    };
+  }
+}
+
 function normalizeTotpFactors(data) {
   const factors = [
     ...(Array.isArray(data?.totp) ? data.totp : []),

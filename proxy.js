@@ -234,19 +234,31 @@ export async function proxy(request) {
         return copyResponseCookies(supabaseResponse, redirectResponse);
       }
 
-      const aalResult = await withTimeout(
-        supabase.auth.mfa.getAuthenticatorAssuranceLevel(),
-        AUTH_VERIFY_TIMEOUT_MS,
-        'Admin MFA assurance verification'
+      const mfaPolicyResult = await withTimeout(
+        supabase.rpc('admin_mfa_required'),
+        ROLE_LOOKUP_TIMEOUT_MS,
+        'Admin MFA policy lookup'
       );
 
-      if (aalResult?.error) {
-        throw new Error('Admin MFA assurance verification failed.');
-      }
+      // Fail closed during rollout or temporary policy lookup errors: until the
+      // policy can be read successfully, keep requiring AAL2.
+      const mfaEnabled = mfaPolicyResult?.error ? true : mfaPolicyResult?.data !== false;
 
-      if (aalResult?.data?.currentLevel !== 'aal2') {
-        const redirectResponse = NextResponse.redirect(getAdminMfaUrl(request), 307);
-        return copyResponseCookies(supabaseResponse, redirectResponse);
+      if (mfaEnabled) {
+        const aalResult = await withTimeout(
+          supabase.auth.mfa.getAuthenticatorAssuranceLevel(),
+          AUTH_VERIFY_TIMEOUT_MS,
+          'Admin MFA assurance verification'
+        );
+
+        if (aalResult?.error) {
+          throw new Error('Admin MFA assurance verification failed.');
+        }
+
+        if (aalResult?.data?.currentLevel !== 'aal2') {
+          const redirectResponse = NextResponse.redirect(getAdminMfaUrl(request), 307);
+          return copyResponseCookies(supabaseResponse, redirectResponse);
+        }
       }
     }
 

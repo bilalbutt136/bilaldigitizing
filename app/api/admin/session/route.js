@@ -12,7 +12,7 @@ async function POST_impl(request) {
   if (burstResponse) return burstResponse;
 
   try {
-    const { user, isAdmin, isAdminIdentity, authLevel, mfaRequired } = await getServerAuthUser(request);
+    const { user, isAdmin, isAdminIdentity, authLevel, mfaEnabled, mfaRequired } = await getServerAuthUser(request);
 
     if (!user) {
       return NextResponse.json(
@@ -24,9 +24,11 @@ async function POST_impl(request) {
     return NextResponse.json({
       success: true,
       isAdmin: Boolean(isAdminIdentity),
-      mfaVerified: Boolean(isAdmin),
+      mfaEnabled: Boolean(mfaEnabled),
+      mfaVerified: authLevel === 'aal2',
       authLevel: authLevel || 'aal1',
       mfaRequired: Boolean(mfaRequired),
+      adminAuthorized: Boolean(isAdmin),
       admin: isAdminIdentity ? { email: user.email } : null
     });
   } catch (err) {

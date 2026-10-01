@@ -19,16 +19,19 @@ test('admin login requires TOTP MFA and only opens the desk at aal2', () => {
   assert.match(mfa, /currentLevel !== 'aal2'/);
 });
 
-test('server-side admin privileges require aal2 while identity remains available for login flow', () => {
+test('server-side admin privileges follow the runtime MFA policy while identity remains available for login flow', () => {
   const auth = read('src/lib/supabase/serverAuth.js');
   const profile = read('app/api/auth/profile/route.js');
   const session = read('app/api/admin/session/route.js');
 
   assert.match(auth, /const isAdminIdentity = Boolean\(access\?\.isAdmin\)/);
-  assert.match(auth, /const isAdmin = isAdminIdentity && authLevel === 'aal2'/);
-  assert.match(auth, /mfaRequired: isAdminIdentity && authLevel !== 'aal2'/);
+  assert.match(auth, /const mfaEnabled = isAdminIdentity \? await getAdminMfaPolicy\(\) : false/);
+  assert.match(auth, /const isAdmin = isAdminIdentity && \(!mfaEnabled \|\| authLevel === 'aal2'\)/);
+  assert.match(auth, /mfaRequired: isAdminIdentity && mfaEnabled && authLevel !== 'aal2'/);
   assert.match(profile, /isAdminIdentity \? 'admin'/);
-  assert.match(session, /mfaVerified: Boolean\(isAdmin\)/);
+  assert.match(session, /mfaEnabled: Boolean\(mfaEnabled\)/);
+  assert.match(session, /mfaVerified: authLevel === 'aal2'/);
+  assert.match(session, /adminAuthorized: Boolean\(isAdmin\)/);
   assert.match(session, /authLevel: authLevel \|\| 'aal1'/);
 });
 
@@ -38,6 +41,9 @@ test('proxy makes admin and client portals mutually exclusive and protects admin
   assert.match(proxy, /const CLIENT_PREFIXES = \['\/client', '\/client-portal'\]/);
   assert.match(proxy, /if \(isClientRoute && isAdminIdentity\)/);
   assert.match(proxy, /adminUrl\.pathname = '\/admin-portal'/);
+  assert.match(proxy, /supabase\.rpc\('admin_mfa_required'\)/);
+  assert.match(proxy, /const mfaEnabled = mfaPolicyResult\?\.error \? true : mfaPolicyResult\?\.data !== false/);
+  assert.match(proxy, /if \(mfaEnabled\)/);
   assert.match(proxy, /getAuthenticatorAssuranceLevel/);
   assert.match(proxy, /currentLevel !== 'aal2'/);
   assert.match(proxy, /mfaUrl\.pathname = '\/secure-admin-login'/);
@@ -84,10 +90,11 @@ test('mobile admin uses a compact operations console while desktop keeps the ful
   assert.match(chat, /Back to conversations/);
 });
 
-test('admin sessions enforce idle reauthentication and database RLS requires aal2', () => {
+test('admin sessions enforce idle reauthentication and database RLS follows the MFA policy', () => {
   const adminPortal = read('app/admin-portal/AdminPortalClient.jsx');
   const settings = read('src/components/admin/settings/AdminSecuritySettings.jsx');
   const migration = read('supabase/migrations/20261001000007_admin_mfa_hardening.sql');
+  const policyMigration = read('supabase/migrations/20261002000001_admin_mfa_policy_toggle.sql');
 
   assert.match(adminPortal, /ADMIN_ACTIVITY_KEY/);
   assert.match(adminPortal, /parseAdminIdleTimeout/);
@@ -98,4 +105,23 @@ test('admin sessions enforce idle reauthentication and database RLS requires aal
   assert.match(migration, /CREATE OR REPLACE FUNCTION public\.is_admin_identity\(\)/);
   assert.match(migration, /coalesce\(auth\.jwt\(\) ->> 'aal', 'aal1'\) <> 'aal2'/);
   assert.match(migration, /WITH CHECK \(public\.is_admin\(\)\)/);
+  assert.match(policyMigration, /CREATE TABLE IF NOT EXISTS public\.admin_security_settings/);
+  assert.match(policyMigration, /CREATE OR REPLACE FUNCTION public\.admin_mfa_required\(\)/);
+  assert.match(policyMigration, /IF public\.admin_mfa_required\(\)/);
+});
+
+test('admin security settings expose an MFA on-off switch backed by the protected policy API', () => {
+  const settings = read('src/components/admin/settings/AdminSecuritySettings.jsx');
+  const service = read('src/services/adminMfaService.js');
+  const route = read('app/api/admin/mfa-policy/route.js');
+  const login = read('src/components/auth/SecureAdminLogin.jsx');
+
+  assert.match(settings, /Two-Factor Authentication \(2FA\)/);
+  assert.match(settings, /aria-label="Require two-factor authentication for administrators"/);
+  assert.match(settings, /updateAdminMfaPolicy\(mfaEnabled\)/);
+  assert.match(service, /export async function getAdminMfaPolicy/);
+  assert.match(service, /export async function updateAdminMfaPolicy/);
+  assert.match(route, /Complete two-factor verification before disabling MFA/);
+  assert.match(route, /admin_security_settings/);
+  assert.match(login, /policy\.success && policy\.enabled === false/);
 });
