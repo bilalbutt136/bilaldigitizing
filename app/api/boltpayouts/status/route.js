@@ -69,7 +69,7 @@ async function GET_impl(request) {
           });
         }
       }
-      return NextResponse.json({ success: false, error: 'Invoice not found' }, { status: 404 });
+      return NextResponse.json({ success: false, status: 'not_found', error: 'Invoice not found' }, { status: 200 });
     }
 
     // Check if any invoice is ALREADY marked paid in our database

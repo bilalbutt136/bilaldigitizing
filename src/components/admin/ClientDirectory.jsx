@@ -8,19 +8,11 @@ export const ClientDirectory = () => {
   const { clients = [], orders = [], refreshClients } = useAppState();
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  /* oxlint-disable react-hooks/exhaustive-deps -- mount-only directory sync; avoid refresh loops from callback identity changes */
-  React.useEffect(() => {
-    if (refreshClients) {
-      refreshClients();
-    }
-  }, []);
-  /* oxlint-enable react-hooks/exhaustive-deps */
-
   const handleRefresh = async () => {
     if (isRefreshing) return;
     setIsRefreshing(true);
     try {
-      if (refreshClients) await refreshClients();
+      if (refreshClients) await refreshClients({ force: true });
     } finally {
       setIsRefreshing(false);
     }

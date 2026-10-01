@@ -160,7 +160,7 @@ export const OrderManagementTable = () => {
     setIsRefreshing(true);
     try {
       if (refreshOrders) {
-        await refreshOrders();
+        await refreshOrders({ force: true });
       }
     } finally {
       setIsRefreshing(false);

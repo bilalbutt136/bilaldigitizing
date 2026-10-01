@@ -86,7 +86,6 @@ export const OrderTrackerDrawer = () => {
     setIsCheckoutModalOpen,
     setCheckoutSession,
     mobileMode,
-    refreshOrders,
     theme
   } = useAppState();
 
@@ -270,31 +269,9 @@ export const OrderTrackerDrawer = () => {
 
   const isPaid = isOrderPaid(ord);
 
-  // ── MUST be declared before any early return — React Rules of Hooks ─────────
-  // If order appears unpaid in the drawer, automatically verify live gateway / BoltPayouts status
-  useEffect(() => {
-    // Guard inside effect — safe because hook call order is always consistent
-    if (!selectedOrderForDrawer || !ord?.id || isPaid) return;
-    let isSubscribed = true;
-
-    const checkLivePaymentStatus = async () => {
-      try {
-        const cleanId = String(ord.id).trim().replace(/^#+/, '');
-        const res = await fetch(`/api/boltpayouts/status?orderId=${encodeURIComponent(cleanId)}`);
-        const data = await res.json();
-        if (isSubscribed && data.success && (data.status === 'paid' || data.status === 'completed')) {
-          if (typeof refreshOrders === 'function') {
-            refreshOrders().catch(() => {});
-          }
-        }
-      } catch {
-        // Non-blocking background verification
-      }
-    };
-
-    checkLivePaymentStatus();
-    return () => { isSubscribed = false; };
-  }, [selectedOrderForDrawer, ord?.id, isPaid, refreshOrders]);
+  // Payment reconciliation is handled by active Checkout/Deposit flows and provider webhooks.
+  // Do not probe BoltPayouts merely because an order is unpaid: many valid unpaid orders
+  // have no Bolt invoice and previously generated slow 404 serverless requests here.
 
   // Load any existing customer review so completed orders can offer feedback later.
   useEffect(() => {

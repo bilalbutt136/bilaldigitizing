@@ -29,25 +29,70 @@ export async function getAuthHeaders() {
 }
 
 const inFlightApiReads = new Map();
+const completedApiReads = new Map();
+const inFlightApiMutations = new Map();
+const recentApiMutations = new Map();
 
 function getAuthScopeKey(headers = {}) {
   const auth = headers.Authorization || headers.authorization || 'cookie-session';
   return String(auth).slice(-64);
 }
 
-function runDedupedApiRead(key, factory) {
+function runDedupedApiRead(key, factory, { ttlMs = 0, force = false } = {}) {
+  const now = Date.now();
+  if (!force && ttlMs > 0) {
+    const cached = completedApiReads.get(key);
+    if (cached && cached.expiresAt > now) return Promise.resolve(cached.value);
+    if (cached) completedApiReads.delete(key);
+  }
+
   const existing = inFlightApiReads.get(key);
   if (existing) return existing;
 
   const promise = Promise.resolve()
     .then(factory)
-    .finally(() => {
-      if (inFlightApiReads.get(key) === promise) {
-        inFlightApiReads.delete(key);
+    .then(value => {
+      if (ttlMs > 0) {
+        completedApiReads.set(key, { value, expiresAt: Date.now() + ttlMs });
       }
+      return value;
+    })
+    .finally(() => {
+      if (inFlightApiReads.get(key) === promise) inFlightApiReads.delete(key);
     });
 
   inFlightApiReads.set(key, promise);
+  return promise;
+}
+
+function clearCompletedApiReads(prefix) {
+  for (const key of completedApiReads.keys()) {
+    if (key.startsWith(prefix)) completedApiReads.delete(key);
+  }
+}
+
+function runDedupedApiMutation(key, factory, { ttlMs = 60_000, force = false } = {}) {
+  const now = Date.now();
+  if (!force) {
+    const cached = recentApiMutations.get(key);
+    if (cached && cached.expiresAt > now) return Promise.resolve(cached.value);
+    if (cached) recentApiMutations.delete(key);
+  }
+
+  const existing = inFlightApiMutations.get(key);
+  if (existing) return existing;
+
+  const promise = Promise.resolve()
+    .then(factory)
+    .then(value => {
+      recentApiMutations.set(key, { value, expiresAt: Date.now() + ttlMs });
+      return value;
+    })
+    .finally(() => {
+      if (inFlightApiMutations.get(key) === promise) inFlightApiMutations.delete(key);
+    });
+
+  inFlightApiMutations.set(key, promise);
   return promise;
 }
 
@@ -205,7 +250,7 @@ export async function updateUserPassword(newPassword) {
 
 // Fetch orders using only verified Supabase cookie/bearer authentication.
 // Legacy parameters are retained for call-site compatibility but are never sent as identity signals.
-export async function fetchOrdersFromSupabase(_customEmail = null, _customOrderIds = null, _customUserId = null) {
+export async function fetchOrdersFromSupabase(_customEmail = null, _customOrderIds = null, _customUserId = null, options = {}) {
   try {
     const headers = await getAuthHeaders();
     const requestKey = `orders:${getAuthScopeKey(headers)}`;
@@ -226,7 +271,7 @@ export async function fetchOrdersFromSupabase(_customEmail = null, _customOrderI
       const data = await res.json();
       const orders = data.orders || [];
       return orders.map(order => mapDatabaseOrderToClientOrder(order)).filter(Boolean);
-    });
+    }, { ttlMs: 15_000, force: Boolean(options?.force) });
   } catch (err) {
     console.warn('fetchOrdersFromSupabase error notice:', err?.message);
     return [];
@@ -522,22 +567,39 @@ export async function deleteOrderInSupabase(orderId) {
 }
 
 // Upsert Client Profile in Supabase DB (Automatic Save on Login & Order Submission)
-export async function upsertClientInSupabase(userData) {
+export async function upsertClientInSupabase(userData, options = {}) {
   try {
     const headers = await getAuthHeaders();
-    const res = await fetch('/api/clients', {
-      method: 'POST',
-      headers,
-      body: JSON.stringify({ action: 'upsert', payload: userData })
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error);
-    return { success: true };
-  } catch (err) { return { success: false, error: err.message }; }
+    const normalizedPayload = {
+      email: String(userData?.email || '').toLowerCase().trim(),
+      name: userData?.name || userData?.full_name || '',
+      full_name: userData?.full_name || '',
+      company: userData?.company || userData?.company_name || '',
+      company_name: userData?.company_name || '',
+      phone: userData?.phone || '',
+      avatar_url: userData?.avatar_url || userData?.avatar || '',
+      role: userData?.role || ''
+    };
+    const requestKey = 'client-upsert:' + getAuthScopeKey(headers) + ':' + JSON.stringify(normalizedPayload);
+
+    return runDedupedApiMutation(requestKey, async () => {
+      const res = await fetch('/api/clients', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ action: 'upsert', payload: userData })
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || ('Client update failed (' + res.status + ')'));
+      clearCompletedApiReads('clients:');
+      return { success: true };
+    }, { ttlMs: 60_000, force: Boolean(options?.force) });
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
 }
 
 // Fetch all registered clients from Supabase DB
-export async function fetchClientsFromSupabase() {
+export async function fetchClientsFromSupabase(options = {}) {
   try {
     const headers = await getAuthHeaders();
     const requestKey = `clients:${getAuthScopeKey(headers)}`;
@@ -545,7 +607,7 @@ export async function fetchClientsFromSupabase() {
       const res = await fetch('/api/clients?action=fetchAll', { headers, cache: 'no-store' });
       const data = await res.json();
       return data.clients || [];
-    });
+    }, { ttlMs: 15_000, force: Boolean(options?.force) });
   } catch { return []; }
 }
 // Deposit Funds & Transaction Handler in Supabase
@@ -995,7 +1057,7 @@ export async function fetchCatalogFromSupabase() {
 // ADMIN SESSION (server-verified via /api/admin/session)
 // ============================================================
 
-export async function verifyAdminSession(email) {
+export async function verifyAdminSession(email, options = {}) {
   if (!email) return { success: false, isAdmin: false };
 
   try {
@@ -1009,7 +1071,7 @@ export async function verifyAdminSession(email) {
       });
       const json = await res.json();
       return { success: Boolean(json?.success), isAdmin: Boolean(json?.isAdmin), admin: json?.admin || null };
-    });
+    }, { ttlMs: 60_000, force: Boolean(options?.force) });
   } catch (err) {
     console.warn('Admin session verification exception:', err);
     return { success: false, isAdmin: false };

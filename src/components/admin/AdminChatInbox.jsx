@@ -102,6 +102,7 @@ export default function AdminChatInbox({ initialChannel = 'inbox' }) {
   const isTypingActiveRef = useRef(false);
   const clientTypingDismissRef = useRef(null);
   const channelRef = useRef(null);
+  const conversationRefreshTimerRef = useRef(null);
 
   // Live Online Presence State (Set of active client emails)
   const [onlineEmails, setOnlineEmails] = useState(new Set());
@@ -264,12 +265,22 @@ export default function AdminChatInbox({ initialChannel = 'inbox' }) {
           }
         }
       }
-      fetchChannelUnreadCounts(silent);
+      fetchChannelUnreadCounts(false);
     } catch (err) {
       console.warn('[Admin Chat] Failed to load conversations:', err);
     } finally {
       setIsLoadingThreads(false);
     }
+  };
+
+  const scheduleConversationRefresh = () => {
+    if (conversationRefreshTimerRef.current) {
+      clearTimeout(conversationRefreshTimerRef.current);
+    }
+    conversationRefreshTimerRef.current = setTimeout(() => {
+      conversationRefreshTimerRef.current = null;
+      fetchConversations(activeFilter, searchQuery, activeChannel, true);
+    }, 300);
   };
 
   // 2. Fetch Messages for Active Conversation
@@ -284,17 +295,22 @@ export default function AdminChatInbox({ initialChannel = 'inbox' }) {
         scrollToBottom();
       }
 
-      // Mark conversation as read for admin and stop any ringing notification tune
+      // Only write a read transition if a client message is actually unread.
+      // This prevents a POST /api/chat/conversations on every thread fetch.
+      const hasUnreadIncoming = Array.isArray(data?.messages) && data.messages.some(message =>
+        message?.sender === 'client' && message?.is_read === false
+      );
       stopNotificationSound();
-      await fetch('/api/chat/conversations', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'markRead', conversationId: convId })
-      });
+      if (hasUnreadIncoming) {
+        await fetch('/api/chat/conversations', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'markRead', conversationId: convId })
+        });
 
-      // Update local unread counter
-      setConversations(prev => prev.map(c => c.id === convId ? { ...c, unread_admin_count: 0 } : c));
-      fetchChannelUnreadCounts();
+        setConversations(prev => prev.map(c => c.id === convId ? { ...c, unread_admin_count: 0 } : c));
+        fetchChannelUnreadCounts(true);
+      }
     } catch (err) {
       console.warn('[Admin Chat] Failed to load messages:', err);
     } finally {
@@ -416,16 +432,17 @@ export default function AdminChatInbox({ initialChannel = 'inbox' }) {
       }
 
       if (msg.sender === 'client') {
-        fetchConversations(activeFilter, searchQuery, activeChannel, true);
+        scheduleConversationRefresh();
       }
     });
 
     const unsubscribeConversations = subscribeToConversations(() => {
-      fetchConversations(activeFilter, searchQuery, activeChannel, true);
+      scheduleConversationRefresh();
     });
 
     return () => {
       clearTimeout(clientTypingDismissRef.current);
+      clearTimeout(conversationRefreshTimerRef.current);
       channelRef.current = null;
       if (activeChannelSub) supabase.removeChannel(activeChannelSub);
       unsubscribeMessages();

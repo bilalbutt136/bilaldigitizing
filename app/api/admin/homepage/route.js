@@ -16,7 +16,7 @@ function revalidateAllSitePages() {
     revalidatePath('/custom-patches');
     revalidatePath('/portfolio');
     revalidatePath('/');
-    revalidateTag('homepage');
+    revalidateTag('homepage', 'max');
   } catch (e) {
     console.warn('[Revalidate Error]:', e);
   }

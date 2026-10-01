@@ -14,7 +14,7 @@ describe('P1 Performance Regression Coverage', () => {
     assert.match(page, /export const revalidate = 300/);
     assert.match(serverCatalog, /tags: \['catalog', 'homepage', 'portfolio'\]/);
     assert.match(catalogRoute, /revalidatePath\('\/portfolio', 'page'\)/);
-    assert.match(catalogRoute, /revalidateTag\('portfolio'\)/);
+    assert.match(catalogRoute, /revalidateTag\('portfolio', 'max'\)/);
   });
 
   test('server auth is request-memoized and trusted role resolution uses one RPC primary path', () => {
@@ -118,6 +118,49 @@ describe('P1 Performance Regression Coverage', () => {
     assert.equal(profileRoute.includes(".from('admins')"), false);
     assert.equal(profileRoute.includes(".from('worker_profiles')"), false);
     assert.equal(profileRoute.includes(".from('workers')"), false);
+  });
+
+  test('admin/session, orders, clients and chat bursts are TTL-deduped instead of only in-flight deduped', () => {
+    const service = fs.readFileSync('src/services/supabaseService.js', 'utf8');
+    const state = fs.readFileSync('src/context/StateContext.jsx', 'utf8');
+    const clientDirectory = fs.readFileSync('src/components/admin/ClientDirectory.jsx', 'utf8');
+    const clientsRoute = fs.readFileSync('app/api/clients/route.js', 'utf8');
+    const adminChat = fs.readFileSync('src/components/admin/AdminChatInbox.jsx', 'utf8');
+    const customerChat = fs.readFileSync('src/components/customer/CustomerSupportChat.jsx', 'utf8');
+    const tracker = fs.readFileSync('src/components/customer/OrderTrackerDrawer.jsx', 'utf8');
+    const boltStatus = fs.readFileSync('app/api/boltpayouts/status/route.js', 'utf8');
+    const orderCreate = fs.readFileSync('src/server/orders/handlers/post/createOrder.js', 'utf8');
+    const chatMessages = fs.readFileSync('app/api/chat/messages/route.js', 'utf8');
+    const reviews = fs.readFileSync('app/api/reviews/route.js', 'utf8');
+
+    assert.match(service, /const completedApiReads = new Map\(\)/);
+    assert.match(service, /ttlMs: 15_000/);
+    assert.match(service, /ttlMs: 60_000/);
+    assert.match(service, /runDedupedApiMutation/);
+    assert.match(service, /client-upsert:/);
+    assert.match(state, /event === 'INITIAL_SESSION' \|\| event === 'SIGNED_IN'/);
+    assert.equal(state.includes('Date.now() - lastHydration.hydratedAt < 15_000'), false);
+    assert.match(state, /if \(role === 'customer'\) upsertClientInSupabase/);
+
+    assert.equal(clientDirectory.includes('mount-only directory sync'), false);
+    assert.match(clientDirectory, /refreshClients\(\{ force: true \}\)/);
+    assert.match(clientsRoute, /enforceApiBurstLimit\(request, 'clients-post', 30, 60_000\)/);
+
+    assert.match(adminChat, /scheduleConversationRefresh/);
+    assert.match(adminChat, /hasUnreadIncoming/);
+    assert.match(customerChat, /CHAT_CONVERSATION_CACHE_TTL_MS = 60_000/);
+    assert.match(customerChat, /getOrCreateConversationCached/);
+    assert.equal(tracker.includes('/api/boltpayouts/status?orderId='), false);
+    assert.match(boltStatus, /status: 'not_found'/);
+    assert.match(boltStatus, /status: 200/);
+
+    assert.match(orderCreate, /after\(async \(\) =>/);
+    assert.match(orderCreate, /\.upsert\(fileRows/);
+    assert.equal(orderCreate.includes('existingIdCheck'), false);
+    assert.match(chatMessages, /after\(async \(\) =>/);
+    assert.match(chatMessages, /existingConversation\?\.unread_admin_count/);
+    assert.match(reviews, /revalidateTag\('catalog', 'max'\)/);
+    assert.match(reviews, /revalidateTag\('homepage', 'max'\)/);
   });
 
   test('durable uploads, bounded list reads and idempotent file rows prevent resource regressions', () => {

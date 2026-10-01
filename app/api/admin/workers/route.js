@@ -333,7 +333,7 @@ async function POST_impl(request) {
   } finally {
     if (shouldInvalidateWorkerDirectory) {
       try {
-        revalidateTag(WORKER_DIRECTORY_TAG);
+        revalidateTag(WORKER_DIRECTORY_TAG, 'max');
       } catch (cacheErr) {
         console.warn('[Admin Workers Cache Invalidation Notice]:', cacheErr?.message);
       }

@@ -27,7 +27,7 @@ describe('Customer Order Reviews & Publication Workflow', () => {
     assert.match(api, /!user \|\| !isAdmin/);
     assert.match(api, /moderation_status: 'published'/);
     assert.match(api, /moderation_status: 'hidden'/);
-    assert.match(api, /revalidateTag\('catalog'\)/);
+    assert.match(api, /revalidateTag\('catalog', 'max'\)/);
   });
 
   test('all customer/admin review requests send the current Supabase access token', () => {

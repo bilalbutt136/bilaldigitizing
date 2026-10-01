@@ -1,5 +1,5 @@
 import { withApiObservability, logServerCaughtError } from '../../../../src/lib/observability/apiObservability.js';
-import { NextResponse } from 'next/server';
+import { NextResponse, after } from 'next/server';
 import { createAdminClient } from '../../../../src/lib/supabase/admin';
 import { getServerAuthUser } from '../../../../src/lib/supabase/serverAuth';
 import { canAccessConversation } from '../../../../src/lib/chat/authorization';
@@ -204,50 +204,46 @@ async function POST_impl(request) {
     const supabase = createAdminClient();
     const nowIso = new Date().toISOString();
 
-    // Customers may create their own new thread, but cannot post into another customer's existing thread.
-    if (!isAdmin) {
-      const { data: existingConversation, error: conversationLookupError } = await supabase
-        .from('conversations')
-        .select('id, client_email')
-        .eq('id', conversation_id)
-        .maybeSingle();
-      if (conversationLookupError) {
-        return NextResponse.json({ error: 'Unable to verify conversation access.' }, { status: 500 });
-      }
-      if (existingConversation && String(existingConversation.client_email || '').trim().toLowerCase() !== cleanEmail) {
-        return NextResponse.json({ error: 'Forbidden.' }, { status: 403 });
-      }
+    // Resolve the conversation once. Previously customer messages queried the same
+    // conversation twice before inserting the message, adding an avoidable DB round trip.
+    let existingConversation = null;
+    const { data: conversationRow, error: conversationLookupError } = await supabase
+      .from('conversations')
+      .select('id, client_email, client_name, unread_admin_count, unread_client_count')
+      .eq('id', conversation_id)
+      .maybeSingle();
+
+    if (conversationLookupError) {
+      return NextResponse.json({ error: 'Unable to verify conversation access.' }, { status: 500 });
+    }
+    existingConversation = conversationRow;
+
+    if (!isAdmin && existingConversation && String(existingConversation.client_email || '').trim().toLowerCase() !== cleanEmail) {
+      return NextResponse.json({ error: 'Forbidden.' }, { status: 403 });
     }
 
-    // 1. Ensure conversation thread exists in conversations table
-    try {
-      const { data: convExists } = await supabase
-        .from('conversations')
-        .select('id, client_name')
-        .eq('id', conversation_id)
-        .maybeSingle();
-
-      if (!convExists) {
-        const isSupportThread = conversation_id.startsWith('support-') || conversation_id === 'general-support';
-        await supabase.from('conversations').insert([{
-          id: conversation_id,
-          client_email: cleanEmail,
-          client_name: effectiveSender === 'client' ? effectiveSenderName : cleanEmail.split('@')[0],
-          order_title: isSupportThread ? '24/7 Customer Support Desk' : 'Direct Studio Communication & Offers',
-          status: effectiveSender === 'client' ? 'online' : 'offline',
-          tags: isSupportThread ? ['support'] : ['inbox'],
-          last_message: text || (attachments.length > 0 ? `Sent ${attachments.length} attachment(s)` : 'New message'),
-          last_message_at: nowIso,
-          last_seen_at: nowIso,
-          unread_admin_count: effectiveSender === 'client' ? 1 : 0,
-          unread_client_count: effectiveSender === 'admin' ? 1 : 0,
-          is_starred: false,
-          created_at: nowIso,
-          updated_at: nowIso
-        }]);
+    if (!existingConversation) {
+      const newConversation = {
+        id: conversation_id,
+        client_email: cleanEmail,
+        client_name: effectiveSender === 'client' ? effectiveSenderName : cleanEmail.split('@')[0],
+        order_title: isSupportThread ? '24/7 Customer Support Desk' : 'Direct Studio Communication & Offers',
+        status: effectiveSender === 'client' ? 'online' : 'offline',
+        tags: isSupportThread ? ['support'] : ['inbox'],
+        last_message: text || (attachments.length > 0 ? `Sent ${attachments.length} attachment(s)` : 'New message'),
+        last_message_at: nowIso,
+        last_seen_at: nowIso,
+        unread_admin_count: 0,
+        unread_client_count: 0,
+        is_starred: false,
+        created_at: nowIso,
+        updated_at: nowIso
+      };
+      const { error: createConversationError } = await supabase.from('conversations').insert([newConversation]);
+      if (createConversationError && createConversationError.code !== '23505') {
+        return NextResponse.json({ error: 'Unable to create conversation.' }, { status: 500 });
       }
-    } catch (cErr) {
-      console.warn('[Chat Auto-Create Conversation Notice]:', cErr.message);
+      existingConversation = newConversation;
     }
 
     // 2. Prepare message record
@@ -307,13 +303,11 @@ async function POST_impl(request) {
         // Client is actively messaging right now
         updatePayload.status = 'online';
         updatePayload.last_seen_at = nowIso;
-        // Increment unread count for admin
-        const { data: cData } = await supabase.from('conversations').select('unread_admin_count').eq('id', conversation_id).maybeSingle();
-        updatePayload.unread_admin_count = (cData?.unread_admin_count || 0) + 1;
+        // Increment from the conversation snapshot already loaded above.
+        updatePayload.unread_admin_count = Number(existingConversation?.unread_admin_count || 0) + 1;
       } else {
-        // Increment unread count for client
-        const { data: cData } = await supabase.from('conversations').select('unread_client_count').eq('id', conversation_id).maybeSingle();
-        updatePayload.unread_client_count = (cData?.unread_client_count || 0) + 1;
+        // Increment from the conversation snapshot already loaded above.
+        updatePayload.unread_client_count = Number(existingConversation?.unread_client_count || 0) + 1;
       }
 
       await supabase.from('conversations').update(updatePayload).eq('id', conversation_id);
@@ -321,6 +315,9 @@ async function POST_impl(request) {
       console.warn('[Chat Conversation Update Notice]:', updErr.message);
     }
 
+    // Email, push, and Realtime fan-out are post-response work. The message and
+    // conversation state are already durable at this point.
+    after(async () => {
     // 4. Trigger guaranteed email notification alert when a customer sends a message
     if (effectiveSender === 'client') {
       try {
@@ -365,6 +362,7 @@ async function POST_impl(request) {
     } catch (bErr) {
       console.warn('[Chat Live Broadcast Notice]:', bErr?.message);
     }
+    });
 
     return NextResponse.json({ success: true, message: insertedMsg });
   } catch (err) {

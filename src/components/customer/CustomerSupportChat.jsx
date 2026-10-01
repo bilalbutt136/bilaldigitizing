@@ -49,6 +49,40 @@ const formatChatDateHeader = (dateStr) => {
   }
 };
 
+const CHAT_CONVERSATION_CACHE_TTL_MS = 60_000;
+const conversationInitCache = new Map();
+const conversationInitInFlight = new Map();
+
+async function getOrCreateConversationCached(payload) {
+  const key = [payload?.conversationId, payload?.clientEmail, payload?.chatType].map(v => String(v || '')).join('|');
+  const now = Date.now();
+  const cached = conversationInitCache.get(key);
+  if (cached && cached.expiresAt > now) return cached.conversation;
+  if (cached) conversationInitCache.delete(key);
+  if (conversationInitInFlight.has(key)) return conversationInitInFlight.get(key);
+
+  const request = fetch('/api/chat/conversations', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ action: 'getOrCreate', ...payload })
+  })
+    .then(async response => {
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok || !data?.conversation) {
+        throw new Error(data?.error || ('Conversation request failed (' + response.status + ')'));
+      }
+      conversationInitCache.set(key, {
+        conversation: data.conversation,
+        expiresAt: Date.now() + CHAT_CONVERSATION_CACHE_TTL_MS
+      });
+      return data.conversation;
+    })
+    .finally(() => conversationInitInFlight.delete(key));
+
+  conversationInitInFlight.set(key, request);
+  return request;
+}
+
 export default function CustomerSupportChat({
   defaultOrderId = null,
   initialTopic = '',
@@ -232,20 +266,14 @@ export default function CustomerSupportChat({
     const convIdToUse = targetId || conversationId || (userEmail ? `${prefix}-${userEmail.replace(/[^a-zA-Z0-9]/g, '_')}` : `${prefix}-guest`);
 
     try {
-      const res = await fetch('/api/chat/conversations', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'getOrCreate',
-          conversationId: convIdToUse,
-          clientEmail: userEmail,
-          clientName: userName,
-          orderId: defaultOrderId,
-          chatType
-        })
+      const conversation = await getOrCreateConversationCached({
+        conversationId: convIdToUse,
+        clientEmail: userEmail,
+        clientName: userName,
+        orderId: defaultOrderId,
+        chatType
       });
-      const data = await res.json();
-      const resolvedId = data?.conversation?.id || convIdToUse;
+      const resolvedId = conversation?.id || convIdToUse;
       if (resolvedId) {
         setConversationId(resolvedId);
         fetchMessages(resolvedId);
@@ -268,13 +296,19 @@ export default function CustomerSupportChat({
         scrollToBottom();
       }
 
-      // Mark messages as read for client
+      // Only persist a read transition when an incoming admin message is actually unread.
+      // The old unconditional POST fired on every message fetch/remount.
+      const hasUnreadIncoming = Array.isArray(data?.messages) && data.messages.some(message =>
+        message?.sender === 'admin' && message?.is_read === false
+      );
       stopNotificationSound();
-      await fetch('/api/chat/conversations', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'markRead', conversationId: convId })
-      });
+      if (hasUnreadIncoming) {
+        await fetch('/api/chat/conversations', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'markRead', conversationId: convId })
+        });
+      }
     } catch (err) {
       console.warn('[Customer Chat] Fetch messages error:', err);
     }

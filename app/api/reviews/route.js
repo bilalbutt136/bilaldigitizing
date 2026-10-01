@@ -76,8 +76,8 @@ function revalidatePublishedReviews() {
     revalidatePath('/', 'layout');
     revalidatePath('/', 'page');
     revalidatePath('/api/catalog');
-    revalidateTag('catalog');
-    revalidateTag('homepage');
+    revalidateTag('catalog', 'max');
+    revalidateTag('homepage', 'max');
   } catch (error) {
     console.warn('[Reviews revalidate warning]:', error?.message || error);
   }

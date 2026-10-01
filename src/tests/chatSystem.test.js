@@ -48,7 +48,8 @@ test('Chat System & Fiverr-Style Inbox Architecture', async (t) => {
 
     // Real messages remain the canonical place that creates/increments chat threads.
     assert.match(messagesRoute, /\.from\('conversations'\)/);
-    assert.match(messagesRoute, /unread_admin_count: effectiveSender === 'client' \? 1 : 0/);
+    assert.match(messagesRoute, /unread_admin_count: 0/);
+    assert.match(messagesRoute, /existingConversation\?\.unread_admin_count/);
     assert.match(messagesRoute, /updatePayload\.unread_admin_count/);
 
     assert.match(cleanupMigration, /NOT EXISTS \([\s\S]*FROM public\.messages/);

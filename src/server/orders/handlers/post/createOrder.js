@@ -1,4 +1,5 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, after } from 'next/server';
+import { logServerCaughtError } from '../../../../lib/observability/apiObservability.js';
 
 export async function handleCreateOrder(context) {
   const { payload, supabase, user, isAdmin } = context;
@@ -51,13 +52,9 @@ export async function handleCreateOrder(context) {
       }
 
       // Generate collision-free order ID
+      // Rely on the database primary-key constraint for collision detection.
+      // A duplicate insert is retried below, avoiding an extra preflight SELECT on every order.
       let assignedId = primaryDbRow.id || `#${Math.floor(10000 + Math.random() * 90000)}`;
-      try {
-        const { data: existingIdCheck } = await supabase.from('orders').select('id').eq('id', assignedId).maybeSingle();
-        if (existingIdCheck) {
-          assignedId = `#${Math.floor(10000 + Math.random() * 90000)}`;
-        }
-      } catch (error) { logServerCaughtError(error, { operation: 'orders.id_collision_check_failed' }); }
 
       const mappedDbRow = {
         id: assignedId,
@@ -144,23 +141,25 @@ export async function handleCreateOrder(context) {
       }
 
       if (orderFiles && orderFiles.length > 0) {
-        for (let file of orderFiles) {
-          if (!file.file_url && !file.public_url) continue;
-          try {
-            await supabase.from('order_files').upsert([{
-              order_id: mappedDbRow.id,
-              file_name: file.file_name || file.name || 'artwork_file',
-              file_format: file.file_format || file.format || file.file_name?.split('.').pop() || 'png',
-              file_type: 'client_artwork',
-              bucket_name: file.bucket_name || 'client-uploads',
-              file_path: file.file_path || file.public_url || file.file_url,
-              public_url: file.public_url || file.file_url,
-              file_url: file.file_url || file.public_url,
-              uploaded_by: 'client'
-            }], { onConflict: 'order_id,file_type,file_url', ignoreDuplicates: true });
-          } catch (fileInsertErr) {
-            console.warn('order_files insert notice:', fileInsertErr);
-          }
+        const fileRows = orderFiles
+          .filter(file => file && (file.file_url || file.public_url))
+          .map(file => ({
+            order_id: mappedDbRow.id,
+            file_name: file.file_name || file.name || 'artwork_file',
+            file_format: file.file_format || file.format || file.file_name?.split('.').pop() || 'png',
+            file_type: 'client_artwork',
+            bucket_name: file.bucket_name || 'client-uploads',
+            file_path: file.file_path || file.public_url || file.file_url,
+            public_url: file.public_url || file.file_url,
+            file_url: file.file_url || file.public_url,
+            uploaded_by: 'client'
+          }));
+
+        if (fileRows.length > 0) {
+          const { error: fileInsertErr } = await supabase
+            .from('order_files')
+            .upsert(fileRows, { onConflict: 'order_id,file_type,file_url', ignoreDuplicates: true });
+          if (fileInsertErr) console.warn('order_files batch upsert notice:', fileInsertErr.message);
         }
       }
 
@@ -170,6 +169,14 @@ export async function handleCreateOrder(context) {
       // actually starts a conversation or sends a message.
 
 
+      const finalOrder = (Array.isArray(insertedOrder) && insertedOrder.length > 0)
+        ? insertedOrder[0]
+        : (insertedOrder && typeof insertedOrder === 'object' && !Array.isArray(insertedOrder))
+          ? insertedOrder
+          : mappedDbRow;
+
+      // Non-critical fan-out must not hold the order-creation response open.
+      after(async () => {
       // Automatically create notifications in public.notifications (Order Placed - Notification 1)
       try {
         const nowIso = new Date().toISOString();
@@ -282,12 +289,6 @@ export async function handleCreateOrder(context) {
         console.warn('[Order Push Service Import Notice]:', pushErr?.message);
       }
 
-      const finalOrder = (Array.isArray(insertedOrder) && insertedOrder.length > 0)
-        ? insertedOrder[0]
-        : (insertedOrder && typeof insertedOrder === 'object' && !Array.isArray(insertedOrder))
-          ? insertedOrder
-          : mappedDbRow;
-
       // Broadcast order_updated & order_change to Realtime WebSocket channel for instant cross-tab & dashboard sync
       try {
         const liveChannel = supabase.channel('bdigitizing-live-hub-v2');
@@ -304,6 +305,7 @@ export async function handleCreateOrder(context) {
       } catch (bOrdErr) {
         console.warn('[Realtime Order Broadcast Notice]:', bOrdErr?.message);
       }
+      });
 
       return NextResponse.json({ success: true, order: finalOrder }, {
         headers: {

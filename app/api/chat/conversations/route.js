@@ -166,21 +166,26 @@ async function POST_impl(request) {
         return NextResponse.json({ error: 'Conversation access denied.' }, { status: 403 });
       }
 
-      const updateData = { updated_at: new Date().toISOString() };
+      const nowIso = new Date().toISOString();
+      const updateData = { updated_at: nowIso };
       if (isAdmin) updateData.unread_admin_count = 0;
       else updateData.unread_client_count = 0;
 
-      await supabase.from('conversations').update(updateData).eq('id', conversationId);
-
       let markMsgQuery = supabase
         .from('messages')
-        .update({ is_read: true, read_at: new Date().toISOString() })
+        .update({ is_read: true, read_at: nowIso })
         .eq('conversation_id', conversationId);
 
       markMsgQuery = isAdmin
         ? markMsgQuery.eq('sender', 'client')
         : markMsgQuery.eq('sender', 'admin');
-      await markMsgQuery;
+
+      const [conversationUpdate, messageUpdate] = await Promise.all([
+        supabase.from('conversations').update(updateData).eq('id', conversationId),
+        markMsgQuery
+      ]);
+      if (conversationUpdate.error) throw conversationUpdate.error;
+      if (messageUpdate.error) throw messageUpdate.error;
 
       return NextResponse.json({ success: true });
     }

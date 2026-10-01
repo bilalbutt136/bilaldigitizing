@@ -776,7 +776,7 @@ export const BDigitizingMobileApp = ({ initialTab = 'home' }) => {
 
   const handleSaveProfile = async (e) => {
     e.preventDefault();
-    if (!activeUser) return;
+    if (!activeUser || isSavingProfile) return;
     setIsSavingProfile(true);
     try {
       const updatedData = {

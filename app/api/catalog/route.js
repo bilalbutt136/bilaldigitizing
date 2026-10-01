@@ -25,8 +25,8 @@ function revalidateAllSitePages() {
     revalidatePath('/services/vector-tracing', 'page');
     revalidatePath('/custom-patches', 'page');
     revalidatePath('/api/catalog');
-    revalidateTag('portfolio');
-    revalidateTag('catalog');
+    revalidateTag('portfolio', 'max');
+    revalidateTag('catalog', 'max');
   } catch (e) {
     console.warn('[Revalidate Error]:', e);
   }

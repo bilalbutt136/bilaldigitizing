@@ -59,6 +59,9 @@ async function GET_impl(request) {
 }
 
 async function POST_impl(request) {
+  const burstResponse = enforceApiBurstLimit(request, 'clients-post', 30, 60_000);
+  if (burstResponse) return burstResponse;
+
   try {
     let body = {};
     try {

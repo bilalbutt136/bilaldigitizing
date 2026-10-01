@@ -1006,7 +1006,7 @@ export const StateProvider = ({ children, initialCatalog = null }) => {
             if (!cancelled && dbOrders) setOrders(dbOrders);
           });
 
-          upsertClientInSupabase({ ...uData, role }).catch(() => {});
+          if (role === 'customer') upsertClientInSupabase({ ...uData, role }).catch(() => {});
         } else {
           // Hard refresh can briefly report no session before Supabase emits its
           // authoritative INITIAL_SESSION event. Do not mark auth initialized yet,
@@ -1384,11 +1384,7 @@ export const StateProvider = ({ children, initialCatalog = null }) => {
             if (
               lastHydration.userId === session.user.id &&
               (
-                event === 'INITIAL_SESSION' ||
-                (
-                  event === 'SIGNED_IN' &&
-                  Date.now() - lastHydration.hydratedAt < 15_000
-                )
+                event === 'INITIAL_SESSION' || event === 'SIGNED_IN'
               )
             ) {
               setIsAuthInitialized(true);
@@ -1436,10 +1432,12 @@ export const StateProvider = ({ children, initialCatalog = null }) => {
               }
             });
 
-            try {
-              await upsertClientInSupabase({ ...uData, role });
-            } catch (err) {
-              console.warn('Client upsert notice:', err);
+            if (role === 'customer') {
+              try {
+                await upsertClientInSupabase({ ...uData, role });
+              } catch (err) {
+                console.warn('Client upsert notice:', err);
+              }
             }
           } else if (event === 'INITIAL_SESSION') {
             // INITIAL_SESSION with no user is the authoritative "signed out"
@@ -2426,7 +2424,7 @@ export const StateProvider = ({ children, initialCatalog = null }) => {
     }
   };
 
-  const refreshOrders = useCallback(async () => {
+  const refreshOrders = useCallback(async (options = {}) => {
     try {
       let resolvedUser = authUser;
       if (!resolvedUser && typeof window !== 'undefined') {
@@ -2438,7 +2436,7 @@ export const StateProvider = ({ children, initialCatalog = null }) => {
       const isAdminUser = resolvedUser?.role === 'admin';
       const email = isAdminUser ? null : (resolvedUser?.email || null);
       const userId = isAdminUser ? null : (resolvedUser?.id || null);
-      const freshOrders = await fetchOrdersFromSupabase(email, null, userId);
+      const freshOrders = await fetchOrdersFromSupabase(email, null, userId, { force: Boolean(options?.force) });
       if (freshOrders && Array.isArray(freshOrders)) {
         setOrders(prevOrders => {
           const freshMap = new Map(freshOrders.map(o => [String(o.id).replace(/^#+/, ''), o]));
@@ -2459,9 +2457,9 @@ export const StateProvider = ({ children, initialCatalog = null }) => {
     return [];
   }, [authUser]);
 
-  const refreshClients = useCallback(async () => {
+  const refreshClients = useCallback(async (options = {}) => {
     try {
-      const freshClients = await fetchClientsFromSupabase();
+      const freshClients = await fetchClientsFromSupabase({ force: Boolean(options?.force) });
       if (freshClients && Array.isArray(freshClients)) {
         setClients(freshClients);
         return freshClients;
