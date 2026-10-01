@@ -293,6 +293,12 @@ const AssetCard = ({
 
 export const BrandingAssetManager = () => {
   const { showToast, siteSettings = {} } = useAppState();
+  const showToastRef = useRef(showToast);
+
+  useEffect(() => {
+    showToastRef.current = showToast;
+  }, [showToast]);
+
   const initialBranding = useMemo(() => ({
     ...DEFAULT_BRANDING,
     app_icon_url: siteSettings.appIconUrl || DEFAULT_BRANDING.app_icon_url,
@@ -338,7 +344,7 @@ export const BrandingAssetManager = () => {
         }
       } catch (error) {
         if (active) {
-          showToast?.(error?.message || 'Could not load branding settings.', 'error');
+          showToastRef.current?.(error?.message || 'Could not load branding settings.', 'error');
         }
       } finally {
         if (active) setLoading(false);
@@ -349,7 +355,7 @@ export const BrandingAssetManager = () => {
     return () => {
       active = false;
     };
-  }, [showToast]);
+  }, []);
 
   const validateAndUpload = async (config, file) => {
     if (!file) return;

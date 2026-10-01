@@ -1945,9 +1945,23 @@ export async function uploadFileToCloudinaryFull(fileObj, bucketName = 'client-u
     window.dispatchEvent(new CustomEvent('upload:start', { detail: { fileName: fileObj.name } }));
   }
 
-  // Attempt 1: Direct Cloudinary Upload via Signed Request with auto resource type
+  let lastUploadError = null;
+
+  // Attempt 1: Direct Cloudinary Upload via Signed Request with auto resource type.
+  // Admin sessions primarily live in Supabase local storage, so the bearer token
+  // must be forwarded explicitly; relying on cookies makes signed uploads fail.
   try {
-    const sigRes = await fetch(`/api/cloudinary/signature?folder=${encodeURIComponent(folderPath)}`);
+    const signatureAuth = await getAuthHeaders().catch(() => ({}));
+    const signatureHeaders = {};
+    if (signatureAuth.Authorization) {
+      signatureHeaders.Authorization = signatureAuth.Authorization;
+    }
+
+    const sigRes = await fetch(`/api/cloudinary/signature?folder=${encodeURIComponent(folderPath)}`, {
+      headers: signatureHeaders,
+      credentials: 'same-origin',
+      cache: 'no-store'
+    });
     if (sigRes.ok) {
       const sigData = await sigRes.json();
       if (sigData.success && sigData.signature && sigData.cloud_name) {
@@ -1998,8 +2012,12 @@ export async function uploadFileToCloudinaryFull(fileObj, bucketName = 'client-u
           };
         }
       }
+    } else {
+      const failure = await sigRes.json().catch(() => null);
+      lastUploadError = new Error(failure?.error || `Upload signing failed with status ${sigRes.status}.`);
     }
   } catch (err) {
+    lastUploadError = err;
     console.warn('[Cloudinary Direct Upload Notice] Direct upload notice:', err.message);
   }
 
@@ -2044,8 +2062,14 @@ export async function uploadFileToCloudinaryFull(fileObj, bucketName = 'client-u
           created_at: serverData.created_at || new Date().toISOString()
         };
       }
+
+      lastUploadError = new Error(serverData?.error || 'Storage upload completed without a public URL.');
+    } else {
+      const failure = await serverRes.json().catch(() => null);
+      lastUploadError = new Error(failure?.error || `Storage upload failed with status ${serverRes.status}.`);
     }
   } catch (storageErr) {
+    lastUploadError = storageErr;
     console.warn('[Storage Fallback Notice] Server storage upload notice:', storageErr.message);
   }
 
@@ -2056,7 +2080,12 @@ export async function uploadFileToCloudinaryFull(fileObj, bucketName = 'client-u
   if (typeof window !== 'undefined') {
     window.dispatchEvent(new CustomEvent('upload:end', { detail: { fileName: fileObj.name, success: false } }));
   }
-  return null;
+
+  if (lastUploadError) {
+    throw lastUploadError;
+  }
+
+  throw new Error('Upload failed. Please try again.');
 }
 
 // CMS Helper

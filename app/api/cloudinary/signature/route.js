@@ -14,6 +14,10 @@ const ADMIN_FOLDERS = new Set([
   'notification-sounds',
   'branding/logo',
   'branding/favicon',
+  'branding/app-icon',
+  'branding/header-logo',
+  'branding/footer-logo',
+  'branding/social-share',
   'deliveries',
   'portfolio'
 ]);

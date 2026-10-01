@@ -93,3 +93,32 @@ test('admin branding manager provides five drag/drop assets with requested produ
   assert.match(source, /\/api\/admin\/branding/);
   assert.match(themeSettings, /<BrandingAssetManager \/>/);
 });
+
+
+test('branding upload state is not overwritten by toast-triggered context rerenders', () => {
+  const source = read('src/components/admin/settings/BrandingAssetManager.jsx');
+
+  assert.match(source, /const showToastRef = useRef\(showToast\)/);
+  assert.match(source, /showToastRef\.current = showToast/);
+  assert.match(source, /loadBranding\(\);[\s\S]*?\}, \[\]\);/);
+});
+
+test('branding uploads forward admin auth and all branding folders are signed', () => {
+  const service = read('src/services/supabaseService.js');
+  const signature = read('app/api/cloudinary/signature/route.js');
+
+  assert.match(service, /signatureAuth = await getAuthHeaders/);
+  assert.match(service, /signatureHeaders\.Authorization = signatureAuth\.Authorization/);
+  assert.match(service, /credentials: 'same-origin'/);
+  assert.match(service, /throw lastUploadError/);
+
+  for (const folder of [
+    'branding/app-icon',
+    'branding/favicon',
+    'branding/header-logo',
+    'branding/footer-logo',
+    'branding/social-share'
+  ]) {
+    assert.equal(signature.includes("'" + folder + "'"), true, 'signature allowlist must include ' + folder);
+  }
+});
