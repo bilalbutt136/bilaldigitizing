@@ -10,7 +10,9 @@ describe('Project-wide mobile layout stability regression', () => {
     const source = read('app/layout.jsx');
     assert.match(source, /next\/font\/google/);
     assert.match(source, /fetchPublicCatalogServer/);
-    assert.match(source, /StateProvider initialCatalog=\{initialCatalog\}/);
+    assert.match(source, /StateProvider initialCatalog=\{catalogWithBranding\}/);
+    assert.match(source, /brandingToSiteSettings/);
+    assert.match(source, /Promise\.all\(\[\s*fetchPublicCatalogServer\(\),\s*getSiteBranding\(\)/);
     assert.equal(source.includes('fonts.googleapis.com/css2'), false);
   });
 

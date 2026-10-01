@@ -1,3 +1,4 @@
+/* oxlint-disable react/only-export-components -- Next.js App Router layouts export metadata helpers alongside the component */
 import '../src/index.css';
 import './globals.css';
 import { Inter, Plus_Jakarta_Sans } from 'next/font/google';
@@ -6,6 +7,7 @@ import { StateProvider } from '../src/context/StateContext';
 import { ErrorBoundary } from '../src/components/ErrorBoundary';
 import { ClientLayoutShell } from '../src/components/layout/ClientLayoutShell';
 import { fetchPublicCatalogServer } from '../src/lib/catalog/serverCatalog';
+import { getSiteBranding, brandingToSiteSettings } from '../src/lib/branding/serverBranding';
 
 const interFont = Inter({
   subsets: ['latin'],
@@ -32,100 +34,112 @@ const getMetadataBase = () => {
   return new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://bdigitizing.com');
 };
 
-export const metadata = {
-  metadataBase: getMetadataBase(),
-  manifest: '/manifest.json',
-  icons: {
-    icon: [
-      { url: '/favicon.ico', sizes: '16x16 32x32 48x48', type: 'image/x-icon' },
-      { url: '/favicon.png', type: 'image/png', sizes: '48x48' },
-      { url: '/icon-192x192.png', type: 'image/png', sizes: '192x192' }
-    ],
-    shortcut: '/favicon.ico',
-    apple: [
-      { url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' }
-    ],
-  },
-  appleWebApp: {
-    capable: true,
-    statusBarStyle: 'black-translucent',
-    title: 'BDigitizing'
-  },
-  title: {
-    default: 'BDigitizing | Premier Machine Embroidery Digitizing & Vector Art Lab',
-    template: '%s | BDigitizing Studio'
-  },
-  description: 'Commercial Machine Embroidery Digitizing, Vector Art Tracing, & Custom Physical Patches with 4-8 Hour Express Turnaround.',
-  keywords: [
-    'Embroidery Digitizing',
-    'Machine Embroidery Files',
-    'DST Format',
-    'PES Format',
-    'Wilcom EMB Source',
-    'Vector Art Tracing',
-    'Raster to Vector',
-    'Custom Patches',
-    '3D Puff Embroidery',
-    'Cap Embroidery'
-  ],
-  authors: [{ name: 'BDigitizing Studio', url: '/' }],
-  creator: 'BDigitizing Studio',
-  publisher: 'BDigitizing Studio',
-  formatDetection: {
-    email: false,
-    address: false,
-    telephone: false
-  },
-  openGraph: {
-    title: 'BDigitizing | Premier Machine Embroidery Digitizing & Vector Art Lab',
+export async function generateMetadata() {
+  const branding = await getSiteBranding();
+  const faviconUrl = branding.favicon_url || '/favicon.png';
+  const appIconUrl = branding.app_icon_url || '/icon-512x512.png';
+  const ogImageUrl = branding.og_image_url || appIconUrl;
+
+  return {
+    metadataBase: getMetadataBase(),
+    manifest: '/manifest.webmanifest',
+    icons: {
+      icon: [{ url: faviconUrl }],
+      shortcut: faviconUrl,
+      apple: [{ url: appIconUrl }]
+    },
+    appleWebApp: {
+      capable: true,
+      statusBarStyle: 'black-translucent',
+      title: 'BDigitizing'
+    },
+    title: {
+      default: 'BDigitizing | Premier Machine Embroidery Digitizing & Vector Art Lab',
+      template: '%s | BDigitizing Studio'
+    },
     description: 'Commercial Machine Embroidery Digitizing, Vector Art Tracing, & Custom Physical Patches with 4-8 Hour Express Turnaround.',
-    url: '/',
-    siteName: 'BDigitizing Studio',
-    locale: 'en_US',
-    type: 'website',
-    images: [
-      {
-        url: '/icon-512x512.png',
-        width: 512,
-        height: 512,
-        alt: 'BDigitizing Studio Logo',
-      }
+    keywords: [
+      'Embroidery Digitizing',
+      'Machine Embroidery Files',
+      'DST Format',
+      'PES Format',
+      'Wilcom EMB Source',
+      'Vector Art Tracing',
+      'Raster to Vector',
+      'Custom Patches',
+      '3D Puff Embroidery',
+      'Cap Embroidery'
     ],
-  },
-  twitter: {
-    card: 'summary_large_image',
-    title: 'BDigitizing | Premier Machine Embroidery Digitizing & Vector Art Lab',
-    description: 'Commercial Machine Embroidery Digitizing, Vector Art Tracing, & Custom Physical Patches with 4-8 Hour Express Turnaround.',
-    images: ['/icon-512x512.png'],
-  },
-  robots: {
-    index: true,
-    follow: true,
-    googleBot: {
+    authors: [{ name: 'BDigitizing Studio', url: '/' }],
+    creator: 'BDigitizing Studio',
+    publisher: 'BDigitizing Studio',
+    formatDetection: {
+      email: false,
+      address: false,
+      telephone: false
+    },
+    openGraph: {
+      title: 'BDigitizing | Premier Machine Embroidery Digitizing & Vector Art Lab',
+      description: 'Commercial Machine Embroidery Digitizing, Vector Art Tracing, & Custom Physical Patches with 4-8 Hour Express Turnaround.',
+      url: '/',
+      siteName: 'BDigitizing Studio',
+      locale: 'en_US',
+      type: 'website',
+      images: [{ url: ogImageUrl, alt: 'BDigitizing Studio' }]
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: 'BDigitizing | Premier Machine Embroidery Digitizing & Vector Art Lab',
+      description: 'Commercial Machine Embroidery Digitizing, Vector Art Tracing, & Custom Physical Patches with 4-8 Hour Express Turnaround.',
+      images: [ogImageUrl]
+    },
+    robots: {
       index: true,
       follow: true,
-      'max-video-preview': -1,
-      'max-image-preview': 'large',
-      'max-snippet': -1
+      googleBot: {
+        index: true,
+        follow: true,
+        'max-video-preview': -1,
+        'max-image-preview': 'large',
+        'max-snippet': -1
+      }
     }
-  }
-};
+  };
+}
 
-export const viewport = {
-  width: 'device-width',
-  initialScale: 1,
-  maximumScale: 5,
-  userScalable: true,
-  viewportFit: 'cover',
-  interactiveWidget: 'resizes-content',
-  themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#ffffff' },
-    { media: '(prefers-color-scheme: dark)', color: '#0a0e17' }
-  ]
-};
+export async function generateViewport() {
+  const branding = await getSiteBranding();
+
+  return {
+    width: 'device-width',
+    initialScale: 1,
+    maximumScale: 5,
+    userScalable: true,
+    viewportFit: 'cover',
+    interactiveWidget: 'resizes-content',
+    themeColor: branding.theme_color || '#ffffff'
+  };
+}
 
 export default async function RootLayout({ children }) {
-  const initialCatalog = await fetchPublicCatalogServer();
+  const [initialCatalog, branding] = await Promise.all([
+    fetchPublicCatalogServer(),
+    getSiteBranding()
+  ]);
+
+  const brandingSettings = brandingToSiteSettings(branding);
+  const catalogWithBranding = {
+    ...(initialCatalog || {}),
+    siteSettings: {
+      ...(initialCatalog?.siteSettings || {}),
+      ...brandingSettings
+    }
+  };
+
+  const organizationLogoUrl = new URL(
+    branding.header_logo_url || '/logo.png',
+    getMetadataBase()
+  ).toString();
 
   return (
     <html lang="en" suppressHydrationWarning>
@@ -159,7 +173,7 @@ export default async function RootLayout({ children }) {
               "@type": "Organization",
               "name": "BDigitizing Studio",
               "url": process.env.NEXT_PUBLIC_SITE_URL || "https://bdigitizing.com",
-              "logo": `${process.env.NEXT_PUBLIC_SITE_URL || 'https://bdigitizing.com'}/logo.png`,
+              "logo": organizationLogoUrl,
               "description": "Premium Commercial Machine Embroidery Digitizing, Vector Art Tracing, & Custom Physical Patches.",
               "contactPoint": {
                 "@type": "ContactPoint",
@@ -254,7 +268,7 @@ export default async function RootLayout({ children }) {
         suppressHydrationWarning
         className={`${interFont.variable} ${headingFont.variable} font-sans antialiased text-slate-900 bg-slate-50 dark:bg-slate-950 dark:text-slate-100`}
       >
-        <StateProvider initialCatalog={initialCatalog}>
+        <StateProvider initialCatalog={catalogWithBranding}>
           <ErrorBoundary>
             <ClientLayoutShell>
               {children}

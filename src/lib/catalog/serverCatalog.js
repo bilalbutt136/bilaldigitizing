@@ -19,6 +19,7 @@ async function loadPublicCatalogRows() {
       { data: hero_slides },
       { data: digitizers },
       { data: site_config },
+      { data: siteBranding },
       { data: faqs },
       { data: testimonials },
       { data: customerReviews },
@@ -38,6 +39,7 @@ async function loadPublicCatalogRows() {
       supabase.from('hero_slides').select('*').order('sort_order', { ascending: true }),
       supabase.from('digitizers').select('*').order('sort_order', { ascending: true }),
       supabase.from('site_config').select('key, value').in('key', PUBLIC_SITE_CONFIG_KEYS),
+      supabase.from('site_branding').select('id, app_icon_url, favicon_url, header_logo_url, footer_logo_url, og_image_url, theme_color, updated_at').eq('id', 1).maybeSingle(),
       supabase.from('faqs').select('*').order('sort_order', { ascending: true }),
       supabase.from('testimonials').select('*').order('created_at', { ascending: false }),
       supabase.from('customer_reviews')
@@ -91,6 +93,7 @@ async function loadPublicCatalogRows() {
       hero_slides,
       digitizers,
       site_config,
+      site_branding: siteBranding || null,
       faqs,
       testimonials: combinedTestimonials
     });
@@ -117,6 +120,6 @@ export const fetchPublicCatalogServer = unstable_cache(
   ['bdigitizing-public-catalog-v1'],
   {
     revalidate: 300,
-    tags: ['catalog', 'homepage', 'portfolio']
+    tags: ['catalog', 'homepage', 'portfolio', 'site-branding']
   }
 );

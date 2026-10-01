@@ -20,6 +20,15 @@ export function normalizePublicCatalog(data = {}) {
   const rawSettings = typeof configMap.site_settings === 'object' && configMap.site_settings
     ? configMap.site_settings
     : {};
+  const brandingRow = Array.isArray(data.site_branding)
+    ? (data.site_branding[0] || null)
+    : (data.site_branding || null);
+  const headerLogoUrl = brandingRow?.header_logo_url || rawSettings.headerLogoUrl || rawSettings.logoUrl || '/logo.png';
+  const footerLogoUrl = brandingRow?.footer_logo_url || rawSettings.footerLogoUrl || rawSettings.logoUrl || '/logo.png';
+  const faviconUrl = brandingRow?.favicon_url || rawSettings.faviconUrl || '/favicon.png';
+  const appIconUrl = brandingRow?.app_icon_url || rawSettings.appIconUrl || '/icon-512x512.png';
+  const ogImageUrl = brandingRow?.og_image_url || rawSettings.ogImageUrl || appIconUrl;
+  const brandingThemeColor = brandingRow?.theme_color || rawSettings.themeColor || '#ffffff';
   const parsedAnnouncement = typeof configMap.announcement === 'object' && configMap.announcement
     ? configMap.announcement
     : (typeof rawSettings.announcement === 'object' ? rawSettings.announcement : null);
@@ -119,6 +128,13 @@ export function normalizePublicCatalog(data = {}) {
     heroServiceText: configMap.hero_service_text || null,
     siteSettings: {
       ...rawSettings,
+      logoUrl: headerLogoUrl,
+      headerLogoUrl,
+      footerLogoUrl,
+      faviconUrl,
+      appIconUrl,
+      ogImageUrl,
+      themeColor: brandingThemeColor,
       admin_notification_email: configMap.admin_notification_email || rawSettings.admin_notification_email || null,
       admin_notification_emails: configMap.admin_notification_emails || rawSettings.admin_notification_emails || null,
       notification_settings: configMap.notification_settings || rawSettings.notification_settings || null,

@@ -12,7 +12,7 @@ describe('P1 Performance Regression Coverage', () => {
     assert.equal(page.includes("fetchCache = 'force-no-store'"), false);
     assert.equal(page.includes('revalidate = 0'), false);
     assert.match(page, /export const revalidate = 300/);
-    assert.match(serverCatalog, /tags: \['catalog', 'homepage', 'portfolio'\]/);
+    assert.match(serverCatalog, /tags: \['catalog', 'homepage', 'portfolio', 'site-branding'\]/);
     assert.match(catalogRoute, /revalidatePath\('\/portfolio', 'page'\)/);
     assert.match(catalogRoute, /revalidateTag\('portfolio', 'max'\)/);
   });

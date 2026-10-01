@@ -323,11 +323,11 @@ export const HeaderNav = () => {
           }}
           style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', cursor: 'pointer', flexShrink: 0, textDecoration: 'none' }}
         >
-          {siteSettings?.logoUrl ? (
+          {(siteSettings?.headerLogoUrl || siteSettings?.logoUrl) ? (
             <img
-              src={siteSettings.logoUrl}
+              src={siteSettings.headerLogoUrl || siteSettings.logoUrl}
               alt="BDigitizing Logo"
-              style={{ width: '38px', height: '38px', objectFit: 'contain', display: 'block', flexShrink: 0 }}
+              style={{ height: '38px', width: 'auto', maxWidth: '170px', objectFit: 'contain', display: 'block', flexShrink: 0 }}
             />
           ) : (
             <div style={{
@@ -1329,11 +1329,11 @@ export const HeaderNav = () => {
                 onClick={() => setIsMobileMenuOpen(false)}
                 style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.6rem', textDecoration: 'none' }}
               >
-                {siteSettings?.logoUrl ? (
+                {(siteSettings?.headerLogoUrl || siteSettings?.logoUrl) ? (
                   <img
-                    src={siteSettings.logoUrl}
+                    src={siteSettings.headerLogoUrl || siteSettings.logoUrl}
                     alt="BDigitizing Logo"
-                    style={{ width: '34px', height: '34px', objectFit: 'contain', display: 'block', flexShrink: 0 }}
+                    style={{ height: '34px', width: 'auto', maxWidth: '150px', objectFit: 'contain', display: 'block', flexShrink: 0 }}
                   />
                 ) : (
                   <div style={{

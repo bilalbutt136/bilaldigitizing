@@ -4,7 +4,6 @@ const path = require('path');
 
 const ROOT = path.join(__dirname, '..');
 const PUBLIC_DIR = path.join(ROOT, 'public');
-const APP_DIR = path.join(ROOT, 'app');
 const BRAND_SOURCE = path.join(PUBLIC_DIR, 'logo.png');
 
 const SAFE_PADDING_RATIO = 0.20; // 20% on every edge.
@@ -179,14 +178,11 @@ async function main() {
   await writePng(path.join(PUBLIC_DIR, 'logo-icon.png'), p96);
   await writePng(path.join(PUBLIC_DIR, 'logo-small.png'), p96);
 
-  // Next.js file-based metadata icons.
-  await writePng(path.join(APP_DIR, 'icon.png'), p512);
-  await writePng(path.join(APP_DIR, 'apple-icon.png'), p180);
-
+  // Keep fallbacks in /public only. Do NOT write app/icon.png, app/apple-icon.png,
+  // or app/favicon.ico: Next file-based metadata would override database branding.
   const icoBuf = await createBmpIco([16, 32, 48], p512);
   fs.writeFileSync(path.join(PUBLIC_DIR, 'favicon.ico'), icoBuf);
-  fs.writeFileSync(path.join(APP_DIR, 'favicon.ico'), icoBuf);
-  console.log('  ✓ public/favicon.ico + app/favicon.ico (16/32/48 multi-size)');
+  console.log('  ✓ public/favicon.ico (16/32/48 multi-size)');
 
   console.log('All PWA, Apple, and favicon assets generated with a white background and safe padding.');
 }

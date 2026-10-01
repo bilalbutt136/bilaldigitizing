@@ -147,9 +147,9 @@ export const Footer = () => {
           {/* Column 1: Brand Info & Social Channels */}
           <div style={{ maxWidth: '300px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.25rem', color: '#ffffff' }}>
-              {siteSettings?.logoUrl ? (
+              {(siteSettings?.footerLogoUrl || siteSettings?.logoUrl) ? (
                 <img
-                  src={siteSettings.logoUrl}
+                  src={siteSettings.footerLogoUrl || siteSettings.logoUrl}
                   alt="BDigitizing Logo"
                   style={{ height: '38px', width: 'auto', maxHeight: '42px', objectFit: 'contain', display: 'block', flexShrink: 0 }}
                 />

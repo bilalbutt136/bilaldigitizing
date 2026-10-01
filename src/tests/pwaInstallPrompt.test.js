@@ -23,7 +23,8 @@ test('mobile website exposes a removable PWA install notice with native one-clic
   assert.match(source, /aria-label="Close install popup"/);
   assert.match(source, /bdigi_pwa_dismissed_until/);
 
-  assert.match(source, /src="\/icon-192x192\.png"/);
+  assert.match(source, /const appIconUrl = siteSettings\.appIconUrl/);
+  assert.match(source, /src=\{appIconUrl\}/);
   assert.match(source, /Install BDigitizing App/);
   assert.match(source, /no app store needed/);
   assert.match(source, /How to Install/);

@@ -53,10 +53,14 @@ const fetchPublicCatalogBundle = unstable_cache(
         .eq('is_published', true)
         .eq('moderation_status', 'published')
         .order('published_at', { ascending: false })
-        .limit(24)
+        .limit(24),
+      supabase.from('site_branding')
+        .select('id, app_icon_url, favicon_url, header_logo_url, footer_logo_url, og_image_url, theme_color, updated_at')
+        .eq('id', 1)
+        .maybeSingle()
     ]);
 
-    const firstError = results.find(result => result.error)?.error;
+    const firstError = results.slice(0, -1).find(result => result.error)?.error;
     if (firstError) throw firstError;
 
     const [
@@ -72,7 +76,8 @@ const fetchPublicCatalogBundle = unstable_cache(
       site_config,
       faqs,
       testimonials,
-      customerReviews
+      customerReviews,
+      siteBranding
     ] = results.map(result => result.data || []);
 
     const publishedCustomerTestimonials = (customerReviews || []).map(review => ({
@@ -103,12 +108,13 @@ const fetchPublicCatalogBundle = unstable_cache(
       hero_slides,
       digitizers,
       site_config,
+      site_branding: siteBranding && !Array.isArray(siteBranding) ? siteBranding : null,
       faqs,
       testimonials: combinedTestimonials
     };
   },
   ['public-catalog-bundle-v1'],
-  { revalidate: 300, tags: ['catalog', 'portfolio'] }
+  { revalidate: 300, tags: ['catalog', 'portfolio', 'site-branding'] }
 );
 
 async function GET_impl(request) {

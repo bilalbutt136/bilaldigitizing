@@ -10,7 +10,8 @@ const ANDROID_FALLBACK_DELAY_MS = 3600;
 const EXPLICIT_DISMISS_COOLDOWN_MS = 24 * 60 * 60 * 1000;
 
 export const PWAInstallBanner = () => {
-  const { setMobileMode } = useAppState();
+  const { setMobileMode, siteSettings = {} } = useAppState();
+  const appIconUrl = siteSettings.appIconUrl || '/icon-512x512.png';
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [showBanner, setShowBanner] = useState(false);
   const [isIOS, setIsIOS] = useState(false);
@@ -352,7 +353,7 @@ export const PWAInstallBanner = () => {
               overflow: 'hidden'
             }}>
               <img
-                src="/icon-192x192.png"
+                src={appIconUrl}
                 alt=""
                 width="46"
                 height="46"
@@ -549,7 +550,7 @@ export const PWAInstallBanner = () => {
               overflow: 'hidden'
             }}>
               <img
-                src="/icon-192x192.png"
+                src={appIconUrl}
                 alt="BDigitizing"
                 width="64"
                 height="64"
@@ -655,7 +656,7 @@ export const PWAInstallBanner = () => {
               overflow: 'hidden'
             }}>
               <img
-                src="/icon-192x192.png"
+                src={appIconUrl}
                 alt="BDigitizing"
                 width="64"
                 height="64"
