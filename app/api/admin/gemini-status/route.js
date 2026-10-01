@@ -73,33 +73,68 @@ function maskApiKey(key) {
   return `${trimmed.substring(0, 8)}...${trimmed.substring(trimmed.length - 4)}`;
 }
 
+const GEMINI_PING_TIMEOUT_MS = 3_000;
+
 async function testGeminiPing(key) {
   const start = Date.now();
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), GEMINI_PING_TIMEOUT_MS);
   const modelsToTry = ['gemini-2.5-flash', 'gemini-3.8-flash'];
 
-  for (const model of modelsToTry) {
-    try {
-      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: 'Respond with OK.' }] }]
-        })
-      });
-      if (res.ok) {
-        const data = await res.json();
-        const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+  try {
+    for (const model of modelsToTry) {
+      try {
+        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: 'Respond with OK.' }] }]
+          }),
+          signal: controller.signal
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+          return {
+            ok: true,
+            status: 'active',
+            model,
+            latencyMs: Date.now() - start,
+            response: text.trim()
+          };
+        }
+      } catch (error) {
+        if (controller.signal.aborted || error?.name === 'AbortError') {
+          return {
+            ok: false,
+            status: 'timeout',
+            latencyMs: Date.now() - start,
+            error: 'Gemini status check timed out after 3 seconds.'
+          };
+        }
+        logServerCaughtError(error, { operation: 'gemini.status_probe_failed' });
+      }
+
+      if (controller.signal.aborted) {
         return {
-          ok: true,
-          model,
+          ok: false,
+          status: 'timeout',
           latencyMs: Date.now() - start,
-          response: text.trim()
+          error: 'Gemini status check timed out after 3 seconds.'
         };
       }
-    } catch (error) { logServerCaughtError(error, { operation: 'gemini.status_probe_failed' }); }
-  }
+    }
 
-  return { ok: false, latencyMs: Date.now() - start, error: 'Could not connect to Gemini models' };
+    return {
+      ok: false,
+      status: 'error',
+      latencyMs: Date.now() - start,
+      error: 'Could not connect to Gemini models'
+    };
+  } finally {
+    clearTimeout(timeoutId);
+  }
 }
 
 // GET /api/admin/gemini-status
@@ -122,6 +157,9 @@ async function GET_impl(request) {
     }
 
     const ping = await testGeminiPing(key);
+    if (ping.status === 'timeout') {
+      return NextResponse.json({ status: 'timeout' });
+    }
 
     return NextResponse.json({
       configured: true,
@@ -155,6 +193,13 @@ async function POST_impl(request) {
         return NextResponse.json({ success: false, error: 'Please enter a Gemini API Key to test.' }, { status: 400 });
       }
       const ping = await testGeminiPing(existingKey);
+      if (ping.status === 'timeout') {
+        return NextResponse.json({
+          success: false,
+          status: 'timeout',
+          error: 'Gemini status check timed out after 3 seconds.'
+        });
+      }
       return NextResponse.json({
         success: ping.ok,
         modelUsed: ping.model,
@@ -170,6 +215,13 @@ async function POST_impl(request) {
 
     // Live test the key first
     const ping = await testGeminiPing(cleanKey);
+    if (ping.status === 'timeout') {
+      return NextResponse.json({
+        success: false,
+        status: 'timeout',
+        error: 'Gemini status check timed out after 3 seconds.'
+      });
+    }
     if (!ping.ok) {
       return NextResponse.json({
         success: false,

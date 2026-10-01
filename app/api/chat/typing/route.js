@@ -73,10 +73,11 @@ async function POST_impl(request) {
 
     try {
       const channel = supabase.channel(`chat-room-${conversationId}`);
-      await channel.send({
-        type: 'broadcast',
-        event: 'typing',
-        payload: { role: senderRole, isTyping: typingBool, conversationId, timestamp: Date.now() }
+      await channel.httpSend('typing', {
+        role: senderRole,
+        isTyping: typingBool,
+        conversationId,
+        timestamp: Date.now()
       });
       supabase.removeChannel(channel);
     } catch (realtimeErr) {

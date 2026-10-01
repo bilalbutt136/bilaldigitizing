@@ -153,19 +153,13 @@ export const AdminDashboard = () => {
 
     fetchPendingReviews();
     const handleReviewsUpdated = () => fetchPendingReviews();
-    const handleFocus = () => fetchPendingReviews();
-    const handleVisibility = () => {
-      if (document.visibilityState === 'visible') fetchPendingReviews();
-    };
+    // Load once on mount. Review mutations explicitly emit bdigi_reviews_updated,
+    // so focus/visibility changes must not become an accidental polling loop.
     window.addEventListener('bdigi_reviews_updated', handleReviewsUpdated);
-    window.addEventListener('focus', handleFocus);
-    document.addEventListener('visibilitychange', handleVisibility);
 
     return () => {
       isMounted = false;
       window.removeEventListener('bdigi_reviews_updated', handleReviewsUpdated);
-      window.removeEventListener('focus', handleFocus);
-      document.removeEventListener('visibilitychange', handleVisibility);
     };
   }, []);
 

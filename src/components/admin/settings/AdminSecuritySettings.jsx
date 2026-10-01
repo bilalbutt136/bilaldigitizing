@@ -512,6 +512,14 @@ export const AdminSecuritySettings = () => {
                 <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
                   <Loader2 size={13} className="spin-icon" /> Checking status...
                 </span>
+              ) : geminiStatus?.status === 'timeout' ? (
+                <span style={{
+                  display: 'inline-flex', alignItems: 'center', gap: '0.35rem',
+                  background: '#fef3c7', color: '#b45309', fontSize: '0.75rem', fontWeight: 800,
+                  padding: '0.25rem 0.65rem', borderRadius: '9999px', border: '1px solid #fde68a'
+                }}>
+                  <AlertTriangle size={13} /> Status check timed out
+                </span>
               ) : geminiStatus?.liveStatus === 'active' ? (
                 <span style={{
                   display: 'inline-flex', alignItems: 'center', gap: '0.35rem',

@@ -43,8 +43,11 @@ describe('Customer Order Reviews & Publication Workflow', () => {
     assert.match(service, /submitOrderReview/);
     assert.match(service, /fetchAdminReviews/);
     assert.match(service, /moderateCustomerReview/);
+    assert.match(service, /REVIEW_READ_TTL_MS = 5 \* 60_000/);
+    assert.match(service, /reviewReadInFlight = new Map\(\)/);
+    assert.match(service, /runCachedReviewRead/);
 
-    assert.match(drawer, /fetchOrderReview\(ord\.id\)/);
+    assert.match(drawer, /fetchOrderReview\(reviewOrderId\)/);
     assert.match(modal, /submitOrderReview\(/);
     assert.match(dashboard, /fetchAdminReviews\(\)/);
     assert.match(manager, /fetchAdminReviews\(\)/);

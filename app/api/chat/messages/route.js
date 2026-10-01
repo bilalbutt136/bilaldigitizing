@@ -351,14 +351,10 @@ async function POST_impl(request) {
       console.warn('[Chat Push Service Import Notice]:', pushImportErr?.message);
     }
 
-    // 6. Instant Real-Time WebSocket Broadcast (for WhatsApp-style on-screen popup)
+    // 6. Realtime broadcast via explicit HTTP delivery (server routes are not subscribed sockets)
     try {
       const liveChannel = supabase.channel('bdigitizing-live-hub-v2');
-      await liveChannel.send({
-        type: 'broadcast',
-        event: 'new_chat_message',
-        payload: insertedMsg
-      });
+      await liveChannel.httpSend('new_chat_message', insertedMsg);
     } catch (bErr) {
       console.warn('[Chat Live Broadcast Notice]:', bErr?.message);
     }

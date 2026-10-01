@@ -274,18 +274,22 @@ export const OrderTrackerDrawer = () => {
   // have no Bolt invoice and previously generated slow 404 serverless requests here.
 
   // Load any existing customer review so completed orders can offer feedback later.
+  // Depend on stable primitives instead of the drawer/order object identity; realtime
+  // order merges can replace those objects without changing the selected order.
+  const reviewOrderId = selectedOrderForDrawer && ord?.id ? String(ord.id) : '';
+  const reviewOrderStatus = String(ord?.status || '').toLowerCase();
+
   useEffect(() => {
     let isCurrent = true;
-    const status = String(ord?.status || '').toLowerCase();
 
-    if (!selectedOrderForDrawer || !ord?.id || status !== 'completed' || !authUser?.email) {
+    if (!reviewOrderId || reviewOrderStatus !== 'completed' || !authUser?.email) {
       setOrderReview(null);
       setIsLoadingOrderReview(false);
       return () => { isCurrent = false; };
     }
 
     setIsLoadingOrderReview(true);
-    fetchOrderReview(ord.id)
+    fetchOrderReview(reviewOrderId)
       .then((review) => {
         if (isCurrent) setOrderReview(review);
       })
@@ -297,7 +301,7 @@ export const OrderTrackerDrawer = () => {
       });
 
     return () => { isCurrent = false; };
-  }, [selectedOrderForDrawer, ord?.id, ord?.status, authUser?.email]);
+  }, [reviewOrderId, reviewOrderStatus, authUser?.email]);
 
   // Keep Order Details hidden whenever a new order is opened.
   // Customers can reveal the section only by tapping Details or Show.

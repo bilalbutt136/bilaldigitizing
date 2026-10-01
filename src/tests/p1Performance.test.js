@@ -132,6 +132,10 @@ describe('P1 Performance Regression Coverage', () => {
     const orderCreate = fs.readFileSync('src/server/orders/handlers/post/createOrder.js', 'utf8');
     const chatMessages = fs.readFileSync('app/api/chat/messages/route.js', 'utf8');
     const reviews = fs.readFileSync('app/api/reviews/route.js', 'utf8');
+    const reviewService = fs.readFileSync('src/services/reviewService.js', 'utf8');
+    const adminDashboard = fs.readFileSync('src/components/admin/AdminDashboard.jsx', 'utf8');
+    const geminiStatus = fs.readFileSync('app/api/admin/gemini-status/route.js', 'utf8');
+    const chatTyping = fs.readFileSync('app/api/chat/typing/route.js', 'utf8');
 
     assert.match(service, /const completedApiReads = new Map\(\)/);
     assert.match(service, /ttlMs: 15_000/);
@@ -163,6 +167,22 @@ describe('P1 Performance Regression Coverage', () => {
     assert.match(chatMessages, /existingConversation\?\.unread_admin_count/);
     assert.match(reviews, /revalidateTag\('catalog', 'max'\)/);
     assert.match(reviews, /revalidateTag\('homepage', 'max'\)/);
+
+    assert.match(reviewService, /REVIEW_READ_TTL_MS = 5 \* 60_000/);
+    assert.match(reviewService, /reviewReadInFlight = new Map\(\)/);
+    assert.match(reviewService, /runCachedReviewRead/);
+    assert.equal(adminDashboard.includes("const handleFocus = () => fetchPendingReviews()"), false);
+    assert.equal(adminDashboard.includes("if (document.visibilityState === 'visible') fetchPendingReviews()"), false);
+    assert.match(tracker, /\[reviewOrderId, reviewOrderStatus, authUser\?\.email\]/);
+
+    assert.match(geminiStatus, /GEMINI_PING_TIMEOUT_MS = 3_000/);
+    assert.match(geminiStatus, /new AbortController\(\)/);
+    assert.match(geminiStatus, /signal: controller\.signal/);
+    assert.match(geminiStatus, /NextResponse\.json\(\{ status: 'timeout' \}\)/);
+
+    assert.match(chatMessages, /\.httpSend\('new_chat_message', insertedMsg\)/);
+    assert.match(chatTyping, /\.httpSend\('typing'/);
+    assert.equal(chatMessages.includes('liveChannel.send({'), false);
   });
 
   test('durable uploads, bounded list reads and idempotent file rows prevent resource regressions', () => {
