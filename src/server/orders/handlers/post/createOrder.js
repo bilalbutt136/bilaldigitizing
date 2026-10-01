@@ -147,7 +147,7 @@ export async function handleCreateOrder(context) {
         for (let file of orderFiles) {
           if (!file.file_url && !file.public_url) continue;
           try {
-            await supabase.from('order_files').insert([{
+            await supabase.from('order_files').upsert([{
               order_id: mappedDbRow.id,
               file_name: file.file_name || file.name || 'artwork_file',
               file_format: file.file_format || file.format || file.file_name?.split('.').pop() || 'png',
@@ -157,7 +157,7 @@ export async function handleCreateOrder(context) {
               public_url: file.public_url || file.file_url,
               file_url: file.file_url || file.public_url,
               uploaded_by: 'client'
-            }]);
+            }], { onConflict: 'order_id,file_type,file_url', ignoreDuplicates: true });
           } catch (fileInsertErr) {
             console.warn('order_files insert notice:', fileInsertErr);
           }

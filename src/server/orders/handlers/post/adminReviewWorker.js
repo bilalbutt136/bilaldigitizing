@@ -38,7 +38,7 @@ export async function handleAdminReviewWorker(context) {
         // Auto-insert file into order_files as machine_file for client access if not already present
         if (targetOrder.worker_file_url) {
           try {
-            await supabase.from('order_files').insert([{
+            await supabase.from('order_files').upsert([{
               order_id: orderId,
               file_name: targetOrder.worker_file_name || 'production_machine_file',
               file_format: targetOrder.worker_file_name?.split('.').pop() || 'dst',
@@ -48,7 +48,7 @@ export async function handleAdminReviewWorker(context) {
               public_url: targetOrder.worker_file_url,
               file_url: targetOrder.worker_file_url,
               uploaded_by: 'admin'
-            }]);
+            }], { onConflict: 'order_id,file_type,file_url', ignoreDuplicates: true });
           } catch (fileErr) {
             console.warn('Auto machine_file promotion notice:', fileErr.message);
           }

@@ -72,7 +72,7 @@ export async function handleWorkerSubmitUpload(context) {
           uploaded_by: 'worker'
         }));
         if (fileInserts.length > 0) {
-          await supabase.from('order_files').insert(fileInserts);
+          await supabase.from('order_files').upsert(fileInserts, { onConflict: 'order_id,file_type,file_url', ignoreDuplicates: true });
         }
       } catch (fileErr) {
         console.warn('order_files worker upload insert notice:', fileErr.message);

@@ -77,6 +77,50 @@ describe('P1 Performance Regression Coverage', () => {
     assert.match(state, /!orderOrId\._summaryOnly/);
   });
 
+  test('durable uploads, bounded list reads and idempotent file rows prevent resource regressions', () => {
+    const service = fs.readFileSync('src/services/supabaseService.js', 'utf8');
+    const upload = fs.readFileSync('app/api/cloudinary/upload/route.js', 'utf8');
+    const signature = fs.readFileSync('app/api/cloudinary/signature/route.js', 'utf8');
+    const download = fs.readFileSync('app/api/download/route.js', 'utf8');
+    const conversations = fs.readFileSync('app/api/chat/conversations/route.js', 'utf8');
+    const messages = fs.readFileSync('app/api/chat/messages/route.js', 'utf8');
+    const clients = fs.readFileSync('app/api/clients/route.js', 'utf8');
+    const audio = fs.readFileSync('src/utils/audioNotification.js', 'utf8');
+    const migration = [
+      fs.readFileSync('supabase/migrations/20261001000001_order_files_idempotency.sql', 'utf8'),
+      fs.readFileSync('supabase/migrations/20261001000002_order_files_upsert_constraint.sql', 'utf8')
+    ].join('\n');
+    const orderHandlers = [
+      'src/server/orders/handlers/post/createOrder.js',
+      'src/server/orders/handlers/post/updateStatus.js',
+      'src/server/orders/handlers/post/adminReviewWorker.js',
+      'src/server/orders/handlers/post/workerSubmitUpload.js'
+    ].map(file => fs.readFileSync(file, 'utf8'));
+
+    assert.equal(service.includes('readAsDataURL'), false);
+    assert.match(service, /Never fall back to Data URLs/);
+
+    assert.match(upload, /enforceApiBurstLimit\(request, 'file-upload-post'/);
+    assert.match(signature, /enforceApiBurstLimit\(request, 'cloudinary-signature-get'/);
+    assert.match(download, /estimatedBytes > 10 \* 1024 \* 1024/);
+
+    assert.match(conversations, /\.limit\(500\)/);
+    assert.match(messages, /order\('created_at', \{ ascending: false \}\)\.limit\(500\)/);
+    assert.match(clients, /\.limit\(500\)/);
+
+    assert.equal(audio.includes('data:audio/'), false);
+    assert.match(audio, /URL\.createObjectURL/);
+
+    assert.match(migration, /CREATE UNIQUE INDEX IF NOT EXISTS uq_order_files_order_type_url/);
+    assert.match(migration, /ON public\.order_files \(order_id, file_type, file_url\);/);
+    assert.match(migration, /PARTITION BY order_id, file_type, file_url/);
+
+    for (const handler of orderHandlers) {
+      assert.match(handler, /onConflict: 'order_id,file_type,file_url'/);
+      assert.match(handler, /ignoreDuplicates: true/);
+    }
+  });
+
   test('performance migration installs the auth RPC and drops only selected redundant indexes', () => {
     const migration = fs.readFileSync(
       'supabase/migrations/20260929000004_p1_performance_auth_and_index_cleanup.sql',

@@ -28,7 +28,8 @@ async function GET_impl(request) {
     let query = supabase
       .from('conversations')
       .select('*')
-      .order('last_message_at', { ascending: false });
+      .order('last_message_at', { ascending: false })
+      .limit(500);
 
     if (isAdmin) {
       if (requestedEmail) query = query.ilike('client_email', requestedEmail);
@@ -93,7 +94,8 @@ async function GET_impl(request) {
             const { data: refreshed } = await supabase
               .from('conversations')
               .select('*')
-              .order('last_message_at', { ascending: false });
+              .order('last_message_at', { ascending: false })
+              .limit(500);
             if (refreshed) conversations = refreshed;
           }
         }

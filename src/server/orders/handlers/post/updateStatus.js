@@ -144,11 +144,13 @@ export async function handleUpdateStatus(context) {
           const { data: existing } = await supabase
             .from('order_files')
             .select('id')
+            .eq('order_id', resolvedOrderId)
+            .eq('file_type', 'machine_file')
             .eq('file_url', fUrl)
             .maybeSingle();
 
           if (!existing) {
-            await supabase.from('order_files').insert([{
+            await supabase.from('order_files').upsert([{
               order_id: resolvedOrderId,
               file_name: file.name || file.fileName || file.file_name || 'machine_file',
               file_format: (file.format || file.file_format || (file.name || '').split('.').pop() || 'dst').toLowerCase(),
@@ -158,7 +160,7 @@ export async function handleUpdateStatus(context) {
               public_url: fUrl,
               file_url: fUrl,
               uploaded_by: 'admin'
-            }]);
+            }], { onConflict: 'order_id,file_type,file_url', ignoreDuplicates: true });
           }
         }
       }

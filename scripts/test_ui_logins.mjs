@@ -1,3 +1,4 @@
+import { requireE2EEnv } from './e2e-env.mjs';
 import { chromium } from 'playwright';
 
 async function testLogins() {
@@ -13,8 +14,8 @@ async function testLogins() {
     await page.waitForTimeout(2000);
     
     console.log('Filling customer login credentials...');
-    await page.fill('input[name="email"]', 'testtest@gmail.com');
-    await page.fill('input[name="password"]', 'CustomerPass123!');
+    await page.fill('input[name="email"]', requireE2EEnv('E2E_CUSTOMER_EMAIL'));
+    await page.fill('input[name="password"]', requireE2EEnv('E2E_CUSTOMER_PASSWORD'));
     await page.click('form[name="loginForm"] button[type="submit"]');
     
     console.log('Waiting for redirection to client portal...');
@@ -39,8 +40,8 @@ async function testLogins() {
     await adminPage.waitForTimeout(2000);
 
     console.log('Filling admin credentials...');
-    await adminPage.fill('input[type="email"]', 'admin_verify@bdigitizing.com');
-    await adminPage.fill('input[type="password"]', 'AdminSecurePass123!');
+    await adminPage.fill('input[type="email"]', requireE2EEnv('E2E_ADMIN_EMAIL'));
+    await adminPage.fill('input[type="password"]', requireE2EEnv('E2E_ADMIN_PASSWORD'));
     await adminPage.click('button[type="submit"]');
 
     console.log('Waiting for redirection to admin portal...');

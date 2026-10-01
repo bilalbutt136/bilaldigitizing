@@ -56,6 +56,9 @@ export async function handleFetchAll(context) {
       .order('created_at', { ascending: false });
 
     query = applyAuthorizationScope(query);
+    if (wantsAdminSummary) {
+      query = query.limit(500);
+    }
     const res = await query;
     if (res.error) throw res.error;
     data = res.data;

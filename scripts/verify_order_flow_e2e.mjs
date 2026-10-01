@@ -1,3 +1,4 @@
+import { requireE2EEnv } from './e2e-env.mjs';
 import { chromium } from 'playwright';
 import path from 'path';
 import fs from 'fs';
@@ -59,8 +60,8 @@ async function runVerification() {
   console.log('\n--- EXECUTING STEP 1 ---');
   await custPage.goto(`${BASE_URL}/login?redirect=/client-portal`, { waitUntil: 'domcontentloaded', timeout: 30000 });
   await custPage.waitForTimeout(2000);
-  await custPage.fill('#email', 'testtest@gmail.com');
-  await custPage.fill('#password', 'CustomerPass123!');
+  await custPage.fill('#email', requireE2EEnv('E2E_CUSTOMER_EMAIL'));
+  await custPage.fill('#password', requireE2EEnv('E2E_CUSTOMER_PASSWORD'));
   await custPage.click('button:has-text("Sign In to Portal")');
   
   console.log('Waiting for authentication and redirect to /client-portal...');
@@ -76,7 +77,7 @@ async function runVerification() {
     1,
     'Open the application as a CUSTOMER',
     step1Passed ? 'PASS' : 'FAIL',
-    'Customer testtest@gmail.com logged in and opened /client-portal dashboard.',
+    'Configured customer logged in and opened /client-portal dashboard.',
     { url: step1Url, screenshot: 'step1_customer_portal.png' }
   );
 

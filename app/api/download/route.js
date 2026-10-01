@@ -263,12 +263,24 @@ async function handleFileRequest(request, isHead = false) {
     // Sanitize filename of filesystem-illegal characters
     filename = String(filename).replace(/[/\\?%*:|"<>]/g, '_').trim() || 'file';
 
-    // 1. Direct Support for Data URLs (Local/Fallback base64 assets)
+    // 1. Transitional support for legacy inline Data URLs.
+    // New uploads are never stored this way. Keep the compatibility path
+    // authenticated and bounded so it cannot become a public memory amplifier.
     if (fileUrl.startsWith('data:')) {
+      const { user } = await getServerAuthUser(request);
+      if (!user) {
+        return NextResponse.json({ error: 'Authentication required.' }, { status: 401 });
+      }
+
       const match = fileUrl.match(/^data:([^;]+);base64,(.+)$/);
       if (match) {
         const dataMime = match[1];
         const base64Data = match[2];
+        const estimatedBytes = Math.ceil(base64Data.length * 0.75);
+        if (estimatedBytes > 10 * 1024 * 1024) {
+          return NextResponse.json({ error: 'Legacy inline file is too large.' }, { status: 413 });
+        }
+
         const buffer = Buffer.from(base64Data, 'base64');
         const ext = filename.split('.').pop()?.toLowerCase() || (dataMime.includes('pdf') ? 'pdf' : 'bin');
         if (!filename.includes('.')) filename = `${filename}.${ext}`;

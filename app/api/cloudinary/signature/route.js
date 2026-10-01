@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { v2 as cloudinary } from 'cloudinary';
 import { getServerAuthUser } from '../../../../src/lib/supabase/serverAuth';
 import { checkDistributedRateLimit, getClientIp, getRateLimitHeaders } from '../../../../src/lib/rateLimit';
+import { enforceApiBurstLimit } from '../../../../src/lib/apiBurstGuard.js';
 
 const CLIENT_FOLDERS = new Set(['artwork', 'orders', 'store-orders', 'chat-attachments']);
 const WORKER_FOLDERS = new Set(['worker-uploads']);
@@ -27,6 +28,9 @@ function normalizeFolder(value) {
 }
 
 async function GET_impl(request) {
+  const burstResponse = enforceApiBurstLimit(request, 'cloudinary-signature-get', 90, 60_000);
+  if (burstResponse) return burstResponse;
+
   try {
     const { user, isAdmin, isWorker } = await getServerAuthUser(request);
     if (!user) {

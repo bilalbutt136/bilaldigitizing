@@ -4,6 +4,7 @@ import { createAdminClient } from '../../../../src/lib/supabase/admin';
 import { getServerAuthUser } from '../../../../src/lib/supabase/serverAuth';
 import { checkDistributedRateLimit, getClientIp, getRateLimitHeaders } from '../../../../src/lib/rateLimit';
 import { v4 as uuidv4 } from 'uuid';
+import { enforceApiBurstLimit } from '../../../../src/lib/apiBurstGuard.js';
 
 const MIME_MAP = {
   jpg: 'image/jpeg',
@@ -84,6 +85,9 @@ const ALLOWED_BUCKETS = new Set([
 const MAX_FILE_SIZE_BYTES = 50 * 1024 * 1024; // 50 MB
 
 async function POST_impl(request) {
+  const burstResponse = enforceApiBurstLimit(request, 'file-upload-post', 90, 60_000);
+  if (burstResponse) return burstResponse;
+
   try {
     const { user, isAdmin, isWorker } = await getServerAuthUser(request);
 

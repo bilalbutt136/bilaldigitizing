@@ -888,7 +888,7 @@ export const OrderManagementTable = () => {
                       <button
                         type="button"
                         className="btn btn-outline btn-sm"
-                        onClick={() => setInvoiceModalOrder(ord)}
+                        onClick={() => hydrateOrderForAction(ord, setInvoiceModalOrder)}
                         style={{
                           fontWeight: 800,
                           fontSize: '0.74rem',

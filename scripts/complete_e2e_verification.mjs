@@ -1,3 +1,4 @@
+import { requireE2EEnv } from './e2e-env.mjs';
 import { chromium } from 'playwright';
 import path from 'path';
 
@@ -18,10 +19,10 @@ async function main() {
   console.log('PHASE 1: VERIFY CUSTOMER DELIVERY EXPERIENCE (POINTS 12-21)');
   console.log('=====================================================');
 
-  console.log('--- Step 12: Login as customer testtest@gmail.com ---');
+  console.log('--- Step 12: Login as configured customer ---');
   await page.goto('https://bdigitizing.com/login', { waitUntil: 'domcontentloaded' });
-  await page.fill('input[type="email"]', 'testtest@gmail.com');
-  await page.fill('input[type="password"]', 'CustomerPass123!');
+  await page.fill('input[type="email"]', requireE2EEnv('E2E_CUSTOMER_EMAIL'));
+  await page.fill('input[type="password"]', requireE2EEnv('E2E_CUSTOMER_PASSWORD'));
   await page.click('button[type="submit"]');
   await page.waitForTimeout(4000);
 
@@ -145,8 +146,8 @@ async function main() {
 
   console.log('--- Step 22.2: Admin logs in, verifies revision status ---');
   await page.goto('https://bdigitizing.com/secure-admin-login', { waitUntil: 'domcontentloaded' });
-  await page.fill('input[type="email"]', 'admin_verify@bdigitizing.com');
-  await page.fill('input[type="password"]', 'AdminSecurePass123!');
+  await page.fill('input[type="email"]', requireE2EEnv('E2E_ADMIN_EMAIL'));
+  await page.fill('input[type="password"]', requireE2EEnv('E2E_ADMIN_PASSWORD'));
   await page.click('button[type="submit"]');
   await page.waitForTimeout(4000);
 
@@ -188,8 +189,8 @@ async function main() {
 
   console.log('--- Step 22.4: Customer opens order and verifies BOTH deliveries exist ---');
   await page.goto('https://bdigitizing.com/login', { waitUntil: 'domcontentloaded' });
-  await page.fill('input[type="email"]', 'testtest@gmail.com');
-  await page.fill('input[type="password"]', 'CustomerPass123!');
+  await page.fill('input[type="email"]', requireE2EEnv('E2E_CUSTOMER_EMAIL'));
+  await page.fill('input[type="password"]', requireE2EEnv('E2E_CUSTOMER_PASSWORD'));
   await page.click('button[type="submit"]');
   await page.waitForTimeout(4000);
 

@@ -374,7 +374,11 @@ export const unlockAudioContext = () => {
   try {
     const audio = getPersistentAudio(true);
     if (audio && !audio.__primed) {
-      audio.src = 'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=';
+      const silentWavBase64 = 'UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=';
+      const binary = window.atob(silentWavBase64);
+      const bytes = Uint8Array.from(binary, char => char.charCodeAt(0));
+      const silentBlobUrl = URL.createObjectURL(new Blob([bytes], { type: 'audio/wav' }));
+      audio.src = silentBlobUrl;
       audio.volume = 0.01;
       const p = audio.play();
       if (p !== undefined) {
@@ -382,7 +386,12 @@ export const unlockAudioContext = () => {
           audio.__primed = true;
           audio.pause();
           audio.currentTime = 0;
-        }).catch(() => {});
+          URL.revokeObjectURL(silentBlobUrl);
+          audio.removeAttribute('src');
+        }).catch(() => {
+          URL.revokeObjectURL(silentBlobUrl);
+          audio.removeAttribute('src');
+        });
       }
     }
   } catch {}

@@ -1985,31 +1985,10 @@ export async function uploadFileToCloudinaryFull(fileObj, bucketName = 'client-u
     console.warn('[Storage Fallback Notice] Server storage upload notice:', storageErr.message);
   }
 
-  // Attempt 3: Client Data URL Fallback so the logo/file is NEVER lost
-  try {
-    const base64Url = await new Promise((resolve) => {
-      const reader = new FileReader();
-      reader.onloadend = () => resolve(reader.result);
-      reader.onerror = () => resolve(null);
-      reader.readAsDataURL(fileObj);
-    });
-
-    if (base64Url) {
-      if (typeof window !== 'undefined') {
-        window.dispatchEvent(new CustomEvent('upload:end', { detail: { fileName: fileObj.name, success: true } }));
-      }
-      return {
-        name: fileObj.name,
-        url: base64Url,
-        public_id: `local_${Date.now()}`,
-        size: `${(fileObj.size / (1024 * 1024)).toFixed(2)} MB`,
-        format: fileObj.name?.split('.').pop() || 'png'
-      };
-    }
-  } catch (base64Err) {
-    console.error('[Upload Fallback Error]', base64Err);
-  }
-
+  // Never fall back to Data URLs. Persisting base64 file bodies inside
+  // order/CMS JSON turns normal list queries into multi-megabyte database reads.
+  // If both durable storage providers fail, surface the upload failure and let
+  // the caller retry instead of silently embedding the file in PostgreSQL.
   if (typeof window !== 'undefined') {
     window.dispatchEvent(new CustomEvent('upload:end', { detail: { fileName: fileObj.name, success: false } }));
   }

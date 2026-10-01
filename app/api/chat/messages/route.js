@@ -35,7 +35,7 @@ async function GET_impl(request) {
       }
     }
 
-    let query = supabase.from('messages').select('*').order('created_at', { ascending: true });
+    let query = supabase.from('messages').select('*').order('created_at', { ascending: false }).limit(500);
 
     if (conversationId) {
       query = query.eq('conversation_id', conversationId);
@@ -63,7 +63,7 @@ async function GET_impl(request) {
       conversationId === 'help-support'
     );
 
-    let syncedMessages = messages || [];
+    let syncedMessages = (messages || []).reverse();
 
     if (isSupportThread) {
       // RULE: Support Desk is strictly for customer support inquiries.

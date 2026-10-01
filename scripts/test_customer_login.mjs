@@ -1,3 +1,4 @@
+import { requireE2EEnv } from './e2e-env.mjs';
 import { chromium } from 'playwright';
 
 async function testCustomerLogin() {
@@ -18,8 +19,8 @@ async function testCustomerLogin() {
   await page.waitForTimeout(2000);
 
   console.log('Filling form...');
-  await page.fill('#email', 'testtest@gmail.com');
-  await page.fill('#password', 'CustomerPass123!');
+  await page.fill('#email', requireE2EEnv('E2E_CUSTOMER_EMAIL'));
+  await page.fill('#password', requireE2EEnv('E2E_CUSTOMER_PASSWORD'));
   
   console.log('Clicking Sign In to Portal...');
   await page.click('button:has-text("Sign In to Portal")');

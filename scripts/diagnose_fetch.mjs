@@ -1,3 +1,4 @@
+import { requireE2EEnv } from './e2e-env.mjs';
 import { chromium } from 'playwright';
 
 async function test() {
@@ -22,8 +23,8 @@ async function test() {
   function reqUrl(u) { return u; }
 
   await page.goto('https://bdigitizing.com/login', { waitUntil: 'domcontentloaded' });
-  await page.fill('#email', 'testtest@gmail.com');
-  await page.fill('#password', 'CustomerPass123!');
+  await page.fill('#email', requireE2EEnv('E2E_CUSTOMER_EMAIL'));
+  await page.fill('#password', requireE2EEnv('E2E_CUSTOMER_PASSWORD'));
   await page.click('button:has-text("Sign In to Portal")');
   await page.waitForURL(url => url.pathname === '/client-portal', { timeout: 25000 });
   await page.waitForTimeout(3000);

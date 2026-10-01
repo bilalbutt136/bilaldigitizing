@@ -1,3 +1,4 @@
+import { requireE2EEnv } from './e2e-env.mjs';
 import { chromium } from 'playwright';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -60,8 +61,8 @@ async function run() {
   console.log('1. Navigating to /secure-admin-login...');
   await adminPage.goto('https://bdigitizing.com/secure-admin-login', { waitUntil: 'domcontentloaded' });
   await adminPage.waitForTimeout(2000);
-  await adminPage.fill('#admin-email, input[type="email"]', 'admin_verify@bdigitizing.com');
-  await adminPage.fill('#admin-password, input[type="password"]', 'AdminSecurePass123!');
+  await adminPage.fill('#admin-email, input[type="email"]', requireE2EEnv('E2E_ADMIN_EMAIL'));
+  await adminPage.fill('#admin-password, input[type="password"]', requireE2EEnv('E2E_ADMIN_PASSWORD'));
   await adminPage.click('button[type="submit"], button:has-text("Authenticate Admin Desk")');
   await adminPage.waitForURL(url => url.pathname.includes('/admin-portal'), { timeout: 25000 });
   await adminPage.waitForTimeout(3000);
@@ -150,8 +151,8 @@ async function run() {
   console.log('1. Customer signing in...');
   await custPage.goto('https://bdigitizing.com/login', { waitUntil: 'domcontentloaded' });
   await custPage.waitForTimeout(2000);
-  await custPage.fill('#email', 'testtest@gmail.com');
-  await custPage.fill('#password', 'CustomerPass123!');
+  await custPage.fill('#email', requireE2EEnv('E2E_CUSTOMER_EMAIL'));
+  await custPage.fill('#password', requireE2EEnv('E2E_CUSTOMER_PASSWORD'));
   await custPage.click('button:has-text("Sign In to Portal")');
   await custPage.waitForURL(url => url.pathname.includes('/client-portal'), { timeout: 25000 });
   await custPage.waitForTimeout(2500);

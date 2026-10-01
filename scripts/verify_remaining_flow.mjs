@@ -1,3 +1,4 @@
+import { requireE2EEnv } from './e2e-env.mjs';
 import { chromium } from 'playwright';
 import path from 'path';
 
@@ -13,8 +14,8 @@ async function main() {
 
   console.log('=== PART A: CUSTOMER VERIFICATION (POINTS 12-21) ===');
   await page.goto('https://bdigitizing.com/login', { waitUntil: 'domcontentloaded' });
-  await page.fill('input[type="email"]', 'testtest@gmail.com');
-  await page.fill('input[type="password"]', 'CustomerPass123!');
+  await page.fill('input[type="email"]', requireE2EEnv('E2E_CUSTOMER_EMAIL'));
+  await page.fill('input[type="password"]', requireE2EEnv('E2E_CUSTOMER_PASSWORD'));
   await page.click('button[type="submit"]');
   await page.waitForTimeout(4000);
 
@@ -125,8 +126,8 @@ async function main() {
 
   console.log('10. Admin logs in to verify status and deliver Delivery #2...');
   await page.goto('https://bdigitizing.com/secure-admin-login', { waitUntil: 'domcontentloaded' });
-  await page.fill('input[type="email"]', 'admin_verify@bdigitizing.com');
-  await page.fill('input[type="password"]', 'AdminSecurePass123!');
+  await page.fill('input[type="email"]', requireE2EEnv('E2E_ADMIN_EMAIL'));
+  await page.fill('input[type="password"]', requireE2EEnv('E2E_ADMIN_PASSWORD'));
   await page.click('button[type="submit"]');
   await page.waitForTimeout(4000);
 
@@ -168,8 +169,8 @@ async function main() {
 
   console.log('12. Customer opens order to verify BOTH deliveries exist sequentially...');
   await page.goto('https://bdigitizing.com/login', { waitUntil: 'domcontentloaded' });
-  await page.fill('input[type="email"]', 'testtest@gmail.com');
-  await page.fill('input[type="password"]', 'CustomerPass123!');
+  await page.fill('input[type="email"]', requireE2EEnv('E2E_CUSTOMER_EMAIL'));
+  await page.fill('input[type="password"]', requireE2EEnv('E2E_CUSTOMER_PASSWORD'));
   await page.click('button[type="submit"]');
   await page.waitForTimeout(4000);
 

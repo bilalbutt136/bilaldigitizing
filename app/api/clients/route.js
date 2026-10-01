@@ -25,7 +25,8 @@ async function GET_impl(request) {
       const { data, error } = await supabase
         .from('clients')
         .select('id, name, full_name, email, phone, company, company_name, avatar_url, role, wallet_balance, orders_count, created_at, updated_at')
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .limit(500);
       if (error) {
         console.error('[Clients API GET fetchAll error]', error.message);
         return NextResponse.json({ clients: [] });

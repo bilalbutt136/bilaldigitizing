@@ -1,3 +1,4 @@
+import { requireE2EEnv } from './e2e-env.mjs';
 import { chromium } from 'playwright';
 
 async function testAdminFlow() {
@@ -10,8 +11,8 @@ async function testAdminFlow() {
 
   console.log('Logging in as Admin...');
   await page.goto('https://bdigitizing.com/secure-admin-login', { waitUntil: 'domcontentloaded' });
-  await page.fill('input[type="email"]', 'admin_verify@bdigitizing.com');
-  await page.fill('input[type="password"]', 'AdminSecurePass123!');
+  await page.fill('input[type="email"]', requireE2EEnv('E2E_ADMIN_EMAIL'));
+  await page.fill('input[type="password"]', requireE2EEnv('E2E_ADMIN_PASSWORD'));
   await page.click('button[type="submit"]');
 
   await page.waitForURL(u => u.pathname === '/admin-portal', { timeout: 20000 });
