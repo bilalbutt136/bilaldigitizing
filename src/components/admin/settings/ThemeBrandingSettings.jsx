@@ -146,10 +146,10 @@ export const ThemeBrandingSettings = () => {
       <div className="card" style={{ padding: '2rem', background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '20px', boxShadow: 'var(--shadow-sm)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', marginBottom: '0.4rem' }}>
           <div style={{ background: 'var(--color-primary-light, rgba(249,115,22,0.12))', color: 'var(--color-primary, #ea580c)', padding: '0.5rem', borderRadius: '10px' }}><ImageIcon size={22} /></div>
-          <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--color-text-primary)', margin: 0 }}>Logo &amp; Favicon Manager</h3>
+          <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--color-text-primary)', margin: 0 }}>Logo, Favicon &amp; PWA Icon Manager</h3>
         </div>
         <p style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)', margin: '0 0 1.75rem' }}>
-          Upload your website logo (shown in the header &amp; footer) and browser favicon (shown in tabs &amp; bookmarks). Changes apply live instantly.
+          Manage the website logo and browser favicon here. The installed PWA icon is build-managed so Android, iOS, and Windows always receive the same tested mask-safe asset.
         </p>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 320px), 1fr))', gap: '1.5rem' }}>
 
@@ -179,7 +179,7 @@ export const ThemeBrandingSettings = () => {
               {isUploadingLogo ? <RefreshCw size={15} className="spin-icon" /> : <Upload size={15} />}
               {isUploadingLogo ? 'Uploading...' : 'Upload Logo File'}
             </button>
-            <p style={{ fontSize: '0.72rem', color: 'var(--color-text-muted)', margin: '0.5rem 0 0', textAlign: 'center' }}>PNG, SVG, WEBP, GIF · Recommended: 200×60 px transparent background</p>
+            <p style={{ fontSize: '0.72rem', color: 'var(--color-text-muted)', margin: '0.5rem 0 0', textAlign: 'center' }}>PNG, SVG, WEBP, GIF · For the black Digitizing wordmark, use a white background so the full logo stays readable.</p>
           </div>
 
           {/* Browser Favicon */}
@@ -211,7 +211,29 @@ export const ThemeBrandingSettings = () => {
               {isUploadingFavicon ? <RefreshCw size={15} className="spin-icon" /> : <Upload size={15} />}
               {isUploadingFavicon ? 'Uploading...' : 'Upload Favicon File'}
             </button>
-            <p style={{ fontSize: '0.72rem', color: 'var(--color-text-muted)', margin: '0.5rem 0 0', textAlign: 'center' }}>PNG, SVG, ICO, WEBP · Recommended: 64×64 or 32×32 px</p>
+            <p style={{ fontSize: '0.72rem', color: 'var(--color-text-muted)', margin: '0.5rem 0 0', textAlign: 'center' }}>PNG, SVG, ICO, WEBP · Best source: square 512×512+ with white background and at least 20% internal padding.</p>
+          </div>
+
+          {/* PWA Install Icon */}
+          <div style={{ background: 'var(--color-subtle, var(--bg-subtle))', border: '1px solid var(--border-color)', borderRadius: '16px', padding: '1.5rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
+              <Globe size={16} style={{ color: 'var(--color-primary, #ea580c)' }} />
+              <span style={{ fontSize: '0.83rem', fontWeight: 800, color: 'var(--color-text-primary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>PWA App Icon</span>
+              <span style={{ fontSize: '0.7rem', color: 'var(--color-text-muted)', background: 'var(--bg-card)', padding: '0.15rem 0.5rem', borderRadius: '999px', border: '1px solid var(--border-color)' }}>Build-managed</span>
+            </div>
+            <div style={{ width: '100%', minHeight: '170px', borderRadius: '18px', border: '2px dashed var(--border-color)', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#ffffff', marginBottom: '1rem', overflow: 'hidden', position: 'relative', padding: '1rem', boxSizing: 'border-box' }}>
+              <img
+                src="/icon-512x512.png"
+                alt="PWA App Icon Preview"
+                style={{ width: '132px', height: '132px', objectFit: 'contain', display: 'block' }}
+              />
+            </div>
+            <div style={{ fontSize: '0.78rem', lineHeight: 1.55, color: 'var(--color-text-muted)' }}>
+              <strong style={{ color: 'var(--color-text-primary)' }}>Install-safe source:</strong> 1024×1024 master on pure white (#ffffff). Keep all essential artwork inside the central 60% of the square, leaving 20% padding on every edge.
+            </div>
+            <div style={{ marginTop: '0.75rem', fontSize: '0.72rem', lineHeight: 1.5, color: 'var(--color-text-muted)', background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '10px', padding: '0.7rem 0.8rem' }}>
+              Generated files: 512×512 maskable/any, 192×192 any, 180×180 Apple touch icon, 48×48 favicon, plus 16/32/48 ICO. PWA install icons stay build-managed because operating systems cache installed app artwork aggressively.
+            </div>
           </div>
         </div>
 

@@ -20,7 +20,7 @@ export const DynamicFavicon = () => {
       const cacheBustUrl = faviconUrl + (faviconUrl.includes('?') ? '&' : '?') + 't=' + encodeURIComponent(faviconUrl.slice(-10));
 
       const existingIcons = document.querySelectorAll(
-        'link[rel="icon"], link[rel="shortcut icon"], link[rel="alternate icon"], link[rel="apple-touch-icon"]'
+        'link[rel="icon"], link[rel="shortcut icon"], link[rel="alternate icon"]'
       );
 
       if (existingIcons.length > 0) {

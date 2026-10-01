@@ -59,7 +59,7 @@ async function POST_impl(req) {
     const payload = {
       title: String(title).slice(0, 120),
       body: String(customBody || message).slice(0, 500),
-      icon: '/icon-192.png',
+      icon: '/icon-192x192.png',
       badge: '/favicon.png',
       tag: `bdigi-alert-${Date.now()}`,
       url: typeof url === 'string' && url.startsWith('/') ? url : '/',

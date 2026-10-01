@@ -2,65 +2,57 @@ const sharp = require('sharp');
 const fs = require('fs');
 const path = require('path');
 
-const srcPath = 'C:/Users/Latitude 7400 2in1/.gemini/antigravity/brain/eac5f6e2-c599-4d02-9399-f6e519816927/.user_uploaded/media_1790347476844.png';
-const largeSrcPath = 'C:/Users/Latitude 7400 2in1/.gemini/antigravity/brain/eac5f6e2-c599-4d02-9399-f6e519816927/.user_uploaded/media_1790347476927.jpg';
+const ROOT = path.join(__dirname, '..');
+const PUBLIC_DIR = path.join(ROOT, 'public');
+const APP_DIR = path.join(ROOT, 'app');
+const BRAND_SOURCE = path.join(PUBLIC_DIR, 'logo.png');
+
+const SAFE_PADDING_RATIO = 0.20; // 20% on every edge.
+const CONTENT_RATIO = 1 - (SAFE_PADDING_RATIO * 2); // central 60%
+const MASTER_SIZE = 1024;
 
 async function createBmpIco(sizes, src) {
   const images = [];
+
   for (const size of sizes) {
     const { data } = await sharp(src)
-      .resize(size, size, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } })
+      .resize(size, size, { fit: 'contain', background: '#ffffff' })
+      .removeAlpha()
       .ensureAlpha()
       .raw()
       .toBuffer({ resolveWithObject: true });
 
     const bih = Buffer.alloc(40);
-    bih.writeUInt32LE(40, 0); // biSize
-    bih.writeInt32LE(size, 4); // biWidth
-    bih.writeInt32LE(size * 2, 8); // biHeight (doubled for XOR + AND)
-    bih.writeUInt16LE(1, 12); // biPlanes
-    bih.writeUInt16LE(32, 14); // biBitCount
-    bih.writeUInt32LE(0, 16); // biCompression (BI_RGB)
-    bih.writeUInt32LE(size * size * 4, 20); // biSizeImage
-    bih.writeInt32LE(0, 24); // biXPelsPerMeter
-    bih.writeInt32LE(0, 28); // biYPelsPerMeter
-    bih.writeUInt32LE(0, 32); // biClrUsed
-    bih.writeUInt32LE(0, 36); // biClrImportant
+    bih.writeUInt32LE(40, 0);
+    bih.writeInt32LE(size, 4);
+    bih.writeInt32LE(size * 2, 8);
+    bih.writeUInt16LE(1, 12);
+    bih.writeUInt16LE(32, 14);
+    bih.writeUInt32LE(0, 16);
+    bih.writeUInt32LE(size * size * 4, 20);
 
     const xorMask = Buffer.alloc(size * size * 4);
     const andRowBytes = Math.ceil(size / 32) * 4;
     const andMask = Buffer.alloc(andRowBytes * size, 0);
 
     for (let y = 0; y < size; y++) {
-      const srcY = size - 1 - y; // bottom-up
+      const srcY = size - 1 - y;
       for (let x = 0; x < size; x++) {
         const srcIdx = (srcY * size + x) * 4;
         const dstIdx = (y * size + x) * 4;
-        const r = data[srcIdx];
-        const g = data[srcIdx + 1];
-        const b = data[srcIdx + 2];
-        const a = data[srcIdx + 3];
-
-        xorMask[dstIdx] = b;
-        xorMask[dstIdx + 1] = g;
-        xorMask[dstIdx + 2] = r;
-        xorMask[dstIdx + 3] = a;
-
-        if (a === 0) {
-          const byteIdx = y * andRowBytes + Math.floor(x / 8);
-          const bitPos = 7 - (x % 8);
-          andMask[byteIdx] |= (1 << bitPos);
-        }
+        xorMask[dstIdx] = data[srcIdx + 2];
+        xorMask[dstIdx + 1] = data[srcIdx + 1];
+        xorMask[dstIdx + 2] = data[srcIdx];
+        xorMask[dstIdx + 3] = data[srcIdx + 3];
       }
     }
 
-    const imgData = Buffer.concat([bih, xorMask, andMask]);
-    images.push({ size, imgData });
+    images.push({ size, imgData: Buffer.concat([bih, xorMask, andMask]) });
   }
 
   const header = Buffer.alloc(6);
   header.writeUInt16LE(0, 0);
-  header.writeUInt16LE(1, 2); // 1 = ICO
+  header.writeUInt16LE(1, 2);
   header.writeUInt16LE(images.length, 4);
 
   let offset = 6 + images.length * 16;
@@ -86,76 +78,120 @@ async function createBmpIco(sizes, src) {
   return Buffer.concat([header, ...dirEntries, ...dataChunks]);
 }
 
-async function main() {
-  console.log('Reading source images:');
-  console.log('  Small logo (icon):', srcPath);
-  console.log('  Large logo (brand):', largeSrcPath);
+async function extractEmblem(sourcePath) {
+  const meta = await sharp(sourcePath).metadata();
+  if (!meta.width || !meta.height) throw new Error('Brand source dimensions could not be read.');
 
-  const smallRaw = fs.readFileSync(srcPath);
-  const smallBase64 = smallRaw.toString('base64');
+  // The final full brand artwork includes the black Digitizing wordmark at the bottom.
+  // PWA/favicon icons intentionally use only the embroidered B + pink needle mark,
+  // because wordmarks become unreadable at launcher/favicon sizes.
+  const cropHeight = Math.round(meta.height * 0.82);
+  const { data, info } = await sharp(sourcePath)
+    .extract({ left: 0, top: 0, width: meta.width, height: cropHeight })
+    .ensureAlpha()
+    .raw()
+    .toBuffer({ resolveWithObject: true });
 
-  // 1. Generate SVG with base64 data URL from the embroidered B icon
-  const svgContent = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48">
-  <image href="data:image/png;base64,${smallBase64}" x="4" y="0" width="40" height="48" />
-</svg>
-`;
+  // The checked-in full logo currently has a dark flattened background.
+  // Recover the colored emblem by keeping only the green embroidery and pink needle.
+  // This preserves the authoritative brand mark without carrying the black box into icons.
+  for (let i = 0; i < data.length; i += info.channels) {
+    const r = data[i];
+    const g = data[i + 1];
+    const b = data[i + 2];
 
-  fs.writeFileSync(path.join(__dirname, '../public/favicon.svg'), svgContent, 'utf8');
-  fs.writeFileSync(path.join(__dirname, '../app/icon.svg'), svgContent, 'utf8');
-  console.log('Updated public/favicon.svg and app/icon.svg');
+    const isGreen = g >= 18 && g >= r + 5 && g >= b + 2;
+    const isPink = r >= 55 && r >= g + 10 && b >= g + 4;
+    data[i + 3] = (isGreen || isPink) ? 255 : 0;
+  }
 
-  // 2. Generate ICO with 16, 32, 48 sizes from embroidered B icon
-  const icoBuf = await createBmpIco([16, 32, 48], srcPath);
-  fs.writeFileSync(path.join(__dirname, '../public/favicon.ico'), icoBuf);
-  fs.writeFileSync(path.join(__dirname, '../app/favicon.ico'), icoBuf);
-  console.log('Updated public/favicon.ico and app/favicon.ico');
-
-  // 3. Generate small square PNG icons (48x48)
-  const p48 = await sharp(srcPath)
-    .resize(48, 48, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } })
+  return sharp(data, { raw: info })
     .png()
+    .trim({ background: { r: 0, g: 0, b: 0, alpha: 0 } })
     .toBuffer();
-  fs.writeFileSync(path.join(__dirname, '../public/favicon.png'), p48);
-  fs.writeFileSync(path.join(__dirname, '../app/icon.png'), p48);
-  fs.writeFileSync(path.join(__dirname, '../public/logo-icon.png'), p48);
-  fs.writeFileSync(path.join(__dirname, '../public/logo-small.png'), p48);
-  console.log('Updated public/favicon.png, app/icon.png, logo-icon.png, logo-small.png');
-
-  // 4. Generate high-resolution PWA & push notification icons from large brand logo
-  const p192 = await sharp(largeSrcPath)
-    .resize(192, 192, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 1 } })
-    .png()
-    .toBuffer();
-  fs.writeFileSync(path.join(__dirname, '../public/icon-192.png'), p192);
-  console.log('Updated public/icon-192.png');
-
-  const p512 = await sharp(largeSrcPath)
-    .resize(512, 512, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 1 } })
-    .png()
-    .toBuffer();
-  fs.writeFileSync(path.join(__dirname, '../public/icon-512.png'), p512);
-  console.log('Updated public/icon-512.png');
-
-  // 5. Apple touch icon: 180x180 from large brand logo
-  const pApple = await sharp(largeSrcPath)
-    .resize(180, 180, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 1 } })
-    .png()
-    .toBuffer();
-  fs.writeFileSync(path.join(__dirname, '../public/apple-touch-icon.png'), pApple);
-  fs.writeFileSync(path.join(__dirname, '../app/apple-icon.png'), pApple);
-  console.log('Updated public/apple-touch-icon.png and app/apple-icon.png');
-
-  // 6. Generate crisp high-resolution public/logo.png from large logo
-  const pLogo = await sharp(largeSrcPath)
-    .png()
-    .toBuffer();
-  fs.writeFileSync(path.join(__dirname, '../public/logo.png'), pLogo);
-  console.log('Updated public/logo.png (high resolution)');
-
-  console.log('All favicon, PWA, notification, and brand logo assets generated successfully!');
 }
 
-main().catch(err => {
+async function buildSafeSquare(emblemBuffer, size) {
+  const maxContent = Math.round(size * CONTENT_RATIO);
+
+  const fitted = await sharp(emblemBuffer)
+    .resize(maxContent, maxContent, {
+      fit: 'inside',
+      withoutEnlargement: false,
+      kernel: sharp.kernel.lanczos3
+    })
+    .png()
+    .toBuffer();
+
+  const fittedMeta = await sharp(fitted).metadata();
+  const left = Math.floor((size - fittedMeta.width) / 2);
+  const top = Math.floor((size - fittedMeta.height) / 2);
+
+  return sharp({
+    create: {
+      width: size,
+      height: size,
+      channels: 4,
+      background: '#ffffff'
+    }
+  })
+    .composite([{ input: fitted, left, top }])
+    .flatten({ background: '#ffffff' })
+    .png({ compressionLevel: 9, adaptiveFiltering: true })
+    .toBuffer();
+}
+
+async function writePng(filePath, buffer) {
+  fs.writeFileSync(filePath, buffer);
+  const meta = await sharp(buffer).metadata();
+  console.log(`  ✓ ${path.relative(ROOT, filePath)} (${meta.width}x${meta.height})`);
+}
+
+async function main() {
+  if (!fs.existsSync(BRAND_SOURCE)) {
+    throw new Error(`Missing brand source: ${BRAND_SOURCE}`);
+  }
+
+  console.log('Generating BDigitizing install-safe branding assets');
+  console.log(`Source: ${path.relative(ROOT, BRAND_SOURCE)}`);
+  console.log(`Safe padding: ${SAFE_PADDING_RATIO * 100}% per edge; content max: ${CONTENT_RATIO * 100}%`);
+
+  const emblem = await extractEmblem(BRAND_SOURCE);
+  const master = await buildSafeSquare(emblem, MASTER_SIZE);
+
+  await writePng(path.join(PUBLIC_DIR, 'pwa-icon-source.png'), master);
+
+  const p512 = await buildSafeSquare(emblem, 512);
+  const p192 = await buildSafeSquare(emblem, 192);
+  const p180 = await buildSafeSquare(emblem, 180);
+  const p96 = await buildSafeSquare(emblem, 96);
+  const p48 = await buildSafeSquare(emblem, 48);
+
+  // Canonical filenames requested by the manifest.
+  await writePng(path.join(PUBLIC_DIR, 'icon-512x512.png'), p512);
+  await writePng(path.join(PUBLIC_DIR, 'icon-192x192.png'), p192);
+  await writePng(path.join(PUBLIC_DIR, 'apple-touch-icon.png'), p180);
+  await writePng(path.join(PUBLIC_DIR, 'favicon.png'), p48);
+
+  // Backward-compatible aliases for push payloads / already-installed clients.
+  await writePng(path.join(PUBLIC_DIR, 'icon-512.png'), p512);
+  await writePng(path.join(PUBLIC_DIR, 'icon-192.png'), p192);
+  await writePng(path.join(PUBLIC_DIR, 'logo-icon.png'), p96);
+  await writePng(path.join(PUBLIC_DIR, 'logo-small.png'), p96);
+
+  // Next.js file-based metadata icons.
+  await writePng(path.join(APP_DIR, 'icon.png'), p512);
+  await writePng(path.join(APP_DIR, 'apple-icon.png'), p180);
+
+  const icoBuf = await createBmpIco([16, 32, 48], p512);
+  fs.writeFileSync(path.join(PUBLIC_DIR, 'favicon.ico'), icoBuf);
+  fs.writeFileSync(path.join(APP_DIR, 'favicon.ico'), icoBuf);
+  console.log('  ✓ public/favicon.ico + app/favicon.ico (16/32/48 multi-size)');
+
+  console.log('All PWA, Apple, and favicon assets generated with a white background and safe padding.');
+}
+
+main().catch((err) => {
   console.error(err);
   process.exit(1);
 });

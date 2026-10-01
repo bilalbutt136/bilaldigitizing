@@ -87,10 +87,10 @@ describe('Complete Interaction and Navigation Audit', () => {
     test('DynamicFavicon updates href attributes in place without removing nodes', () => {
       // Mock DOM head with existing icon links
       const headLinks = [
-        { rel: 'icon', href: '/favicon.svg' },
-        { rel: 'shortcut icon', href: '/favicon.ico' },
-        { rel: 'apple-touch-icon', href: '/apple-touch-icon.png' }
+        { rel: 'icon', href: '/favicon.png' },
+        { rel: 'shortcut icon', href: '/favicon.ico' }
       ];
+      const appleTouchIcon = { rel: 'apple-touch-icon', href: '/apple-touch-icon.png' };
 
       const newFaviconUrl = 'https://supabase.co/storage/v1/object/public/logos/favicon-custom.png';
       const cacheBustUrl = newFaviconUrl + '?t=custom.png';
@@ -100,11 +100,16 @@ describe('Complete Interaction and Navigation Audit', () => {
         link.href = cacheBustUrl;
       });
 
-      // Verify node count unchanged (no removeChild was called)
-      assert.equal(headLinks.length, 3, 'Head links count must remain exactly 3');
+      // Verify favicon nodes update in place while the high-resolution Apple icon stays static.
+      assert.equal(headLinks.length, 2, 'Favicon link count must remain exactly 2');
       headLinks.forEach(link => {
         assert.equal(link.href, cacheBustUrl, 'Link href must be updated in-place');
       });
+      assert.equal(
+        appleTouchIcon.href,
+        '/apple-touch-icon.png',
+        'Dynamic favicon updates must not replace the 180x180 Apple touch icon'
+      );
     });
 
     test('Eliminates TypeError: Cannot read properties of null (reading removeChild)', () => {

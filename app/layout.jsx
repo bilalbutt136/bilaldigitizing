@@ -37,9 +37,9 @@ export const metadata = {
   manifest: '/manifest.json',
   icons: {
     icon: [
-      { url: '/favicon.ico', sizes: 'any' },
-      { url: '/favicon.svg', type: 'image/svg+xml' },
-      { url: '/favicon.png', type: 'image/png', sizes: '48x48' }
+      { url: '/favicon.ico', sizes: '16x16 32x32 48x48', type: 'image/x-icon' },
+      { url: '/favicon.png', type: 'image/png', sizes: '48x48' },
+      { url: '/icon-192x192.png', type: 'image/png', sizes: '192x192' }
     ],
     shortcut: '/favicon.ico',
     apple: [
@@ -85,7 +85,7 @@ export const metadata = {
     type: 'website',
     images: [
       {
-        url: '/icon-512.png',
+        url: '/icon-512x512.png',
         width: 512,
         height: 512,
         alt: 'BDigitizing Studio Logo',
@@ -96,7 +96,7 @@ export const metadata = {
     card: 'summary_large_image',
     title: 'BDigitizing | Premier Machine Embroidery Digitizing & Vector Art Lab',
     description: 'Commercial Machine Embroidery Digitizing, Vector Art Tracing, & Custom Physical Patches with 4-8 Hour Express Turnaround.',
-    images: ['/icon-512.png'],
+    images: ['/icon-512x512.png'],
   },
   robots: {
     index: true,

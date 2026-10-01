@@ -9,7 +9,7 @@ describe('Service Worker & Image Layout Stability', () => {
   test('service worker never intercepts cross-origin resources and always returns a Response on handled failures', () => {
     const sw = read('public/sw.js');
 
-    assert.match(sw, /const CACHE_VERSION = 'bdigi-pwa-v4\.1'/);
+    assert.match(sw, /const CACHE_VERSION = 'bdigi-pwa-v4\.2'/);
     assert.match(sw, /requestUrl\.origin !== self\.location\.origin/);
     assert.match(sw, /requestUrl\.pathname\.startsWith\('\/api\/'\)/);
     assert.match(sw, /requestUrl\.pathname\.startsWith\('\/_next\/'\)/);
