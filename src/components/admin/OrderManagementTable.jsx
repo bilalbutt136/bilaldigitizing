@@ -155,15 +155,6 @@ export const OrderManagementTable = () => {
     return found ? (found.name || found.email) : 'Assigned Worker';
   };
 
-  // Auto-refresh orders from Supabase on mount.
-  /* oxlint-disable react-hooks/exhaustive-deps -- mount-only refresh; callback identity may change after the refresh it triggers */
-  React.useEffect(() => {
-    if (refreshOrders) {
-      refreshOrders();
-    }
-  }, []);
-  /* oxlint-enable react-hooks/exhaustive-deps */
-
   const handleManualRefresh = async () => {
     if (isRefreshing) return;
     setIsRefreshing(true);

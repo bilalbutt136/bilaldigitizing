@@ -9,6 +9,7 @@ import { downloadFileDirectly, openFileInNewTab as _openFileInNewTab } from '../
 import { playMessageChime as _playMessageChime, playMessageChimeForMessage, playAdminChime, stopNotificationSound, unlockAudioContext } from '../../utils/audioNotification';
 import { subscribeToPresence, syncPresenceFromRest } from '../../services/presenceService';
 import { subscribeToChatMessages, subscribeToConversations } from '../../services/supabaseService';
+import { fetchChatUnreadCounts } from '../../services/chatUnreadService';
 import {
   Search,
   ChevronDown,
@@ -221,20 +222,19 @@ export default function AdminChatInbox({ initialChannel = 'inbox' }) {
   // Channel unread counts: { inbox: number, support: number }
   const [channelUnreadCounts, setChannelUnreadCounts] = useState({ inbox: 0, support: 0 });
 
-  const fetchChannelUnreadCounts = useCallback(async () => {
+  const fetchChannelUnreadCounts = useCallback(async (force = false) => {
     try {
-      const [inboxRes, supportRes] = await Promise.all([
-        fetch('/api/chat/conversations?filter=unread&channel=inbox'),
-        fetch('/api/chat/conversations?filter=unread&channel=support')
-      ]);
-      const [inboxData, supportData] = await Promise.all([inboxRes.json(), supportRes.json()]);
-
-      const inboxTotal = (inboxData?.conversations || []).reduce((sum, c) => sum + (c.unread_admin_count || 0), 0);
-      const supportTotal = (supportData?.conversations || []).reduce((sum, c) => sum + (c.unread_admin_count || 0), 0);
-
-      setChannelUnreadCounts({ inbox: inboxTotal, support: supportTotal });
+      const counts = await fetchChatUnreadCounts({
+        email: authUser?.email || '',
+        isAdmin: true,
+        force
+      });
+      setChannelUnreadCounts({
+        inbox: counts.inbox,
+        support: counts.support
+      });
     } catch {}
-  }, []);
+  }, [authUser?.email]);
 
   useEffect(() => {
     if (initialChannel) {
@@ -264,7 +264,7 @@ export default function AdminChatInbox({ initialChannel = 'inbox' }) {
           }
         }
       }
-      fetchChannelUnreadCounts();
+      fetchChannelUnreadCounts(silent);
     } catch (err) {
       console.warn('[Admin Chat] Failed to load conversations:', err);
     } finally {
@@ -318,7 +318,6 @@ export default function AdminChatInbox({ initialChannel = 'inbox' }) {
   useEffect(() => {
     fetchConversations(activeFilter, searchQuery, activeChannel);
     fetchSavedReplies();
-    fetchChannelUnreadCounts();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeFilter, activeChannel]);
 
@@ -418,13 +417,11 @@ export default function AdminChatInbox({ initialChannel = 'inbox' }) {
 
       if (msg.sender === 'client') {
         fetchConversations(activeFilter, searchQuery, activeChannel, true);
-        fetchChannelUnreadCounts();
       }
     });
 
     const unsubscribeConversations = subscribeToConversations(() => {
       fetchConversations(activeFilter, searchQuery, activeChannel, true);
-      fetchChannelUnreadCounts();
     });
 
     return () => {

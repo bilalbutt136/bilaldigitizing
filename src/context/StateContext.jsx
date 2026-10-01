@@ -81,6 +81,7 @@ export const StateProvider = ({ children, initialCatalog = null }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isAuthInitialized, setIsAuthInitialized] = useState(false);
   const [authUser, setAuthUser] = useState(null);
+  const authHydrationGuardRef = _useRef({ userId: null, hydratedAt: 0 });
 
   // Global Toast Notification State - hoisted early so all callbacks/effects can safely access it
   const [toast, setToast] = useState(null);
@@ -950,6 +951,10 @@ export const StateProvider = ({ children, initialCatalog = null }) => {
         const session = sessionData?.session;
         if (!cancelled && session?.user) {
           const role = await resolveRole(session.user.email, session.user);
+          authHydrationGuardRef.current = {
+            userId: session.user.id,
+            hydratedAt: Date.now()
+          };
           const uData = buildAuthUser(session.user, role);
           setAuthUser(uData);
           setIsAuthenticated(true);
@@ -1322,7 +1327,9 @@ export const StateProvider = ({ children, initialCatalog = null }) => {
 
         try {
           // Initial hydration is already handled by validateImmediateSession above.
-          if (event === 'INITIAL_SESSION') return;
+          // TOKEN_REFRESHED changes credentials, not application data; refetching
+          // orders/clients here creates avoidable request bursts.
+          if (event === 'INITIAL_SESSION' || event === 'TOKEN_REFRESHED') return;
 
           if (event === 'PASSWORD_RECOVERY') {
             setAuthModalMode('update_password');
@@ -1331,6 +1338,7 @@ export const StateProvider = ({ children, initialCatalog = null }) => {
           }
 
           if (event === 'SIGNED_OUT') {
+            authHydrationGuardRef.current = { userId: null, hydratedAt: 0 };
             setIsAuthenticated(false);
             setAuthUser(null);
             setCurrentView('public');
@@ -1355,7 +1363,20 @@ export const StateProvider = ({ children, initialCatalog = null }) => {
           }
 
           if (session?.user) {
+            const lastHydration = authHydrationGuardRef.current;
+            if (
+              event === 'SIGNED_IN' &&
+              lastHydration.userId === session.user.id &&
+              Date.now() - lastHydration.hydratedAt < 15_000
+            ) {
+              return;
+            }
+
             const role = await resolveRole(session.user.email, session.user);
+            authHydrationGuardRef.current = {
+              userId: session.user.id,
+              hydratedAt: Date.now()
+            };
             const uData = buildAuthUser(session.user, role);
             setAuthUser(uData);
             setIsAuthenticated(true);
@@ -1556,6 +1577,10 @@ export const StateProvider = ({ children, initialCatalog = null }) => {
     }
 
     const uData = buildAuthUser(sbUser, role);
+    authHydrationGuardRef.current = {
+      userId: sbUser.id,
+      hydratedAt: Date.now()
+    };
     persistAuth(uData, role);
     setWalletBalance(balance);
 
@@ -2354,7 +2379,7 @@ export const StateProvider = ({ children, initialCatalog = null }) => {
     }
   };
 
-  const refreshOrders = async () => {
+  const refreshOrders = useCallback(async () => {
     try {
       let resolvedUser = authUser;
       if (!resolvedUser && typeof window !== 'undefined') {
@@ -2385,9 +2410,9 @@ export const StateProvider = ({ children, initialCatalog = null }) => {
       console.warn('refreshOrders error:', err);
     }
     return [];
-  };
+  }, [authUser]);
 
-  const refreshClients = async () => {
+  const refreshClients = useCallback(async () => {
     try {
       const freshClients = await fetchClientsFromSupabase();
       if (freshClients && Array.isArray(freshClients)) {
@@ -2398,7 +2423,7 @@ export const StateProvider = ({ children, initialCatalog = null }) => {
       console.warn('refreshClients error:', err);
     }
     return [];
-  };
+  }, []);
 
   const deductWalletBalance = async (amount, orderId = null) => {
     const num = parseFloat(amount);

@@ -6,7 +6,6 @@ import { createClient } from '../../lib/supabase/client';
 import OfferCardMessage from '../common/OfferCardMessage';
 import { downloadFileDirectly, openFileInNewTab } from '../../utils/fileDownloader';
 import { playMessageChime as _playMessageChime, playMessageChimeForMessage, playCustomerChime, stopNotificationSound, unlockAudioContext } from '../../utils/audioNotification';
-import { trackUserPresence, untrackUserPresence } from '../../services/presenceService';
 import { subscribeToChatMessages } from '../../services/supabaseService';
 import {
   Send,
@@ -428,22 +427,9 @@ export default function CustomerSupportChat({
     };
   }, [conversationId]);
 
-  // Real-time client presence tracking while chat session is open
-  useEffect(() => {
-    if (!userEmail) return;
-    const cleanEmail = userEmail.toLowerCase().trim();
-
-    trackUserPresence({
-      email: cleanEmail,
-      name: userName,
-      role: 'client',
-      conversationId
-    });
-
-    return () => {
-      untrackUserPresence(cleanEmail);
-    };
-  }, [userEmail, userName, conversationId]);
+  // Presence is tracked once at the application shell (StateContext).
+  // Avoid a second tracker here; duplicate track/untrack cycles caused redundant
+  // /api/chat/presence fallback traffic while chat mounted/unmounted.
 
   // Broadcast typing helper with immediate WebSocket dispatch & API backup
   const broadcastTyping = useCallback((isTyping) => {

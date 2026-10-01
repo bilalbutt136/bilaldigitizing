@@ -83,6 +83,45 @@ describe('P2 Observability Regression Coverage', () => {
     }
   });
 
+  test('production suppresses fast successful request logs but still emits warnings', async () => {
+    const originalNodeEnv = process.env.NODE_ENV;
+    const originalVercelEnv = process.env.VERCEL_ENV;
+    const originalSuccessOverride = process.env.OBSERVABILITY_LOG_SUCCESS;
+    const originalLog = console.log;
+    const originalWarn = console.warn;
+    const logs = [];
+    const warnings = [];
+
+    process.env.NODE_ENV = 'production';
+    process.env.VERCEL_ENV = 'production';
+    delete process.env.OBSERVABILITY_LOG_SUCCESS;
+    console.log = line => logs.push(String(line));
+    console.warn = line => warnings.push(String(line));
+
+    try {
+      const okHandler = withApiObservability(async () => new Response(null, { status: 200 }));
+      await okHandler(new Request('http://localhost/api/health'));
+      assert.equal(logs.length, 0);
+      assert.equal(warnings.length, 0);
+
+      const clientErrorHandler = withApiObservability(async () => new Response(null, { status: 404 }));
+      await clientErrorHandler(new Request('http://localhost/api/missing'));
+      assert.equal(warnings.length, 1);
+      const record = JSON.parse(warnings[0]);
+      assert.equal(record.event, 'api.request.completed_with_client_error');
+      assert.equal(record.statusCode, 404);
+    } finally {
+      console.log = originalLog;
+      console.warn = originalWarn;
+      if (originalNodeEnv === undefined) delete process.env.NODE_ENV;
+      else process.env.NODE_ENV = originalNodeEnv;
+      if (originalVercelEnv === undefined) delete process.env.VERCEL_ENV;
+      else process.env.VERCEL_ENV = originalVercelEnv;
+      if (originalSuccessOverride === undefined) delete process.env.OBSERVABILITY_LOG_SUCCESS;
+      else process.env.OBSERVABILITY_LOG_SUCCESS = originalSuccessOverride;
+    }
+  });
+
   test('invalid incoming request IDs are replaced with generated safe IDs', async () => {
     const originalLog = console.log;
     console.log = () => {};

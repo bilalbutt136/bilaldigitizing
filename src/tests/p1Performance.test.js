@@ -77,6 +77,47 @@ describe('P1 Performance Regression Coverage', () => {
     assert.match(state, /!orderOrId\._summaryOnly/);
   });
 
+  test('portal refresh and chat presence callbacks cannot recreate request storms', () => {
+    const state = fs.readFileSync('src/context/StateContext.jsx', 'utf8');
+    const adminDashboard = fs.readFileSync('src/components/admin/AdminDashboard.jsx', 'utf8');
+    const adminChat = fs.readFileSync('src/components/admin/AdminChatInbox.jsx', 'utf8');
+    const customerChat = fs.readFileSync('src/components/customer/CustomerSupportChat.jsx', 'utf8');
+    const presence = fs.readFileSync('src/services/presenceService.js', 'utf8');
+    const workersRoute = fs.readFileSync('app/api/admin/workers/route.js', 'utf8');
+    const profileRoute = fs.readFileSync('app/api/auth/profile/route.js', 'utf8');
+
+    assert.match(state, /const refreshOrders = useCallback/);
+    assert.match(state, /const refreshClients = useCallback/);
+    assert.match(state, /event === 'INITIAL_SESSION' || event === 'TOKEN_REFRESHED'/);
+    assert.equal(adminDashboard.includes('refreshOrders'), false);
+    assert.equal(adminDashboard.includes('refreshClients'), false);
+
+    assert.match(adminChat, /fetchChatUnreadCounts/);
+    assert.equal(adminChat.includes("filter=unread&channel=inbox"), false);
+    assert.equal(adminChat.includes("filter=unread&channel=support"), false);
+
+    assert.equal(customerChat.includes('trackUserPresence'), false);
+    assert.equal(customerChat.includes('untrackUserPresence'), false);
+    const mobileApp = fs.readFileSync('src/components/mobile/BDigitizingMobileApp.jsx', 'utf8');
+    assert.match(mobileApp, /lastAutoOrderRefreshAtRef/);
+    assert.match(mobileApp, /15_000/);
+    assert.match(presence, /REST_PRESENCE_MIN_INTERVAL_MS = 30_000/);
+
+    assert.match(workersRoute, /unstable_cache/);
+    assert.match(workersRoute, /revalidate: 30/);
+    assert.match(workersRoute, /rpc\('get_admin_worker_directory'\)/);
+    assert.match(profileRoute, /resolveTrustedUserAccess/);
+    const workerRpcMigration = fs.readFileSync(
+      'supabase/migrations/20261001000003_admin_worker_directory_rpc.sql',
+      'utf8'
+    );
+    assert.match(workerRpcMigration, /CREATE OR REPLACE FUNCTION public\.get_admin_worker_directory/);
+    assert.match(workerRpcMigration, /GRANT EXECUTE ON FUNCTION public\.get_admin_worker_directory\(\) TO service_role/);
+    assert.equal(profileRoute.includes(".from('admins')"), false);
+    assert.equal(profileRoute.includes(".from('worker_profiles')"), false);
+    assert.equal(profileRoute.includes(".from('workers')"), false);
+  });
+
   test('durable uploads, bounded list reads and idempotent file rows prevent resource regressions', () => {
     const service = fs.readFileSync('src/services/supabaseService.js', 'utf8');
     const upload = fs.readFileSync('app/api/cloudinary/upload/route.js', 'utf8');

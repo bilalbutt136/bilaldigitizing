@@ -7,13 +7,19 @@ import {
 
 export { logServerCaughtError } from './serverLogger.js';
 
-const DEFAULT_SLOW_REQUEST_MS = 1500;
+const DEFAULT_SLOW_REQUEST_MS = 1000;
 
 function getSlowRequestThreshold() {
   const configured = Number(process.env.OBSERVABILITY_SLOW_REQUEST_MS);
   return Number.isFinite(configured) && configured > 0
     ? configured
     : DEFAULT_SLOW_REQUEST_MS;
+}
+
+
+function shouldLogSuccessfulRequest() {
+  if (process.env.OBSERVABILITY_LOG_SUCCESS === 'true') return true;
+  return process.env.NODE_ENV !== 'production' && process.env.VERCEL_ENV !== 'production';
 }
 
 function attachObservabilityHeaders(response, requestId, durationMs) {
@@ -57,9 +63,11 @@ export function withApiObservability(handler) {
             new Error(`HTTP ${statusCode}`),
             fields
           );
+        } else if (statusCode >= 400) {
+          logServerWarn('api.request.completed_with_client_error', fields);
         } else if (fields.slow) {
           logServerWarn('api.request.slow', fields);
-        } else {
+        } else if (shouldLogSuccessfulRequest()) {
           logServerInfo('api.request.completed', fields);
         }
 

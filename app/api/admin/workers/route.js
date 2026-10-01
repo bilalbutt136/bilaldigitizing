@@ -1,10 +1,41 @@
 import { withApiObservability, logServerCaughtError } from '../../../../src/lib/observability/apiObservability.js';
 import { NextResponse } from 'next/server';
+import { unstable_cache, revalidateTag } from 'next/cache';
 import { supabaseAdmin, hasServiceRole } from '../../../../src/lib/supabaseAdmin';
 import { createAdminClient } from '../../../../src/lib/supabase/admin';
 import { getServerAuthUser } from '../../../../src/lib/supabase/serverAuth';
+import { enforceApiBurstLimit } from '../../../../src/lib/apiBurstGuard.js';
+
+const WORKER_DIRECTORY_TAG = 'admin-workers-directory';
+
+const loadWorkerDirectory = unstable_cache(
+  async () => {
+    const adminClient = (hasServiceRole && supabaseAdmin) ? supabaseAdmin : createAdminClient();
+    if (!adminClient) throw new Error('Database service unavailable');
+
+    const { data, error } = await adminClient.rpc('get_admin_worker_directory');
+    if (error) throw error;
+
+    const allWorkers = Array.isArray(data) ? data : [];
+    const activeWorkers = allWorkers.filter(worker => {
+      const status = String(worker.status || '').toLowerCase();
+      return status === 'active' || status === 'busy' || status === 'suspended';
+    });
+    const applications = allWorkers.filter(worker => {
+      const status = String(worker.status || '').toLowerCase();
+      return status === 'pending' || status === 'rejected';
+    });
+
+    return { allWorkers, activeWorkers, applications };
+  },
+  ['admin-workers-directory-v5'],
+  { revalidate: 30, tags: [WORKER_DIRECTORY_TAG] }
+);
 
 async function GET_impl(request) {
+  const burstResponse = enforceApiBurstLimit(request, 'admin-workers-get', 60, 60_000);
+  if (burstResponse) return burstResponse;
+
   try {
     const { user, isAdmin, isWorker } = await getServerAuthUser(request);
     if (!user) {
@@ -15,194 +46,24 @@ async function GET_impl(request) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    const adminClient = (hasServiceRole && supabaseAdmin) ? supabaseAdmin : createAdminClient();
-    if (!adminClient) {
-      return NextResponse.json({ error: 'Database service unavailable' }, { status: 503 });
-    }
+    const { allWorkers, activeWorkers, applications } = await loadWorkerDirectory();
+    const visibleWorkers = isAdmin
+      ? allWorkers
+      : activeWorkers.filter(worker => String(worker.status || '').toLowerCase() === 'active');
 
-    // 1. Fetch from worker_profiles (preferred rich source)
-    let profiles = [];
-    try {
-      const { data, error } = await adminClient
-        .from('worker_profiles')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (!error && data) {
-        profiles = data;
-      }
-    } catch (err) {
-      console.warn('worker_profiles query notice:', err?.message);
-    }
-
-    // 2. Fetch from workers table as well to merge
-    let directoryWorkers = [];
-    try {
-      const { data, error } = await adminClient
-        .from('workers')
-        .select('*')
-        .order('name', { ascending: true });
-
-      if (!error && data) {
-        directoryWorkers = data;
-      }
-    } catch (err) {
-      console.warn('workers directory query notice:', err?.message);
-    }
-
-    // 3. Check auth.users for any users with worker role to auto-sync
-    let authWorkers = [];
-    try {
-      const { data: authData } = await adminClient.auth.admin.listUsers({ perPage: 100 });
-      if (authData?.users) {
-        authWorkers = authData.users.filter(u => 
-          u.user_metadata?.role === 'worker' || 
-          u.user_metadata?.worker_status || 
-          u.app_metadata?.role === 'worker'
-        );
-      }
-    } catch (authErr) {
-      console.warn('auth workers query notice:', authErr?.message);
-    }
-
-    // Merge profiles, directory workers, and auth users into unified worker objects
-    const map = new Map();
-
-    // From Auth users first
-    authWorkers.forEach(u => {
-      const uEmail = (u.email || '').toLowerCase().trim();
-      const meta = u.user_metadata || {};
-      map.set(u.id || uEmail, {
-        id: u.id,
-        name: meta.full_name || meta.name || uEmail.split('@')[0],
-        email: uEmail,
-        phone: meta.phone || null,
-        specialty: meta.primary_software || 'Embroidery Digitizer',
-        experience_years: meta.experience_years || 1,
-        primary_software: meta.primary_software || 'Wilcom',
-        status: meta.worker_status || meta.status || 'Pending',
-        assigned_orders_count: 0,
-        completed_orders_count: 0,
-        created_at: u.created_at,
-        updated_at: u.updated_at || u.created_at
-      });
-    });
-
-    directoryWorkers.forEach(w => {
-      const key = w.id || (w.email || '').toLowerCase().trim();
-      const existing = map.get(key) || {};
-      map.set(key, {
-        ...existing,
-        id: w.id || existing.id,
-        name: w.name || existing.name,
-        email: w.email || existing.email,
-        phone: w.phone || existing.phone,
-        specialty: w.specialty || existing.specialty || 'Embroidery Digitizer',
-        status: w.status || existing.status || 'Active',
-        assigned_orders_count: w.assigned_orders_count || 0,
-        completed_orders_count: w.completed_orders_count || 0,
-        created_at: w.created_at || existing.created_at,
-        updated_at: w.updated_at || existing.updated_at
-      });
-    });
-
-    profiles.forEach(p => {
-      const key = p.id || (p.email || '').toLowerCase().trim();
-      const existing = map.get(key) || {};
-      map.set(key, {
-        ...existing,
-        id: p.id || existing.id,
-        name: p.name || existing.name,
-        email: p.email || existing.email,
-        phone: p.phone || existing.phone,
-        specialty: p.primary_software || existing.specialty || 'Embroidery Digitizer',
-        experience_years: p.experience_years || existing.experience_years || 1,
-        primary_software: p.primary_software || existing.primary_software || 'Wilcom',
-        portfolio_sample_url: p.portfolio_sample_url,
-        portfolio_file_name: p.portfolio_file_name,
-        bio: p.bio,
-        status: p.status || existing.status || 'Pending',
-        rejection_reason: p.rejection_reason,
-        total_earned: p.total_earned || 0,
-        pending_payout: p.pending_payout || 0,
-        created_at: p.created_at || existing.created_at,
-        updated_at: p.updated_at || existing.updated_at
-      });
-    });
-
-    const allWorkers = Array.from(map.values());
-
-    // Auto-heal: Ensure any auth workers not in worker_profiles get saved to worker_profiles
-    try {
-      for (const w of allWorkers) {
-        const hasProfile = profiles.some(p => p.id === w.id || p.email?.toLowerCase() === w.email?.toLowerCase());
-        if (!hasProfile && w.id && w.email) {
-          adminClient.from('worker_profiles').upsert([{
-            id: w.id,
-            name: w.name,
-            email: w.email,
-            phone: w.phone,
-            experience_years: w.experience_years || 1,
-            primary_software: w.primary_software || 'Wilcom',
-            status: w.status || 'Pending',
-            created_at: w.created_at || new Date().toISOString()
-          }], { onConflict: 'id' }).then(() => {});
+    return NextResponse.json(
+      {
+        success: true,
+        workers: visibleWorkers,
+        activeWorkers: isAdmin ? activeWorkers : visibleWorkers,
+        applications: isAdmin ? applications : []
+      },
+      {
+        headers: {
+          'Cache-Control': 'private, max-age=15, stale-while-revalidate=30'
         }
       }
-    } catch (error) { logServerCaughtError(error, { operation: 'workers.directory_sync_failed' }); }
-
-    // Compute live order counts and earnings per worker if admin
-    if (isAdmin) {
-      try {
-        const { data: allOrders } = await adminClient
-          .from('orders')
-          .select('id, worker_id, status, worker_status, worker_payout, worker_payout_status');
-
-        const { data: allEarnings } = await adminClient
-          .from('worker_earnings')
-          .select('worker_id, amount, status');
-
-        if (allOrders) {
-          allWorkers.forEach(w => {
-            const workerOrders = allOrders.filter(o => o.worker_id === w.id);
-            w.assigned_orders_count = workerOrders.length;
-            w.completed_orders_count = workerOrders.filter(
-              o => o.worker_status === 'Completed' || (o.status || '').toLowerCase() === 'completed'
-            ).length;
-
-            // Compute earnings
-            if (allEarnings) {
-              const we = allEarnings.filter(e => e.worker_id === w.id);
-              w.total_earned = we
-                .filter(e => (e.status || '').toLowerCase() === 'paid')
-                .reduce((acc, curr) => acc + (parseFloat(curr.amount) || 0), 0);
-              w.pending_payout = we
-                .filter(e => (e.status || '').toLowerCase() === 'pending')
-                .reduce((acc, curr) => acc + (parseFloat(curr.amount) || 0), 0);
-            }
-          });
-        }
-      } catch (countErr) {
-        console.warn('Orders count aggregation notice:', countErr?.message);
-      }
-    }
-
-    // Separate active workers from pending applications (case-insensitive)
-    const activeWorkers = allWorkers.filter(w => {
-      const s = (w.status || '').toLowerCase();
-      return s === 'active' || s === 'busy' || s === 'suspended';
-    });
-    const applications = allWorkers.filter(w => {
-      const s = (w.status || '').toLowerCase();
-      return s === 'pending' || s === 'rejected';
-    });
-
-    return NextResponse.json({
-      success: true,
-      workers: isAdmin ? allWorkers : allWorkers.filter(w => (w.status || '').toLowerCase() === 'active'),
-      activeWorkers,
-      applications
-    });
+    );
   } catch (error) {
     console.error('[Admin Workers API GET]', error);
     return NextResponse.json({ error: error.message }, { status: 500 });
@@ -210,6 +71,11 @@ async function GET_impl(request) {
 }
 
 async function POST_impl(request) {
+  let shouldInvalidateWorkerDirectory = false;
+
+  const burstResponse = enforceApiBurstLimit(request, 'admin-workers-post', 30, 60_000);
+  if (burstResponse) return burstResponse;
+
   try {
     const { user, isAdmin } = await getServerAuthUser(request);
     if (!user || !isAdmin) {
@@ -218,6 +84,15 @@ async function POST_impl(request) {
 
     const body = await request.json();
     const { action, payload = {} } = body;
+    shouldInvalidateWorkerDirectory = new Set([
+      'approveWorker',
+      'rejectWorker',
+      'updateWorkerStatus',
+      'suspendWorker',
+      'reactivateWorker',
+      'markEarningsPaid',
+      'createWorker'
+    ]).has(action);
     const adminClient = (hasServiceRole && supabaseAdmin) ? supabaseAdmin : createAdminClient();
 
     if (!adminClient) {
@@ -455,6 +330,14 @@ async function POST_impl(request) {
   } catch (error) {
     console.error('[Admin Workers API POST]', error);
     return NextResponse.json({ error: error.message }, { status: 500 });
+  } finally {
+    if (shouldInvalidateWorkerDirectory) {
+      try {
+        revalidateTag(WORKER_DIRECTORY_TAG);
+      } catch (cacheErr) {
+        console.warn('[Admin Workers Cache Invalidation Notice]:', cacheErr?.message);
+      }
+    }
   }
 }
 

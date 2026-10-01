@@ -7,6 +7,9 @@ let presenceSessionId = null;
 const presenceListeners = new Set();
 let realtimeOnlineEmails = new Set();
 let restOnlineEmails = new Set();
+const REST_PRESENCE_MIN_INTERVAL_MS = 30_000;
+let lastRestPresenceWriteAt = 0;
+let restPresenceWriteInFlight = null;
 
 function isValidPresenceSessionId(value) {
   return /^[a-zA-Z0-9_-]{8,128}$/.test(String(value || ''));
@@ -215,23 +218,34 @@ export async function trackUserPresence({
   // Do not invoke a Vercel function on every heartbeat when Realtime is healthy.
   if (realtimeTracked) return;
 
-  try {
-    const response = await fetch('/api/chat/presence', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      cache: 'no-store',
-      body: JSON.stringify({
-        status: 'online',
-        sessionId,
-        conversationId
-      })
+  const now = Date.now();
+  if (restPresenceWriteInFlight || now - lastRestPresenceWriteAt < REST_PRESENCE_MIN_INTERVAL_MS) {
+    return;
+  }
+
+  lastRestPresenceWriteAt = now;
+  restPresenceWriteInFlight = fetch('/api/chat/presence', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    cache: 'no-store',
+    body: JSON.stringify({
+      status: 'online',
+      sessionId,
+      conversationId
+    })
+  })
+    .then(response => {
+      if (!response.ok && response.status !== 401) {
+        console.warn('[PresenceService] REST heartbeat failed:', response.status);
+      }
+    })
+    .catch(() => {})
+    .finally(() => {
+      restPresenceWriteInFlight = null;
     });
 
-    if (!response.ok && response.status !== 401) {
-      console.warn('[PresenceService] REST heartbeat failed:', response.status);
-    }
-  } catch {}
+  await restPresenceWriteInFlight;
 }
 
 export async function untrackUserPresence(email) {

@@ -520,6 +520,7 @@ export const BDigitizingMobileApp = ({ initialTab = 'home' }) => {
   }, [activeUser]);
 
   const [isRefreshingOrders, setIsRefreshingOrders] = useState(false);
+  const lastAutoOrderRefreshAtRef = useRef(0);
 
   const handleManualRefreshOrders = async () => {
     if (typeof refreshOrders === 'function') {
@@ -534,12 +535,20 @@ export const BDigitizingMobileApp = ({ initialTab = 'home' }) => {
     }
   };
 
-  // Automatically refresh live orders on component mount and when switching tabs
+  // Realtime keeps order state current. Use a guarded REST refresh only when the
+  // Orders tab is opened, never on unrelated tab switches.
   useEffect(() => {
-    if (typeof refreshOrders === 'function') {
-      refreshOrders().catch(err => console.warn('Order sync note:', err));
+    if (mobileTab !== 'orders' || !userEmail) return;
+
+    const now = Date.now();
+    if (now - lastAutoOrderRefreshAtRef.current >= 15_000) {
+      lastAutoOrderRefreshAtRef.current = now;
+      if (typeof refreshOrders === 'function') {
+        refreshOrders().catch(err => console.warn('Order sync note:', err));
+      }
     }
-    if (mobileTab === 'orders' && typeof markOrdersAsRead === 'function') {
+
+    if (typeof markOrdersAsRead === 'function') {
       markOrdersAsRead();
     }
   }, [mobileTab, userEmail, markOrdersAsRead, refreshOrders]);
