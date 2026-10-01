@@ -103,7 +103,9 @@ describe('P1 Performance Regression Coverage', () => {
     const mobileApp = fs.readFileSync('src/components/mobile/BDigitizingMobileApp.jsx', 'utf8');
     assert.match(mobileApp, /lastAutoOrderRefreshAtRef/);
     assert.match(mobileApp, /15_000/);
-    assert.match(presence, /REST_PRESENCE_MIN_INTERVAL_MS = 30_000/);
+    assert.match(presence, /REST_PRESENCE_MIN_INTERVAL_MS = 60_000/);
+    assert.match(presence, /restPresenceAuthBlocked/);
+    assert.match(presence, /document\.visibilityState === 'hidden'/);
 
     assert.match(workersRoute, /unstable_cache/);
     assert.match(workersRoute, /revalidate: 30/);

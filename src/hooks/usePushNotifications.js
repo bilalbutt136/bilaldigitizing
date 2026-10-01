@@ -1,41 +1,24 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import {
+  clearPushSubscriptionSync,
+  getClientVapidPublicKey,
+  isPushSubscriptionSynced,
+  markPushSubscriptionSynced,
+  subscriptionUsesVapidKey,
+  urlBase64ToUint8Array
+} from '../utils/pushSubscriptionClient';
 
 /**
- * Converts URL-safe base64 string to Uint8Array for applicationServerKey
+ * Web Push hook for authenticated users.
+ * Existing browser subscriptions are locally marked after a successful server sync
+ * so rerenders/remounts do not repeatedly call the VAPID and subscribe endpoints.
  */
-function urlBase64ToUint8Array(base64String) {
-  const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
-  const base64 = (base64String + padding)
-    .replace(/-/g, '+')
-    .replace(/_/g, '/');
-
-  const rawData = window.atob(base64);
-  const outputArray = new Uint8Array(rawData.length);
-
-  for (let i = 0; i < rawData.length; ++i) {
-    outputArray[i] = rawData.charCodeAt(i);
-  }
-  return outputArray;
-}
-
-function arrayBufferToUrlBase64(buffer) {
-  if (!buffer) return '';
-  const bytes = new Uint8Array(buffer);
-  let binary = '';
-  for (const byte of bytes) binary += String.fromCharCode(byte);
-  return window.btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
-}
-
-function subscriptionUsesVapidKey(subscription, publicKey) {
-  const currentKey = subscription?.options?.applicationServerKey;
-  if (!currentKey || !publicKey) return false;
-  return arrayBufferToUrlBase64(currentKey) === String(publicKey).replace(/=+$/g, '');
-}
-
 export function usePushNotifications(userContext = {}) {
   const { userEmail = '', role = 'client', userId = null } = userContext;
+  const normalizedEmail = String(userEmail || '').toLowerCase().trim();
+  const isAuthenticatedUser = Boolean(normalizedEmail && userId);
 
   const [isSupported, setIsSupported] = useState(false);
   const [permission, setPermission] = useState('default');
@@ -44,88 +27,112 @@ export function usePushNotifications(userContext = {}) {
   const [isTesting, setIsTesting] = useState(false);
   const [testCountdown, setTestCountdown] = useState(0);
   const [errorMessage, setErrorMessage] = useState(null);
+  const isSubscribingRef = useRef(false);
 
-  // Check support and current subscription status on mount
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
     const supported = 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
     setIsSupported(supported);
 
-    if (supported) {
-      setPermission(Notification.permission);
+    if (!supported) return;
 
-      // Check if registration exists and has an active subscription
-      navigator.serviceWorker.ready
-        .then((reg) => reg.pushManager.getSubscription())
-        .then((sub) => {
-          if (sub) {
-            setIsSubscribed(true);
-            // Sync current active subscription in background
-            if (userEmail || role) {
-              fetch('/api/push/subscribe', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  subscription: sub,
-                  userEmail,
-                  role,
-                  userId,
-                  userAgent: navigator.userAgent
-                })
-              }).catch(() => {});
-            }
-          } else {
-            setIsSubscribed(false);
-          }
-        })
-        .catch((err) => {
-          console.warn('[usePushNotifications] Subscription check notice:', err);
+    setPermission(Notification.permission);
+
+    navigator.serviceWorker.ready
+      .then((reg) => reg.pushManager.getSubscription())
+      .then((sub) => {
+        setIsSubscribed(Boolean(sub));
+
+        // Never sync anonymous/stale UI state to an auth-required endpoint.
+        if (!sub || !isAuthenticatedUser || isPushSubscriptionSynced(userId, sub)) return;
+
+        // Existing unsynced subscriptions are reconciled once for the current user.
+        // The callback below has a parallel-request guard.
+        return subscribeExistingSubscription(sub);
+      })
+      .catch((err) => {
+        console.warn('[usePushNotifications] Subscription check notice:', err);
+      });
+
+    async function subscribeExistingSubscription(sub) {
+      if (isSubscribingRef.current) return;
+      isSubscribingRef.current = true;
+
+      try {
+        const publicKey = await getClientVapidPublicKey();
+        if (!subscriptionUsesVapidKey(sub, publicKey)) return;
+
+        const response = await fetch('/api/push/subscribe', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({
+            subscription: sub,
+            userEmail: normalizedEmail,
+            role,
+            userId,
+            userAgent: navigator.userAgent
+          })
         });
+        const data = await response.json().catch(() => ({}));
+
+        if (response.ok && data?.success) {
+          markPushSubscriptionSynced(userId, sub, publicKey);
+        }
+      } finally {
+        isSubscribingRef.current = false;
+      }
     }
-  }, [userEmail, role, userId]);
+  }, [normalizedEmail, role, userId, isAuthenticatedUser]);
 
   /**
-   * Request permission and subscribe to Web Push
+   * Request permission and subscribe to Web Push.
    */
   const subscribeToPush = useCallback(async () => {
+    if (!isAuthenticatedUser) {
+      setErrorMessage('Sign in before enabling push notifications.');
+      return { success: false, error: 'Authentication required' };
+    }
+
     if (!isSupported) {
       setErrorMessage('Push notifications are not supported on this browser.');
       return { success: false, error: 'Not supported' };
     }
 
+    if (isSubscribingRef.current) {
+      return { success: false, error: 'Subscription already in progress' };
+    }
+
+    isSubscribingRef.current = true;
     setIsLoading(true);
     setErrorMessage(null);
 
     try {
-      // 1. Request Browser Permission
       const requestedPermission = await Notification.requestPermission();
       setPermission(requestedPermission);
 
       if (requestedPermission !== 'granted') {
-        setIsLoading(false);
         return { success: false, error: 'Permission not granted' };
       }
 
-      // 2. Ensure Service Worker is ready
       const registration = await navigator.serviceWorker.ready;
+      let subscription = await registration.pushManager.getSubscription();
 
-      // 3. Get Public VAPID Key from Server
-      const keyRes = await fetch('/api/push/vapid-key');
-      const keyData = await keyRes.json();
-
-      if (!keyData.success || !keyData.publicKey) {
-        throw new Error(keyData.error || 'Failed to retrieve VAPID key');
+      if (subscription && isPushSubscriptionSynced(userId, subscription)) {
+        setIsSubscribed(true);
+        return { success: true, subscription };
       }
 
-      const applicationServerKey = urlBase64ToUint8Array(keyData.publicKey);
+      const publicKey = await getClientVapidPublicKey();
+      const applicationServerKey = urlBase64ToUint8Array(publicKey);
 
-      // 4. Register Push Subscription with Browser Push Service (FCM / APNs)
-      let subscription = await registration.pushManager.getSubscription();
-      if (subscription && !subscriptionUsesVapidKey(subscription, keyData.publicKey)) {
+      if (subscription && !subscriptionUsesVapidKey(subscription, publicKey)) {
         await subscription.unsubscribe();
+        clearPushSubscriptionSync(userId);
         subscription = null;
       }
+
       if (!subscription) {
         subscription = await registration.pushManager.subscribe({
           userVisibleOnly: true,
@@ -133,38 +140,37 @@ export function usePushNotifications(userContext = {}) {
         });
       }
 
-      // 5. Send subscription to our server to persist
       const saveRes = await fetch('/api/push/subscribe', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({
           subscription,
-          userEmail,
+          userEmail: normalizedEmail,
           role,
           userId,
           userAgent: navigator.userAgent
         })
       });
 
-      const saveData = await saveRes.json();
-      if (saveData.success) {
-        setIsSubscribed(true);
-        setIsLoading(false);
-        return { success: true, subscription };
-      } else {
-        throw new Error(saveData.error || 'Server failed to save subscription');
+      const saveData = await saveRes.json().catch(() => ({}));
+      if (!saveRes.ok || !saveData.success) {
+        throw new Error(saveData.error || `Server failed to save subscription (${saveRes.status})`);
       }
+
+      markPushSubscriptionSynced(userId, subscription, publicKey);
+      setIsSubscribed(true);
+      return { success: true, subscription };
     } catch (err) {
       console.error('[usePushNotifications] Subscription failed:', err);
       setErrorMessage(err.message);
-      setIsLoading(false);
       return { success: false, error: err.message };
+    } finally {
+      isSubscribingRef.current = false;
+      setIsLoading(false);
     }
-  }, [isSupported, userEmail, role, userId]);
+  }, [isAuthenticatedUser, isSupported, normalizedEmail, role, userId]);
 
-  /**
-   * Trigger a delayed test notification so user can lock their phone and verify lock-screen alert
-   */
   const triggerTestNotification = useCallback(async (delaySeconds = 5) => {
     if (!isSubscribed) {
       const res = await subscribeToPush();
@@ -188,14 +194,15 @@ export function usePushNotifications(userContext = {}) {
       await fetch('/api/push/send', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({
           title: '💬 BDigitizing Studio',
           message: '🌟 Lock Screen Alert: Your mobile notifications are 100% active and working!',
           url: '/client-portal?tab=inbox',
           delaySeconds,
-          email: userEmail,
+          email: normalizedEmail,
           role,
-          all: !userEmail && !role
+          all: false
         })
       });
     } catch (err) {
@@ -205,7 +212,7 @@ export function usePushNotifications(userContext = {}) {
         setIsTesting(false);
       }, (delaySeconds + 1) * 1000);
     }
-  }, [isSubscribed, subscribeToPush, userEmail, role]);
+  }, [isSubscribed, subscribeToPush, normalizedEmail, role]);
 
   return {
     isSupported,

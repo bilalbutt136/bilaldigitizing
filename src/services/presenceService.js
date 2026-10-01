@@ -7,9 +7,11 @@ let presenceSessionId = null;
 const presenceListeners = new Set();
 let realtimeOnlineEmails = new Set();
 let restOnlineEmails = new Set();
-const REST_PRESENCE_MIN_INTERVAL_MS = 30_000;
+const REST_PRESENCE_MIN_INTERVAL_MS = 60_000;
 let lastRestPresenceWriteAt = 0;
 let restPresenceWriteInFlight = null;
+let restPresenceReadInFlight = null;
+let restPresenceAuthBlocked = false;
 
 function isValidPresenceSessionId(value) {
   return /^[a-zA-Z0-9_-]{8,128}$/.test(String(value || ''));
@@ -218,6 +220,10 @@ export async function trackUserPresence({
   // Do not invoke a Vercel function on every heartbeat when Realtime is healthy.
   if (realtimeTracked) return;
 
+  if (restPresenceAuthBlocked || (typeof document !== 'undefined' && document.visibilityState === 'hidden')) {
+    return;
+  }
+
   const now = Date.now();
   if (restPresenceWriteInFlight || now - lastRestPresenceWriteAt < REST_PRESENCE_MIN_INTERVAL_MS) {
     return;
@@ -236,7 +242,11 @@ export async function trackUserPresence({
     })
   })
     .then(response => {
-      if (!response.ok && response.status !== 401) {
+      if (response.status === 401) {
+        restPresenceAuthBlocked = true;
+        return;
+      }
+      if (!response.ok) {
         console.warn('[PresenceService] REST heartbeat failed:', response.status);
       }
     })
@@ -294,33 +304,50 @@ export async function untrackUserPresence(email) {
 }
 
 export async function syncPresenceFromRest() {
-  try {
-    const response = await fetch('/api/chat/presence', {
-      credentials: 'include',
-      cache: 'no-store'
-    });
+  if (restPresenceAuthBlocked || (typeof document !== 'undefined' && document.visibilityState === 'hidden')) {
+    return;
+  }
+  if (restPresenceReadInFlight) return restPresenceReadInFlight;
 
-    if (!response.ok) {
-      if (response.status === 401) {
-        restOnlineEmails = new Set();
-        emitPresence();
-      }
-      return;
-    }
-
-    const data = await response.json();
-    const nextRestPresence = new Set();
-
-    if (Array.isArray(data?.onlineUsers)) {
-      data.onlineUsers.forEach(email => {
-        const cleanEmail = String(email || '').toLowerCase().trim();
-        if (cleanEmail && cleanEmail.includes('@')) {
-          nextRestPresence.add(cleanEmail);
-        }
+  restPresenceReadInFlight = (async () => {
+    try {
+      const response = await fetch('/api/chat/presence', {
+        credentials: 'include',
+        cache: 'no-store'
       });
-    }
 
-    restOnlineEmails = nextRestPresence;
-    emitPresence();
-  } catch {}
+      if (!response.ok) {
+        if (response.status === 401) {
+          restPresenceAuthBlocked = true;
+          restOnlineEmails = new Set();
+          emitPresence();
+        }
+        return;
+      }
+
+      const data = await response.json();
+      const nextRestPresence = new Set();
+
+      if (Array.isArray(data?.onlineUsers)) {
+        data.onlineUsers.forEach(email => {
+          const cleanEmail = String(email || '').toLowerCase().trim();
+          if (cleanEmail && cleanEmail.includes('@')) {
+            nextRestPresence.add(cleanEmail);
+          }
+        });
+      }
+
+      restOnlineEmails = nextRestPresence;
+      emitPresence();
+    } catch {}
+  })().finally(() => {
+    restPresenceReadInFlight = null;
+  });
+
+  return restPresenceReadInFlight;
+}
+
+export function resetPresenceAuthBlock() {
+  restPresenceAuthBlocked = false;
+  lastRestPresenceWriteAt = 0;
 }

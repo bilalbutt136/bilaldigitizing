@@ -46,7 +46,8 @@ import {
   ORDER_STATUSES,
   validateStatusTransition
 } from '../services/supabaseService';
-import { trackUserPresence, untrackUserPresence } from '../services/presenceService';
+import { trackUserPresence, untrackUserPresence, resetPresenceAuthBlock } from '../services/presenceService';
+import { clearChatUnreadCache } from '../services/chatUnreadService';
 
 import {
   playNotificationSound as _playNotificationSound,
@@ -1344,9 +1345,13 @@ export const StateProvider = ({ children, initialCatalog = null }) => {
             authInitialSessionSeenRef.current = true;
           }
 
-          // TOKEN_REFRESHED changes credentials, not application data; refetching
-          // orders/clients here creates avoidable request bursts.
-          if (event === 'TOKEN_REFRESHED') return;
+          // TOKEN_REFRESHED changes credentials, not application data. Reset only
+          // auth-sensitive REST circuit breakers without refetching portal data.
+          if (event === 'TOKEN_REFRESHED') {
+            clearChatUnreadCache();
+            resetPresenceAuthBlock();
+            return;
+          }
 
           if (event === 'PASSWORD_RECOVERY') {
             setAuthModalMode('update_password');
@@ -1355,6 +1360,8 @@ export const StateProvider = ({ children, initialCatalog = null }) => {
           }
 
           if (event === 'SIGNED_OUT') {
+            clearChatUnreadCache();
+            resetPresenceAuthBlock();
             authHydrationGuardRef.current = { userId: null, hydratedAt: 0 };
             setIsAuthenticated(false);
             setAuthUser(null);
@@ -1380,6 +1387,8 @@ export const StateProvider = ({ children, initialCatalog = null }) => {
           }
 
           if (session?.user) {
+            clearChatUnreadCache();
+            resetPresenceAuthBlock();
             const lastHydration = authHydrationGuardRef.current;
             if (
               lastHydration.userId === session.user.id &&

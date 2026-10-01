@@ -146,6 +146,11 @@ const nextConfig = {
         permanent: true,
       },
       {
+        source: '/3d-puff-digitizing',
+        destination: '/services/embroidery-digitizing',
+        permanent: true,
+      },
+      {
         source: '/calculator',
         destination: '/services/embroidery-digitizing',
         permanent: true,

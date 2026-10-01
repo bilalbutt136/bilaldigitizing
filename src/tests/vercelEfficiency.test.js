@@ -20,6 +20,29 @@ test('Vercel efficiency: always-on API polling is removed from persistent UI she
   assert.equal(customerChat.includes("fetch(`/api/chat/messages") && customerChat.includes('setInterval(async'), false);
 });
 
+
+test('Vercel efficiency: push registration and unread counts are guarded against request bursts', () => {
+  const registrar = read('src/components/common/PWARegistrar.jsx');
+  const pushHook = read('src/hooks/usePushNotifications.js');
+  const pushClient = read('src/utils/pushSubscriptionClient.js');
+  const unread = read('src/services/chatUnreadService.js');
+  const nextConfig = read('next.config.js');
+
+  assert.match(registrar, /isSubscribingRef/);
+  assert.match(registrar, /canSyncPush/);
+  assert.match(registrar, /isPushSubscriptionSynced/);
+  assert.match(pushHook, /isSubscribingRef/);
+  assert.match(pushHook, /Authentication required/);
+  assert.match(pushClient, /bdigi_push_subscription_synced_v1/);
+
+  assert.match(unread, /CACHE_TTL_MS = 60_000/);
+  assert.match(unread, /DEDUPING_INTERVAL_MS = 45_000/);
+  assert.match(unread, /document\.visibilityState === 'hidden'/);
+  assert.match(unread, /authBlocked\.add\(identityKey\)/);
+  assert.match(nextConfig, /source: '\/3d-puff-digitizing'/);
+  assert.match(nextConfig, /destination: '\/services\/embroidery-digitizing'/);
+});
+
 test('Vercel efficiency: legal pages use ISR instead of per-request SSR', () => {
   for (const path of ['app/privacy/page.jsx', 'app/terms/page.jsx']) {
     const source = read(path);
