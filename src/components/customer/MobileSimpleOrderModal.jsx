@@ -288,7 +288,8 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
   const [guestEmail, setGuestEmail] = useState('');
   const [guestPassword, setGuestPassword] = useState('');
   const [guestCompany, setGuestCompany] = useState('');
-  const [_isSubmittingAuth, setIsSubmittingAuth] = useState(false);
+  const [isSubmittingAuth, setIsSubmittingAuth] = useState(false);
+  const [guestAuthRequested, setGuestAuthRequested] = useState(false);
 
   // Configuration Specs State
   const [isRush, setIsRush] = useState(false);
@@ -311,6 +312,8 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
   const [createdOrderObj, setCreatedOrderObj] = useState(null);
 
   const fileInputRef = useRef(null);
+  const guestAuthCardRef = useRef(null);
+  const guestEmailInputRef = useRef(null);
 
   const getPackagesForCategory = (catKey) => {
     const coreList = CORE_PACKAGES[catKey] || CORE_PACKAGES.embroidery;
@@ -365,6 +368,7 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
       setUploadError(null);
       setIsRush(false);
       setNotes('');
+      setGuestAuthRequested(false);
 
       // Auto-populate active promotion
       const livePromo = getActivePromotion(siteSettings?.promotions);
@@ -609,6 +613,20 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
     }
   };
 
+  const revealGuestAuth = () => {
+    setGuestAuthRequested(true);
+
+    if (typeof window !== 'undefined') {
+      window.requestAnimationFrame(() => {
+        guestAuthCardRef.current?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'center'
+        });
+        setTimeout(() => guestEmailInputRef.current?.focus(), 350);
+      });
+    }
+  };
+
   const handleGoogleAuthSuccess = async (googleUser) => {
     try {
       if (loginWithGoogle) {
@@ -617,6 +635,10 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
           setGuestEmail(res.user.email || '');
           setGuestName(res.user.name || '');
           if (showToast) showToast(`✓ Connected with Google (${res.user.email})`, 'success');
+          await handleSubmitOrder({
+            email: res.user.email,
+            name: res.user.name || res.user.user_metadata?.full_name || 'Studio Client'
+          });
           return;
         }
       }
@@ -631,7 +653,7 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
     }
   };
 
-  const handleSubmitOrder = async () => {
+  const handleSubmitOrder = async (authenticatedOverride = null) => {
     if (selectedService === 'patch' && quantity < 50) {
       if (showToast) showToast('Minimum order requirement for Custom Patches is 50 pieces.', 'error');
       setQuantity(50);
@@ -647,12 +669,13 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
     }
 
     // 1. Ensure user is authenticated or authenticate them
-    let clientEmail = (authUser?.email || currentUser?.email || '').toLowerCase().trim();
-    let clientName = authUser?.user_metadata?.full_name || authUser?.name || currentUser?.name || 'Studio Client';
+    let clientEmail = (authenticatedOverride?.email || authUser?.email || currentUser?.email || '').toLowerCase().trim();
+    let clientName = authenticatedOverride?.name || authUser?.user_metadata?.full_name || authUser?.name || currentUser?.name || 'Studio Client';
+    const hasAuthenticatedOverride = Boolean(authenticatedOverride?.email);
 
-    if (!isAuthenticated && !authUser) {
+    if (!hasAuthenticatedOverride && !isAuthenticated && !authUser) {
       if (!guestEmail.trim() || !guestPassword.trim()) {
-        if (showToast) showToast('Please sign in or create an account to finalize your order.', 'warning');
+        revealGuestAuth();
         return;
       }
 
@@ -2197,22 +2220,31 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
 
               {/* Guest Authentication Card (Google & Email) */}
               {!isAuthenticated && !authUser && (
-                <div style={{
+                <div
+                  ref={guestAuthCardRef}
+                  style={{
                   background: isDark ? 'var(--color-subtle, #1e293b)' : '#ffffff',
-                  border: isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid #cbd5e1',
+                  border: guestAuthRequested
+                    ? '2px solid #059669'
+                    : (isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid #cbd5e1'),
                   borderRadius: '16px',
                   padding: '1rem',
                   display: 'flex',
                   flexDirection: 'column',
-                  gap: '0.75rem'
+                  gap: '0.75rem',
+                  boxShadow: guestAuthRequested ? '0 0 0 4px rgba(5, 150, 105, 0.10)' : 'none'
                 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div>
                       <div style={{ fontSize: '0.88rem', fontWeight: 900, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a' }}>
-                        Studio Account / Sign In
+                        {guestAuthRequested
+                          ? 'Create an account or sign in to place this order'
+                          : 'Studio Account / Sign In'}
                       </div>
-                      <div style={{ fontSize: '0.7rem', color: isDark ? 'var(--color-text-muted, #94a3b8)' : '#64748b' }}>
-                        Sign in to track orders and download live deliverables.
+                      <div style={{ fontSize: '0.7rem', color: isDark ? 'var(--color-text-muted, #94a3b8)' : '#64748b', lineHeight: 1.45 }}>
+                        {guestAuthRequested
+                          ? 'Your order and artwork stay saved. Authenticate below and this same order will continue immediately.'
+                          : 'Sign in to track orders and download live deliverables.'}
                       </div>
                     </div>
                     <div style={{ display: 'flex', gap: '0.3rem' }}>
@@ -2290,6 +2322,7 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
                       />
                     )}
                     <input
+                      ref={guestEmailInputRef}
                       type="email"
                       value={guestEmail}
                       onChange={(e) => setGuestEmail(e.target.value)}
@@ -2496,7 +2529,7 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
 
             <button
               type="button"
-              disabled={isSubmitting}
+              disabled={isSubmitting || isSubmittingAuth}
               onClick={() => {
                 if (step === 1) {
                   setStep(2);
@@ -2533,7 +2566,7 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
                 display: 'flex',
                 alignItems: 'center',
                 gap: '0.45rem',
-                cursor: isSubmitting ? 'not-allowed' : 'pointer',
+                cursor: (isSubmitting || isSubmittingAuth) ? 'not-allowed' : 'pointer',
                 boxShadow: '0 4px 14px rgba(5, 150, 105, 0.3)',
                 flexShrink: 0
               }}
@@ -2565,9 +2598,15 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
                   Next: Review Order <ArrowRight size={16} />
                 </>
               ) : (
-                <>
-                  Confirm & Place Order (${totalPrice.toFixed(2)}) <Check size={16} />
-                </>
+                !isAuthenticated && !authUser ? (
+                  <>
+                    {guestAuthMode === 'signup' ? 'Create Account' : 'Sign In'} & Place Order (${totalPrice.toFixed(2)}) <Check size={16} />
+                  </>
+                ) : (
+                  <>
+                    Confirm & Place Order (${totalPrice.toFixed(2)}) <Check size={16} />
+                  </>
+                )
               )}
             </button>
           </div>

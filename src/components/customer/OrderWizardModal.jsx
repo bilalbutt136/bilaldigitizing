@@ -361,11 +361,14 @@ export const OrderWizardModal = () => {
   const [guestCompany, setGuestCompany] = useState('');
   const [guestAuthMode, setGuestAuthMode] = useState('signup');
   const [isSubmittingAuth, setIsSubmittingAuth] = useState(false);
+  const [guestAuthRequested, setGuestAuthRequested] = useState(false);
 
   // Order Submission State
   const [isSubmittingOrder, setIsSubmittingOrder] = useState(false);
 
   const fileInputRef = useRef(null);
+  const guestAuthCardRef = useRef(null);
+  const guestEmailInputRef = useRef(null);
 
   const getPackagesForCategory = (catKey) => {
     const coreList = CORE_PACKAGES[catKey] || CORE_PACKAGES.embroidery;
@@ -465,6 +468,7 @@ export const OrderWizardModal = () => {
       setNotes('');
       setOrderTitle('');
       setAppliedPromo(null);
+      setGuestAuthRequested(false);
 
       // Check active live promotion from Supabase siteSettings
       const livePromo = getActivePromotion(siteSettings?.promotions);
@@ -715,6 +719,20 @@ export const OrderWizardModal = () => {
     if (showToast) showToast(`Promo ${clean} applied! (${getServiceDisplayName(selectedService)}: ${pct}% OFF)`, 'success');
   };
 
+  const revealGuestAuth = () => {
+    setGuestAuthRequested(true);
+
+    if (typeof window !== 'undefined') {
+      window.requestAnimationFrame(() => {
+        guestAuthCardRef.current?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'center'
+        });
+        setTimeout(() => guestEmailInputRef.current?.focus(), 350);
+      });
+    }
+  };
+
   const handleGoogleAuthSuccess = async (googleUser) => {
     try {
       if (loginWithGoogle) {
@@ -723,6 +741,10 @@ export const OrderWizardModal = () => {
           setGuestEmail(res.user.email || '');
           setGuestName(res.user.name || '');
           if (showToast) showToast(`✓ Connected with Google (${res.user.email})`, 'success');
+          await handleSubmitOrder({
+            email: res.user.email,
+            name: res.user.name || res.user.user_metadata?.full_name || 'Studio Client'
+          });
           return;
         }
       }
@@ -737,7 +759,7 @@ export const OrderWizardModal = () => {
     }
   };
 
-  const handleSubmitOrder = async () => {
+  const handleSubmitOrder = async (authenticatedOverride = null) => {
     if (selectedService === 'patch' && quantity < 50) {
       if (showToast) showToast('Minimum order requirement for Custom Patches is 50 pieces.', 'error');
       setQuantity(50);
@@ -747,12 +769,13 @@ export const OrderWizardModal = () => {
     }
 
     // 1. Ensure user is authenticated or authenticate them
-    let clientEmail = (authUser?.email || currentUser?.email || '').toLowerCase().trim();
-    let clientName = authUser?.user_metadata?.full_name || authUser?.name || currentUser?.name || 'Studio Client';
+    let clientEmail = (authenticatedOverride?.email || authUser?.email || currentUser?.email || '').toLowerCase().trim();
+    let clientName = authenticatedOverride?.name || authUser?.user_metadata?.full_name || authUser?.name || currentUser?.name || 'Studio Client';
+    const hasAuthenticatedOverride = Boolean(authenticatedOverride?.email);
 
-    if (!isAuthenticated && !authUser) {
+    if (!hasAuthenticatedOverride && !isAuthenticated && !authUser) {
       if (!guestEmail.trim() || !guestPassword.trim()) {
-        showToast('Please sign in or create an account to finalize your order.', 'warning');
+        revealGuestAuth();
         return;
       }
 
@@ -2359,20 +2382,34 @@ export const OrderWizardModal = () => {
 
                 {/* Inline Auth for Guest Users */}
                 {!isAuthenticated && !authUser && (
-                  <div style={{
+                  <div
+                    ref={guestAuthCardRef}
+                    style={{
                     background: 'var(--color-subtle, #ffffff)',
-                    border: '1.5px solid var(--color-border, #cbd5e1)',
+                    border: guestAuthRequested
+                      ? '2px solid #059669'
+                      : '1.5px solid var(--color-border, #cbd5e1)',
                     borderRadius: '16px',
                     padding: '1.15rem',
                     display: 'flex',
                     flexDirection: 'column',
-                    gap: '0.75rem'
+                    gap: '0.75rem',
+                    boxShadow: guestAuthRequested ? '0 0 0 4px rgba(5, 150, 105, 0.10)' : 'none'
                   }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <div style={{ fontSize: '0.88rem', fontWeight: 900, color: 'var(--color-text-primary, #0f172a)' }}>
-                        Studio Account Setup / Sign In
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.75rem', flexWrap: 'wrap' }}>
+                      <div style={{ minWidth: 0, flex: '1 1 240px' }}>
+                        <div style={{ fontSize: '0.88rem', fontWeight: 900, color: 'var(--color-text-primary, #0f172a)' }}>
+                          {guestAuthRequested
+                            ? 'Create an account or sign in to place this order'
+                            : 'Studio Account Setup / Sign In'}
+                        </div>
+                        {guestAuthRequested && (
+                          <div style={{ fontSize: '0.72rem', color: 'var(--color-text-muted, #64748b)', marginTop: '0.2rem', lineHeight: 1.45 }}>
+                            Your order details and uploaded artwork are saved here. Authenticate below and this same order will continue immediately.
+                          </div>
+                        )}
                       </div>
-                      <div style={{ display: 'flex', gap: '0.35rem' }}>
+                      <div style={{ display: 'flex', gap: '0.35rem', flexShrink: 0 }}>
                         <button
                           type="button"
                           onClick={() => setGuestAuthMode('signup')}
@@ -2447,6 +2484,7 @@ export const OrderWizardModal = () => {
                         />
                       )}
                       <input
+                        ref={guestEmailInputRef}
                         type="email"
                         value={guestEmail}
                         onChange={(e) => setGuestEmail(e.target.value)}
@@ -2639,9 +2677,15 @@ export const OrderWizardModal = () => {
                     Next: Review & Pay <ArrowRight size={16} />
                   </>
                 ) : (
-                  <>
-                    🚀 Confirm & Place Order (${totalPrice.toFixed(2)}) <Check size={16} />
-                  </>
+                  !isAuthenticated && !authUser ? (
+                    <>
+                      {guestAuthMode === 'signup' ? 'Create Account' : 'Sign In'} & Place Order (${totalPrice.toFixed(2)}) <Check size={16} />
+                    </>
+                  ) : (
+                    <>
+                      🚀 Confirm & Place Order (${totalPrice.toFixed(2)}) <Check size={16} />
+                    </>
+                  )
                 )}
               </button>
             </div>
