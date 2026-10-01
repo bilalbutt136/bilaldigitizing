@@ -25,6 +25,8 @@ export function AdminPortalClient() {
   const [isMounted, setIsMounted] = useState(false);
   const [mfaVerified, setMfaVerified] = useState(false);
   const [isCheckingMfa, setIsCheckingMfa] = useState(true);
+  const [isMobileViewport, setIsMobileViewport] = useState(false);
+  const [viewportReady, setViewportReady] = useState(false);
   const {
     currentView,
     setCurrentView,
@@ -38,12 +40,27 @@ export function AdminPortalClient() {
 
   useEffect(() => {
     setIsMounted(true);
+    const media = window.matchMedia('(max-width: 900px)');
+    const syncViewport = () => {
+      setIsMobileViewport(media.matches);
+      setViewportReady(true);
+    };
+    syncViewport();
+    media.addEventListener?.('change', syncViewport);
+    return () => media.removeEventListener?.('change', syncViewport);
   }, []);
 
   useEffect(() => {
-    if (!isMounted || !isAuthInitialized) return;
+    if (!isMounted || !isAuthInitialized || !viewportReady) return;
 
     const isMasterAdmin = isAuthenticated && authUser?.role === 'admin';
+
+    if (isMasterAdmin && isMobileViewport) {
+      setMfaVerified(false);
+      setIsCheckingMfa(false);
+      router.replace('/secure-admin-login?mobile=1');
+      return;
+    }
 
     if (!isMasterAdmin) {
       setMfaVerified(false);
@@ -78,7 +95,7 @@ export function AdminPortalClient() {
     return () => {
       active = false;
     };
-  }, [isMounted, isAuthenticated, isAuthInitialized, authUser?.role, currentView, setCurrentView, router]);
+  }, [isMounted, isAuthenticated, isAuthInitialized, authUser?.role, currentView, setCurrentView, router, viewportReady, isMobileViewport]);
 
   useEffect(() => {
     if (!isMounted || !mfaVerified || authUser?.role !== 'admin') return;
@@ -142,7 +159,7 @@ export function AdminPortalClient() {
     };
   }, [isMounted, mfaVerified, authUser?.role, siteSettings?.sessionTimeout, logout, router]);
 
-  if (!isMounted || (!isAuthInitialized && !authUser) || isCheckingMfa) {
+  if (!isMounted || !viewportReady || (!isAuthInitialized && !authUser) || isCheckingMfa) {
     return (
       <div style={{ minHeight: '80vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0f172a', color: '#ffffff' }}>
         <div style={{ textAlign: 'center' }}>

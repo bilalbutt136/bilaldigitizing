@@ -52,9 +52,36 @@ test('client portal refuses administrator accounts on web and installed mobile a
   assert.match(client, /navigate\('\/admin-portal', \{ replace: true \}\)/);
   assert.match(client, /if \(isAdminAccount\)/);
   assert.match(home, /shouldRenderApp && isAdminAccount/);
-  assert.match(home, /window\.location\.replace\('\/admin-portal'\)/);
+  assert.match(home, /shouldRenderApp \? '\/secure-admin-login\?mobile=1' : '\/admin-portal'/);
   assert.match(state, /Administrator accounts use the Admin Portal, not the Client Portal/);
   assert.match(state, /Administrator accounts cannot enter the Client Portal/);
+});
+
+test('mobile admin uses a compact operations console while desktop keeps the full portal', () => {
+  const login = read('src/components/auth/SecureAdminLogin.jsx');
+  const adminPortal = read('app/admin-portal/AdminPortalClient.jsx');
+  const mobile = read('src/components/admin/MobileAdminConsole.jsx');
+  const chat = read('src/components/admin/AdminChatInbox.jsx');
+
+  assert.match(login, /matchMedia\('\(max-width: 900px\)'\)/);
+  assert.match(login, /setMfaStage\('mobile-console'\)/);
+  assert.match(login, /return <MobileAdminConsole \/>/);
+  assert.match(login, /navigate\('\/admin-portal', \{ replace: true \}\)/);
+
+  assert.match(adminPortal, /isMasterAdmin && isMobileViewport/);
+  assert.match(adminPortal, /router\.replace\('\/secure-admin-login\?mobile=1'\)/);
+
+  assert.match(mobile, /Orders, chat, alerts & deliveries only/);
+  assert.match(mobile, /Full settings, CMS, staff tools and reporting stay on desktop/);
+  assert.match(mobile, /AdminChatInbox compactMobile/);
+  assert.match(mobile, /Open \/ Deliver/);
+  assert.match(mobile, /updateOrderStatus\?\.\(order\.id, 'in_progress'/);
+  assert.match(mobile, /markAllNotificationsAsRead/);
+  assert.match(mobile, /mobile-admin-console-active/);
+
+  assert.match(chat, /compactMobile = false/);
+  assert.match(chat, /compactMobile && activeConversationId \? 'none' : 'flex'/);
+  assert.match(chat, /Back to conversations/);
 });
 
 test('admin sessions enforce idle reauthentication and database RLS requires aal2', () => {

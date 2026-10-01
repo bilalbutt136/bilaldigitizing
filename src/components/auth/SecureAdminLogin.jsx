@@ -21,6 +21,7 @@ import {
   getAdminMfaStatus,
   verifyAdminMfaCode
 } from '../../services/adminMfaService';
+import MobileAdminConsole from '../admin/MobileAdminConsole';
 
 export const SecureAdminLogin = () => {
   const navigate = useNavigate();
@@ -29,7 +30,8 @@ export const SecureAdminLogin = () => {
     showToast,
     isAuthInitialized,
     isAuthenticated,
-    authUser
+    authUser,
+    setCurrentView
   } = useAppState();
 
   const [adminEmail, setAdminEmail] = useState('');
@@ -41,7 +43,33 @@ export const SecureAdminLogin = () => {
   const [mfaCode, setMfaCode] = useState('');
   const [mfaEnrollment, setMfaEnrollment] = useState(null);
   const [copiedSecret, setCopiedSecret] = useState(false);
+  const [isMobileViewport, setIsMobileViewport] = useState(false);
+  const [viewportReady, setViewportReady] = useState(false);
   const preparationRef = useRef(null);
+
+  React.useEffect(() => {
+    if (typeof window === 'undefined') return undefined;
+
+    const media = window.matchMedia('(max-width: 900px)');
+    const syncViewport = () => {
+      setIsMobileViewport(media.matches);
+      setViewportReady(true);
+    };
+
+    syncViewport();
+    media.addEventListener?.('change', syncViewport);
+    return () => media.removeEventListener?.('change', syncViewport);
+  }, []);
+
+  const openVerifiedAdminArea = useCallback(() => {
+    if (isMobileViewport) {
+      setCurrentView?.('admin');
+      setMfaStage('mobile-console');
+      return;
+    }
+
+    navigate('/admin-portal', { replace: true });
+  }, [isMobileViewport, navigate, setCurrentView]);
 
   const prepareAdminMfa = useCallback(async () => {
     if (preparationRef.current) return preparationRef.current;
@@ -59,7 +87,7 @@ export const SecureAdminLogin = () => {
       }
 
       if (status.currentLevel === 'aal2') {
-        navigate('/admin-portal', { replace: true });
+        openVerifiedAdminArea();
         return true;
       }
 
@@ -92,14 +120,14 @@ export const SecureAdminLogin = () => {
       preparationRef.current = null;
       setIsLoading(false);
     }
-  }, [navigate]);
+  }, [openVerifiedAdminArea]);
 
   React.useEffect(() => {
-    if (!isAuthInitialized) return;
+    if (!isAuthInitialized || !viewportReady) return;
     if (isAuthenticated && authUser?.role === 'admin') {
       prepareAdminMfa();
     }
-  }, [isAuthInitialized, isAuthenticated, authUser?.role, prepareAdminMfa]);
+  }, [isAuthInitialized, isAuthenticated, authUser?.role, viewportReady, prepareAdminMfa]);
 
   const handleSubmit = async (e) => {
     e?.preventDefault?.();
@@ -152,7 +180,7 @@ export const SecureAdminLogin = () => {
     }
 
     showToast('Administrator multi-factor verification complete.', 'success');
-    navigate('/admin-portal', { replace: true });
+    openVerifiedAdminArea();
   };
 
   const handleCopySecret = async () => {
@@ -173,7 +201,7 @@ export const SecureAdminLogin = () => {
     ? `data:image/svg+xml;charset=utf-8,${encodeURIComponent(qrCode)}`
     : qrCode;
 
-  if (!isAuthInitialized || mfaStage === 'checking') {
+  if (!isAuthInitialized || !viewportReady || mfaStage === 'checking') {
     return (
       <div style={{
         minHeight: 'calc(100vh - 140px)',
@@ -191,6 +219,10 @@ export const SecureAdminLogin = () => {
         </div>
       </div>
     );
+  }
+
+  if (mfaStage === 'mobile-console') {
+    return <MobileAdminConsole />;
   }
 
   const isMfaStep = mfaStage === 'challenge' || mfaStage === 'enroll';

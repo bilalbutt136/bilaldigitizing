@@ -32,7 +32,7 @@ describe('Login Stability & Mobile Order Tracking Regression', () => {
       state,
       /Hard refresh can briefly report no session before Supabase emits its[\s\S]*authoritative INITIAL_SESSION event/
     );
-    assert.match(portal, /if \(!isMounted \|\| !isAuthInitialized\) return;/);
+    assert.equal(portal.includes("if (!isMounted || !isAuthInitialized || !viewportReady) return;"), true);
 
     assert.match(adminLogin, /isAuthInitialized/);
     assert.match(adminLogin, /isAuthenticated && authUser\?\.role === 'admin'/);

@@ -22,8 +22,11 @@ export default function HomePageClient({ initialAppMode = false, initialAppTab =
   useEffect(() => {
     if (isAdminAccount) {
       if (currentView !== 'admin') setCurrentView('admin');
-      if (typeof window !== 'undefined' && window.location.pathname !== '/admin-portal') {
-        window.location.replace('/admin-portal');
+      if (typeof window !== 'undefined') {
+        const destination = shouldRenderApp ? '/secure-admin-login?mobile=1' : '/admin-portal';
+        if (window.location.pathname !== destination.split('?')[0]) {
+          window.location.replace(destination);
+        }
       }
       return;
     }
@@ -31,7 +34,7 @@ export default function HomePageClient({ initialAppMode = false, initialAppTab =
     if (currentView !== 'public') {
       setCurrentView('public');
     }
-  }, [isAdminAccount, currentView, setCurrentView]);
+  }, [isAdminAccount, currentView, setCurrentView, shouldRenderApp]);
 
   if (shouldRenderApp && isAdminAccount) {
     return (

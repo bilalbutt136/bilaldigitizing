@@ -13,6 +13,7 @@ import { fetchChatUnreadCounts } from '../../services/chatUnreadService';
 import {
   Search,
   ChevronDown,
+  ChevronLeft,
   Star,
   Paperclip,
   Smile,
@@ -68,7 +69,7 @@ const formatChatDateHeader = (dateStr) => {
   }
 };
 
-export default function AdminChatInbox({ initialChannel = 'inbox' }) {
+export default function AdminChatInbox({ initialChannel = 'inbox', compactMobile = false }) {
   const { authUser, orders: _orders = [] } = useAppState();
 
   const [conversations, setConversations] = useState([]);
@@ -874,8 +875,12 @@ export default function AdminChatInbox({ initialChannel = 'inbox' }) {
   };
 
   return (
-    <div style={{
+    <div
+      className={compactMobile ? 'admin-chat-mobile' : undefined}
+      style={{
       display: 'flex',
+      flexDirection: compactMobile ? 'column' : 'row',
+      width: '100%',
       height: '100%',
       maxHeight: '100%',
       minHeight: 0,
@@ -914,10 +919,12 @@ export default function AdminChatInbox({ initialChannel = 'inbox' }) {
       {/* ============================================================ */}
       {/* LEFT SIDEBAR: THREADS LIST (Exact match to Fiverr Reference)  */}
       {/* ============================================================ */}
-      <div style={{
-        width: '320px',
-        borderRight: '1px solid #e2e8f0',
-        display: 'flex',
+      <div
+        className="admin-chat-thread-pane"
+        style={{
+        width: compactMobile ? '100%' : '320px',
+        borderRight: compactMobile ? 'none' : '1px solid #e2e8f0',
+        display: compactMobile && activeConversationId ? 'none' : 'flex',
         flexDirection: 'column',
         background: '#ffffff',
         flexShrink: 0,
@@ -1307,9 +1314,12 @@ export default function AdminChatInbox({ initialChannel = 'inbox' }) {
       {/* ============================================================ */}
       {/* RIGHT PANE: ACTIVE CONVERSATION (Exact match to Reference)   */}
       {/* ============================================================ */}
-      <div style={{
+      <div
+        className="admin-chat-message-pane"
+        style={{
         flex: 1,
-        display: 'flex',
+        width: '100%',
+        display: compactMobile && !activeConversationId ? 'none' : 'flex',
         flexDirection: 'column',
         background: '#ffffff',
         minWidth: 0,
@@ -1321,8 +1331,10 @@ export default function AdminChatInbox({ initialChannel = 'inbox' }) {
         {activeConversation ? (
           <>
             {/* TOP HEADER: CLIENT INFO & ACTIONS */}
-            <div style={{
-              padding: '0.85rem 1.5rem',
+            <div
+              className="admin-chat-conversation-header"
+              style={{
+              padding: compactMobile ? '0.65rem 0.7rem' : '0.85rem 1.5rem',
               borderBottom: '1px solid #e2e8f0',
               display: 'flex',
               alignItems: 'center',
@@ -1330,8 +1342,32 @@ export default function AdminChatInbox({ initialChannel = 'inbox' }) {
               background: '#ffffff',
               flexShrink: 0
             }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
-                <div style={{ position: 'relative' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: compactMobile ? '0.5rem' : '0.85rem', minWidth: 0 }}>
+                {compactMobile && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setActiveConversationId(null);
+                      setMessages([]);
+                    }}
+                    aria-label="Back to conversations"
+                    style={{
+                      width: '34px',
+                      height: '34px',
+                      borderRadius: '9px',
+                      border: '1px solid #e2e8f0',
+                      background: '#f8fafc',
+                      color: '#334155',
+                      display: 'grid',
+                      placeItems: 'center',
+                      flexShrink: 0,
+                      cursor: 'pointer'
+                    }}
+                  >
+                    <ChevronLeft size={18} />
+                  </button>
+                )}
+                <div style={{ position: 'relative', flexShrink: 0 }}>
                   <div style={{
                     width: '46px',
                     height: '46px',
@@ -1364,8 +1400,8 @@ export default function AdminChatInbox({ initialChannel = 'inbox' }) {
                   )}
                 </div>
 
-                <div>
-                  <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#0f172a', margin: '0 0 0.15rem 0', lineHeight: 1.2 }}>
+                <div style={{ minWidth: 0 }}>
+                  <h3 style={{ fontSize: compactMobile ? '0.92rem' : '1.05rem', fontWeight: 800, color: '#0f172a', margin: '0 0 0.15rem 0', lineHeight: 1.2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {activeConversation.client_name || activeConversation.client_email?.split('@')[0]}
                   </h3>
                   <div style={{ fontSize: '0.78rem', color: '#64748b' }}>
@@ -1384,7 +1420,9 @@ export default function AdminChatInbox({ initialChannel = 'inbox' }) {
               </div>
 
               {/* ACTION ICONS: SOUND, TAG, STAR, REFRESH */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: compactMobile ? '0.2rem' : '0.65rem', flexShrink: 0 }}>
+                {!compactMobile && (
+                  <>
                 <button
                   type="button"
                   onClick={handleToggleSound}
@@ -1423,6 +1461,8 @@ export default function AdminChatInbox({ initialChannel = 'inbox' }) {
                 >
                   <Tag size={19} />
                 </button>
+                  </>
+                )}
                 <button
                   type="button"
                   onClick={() => fetchActiveMessages(activeConversation.id)}
@@ -1437,7 +1477,7 @@ export default function AdminChatInbox({ initialChannel = 'inbox' }) {
             {/* NAVIGATION TABS: MESSAGES | SAVED (Exact match to Reference) */}
             <div style={{
               display: 'flex',
-              padding: '0 1.5rem',
+              padding: compactMobile ? '0 0.7rem' : '0 1.5rem',
               borderBottom: '1px solid #e2e8f0',
               background: '#ffffff',
               flexShrink: 0
@@ -2029,7 +2069,7 @@ export default function AdminChatInbox({ initialChannel = 'inbox' }) {
                 {/* BOTTOM COMPOSER (LOCKED AT BOTTOM, NEVER PUSHED OFF SCREEN)  */}
                 {/* ============================================================ */}
                 <div style={{
-                  padding: '0.85rem 1.5rem',
+                  padding: compactMobile ? '0.7rem' : '0.85rem 1.5rem',
                   borderTop: '1px solid #e2e8f0',
                   background: '#ffffff',
                   flexShrink: 0
