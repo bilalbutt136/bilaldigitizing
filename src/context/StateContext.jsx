@@ -1822,7 +1822,13 @@ export const StateProvider = ({ children, initialCatalog = null }) => {
         return;
       }
       if (targetView === 'customer') {
-        if (isAuthed) {
+        if (isAuthed && authUser?.role === 'admin') {
+          showToast('Administrator accounts use the Admin Portal, not the Client Portal.', 'info');
+          setCurrentView('admin');
+          if (typeof window !== 'undefined') {
+            window.location.href = '/admin-portal';
+          }
+        } else if (isAuthed) {
           setCurrentView('customer');
           if (triggerOrderWizard) {
             setMobileTab('home');
@@ -1859,7 +1865,13 @@ export const StateProvider = ({ children, initialCatalog = null }) => {
     }
 
     if (targetView === 'customer') {
-      if (isAuthed) {
+      if (isAuthed && authUser?.role === 'admin') {
+        showToast('Administrator accounts cannot enter the Client Portal.', 'info');
+        setCurrentView('admin');
+        if (typeof window !== 'undefined') {
+          window.location.href = '/admin-portal';
+        }
+      } else if (isAuthed) {
         setCurrentView('customer');
         if (triggerOrderWizard) {
           openOrderWizard(initialData);

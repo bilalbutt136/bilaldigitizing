@@ -13,15 +13,33 @@ import { BDigitizingMobileApp } from '../mobile/BDigitizingMobileApp';
 import { normalizeCategory } from '../../utils/categoryUtils';
 
 export default function HomePageClient({ initialAppMode = false, initialAppTab = 'home' }) {
-  const { currentView, setCurrentView, activeHomeServiceTab, mobileMode } = useAppState();
+  const { currentView, setCurrentView, activeHomeServiceTab, mobileMode, isAuthInitialized, isAuthenticated, authUser } = useAppState();
   const activeTab = normalizeCategory(activeHomeServiceTab || 'all');
   const shouldRenderApp = initialAppMode || mobileMode === 'app';
 
+  const isAdminAccount = Boolean(isAuthInitialized && isAuthenticated && authUser?.role === 'admin');
+
   useEffect(() => {
+    if (isAdminAccount) {
+      if (currentView !== 'admin') setCurrentView('admin');
+      if (typeof window !== 'undefined' && window.location.pathname !== '/admin-portal') {
+        window.location.replace('/admin-portal');
+      }
+      return;
+    }
+
     if (currentView !== 'public') {
       setCurrentView('public');
     }
-  }, [currentView, setCurrentView]);
+  }, [isAdminAccount, currentView, setCurrentView]);
+
+  if (shouldRenderApp && isAdminAccount) {
+    return (
+      <div className="mobile-app-wrapper" style={{ width: '100%', minHeight: '100svh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--color-background, #ffffff)' }}>
+        <div style={{ color: 'var(--text-muted)', fontWeight: 700 }}>Opening secure Admin Portal...</div>
+      </div>
+    );
+  }
 
   if (shouldRenderApp) {
     return (

@@ -20,6 +20,7 @@ export function ClientPortalClient() {
   } = useAppState();
 
   const isApp = mobileMode === 'app';
+  const isAdminAccount = Boolean(isAuthenticated && authUser?.role === 'admin');
 
   // Once backend auth resolves, strictly enforce authenticated backend session (Rule 3: Auth Enforcement)
   const isUserLoggedIn = isAuthInitialized
@@ -28,6 +29,14 @@ export function ClientPortalClient() {
 
   useEffect(() => {
     if (!isAuthInitialized) return;
+
+    // Administrator accounts are never allowed to enter the client workspace.
+    // Route them to the MFA-protected admin portal on desktop and installed PWA alike.
+    if (isAdminAccount) {
+      if (currentView !== 'admin') setCurrentView('admin');
+      navigate('/admin-portal', { replace: true });
+      return;
+    }
 
     // In mobile app mode (standalone installed app), BDigitizingMobileApp handles its own guest & auth tabs natively
     if (isApp) {
@@ -46,7 +55,23 @@ export function ClientPortalClient() {
         document.cookie = 'bdigi_auth=true; path=/; max-age=31536000; SameSite=Lax';
       }
     }
-  }, [isAuthInitialized, isUserLoggedIn, currentView, setCurrentView, navigate, isApp]);
+  }, [isAuthInitialized, isUserLoggedIn, isAdminAccount, currentView, setCurrentView, navigate, isApp]);
+
+  if (isAdminAccount) {
+    return (
+      <div style={{
+        minHeight: '60vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '2rem'
+      }}>
+        <div style={{ textAlign: 'center', color: 'var(--text-muted)', fontWeight: 700 }}>
+          Redirecting administrator account to the secure admin portal...
+        </div>
+      </div>
+    );
+  }
 
   // If in Standalone Installed App Mode, render the 5-tab mobile app
   if (isApp) {

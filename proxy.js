@@ -1,9 +1,10 @@
 import { NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 
-const PROTECTED_PREFIXES = ['/admin', '/admin-portal', '/worker', '/worker-portal', '/portal'];
 const ADMIN_PREFIXES = ['/admin', '/admin-portal'];
+const CLIENT_PREFIXES = ['/client', '/client-portal'];
 const WORKER_PREFIXES = ['/worker', '/worker-portal', '/portal'];
+const PROTECTED_PREFIXES = [...ADMIN_PREFIXES, ...CLIENT_PREFIXES, ...WORKER_PREFIXES];
 
 const AUTH_VERIFY_TIMEOUT_MS = 5000;
 const ROLE_LOOKUP_TIMEOUT_MS = 3500;
@@ -81,6 +82,16 @@ function getLoginUrl(request, pathname, isWorkerRoute) {
   loginUrl.search = '';
   loginUrl.searchParams.set('redirect', pathname);
   return loginUrl;
+}
+
+function getAdminMfaUrl(request) {
+  const mfaUrl = request.nextUrl.clone();
+  const originalTarget = `${request.nextUrl.pathname}${request.nextUrl.search || ''}`;
+  mfaUrl.pathname = '/secure-admin-login';
+  mfaUrl.search = '';
+  mfaUrl.searchParams.set('mfa', 'required');
+  mfaUrl.searchParams.set('redirect', originalTarget);
+  return mfaUrl;
 }
 
 function copyResponseCookies(sourceResponse, targetResponse) {
@@ -181,8 +192,13 @@ export async function proxy(request) {
     const isAdminRoute = ADMIN_PREFIXES.some(
       prefix => pathname === prefix || pathname.startsWith(`${prefix}/`)
     );
+    const isClientRoute = CLIENT_PREFIXES.some(
+      prefix => pathname === prefix || pathname.startsWith(`${prefix}/`)
+    );
 
-    if (isAdminRoute && !hasTrustedAdminMetadata(user)) {
+    let isAdminIdentity = hasTrustedAdminMetadata(user);
+
+    if (!isAdminIdentity && (isAdminRoute || isClientRoute)) {
       const adminResult = await withTimeout(
         supabase
           .from('admins')
@@ -196,12 +212,40 @@ export async function proxy(request) {
       if (adminResult?.error) {
         throw new Error('Admin authorization lookup failed.');
       }
+      isAdminIdentity = Boolean(adminResult?.data);
+    }
 
-      if (!adminResult?.data) {
+    // Admin and client workspaces are mutually exclusive. An administrator
+    // account can never fall through into the customer portal.
+    if (isClientRoute && isAdminIdentity) {
+      const adminUrl = request.nextUrl.clone();
+      adminUrl.pathname = '/admin-portal';
+      adminUrl.search = '';
+      const redirectResponse = NextResponse.redirect(adminUrl);
+      return copyResponseCookies(supabaseResponse, redirectResponse);
+    }
+
+    if (isAdminRoute) {
+      if (!isAdminIdentity) {
         const clientUrl = request.nextUrl.clone();
         clientUrl.pathname = '/client-portal';
         clientUrl.search = '';
         const redirectResponse = NextResponse.redirect(clientUrl);
+        return copyResponseCookies(supabaseResponse, redirectResponse);
+      }
+
+      const aalResult = await withTimeout(
+        supabase.auth.mfa.getAuthenticatorAssuranceLevel(),
+        AUTH_VERIFY_TIMEOUT_MS,
+        'Admin MFA assurance verification'
+      );
+
+      if (aalResult?.error) {
+        throw new Error('Admin MFA assurance verification failed.');
+      }
+
+      if (aalResult?.data?.currentLevel !== 'aal2') {
+        const redirectResponse = NextResponse.redirect(getAdminMfaUrl(request), 307);
         return copyResponseCookies(supabaseResponse, redirectResponse);
       }
     }

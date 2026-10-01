@@ -9,7 +9,7 @@ async function GET_impl(request) {
   if (burstResponse) return burstResponse;
 
   try {
-    const { user, isAdmin, isWorker } = await getServerAuthUser(request);
+    const { user, isAdmin, isAdminIdentity, isWorker } = await getServerAuthUser(request);
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -26,7 +26,7 @@ async function GET_impl(request) {
     const supabase = createAdminClient();
 
     let role = isSelf
-      ? (isAdmin ? 'admin' : (isWorker ? 'worker' : 'customer'))
+      ? (isAdminIdentity ? 'admin' : (isWorker ? 'worker' : 'customer'))
       : 'customer';
 
     // Admin lookups for another account still use the same trusted one-RPC role resolver.

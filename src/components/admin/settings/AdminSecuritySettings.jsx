@@ -36,7 +36,7 @@ export const AdminSecuritySettings = () => {
   } = useAppState();
 
   const [adminEmail, setAdminEmail] = useState(authUser?.email || '');
-  const [sessionTimeout, setSessionTimeout] = useState(siteSettings?.sessionTimeout || '24h');
+  const [sessionTimeout, setSessionTimeout] = useState(siteSettings?.sessionTimeout || '30m');
   const [maintenanceMode, setMaintenanceMode] = useState(siteSettings?.maintenanceMode === true);
   const [maintenanceNotice, setMaintenanceNotice] = useState(siteSettings?.maintenanceNotice || 'We are currently performing scheduled maintenance. The studio will be back online shortly.');
   const [isSaving, setIsSaving] = useState(false);
@@ -439,7 +439,7 @@ export const AdminSecuritySettings = () => {
                   <option value="30m">30 Minutes</option>
                   <option value="1h">1 Hour</option>
                   <option value="4h">4 Hours</option>
-                  <option value="24h">24 Hours (Default)</option>
+                  <option value="24h">24 Hours</option>
                   <option value="7d">7 Days</option>
                 </select>
                 <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginTop: '0.35rem', display: 'block' }}>

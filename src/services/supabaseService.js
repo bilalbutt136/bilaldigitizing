@@ -1081,7 +1081,7 @@ export async function verifyAdminSession(email, options = {}) {
         body: JSON.stringify({ email })
       });
       const json = await res.json();
-      return { success: Boolean(json?.success), isAdmin: Boolean(json?.isAdmin), admin: json?.admin || null };
+      return { success: Boolean(json?.success), isAdmin: Boolean(json?.isAdmin), mfaVerified: Boolean(json?.mfaVerified), authLevel: json?.authLevel || 'aal1', mfaRequired: Boolean(json?.mfaRequired), admin: json?.admin || null };
     }, { ttlMs: 60_000, force: Boolean(options?.force) });
   } catch (err) {
     console.warn('Admin session verification exception:', err);

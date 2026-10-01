@@ -5,6 +5,18 @@ import { createAdminClient } from './admin';
 
 const requestAuthCache = new WeakMap();
 
+function getVerifiedJwtAal(token) {
+  if (!token) return 'aal1';
+  try {
+    const parts = String(token).split('.');
+    if (parts.length < 2) return 'aal1';
+    const payload = JSON.parse(Buffer.from(parts[1], 'base64url').toString('utf8'));
+    return payload?.aal === 'aal2' ? 'aal2' : 'aal1';
+  } catch {
+    return 'aal1';
+  }
+}
+
 function getConfiguredAdminEmails() {
   return [
     process.env.MASTER_ADMIN_EMAIL,
@@ -146,6 +158,7 @@ export async function resolveTrustedUserAccess(user, dbClientOverride = null) {
 async function getServerAuthUserUncached(request) {
   try {
     let user = null;
+    let authLevel = 'aal1';
 
     const authHeader = request?.headers?.get('Authorization') || request?.headers?.get('authorization');
     if (authHeader && authHeader.toLowerCase().startsWith('bearer ')) {
@@ -154,7 +167,10 @@ async function getServerAuthUserUncached(request) {
         if (hasServiceRole && supabaseAdmin) {
           try {
             const { data: userData, error: userError } = await supabaseAdmin.auth.getUser(token);
-            if (!userError && userData?.user) user = userData.user;
+            if (!userError && userData?.user) {
+              user = userData.user;
+              authLevel = getVerifiedJwtAal(token);
+            }
           } catch {}
         }
 
@@ -162,7 +178,10 @@ async function getServerAuthUserUncached(request) {
           try {
             const adminSb = createAdminClient();
             const { data: fallbackUserData, error: fallbackError } = await adminSb.auth.getUser(token);
-            if (!fallbackError && fallbackUserData?.user) user = fallbackUserData.user;
+            if (!fallbackError && fallbackUserData?.user) {
+              user = fallbackUserData.user;
+              authLevel = getVerifiedJwtAal(token);
+            }
           } catch {}
         }
       }
@@ -193,7 +212,15 @@ async function getServerAuthUserUncached(request) {
         );
 
         const { data: cookieAuthData, error: cookieError } = await supabase.auth.getUser();
-        if (!cookieError && cookieAuthData?.user) user = cookieAuthData.user;
+        if (!cookieError && cookieAuthData?.user) {
+          user = cookieAuthData.user;
+          try {
+            const { data: aalData, error: aalError } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+            if (!aalError && aalData?.currentLevel === 'aal2') {
+              authLevel = 'aal2';
+            }
+          } catch {}
+        }
       } catch {
         // Bearer authentication may still have succeeded above.
       }
@@ -203,21 +230,38 @@ async function getServerAuthUserUncached(request) {
       return {
         user: null,
         isAdmin: false,
+        isAdminIdentity: false,
         isWorker: false,
         workerData: null,
+        authLevel: 'aal1',
+        mfaRequired: false,
         error: 'Unauthenticated'
       };
     }
 
     const access = await resolveTrustedUserAccess(user);
-    return { user, ...access, error: null };
+    const isAdminIdentity = Boolean(access?.isAdmin);
+    const isAdmin = isAdminIdentity && authLevel === 'aal2';
+
+    return {
+      user,
+      ...access,
+      isAdminIdentity,
+      isAdmin,
+      authLevel,
+      mfaRequired: isAdminIdentity && authLevel !== 'aal2',
+      error: null
+    };
   } catch (err) {
     console.error('[getServerAuthUser Exception]:', err);
     return {
       user: null,
       isAdmin: false,
+      isAdminIdentity: false,
       isWorker: false,
       workerData: null,
+      authLevel: 'aal1',
+      mfaRequired: false,
       error: err.message
     };
   }
