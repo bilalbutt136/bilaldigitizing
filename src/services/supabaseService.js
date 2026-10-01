@@ -1062,7 +1062,9 @@ export async function verifyAdminSession(email, options = {}) {
 
   try {
     const headers = await getAuthHeaders();
-    const requestKey = `admin-session:${getAuthScopeKey(headers)}:${String(email).toLowerCase().trim()}`;
+    // Keep the 60s role-check cache stable across access-token refreshes.
+    // Privileged server APIs still verify the live token/cookie independently.
+    const requestKey = `admin-session:${String(email).toLowerCase().trim()}`;
     return runDedupedApiRead(requestKey, async () => {
       const res = await fetch('/api/admin/session', {
         method: 'POST',

@@ -136,6 +136,8 @@ describe('P1 Performance Regression Coverage', () => {
     assert.match(service, /const completedApiReads = new Map\(\)/);
     assert.match(service, /ttlMs: 15_000/);
     assert.match(service, /ttlMs: 60_000/);
+    assert.match(service, /const requestKey = `admin-session:\$\{String\(email\)\.toLowerCase\(\)\.trim\(\)\}`/);
+    assert.equal(service.includes('admin-session:${getAuthScopeKey(headers)}'), false);
     assert.match(service, /runDedupedApiMutation/);
     assert.match(service, /client-upsert:/);
     assert.match(state, /event === 'INITIAL_SESSION' \|\| event === 'SIGNED_IN'/);
