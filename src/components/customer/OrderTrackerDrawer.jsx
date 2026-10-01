@@ -222,33 +222,52 @@ export const OrderTrackerDrawer = () => {
     return oClean === cleanSelId || o?.id === selectedOrderForDrawer?.id || o?.id === selWithHash;
   });
 
-  const ord = (matchedFromOrders && matchedFromOrders.status && (matchedFromOrders.client_name || matchedFromOrders.clientName || matchedFromOrders.price !== undefined))
-    ? matchedFromOrders
-    : (selectedOrderForDrawer || {});
+  const selectedHasFullDeliveryData = Boolean(
+    selectedOrderForDrawer &&
+    !selectedOrderForDrawer._summaryOnly &&
+    (
+      Array.isArray(selectedOrderForDrawer.deliveries) ||
+      Array.isArray(selectedOrderForDrawer.uploadedMachineFiles) ||
+      selectedOrderForDrawer.deliveryNotes !== undefined ||
+      selectedOrderForDrawer.order_files !== undefined
+    )
+  );
+  const ord = selectedHasFullDeliveryData
+    ? selectedOrderForDrawer
+    : ((matchedFromOrders && matchedFromOrders.status && (matchedFromOrders.client_name || matchedFromOrders.clientName || matchedFromOrders.price !== undefined))
+      ? matchedFromOrders
+      : (selectedOrderForDrawer || {}));
 
   const [isFetchingOrder, setIsFetchingOrder] = useState(false);
+  const adminHydratedOrderRef = useRef(null);
+  const isAdminContext = authUser?.role === 'admin' || currentView === 'admin';
 
-  // If order in drawer is incomplete or marked as loading, fetch live from Supabase
+  // Admin always receives one full live hydration per opened order. Summary rows
+  // intentionally omit notes.deliveries, so relying on them hides previous versions.
   useEffect(() => {
-    if (!cleanSelId) return;
-    const isMissingDetails = Boolean(ord._isLoading || (!ord.status && !ord.title));
-    if (isMissingDetails && !isFetchingOrder) {
-      let isMounted = true;
-      setIsFetchingOrder(true);
-      fetchOrderById(cleanSelId).then(liveOrder => {
-        if (isMounted && liveOrder) {
-          if (typeof setSelectedOrderForDrawer === 'function') {
-            setSelectedOrderForDrawer(liveOrder);
-          }
+    if (!cleanSelId || isFetchingOrder) return;
+
+    const isMissingDetails = Boolean(ord._isLoading || ord._summaryOnly || (!ord.status && !ord.title));
+    const needsAdminHydration = isAdminContext && adminHydratedOrderRef.current !== cleanSelId;
+    if (!isMissingDetails && !needsAdminHydration) return;
+
+    let isMounted = true;
+    setIsFetchingOrder(true);
+    fetchOrderById(cleanSelId).then(liveOrder => {
+      if (isMounted && liveOrder) {
+        adminHydratedOrderRef.current = cleanSelId;
+        if (typeof setSelectedOrderForDrawer === 'function') {
+          setSelectedOrderForDrawer(liveOrder);
         }
-      }).catch(err => {
-        console.warn('[OrderTrackerDrawer live fetch notice]:', err?.message);
-      }).finally(() => {
-        setIsFetchingOrder(false);
-      });
-      return () => { isMounted = false; };
-    }
-  }, [cleanSelId, ord.status, ord.title, ord._isLoading, isFetchingOrder, setSelectedOrderForDrawer]);
+      }
+    }).catch(err => {
+      console.warn('[OrderTrackerDrawer live fetch notice]:', err?.message);
+    }).finally(() => {
+      if (isMounted) setIsFetchingOrder(false);
+    });
+
+    return () => { isMounted = false; };
+  }, [cleanSelId, ord.status, ord.title, ord._isLoading, ord._summaryOnly, isAdminContext, isFetchingOrder, setSelectedOrderForDrawer]);
 
   const isOrderPaid = (o) => {
     const pStatus = String(o?.payment_status || o?.paymentStatus || '').toLowerCase().trim();
@@ -312,6 +331,9 @@ export const OrderTrackerDrawer = () => {
     if (lastSetOrderIdRef.current !== currentId) {
       lastSetOrderIdRef.current = currentId;
       setIsRequirementsOpen(false);
+      setAdminFilesList([]);
+      setDeliveryMessage('');
+      setIsDelivering(false);
     }
   }, [selectedOrderForDrawer, ord?.id]);
 
@@ -550,46 +572,136 @@ export const OrderTrackerDrawer = () => {
     }
   };
 
-  const processAdminFilesList = (files) => {
-    if (!files || files.length === 0) return;
-    const fileArray = Array.from(files);
+  const updateAdminUpload = (uploadId, patch) => {
+    setAdminFilesList(prev => prev.map(item => item.id === uploadId ? { ...item, ...patch } : item));
+  };
 
-    fileArray.forEach((file) => {
-      const ext = file.name.split('.').pop().toLowerCase();
-      const tempUrl = URL.createObjectURL(file);
-      setAdminFilesList(prev => [
-        ...prev,
-        { name: file.name, format: ext, url: tempUrl, rawFile: file, uploadedAt: new Date().toISOString() }
-      ]);
+  const uploadAdminDeliveryFile = async (entry) => {
+    updateAdminUpload(entry.id, {
+      status: 'uploading',
+      progress: Math.max(1, entry.progress || 0),
+      error: null
+    });
+
+    try {
+      const uploaded = await uploadFileToCloudinaryFull(
+        entry.rawFile,
+        'admin-deliveries',
+        'deliveries',
+        (progress) => {
+          updateAdminUpload(entry.id, {
+            status: progress >= 100 ? 'uploaded' : 'uploading',
+            progress: Math.max(1, Math.min(100, progress))
+          });
+        }
+      );
+
+      const durableUrl = uploaded?.url || uploaded?.public_url || uploaded?.file_url;
+      if (!durableUrl) {
+        throw new Error('Upload finished without a durable file URL.');
+      }
+
+      const uploadedFile = {
+        ...uploaded,
+        name: uploaded.name || entry.name,
+        format: String(uploaded.format || entry.format || '').toLowerCase(),
+        url: durableUrl,
+        public_url: durableUrl,
+        uploadedAt: uploaded.uploadedAt || uploaded.created_at || new Date().toISOString()
+      };
+
+      updateAdminUpload(entry.id, {
+        status: 'uploaded',
+        progress: 100,
+        uploadedFile,
+        error: null
+      });
+      return uploadedFile;
+    } catch (error) {
+      updateAdminUpload(entry.id, {
+        status: 'error',
+        error: error?.message || 'Upload failed. Please retry.'
+      });
+      return null;
+    }
+  };
+
+  const processAdminFilesList = (files) => {
+    if (!files || files.length === 0 || isDelivering) return;
+
+    const entries = Array.from(files).map((file, index) => ({
+      id: `${Date.now()}_${index}_${Math.random().toString(36).slice(2, 9)}`,
+      name: file.name,
+      format: (file.name.split('.').pop() || 'file').toLowerCase(),
+      rawFile: file,
+      progress: 0,
+      status: 'queued',
+      error: null,
+      uploadedFile: null,
+      uploadedAt: null
+    }));
+
+    setAdminFilesList(prev => [...prev, ...entries]);
+    entries.forEach(entry => {
+      uploadAdminDeliveryFile(entry);
     });
   };
 
-  const removeAdminFile = (indexToRemove) => {
-    setAdminFilesList(prev => prev.filter((_, idx) => idx !== indexToRemove));
+  const removeAdminFile = (uploadId) => {
+    setAdminFilesList(prev => prev.filter(item => item.id !== uploadId));
   };
+
+  const retryAdminFile = (uploadId) => {
+    const entry = adminFilesList.find(item => item.id === uploadId);
+    if (!entry || !entry.rawFile || entry.status === 'uploading') return;
+    uploadAdminDeliveryFile({ ...entry, progress: 0 });
+  };
+
+  const isAdminUploading = adminFilesList.some(file => file.status === 'queued' || file.status === 'uploading');
+  const hasAdminUploadFailures = adminFilesList.some(file => file.status === 'error');
+  const allAdminFilesUploaded = adminFilesList.length > 0 && adminFilesList.every(file =>
+    file.status === 'uploaded' &&
+    file.progress === 100 &&
+    Boolean(file.uploadedFile?.url || file.uploadedFile?.public_url || file.uploadedFile?.file_url)
+  );
+  const adminOverallUploadProgress = adminFilesList.length > 0
+    ? Math.round(adminFilesList.reduce((sum, file) => sum + Number(file.progress || 0), 0) / adminFilesList.length)
+    : 0;
 
   const handleAdminDeliverOrder = async (e) => {
     e.preventDefault();
-    if (adminFilesList.length === 0 && (!ord.uploadedMachineFiles || ord.uploadedMachineFiles.length === 0)) {
-      alert('Please select or drop at least one deliverable file to complete delivery.');
+
+    if (adminFilesList.length === 0) {
+      showToast('Select at least one deliverable file before sending this delivery.', 'error');
+      return;
+    }
+    if (isAdminUploading) {
+      showToast('Please wait until every file reaches 100% before sending.', 'info');
+      return;
+    }
+    if (hasAdminUploadFailures || !allAdminFilesUploaded) {
+      showToast('One or more files failed to upload. Retry them before sending.', 'error');
       return;
     }
 
     setIsDelivering(true);
     try {
-      const uploadedCloudinaryFiles = [];
-      for (const fileObj of adminFilesList) {
-        if (!fileObj.rawFile) continue;
-        const uploaded = await uploadFileToCloudinaryFull(fileObj.rawFile, 'admin-deliveries', 'deliveries');
-        if (uploaded) {
-          uploadedCloudinaryFiles.push(uploaded);
-        } else {
-          uploadedCloudinaryFiles.push({ name: fileObj.name, url: fileObj.url, format: fileObj.format });
-        }
+      const uploadedCloudinaryFiles = adminFilesList
+        .map(file => file.uploadedFile)
+        .filter(file => Boolean(file?.url || file?.public_url || file?.file_url));
+
+      if (uploadedCloudinaryFiles.length !== adminFilesList.length) {
+        throw new Error('Not all selected files have a durable uploaded URL.');
       }
 
-      const existingFiles = ord.uploadedMachineFiles || [];
-      const updatedFiles = [...uploadedCloudinaryFiles, ...existingFiles];
+      const existingFiles = Array.isArray(ord.uploadedMachineFiles) ? ord.uploadedMachineFiles : [];
+      const seenFileUrls = new Set();
+      const updatedFiles = [...uploadedCloudinaryFiles, ...existingFiles].filter(file => {
+        const key = file?.url || file?.public_url || file?.file_url || file?.name;
+        if (!key || seenFileUrls.has(key)) return false;
+        seenFileUrls.add(key);
+        return true;
+      });
       const deliveryNoteText = deliveryMessage.trim() || 'Your production stitch files and preview documents are ready for download.';
 
       // Construct Multi-Delivery Structured History (1st Delivery, 2nd Delivery, etc.)
@@ -619,17 +731,17 @@ export const OrderTrackerDrawer = () => {
         deliveryDate: new Date().toISOString(),
         deliveryMessage: deliveryNoteText,
         deliveredBy: authUser?.name || 'Master Digitizer Desk',
-        files: uploadedCloudinaryFiles.length > 0 ? uploadedCloudinaryFiles : existingFiles
+        files: uploadedCloudinaryFiles
       };
 
       const updatedDeliveries = [newDeliveryItem, ...baseDeliveries];
 
-      await updateOrderStatus(ord.id, 'delivered', {
+      const deliveryResult = await updateOrderStatus(ord.id, 'delivered', {
         status: 'delivered',
         clientEmail: ord.client_email || ord.clientEmail,
         clientName: ord.client_name || ord.clientName,
         title: ord.title || `Order #${ord.id}`,
-        outputFileUrl: uploadedCloudinaryFiles.length > 0 ? (uploadedCloudinaryFiles[0].url || uploadedCloudinaryFiles[0].name) : (ord.outputFileUrl || ''),
+        outputFileUrl: uploadedCloudinaryFiles[0]?.url || uploadedCloudinaryFiles[0]?.public_url || uploadedCloudinaryFiles[0]?.file_url || ord.outputFileUrl || '',
         uploadedMachineFiles: updatedFiles,
         deliveries: updatedDeliveries,
         deliveryNumber: newDeliveryNumber,
@@ -639,12 +751,17 @@ export const OrderTrackerDrawer = () => {
         deliveryDate: new Date().toISOString()
       });
 
+      if (deliveryResult?.success === false) {
+        throw new Error(deliveryResult.error || 'Delivery could not be saved.');
+      }
+
       setAdminFilesList([]);
       setDeliveryMessage('');
+      setSelectedDeliveryIndex(0);
       showToast(`🎉 Delivery #${newDeliveryNumber} successfully sent to client!`, 'success');
     } catch (err) {
       console.error('Delivery error:', err);
-      showToast('Delivery failed. Please try again.', 'error');
+      showToast(err?.message || 'Delivery failed. Please try again.', 'error');
     } finally {
       setIsDelivering(false);
     }
@@ -1451,7 +1568,7 @@ export const OrderTrackerDrawer = () => {
                 </div>
               </div>
 
-              {isDelivered && (
+              {(isDelivered || allDeliveries.length > 0) && (
                 <button
                   type="button"
                   onClick={handleDownloadAll}
@@ -1549,18 +1666,117 @@ export const OrderTrackerDrawer = () => {
                   </label>
                 </div>
 
-                {/* Staged Upload Files List */}
+                {/* Durable per-file upload progress. 100% means storage confirmed a public URL. */}
                 {adminFilesList.length > 0 && (
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '0.5rem' }}>
-                    {adminFilesList.map((f, idx) => (
-                      <div key={idx} style={{ background: 'var(--bg-card)', padding: '0.5rem 0.75rem', borderRadius: '8px', border: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', minWidth: 0 }}>
-                          <FileCheck size={14} style={{ color: '#10b981', flexShrink: 0 }} />
-                          <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-main)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{f.name}</span>
-                        </div>
-                        <button type="button" onClick={() => removeAdminFile(idx)} style={{ border: 'none', background: 'none', color: '#ef4444', cursor: 'pointer', padding: 0 }}><Trash2 size={13}/></button>
-                      </div>
-                    ))}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem', flexWrap: 'wrap' }}>
+                      <span style={{ fontSize: '0.76rem', fontWeight: 800, color: 'var(--text-muted)' }}>
+                        {allAdminFilesUploaded
+                          ? `All ${adminFilesList.length} file(s) uploaded — ready to send`
+                          : `Uploading ${adminFilesList.filter(file => file.status === 'uploaded').length}/${adminFilesList.length} file(s)`}
+                      </span>
+                      <span style={{ fontSize: '0.76rem', fontWeight: 900, color: allAdminFilesUploaded ? '#059669' : 'var(--orange-600)' }}>
+                        {adminOverallUploadProgress}%
+                      </span>
+                    </div>
+
+                    <div style={{ height: '7px', background: 'var(--border-color)', borderRadius: '9999px', overflow: 'hidden' }}>
+                      <div
+                        style={{
+                          width: `${adminOverallUploadProgress}%`,
+                          height: '100%',
+                          background: allAdminFilesUploaded ? '#10b981' : 'var(--orange-500)',
+                          transition: 'width 0.2s ease'
+                        }}
+                      />
+                    </div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '0.6rem' }}>
+                      {adminFilesList.map((f) => {
+                        const isUploaded = f.status === 'uploaded' && f.progress === 100;
+                        const isUploadingFile = f.status === 'queued' || f.status === 'uploading';
+                        const hasError = f.status === 'error';
+
+                        return (
+                          <div
+                            key={f.id}
+                            style={{
+                              background: 'var(--bg-card)',
+                              padding: '0.7rem 0.8rem',
+                              borderRadius: '9px',
+                              border: `1px solid ${hasError ? '#fecaca' : (isUploaded ? '#86efac' : 'var(--border-color)')}`,
+                              display: 'flex',
+                              flexDirection: 'column',
+                              gap: '0.5rem'
+                            }}
+                          >
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', minWidth: 0, flex: 1 }}>
+                                {isUploaded ? (
+                                  <CheckCircle2 size={15} style={{ color: '#10b981', flexShrink: 0 }} />
+                                ) : hasError ? (
+                                  <XCircle size={15} style={{ color: '#ef4444', flexShrink: 0 }} />
+                                ) : (
+                                  <Loader2 size={15} className="animate-spin" style={{ color: 'var(--orange-500)', flexShrink: 0 }} />
+                                )}
+                                <span style={{ fontSize: '0.78rem', fontWeight: 800, color: 'var(--text-main)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                  {f.name}
+                                </span>
+                              </div>
+                              <span style={{ fontSize: '0.74rem', fontWeight: 900, color: isUploaded ? '#059669' : (hasError ? '#dc2626' : 'var(--orange-600)') }}>
+                                {isUploaded ? '100%' : (hasError ? 'Failed' : `${Math.max(0, Number(f.progress || 0))}%`)}
+                              </span>
+                            </div>
+
+                            <div style={{ height: '6px', background: 'var(--border-color)', borderRadius: '9999px', overflow: 'hidden' }}>
+                              <div
+                                style={{
+                                  width: `${Math.max(0, Math.min(100, Number(f.progress || 0)))}%`,
+                                  height: '100%',
+                                  background: hasError ? '#ef4444' : (isUploaded ? '#10b981' : 'var(--orange-500)'),
+                                  transition: 'width 0.2s ease'
+                                }}
+                              />
+                            </div>
+
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem', minHeight: '24px' }}>
+                              <span style={{ fontSize: '0.7rem', color: hasError ? '#dc2626' : 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                {hasError ? (f.error || 'Upload failed') : (isUploaded ? 'Upload complete and verified' : 'Uploading to secure storage…')}
+                              </span>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', flexShrink: 0 }}>
+                                {hasError && (
+                                  <button
+                                    type="button"
+                                    onClick={() => retryAdminFile(f.id)}
+                                    disabled={isDelivering}
+                                    title="Retry upload"
+                                    style={{ border: 'none', background: 'none', color: 'var(--orange-600)', cursor: 'pointer', padding: '2px' }}
+                                  >
+                                    <RotateCcw size={14} />
+                                  </button>
+                                )}
+                                <button
+                                  type="button"
+                                  onClick={() => removeAdminFile(f.id)}
+                                  disabled={isUploadingFile || isDelivering}
+                                  title={isUploadingFile ? 'Wait for this upload to finish' : 'Remove file'}
+                                  style={{
+                                    border: 'none',
+                                    background: 'none',
+                                    color: '#ef4444',
+                                    cursor: isUploadingFile || isDelivering ? 'not-allowed' : 'pointer',
+                                    opacity: isUploadingFile || isDelivering ? 0.4 : 1,
+                                    padding: '2px'
+                                  }}
+                                >
+                                  <Trash2 size={14}/>
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
                 )}
 
@@ -1583,18 +1799,48 @@ export const OrderTrackerDrawer = () => {
                   <button
                     type="submit"
                     className="btn btn-primary-orange"
-                    disabled={isDelivering || (adminFilesList.length === 0 && (!ord.uploadedMachineFiles || ord.uploadedMachineFiles.length === 0))}
-                    style={{ fontWeight: 800, gap: '0.4rem' }}
+                    disabled={isDelivering || isAdminUploading || hasAdminUploadFailures || !allAdminFilesUploaded}
+                    style={{
+                      fontWeight: 800,
+                      gap: '0.4rem',
+                      opacity: isDelivering || isAdminUploading || hasAdminUploadFailures || !allAdminFilesUploaded ? 0.55 : 1,
+                      cursor: isDelivering || isAdminUploading || hasAdminUploadFailures || !allAdminFilesUploaded ? 'not-allowed' : 'pointer'
+                    }}
+                    title={
+                      isAdminUploading
+                        ? 'Wait for every file to reach 100%'
+                        : (hasAdminUploadFailures
+                          ? 'Retry failed uploads before sending'
+                          : (!allAdminFilesUploaded ? 'Upload at least one file first' : 'Send this completed delivery to the client'))
+                    }
                   >
-                    <Send size={15} /> {isDelivering ? 'Uploading & Delivering...' : '🚀 Deliver Order to Client'}
+                    {isDelivering ? (
+                      <><Loader2 size={15} className="animate-spin" /> Sending Delivery...</>
+                    ) : isAdminUploading ? (
+                      <><Loader2 size={15} className="animate-spin" /> Uploading Files...</>
+                    ) : (
+                      <><Send size={15} /> Send Delivery to Client</>
+                    )}
                   </button>
                 </div>
               </form>
             )}
 
-            {/* MULTI-DELIVERY VERSIONING SYSTEM (DROPDOWN & SEGMENTED TABS) */}
-            {isDelivered && (
+            {/* MULTI-DELIVERY VERSIONING / HISTORY stays visible even after a revision reopens production. */}
+            {allDeliveries.length > 0 && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem', marginBottom: '1.25rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem', flexWrap: 'wrap' }}>
+                  <div>
+                    <div style={{ fontSize: '0.9rem', fontWeight: 900, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                      <Layers size={16} style={{ color: 'var(--orange-500)' }} />
+                      Delivery History
+                    </div>
+                    <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '0.15rem' }}>
+                      {allDeliveries.length} saved delivery version{allDeliveries.length === 1 ? '' : 's'} — previous files stay available during revisions and re-delivery.
+                    </div>
+                  </div>
+                </div>
+
                 {/* Delivery Version Selector (Shown when more than 1 delivery exists) */}
                 {allDeliveries.length > 1 && (
                   <div style={{

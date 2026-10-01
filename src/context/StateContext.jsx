@@ -2091,14 +2091,19 @@ export const StateProvider = ({ children, initialCatalog = null }) => {
         const clientEmailForApi = (targetOrder?.clientEmail || targetOrder?.client_email || safeExtraData?.clientEmail || safeExtraData?.client_email || '').toLowerCase().trim();
         const clientNameForApi = targetOrder?.clientName || targetOrder?.client_name || safeExtraData?.clientName || safeExtraData?.client_name || '';
         const orderTitleForApi = targetOrder?.title || safeExtraData?.title || '';
-        await updateOrderStatusInSupabase(orderId, newStatus, {
+        const persistenceResult = await updateOrderStatusInSupabase(orderId, newStatus, {
           ...safeExtraData,
           clientEmail: clientEmailForApi,
           clientName: clientNameForApi,
           title: orderTitleForApi
         });
+        if (!persistenceResult?.success) {
+          throw new Error(persistenceResult?.error || 'Order update was not persisted.');
+        }
       } catch (sbErr) {
         console.warn('Supabase update order status notice:', sbErr);
+        showToast(sbErr?.message || 'Order update failed to save.', 'error');
+        return { success: false, error: sbErr?.message || 'Order update failed to save.' };
       }
     }
 
@@ -2198,6 +2203,8 @@ export const StateProvider = ({ children, initialCatalog = null }) => {
     } else if (newStatus === 'completed') {
       triggerEmailNotification('ORDER_COMPLETED', { ...(targetOrder || {}), id: orderId, ...safeExtraData });
     }
+
+    return { success: true };
   };
 
   const _assignDigitizer = async (orderId, digitizerId) => {

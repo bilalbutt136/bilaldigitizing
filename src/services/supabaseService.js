@@ -520,13 +520,22 @@ export async function createOrderInSupabase(newOrder) {
 export async function updateOrderStatusInSupabase(orderId, newStatus, extraData = {}) {
   try {
     const headers = await getAuthHeaders();
-    await fetch('/api/orders', {
+    const response = await fetch('/api/orders', {
       method: 'POST',
       headers,
       body: JSON.stringify({ action: 'updateStatus', payload: { orderId, newStatus, extraData } })
     });
-    return true;
-  } catch { return false; }
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok || data?.success === false || data?.error) {
+      return {
+        success: false,
+        error: data?.error || `Order update failed with status ${response.status}.`
+      };
+    }
+    return { success: true, data };
+  } catch (error) {
+    return { success: false, error: error?.message || 'Order update request failed.' };
+  }
 }
 
 // Add Revision Request in Supabase DB
@@ -1979,7 +1988,7 @@ export async function uploadFileToCloudinaryFull(fileObj, bucketName = 'client-u
           xhr.open('POST', cloudinaryUrl, true);
           xhr.upload.onprogress = (event) => {
             if (event.lengthComputable && onProgress) {
-              const percent = Math.round((event.loaded / event.total) * 100);
+              const percent = Math.min(99, Math.round((event.loaded / event.total) * 100));
               onProgress(percent);
               if (typeof window !== 'undefined') {
                 window.dispatchEvent(new CustomEvent('upload:progress', {
@@ -2000,7 +2009,9 @@ export async function uploadFileToCloudinaryFull(fileObj, bucketName = 'client-u
         });
 
         if (data && (data.secure_url || data.url)) {
+          if (onProgress) onProgress(100);
           if (typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent('upload:progress', { detail: { progress: 100, fileName: fileObj.name } }));
             window.dispatchEvent(new CustomEvent('upload:end', { detail: { fileName: fileObj.name, success: true } }));
           }
           return {
@@ -2034,17 +2045,45 @@ export async function uploadFileToCloudinaryFull(fileObj, bucketName = 'client-u
       headers.Authorization = authHeaders.Authorization;
     }
 
-    const serverRes = await fetch('/api/cloudinary/upload', {
-      method: 'POST',
-      headers,
-      credentials: 'same-origin',
-      body: serverFormData
+    const serverUpload = await new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', '/api/cloudinary/upload', true);
+      xhr.withCredentials = true;
+      if (headers.Authorization) {
+        xhr.setRequestHeader('Authorization', headers.Authorization);
+      }
+      xhr.upload.onprogress = (event) => {
+        if (event.lengthComputable && onProgress) {
+          const percent = Math.min(99, Math.round((event.loaded / event.total) * 100));
+          onProgress(percent);
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent('upload:progress', {
+              detail: { progress: percent, fileName: fileObj.name }
+            }));
+          }
+        }
+      };
+      xhr.onload = () => {
+        let payload = null;
+        try {
+          payload = xhr.responseText ? JSON.parse(xhr.responseText) : null;
+        } catch {}
+        resolve({
+          ok: xhr.status >= 200 && xhr.status < 300,
+          status: xhr.status,
+          data: payload
+        });
+      };
+      xhr.onerror = () => reject(new Error('Network error during storage fallback upload'));
+      xhr.send(serverFormData);
     });
 
-    if (serverRes.ok) {
-      const serverData = await serverRes.json();
-      if (serverData.success && (serverData.url || serverData.secure_url)) {
+    const serverData = serverUpload.data;
+    if (serverUpload.ok) {
+      if (serverData?.success && (serverData.url || serverData.secure_url)) {
+        if (onProgress) onProgress(100);
         if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('upload:progress', { detail: { progress: 100, fileName: fileObj.name } }));
           window.dispatchEvent(new CustomEvent('upload:end', { detail: { fileName: fileObj.name, success: true } }));
         }
         return {
@@ -2065,8 +2104,7 @@ export async function uploadFileToCloudinaryFull(fileObj, bucketName = 'client-u
 
       lastUploadError = new Error(serverData?.error || 'Storage upload completed without a public URL.');
     } else {
-      const failure = await serverRes.json().catch(() => null);
-      lastUploadError = new Error(failure?.error || `Storage upload failed with status ${serverRes.status}.`);
+      lastUploadError = new Error(serverData?.error || `Storage upload failed with status ${serverUpload.status}.`);
     }
   } catch (storageErr) {
     lastUploadError = storageErr;
