@@ -12,7 +12,16 @@ describe('Proxy Authentication Resilience', () => {
     assert.match(proxy, /const AUTH_VERIFY_TIMEOUT_MS = 5000/);
     assert.match(proxy, /const ROLE_LOOKUP_TIMEOUT_MS = 3500/);
     assert.match(proxy, /Supabase authentication verification/);
+    assert.match(proxy, /supabase\.auth\.getClaims\(\)/);
+    assert.equal(proxy.includes('supabase.auth.getUser()'), false);
     assert.equal(proxy.includes('timeoutMs = 1500'), false);
+  });
+
+  test('stale UI auth hints do not trigger remote protected-route verification', () => {
+    const proxy = read('proxy.js');
+
+    assert.match(proxy, /name\.includes\('auth-token'\)/);
+    assert.equal(proxy.includes("cookie.name.includes('bdigi_auth')"), false);
   });
 
   test('temporary auth failures fail closed without exposing raw JSON to customers', () => {

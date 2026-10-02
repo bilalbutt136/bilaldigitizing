@@ -131,13 +131,13 @@ export async function proxy(request) {
   }
 
   const allCookies = request.cookies.getAll();
-  const hasAuthCookie = allCookies.some(
-    cookie =>
-      cookie.name.includes('sb-') ||
-      cookie.name.includes('auth-token') ||
-      cookie.name.includes('supabase') ||
-      cookie.name.includes('bdigi_auth')
-  );
+  // Only a real Supabase session cookie should trigger protected-route auth.
+  // The long-lived bdigi_auth UI hint can outlive the actual Supabase session
+  // and previously caused every protected navigation to make a doomed auth call.
+  const hasAuthCookie = allCookies.some(cookie => {
+    const name = String(cookie.name || '');
+    return name.includes('auth-token') && (name.startsWith('sb-') || name.includes('supabase'));
+  });
 
   const isWorkerRoute = WORKER_PREFIXES.some(
     prefix => pathname === prefix || pathname.startsWith(`${prefix}/`)
@@ -177,12 +177,23 @@ export async function proxy(request) {
       }
     );
 
+    // getClaims() cryptographically verifies the access token and can use
+    // Supabase's cached signing keys instead of making a remote Auth /user
+    // round-trip on every protected page navigation.
     const authResult = await withTimeout(
-      supabase.auth.getUser(),
+      supabase.auth.getClaims(),
       AUTH_VERIFY_TIMEOUT_MS,
       'Supabase authentication verification'
     );
-    const user = authResult?.data?.user || null;
+    const claims = authResult?.data?.claims || null;
+    const user = claims?.sub && claims?.email
+      ? {
+          id: claims.sub,
+          email: claims.email,
+          app_metadata: claims.app_metadata || {},
+          user_metadata: claims.user_metadata || {}
+        }
+      : null;
 
     if (!user) {
       const redirectResponse = NextResponse.redirect(getLoginUrl(request, pathname, isWorkerRoute));
@@ -198,7 +209,9 @@ export async function proxy(request) {
 
     let isAdminIdentity = hasTrustedAdminMetadata(user);
 
-    if (!isAdminIdentity && (isAdminRoute || isClientRoute)) {
+    // Customers should not pay for an admin-table lookup on every portal
+    // navigation. Admin routes still fail closed and perform the trusted lookup.
+    if (!isAdminIdentity && isAdminRoute) {
       const adminResult = await withTimeout(
         supabase
           .from('admins')
@@ -245,17 +258,11 @@ export async function proxy(request) {
       const mfaEnabled = mfaPolicyResult?.error ? true : mfaPolicyResult?.data !== false;
 
       if (mfaEnabled) {
-        const aalResult = await withTimeout(
-          supabase.auth.mfa.getAuthenticatorAssuranceLevel(),
-          AUTH_VERIFY_TIMEOUT_MS,
-          'Admin MFA assurance verification'
-        );
+        // AAL is a signed JWT claim, so no extra Auth network request is
+        // required after getClaims() has verified the token.
+        const currentAal = claims?.aal || 'aal1';
 
-        if (aalResult?.error) {
-          throw new Error('Admin MFA assurance verification failed.');
-        }
-
-        if (aalResult?.data?.currentLevel !== 'aal2') {
+        if (currentAal !== 'aal2') {
           const redirectResponse = NextResponse.redirect(getAdminMfaUrl(request), 307);
           return copyResponseCookies(supabaseResponse, redirectResponse);
         }

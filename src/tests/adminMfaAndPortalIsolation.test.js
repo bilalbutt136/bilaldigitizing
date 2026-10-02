@@ -44,8 +44,9 @@ test('proxy makes admin and client portals mutually exclusive and protects admin
   assert.match(proxy, /supabase\.rpc\('admin_mfa_required'\)/);
   assert.match(proxy, /const mfaEnabled = mfaPolicyResult\?\.error \? true : mfaPolicyResult\?\.data !== false/);
   assert.match(proxy, /if \(mfaEnabled\)/);
-  assert.match(proxy, /getAuthenticatorAssuranceLevel/);
-  assert.match(proxy, /currentLevel !== 'aal2'/);
+  assert.match(proxy, /supabase\.auth\.getClaims\(\)/);
+  assert.match(proxy, /const currentAal = claims\?\.aal \|\| 'aal1'/);
+  assert.match(proxy, /currentAal !== 'aal2'/);
   assert.match(proxy, /mfaUrl\.pathname = '\/secure-admin-login'/);
 });
 

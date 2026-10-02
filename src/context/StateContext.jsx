@@ -20,7 +20,6 @@ import {
   fetchClientsFromSupabase,
   fetchOrdersFromSupabase,
   fetchOrderById,
-  verifyAdminSession,
   fetchAdminUsers,
   addAdminUserInSupabase,
   resetAdminPasswordInSupabase,
@@ -891,47 +890,33 @@ export const StateProvider = ({ children, initialCatalog = null }) => {
     };
   };
 
-  // Resolve role (admin vs worker vs customer) server-side from admins/workers/metadata with local fallback
+  // Resolve role with one trusted server request instead of multiple serial
+  // admin/worker lookups during every hard refresh.
   const resolveRole = async (email, sbUser = null) => {
     const cleanEmail = (email || '').toLowerCase().trim();
     if (!cleanEmail) return 'customer';
+
     if (adminUsers.some(a => (a.email || '').toLowerCase().trim() === cleanEmail)) {
       return 'admin';
     }
-    try {
-      const res = await verifyAdminSession(cleanEmail);
-      if (res?.isAdmin) return 'admin';
-    } catch {}
-    // Only server-controlled app_metadata may provide an immediate worker role.
-    // user_metadata and localStorage are user-controlled and must never grant privileges.
+
+    // app_metadata is server-controlled by Supabase and safe for immediate role hints.
+    if (sbUser?.app_metadata?.role === 'admin' || sbUser?.app_metadata?.is_admin === true) {
+      return 'admin';
+    }
     if (sbUser?.app_metadata?.role === 'worker') {
       return 'worker';
     }
 
-    // Check worker directory records using the verified authenticated email.
-    if (supabase) {
-      try {
-        const { data: worker } = await supabase
-          .from('workers')
-          .select('id, status')
-          .eq('email', cleanEmail)
-          .maybeSingle();
-        if (worker && (worker.status || '').toLowerCase() === 'active') {
-          return 'worker';
-        }
-      } catch {}
-
-      try {
-        const { data: profile } = await supabase
-          .from('worker_profiles')
-          .select('id, status')
-          .eq('email', cleanEmail)
-          .maybeSingle();
-        if (profile && (profile.status || '').toLowerCase() === 'active') {
-          return 'worker';
-        }
-      } catch {}
-    }
+    try {
+      const headers = await getAuthHeaders();
+      const res = await fetch('/api/auth/profile', { method: 'GET', headers });
+      if (res.ok) {
+        const profile = await res.json();
+        if (profile?.role === 'admin') return 'admin';
+        if (profile?.role === 'worker') return 'worker';
+      }
+    } catch {}
 
     return 'customer';
   };

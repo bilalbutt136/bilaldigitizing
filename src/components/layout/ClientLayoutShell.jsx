@@ -1,24 +1,26 @@
 'use client';
 
 import React, { Suspense } from 'react';
+import dynamic from 'next/dynamic';
 import { useAppState } from '../../context/StateContext';
 import { usePathname } from 'next/navigation';
 import { AnnouncementBar } from '../public/AnnouncementBar';
 import { HeaderNav } from '../HeaderNav';
 import { Footer } from '../public/Footer';
-import { AuthModal } from '../auth/AuthModal';
-import { OrderWizardModal } from '../customer/OrderWizardModal';
-import { StoreOrderModal } from '../customer/StoreOrderModal';
-import { CheckoutModal } from '../customer/CheckoutModal';
-import { OrderTrackerDrawer } from '../customer/OrderTrackerDrawer';
-import { DepositModal } from '../customer/DepositModal';
 import ToastContainer from '../../../app/ToastContainer';
-import GlobalUploadModal from '../common/GlobalUploadModal';
 import { MetaPixelTracker } from '../common/MetaPixelTracker';
 import { PWAInstallBanner } from '../common/PWAInstallBanner';
 import { PWARegistrar } from '../common/PWARegistrar';
 import { WhatsAppMessagePopup } from '../common/WhatsAppMessagePopup';
 import { DynamicFavicon } from './DynamicFavicon';
+
+const AuthModal = dynamic(() => import('../auth/AuthModal').then(mod => mod.AuthModal), { ssr: false });
+const OrderWizardModal = dynamic(() => import('../customer/OrderWizardModal').then(mod => mod.OrderWizardModal), { ssr: false });
+const StoreOrderModal = dynamic(() => import('../customer/StoreOrderModal').then(mod => mod.StoreOrderModal), { ssr: false });
+const CheckoutModal = dynamic(() => import('../customer/CheckoutModal').then(mod => mod.CheckoutModal), { ssr: false });
+const OrderTrackerDrawer = dynamic(() => import('../customer/OrderTrackerDrawer').then(mod => mod.OrderTrackerDrawer), { ssr: false });
+const DepositModal = dynamic(() => import('../customer/DepositModal').then(mod => mod.DepositModal), { ssr: false });
+const GlobalUploadModal = dynamic(() => import('../common/GlobalUploadModal'), { ssr: false });
 
 export const ClientLayoutShell = ({ children }) => {
   const { mobileMode } = useAppState();
@@ -28,6 +30,7 @@ export const ClientLayoutShell = ({ children }) => {
   const isPortalRoute = pathname.startsWith('/client-portal') || pathname.startsWith('/admin-portal') || pathname === '/client' || pathname === '/admin';
   const isCompactShell = isDedicatedAuthRoute || isPortalRoute;
   const isWorkerPortal = pathname.startsWith('/portal') || pathname.startsWith('/worker');
+  const shouldMountCommerceUi = !isDedicatedAuthRoute;
 
   // Complete stealth mode isolation for Worker Portal
   if (isWorkerPortal) {
@@ -44,10 +47,8 @@ export const ClientLayoutShell = ({ children }) => {
 
   return (
     <div className={isCompactShell ? 'site-shell auth-route-shell' : 'site-shell'} style={{ minHeight: '100svh', display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-      {/* Dynamic favicon — overrides static server-rendered icon link on every page load */}
       <DynamicFavicon />
 
-      {/* Website Top Header (Hidden in Standalone 5-Tab App Mode) */}
       <div className="website-header-zone">
         {!isCompactShell && <AnnouncementBar />}
         <Suspense fallback={<header style={{ minHeight: '63px', background: '#ffffff' }} />}>
@@ -55,30 +56,30 @@ export const ClientLayoutShell = ({ children }) => {
         </Suspense>
       </div>
 
-      {/* Main Content Area */}
       <main className="website-main-zone" style={{ flex: 1, minWidth: 0 }}>
         {children}
       </main>
 
-      {/* Website Footer & Desktop Widgets (Hidden in Standalone 5-Tab App Mode) */}
       {!isCompactShell && (
         <div className="website-footer-zone">
           <Footer />
         </div>
       )}
 
-      {/* Global Interactive Modals & System Services */}
-      <OrderWizardModal />
-      <StoreOrderModal />
-      <OrderTrackerDrawer />
-      <DepositModal />
-      <CheckoutModal />
+      {shouldMountCommerceUi && (
+        <>
+          <OrderWizardModal />
+          <StoreOrderModal />
+          <OrderTrackerDrawer />
+          <DepositModal />
+          <CheckoutModal />
+          <GlobalUploadModal />
+        </>
+      )}
       {!isDedicatedAuthRoute && <AuthModal />}
-      <GlobalUploadModal />
       <ToastContainer />
       <MetaPixelTracker />
-      
-      {/* PWA Prompt Banner (Visible on mobile website to offer App installation or launch) */}
+
       {!isAppMode && !isCompactShell && <PWAInstallBanner />}
       <PWARegistrar />
       {!isAppMode && <WhatsAppMessagePopup />}
