@@ -439,9 +439,13 @@ export default function MobileAdminConsole() {
     <div className="mobile-admin-console" style={{
       width: '100%',
       minHeight: '100svh',
+      height: activeTab === 'chat' ? '100svh' : 'auto',
+      display: 'flex',
+      flexDirection: 'column',
+      overflow: activeTab === 'chat' ? 'hidden' : 'visible',
       background: 'var(--bg-main, #f8fafc)',
       color: 'var(--color-text-primary, #0f172a)',
-      paddingBottom: 'calc(78px + env(safe-area-inset-bottom, 0px))'
+      paddingBottom: activeTab === 'chat' ? 0 : 'calc(78px + env(safe-area-inset-bottom, 0px))'
     }}>
       <style>{`
         @media (max-width: 900px) {
@@ -506,9 +510,13 @@ export default function MobileAdminConsole() {
       </header>
 
       <main style={{
+        width: '100%',
         maxWidth: '680px',
         margin: '0 auto',
-        padding: activeTab === 'chat' ? '0.75rem 0.55rem' : '0.9rem'
+        flex: activeTab === 'chat' ? 1 : 'initial',
+        minHeight: 0,
+        overflow: activeTab === 'chat' ? 'hidden' : 'visible',
+        padding: activeTab === 'chat' ? 0 : '0.9rem'
       }}>
         {activeTab === 'home' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
@@ -643,11 +651,12 @@ export default function MobileAdminConsole() {
 
         {activeTab === 'chat' && (
           <section style={{
-            height: 'calc(100svh - 72px - 78px - env(safe-area-inset-top, 0px) - 1.5rem)',
-            minHeight: '520px',
-            maxHeight: '760px'
+            height: '100%',
+            minHeight: 0,
+            maxHeight: 'none',
+            overflow: 'hidden'
           }}>
-            <AdminChatInbox compactMobile initialChannel="inbox" />
+            <AdminChatInbox compactMobile initialChannel="inbox" onExitMobileChat={() => setActiveTab('home')} />
           </section>
         )}
 
@@ -733,6 +742,7 @@ export default function MobileAdminConsole() {
         )}
       </main>
 
+      {activeTab !== 'chat' && (
       <nav
         aria-label="Mobile admin navigation"
         style={{
@@ -804,6 +814,7 @@ export default function MobileAdminConsole() {
           );
         })}
       </nav>
+      )}
     </div>
   );
 }

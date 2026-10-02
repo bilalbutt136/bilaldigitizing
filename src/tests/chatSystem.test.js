@@ -763,6 +763,23 @@ test('Chat System & Fiverr-Style Inbox Architecture', async (t) => {
     assert.equal(formatLastSeen(null), 'Offline');
   });
 
+  await t.test('28. Compact mobile chat keeps only the Fiverr-style bottom actions and owns the viewport bottom', () => {
+    const chat = read('src/components/admin/AdminChatInbox.jsx');
+    const mobileAdmin = read('src/components/admin/MobileAdminConsole.jsx');
+
+    assert.match(chat, /display: compactMobile \? 'none' : 'block'/);
+    assert.match(chat, /display: compactMobile \? 'none' : 'flex'/);
+    assert.match(chat, /<Zap size=\{compactMobile \? 22 : 18\}/);
+    assert.match(chat, /<Paperclip size=\{compactMobile \? 22 : 18\}/);
+    assert.match(chat, /isSendingMessage \? 'Sending…' : 'Send'/);
+    assert.match(chat, /borderBottom: compactMobile \? '1\.5px solid #9ca3af'/);
+    assert.match(chat, /position: compactMobile \? 'sticky' : 'relative'/);
+
+    assert.match(mobileAdmin, /activeTab !== 'chat'/);
+    assert.match(mobileAdmin, /paddingBottom: activeTab === 'chat' \? 0/);
+    assert.match(mobileAdmin, /onExitMobileChat=\{\(\) => setActiveTab\('home'\)\}/);
+  });
+
 });
 
 

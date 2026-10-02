@@ -70,7 +70,7 @@ const formatChatDateHeader = (dateStr) => {
   }
 };
 
-export default function AdminChatInbox({ initialChannel = 'inbox', compactMobile = false }) {
+export default function AdminChatInbox({ initialChannel = 'inbox', compactMobile = false, onExitMobileChat = null }) {
   const { authUser, orders: _orders = [] } = useAppState();
 
   const [conversations, setConversations] = useState([]);
@@ -961,8 +961,32 @@ export default function AdminChatInbox({ initialChannel = 'inbox', compactMobile
           position: 'relative',
           flexShrink: 0
         }}>
+          {compactMobile && typeof onExitMobileChat === 'function' && (
+            <button
+              type="button"
+              onClick={onExitMobileChat}
+              aria-label="Back to mobile admin home"
+              title="Back to dashboard"
+              style={{
+                width: '32px',
+                height: '32px',
+                borderRadius: '9px',
+                border: '1px solid #e2e8f0',
+                background: '#f8fafc',
+                color: '#475569',
+                display: 'grid',
+                placeItems: 'center',
+                padding: 0,
+                cursor: 'pointer',
+                flexShrink: 0
+              }}
+            >
+              <ChevronLeft size={18} />
+            </button>
+          )}
+
           {/* Dropdown Toggle */}
-          <div style={{ position: 'relative' }}>
+          <div style={{ position: 'relative', flex: compactMobile ? 1 : 'initial', minWidth: 0 }}>
             <button
               type="button"
               onClick={() => setIsFilterDropdownOpen(!isFilterDropdownOpen)}
@@ -2107,11 +2131,15 @@ export default function AdminChatInbox({ initialChannel = 'inbox', compactMobile
                 {/* BOTTOM COMPOSER (LOCKED AT BOTTOM, NEVER PUSHED OFF SCREEN)  */}
                 {/* ============================================================ */}
                 <div style={{
+                  position: compactMobile ? 'sticky' : 'relative',
+                  bottom: 0,
+                  zIndex: compactMobile ? 25 : 'auto',
                   padding: compactMobile
-                    ? '0.82rem 0.85rem calc(0.82rem + env(safe-area-inset-bottom, 0px))'
+                    ? '0.55rem 0.9rem calc(0.6rem + env(safe-area-inset-bottom, 0px))'
                     : '0.85rem 1.5rem',
-                  borderTop: '1px solid #e2e8f0',
+                  borderTop: '1px solid #e5e7eb',
                   background: '#ffffff',
+                  boxShadow: compactMobile ? '0 -2px 10px rgba(15, 23, 42, 0.04)' : 'none',
                   flexShrink: 0
                 }}>
                   {replyingTo && (
@@ -2183,7 +2211,7 @@ export default function AdminChatInbox({ initialChannel = 'inbox', compactMobile
                   )}
 
                   {/* UNDO AI POLISH BANNER */}
-                  {previousDraft !== null && (
+                  {!compactMobile && previousDraft !== null && (
                     <div style={{
                       display: 'flex',
                       alignItems: 'center',
@@ -2225,14 +2253,16 @@ export default function AdminChatInbox({ initialChannel = 'inbox', compactMobile
                       }}
                       style={{
                         width: '100%',
-                        border: '1.5px solid #e2e8f0',
-                        borderRadius: compactMobile ? '12px' : '10px',
-                        padding: compactMobile ? '0.78rem 0.95rem' : '0.75rem 1rem',
-                        fontSize: '0.9rem',
+                        border: compactMobile ? 'none' : '1.5px solid #e2e8f0',
+                        borderRadius: compactMobile ? 0 : '10px',
+                        padding: compactMobile ? '0.3rem 0 0.5rem' : '0.75rem 1rem',
+                        fontSize: compactMobile ? '0.92rem' : '0.9rem',
+                        color: '#111827',
+                        background: '#ffffff',
                         outline: 'none',
                         resize: 'none',
                         fontFamily: 'inherit',
-                        minHeight: compactMobile ? '46px' : '48px',
+                        minHeight: compactMobile ? '38px' : '48px',
                         maxHeight: '180px',
                         lineHeight: 1.4,
                         boxSizing: 'border-box',
@@ -2244,19 +2274,20 @@ export default function AdminChatInbox({ initialChannel = 'inbox', compactMobile
                   {/* COMPOSER TOOLBAR */}
                   <div style={{
                     display: 'flex',
-                    flexDirection: compactMobile ? 'column' : 'row',
-                    alignItems: compactMobile ? 'stretch' : 'center',
+                    flexDirection: 'row',
+                    alignItems: 'center',
                     justifyContent: 'space-between',
-                    gap: compactMobile ? '0.6rem' : 0,
-                    marginTop: compactMobile ? '0.75rem' : '0.65rem'
+                    gap: compactMobile ? '0.75rem' : 0,
+                    marginTop: compactMobile ? '0.2rem' : '0.65rem'
                   }}>
                     {/* LEFT TOOLS: CLIP, EMOJI, QUICK RESPONSES, VIDEO, AI POLISH */}
                     <div style={{
                       display: 'flex',
                       alignItems: 'center',
-                      justifyContent: compactMobile ? 'space-between' : 'flex-start',
-                      gap: compactMobile ? '0.3rem' : '0.65rem',
-                      width: compactMobile ? '100%' : 'auto'
+                      justifyContent: 'flex-start',
+                      gap: compactMobile ? '0.95rem' : '0.65rem',
+                      width: 'auto',
+                      flexShrink: 0
                     }}>
                       {/* Hidden File Input */}
                       <input
@@ -2273,14 +2304,26 @@ export default function AdminChatInbox({ initialChannel = 'inbox', compactMobile
                         type="button"
                         onClick={() => fileInputRef.current?.click()}
                         disabled={isUploadingFiles}
-                        style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#64748b', padding: '4px' }}
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          cursor: 'pointer',
+                          color: '#6b7280',
+                          padding: compactMobile ? 0 : '4px',
+                          order: compactMobile ? 2 : 0,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center'
+                        }}
                         title="Attach embroidery, vector, or artwork files"
                       >
-                        {isUploadingFiles ? <Loader2 size={18} className="spin-icon" color="#ea580c" /> : <Paperclip size={18} />}
+                        {isUploadingFiles
+                          ? <Loader2 size={compactMobile ? 22 : 18} className="spin-icon" color="#ea580c" />
+                          : <Paperclip size={compactMobile ? 22 : 18} />}
                       </button>
 
                       {/* Emoji Picker Toggle */}
-                      <div style={{ position: 'relative' }}>
+                      <div style={{ position: 'relative', display: compactMobile ? 'none' : 'block' }}>
                         <button
                           type="button"
                           onClick={() => setIsEmojiPickerOpen(!isEmojiPickerOpen)}
@@ -2323,14 +2366,23 @@ export default function AdminChatInbox({ initialChannel = 'inbox', compactMobile
                       </div>
 
                       {/* Quick Responses / Auto-Replies (Lightning Bolt) */}
-                      <div style={{ position: 'relative' }}>
+                      <div style={{ position: 'relative', order: compactMobile ? 1 : 0 }}>
                         <button
                           type="button"
                           onClick={() => setIsQuickRepliesOpen(!isQuickRepliesOpen)}
-                          style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#64748b', padding: '4px' }}
+                          style={{
+                            background: 'none',
+                            border: 'none',
+                            cursor: 'pointer',
+                            color: '#6b7280',
+                            padding: compactMobile ? 0 : '4px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                          }}
                           title="Quick responses & saved auto-replies"
                         >
-                          <Zap size={18} />
+                          <Zap size={compactMobile ? 22 : 18} />
                         </button>
 
                         {isQuickRepliesOpen && (
@@ -2378,7 +2430,14 @@ export default function AdminChatInbox({ initialChannel = 'inbox', compactMobile
                       <button
                         type="button"
                         onClick={() => showToast('Studio live consultation call link created', 'info')}
-                        style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#64748b', padding: '4px' }}
+                        style={{
+                          display: compactMobile ? 'none' : 'flex',
+                          background: 'none',
+                          border: 'none',
+                          cursor: 'pointer',
+                          color: '#64748b',
+                          padding: '4px'
+                        }}
                         title="Start studio video meeting"
                       >
                         <Video size={18} />
@@ -2398,7 +2457,7 @@ export default function AdminChatInbox({ initialChannel = 'inbox', compactMobile
                           fontSize: '0.78rem',
                           fontWeight: 700,
                           cursor: isPolishing || !inputText.trim() ? 'not-allowed' : 'pointer',
-                          display: 'flex',
+                          display: compactMobile ? 'none' : 'flex',
                           alignItems: 'center',
                           gap: '0.35rem',
                           transition: 'all 0.15s ease'
@@ -2421,9 +2480,10 @@ export default function AdminChatInbox({ initialChannel = 'inbox', compactMobile
                     <div style={{
                       display: 'flex',
                       alignItems: 'center',
-                      justifyContent: compactMobile ? 'space-between' : 'flex-start',
-                      gap: compactMobile ? '0.6rem' : '0.85rem',
-                      width: compactMobile ? '100%' : 'auto'
+                      justifyContent: 'flex-end',
+                      gap: compactMobile ? '1.15rem' : '0.85rem',
+                      width: compactMobile ? 'auto' : 'auto',
+                      flex: compactMobile ? 1 : 'initial'
                     }}>
                       {/* "Create an offer" Button (Strictly for Inbox & Offers channel) */}
                       {activeChannel === 'inbox' && (
@@ -2431,16 +2491,18 @@ export default function AdminChatInbox({ initialChannel = 'inbox', compactMobile
                           type="button"
                           onClick={() => setIsCreateOfferModalOpen(true)}
                           style={{
-                            background: '#ffffff',
-                            color: '#0f172a',
-                            border: '1.5px solid #0f172a',
-                            borderRadius: compactMobile ? '10px' : '6px',
-                            padding: compactMobile ? '0.58rem 0.9rem' : '0.4rem 1rem',
-                            fontSize: '0.85rem',
-                            fontWeight: 700,
+                            background: compactMobile ? 'transparent' : '#ffffff',
+                            color: compactMobile ? '#6b7280' : '#0f172a',
+                            border: compactMobile ? 'none' : '1.5px solid #0f172a',
+                            borderBottom: compactMobile ? '1.5px solid #9ca3af' : undefined,
+                            borderRadius: compactMobile ? 0 : '6px',
+                            padding: compactMobile ? '0.18rem 0' : '0.4rem 1rem',
+                            fontSize: compactMobile ? '0.88rem' : '0.85rem',
+                            fontWeight: compactMobile ? 600 : 700,
                             cursor: 'pointer',
-                            flex: compactMobile ? 1 : 'initial',
-                            minHeight: compactMobile ? '40px' : 'auto',
+                            flex: 'initial',
+                            minHeight: 'auto',
+                            whiteSpace: 'nowrap',
                             transition: 'all 0.15s ease'
                           }}
                         >
@@ -2454,29 +2516,31 @@ export default function AdminChatInbox({ initialChannel = 'inbox', compactMobile
                         onClick={handleSendMessage}
                         disabled={isSendingMessage || (!inputText.trim() && pendingAttachments.length === 0)}
                         style={{
-                          background: compactMobile
-                            ? ((!inputText.trim() && pendingAttachments.length === 0) ? '#f1f5f9' : '#0f172a')
-                            : 'none',
+                          background: 'none',
                           border: 'none',
-                          borderRadius: compactMobile ? '999px' : 0,
+                          borderBottom: compactMobile ? '1.5px solid currentColor' : 'none',
+                          borderRadius: 0,
                           cursor: isSendingMessage || (!inputText.trim() && pendingAttachments.length === 0) ? 'not-allowed' : 'pointer',
-                          color: compactMobile
-                            ? ((!inputText.trim() && pendingAttachments.length === 0) ? '#cbd5e1' : '#ffffff')
-                            : ((!inputText.trim() && pendingAttachments.length === 0) ? '#cbd5e1' : '#0f172a'),
-                          padding: compactMobile ? 0 : '4px',
-                          width: compactMobile ? '40px' : 'auto',
-                          height: compactMobile ? '40px' : 'auto',
+                          color: (!inputText.trim() && pendingAttachments.length === 0) ? '#d1d5db' : (compactMobile ? '#6b7280' : '#0f172a'),
+                          padding: compactMobile ? '0.18rem 0' : '4px',
+                          width: 'auto',
+                          height: 'auto',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
-                          flexShrink: 0
+                          flexShrink: 0,
+                          fontSize: compactMobile ? '0.88rem' : undefined,
+                          fontWeight: compactMobile ? 600 : undefined,
+                          whiteSpace: 'nowrap'
                         }}
                         title="Send message (Enter)"
                       >
-                        {isSendingMessage ? (
-                          <Loader2 size={20} className="spin-icon" color="#ea580c" />
+                        {compactMobile ? (
+                          isSendingMessage ? 'Sending…' : 'Send'
                         ) : (
-                          <Send size={20} />
+                          isSendingMessage
+                            ? <Loader2 size={20} className="spin-icon" color="#ea580c" />
+                            : <Send size={20} />
                         )}
                       </button>
                     </div>
