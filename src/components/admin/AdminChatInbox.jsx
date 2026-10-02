@@ -10,7 +10,7 @@ import { playMessageChime as _playMessageChime, playMessageChimeForMessage, play
 import { subscribeToPresence, syncPresenceFromRest } from '../../services/presenceService';
 import { subscribeToChatMessages, subscribeToConversations } from '../../services/supabaseService';
 import { fetchChatUnreadCounts } from '../../services/chatUnreadService';
-import { fetchClientQuery } from '../../services/clientQueryService';
+import { fetchClientQuery, invalidateClientQuery } from '../../services/clientQueryService';
 import {
   Search,
   ChevronDown,
@@ -271,6 +271,7 @@ export default function AdminChatInbox({ initialChannel = 'inbox', compactMobile
       const data = await fetchClientQuery({
         key: ['admin-chat-conversations', targetChannel, filter, query || ''],
         staleTime: 60_000,
+        force: Boolean(silent),
         queryFn: async () => {
           const res = await fetch(url, { credentials: 'include', cache: 'default' });
           if (!res.ok) throw new Error(`Conversation request failed (${res.status})`);
@@ -310,13 +311,14 @@ export default function AdminChatInbox({ initialChannel = 'inbox', compactMobile
   };
 
   // 2. Fetch Messages for Active Conversation
-  const fetchActiveMessages = async (convId) => {
+  const fetchActiveMessages = async (convId, { force = false } = {}) => {
     if (!convId) return;
     setIsLoadingMessages(true);
     try {
       const data = await fetchClientQuery({
         key: ['chat-messages', convId],
-        staleTime: 60_000,
+        staleTime: 15_000,
+        force,
         queryFn: async () => {
           const res = await fetch(`/api/chat/messages?conversationId=${encodeURIComponent(convId)}`, {
             credentials: 'include',
@@ -349,6 +351,7 @@ export default function AdminChatInbox({ initialChannel = 'inbox', compactMobile
       }
     } catch (err) {
       console.warn('[Admin Chat] Failed to load messages:', err);
+      showToast('Could not load message history. Tap refresh to retry.', 'error');
     } finally {
       setIsLoadingMessages(false);
     }
@@ -376,7 +379,7 @@ export default function AdminChatInbox({ initialChannel = 'inbox', compactMobile
   /* oxlint-disable react-hooks/exhaustive-deps -- fetch is keyed by conversation id, not render-local helper identity */
   useEffect(() => {
     if (activeConversationId) {
-      fetchActiveMessages(activeConversationId);
+      fetchActiveMessages(activeConversationId, { force: true });
     }
   }, [activeConversationId]);
   /* oxlint-enable react-hooks/exhaustive-deps */
@@ -395,7 +398,7 @@ export default function AdminChatInbox({ initialChannel = 'inbox', compactMobile
       fetchConversations(activeFilter, searchQuery, activeChannel, true);
       fetchChannelUnreadCounts();
       if (activeConversationId) {
-        fetchActiveMessages(activeConversationId);
+        fetchActiveMessages(activeConversationId, { force: true });
       }
     };
 
@@ -456,6 +459,7 @@ export default function AdminChatInbox({ initialChannel = 'inbox', compactMobile
           if (prev.some(existing => existing.id === msg.id)) return prev;
           return [...prev, msg];
         });
+        invalidateClientQuery(['chat-messages', activeConversationId]);
         scrollToBottom();
 
         if (msg.sender === 'client') {
@@ -764,7 +768,6 @@ export default function AdminChatInbox({ initialChannel = 'inbox', compactMobile
     e?.preventDefault();
     if ((!inputText.trim() && pendingAttachments.length === 0) || isSendingMessage || !activeConversationId) return;
 
-    // Immediately cancel and broadcast typing cessation
     clearTimeout(typingTimeoutRef.current);
     if (isTypingActiveRef.current) {
       isTypingActiveRef.current = false;
@@ -774,6 +777,30 @@ export default function AdminChatInbox({ initialChannel = 'inbox', compactMobile
     const messageText = inputText.trim();
     const attachmentsToSend = [...pendingAttachments];
     const replyToSend = replyingTo ? { ...replyingTo } : null;
+    const clientEmail = (activeConversation?.client_email || '').toLowerCase().trim();
+    const adminEmail = (authUser?.email || '').toLowerCase().trim();
+
+    if (!clientEmail || !adminEmail) {
+      showToast('A verified client conversation and authenticated admin account are required.', 'error');
+      return;
+    }
+
+    const tempId = `temp-admin-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
+    const optimisticMessage = {
+      id: tempId,
+      conversation_id: activeConversationId,
+      client_email: clientEmail,
+      sender: 'admin',
+      sender_name: 'BDigitizing Support',
+      sender_email: adminEmail,
+      text: messageText,
+      type: attachmentsToSend.length > 0 && !messageText ? 'attachment' : 'text',
+      attachments: attachmentsToSend,
+      reply_to: replyToSend,
+      is_read: false,
+      created_at: new Date().toISOString(),
+      isPending: true
+    };
 
     stopNotificationSound();
     setIsSendingMessage(true);
@@ -781,17 +808,14 @@ export default function AdminChatInbox({ initialChannel = 'inbox', compactMobile
     setPendingAttachments([]);
     setReplyingTo(null);
     setPreviousDraft(null);
+    setMessages(prev => [...prev, optimisticMessage]);
+    scrollToBottom();
+
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto';
     }
 
     try {
-      const clientEmail = (activeConversation?.client_email || '').toLowerCase().trim();
-      const adminEmail = (authUser?.email || '').toLowerCase().trim();
-      if (!clientEmail || !adminEmail) {
-        throw new Error('A verified client conversation and authenticated admin account are required to send messages.');
-      }
-
       const res = await fetch('/api/chat/messages', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -808,28 +832,32 @@ export default function AdminChatInbox({ initialChannel = 'inbox', compactMobile
         })
       });
 
-      const data = await res.json();
-      if (data?.message) {
-        setMessages(prev => {
-          if (prev.some(m => m.id === data.message.id)) return prev;
-          return [...prev, data.message];
-        });
-        scrollToBottom();
-
-        // Update thread snippet in left sidebar
-        setConversations(prev => prev.map(c => {
-          if (c.id === activeConversationId) {
-            return {
-              ...c,
-              last_message: messageText || (attachmentsToSend.length > 0 ? `📎 ${attachmentsToSend[0].name}` : 'New message'),
-              last_message_at: new Date().toISOString()
-            };
-          }
-          return c;
-        }));
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data?.message) {
+        throw new Error(data?.error || `Message request failed (${res.status})`);
       }
-    } catch {
-      showToast('Failed to send message.', 'error');
+
+      setMessages(prev => {
+        const alreadyExists = prev.some(m => m.id === data.message.id);
+        if (alreadyExists) return prev.filter(m => m.id !== tempId);
+        return prev.map(m => m.id === tempId ? data.message : m);
+      });
+      invalidateClientQuery(['chat-messages', activeConversationId]);
+      scrollToBottom();
+
+      setConversations(prev => prev.map(c => {
+        if (c.id === activeConversationId) {
+          return {
+            ...c,
+            last_message: messageText || (attachmentsToSend.length > 0 ? `📎 ${attachmentsToSend[0].name}` : 'New message'),
+            last_message_at: data.message.created_at || new Date().toISOString()
+          };
+        }
+        return c;
+      }));
+    } catch (err) {
+      setMessages(prev => prev.filter(m => m.id !== tempId));
+      showToast(err?.message || 'Failed to send message.', 'error');
       setInputText(messageText);
       setPendingAttachments(attachmentsToSend);
       setReplyingTo(replyToSend);
@@ -1519,7 +1547,7 @@ export default function AdminChatInbox({ initialChannel = 'inbox', compactMobile
                 )}
                 <button
                   type="button"
-                  onClick={() => fetchActiveMessages(activeConversation.id)}
+                  onClick={() => fetchActiveMessages(activeConversation.id, { force: true })}
                   style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '6px', color: '#64748b' }}
                   title="Refresh conversation"
                 >
@@ -2581,7 +2609,7 @@ export default function AdminChatInbox({ initialChannel = 'inbox', compactMobile
                 return [...prev, createdMessage];
               });
             }
-            fetchActiveMessages(activeConversation.id);
+            fetchActiveMessages(activeConversation.id, { force: true });
             fetchConversations(activeFilter, searchQuery, activeChannel);
             showToast('Custom offer dispatched to client!', 'success');
           }}

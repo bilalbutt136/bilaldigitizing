@@ -7,7 +7,7 @@ import { enforceApiBurstLimit } from '../../../../src/lib/apiBurstGuard.js';
 
 export const dynamic = 'force-dynamic';
 
-const MESSAGE_FIELDS = 'id, conversation_id, thread_id, client_email, guest_id, sender, sender_name, sender_email, text, type, attachment, attachments, attachment_url, attachment_name, attachment_size, attachment_type, file_id, reply_to, offer_id, offer_data, metadata, status, is_read, read_at, is_autopilot, auto_pilot, deleted_at, timestamp, created_at';
+const MESSAGE_FIELDS = 'id, conversation_id, client_email, sender, sender_name, sender_email, text, type, attachments, attachment_url, attachment_name, attachment_size, attachment_type, reply_to, offer_id, offer_data, is_read, read_at, created_at';
 const OFFER_FIELDS = 'id, conversation_id, thread_id, order_id, customer_id, created_by, client_name, client_email, title, description, service_type, price, discount_amount, final_price, delivery_time_text, delivery_days, revisions_allowed, expires_in_hours, expires_at, requires_requirements, status, payment_status, payment_intent_id, stripe_session_id, accepted_at, created_at, updated_at';
 
 async function GET_impl(request) {
@@ -55,8 +55,11 @@ async function GET_impl(request) {
 
     const { data: messages, error } = await query;
     if (error) {
-      console.warn('[Chat Messages GET Error]:', error.message);
-      return NextResponse.json({ messages: [] });
+      console.error('[Chat Messages GET Error]:', error.message);
+      return NextResponse.json(
+        { error: 'Unable to load message history.' },
+        { status: 500, headers: { 'Cache-Control': 'no-store' } }
+      );
     }
 
     // Strict Channel Isolation: Check if current thread is a support thread
@@ -88,7 +91,10 @@ async function GET_impl(request) {
           offerQuery = offerQuery.ilike('client_email', authEmail);
         }
 
-        const { data: offers } = await offerQuery;
+        const { data: offers, error: offerError } = await offerQuery;
+        if (offerError) {
+          throw new Error(`Unable to synchronize custom offers: ${offerError.message}`);
+        }
 
         if (offers && offers.length > 0) {
           const offerMap = new Map();
@@ -151,7 +157,9 @@ async function GET_impl(request) {
 
     return NextResponse.json({ messages: syncedMessages }, {
       headers: {
-        'Cache-Control': 'private, max-age=10, stale-while-revalidate=50'
+        // Realtime is the live transport. Thread opens still revalidate so a
+        // missed socket event can never leave message history stale.
+        'Cache-Control': 'private, no-cache'
       }
     });
   } catch (err) {

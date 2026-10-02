@@ -70,7 +70,7 @@ test('Vercel efficiency: hot read routes use bounded projections and cache heade
 
   assert.match(messages, /MESSAGE_FIELDS/);
   assert.match(messages, /\.limit\(150\)/);
-  assert.match(messages, /stale-while-revalidate=50/);
+  assert.match(messages, /'Cache-Control': 'private, no-cache'/);
   assert.match(conversations, /CONVERSATION_FIELDS/);
   assert.match(conversations, /\.limit\(200\)/);
   assert.match(conversations, /stale-while-revalidate=45/);

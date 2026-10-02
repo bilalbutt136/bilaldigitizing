@@ -7,7 +7,7 @@ import OfferCardMessage from '../common/OfferCardMessage';
 import { downloadFileDirectly, openFileInNewTab } from '../../utils/fileDownloader';
 import { playMessageChime as _playMessageChime, playMessageChimeForMessage, playCustomerChime, stopNotificationSound, unlockAudioContext } from '../../utils/audioNotification';
 import { subscribeToChatMessages } from '../../services/supabaseService';
-import { fetchClientQuery } from '../../services/clientQueryService';
+import { fetchClientQuery, invalidateClientQuery } from '../../services/clientQueryService';
 import {
   Send,
   Paperclip,
@@ -290,7 +290,7 @@ export default function CustomerSupportChat({
       const resolvedId = conversation?.id || convIdToUse;
       if (resolvedId) {
         setConversationId(resolvedId);
-        fetchMessages(resolvedId);
+        fetchMessages(resolvedId, { force: true });
       }
     } catch (err) {
       console.warn('[Customer Chat] Init error:', err);
@@ -300,12 +300,13 @@ export default function CustomerSupportChat({
   };
 
   // 2. Fetch Messages
-  const fetchMessages = async (convId) => {
+  const fetchMessages = async (convId, { force = false } = {}) => {
     if (!convId) return;
     try {
       const data = await fetchClientQuery({
         key: ['chat-messages', convId],
-        staleTime: 60_000,
+        staleTime: 15_000,
+        force,
         queryFn: async () => {
           const res = await fetch(`/api/chat/messages?conversationId=${encodeURIComponent(convId)}&clientEmail=${encodeURIComponent(userEmail)}`, {
             credentials: 'include',
@@ -335,6 +336,7 @@ export default function CustomerSupportChat({
       }
     } catch (err) {
       console.warn('[Customer Chat] Fetch messages error:', err);
+      showToast('Could not load message history. Tap refresh to retry.', 'error');
     }
   };
 
@@ -379,7 +381,7 @@ export default function CustomerSupportChat({
           }));
         }
         if (conversationId) {
-          fetchMessages(conversationId);
+          fetchMessages(conversationId, { force: true });
         }
       })
       .catch(err => console.warn('Payment success callback notice:', err));
@@ -405,7 +407,7 @@ export default function CustomerSupportChat({
       const now = Date.now();
       if (now - lastRecoveryAt < 60_000) return;
       lastRecoveryAt = now;
-      fetchMessages(conversationId);
+      fetchMessages(conversationId, { force: true });
     };
 
     const handleVisibility = () => {
@@ -472,6 +474,7 @@ export default function CustomerSupportChat({
 
         return [...prev, msg];
       });
+      invalidateClientQuery(['chat-messages', conversationId]);
       scrollToBottom();
     });
 
@@ -670,7 +673,10 @@ export default function CustomerSupportChat({
         })
       });
 
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data?.message) {
+        throw new Error(data?.error || `Message request failed (${res.status})`);
+      }
       if (data?.message) {
         setMessages(prev => {
           // If Realtime already added or reconciled the message with data.message.id:
@@ -682,9 +688,8 @@ export default function CustomerSupportChat({
           // Otherwise, replace the temp message with the real one
           return prev.map(m => m.id === tempId ? data.message : m);
         });
+        invalidateClientQuery(['chat-messages', conversationId]);
         scrollToBottom();
-      } else {
-        throw new Error(data?.error || 'Failed to dispatch message.');
       }
     } catch (err) {
       showToast(err?.message || 'Failed to send message.', 'error');
@@ -1003,7 +1008,7 @@ export default function CustomerSupportChat({
 
           <button
             type="button"
-            onClick={() => fetchMessages(conversationId)}
+            onClick={() => fetchMessages(conversationId, { force: true })}
             style={{
               background: 'rgba(255,255,255,0.08)',
               border: '1px solid rgba(255,255,255,0.12)',

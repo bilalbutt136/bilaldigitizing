@@ -763,7 +763,31 @@ test('Chat System & Fiverr-Style Inbox Architecture', async (t) => {
     assert.equal(formatLastSeen(null), 'Offline');
   });
 
-  await t.test('28. Compact mobile chat keeps only the Fiverr-style bottom actions and owns the viewport bottom', () => {
+  await t.test('28. Chat history projection matches the rebuilt production schema and failures never masquerade as empty history', () => {
+    const route = read('app/api/chat/messages/route.js');
+    const migration = read('supabase/migrations/20261002000005_restore_chat_message_compatibility.sql');
+    const adminChat = read('src/components/admin/AdminChatInbox.jsx');
+    const customerChat = read('src/components/customer/CustomerSupportChat.jsx');
+
+    const fieldLine = route.match(/const MESSAGE_FIELDS = '([^']+)'/)?.[1] || '';
+    assert.equal(fieldLine.includes('thread_id'), false);
+    assert.equal(fieldLine.includes('guest_id'), false);
+    assert.equal(fieldLine.includes('attachment,'), false);
+    assert.match(fieldLine, /conversation_id/);
+    assert.match(fieldLine, /reply_to/);
+    assert.match(fieldLine, /created_at/);
+    assert.match(route, /Unable to load message history/);
+    assert.match(route, /status: 500/);
+    assert.match(route, /'Cache-Control': 'private, no-cache'/);
+
+    assert.match(migration, /ADD COLUMN IF NOT EXISTS thread_id text/);
+    assert.match(migration, /SET thread_id = conversation_id/);
+    assert.match(adminChat, /temp-admin-/);
+    assert.match(adminChat, /invalidateClientQuery\(\['chat-messages', activeConversationId\]\)/);
+    assert.match(customerChat, /invalidateClientQuery\(\['chat-messages', conversationId\]\)/);
+  });
+
+  await t.test('29. Compact mobile chat keeps only the Fiverr-style bottom actions and owns the viewport bottom', () => {
     const chat = read('src/components/admin/AdminChatInbox.jsx');
     const mobileAdmin = read('src/components/admin/MobileAdminConsole.jsx');
 
