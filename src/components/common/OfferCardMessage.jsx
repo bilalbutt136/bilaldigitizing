@@ -16,6 +16,7 @@ import { useAppState } from '../../context/StateContext';
 export default function OfferCardMessage({
   offer,
   isCustomerView = false,
+  compact = false,
   onOfferAccepted = () => {},
   onOfferDeclined = () => {},
   showToast = () => {}
@@ -176,17 +177,17 @@ export default function OfferCardMessage({
     <div style={{
       background: '#ffffff',
       border: isPaid ? '1.5px solid #86efac' : isAcceptedUnpaid ? '1.5px solid #fde68a' : '1.5px solid #e2e8f0',
-      borderRadius: '14px',
-      padding: '1.25rem',
+      borderRadius: compact ? '12px' : '14px',
+      padding: compact ? '1rem' : '1.25rem',
       maxWidth: '460px',
       width: '100%',
       boxShadow: isPaid ? '0 4px 16px rgba(22, 163, 74, 0.08)' : isAcceptedUnpaid ? '0 4px 16px rgba(217, 119, 6, 0.08)' : '0 4px 16px rgba(15, 23, 42, 0.08)',
-      margin: '0.5rem 0',
+      margin: compact ? '0.35rem 0' : '0.5rem 0',
       fontFamily: 'inherit',
       textAlign: 'left'
     }}>
       {/* CARD HEADER */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
+      <div style={{ display: 'flex', alignItems: compact ? 'flex-start' : 'center', justifyContent: 'space-between', flexDirection: compact ? 'column' : 'row', gap: compact ? '0.55rem' : 0, marginBottom: '0.75rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
           <span style={{
             background: 'linear-gradient(135deg, #ea580c, #f97316)',
@@ -251,8 +252,8 @@ export default function OfferCardMessage({
       {/* SPECIFICATIONS GRID */}
       <div style={{
         display: 'grid',
-        gridTemplateColumns: 'repeat(3, 1fr)',
-        gap: '0.5rem',
+        gridTemplateColumns: compact ? '1fr' : 'repeat(3, 1fr)',
+        gap: compact ? '0.65rem' : '0.5rem',
         background: '#f8fafc',
         borderRadius: '10px',
         padding: '0.65rem 0.75rem',

@@ -261,7 +261,36 @@ describe('Notification Privacy Isolation & Two-Notifications-Per-Order Enforceme
     assert.equal(bobPersonalNotifs.length, 0, 'Admin notification list should not be flooded with private client notifications');
   });
 
-  test('8. Helper detection functions accurately identify Placed and Payment Confirmed events', () => {
+  test('8. Admin completion notifications are semantically deduplicated per order', () => {
+    const duplicates = [
+      {
+        id: 'notif-comp-1000251296-admin-legacy-1',
+        recipient_role: 'admin',
+        title: '✅ Order Completed: 1000251296 - Embroidery Digitizing (Qty: 1)',
+        message: 'Client approved the delivery. Order is now complete.',
+        order_id: '1000251296',
+        created_at: '2026-10-02T12:00:00.000Z'
+      },
+      {
+        id: 'notif-comp-1000251296-admin-legacy-2',
+        recipient_role: 'admin',
+        title: '✅ Order Completed: 1000251296 - Embroidery Digitizing (Qty: 1)',
+        message: 'Client approved the delivery. Order is now complete.',
+        order_id: '1000251296',
+        created_at: '2026-10-02T12:01:00.000Z'
+      }
+    ];
+
+    const result = filterAndSanitizeNotifications(duplicates, {
+      currentUserEmail: 'admin@bdigitizing.com',
+      isAdmin: true
+    });
+
+    assert.equal(result.length, 1, 'One completed order must render one admin completion notification');
+    assert.equal(result[0].id, 'notif-comp-1000251296-admin-legacy-2');
+  });
+
+  test('9. Helper detection functions accurately identify Placed and Payment Confirmed events', () => {
     assert.equal(isOrderPlacedNotification({ title: '🎉 Order Placed Successfully!' }), true);
     assert.equal(isOrderPlacedNotification({ id: 'ord-created-555' }), true);
     assert.equal(isOrderPlacedNotification({ id: 'notif-ord-555-client' }), true);

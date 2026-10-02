@@ -340,7 +340,7 @@ export async function handleUpdateStatus(context) {
 
         } else if (newStatus === 'completed') {
           await insertNotif({
-            id: `notif-comp-${resolvedOrderId}-admin-${Date.now()}`,
+            id: `notif-comp-${resolvedOrderId}-admin`,
             recipient_role: 'admin',
             title: `✅ Order Completed: ${ordTitle}`,
             message: `${clientName} approved the delivery. Order is now complete.`,

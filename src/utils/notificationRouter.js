@@ -461,6 +461,7 @@ export function filterAndSanitizeNotifications(notifications, { currentUserEmail
   const orderPlacedMap = new Map(); // orderId -> notification
   const orderPaidMap = new Map();   // orderId -> notification
   const orderDeliveredMap = new Map(); // delivKey -> notification
+  const adminCompletedMap = new Map(); // orderId -> canonical completion notification
   const otherNotifications = [];
 
   for (const rawNotif of notifications) {
@@ -500,9 +501,30 @@ export function filterAndSanitizeNotifications(notifications, { currentUserEmail
       }
     }
 
-    // If admin, preserve all admin notifications
+    // Admin lifecycle events are usually preserved verbatim, but order
+    // completion is terminal and must appear only once per order. Older
+    // deployments generated timestamp-based completion IDs, so collapse those
+    // legacy duplicates semantically as well as relying on the new stable ID.
     if (isAdmin) {
-      otherNotifications.push(notif);
+      let adminOrderId = notif.order_id || notif.orderId || null;
+      if (!adminOrderId) {
+        adminOrderId = parseNotificationTarget(notif).orderId;
+      }
+      const isCompleted = notifTitle.includes('order completed') ||
+        String(notif.id || '').toLowerCase().startsWith('notif-comp-');
+
+      if (isCompleted && adminOrderId) {
+        const cleanOrderId = String(adminOrderId).trim().replace(/^#+/, '');
+        const existingCompleted = adminCompletedMap.get(cleanOrderId);
+        const incomingTime = (resolveNotificationDate(notif) || new Date(0)).getTime();
+        const existingTime = (resolveNotificationDate(existingCompleted) || new Date(0)).getTime();
+
+        if (!existingCompleted || incomingTime >= existingTime) {
+          adminCompletedMap.set(cleanOrderId, notif);
+        }
+      } else {
+        otherNotifications.push(notif);
+      }
       continue;
     }
 
@@ -612,6 +634,7 @@ export function filterAndSanitizeNotifications(notifications, { currentUserEmail
     ...Array.from(orderPlacedMap.values()),
     ...Array.from(orderPaidMap.values()),
     ...Array.from(orderDeliveredMap.values()),
+    ...Array.from(adminCompletedMap.values()),
     ...otherNotifications
   ];
 

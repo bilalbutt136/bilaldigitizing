@@ -904,10 +904,10 @@ export default function AdminChatInbox({ initialChannel = 'inbox', compactMobile
       minHeight: 0,
       flex: 1,
       background: '#ffffff',
-      borderRadius: '12px',
-      border: '1px solid #e2e8f0',
+      borderRadius: compactMobile ? '0' : '12px',
+      border: compactMobile ? 'none' : '1px solid #e2e8f0',
       overflow: 'hidden',
-      boxShadow: '0 4px 20px rgba(0,0,0,0.06)',
+      boxShadow: compactMobile ? 'none' : '0 4px 20px rgba(0,0,0,0.06)',
       position: 'relative',
       fontFamily: 'inherit'
     }}>
@@ -1352,7 +1352,7 @@ export default function AdminChatInbox({ initialChannel = 'inbox', compactMobile
             <div
               className="admin-chat-conversation-header"
               style={{
-              padding: compactMobile ? '0.65rem 0.7rem' : '0.85rem 1.5rem',
+              padding: compactMobile ? '0.72rem 0.85rem' : '0.85rem 1.5rem',
               borderBottom: '1px solid #e2e8f0',
               display: 'flex',
               alignItems: 'center',
@@ -1387,8 +1387,8 @@ export default function AdminChatInbox({ initialChannel = 'inbox', compactMobile
                 )}
                 <div style={{ position: 'relative', flexShrink: 0 }}>
                   <div style={{
-                    width: '46px',
-                    height: '46px',
+                    width: compactMobile ? '40px' : '46px',
+                    height: compactMobile ? '40px' : '46px',
                     borderRadius: '50%',
                     background: '#fed7aa',
                     color: '#c2410c',
@@ -1422,16 +1422,28 @@ export default function AdminChatInbox({ initialChannel = 'inbox', compactMobile
                   <h3 style={{ fontSize: compactMobile ? '0.92rem' : '1.05rem', fontWeight: 800, color: '#0f172a', margin: '0 0 0.15rem 0', lineHeight: 1.2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {activeConversation.client_name || activeConversation.client_email?.split('@')[0]}
                   </h3>
-                  <div style={{ fontSize: '0.78rem', color: '#64748b' }}>
-                    {activeConversation.client_email} • {isClientOnline(activeConversation) ? (
-                      <span style={{ color: '#22c55e', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                        <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#22c55e', display: 'inline-block' }} />
-                        Online now
-                      </span>
+                  <div style={{ fontSize: compactMobile ? '0.74rem' : '0.78rem', color: '#64748b', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {compactMobile ? (
+                      isClientOnline(activeConversation) ? (
+                        <span style={{ color: '#22c55e', fontWeight: 600 }}>Online now</span>
+                      ) : (
+                        <span style={{ color: '#94a3b8', fontWeight: 500 }}>
+                          {formatLastSeen(activeConversation.last_seen_at || activeConversation.last_message_at || activeConversation.updated_at)}
+                        </span>
+                      )
                     ) : (
-                      <span style={{ color: '#94a3b8', fontWeight: 500 }}>
-                        {formatLastSeen(activeConversation.last_seen_at || activeConversation.last_message_at || activeConversation.updated_at)}
-                      </span>
+                      <>
+                        {activeConversation.client_email} • {isClientOnline(activeConversation) ? (
+                          <span style={{ color: '#22c55e', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                            <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#22c55e', display: 'inline-block' }} />
+                            Online now
+                          </span>
+                        ) : (
+                          <span style={{ color: '#94a3b8', fontWeight: 500 }}>
+                            {formatLastSeen(activeConversation.last_seen_at || activeConversation.last_message_at || activeConversation.updated_at)}
+                          </span>
+                        )}
+                      </>
                     )}
                   </div>
                 </div>
@@ -1495,7 +1507,7 @@ export default function AdminChatInbox({ initialChannel = 'inbox', compactMobile
             {/* NAVIGATION TABS: MESSAGES | SAVED (Exact match to Reference) */}
             <div style={{
               display: 'flex',
-              padding: compactMobile ? '0 0.7rem' : '0 1.5rem',
+              padding: compactMobile ? '0 0.85rem' : '0 1.5rem',
               borderBottom: '1px solid #e2e8f0',
               background: '#ffffff',
               flexShrink: 0
@@ -1647,7 +1659,7 @@ export default function AdminChatInbox({ initialChannel = 'inbox', compactMobile
                     flex: 1,
                     minHeight: 0,
                     overflowY: 'auto',
-                    padding: '1.25rem 1.5rem',
+                    padding: compactMobile ? '1.15rem 0.85rem 1.5rem' : '1.25rem 1.5rem',
                     display: 'flex',
                     flexDirection: 'column',
                     scrollBehavior: 'smooth'
@@ -1718,7 +1730,9 @@ export default function AdminChatInbox({ initialChannel = 'inbox', compactMobile
                               display: 'flex',
                               flexDirection: 'column',
                               alignItems: isAdminMsg ? 'flex-end' : 'flex-start',
-                              marginTop: showDateHeader ? '0.35rem' : isFirstInGroup ? '0.75rem' : '0.25rem'
+                              marginTop: compactMobile
+                                ? (showDateHeader ? '0.55rem' : isFirstInGroup ? '1rem' : '0.4rem')
+                                : (showDateHeader ? '0.35rem' : isFirstInGroup ? '0.75rem' : '0.25rem')
                             }}
                           >
                             {/* Sender Label: Show for customer if first in group */}
@@ -1737,10 +1751,14 @@ export default function AdminChatInbox({ initialChannel = 'inbox', compactMobile
 
                             {/* Custom Offer Card Rendering */}
                             {isOffer ? (
-                              <div style={{ maxWidth: '90%', width: '420px' }}>
+                              <div style={{
+                                width: compactMobile ? '88%' : '420px',
+                                maxWidth: compactMobile ? '360px' : '90%'
+                              }}>
                                 <OfferCardMessage
                                   offer={msg.offer_data || { id: msg.offer_id, title: 'Custom Digitizing Offer' }}
                                   isCustomerView={false}
+                                  compact={compactMobile}
                                   showToast={showToast}
                                 />
                               </div>
@@ -1748,11 +1766,13 @@ export default function AdminChatInbox({ initialChannel = 'inbox', compactMobile
                               /* Standard Clean Chat Bubble */
                               <div
                                 style={{
-                                  maxWidth: '75%',
+                                  maxWidth: compactMobile ? '82%' : '75%',
                                   background: isAdminMsg ? '#0f172a' : '#ffffff',
                                   color: isAdminMsg ? '#ffffff' : '#0f172a',
-                                  padding: '0.75rem 1rem',
-                                  borderRadius: isAdminMsg ? '16px 16px 4px 16px' : '16px 16px 16px 4px',
+                                  padding: compactMobile ? '0.78rem 0.95rem' : '0.75rem 1rem',
+                                  borderRadius: isAdminMsg
+                                    ? (compactMobile ? '16px 16px 5px 16px' : '16px 16px 4px 16px')
+                                    : (compactMobile ? '16px 16px 16px 5px' : '16px 16px 16px 4px'),
                                   boxShadow: isAdminMsg
                                     ? '0 2px 6px rgba(15, 23, 42, 0.12)'
                                     : '0 1px 4px rgba(0, 0, 0, 0.05)',
@@ -2087,7 +2107,9 @@ export default function AdminChatInbox({ initialChannel = 'inbox', compactMobile
                 {/* BOTTOM COMPOSER (LOCKED AT BOTTOM, NEVER PUSHED OFF SCREEN)  */}
                 {/* ============================================================ */}
                 <div style={{
-                  padding: compactMobile ? '0.7rem' : '0.85rem 1.5rem',
+                  padding: compactMobile
+                    ? '0.82rem 0.85rem calc(0.82rem + env(safe-area-inset-bottom, 0px))'
+                    : '0.85rem 1.5rem',
                   borderTop: '1px solid #e2e8f0',
                   background: '#ffffff',
                   flexShrink: 0
@@ -2204,13 +2226,13 @@ export default function AdminChatInbox({ initialChannel = 'inbox', compactMobile
                       style={{
                         width: '100%',
                         border: '1.5px solid #e2e8f0',
-                        borderRadius: '10px',
-                        padding: '0.75rem 1rem',
+                        borderRadius: compactMobile ? '12px' : '10px',
+                        padding: compactMobile ? '0.78rem 0.95rem' : '0.75rem 1rem',
                         fontSize: '0.9rem',
                         outline: 'none',
                         resize: 'none',
                         fontFamily: 'inherit',
-                        minHeight: '48px',
+                        minHeight: compactMobile ? '46px' : '48px',
                         maxHeight: '180px',
                         lineHeight: 1.4,
                         boxSizing: 'border-box',
@@ -2222,12 +2244,20 @@ export default function AdminChatInbox({ initialChannel = 'inbox', compactMobile
                   {/* COMPOSER TOOLBAR */}
                   <div style={{
                     display: 'flex',
-                    alignItems: 'center',
+                    flexDirection: compactMobile ? 'column' : 'row',
+                    alignItems: compactMobile ? 'stretch' : 'center',
                     justifyContent: 'space-between',
-                    marginTop: '0.65rem'
+                    gap: compactMobile ? '0.6rem' : 0,
+                    marginTop: compactMobile ? '0.75rem' : '0.65rem'
                   }}>
                     {/* LEFT TOOLS: CLIP, EMOJI, QUICK RESPONSES, VIDEO, AI POLISH */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: compactMobile ? 'space-between' : 'flex-start',
+                      gap: compactMobile ? '0.3rem' : '0.65rem',
+                      width: compactMobile ? '100%' : 'auto'
+                    }}>
                       {/* Hidden File Input */}
                       <input
                         ref={fileInputRef}
@@ -2388,7 +2418,13 @@ export default function AdminChatInbox({ initialChannel = 'inbox', compactMobile
                     </div>
 
                     {/* RIGHT CONTROLS: CREATE AN OFFER & SEND (Exact match to Reference) */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: compactMobile ? 'space-between' : 'flex-start',
+                      gap: compactMobile ? '0.6rem' : '0.85rem',
+                      width: compactMobile ? '100%' : 'auto'
+                    }}>
                       {/* "Create an offer" Button (Strictly for Inbox & Offers channel) */}
                       {activeChannel === 'inbox' && (
                         <button
@@ -2398,11 +2434,13 @@ export default function AdminChatInbox({ initialChannel = 'inbox', compactMobile
                             background: '#ffffff',
                             color: '#0f172a',
                             border: '1.5px solid #0f172a',
-                            borderRadius: '6px',
-                            padding: '0.4rem 1rem',
+                            borderRadius: compactMobile ? '10px' : '6px',
+                            padding: compactMobile ? '0.58rem 0.9rem' : '0.4rem 1rem',
                             fontSize: '0.85rem',
                             fontWeight: 700,
                             cursor: 'pointer',
+                            flex: compactMobile ? 1 : 'initial',
+                            minHeight: compactMobile ? '40px' : 'auto',
                             transition: 'all 0.15s ease'
                           }}
                         >
@@ -2416,13 +2454,22 @@ export default function AdminChatInbox({ initialChannel = 'inbox', compactMobile
                         onClick={handleSendMessage}
                         disabled={isSendingMessage || (!inputText.trim() && pendingAttachments.length === 0)}
                         style={{
-                          background: 'none',
+                          background: compactMobile
+                            ? ((!inputText.trim() && pendingAttachments.length === 0) ? '#f1f5f9' : '#0f172a')
+                            : 'none',
                           border: 'none',
+                          borderRadius: compactMobile ? '999px' : 0,
                           cursor: isSendingMessage || (!inputText.trim() && pendingAttachments.length === 0) ? 'not-allowed' : 'pointer',
-                          color: (!inputText.trim() && pendingAttachments.length === 0) ? '#cbd5e1' : '#0f172a',
-                          padding: '4px',
+                          color: compactMobile
+                            ? ((!inputText.trim() && pendingAttachments.length === 0) ? '#cbd5e1' : '#ffffff')
+                            : ((!inputText.trim() && pendingAttachments.length === 0) ? '#cbd5e1' : '#0f172a'),
+                          padding: compactMobile ? 0 : '4px',
+                          width: compactMobile ? '40px' : 'auto',
+                          height: compactMobile ? '40px' : 'auto',
                           display: 'flex',
-                          alignItems: 'center'
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          flexShrink: 0
                         }}
                         title="Send message (Enter)"
                       >
