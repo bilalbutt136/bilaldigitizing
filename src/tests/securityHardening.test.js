@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 
 import { resolveAuthoritativePayment, PaymentAuthorizationError } from '../lib/payments/paymentAuthorization.js';
+import { formatBoltAmount } from '../lib/payments/boltPayouts.js';
 import { canAccessConversation } from '../lib/chat/authorization.js';
 import { sanitizeCmsHtml } from '../lib/sanitizeHtml.js';
 
@@ -249,6 +250,13 @@ describe('Security Hardening Regression Coverage', () => {
     assert.match(migration, /ON CONFLICT \(provider_reference\).*DO NOTHING/s);
     assert.match(migration, /REVOKE ALL ON FUNCTION public\.deposit_funds\(text, numeric, text\)[\s\S]*FROM PUBLIC, anon, authenticated/);
     assert.match(migration, /GRANT EXECUTE ON FUNCTION public\.deduct_wallet_balance\(text, numeric, text\) TO service_role/);
+  });
+
+  test('Bolt provider receives the exact server-authoritative amount without .99 price mutation', () => {
+    assert.equal(formatBoltAmount(37.5), 37.5);
+    assert.equal(formatBoltAmount(16), 16);
+    assert.equal(formatBoltAmount(19.99), 19.99);
+    assert.equal(Number.isNaN(formatBoltAmount(0)), true);
   });
 
   test('Bolt payments use private configuration, authenticated status lookup and idempotent settlement', () => {

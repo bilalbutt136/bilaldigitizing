@@ -41,12 +41,9 @@ export function formatBoltAmount(value) {
   const amount = Number.parseFloat(value);
   if (!Number.isFinite(amount) || amount <= 0) return NaN;
 
-  // Existing provider integration requires .99 denomination values.
-  if (Math.abs(amount - (Math.floor(amount) + 0.99)) < 0.001) {
-    return Number(amount.toFixed(2));
-  }
-
-  return Number(Math.max(0.99, Math.ceil(amount) - 0.01).toFixed(2));
+  // Never mutate an authoritative customer price to fit a cosmetic/provider
+  // denomination pattern. Charging must match the server-authorized amount.
+  return Number(amount.toFixed(2));
 }
 
 export function normalizeBoltMethod(rawMethod) {
@@ -369,6 +366,32 @@ async function settleCustomOffer(supabase, invoice, providerOrderId, offer) {
     }], { onConflict: 'id', ignoreDuplicates: true });
 
     if (orderInsertError) throw orderInsertError;
+  } else {
+    const { data: existingOrder, error: existingOrderError } = await supabase
+      .from('orders')
+      .select('id, status, paid_at')
+      .in('id', orderCandidates(orderId))
+      .maybeSingle();
+
+    if (existingOrderError) throw existingOrderError;
+    if (!existingOrder) throw new Error('Custom offer order could not be resolved.');
+
+    orderId = existingOrder.id;
+    const targetStatus = ['delivered', 'completed'].includes(String(existingOrder.status || '').toLowerCase())
+      ? existingOrder.status
+      : 'in_progress';
+
+    const { error: existingOrderUpdateError } = await supabase
+      .from('orders')
+      .update({
+        payment_status: 'paid',
+        status: targetStatus,
+        paid_at: existingOrder.paid_at || nowIso,
+        updated_at: nowIso
+      })
+      .eq('id', existingOrder.id);
+
+    if (existingOrderUpdateError) throw existingOrderUpdateError;
   }
 
   const { error: offerUpdateError } = await supabase
