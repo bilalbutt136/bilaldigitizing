@@ -2,12 +2,10 @@ import { withApiObservability, logServerCaughtError } from '../../../src/lib/obs
 import { NextResponse } from 'next/server';
 import { checkDistributedRateLimit, getClientIp, getRateLimitHeaders } from '../../../src/lib/rateLimit.js';
 import { sendOrderNotification } from '../../../src/lib/email.js';
-import { createAdminClient } from '../../../src/lib/supabase/admin.js';
+import { getPrivateTextConfig } from '../../../src/lib/privateServerConfig.js';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
-
-const DEFAULT_SECRET = 'bd_sec_live_notification_trigger_9831';
 
 /**
  * Validates incoming webhook secret or Bearer token
@@ -24,34 +22,21 @@ async function verifyWebhookSecret(req) {
   const incomingToken = (headerSecret || bearerToken).trim();
   if (!incomingToken) return false;
 
-  // 1. Check environment variable
+  // 1. Check the server-only environment secret.
   const envSecret = process.env.NOTIFICATION_WEBHOOK_SECRET || process.env.SUPABASE_WEBHOOK_SECRET;
   if (envSecret && incomingToken === envSecret.trim()) {
     return true;
   }
 
-  // 2. Check hardcoded fallback default
-  if (incomingToken === DEFAULT_SECRET) {
-    return true;
-  }
-
-  // 3. Check live dynamic setting stored in site_config
+  // 2. Check the server-only database secret store. There is deliberately no
+  // hardcoded or public site_config fallback.
   try {
-    const supabase = createAdminClient();
-    const { data: config } = await supabase
-      .from('site_config')
-      .select('value')
-      .eq('key', 'notification_webhook_secret')
-      .maybeSingle();
-
-    if (config?.value) {
-      const dbSecret = String(config.value).trim().replace(/^["']|["']$/g, '');
-      if (dbSecret && incomingToken === dbSecret) {
-        return true;
-      }
+    const storedSecret = await getPrivateTextConfig('notification_webhook_secret');
+    if (storedSecret && incomingToken === storedSecret) {
+      return true;
     }
   } catch (err) {
-    console.warn('[verifyWebhookSecret] site_config lookup warning:', err?.message);
+    console.warn('[verifyWebhookSecret] private configuration lookup warning:', err?.message);
   }
 
   return false;

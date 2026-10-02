@@ -55,10 +55,14 @@ async function POST_impl(req) {
     const paramPrefix = isApp ? '&' : '?';
     const successUrl = payment.type === 'custom_offer'
       ? `${basePath}${paramPrefix}tab=inbox&chatId=${encodeURIComponent(payment.conversationId || '')}&payment=success&offerId=${encodeURIComponent(payment.offerId || '')}&session_id={CHECKOUT_SESSION_ID}`
-      : `${basePath}${paramPrefix}tab=orders&payment=success&orderId=${encodeURIComponent(payment.orderId || '')}&session_id={CHECKOUT_SESSION_ID}`;
+      : payment.type === 'deposit'
+        ? `${basePath}${paramPrefix}tab=wallet&payment=success&deposit=1&session_id={CHECKOUT_SESSION_ID}`
+        : `${basePath}${paramPrefix}tab=orders&payment=success&orderId=${encodeURIComponent(payment.orderId || '')}&session_id={CHECKOUT_SESSION_ID}`;
     const cancelUrl = payment.type === 'custom_offer'
       ? `${basePath}${paramPrefix}tab=inbox&chatId=${encodeURIComponent(payment.conversationId || '')}&payment=canceled`
-      : `${basePath}${paramPrefix}tab=orders&payment=canceled`;
+      : payment.type === 'deposit'
+        ? `${basePath}${paramPrefix}tab=wallet&payment=canceled&deposit=1`
+        : `${basePath}${paramPrefix}tab=orders&payment=canceled`;
 
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],

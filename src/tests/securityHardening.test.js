@@ -233,4 +233,40 @@ describe('Security Hardening Regression Coverage', () => {
     assert.equal(source.includes('RESEND_API_KEY'), false);
     assert.equal(source.includes('dbError'), false);
   });
+  test('final hardening removes public secrets and anonymous access to private account data', () => {
+    const migration = fs.readFileSync('supabase/migrations/20261002000002_final_security_hardening.sql', 'utf8');
+    assert.match(migration, /WHERE key IN \('notification_webhook_secret', 'boltpayouts_config'\)/);
+    assert.match(migration, /'vapid_private_key'/);
+    assert.match(migration, /REVOKE ALL ON public\.admins FROM anon, authenticated/);
+    assert.match(migration, /DROP POLICY IF EXISTS "Allow public and service access to notifications"/);
+    assert.match(migration, /REVOKE ALL ON public\.email_notification_logs FROM anon, authenticated/);
+    assert.match(migration, /CREATE POLICY "site_config_public_read"/);
+  });
+
+  test('wallet settlement RPCs are service-only and provider deposits are idempotent', () => {
+    const migration = fs.readFileSync('supabase/migrations/20261002000002_final_security_hardening.sql', 'utf8');
+    assert.match(migration, /CREATE OR REPLACE FUNCTION public\.settle_wallet_deposit_once/);
+    assert.match(migration, /ON CONFLICT \(provider_reference\).*DO NOTHING/s);
+    assert.match(migration, /REVOKE ALL ON FUNCTION public\.deposit_funds\(text, numeric, text\)[\s\S]*FROM PUBLIC, anon, authenticated/);
+    assert.match(migration, /GRANT EXECUTE ON FUNCTION public\.deduct_wallet_balance\(text, numeric, text\) TO service_role/);
+  });
+
+  test('Bolt payments use private configuration, authenticated status lookup and idempotent settlement', () => {
+    const createRoute = fs.readFileSync('app/api/boltpayouts/create/route.js', 'utf8');
+    const statusRoute = fs.readFileSync('app/api/boltpayouts/status/route.js', 'utf8');
+    const webhookRoute = fs.readFileSync('app/api/boltpayouts/webhook/route.js', 'utf8');
+    const helper = fs.readFileSync('src/lib/payments/boltPayouts.js', 'utf8');
+
+    assert.match(createRoute, /getBoltPayoutsConfig/);
+    assert.equal(createRoute.includes("from('site_config')"), false);
+    assert.match(statusRoute, /getServerAuthUser/);
+    assert.match(statusRoute, /Authentication required/);
+    assert.equal(statusRoute.includes("from('site_config')"), false);
+    assert.match(webhookRoute, /timingSafeEqual/);
+    assert.equal(webhookRoute.includes("from('site_config')"), false);
+    assert.match(helper, /privateServerConfig/);
+    assert.match(helper, /settle_wallet_deposit_once/);
+    assert.match(helper, /provider_reference/);
+  });
+
 });

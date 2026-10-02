@@ -619,56 +619,6 @@ export async function fetchClientsFromSupabase(options = {}) {
     }, { ttlMs: 15_000, force: Boolean(options?.force) });
   } catch { return []; }
 }
-// Deposit Funds & Transaction Handler in Supabase
-export async function depositFundsInSupabase(clientEmail, depositAmount, paymentMethod = 'Credit Card') {
-  if (!isSupabaseConfigured || !clientEmail) return null;
-
-  try {
-    const cleanEmail = clientEmail.toLowerCase().trim();
-    const amount = parseFloat(depositAmount);
-
-    const { data: newBalance, error } = await supabase.rpc('deposit_funds', {
-      p_client_email: cleanEmail,
-      p_amount: amount,
-      p_payment_method: paymentMethod
-    });
-
-    if (error) {
-      console.error('Supabase deposit funds error:', error.message);
-      return null;
-    }
-    return newBalance;
-  } catch (err) {
-    console.warn('Supabase deposit funds exception:', err);
-    return null;
-  }
-}
-
-// Deduct Wallet Balance in Supabase DB on Order Submission
-export async function deductWalletInSupabase(clientEmail, orderAmount, orderId) {
-  if (!isSupabaseConfigured || !clientEmail) return null;
-
-  try {
-    const cleanEmail = clientEmail.toLowerCase().trim();
-    const amount = parseFloat(orderAmount);
-
-    const { data: newBalance, error } = await supabase.rpc('deduct_wallet_balance', {
-      p_client_email: cleanEmail,
-      p_amount: amount,
-      p_order_id: orderId
-    });
-
-    if (error) {
-      console.error('Supabase deduct wallet error:', error.message);
-      return null;
-    }
-    return newBalance;
-  } catch (err) {
-    console.warn('Supabase deduct wallet exception:', err);
-    return null;
-  }
-}
-
 // Fetch CMS Configuration from Supabase (Pricing, Services & Site Settings)
 export async function fetchCmsConfigFromSupabase() {
   if (!isSupabaseConfigured) return null;
@@ -719,27 +669,11 @@ export async function saveCmsConfigToSupabase(key, value) {
 
     if (res.ok) return true;
 
-    // Direct fallback if API route returned non-200
-    if (supabase) {
-      const valStr = typeof value === 'object' ? JSON.stringify(value) : String(value);
-      await Promise.allSettled([
-        supabase.from('site_config').upsert({ key, value: valStr, updated_at: new Date().toISOString() }, { onConflict: 'key' }),
-        supabase.from('home_page_settings').upsert({ key, value: valStr, updated_at: new Date().toISOString() }, { onConflict: 'key' })
-      ]);
-      return true;
-    }
+    const errorBody = await res.json().catch(() => ({}));
+    console.warn(`saveCmsConfigToSupabase [${key}] API rejected update:`, errorBody?.error || res.status);
     return false;
   } catch (err) {
     console.warn(`saveCmsConfigToSupabase [${key}] exception:`, err);
-    if (supabase) {
-      try {
-        const valStr = typeof value === 'object' ? JSON.stringify(value) : String(value);
-        await supabase.from('site_config').upsert({ key, value: valStr, updated_at: new Date().toISOString() }, { onConflict: 'key' }, { onConflict: 'key' });
-        return true;
-      } catch (dbErr) {
-        console.error('Direct supabase fallback error:', dbErr);
-      }
-    }
     return false;
   }
 }
@@ -1313,20 +1247,38 @@ export async function createCustomOffer(offerPayload) {
 export async function createOfferCheckoutSession(offerId, options = {}) {
   try {
     const headers = await getAuthHeaders();
-    const res = await fetch('/api/boltpayouts/create', {
+
+    // Prefer hosted Stripe checkout when it is configured. Production may use
+    // the existing Bolt gateway instead, so a provider configuration failure
+    // falls back without trusting browser-supplied price or customer identity.
+    const stripeRes = await fetch('/api/checkout', {
       method: 'POST',
       headers,
       body: JSON.stringify({
         type: 'custom_offer',
         offerId,
-        amount: options.amount,
-        method: options.method || 'card',
-        clientEmail: options.clientEmail,
-        title: options.title,
-        description: options.title
+        isApp: Boolean(options.isApp)
       })
     });
-    return await res.json();
+    const stripeData = await stripeRes.json().catch(() => ({}));
+    if (stripeRes.ok && stripeData?.success !== false && stripeData?.url) {
+      return { ...stripeData, success: true };
+    }
+
+    const boltRes = await fetch('/api/boltpayouts/create', {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        offerId,
+        method: options.method || 'card'
+      })
+    });
+    const boltData = await boltRes.json().catch(() => ({}));
+    return {
+      ...boltData,
+      success: boltRes.ok && boltData?.success !== false,
+      url: boltData?.paymentUrl || boltData?.url || null
+    };
   } catch (err) {
     return { success: false, error: err.message };
   }

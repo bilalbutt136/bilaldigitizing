@@ -413,44 +413,23 @@ async function POST_impl(req) {
 
         console.log(`[Stripe Webhook] Successfully marked order ${orderId} as Paid.`);
       } else if (type === 'deposit' && clientEmail && amountInDollars > 0) {
-        // Studio Wallet deposit top-up
-        const { data: clientRow } = await supabase
-          .from('clients')
-          .select('id, wallet_balance')
-          .ilike('email', clientEmail)
-          .maybeSingle();
-
-        if (clientRow) {
-          const providerReference = `stripe:${session.id}:deposit`;
-          const { data: existingDeposit } = await supabase
-            .from('transactions')
-            .select('id')
-            .eq('provider_reference', providerReference)
-            .maybeSingle();
-
-          if (!existingDeposit) {
-            const newBal = parseFloat((parseFloat(clientRow.wallet_balance || 0) + amountInDollars).toFixed(2));
-            await supabase
-              .from('clients')
-              .update({ wallet_balance: newBal, updated_at: nowIso })
-              .eq('id', clientRow.id);
-
-            const { error: depositLogError } = await supabase.from('transactions').insert([{
-              user_id: clientRow.id,
-              client_email: clientEmail,
-              type: 'deposit',
-              amount: amountInDollars,
-              payment_method: 'Stripe Card',
-              provider_reference: providerReference,
-              description: `Studio Wallet Deposit Top-up via Stripe (+ $${amountInDollars.toFixed(2)})`
-            }]);
-
-            if (depositLogError) throw depositLogError;
-            console.log(`[Stripe Webhook] Credited $${amountInDollars} to wallet for ${clientEmail}. New balance: $${newBal}`);
+        // Wallet settlement is atomic and idempotent. The database function
+        // owns both the ledger insert and balance mutation under one row lock.
+        const providerReference = `stripe:${session.id}:deposit`;
+        const { data: newBalance, error: settleError } = await supabase.rpc(
+          'settle_wallet_deposit_once',
+          {
+            p_client_email: clientEmail,
+            p_amount: amountInDollars,
+            p_payment_method: 'Stripe Card',
+            p_provider_reference: providerReference
           }
-        } else {
-          console.warn(`[Stripe Webhook] Client not found for deposit: ${clientEmail}`);
-        }
+        );
+
+        if (settleError) throw settleError;
+        console.log(
+          `[Stripe Webhook] Wallet deposit settled for ${clientEmail}. Current balance: $${Number(newBalance || 0).toFixed(2)}`
+        );
       }
     } catch (processErr) {
       await markWebhookEvent(supabase, event.id, 'failed', processErr.message);

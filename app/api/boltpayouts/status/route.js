@@ -1,294 +1,204 @@
-import { withApiObservability, logServerCaughtError } from '../../../../src/lib/observability/apiObservability.js';
+import { withApiObservability } from '../../../../src/lib/observability/apiObservability.js';
 import { NextResponse } from 'next/server';
 import { supabaseAdmin, hasServiceRole } from '../../../../src/lib/supabaseAdmin';
 import { getServerAuthUser } from '../../../../src/lib/supabase/serverAuth';
+import { checkDistributedRateLimit, getClientIp, getRateLimitHeaders } from '../../../../src/lib/rateLimit';
+import {
+  checkBoltPaymentStatus,
+  getBoltPayoutsConfig,
+  settleBoltInvoice
+} from '../../../../src/lib/payments/boltPayouts';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+function orderCandidates(value) {
+  const raw = String(value || '').trim();
+  const clean = raw.replace(/^#+/, '');
+  return Array.from(new Set([raw, clean, clean ? `#${clean}` : ''])).filter(Boolean);
+}
+
+function scopedInvoiceQuery(query, isAdmin, email) {
+  return isAdmin ? query : query.ilike('client_email', email);
+}
+
+async function findInvoice({ invoiceId, orderId, genericId, isAdmin, email }) {
+  if (orderId) {
+    const result = await scopedInvoiceQuery(
+      supabaseAdmin
+        .from('invoices')
+        .select('*')
+        .in('order_id', orderCandidates(orderId))
+        .order('created_at', { ascending: false })
+        .limit(1),
+      isAdmin,
+      email
+    );
+    if (result.error) throw result.error;
+    return result.data?.[0] || null;
+  }
+
+  const lookup = String(invoiceId || genericId || '').trim();
+  if (!lookup) return null;
+
+  if (UUID_RE.test(lookup)) {
+    const byId = await scopedInvoiceQuery(
+      supabaseAdmin.from('invoices').select('*').eq('id', lookup).limit(1),
+      isAdmin,
+      email
+    );
+    if (byId.error) throw byId.error;
+    if (byId.data?.[0]) return byId.data[0];
+  }
+
+  const byProvider = await scopedInvoiceQuery(
+    supabaseAdmin.from('invoices').select('*').eq('bolt_order_id', lookup).limit(1),
+    isAdmin,
+    email
+  );
+  if (byProvider.error) throw byProvider.error;
+  return byProvider.data?.[0] || null;
+}
+
+async function findOwnedOrder(orderId, isAdmin, email) {
+  if (!orderId) return null;
+  let query = supabaseAdmin
+    .from('orders')
+    .select('id, client_email, status, payment_status, price, cost')
+    .in('id', orderCandidates(orderId))
+    .limit(1);
+
+  if (!isAdmin) query = query.ilike('client_email', email);
+
+  const { data, error } = await query;
+  if (error) throw error;
+  return data?.[0] || null;
+}
+
 async function GET_impl(request) {
   try {
-    const { user, isAdmin } = await getServerAuthUser(request);
-
     if (!hasServiceRole || !supabaseAdmin) {
-      return NextResponse.json({ success: false, error: 'Server misconfiguration: Database service client unavailable' }, { status: 500 });
+      return NextResponse.json(
+        { success: false, error: 'Payment status service is temporarily unavailable.' },
+        { status: 503 }
+      );
+    }
+
+    const { user, isAdmin } = await getServerAuthUser(request);
+    if (!user?.email) {
+      return NextResponse.json({ success: false, error: 'Authentication required.' }, { status: 401 });
+    }
+
+    const rateLimit = await checkDistributedRateLimit(
+      `boltpayouts-status:${user.id || getClientIp(request)}`,
+      45,
+      60_000
+    );
+    if (!rateLimit.success) {
+      return NextResponse.json(
+        { success: false, error: 'Too many payment status requests.' },
+        { status: rateLimit.unavailable ? 503 : 429, headers: getRateLimitHeaders(rateLimit) }
+      );
     }
 
     const { searchParams } = new URL(request.url);
-    const invoiceIdParam = searchParams.get('invoiceId');
-    const orderIdParam = searchParams.get('orderId');
-    const idParam = searchParams.get('id');
+    const invoiceId = searchParams.get('invoiceId');
+    const orderId = searchParams.get('orderId');
+    const genericId = searchParams.get('id');
 
-    const lookupKey = invoiceIdParam || orderIdParam || idParam;
-
-    if (!lookupKey) {
-      return NextResponse.json({ success: false, error: 'Missing invoiceId or orderId parameter' }, { status: 400 });
+    if (!invoiceId && !orderId && !genericId) {
+      return NextResponse.json(
+        { success: false, error: 'Missing invoice or order identifier.' },
+        { status: 400 }
+      );
     }
 
-    const cleanLookup = String(lookupKey).trim();
-    const cleanNoHash = cleanLookup.replace(/^#+/, '');
-    const cleanUserEmail = user?.email ? user.email.toLowerCase().trim() : null;
+    const email = user.email.toLowerCase().trim();
+    const invoice = await findInvoice({ invoiceId, orderId, genericId, isAdmin, email });
 
-    // 1. Find matching invoices by UUID, bolt_order_id, or order_id
-    let query = supabaseAdmin
-      .from('invoices')
-      .select('*');
-
-    if (orderIdParam) {
-      const rawO = String(orderIdParam).trim();
-      const cleanO = rawO.replace(/^#+/, '');
-      query = query.or(`order_id.eq.${rawO},order_id.eq.#${cleanO},order_id.eq.${cleanO},id.eq.${rawO},bolt_order_id.eq.${rawO}`);
-    } else {
-      query = query.or(`id.eq.${cleanLookup},bolt_order_id.eq.${cleanLookup},order_id.eq.${cleanLookup},order_id.eq.#${cleanNoHash}`);
-    }
-
-    // Filter by client email only if not admin and not public order check
-    if (!isAdmin && cleanUserEmail && !orderIdParam) {
-      query = query.ilike('client_email', cleanUserEmail);
-    }
-
-    const { data: invoices, error: invFetchErr } = await query.order('created_at', { ascending: false });
-
-    if (invFetchErr || !invoices || invoices.length === 0) {
-      // If invoice not found by ID, but orderId is provided, also check if order itself is already paid
-      if (orderIdParam) {
-        const rawO = String(orderIdParam).trim();
-        const cleanO = rawO.replace(/^#+/, '');
-        const { data: ord } = await supabaseAdmin
-          .from('orders')
-          .select('id, status, payment_status, price')
-          .or(`id.eq.${rawO},id.eq.#${cleanO},id.eq.${cleanO}`)
-          .maybeSingle();
-
-        if (ord && (ord.payment_status === 'paid' || ord.status === 'in_progress' || ord.status === 'delivered' || ord.status === 'completed')) {
+    if (!invoice) {
+      if (orderId) {
+        const order = await findOwnedOrder(orderId, isAdmin, email);
+        if (order) {
+          const paid = String(order.payment_status || '').toLowerCase() === 'paid';
           return NextResponse.json({
             success: true,
-            status: 'paid',
-            orderId: ord.id,
-            amount: ord.price
+            status: paid ? 'paid' : 'pending',
+            orderId: order.id,
+            amount: order.price ?? order.cost ?? null
           });
         }
       }
-      return NextResponse.json({ success: false, status: 'not_found', error: 'Invoice not found' }, { status: 200 });
+
+      return NextResponse.json(
+        { success: false, status: 'not_found', error: 'Payment record not found.' },
+        { status: 200 }
+      );
     }
 
-    // Check if any invoice is ALREADY marked paid in our database
-    const alreadyPaidInvoice = invoices.find(i => i.status === 'paid' || i.status === 'completed');
-    if (alreadyPaidInvoice) {
-      // Ensure order status is in sync
-      if (alreadyPaidInvoice.order_id) {
-        await settleOrderPayment(alreadyPaidInvoice.order_id, alreadyPaidInvoice.client_email);
+    const providerOrderId = String(invoice.bolt_order_id || '').trim();
+    const currentStatus = String(invoice.status || '').toLowerCase();
+
+    if (currentStatus === 'paid' || currentStatus === 'completed') {
+      if (providerOrderId) {
+        await settleBoltInvoice(supabaseAdmin, invoice, providerOrderId);
       }
       return NextResponse.json({
         success: true,
         status: 'paid',
-        amount: alreadyPaidInvoice.amount,
-        payment_method: alreadyPaidInvoice.payment_method || alreadyPaidInvoice.method,
-        invoice: alreadyPaidInvoice
+        amount: invoice.amount,
+        payment_method: invoice.payment_method || invoice.method,
+        invoice
       });
     }
 
-    // 2. Fetch BoltPayouts API Key
-    let apiKey = process.env.BOLTPAYOUTS_API_KEY || process.env.BOLT_API_KEY || null;
-    if (!apiKey) {
-      const { data: configRow } = await supabaseAdmin
-        .from('site_config')
-        .select('value')
-        .eq('key', 'boltpayouts_config')
-        .maybeSingle();
-
-      let boltConfig = configRow?.value || {};
-      if (typeof boltConfig === 'string') {
-        try {
-          boltConfig = JSON.parse(boltConfig);
-        } catch {
-          boltConfig = { apiKey: boltConfig };
-        }
-      }
-      apiKey = boltConfig?.apiKey || boltConfig?.api_key || boltConfig?.key || (typeof boltConfig === 'string' ? boltConfig : null);
+    const config = await getBoltPayoutsConfig();
+    if (!config.apiKey || config.isActive === false || !providerOrderId) {
+      return NextResponse.json({
+        success: true,
+        status: currentStatus || 'pending',
+        amount: invoice.amount,
+        payment_method: invoice.payment_method || invoice.method,
+        invoice
+      });
     }
 
-    // 3. For any pending invoices, query BoltPayouts check-status with ?id=
-    for (const inv of invoices) {
-      if ((inv.status === 'pending' || inv.status === 'unpaid') && inv.bolt_order_id && apiKey) {
-        try {
-          // CRITICAL FIX: BoltPayouts expects ?id=, not ?orderId=!
-          let boltCheckData = null;
-          try {
-            const boltRes = await fetch(`https://www.boltpayouts.xyz/api/check-status?id=${inv.bolt_order_id}`, {
-              headers: { 'x-api-key': apiKey },
-              cache: 'no-store'
-            });
-            boltCheckData = await boltRes.json().catch(() => ({}));
-          } catch {
-            // Secondary fallback attempt
-            const boltRes2 = await fetch(`https://www.boltpayouts.xyz/api/check-status?orderId=${inv.bolt_order_id}`, {
-              headers: { 'x-api-key': apiKey },
-              cache: 'no-store'
-            });
-            boltCheckData = await boltRes2.json().catch(() => ({}));
-          }
+    try {
+      const providerStatus = await checkBoltPaymentStatus({
+        apiKey: config.apiKey,
+        providerOrderId
+      });
 
-          const isPaidOnBolt = boltCheckData && (
-            boltCheckData.status === 'paid' ||
-            boltCheckData.status === 'completed' ||
-            boltCheckData.status === 'success' ||
-            boltCheckData.paid === true
-          );
-
-          if (isPaidOnBolt) {
-            // Mark invoice as paid
-            const nowIso = new Date().toISOString();
-            await supabaseAdmin
-              .from('invoices')
-              .update({
-                status: 'paid',
-                paid_at: nowIso,
-                updated_at: nowIso
-              })
-              .eq('id', inv.id);
-
-            const clientEmail = (inv.client_email || cleanUserEmail || '').toLowerCase().trim();
-            const amount = parseFloat(inv.amount || 0);
-
-            // Settle order if attached
-            if (inv.order_id) {
-              await settleOrderPayment(inv.order_id, clientEmail);
-            } else {
-              // Wallet deposit
-              await settleWalletDeposit(clientEmail, amount, inv);
-            }
-
-            return NextResponse.json({
-              success: true,
-              status: 'paid',
-              amount: inv.amount,
-              payment_method: inv.payment_method || inv.method,
-              method: inv.method || inv.payment_method,
-              invoice: {
-                ...inv,
-                status: 'paid',
-                paid_at: nowIso
-              }
-            });
-          }
-        } catch (checkErr) {
-          console.warn('[Bolt Status] Live status check notice:', checkErr.message);
-        }
+      if (providerStatus.paid) {
+        const settlement = await settleBoltInvoice(supabaseAdmin, invoice, providerOrderId);
+        return NextResponse.json({
+          success: true,
+          status: 'paid',
+          amount: invoice.amount,
+          payment_method: invoice.payment_method || invoice.method,
+          settlement,
+          invoice: { ...invoice, status: 'paid' }
+        });
       }
+    } catch (providerError) {
+      console.warn('[BoltPayouts Status] Provider reconciliation warning:', providerError?.message);
     }
 
-    // Default response with latest invoice status
-    const latestInvoice = invoices[0];
     return NextResponse.json({
       success: true,
-      status: latestInvoice.status || 'pending',
-      amount: latestInvoice.amount,
-      payment_method: latestInvoice.payment_method || latestInvoice.method,
-      method: latestInvoice.method || latestInvoice.payment_method,
-      invoice: latestInvoice
+      status: currentStatus || 'pending',
+      amount: invoice.amount,
+      payment_method: invoice.payment_method || invoice.method,
+      invoice
     });
-
-  } catch (err) {
-    console.error('Bolt status exception:', err);
-    return NextResponse.json({ success: false, error: err.message }, { status: 500 });
-  }
-}
-
-async function settleOrderPayment(orderId, _clientEmail) {
-  try {
-    const rawOrdId = String(orderId).trim();
-    const cleanOrdId = rawOrdId.replace(/^#+/, '');
-    const withHash = `#${cleanOrdId}`;
-    const candidateOrdIds = Array.from(new Set([rawOrdId, cleanOrdId, withHash])).filter(Boolean);
-
-    // Fetch existing order to avoid overriding terminal statuses (delivered, completed)
-    const { data: existingOrd } = await supabaseAdmin
-      .from('orders')
-      .select('id, status, payment_status, client_email, paid_at')
-      .in('id', candidateOrdIds)
-      .maybeSingle();
-
-    const targetStatus = (existingOrd?.status === 'delivered' || existingOrd?.status === 'completed')
-      ? existingOrd.status
-      : 'in_progress';
-
-    const nowIso = new Date().toISOString();
-    await supabaseAdmin
-      .from('orders')
-      .update({
-        status: targetStatus,
-        payment_status: 'paid',
-        paid_at: existingOrd?.paid_at || nowIso,
-        updated_at: nowIso
-      })
-      .in('id', candidateOrdIds);
-
-    // If client email exists, also update custom_offers if this was a custom offer
-    const { data: offerRow } = await supabaseAdmin
-      .from('custom_offers')
-      .select('id, status')
-      .or(`id.eq.${cleanOrdId},id.eq.${rawOrdId}`)
-      .maybeSingle();
-
-    if (offerRow) {
-      await supabaseAdmin
-        .from('custom_offers')
-        .update({
-          status: 'accepted',
-          payment_status: 'paid',
-          updated_at: nowIso
-        })
-        .eq('id', offerRow.id);
-    }
-  } catch (err) {
-    console.error('[settleOrderPayment] error:', err);
-  }
-}
-
-async function settleWalletDeposit(clientEmail, amount, invoice) {
-  if (!clientEmail || !amount) return;
-  try {
-    const depositMethod = `BoltPayouts (${invoice.payment_method || invoice.method || 'online'})`;
-
-    // 1. Try RPC
-    const { error: rpcErr } = await supabaseAdmin.rpc('deposit_funds', {
-      p_client_email: clientEmail,
-      p_amount: amount,
-      p_payment_method: depositMethod
-    });
-
-    if (rpcErr) {
-      // 2. Direct ledger update fallback
-      const { data: clientRow } = await supabaseAdmin
-        .from('clients')
-        .select('id, wallet_balance')
-        .eq('email', clientEmail)
-        .maybeSingle();
-
-      if (clientRow) {
-        const newBal = parseFloat((parseFloat(clientRow.wallet_balance || 0) + amount).toFixed(2));
-        await supabaseAdmin
-          .from('clients')
-          .update({ wallet_balance: newBal, updated_at: new Date().toISOString() })
-          .eq('id', clientRow.id);
-      }
-    }
-
-    // 3. Log transaction
-    await supabaseAdmin
-      .from('transactions')
-      .insert([{
-        user_id: invoice.user_id || null,
-        client_email: clientEmail,
-        type: 'deposit',
-        amount: amount,
-        payment_method: depositMethod,
-        description: `Studio Wallet Deposit Top-up (+ $${amount.toFixed(2)})`
-      }])
-      .catch((error) => { logServerCaughtError(error, { operation: 'bolt.wallet_transaction_insert_failed' }); });
-  } catch (err) {
-    console.error('[settleWalletDeposit] error:', err);
+  } catch (error) {
+    console.error('[BoltPayouts Status] Status lookup failed:', error?.message);
+    return NextResponse.json(
+      { success: false, error: 'Payment status could not be verified.' },
+      { status: 500 }
+    );
   }
 }
 

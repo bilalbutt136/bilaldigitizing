@@ -3,98 +3,43 @@ import { NextResponse } from 'next/server';
 import { supabaseAdmin, hasServiceRole } from '../../../../src/lib/supabaseAdmin';
 import { getServerAuthUser } from '../../../../src/lib/supabase/serverAuth';
 import { checkDistributedRateLimit, getClientIp, getRateLimitHeaders } from '../../../../src/lib/rateLimit';
-import { resolveAuthoritativePayment, PaymentAuthorizationError } from '../../../../src/lib/payments/paymentAuthorization';
+import {
+  resolveAuthoritativePayment,
+  PaymentAuthorizationError
+} from '../../../../src/lib/payments/paymentAuthorization';
+import {
+  createBoltPayment,
+  extractBoltPaymentDetails,
+  formatBoltAmount,
+  getBoltPayoutsConfig,
+  normalizeBoltMethod
+} from '../../../../src/lib/payments/boltPayouts';
 
-function formatBoltAmount(amt) {
-  const num = parseFloat(amt);
-  if (isNaN(num) || num <= 0) return 0.99;
-
-  // If already ending in .99
-  if (Math.abs(num - (Math.floor(num) + 0.99)) < 0.001) {
-    return Number(num.toFixed(2));
-  }
-
-  // Convert standard amount (e.g. 16.00 -> 15.99, 10.00 -> 9.99, 20.00 -> 19.99, 35.00 -> 34.99)
-  const rounded = Math.ceil(num) - 0.01;
-  return Number(Math.max(0.99, rounded).toFixed(2));
-}
-
-function extractSolanaAddress(url, boltData = {}) {
-  if (boltData?.receivingAddress) return boltData.receivingAddress;
-  if (boltData?.solanaAddress) return boltData.solanaAddress;
-  if (boltData?.pyusdAddress) return boltData.pyusdAddress;
-  if (boltData?.cryptoAddress) return boltData.cryptoAddress;
-  if (boltData?.depositAddress) return boltData.depositAddress;
-  if (boltData?.address && !String(boltData.address).startsWith('lnbc')) return boltData.address;
-  if (boltData?.walletAddress) return boltData.walletAddress;
-  if (boltData?.recipient) return boltData.recipient;
-  if (boltData?.destinationAddress) return boltData.destinationAddress;
-
-  if (!url || typeof url !== 'string') return null;
-
-  try {
-    const parsed = new URL(url);
-    const paramAddr = parsed.searchParams.get('address') ||
-                      parsed.searchParams.get('solanaAddress') ||
-                      parsed.searchParams.get('pyusdAddress') ||
-                      parsed.searchParams.get('wallet') ||
-                      parsed.searchParams.get('to') ||
-                      parsed.searchParams.get('recipient') ||
-                      parsed.searchParams.get('destination');
-    if (paramAddr && paramAddr.length >= 32 && paramAddr.length <= 44) {
-      return paramAddr;
-    }
-  } catch  {}
-
-  const matches = url.match(/[1-9A-HJ-NP-Za-km-z]{32,44}/g);
-  if (matches && matches.length > 0) {
-    const valid = matches.find(m =>
-      !m.toLowerCase().includes('http') &&
-      !m.toLowerCase().includes('boltpayouts') &&
-      !m.toLowerCase().includes('taptapup') &&
-      !m.toLowerCase().includes('checkout') &&
-      !m.toLowerCase().includes('invoice')
-    );
-    if (valid) return valid;
-  }
-
-  return null;
-}
-
-function extractLightningInvoice(url, boltData = {}) {
-  if (boltData?.lightningInvoice) return boltData.lightningInvoice;
-  if (boltData?.invoice && String(boltData.invoice).startsWith('lnbc')) return boltData.invoice;
-  if (boltData?.paymentRequest) return boltData.paymentRequest;
-  if (boltData?.lightning) return boltData.lightning;
-  if (boltData?.bolt11) return boltData.bolt11;
-  if (boltData?.pr) return boltData.pr;
-  if (boltData?.address && (String(boltData.address).startsWith('lnbc') || String(boltData.address).includes('@'))) {
-    return boltData.address;
-  }
-
-  if (!url || typeof url !== 'string') return null;
-
-  if (url.startsWith('lightning:')) return url.replace('lightning:', '');
-
-  try {
-    const parsed = new URL(url);
-    const param = parsed.searchParams.get('lightning') ||
-                  parsed.searchParams.get('invoice') ||
-                  parsed.searchParams.get('req') ||
-                  parsed.searchParams.get('ln');
-    if (param) return param;
-  } catch  {}
-
-  const match = url.match(/lnbc[0-9a-zA-Z]+/);
-  if (match) return match[0];
-
-  return null;
+function paymentReference(payment) {
+  if (payment.type === 'custom_offer') return `offer:${payment.offerId}`;
+  if (payment.type === 'order_payment') return `order:${payment.orderId}`;
+  return 'deposit';
 }
 
 async function POST_impl(request) {
   try {
-    const ip = getClientIp(request);
-    const rateLimit = await checkDistributedRateLimit(`boltpayouts-create:${ip}`, 25, 60000);
+    if (!hasServiceRole || !supabaseAdmin) {
+      return NextResponse.json(
+        { success: false, error: 'Payment service is temporarily unavailable.' },
+        { status: 503 }
+      );
+    }
+
+    const { user, isAdmin } = await getServerAuthUser(request);
+    if (!user?.email) {
+      return NextResponse.json({ success: false, error: 'Authentication required.' }, { status: 401 });
+    }
+
+    const rateLimit = await checkDistributedRateLimit(
+      `boltpayouts-create:${user.id || getClientIp(request)}`,
+      20,
+      60_000
+    );
     if (!rateLimit.success) {
       return NextResponse.json(
         { success: false, error: 'Too many payment requests. Please wait a moment.' },
@@ -102,17 +47,7 @@ async function POST_impl(request) {
       );
     }
 
-    const { user, isAdmin } = await getServerAuthUser(request);
-    if (!user) {
-      return NextResponse.json({ success: false, error: 'Authentication required.' }, { status: 401 });
-    }
-
-    if (!hasServiceRole || !supabaseAdmin) {
-      return NextResponse.json({ success: false, error: 'Server misconfiguration: Database service client unavailable' }, { status: 500 });
-    }
-
     const body = await request.json().catch(() => ({}));
-    const rawMethod = body.method || 'card';
     const payment = await resolveAuthoritativePayment({
       supabase: supabaseAdmin,
       user,
@@ -124,212 +59,121 @@ async function POST_impl(request) {
       allowDeposit: true
     });
 
-    const orderId = payment.orderId;
-    const offerId = payment.offerId;
-    const _conversationId = payment.conversationId;
-    const targetEmail = payment.targetEmail;
-    const targetUserId = payment.targetUserId;
-
-    // BoltPayouts requires .99-style amounts; the source amount is authoritative server data.
-    const boltAmount = formatBoltAmount(payment.amount);
-
-    // Map UI methods to correct BoltPayouts backend methods with automatic fallback
-    let gatewayMethod = rawMethod;
-    let fallbackMethod = null;
-
-    if (rawMethod === 'cashapp' || rawMethod === 'dollarpay_cashapp') {
-      gatewayMethod = 'lightning';
-      fallbackMethod = 'cashapp';
-    } else if (rawMethod === 'paypal' || rawMethod === 'dollarpay_paypal') {
-      gatewayMethod = 'pyusd';
-      fallbackMethod = 'paypal';
-    } else if (rawMethod === 'apple_pay' || rawMethod === 'dollarpay_apple_pay') {
-      gatewayMethod = 'apple_pay';
-      fallbackMethod = 'card';
-    } else if (rawMethod === 'google_pay' || rawMethod === 'dollarpay_google_pay') {
-      gatewayMethod = 'google_pay';
-      fallbackMethod = 'card';
-    } else if (rawMethod === 'card') {
-      gatewayMethod = 'card';
+    const providerAmount = formatBoltAmount(payment.amount);
+    if (!Number.isFinite(providerAmount) || providerAmount <= 0) {
+      return NextResponse.json({ success: false, error: 'Invalid payment amount.' }, { status: 409 });
     }
 
-    // Fetch Bolt config from site_config with robust string-or-object parsing
-    let apiKey = process.env.BOLTPAYOUTS_API_KEY || process.env.BOLT_API_KEY || null;
-
-    if (!apiKey) {
-      const { data: configRow } = await supabaseAdmin
-        .from('site_config')
-        .select('value')
-        .eq('key', 'boltpayouts_config')
-        .maybeSingle();
-
-      let boltConfig = configRow?.value || {};
-      if (typeof boltConfig === 'string') {
-        try {
-          boltConfig = JSON.parse(boltConfig);
-        } catch {
-          boltConfig = { apiKey: boltConfig };
-        }
-      }
-      apiKey = boltConfig?.apiKey || boltConfig?.api_key || boltConfig?.key || (typeof boltConfig === 'string' ? boltConfig : null);
+    const config = await getBoltPayoutsConfig();
+    if (!config.apiKey || config.isActive === false) {
+      return NextResponse.json(
+        { success: false, error: 'Payment gateway is temporarily unavailable. Please contact studio support.' },
+        { status: 503 }
+      );
     }
 
-    if (!apiKey) {
-      return NextResponse.json({ success: false, error: 'Payment gateway configuration pending. Please use Studio Wallet or contact support.' }, { status: 503 });
-    }
-
-    let boltResponse = await fetch('https://www.boltpayouts.xyz/api/create-payment', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': apiKey
-      },
-      body: JSON.stringify({
-        amount: boltAmount,
-        username: targetEmail,
-        method: gatewayMethod
-      })
+    const method = normalizeBoltMethod(body.method || 'card');
+    const { data: providerData, providerMethod } = await createBoltPayment({
+      apiKey: config.apiKey,
+      amount: providerAmount,
+      email: payment.targetEmail,
+      method
     });
 
-    let boltData = await boltResponse.json().catch(() => ({}));
+    const providerOrderId = String(
+      providerData?.orderId || providerData?.id || providerData?.order_id || ''
+    ).trim();
 
-    // If primary method failed and fallback exists, try fallback method
-    if ((!boltResponse.ok || !boltData.success) && fallbackMethod) {
-      console.warn(`[BoltPayouts] Primary method ${gatewayMethod} failed, attempting fallback ${fallbackMethod}...`);
-      const retryRes = await fetch('https://www.boltpayouts.xyz/api/create-payment', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': apiKey
-        },
-        body: JSON.stringify({
-          amount: boltAmount,
-          username: targetEmail,
-          method: fallbackMethod
-        })
-      });
-      const retryData = await retryRes.json().catch(() => ({}));
-      if (retryRes.ok && retryData.success) {
-        boltResponse = retryRes;
-        boltData = retryData;
-        gatewayMethod = fallbackMethod;
-      }
+    if (!providerOrderId) {
+      return NextResponse.json(
+        { success: false, error: 'Payment provider did not return a valid payment identifier.' },
+        { status: 502 }
+      );
     }
 
-    if (!boltResponse.ok || !boltData.success) {
-      console.error("BoltPayouts API Error:", boltData);
-      const errorMessage = boltData.error || boltData.message || 'Payment provider gateway error';
-      return NextResponse.json({
-        success: false,
-        error: errorMessage,
-        details: boltData
-      }, { status: boltResponse.status === 200 ? 400 : boltResponse.status });
+    const details = extractBoltPaymentDetails(providerData);
+    if (!details.paymentUrl && !details.solanaAddress && !details.lightningInvoice) {
+      return NextResponse.json(
+        { success: false, error: 'Payment provider did not return a usable checkout destination.' },
+        { status: 502 }
+      );
     }
 
-    const boltOrderId = boltData.orderId || boltData.id || boltData.order_id || `bolt_${Date.now()}`;
-    let paymentUrl = boltData.paymentUrl || boltData.url || boltData.checkoutUrl || boltData.taptapupRedirectUrl || boltData.redirectUrl || '';
-    const solanaAddress = extractSolanaAddress(paymentUrl, boltData);
-    const lightningInvoice = extractLightningInvoice(paymentUrl, boltData);
-
-    if (!paymentUrl) {
-      if (lightningInvoice) {
-        paymentUrl = `lightning:${lightningInvoice}`;
-      } else if (solanaAddress) {
-        paymentUrl = `solana:${solanaAddress}`;
-      }
-    }
-
-    // Create Invoice with comprehensive column mapping
+    const nowIso = new Date().toISOString();
     const invoicePayload = {
-      user_id: targetUserId,
-      client_email: targetEmail,
-      amount: boltAmount,
-      method: rawMethod,
-      payment_method: rawMethod,
+      user_id: payment.targetUserId || user.id,
+      client_email: payment.targetEmail,
+      amount: providerAmount,
+      method: method.requestedMethod,
+      payment_method: method.requestedMethod,
       status: 'pending',
-      bolt_order_id: boltOrderId,
-      payment_url: paymentUrl,
-      invoice_number: `INV-${Date.now()}`,
-      order_id: orderId || offerId,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
+      bolt_order_id: providerOrderId,
+      payment_url: details.paymentUrl,
+      reference_id: paymentReference(payment),
+      description:
+        payment.type === 'deposit'
+          ? 'Studio Wallet top-up'
+          : payment.type === 'custom_offer'
+            ? `Custom offer payment: ${payment.title || payment.offerId}`
+            : `Order payment: ${payment.orderId}`,
+      invoice_number: `INV-${Date.now()}-${providerOrderId.replace(/[^a-zA-Z0-9]/g, '').slice(-8)}`,
+      order_id: payment.orderId || payment.offerId || null,
+      created_at: nowIso,
+      updated_at: nowIso
     };
 
-    if (offerId && supabaseAdmin) {
-      try {
-        await supabaseAdmin
-          .from('custom_offers')
-          .update({
-            stripe_session_id: boltOrderId,
-            payment_intent_id: boltOrderId,
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', offerId);
-      } catch (coErr) {
-        console.warn('[BoltPayouts Create] custom_offers update notice:', coErr.message);
-      }
+    const { data: invoice, error: invoiceError } = await supabaseAdmin
+      .from('invoices')
+      .insert([invoicePayload])
+      .select()
+      .single();
+
+    if (invoiceError || !invoice) {
+      console.error('[BoltPayouts Create] Invoice persistence failed:', invoiceError?.message);
+      return NextResponse.json(
+        { success: false, error: 'Payment session could not be persisted. Please try again.' },
+        { status: 503 }
+      );
     }
 
-    let invoice = null;
-    try {
-      const { data: createdInvoice, error: invoiceError } = await supabaseAdmin
-        .from('invoices')
-        .insert([invoicePayload])
-        .select()
-        .single();
+    if (payment.type === 'custom_offer' && payment.offerId) {
+      const { error: offerUpdateError } = await supabaseAdmin
+        .from('custom_offers')
+        .update({
+          stripe_session_id: providerOrderId,
+          payment_intent_id: providerOrderId,
+          updated_at: nowIso
+        })
+        .eq('id', payment.offerId);
 
-      if (invoiceError) throw invoiceError;
-      invoice = createdInvoice;
-    } catch (invErr) {
-      console.warn('[BoltPayouts Create] Primary invoice insert warning, trying core schema fallback:', invErr.message);
-      // Fallback with base columns only
-      const coreInvoicePayload = {
-        user_id: targetUserId,
-        client_email: targetEmail,
-        amount: boltAmount,
-        method: rawMethod,
-        status: 'pending',
-        bolt_order_id: boltOrderId,
-        order_id: orderId
-      };
-
-      const { data: fallbackInvoice, error: fallbackErr } = await supabaseAdmin
-        .from('invoices')
-        .insert([coreInvoicePayload])
-        .select()
-        .single();
-
-      if (fallbackErr) {
-        console.error('[BoltPayouts Create] Fallback invoice insert failed:', fallbackErr);
-        invoice = {
-          id: boltOrderId || `temp-${Date.now()}`,
-          ...coreInvoicePayload,
-          paymentUrl: paymentUrl
-        };
-      } else {
-        invoice = fallbackInvoice;
+      if (offerUpdateError) {
+        console.warn('[BoltPayouts Create] Offer payment reference sync warning:', offerUpdateError.message);
       }
     }
 
     return NextResponse.json({
       success: true,
-      invoice: invoice,
-      paymentUrl: paymentUrl,
-      method: rawMethod,
-      gatewayMethod: gatewayMethod,
-      solanaAddress: solanaAddress,
-      lightningInvoice: lightningInvoice,
-      lightningAddress: lightningInvoice,
-      pyusdAddress: solanaAddress,
-      amount: boltAmount
+      invoice,
+      paymentUrl: details.paymentUrl,
+      method: method.requestedMethod,
+      gatewayMethod: providerMethod,
+      solanaAddress: details.solanaAddress,
+      lightningInvoice: details.lightningInvoice,
+      lightningAddress: details.lightningInvoice,
+      pyusdAddress: details.solanaAddress,
+      amount: providerAmount
     });
-
-  } catch (err) {
-    if (err instanceof PaymentAuthorizationError) {
-      return NextResponse.json({ success: false, error: err.message }, { status: err.status });
+  } catch (error) {
+    if (error instanceof PaymentAuthorizationError) {
+      return NextResponse.json({ success: false, error: error.message }, { status: error.status });
     }
-    console.error('Bolt create exception:', err);
-    return NextResponse.json({ success: false, error: 'Payment initiation error' }, { status: 500 });
+
+    const status = Number(error?.status);
+    console.error('[BoltPayouts Create] Payment initiation failed:', error?.message);
+    return NextResponse.json(
+      { success: false, error: 'Payment initiation failed. Please try again or contact support.' },
+      { status: Number.isInteger(status) && status >= 400 && status < 600 ? status : 500 }
+    );
   }
 }
 

@@ -2,308 +2,264 @@ import { withApiObservability, logServerCaughtError } from '../../../src/lib/obs
 import { NextResponse } from 'next/server';
 import { supabaseAdmin, hasServiceRole } from '../../../src/lib/supabaseAdmin';
 import { getServerAuthUser } from '../../../src/lib/supabase/serverAuth';
+import { checkDistributedRateLimit, getClientIp, getRateLimitHeaders } from '../../../src/lib/rateLimit';
+import {
+  resolveAuthoritativePayment,
+  PaymentAuthorizationError
+} from '../../../src/lib/payments/paymentAuthorization';
 
-// POST /api/wallet { action: 'deposit' | 'deduct', amount, orderId, paymentMethod }
-// Server-side wallet ledger updates so wallet_balance can never be
-// spoofed from the client. Operates strictly on the authenticated user's record.
+function walletRpcStatus(error) {
+  const message = String(error?.message || '').toLowerCase();
+  if (message.includes('insufficient')) return 400;
+  if (message.includes('not found')) return 404;
+  if (message.includes('does not belong') || message.includes('not authorized')) return 403;
+  if (message.includes('authoritative') || message.includes('amount')) return 409;
+  return 503;
+}
+
+async function ensureClientRecord(user) {
+  const email = String(user?.email || '').toLowerCase().trim();
+  if (!email) return null;
+
+  const { data: byEmail, error: findError } = await supabaseAdmin
+    .from('clients')
+    .select('id, email, wallet_balance, name, user_id')
+    .ilike('email', email)
+    .maybeSingle();
+
+  if (findError) throw findError;
+  if (byEmail) return byEmail;
+
+  const clientName = user.user_metadata?.full_name || user.user_metadata?.name || email.split('@')[0];
+  const payload = {
+    email,
+    user_id: user.id,
+    name: clientName,
+    full_name: clientName,
+    company: user.user_metadata?.company || `${clientName}'s Studio`,
+    wallet_balance: 0,
+    orders_count: 0
+  };
+
+  const { data: created, error: insertError } = await supabaseAdmin
+    .from('clients')
+    .insert(payload)
+    .select('id, email, wallet_balance, name, user_id')
+    .single();
+
+  if (insertError) throw insertError;
+  return created;
+}
+
+// POST /api/wallet
+// - deduct: order price and ownership are always resolved from the database.
+// - deposit: manual credit is restricted to a verified administrator account.
 async function POST_impl(request) {
   try {
     if (!hasServiceRole || !supabaseAdmin) {
       return NextResponse.json(
-        { success: false, error: 'Wallet service is unavailable. Supabase service role is not configured.' },
+        { success: false, error: 'Wallet service is temporarily unavailable.' },
         { status: 503 }
       );
     }
 
     const { user, isAdmin, error: authError } = await getServerAuthUser(request);
-    if (authError || !user) {
+    if (authError || !user?.email) {
       return NextResponse.json(
-        { success: false, error: authError || 'Authentication required.' },
+        { success: false, error: 'Authentication required.' },
         { status: 401 }
       );
     }
 
-    const body = await request.json().catch(() => ({}));
-    const action = body?.action;
-    const amount = parseFloat(body?.amount);
-    const orderId = body?.orderId;
-    const email = (user.email || '').toLowerCase().trim();
+    const rateLimit = await checkDistributedRateLimit(
+      `wallet-post:${user.id || getClientIp(request)}`,
+      isAdmin ? 40 : 20,
+      60_000
+    );
+    if (!rateLimit.success) {
+      return NextResponse.json(
+        { success: false, error: 'Too many wallet requests. Please wait a moment.' },
+        { status: rateLimit.unavailable ? 503 : 429, headers: getRateLimitHeaders(rateLimit) }
+      );
+    }
 
-    if (!action || !['deposit', 'deduct'].includes(action)) {
+    const body = await request.json().catch(() => ({}));
+    const action = String(body?.action || '').trim();
+    if (!['deposit', 'deduct'].includes(action)) {
       return NextResponse.json({ success: false, error: 'Invalid wallet action.' }, { status: 400 });
     }
 
-    if (action === 'deposit') {
-      // Secure deposits: only admins can manually deposit through this route.
-      // Regular customers must use BoltPayouts or Stripe webhooks.
-      if (!isAdmin) {
-        return NextResponse.json({ success: false, error: 'Direct deposits are disabled. Please use the checkout portal.' }, { status: 403 });
-      }
-    }
-
-    if (isNaN(amount) || amount <= 0) {
-      return NextResponse.json({ success: false, error: 'Amount must be a positive number.' }, { status: 400 });
-    }
-
-    // 1. Locate or create client record by ID or Email
-    let clientData = null;
-    const { data: byId } = await supabaseAdmin
-      .from('clients')
-      .select('id, email, wallet_balance, name')
-      .eq('id', user.id)
-      .maybeSingle();
-
-    if (byId) {
-      clientData = byId;
-    } else {
-      const { data: byEmail } = await supabaseAdmin
-        .from('clients')
-        .select('id, email, wallet_balance, name')
-        .ilike('email', email)
-        .maybeSingle();
-
-      if (byEmail) {
-        clientData = byEmail;
-      }
-    }
-
-    if (!clientData) {
-      // Auto-create client record for this authenticated user
-      const clientName = user.user_metadata?.full_name || user.user_metadata?.name || email.split('@')[0];
-      const { data: created, error: insertErr } = await supabaseAdmin
-        .from('clients')
-        .insert({
-          id: user.id,
-          email,
-          name: clientName,
-          full_name: clientName,
-          company: user.user_metadata?.company || `${clientName}'s Studio`,
-          wallet_balance: 0,
-          orders_count: 0
-        })
-        .select()
-        .single();
-
-      if (insertErr) {
-        return NextResponse.json({ success: false, error: 'Failed to initialize wallet client: ' + insertErr.message }, { status: 500 });
-      }
-      clientData = created;
-    }
-
-    let newBalance = 0;
+    await ensureClientRecord(user);
 
     if (action === 'deduct') {
-      // Try Postgres RPC for atomic deduction and concurrency lock
-      const { data: rpcBal, error: rpcErr } = await supabaseAdmin.rpc('deduct_wallet_balance', {
-        p_client_email: email,
-        p_amount: amount,
-        p_order_id: String(orderId || '')
+      const orderId = String(body?.orderId || '').trim();
+      if (!orderId) {
+        return NextResponse.json({ success: false, error: 'Order ID is required.' }, { status: 400 });
+      }
+
+      // Never grant the administrator ownership override for a wallet payment.
+      // A wallet deduction must belong to the currently signed-in account.
+      const payment = await resolveAuthoritativePayment({
+        supabase: supabaseAdmin,
+        user,
+        isAdmin: false,
+        body: { type: 'order_payment', orderId }
       });
 
-      if (!rpcErr && rpcBal !== null) {
-        newBalance = parseFloat(rpcBal);
-      } else {
-        // Fallback atomic balance check and update
-        const currentBalance = parseFloat(clientData.wallet_balance || 0);
-        if (currentBalance < amount) {
-          return NextResponse.json({ 
-            success: false, 
-            error: `Insufficient wallet balance. You have $${currentBalance.toFixed(2)} but order total is $${amount.toFixed(2)}.` 
-          }, { status: 400 });
-        }
+      const { data: rpcBalance, error: rpcError } = await supabaseAdmin.rpc('deduct_wallet_balance', {
+        p_client_email: payment.targetEmail,
+        p_amount: payment.amount,
+        p_order_id: payment.orderId
+      });
 
-        newBalance = parseFloat(Math.max(0, currentBalance - amount).toFixed(2));
-        const { error: updateErr } = await supabaseAdmin
-          .from('clients')
-          .update({
-            wallet_balance: newBalance,
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', clientData.id);
-
-        if (updateErr) {
-          return NextResponse.json({ success: false, error: 'Failed to update wallet ledger: ' + updateErr.message }, { status: 500 });
-        }
-
-        // Record transaction in ledger
-        const txDesc = orderId
-          ? `Studio Wallet Payment for Order #${String(orderId).slice(0, 8)} (- $${amount.toFixed(2)})`
-          : `Studio Wallet Order Payment (- $${amount.toFixed(2)})`;
-
-        await supabaseAdmin.from('transactions').insert([{
-          user_id: user.id,
-          client_email: email,
-          type: 'order_payment',
-          amount: -amount,
-          payment_method: body?.paymentMethod || 'Studio Wallet Credit',
-          description: txDesc,
-          created_at: new Date().toISOString()
-        }]);
+      if (rpcError) {
+        return NextResponse.json(
+          { success: false, error: rpcError.message?.toLowerCase().includes('insufficient')
+            ? 'Insufficient wallet balance for this order.'
+            : 'Wallet payment could not be completed.' },
+          { status: walletRpcStatus(rpcError) }
+        );
       }
 
-      // Always ensure the order is marked as paid and in_progress in the live database
-      if (orderId) {
-        const rawId = String(orderId).trim();
-        const cleanId = rawId.replace(/^#+/, '');
-        const withHash = `#${cleanId}`;
-        const candidateIds = Array.from(new Set([rawId, cleanId, withHash])).filter(Boolean);
-
-        // 1. Direct match by candidate IDs
-        const { data: matchedRows } = await supabaseAdmin
-          .from('orders')
-          .select('id, status')
-          .in('id', candidateIds);
-
-        if (matchedRows && matchedRows.length > 0) {
-          for (const row of matchedRows) {
-            const targetStatus = (row.status === 'delivered' || row.status === 'completed') ? row.status : 'in_progress';
-            await supabaseAdmin
-              .from('orders')
-              .update({
-                status: targetStatus,
-                payment_status: 'paid',
-                updated_at: new Date().toISOString()
-              })
-              .eq('id', row.id);
-          }
-        } else {
-          // 2. Search by partial ID or client email
-          let query = supabaseAdmin
-            .from('orders')
-            .select('id, status')
-            .ilike('client_email', email);
-
-          if (cleanId.length >= 3) {
-            query = query.ilike('id', `%${cleanId}%`);
-          }
-
-          const { data: fallbackRows } = await query;
-          if (fallbackRows && fallbackRows.length > 0) {
-            for (const row of fallbackRows) {
-              const targetStatus = (row.status === 'delivered' || row.status === 'completed') ? row.status : 'in_progress';
-              await supabaseAdmin
-                .from('orders')
-                .update({
-                  status: targetStatus,
-                  payment_status: 'paid',
-                  updated_at: new Date().toISOString()
-                })
-                .eq('id', row.id);
-            }
-          }
-        }
-
-        // Client Notification 2: Payment Confirmed
-        if (email) {
-          try {
-            const nowIso = new Date().toISOString();
-            await supabaseAdmin.from('notifications').upsert([{
-              id: `ord-paid-${cleanId}`,
-              recipient_role: 'client',
-              recipient_email: email.toLowerCase().trim(),
-              title: `💳 Payment Confirmed - Order Active!`,
-              message: `Wallet payment confirmed for Order #${cleanId}. Production is underway.`,
-              type: 'success',
-              order_id: cleanId,
-              link: `/client-portal?tab=orders&trackOrder=${cleanId}`,
-              read: false,
-              created_at: nowIso,
-              updated_at: nowIso
-            }], { onConflict: 'id' });
-          } catch (error) { logServerCaughtError(error, { operation: 'wallet.notification_upsert_failed' }); }
-        }
-      }
-    } else if (action === 'deposit') {
-      // Manual Admin deposit
-      const currentBalance = parseFloat(clientData.wallet_balance || 0);
-      newBalance = parseFloat((currentBalance + amount).toFixed(2));
-
-      const { error: updateErr } = await supabaseAdmin
-        .from('clients')
-        .update({
-          wallet_balance: newBalance,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', clientData.id);
-
-      if (updateErr) {
-        return NextResponse.json({ success: false, error: 'Failed to deposit: ' + updateErr.message }, { status: 500 });
+      const cleanId = String(payment.orderId || '').replace(/^#+/, '');
+      try {
+        const nowIso = new Date().toISOString();
+        await supabaseAdmin.from('notifications').upsert([{
+          id: `ord-paid-${cleanId}`,
+          recipient_role: 'client',
+          recipient_email: payment.targetEmail,
+          title: '💳 Payment Confirmed - Order Active!',
+          message: `Wallet payment confirmed for Order #${cleanId}. Production is underway.`,
+          type: 'success',
+          order_id: cleanId,
+          link: `/client-portal?tab=orders&trackOrder=${encodeURIComponent(cleanId)}`,
+          read: false,
+          created_at: nowIso,
+          updated_at: nowIso
+        }], { onConflict: 'id' });
+      } catch (error) {
+        logServerCaughtError(error, { operation: 'wallet.notification_upsert_failed' });
       }
 
-      await supabaseAdmin.from('transactions').insert([{
-        user_id: user.id,
-        client_email: email,
-        type: 'deposit',
-        amount: amount,
-        payment_method: body?.paymentMethod || 'Admin Credit / Manual',
-        description: `Admin Studio Wallet Credit (+ $${amount.toFixed(2)})`,
-        created_at: new Date().toISOString()
-      }]);
+      return NextResponse.json({
+        success: true,
+        balance: Number(rpcBalance || 0),
+        amount: payment.amount,
+        orderId: payment.orderId,
+        message: `Successfully paid $${payment.amount.toFixed(2)} via Studio Wallet.`
+      });
     }
 
-    return NextResponse.json({ 
-      success: true, 
-      balance: newBalance,
-      message: `Successfully ${action === 'deposit' ? 'deposited' : 'paid'} $${amount.toFixed(2)} via Studio Wallet.`
+    if (!isAdmin) {
+      return NextResponse.json(
+        { success: false, error: 'Direct deposits are disabled. Please use the checkout portal.' },
+        { status: 403 }
+      );
+    }
+
+    const amount = Number.parseFloat(body?.amount);
+    if (!Number.isFinite(amount) || amount <= 0 || amount > 5000) {
+      return NextResponse.json(
+        { success: false, error: 'Manual credit amount must be between $0.01 and $5,000.' },
+        { status: 400 }
+      );
+    }
+
+    const email = user.email.toLowerCase().trim();
+    const { data: rpcBalance, error: rpcError } = await supabaseAdmin.rpc('deposit_funds', {
+      p_client_email: email,
+      p_amount: Number(amount.toFixed(2)),
+      p_payment_method: body?.paymentMethod || 'Admin Credit / Manual'
     });
-  } catch (err) {
-    console.error('Wallet POST Exception:', err);
+
+    if (rpcError) {
+      return NextResponse.json(
+        { success: false, error: 'Manual wallet credit could not be completed.' },
+        { status: walletRpcStatus(rpcError) }
+      );
+    }
+
+    return NextResponse.json({
+      success: true,
+      balance: Number(rpcBalance || 0),
+      amount: Number(amount.toFixed(2)),
+      message: `Successfully credited $${amount.toFixed(2)} to the Studio Wallet.`
+    });
+  } catch (error) {
+    if (error instanceof PaymentAuthorizationError) {
+      return NextResponse.json(
+        { success: false, error: error.message },
+        { status: error.status }
+      );
+    }
+
+    console.error('Wallet POST Exception:', error);
     return NextResponse.json(
-      { success: false, error: err.message || 'Wallet operation failed.' },
+      { success: false, error: 'Wallet operation failed.' },
       { status: 500 }
     );
   }
 }
 
-// GET /api/wallet - Get current authenticated user's wallet balance and transaction history
+// GET /api/wallet - authenticated user's balance and ledger only.
 async function GET_impl(request) {
   try {
     if (!hasServiceRole || !supabaseAdmin) {
       return NextResponse.json(
-        { success: false, error: 'Wallet service is unavailable.' },
+        { success: false, error: 'Wallet service is temporarily unavailable.' },
         { status: 503 }
       );
     }
 
     const { user, error: authError } = await getServerAuthUser(request);
-    if (authError || !user) {
+    if (authError || !user?.email) {
       return NextResponse.json(
-        { success: false, error: authError || 'Authentication required.' },
+        { success: false, error: 'Authentication required.' },
         { status: 401 }
       );
     }
 
-    const email = (user.email || '').toLowerCase().trim();
-
-    // 1. Fetch live balance from clients table
-    let balance = 0;
-    const { data: clientData } = await supabaseAdmin
-      .from('clients')
-      .select('id, wallet_balance')
-      .or(`id.eq.${user.id},email.ilike.${email}`)
-      .maybeSingle();
-
-    if (clientData) {
-      balance = parseFloat(clientData.wallet_balance || 0);
+    const rateLimit = await checkDistributedRateLimit(
+      `wallet-get:${user.id || getClientIp(request)}`,
+      60,
+      60_000
+    );
+    if (!rateLimit.success) {
+      return NextResponse.json(
+        { success: false, error: 'Too many wallet requests. Please wait a moment.' },
+        { status: rateLimit.unavailable ? 503 : 429, headers: getRateLimitHeaders(rateLimit) }
+      );
     }
 
-    // 2. Fetch user's transaction ledger
-    const { data: transactions } = await supabaseAdmin
-      .from('transactions')
-      .select('*')
-      .or(`user_id.eq.${user.id},client_email.ilike.${email}`)
-      .order('created_at', { ascending: false })
-      .limit(30);
+    const email = user.email.toLowerCase().trim();
+
+    const [{ data: clientData, error: clientError }, { data: transactions, error: txError }] = await Promise.all([
+      supabaseAdmin
+        .from('clients')
+        .select('id, wallet_balance')
+        .ilike('email', email)
+        .maybeSingle(),
+      supabaseAdmin
+        .from('transactions')
+        .select('*')
+        .ilike('client_email', email)
+        .order('created_at', { ascending: false })
+        .limit(30)
+    ]);
+
+    if (clientError || txError) {
+      throw clientError || txError;
+    }
 
     return NextResponse.json({
       success: true,
-      balance,
+      balance: Number.parseFloat(clientData?.wallet_balance || 0),
       transactions: transactions || []
     });
-  } catch (err) {
-    console.error('Wallet GET Exception:', err);
+  } catch (error) {
+    console.error('Wallet GET Exception:', error);
     return NextResponse.json(
-      { success: false, error: err.message || 'Failed to fetch wallet info.' },
+      { success: false, error: 'Failed to fetch wallet information.' },
       { status: 500 }
     );
   }
