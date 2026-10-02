@@ -2,6 +2,7 @@ import { supabase, isSupabaseConfigured } from '../lib/supabase/client.js';
 import { getSiteUrl } from '../utils/siteUrl.js';
 import { filterAndSanitizeNotifications } from '../utils/notificationRouter.js';
 import { normalizePublicCatalog } from '../lib/catalog/normalizePublicCatalog.js';
+import { fetchClientQuery, invalidateClientQuery } from './clientQueryService.js';
 
 export { isSupabaseConfigured };
 
@@ -13,13 +14,10 @@ export async function getAuthHeaders() {
   const headers = { 'Content-Type': 'application/json' };
   try {
     if (supabase) {
-      let { data: { session } } = await supabase.auth.getSession();
-      if (session?.expires_at && session.expires_at < Math.floor(Date.now() / 1000) + 60) {
-        try {
-          const { data: refreshed } = await supabase.auth.refreshSession();
-          if (refreshed?.session) session = refreshed.session;
-        } catch {}
-      }
+      // The browser Supabase client already refreshes tokens. Calling refreshSession()
+      // from every API helper can fan out concurrent refreshes, emit repeated auth
+      // events, and restart portal hydration/presence work.
+      const { data: { session } } = await supabase.auth.getSession();
       if (session?.access_token) {
         headers['Authorization'] = `Bearer ${session.access_token}`;
       }
@@ -38,10 +36,17 @@ function getAuthScopeKey(headers = {}) {
   return String(auth).slice(-64);
 }
 
-function runDedupedApiRead(key, factory, { ttlMs = 0, force = false } = {}) {
+function runDedupedApiRead(key, factory, { ttlMs = 0, force = false, hardMinIntervalMs = 0 } = {}) {
   const now = Date.now();
+  const cached = completedApiReads.get(key);
+
+  // Even explicit refresh callers cannot create a burst on hot routes. A manual
+  // force may bypass normal staleness, but never the route-specific hard floor.
+  if (cached && hardMinIntervalMs > 0 && now - Number(cached.completedAt || 0) < hardMinIntervalMs) {
+    return Promise.resolve(cached.value);
+  }
+
   if (!force && ttlMs > 0) {
-    const cached = completedApiReads.get(key);
     if (cached && cached.expiresAt > now) return Promise.resolve(cached.value);
     if (cached) completedApiReads.delete(key);
   }
@@ -53,7 +58,8 @@ function runDedupedApiRead(key, factory, { ttlMs = 0, force = false } = {}) {
     .then(factory)
     .then(value => {
       if (ttlMs > 0) {
-        completedApiReads.set(key, { value, expiresAt: Date.now() + ttlMs });
+        const completedAt = Date.now();
+        completedApiReads.set(key, { value, completedAt, expiresAt: completedAt + ttlMs });
       }
       return value;
     })
@@ -260,18 +266,14 @@ export async function fetchOrdersFromSupabase(_customEmail = null, _customOrderI
       // requests remain fully hydrated server-side.
       const url = '/api/orders?action=fetchAll&view=summary';
       const res = await fetch(url, {
-        headers: {
-          ...headers,
-          'Cache-Control': 'no-cache, no-store, must-revalidate',
-          'Pragma': 'no-cache'
-        },
-        cache: 'no-store',
+        headers,
+        cache: 'default',
         credentials: 'include'
       });
       const data = await res.json();
       const orders = data.orders || [];
       return orders.map(order => mapDatabaseOrderToClientOrder(order)).filter(Boolean);
-    }, { ttlMs: 15_000, force: Boolean(options?.force) });
+    }, { ttlMs: 60_000, hardMinIntervalMs: 10_000, force: Boolean(options?.force) });
   } catch (err) {
     console.warn('fetchOrdersFromSupabase error notice:', err?.message);
     return [];
@@ -613,10 +615,10 @@ export async function fetchClientsFromSupabase(options = {}) {
     const headers = await getAuthHeaders();
     const requestKey = `clients:${getAuthScopeKey(headers)}`;
     return runDedupedApiRead(requestKey, async () => {
-      const res = await fetch('/api/clients?action=fetchAll', { headers, cache: 'no-store' });
+      const res = await fetch('/api/clients?action=fetchAll', { headers, cache: 'default', credentials: 'include' });
       const data = await res.json();
       return data.clients || [];
-    }, { ttlMs: 15_000, force: Boolean(options?.force) });
+    }, { ttlMs: 60_000, hardMinIntervalMs: 10_000, force: Boolean(options?.force) });
   } catch { return []; }
 }
 // Fetch CMS Configuration from Supabase (Pricing, Services & Site Settings)
@@ -1022,15 +1024,20 @@ export async function verifyAdminSession(email, options = {}) {
     return { success: false, isAdmin: false };
   }
 }
-export async function fetchAdminUsers(_email = null) {
+export async function fetchAdminUsers(_email = null, options = {}) {
   try {
     const headers = await getAuthHeaders();
-    const res = await fetch('/api/admin/users', {
-      method: 'GET',
-      headers
-    });
-    const json = await res.json();
-    return json?.admins || [];
+    const requestKey = `admin-users:${getAuthScopeKey(headers)}`;
+    return runDedupedApiRead(requestKey, async () => {
+      const res = await fetch('/api/admin/users', {
+        method: 'GET',
+        headers,
+        cache: 'default',
+        credentials: 'include'
+      });
+      const json = await res.json();
+      return json?.admins || [];
+    }, { ttlMs: 5 * 60_000, hardMinIntervalMs: 60_000, force: Boolean(options?.force) });
   } catch (err) {
     console.warn('Fetch admin users exception:', err);
     return [];
@@ -2081,9 +2088,18 @@ export async function uploadFileToCloudinaryFull(fileObj, bucketName = 'client-u
 // CMS Helper
 export async function getCmsContent(key) {
   try {
-    const res = await fetch(`/api/cms?action=fetchContent&key=${key}`);
-    const data = await res.json();
-    return data.content || null;
+    return fetchClientQuery({
+      key: ['cms-content', String(key || '')],
+      staleTime: 5 * 60_000,
+      queryFn: async () => {
+        const res = await fetch(`/api/cms?action=fetchContent&key=${encodeURIComponent(key)}`, {
+          cache: 'default'
+        });
+        if (!res.ok) throw new Error(`CMS request failed (${res.status})`);
+        const data = await res.json();
+        return data.content || null;
+      }
+    });
   } catch { return null; }
 }
 
@@ -2095,6 +2111,7 @@ export async function saveCmsContent(key, content) {
       body: JSON.stringify({ key, content })
     });
     const data = await res.json();
+    if (res.ok && key) await invalidateClientQuery(['cms-content', String(key)]);
     return data;
   } catch (err) {
     return { success: false, error: err.message };

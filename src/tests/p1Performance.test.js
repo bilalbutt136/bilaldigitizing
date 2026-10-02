@@ -140,8 +140,8 @@ describe('P1 Performance Regression Coverage', () => {
     const chatTyping = fs.readFileSync('app/api/chat/typing/route.js', 'utf8');
 
     assert.match(service, /const completedApiReads = new Map\(\)/);
-    assert.match(service, /ttlMs: 15_000/);
     assert.match(service, /ttlMs: 60_000/);
+    assert.match(service, /ttlMs: 5 \* 60_000/);
     assert.match(service, /const requestKey = `admin-session:\$\{String\(email\)\.toLowerCase\(\)\.trim\(\)\}`/);
     assert.equal(service.includes('admin-session:${getAuthScopeKey(headers)}'), false);
     assert.match(service, /runDedupedApiMutation/);
@@ -214,8 +214,8 @@ describe('P1 Performance Regression Coverage', () => {
     assert.match(signature, /enforceApiBurstLimit\(request, 'cloudinary-signature-get'/);
     assert.match(download, /estimatedBytes > 10 \* 1024 \* 1024/);
 
-    assert.match(conversations, /\.limit\(500\)/);
-    assert.match(messages, /order\('created_at', \{ ascending: false \}\)\.limit\(500\)/);
+    assert.match(conversations, /\.limit\(200\)/);
+    assert.match(messages, /order\('created_at', \{ ascending: false \}\)\.limit\(150\)/);
     assert.match(clients, /\.limit\(500\)/);
 
     assert.equal(audio.includes('data:audio/'), false);

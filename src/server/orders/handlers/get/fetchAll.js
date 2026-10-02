@@ -93,9 +93,7 @@ export async function handleFetchAll(context) {
 
   return NextResponse.json({ orders }, {
     headers: {
-      'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
-      'Pragma': 'no-cache',
-      'Expires': '0'
+      'Cache-Control': 'private, max-age=15, stale-while-revalidate=45'
     }
   });
 }

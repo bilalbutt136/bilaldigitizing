@@ -18,7 +18,7 @@ function isSupportConversation(conversation) {
 }
 
 async function GET_impl(request) {
-  const burst = checkRateLimit(`chat-unread:${getClientIp(request)}`, 120, 60_000);
+  const burst = checkRateLimit(`chat-unread:${getClientIp(request)}`, 12, 60_000);
   if (!burst.success) {
     return NextResponse.json(
       { error: 'Too many unread-count requests.' },
@@ -62,7 +62,7 @@ async function GET_impl(request) {
       {
         headers: {
           ...getRateLimitHeaders(burst),
-          'Cache-Control': 'private, max-age=5, stale-while-revalidate=10'
+          'Cache-Control': 'private, max-age=30, stale-while-revalidate=60'
         }
       }
     );

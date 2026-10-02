@@ -11,6 +11,7 @@ const REST_PRESENCE_MIN_INTERVAL_MS = 60_000;
 let lastRestPresenceWriteAt = 0;
 let restPresenceWriteInFlight = null;
 let restPresenceReadInFlight = null;
+let lastRestPresenceReadAt = 0;
 let restPresenceAuthBlocked = false;
 
 function isValidPresenceSessionId(value) {
@@ -234,7 +235,7 @@ export async function trackUserPresence({
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     credentials: 'include',
-    cache: 'no-store',
+    cache: 'default',
     body: JSON.stringify({
       status: 'online',
       sessionId,
@@ -307,7 +308,10 @@ export async function syncPresenceFromRest() {
   if (restPresenceAuthBlocked || (typeof document !== 'undefined' && document.visibilityState === 'hidden')) {
     return;
   }
+  const now = Date.now();
+  if (now - lastRestPresenceReadAt < REST_PRESENCE_MIN_INTERVAL_MS) return;
   if (restPresenceReadInFlight) return restPresenceReadInFlight;
+  lastRestPresenceReadAt = now;
 
   restPresenceReadInFlight = (async () => {
     try {

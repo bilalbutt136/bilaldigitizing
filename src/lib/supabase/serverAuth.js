@@ -4,6 +4,8 @@ import { supabaseAdmin, hasServiceRole } from '../supabaseAdmin';
 import { createAdminClient } from './admin';
 
 const requestAuthCache = new WeakMap();
+const trustedAccessCache = new Map();
+const TRUSTED_ACCESS_CACHE_TTL_MS = 15_000;
 const ADMIN_MFA_POLICY_TTL_MS = 5000;
 let adminMfaPolicyCache = { value: true, expiresAt: 0 };
 
@@ -52,16 +54,20 @@ export async function getAdminMfaPolicy(dbClientOverride = null, { force = false
   }
 }
 
-function getVerifiedJwtAal(token) {
-  if (!token) return 'aal1';
-  try {
-    const parts = String(token).split('.');
-    if (parts.length < 2) return 'aal1';
-    const payload = JSON.parse(Buffer.from(parts[1], 'base64url').toString('utf8'));
-    return payload?.aal === 'aal2' ? 'aal2' : 'aal1';
-  } catch {
-    return 'aal1';
-  }
+function claimsToUser(claims) {
+  if (!claims?.sub || !claims?.email) return null;
+  return {
+    id: claims.sub,
+    email: claims.email,
+    app_metadata: claims.app_metadata || {},
+    user_metadata: claims.user_metadata || {}
+  };
+}
+
+export function invalidateTrustedAccessCache(email = null) {
+  const key = String(email || '').toLowerCase().trim();
+  if (key) trustedAccessCache.delete(key);
+  else trustedAccessCache.clear();
 }
 
 function getConfiguredAdminEmails() {
@@ -109,6 +115,35 @@ export async function resolveTrustedUserAccess(user, dbClientOverride = null) {
     return { isAdmin: true, isWorker: false, workerData: null };
   }
 
+  if (
+    user.app_metadata?.role === 'worker' &&
+    String(user.app_metadata?.worker_status || '').toLowerCase() === 'active'
+  ) {
+    return {
+      isAdmin: false,
+      isWorker: true,
+      workerData: {
+        id: user.id,
+        email,
+        status: 'active',
+        role: 'worker'
+      }
+    };
+  }
+
+  const cached = trustedAccessCache.get(email);
+  if (cached && cached.expiresAt > Date.now()) {
+    return cached.value;
+  }
+
+  const cacheAccess = value => {
+    trustedAccessCache.set(email, {
+      value,
+      expiresAt: Date.now() + TRUSTED_ACCESS_CACHE_TTL_MS
+    });
+    return value;
+  };
+
   let dbClient = dbClientOverride;
   if (!dbClient) {
     try {
@@ -131,13 +166,13 @@ export async function resolveTrustedUserAccess(user, dbClientOverride = null) {
 
       if (!rpcError) {
         const normalized = normalizeTrustedAccess(rpcData);
-        if (normalized) return normalized;
+        if (normalized) return cacheAccess(normalized);
       } else if (rpcError.code !== 'PGRST202' && rpcError.code !== '42883') {
         console.warn('[resolveTrustedUserAccess RPC Warning]:', rpcError.message);
         // The RPC exists in current production. If it fails because the database
         // is saturated or a statement times out, do not amplify one failing auth
         // check into four additional role queries. Fail closed on privileges.
-        return { isAdmin: false, isWorker: false, workerData: null };
+        return cacheAccess({ isAdmin: false, isWorker: false, workerData: null });
       }
     }
   } catch (rpcErr) {
@@ -161,12 +196,12 @@ export async function resolveTrustedUserAccess(user, dbClientOverride = null) {
         .maybeSingle(),
       dbClient
         .from('worker_profiles')
-        .select('*')
+        .select('id, email, name, status, phone, primary_software, specialty')
         .ilike('email', email)
         .maybeSingle(),
       dbClient
         .from('workers')
-        .select('*')
+        .select('id, email, name, status, phone, primary_software, specialty')
         .ilike('email', email)
         .maybeSingle()
     ]);
@@ -177,29 +212,29 @@ export async function resolveTrustedUserAccess(user, dbClientOverride = null) {
     const workerRecord = workerResult?.data || null;
 
     if (adminRecord) {
-      return { isAdmin: true, isWorker: false, workerData: null };
+      return cacheAccess({ isAdmin: true, isWorker: false, workerData: null });
     }
 
     if (clientRecord && (clientRecord.role === 'admin' || clientRecord.role === 'staff')) {
-      return { isAdmin: true, isWorker: false, workerData: null };
+      return cacheAccess({ isAdmin: true, isWorker: false, workerData: null });
     }
 
     if (profileRecord && String(profileRecord.status || '').toLowerCase() === 'active') {
-      return { isAdmin: false, isWorker: true, workerData: profileRecord };
+      return cacheAccess({ isAdmin: false, isWorker: true, workerData: profileRecord });
     }
 
     if (workerRecord && String(workerRecord.status || '').toLowerCase() === 'active') {
-      return { isAdmin: false, isWorker: true, workerData: workerRecord };
+      return cacheAccess({ isAdmin: false, isWorker: true, workerData: workerRecord });
     }
 
     if (clientRecord?.role === 'worker') {
-      return { isAdmin: false, isWorker: true, workerData: clientRecord };
+      return cacheAccess({ isAdmin: false, isWorker: true, workerData: clientRecord });
     }
   } catch (dbErr) {
     console.warn('[resolveTrustedUserAccess DB Check Warning]:', dbErr?.message);
   }
 
-  return { isAdmin: false, isWorker: false, workerData: null };
+  return cacheAccess({ isAdmin: false, isWorker: false, workerData: null });
 }
 
 async function getServerAuthUserUncached(request) {
@@ -211,26 +246,14 @@ async function getServerAuthUserUncached(request) {
     if (authHeader && authHeader.toLowerCase().startsWith('bearer ')) {
       const token = authHeader.substring(7).trim();
       if (token) {
-        if (hasServiceRole && supabaseAdmin) {
-          try {
-            const { data: userData, error: userError } = await supabaseAdmin.auth.getUser(token);
-            if (!userError && userData?.user) {
-              user = userData.user;
-              authLevel = getVerifiedJwtAal(token);
-            }
-          } catch {}
-        }
-
-        if (!user) {
-          try {
-            const adminSb = createAdminClient();
-            const { data: fallbackUserData, error: fallbackError } = await adminSb.auth.getUser(token);
-            if (!fallbackError && fallbackUserData?.user) {
-              user = fallbackUserData.user;
-              authLevel = getVerifiedJwtAal(token);
-            }
-          } catch {}
-        }
+        try {
+          const verifier = (hasServiceRole && supabaseAdmin) ? supabaseAdmin : createAdminClient();
+          const { data: claimData, error: claimError } = await verifier.auth.getClaims(token);
+          if (!claimError && claimData?.claims) {
+            user = claimsToUser(claimData.claims);
+            authLevel = claimData.claims?.aal === 'aal2' ? 'aal2' : 'aal1';
+          }
+        } catch {}
       }
     }
 
@@ -258,15 +281,10 @@ async function getServerAuthUserUncached(request) {
           }
         );
 
-        const { data: cookieAuthData, error: cookieError } = await supabase.auth.getUser();
-        if (!cookieError && cookieAuthData?.user) {
-          user = cookieAuthData.user;
-          try {
-            const { data: aalData, error: aalError } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
-            if (!aalError && aalData?.currentLevel === 'aal2') {
-              authLevel = 'aal2';
-            }
-          } catch {}
+        const { data: cookieClaims, error: cookieError } = await supabase.auth.getClaims();
+        if (!cookieError && cookieClaims?.claims) {
+          user = claimsToUser(cookieClaims.claims);
+          authLevel = cookieClaims.claims?.aal === 'aal2' ? 'aal2' : 'aal1';
         }
       } catch {
         // Bearer authentication may still have succeeded above.

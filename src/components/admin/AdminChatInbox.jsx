@@ -10,6 +10,7 @@ import { playMessageChime as _playMessageChime, playMessageChimeForMessage, play
 import { subscribeToPresence, syncPresenceFromRest } from '../../services/presenceService';
 import { subscribeToChatMessages, subscribeToConversations } from '../../services/supabaseService';
 import { fetchChatUnreadCounts } from '../../services/chatUnreadService';
+import { fetchClientQuery } from '../../services/clientQueryService';
 import {
   Search,
   ChevronDown,
@@ -267,8 +268,15 @@ export default function AdminChatInbox({ initialChannel = 'inbox', compactMobile
       const targetChannel = channel === 'support' ? 'support' : 'inbox';
       let url = `/api/chat/conversations?filter=${filter}&channel=${targetChannel}`;
       if (query) url += `&q=${encodeURIComponent(query)}`;
-      const res = await fetch(url);
-      const data = await res.json();
+      const data = await fetchClientQuery({
+        key: ['admin-chat-conversations', targetChannel, filter, query || ''],
+        staleTime: 60_000,
+        queryFn: async () => {
+          const res = await fetch(url, { credentials: 'include', cache: 'default' });
+          if (!res.ok) throw new Error(`Conversation request failed (${res.status})`);
+          return res.json();
+        }
+      });
       if (data?.conversations) {
         setConversations(data.conversations);
         if (!silent) {
@@ -306,8 +314,18 @@ export default function AdminChatInbox({ initialChannel = 'inbox', compactMobile
     if (!convId) return;
     setIsLoadingMessages(true);
     try {
-      const res = await fetch(`/api/chat/messages?conversationId=${encodeURIComponent(convId)}`);
-      const data = await res.json();
+      const data = await fetchClientQuery({
+        key: ['chat-messages', convId],
+        staleTime: 60_000,
+        queryFn: async () => {
+          const res = await fetch(`/api/chat/messages?conversationId=${encodeURIComponent(convId)}`, {
+            credentials: 'include',
+            cache: 'default'
+          });
+          if (!res.ok) throw new Error(`Message request failed (${res.status})`);
+          return res.json();
+        }
+      });
       if (data?.messages) {
         setMessages(data.messages);
         scrollToBottom();
@@ -371,7 +389,7 @@ export default function AdminChatInbox({ initialChannel = 'inbox', compactMobile
     const recoverAfterBackground = () => {
       if (typeof document !== 'undefined' && document.visibilityState === 'hidden') return;
       const now = Date.now();
-      if (now - lastRecoveryAt < 15000) return;
+      if (now - lastRecoveryAt < 60_000) return;
       lastRecoveryAt = now;
 
       fetchConversations(activeFilter, searchQuery, activeChannel, true);

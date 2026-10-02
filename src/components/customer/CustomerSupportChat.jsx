@@ -7,6 +7,7 @@ import OfferCardMessage from '../common/OfferCardMessage';
 import { downloadFileDirectly, openFileInNewTab } from '../../utils/fileDownloader';
 import { playMessageChime as _playMessageChime, playMessageChimeForMessage, playCustomerChime, stopNotificationSound, unlockAudioContext } from '../../utils/audioNotification';
 import { subscribeToChatMessages } from '../../services/supabaseService';
+import { fetchClientQuery } from '../../services/clientQueryService';
 import {
   Send,
   Paperclip,
@@ -302,8 +303,18 @@ export default function CustomerSupportChat({
   const fetchMessages = async (convId) => {
     if (!convId) return;
     try {
-      const res = await fetch(`/api/chat/messages?conversationId=${encodeURIComponent(convId)}&clientEmail=${encodeURIComponent(userEmail)}`);
-      const data = await res.json();
+      const data = await fetchClientQuery({
+        key: ['chat-messages', convId],
+        staleTime: 60_000,
+        queryFn: async () => {
+          const res = await fetch(`/api/chat/messages?conversationId=${encodeURIComponent(convId)}&clientEmail=${encodeURIComponent(userEmail)}`, {
+            credentials: 'include',
+            cache: 'default'
+          });
+          if (!res.ok) throw new Error(`Message request failed (${res.status})`);
+          return res.json();
+        }
+      });
       if (data?.messages) {
         setMessages(data.messages);
         scrollToBottom();
@@ -392,7 +403,7 @@ export default function CustomerSupportChat({
     const recoverMessages = () => {
       if (typeof document !== 'undefined' && document.visibilityState === 'hidden') return;
       const now = Date.now();
-      if (now - lastRecoveryAt < 15000) return;
+      if (now - lastRecoveryAt < 60_000) return;
       lastRecoveryAt = now;
       fetchMessages(conversationId);
     };

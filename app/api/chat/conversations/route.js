@@ -7,8 +7,10 @@ import { enforceApiBurstLimit } from '../../../../src/lib/apiBurstGuard.js';
 
 export const dynamic = 'force-dynamic';
 
+const CONVERSATION_FIELDS = 'id, client_email, client_name, client_company, order_id, order_title, avatar, status, last_message, last_message_at, last_seen_at, unread_admin_count, unread_client_count, is_starred, tags, typing_client_at, typing_admin_at, created_at, updated_at';
+
 async function GET_impl(request) {
-  const burstResponse = enforceApiBurstLimit(request, 'chat-conversations-get', 120, 60_000);
+  const burstResponse = enforceApiBurstLimit(request, 'chat-conversations-get', 30, 60_000);
   if (burstResponse) return burstResponse;
 
   try {
@@ -27,9 +29,9 @@ async function GET_impl(request) {
     const supabase = createAdminClient();
     let query = supabase
       .from('conversations')
-      .select('*')
+      .select(CONVERSATION_FIELDS)
       .order('last_message_at', { ascending: false })
-      .limit(500);
+      .limit(200);
 
     if (isAdmin) {
       if (requestedEmail) query = query.ilike('client_email', requestedEmail);
@@ -107,7 +109,11 @@ async function GET_impl(request) {
       return { ...c, status: isOnline ? 'online' : 'offline', is_online: isOnline };
     });
 
-    return NextResponse.json({ conversations: sanitizedResults });
+    return NextResponse.json({ conversations: sanitizedResults }, {
+      headers: {
+        'Cache-Control': 'private, max-age=15, stale-while-revalidate=45'
+      }
+    });
   } catch (err) {
     console.error('[Chat Conversations API Error]:', err);
     return NextResponse.json({ error: 'Unable to load conversations.' }, { status: 500 });
@@ -222,7 +228,7 @@ async function POST_impl(request) {
 
       const { data: existing, error: existingError } = await supabase
         .from('conversations')
-        .select('*')
+        .select(CONVERSATION_FIELDS)
         .eq('id', convId)
         .maybeSingle();
 

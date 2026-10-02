@@ -2,10 +2,14 @@ import { withApiObservability } from '../../../../src/lib/observability/apiObser
 import { NextResponse } from 'next/server';
 import { supabaseAdmin, hasServiceRole } from '../../../../src/lib/supabaseAdmin';
 import { getServerAuthUser } from '../../../../src/lib/supabase/serverAuth';
+import { enforceApiBurstLimit } from '../../../../src/lib/apiBurstGuard.js';
 
 // GET /api/admin/users
 // Returns the whitelisted admin emails (server-side, verified admins only).
 async function GET_impl(request) {
+  const burstResponse = enforceApiBurstLimit(request, 'admin-users-get', 20, 60_000);
+  if (burstResponse) return burstResponse;
+
   try {
     if (!hasServiceRole || !supabaseAdmin) {
       return NextResponse.json(
@@ -32,7 +36,9 @@ async function GET_impl(request) {
       return NextResponse.json({ success: false, error: error.message }, { status: 500 });
     }
 
-    return NextResponse.json({ success: true, admins: data || [] });
+    return NextResponse.json({ success: true, admins: data || [] }, {
+      headers: { 'Cache-Control': 'private, max-age=60, stale-while-revalidate=240' }
+    });
   } catch (err) {
     return NextResponse.json(
       { success: false, error: err.message || 'Failed to fetch admins.' },

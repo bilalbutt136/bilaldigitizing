@@ -4,6 +4,8 @@ import { createAdminClient } from '../../../src/lib/supabase/admin';
 import { getServerAuthUser } from '../../../src/lib/supabase/serverAuth';
 
 // Default built-in fallback content for standard CMS keys
+const PUBLIC_CMS_CACHE_HEADERS = { 'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=3600' };
+
 const DEFAULT_CMS_CONTENT = {
   placement_options: [
     { id: 'left_chest', label: 'Left Chest', standard_width: 3.5, standard_height: 3.0, unit: 'inches' },
@@ -192,7 +194,7 @@ async function GET_impl(request) {
 
     if (!key) {
       // Return all default fallback keys or list
-      return NextResponse.json({ success: true, keys: Object.keys(DEFAULT_CMS_CONTENT) });
+      return NextResponse.json({ success: true, keys: Object.keys(DEFAULT_CMS_CONTENT) }, { headers: PUBLIC_CMS_CACHE_HEADERS });
     }
 
     const supabase = createAdminClient();
@@ -200,7 +202,7 @@ async function GET_impl(request) {
       try {
         const { data, error } = await supabase
           .from('cms_content')
-          .select('*')
+          .select('key, content, value, updated_at')
           .eq('key', key)
           .maybeSingle();
 
@@ -212,7 +214,7 @@ async function GET_impl(request) {
               key: data.key, 
               content: rawContent, 
               updated_at: data.updated_at 
-            });
+            }, { headers: PUBLIC_CMS_CACHE_HEADERS });
           }
         }
       } catch (dbErr) {
@@ -227,7 +229,7 @@ async function GET_impl(request) {
       key, 
       content: fallbackContent,
       isFallback: true 
-    });
+    }, { headers: PUBLIC_CMS_CACHE_HEADERS });
   } catch (error) {
     console.error('[CMS API GET Exception]:', error);
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });

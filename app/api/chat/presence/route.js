@@ -19,7 +19,7 @@ function normalizeSessionId(value) {
 }
 
 async function GET_impl(request) {
-  const burstResponse = enforceApiBurstLimit(request, 'chat-presence-get', 60, 60_000);
+  const burstResponse = enforceApiBurstLimit(request, 'chat-presence-get', 12, 60_000);
   if (burstResponse) return burstResponse;
 
   try {
@@ -65,7 +65,7 @@ async function GET_impl(request) {
       timestamp: Date.now()
     }, {
       headers: {
-        'Cache-Control': 'no-store, max-age=0'
+        'Cache-Control': 'private, max-age=30, stale-while-revalidate=60'
       }
     });
   } catch (error) {
@@ -75,7 +75,7 @@ async function GET_impl(request) {
 }
 
 async function POST_impl(request) {
-  const burstResponse = enforceApiBurstLimit(request, 'chat-presence-post', 60, 60_000);
+  const burstResponse = enforceApiBurstLimit(request, 'chat-presence-post', 12, 60_000);
   if (burstResponse) return burstResponse;
 
   try {

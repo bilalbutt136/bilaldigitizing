@@ -31,7 +31,9 @@ async function GET_impl(request) {
         console.error('[Clients API GET fetchAll error]', error.message);
         return NextResponse.json({ clients: [] });
       }
-      return NextResponse.json({ clients: data || [] });
+      return NextResponse.json({ clients: data || [] }, {
+        headers: { 'Cache-Control': 'private, max-age=30, stale-while-revalidate=90' }
+      });
     }
 
     // Default GET: Return current authenticated user client profile
@@ -51,7 +53,9 @@ async function GET_impl(request) {
       return NextResponse.json({ client: null });
     }
 
-    return NextResponse.json({ client: data || null });
+    return NextResponse.json({ client: data || null }, {
+      headers: { 'Cache-Control': 'private, max-age=30, stale-while-revalidate=90' }
+    });
   } catch (error) {
     console.error('[Clients API GET]', error);
     return NextResponse.json({ error: error.message || 'Failed to fetch client profile' }, { status: 500 });

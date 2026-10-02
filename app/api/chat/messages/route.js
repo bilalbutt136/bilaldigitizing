@@ -7,8 +7,11 @@ import { enforceApiBurstLimit } from '../../../../src/lib/apiBurstGuard.js';
 
 export const dynamic = 'force-dynamic';
 
+const MESSAGE_FIELDS = 'id, conversation_id, thread_id, client_email, guest_id, sender, sender_name, sender_email, text, type, attachment, attachments, attachment_url, attachment_name, attachment_size, attachment_type, file_id, reply_to, offer_id, offer_data, metadata, status, is_read, read_at, is_autopilot, auto_pilot, deleted_at, timestamp, created_at';
+const OFFER_FIELDS = 'id, conversation_id, thread_id, order_id, customer_id, created_by, client_name, client_email, title, description, service_type, price, discount_amount, final_price, delivery_time_text, delivery_days, revisions_allowed, expires_in_hours, expires_at, requires_requirements, status, payment_status, payment_intent_id, stripe_session_id, accepted_at, created_at, updated_at';
+
 async function GET_impl(request) {
-  const burstResponse = enforceApiBurstLimit(request, 'chat-messages-get', 120, 60_000);
+  const burstResponse = enforceApiBurstLimit(request, 'chat-messages-get', 30, 60_000);
   if (burstResponse) return burstResponse;
 
   try {
@@ -35,7 +38,7 @@ async function GET_impl(request) {
       }
     }
 
-    let query = supabase.from('messages').select('*').order('created_at', { ascending: false }).limit(500);
+    let query = supabase.from('messages').select(MESSAGE_FIELDS).order('created_at', { ascending: false }).limit(150);
 
     if (conversationId) {
       query = query.eq('conversation_id', conversationId);
@@ -72,7 +75,7 @@ async function GET_impl(request) {
     } else if (conversationId || clientEmail) {
       // INBOX CHANNEL: Fetch & sync live custom offers strictly for this inbox conversation
       try {
-        let offerQuery = supabase.from('custom_offers').select('*');
+        let offerQuery = supabase.from('custom_offers').select(OFFER_FIELDS);
         if (conversationId) {
           // Strictly match by conversation_id to avoid cross-thread offer leakage
           offerQuery = offerQuery.eq('conversation_id', conversationId);
@@ -146,7 +149,11 @@ async function GET_impl(request) {
       }
     }
 
-    return NextResponse.json({ messages: syncedMessages });
+    return NextResponse.json({ messages: syncedMessages }, {
+      headers: {
+        'Cache-Control': 'private, max-age=10, stale-while-revalidate=50'
+      }
+    });
   } catch (err) {
     console.error('[Chat Messages API GET Error]:', err);
     return NextResponse.json({ error: err.message }, { status: 500 });

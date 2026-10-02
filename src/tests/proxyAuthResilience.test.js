@@ -13,6 +13,8 @@ describe('Proxy Authentication Resilience', () => {
     assert.match(proxy, /const ROLE_LOOKUP_TIMEOUT_MS = 3500/);
     assert.match(proxy, /Supabase authentication verification/);
     assert.match(proxy, /supabase\.auth\.getClaims\(\)/);
+    assert.match(proxy, /if \(!isAdminIdentity && isAdminRoute\)/);
+    assert.equal(proxy.includes('if (!isAdminIdentity && (isAdminRoute || isClientRoute))'), false);
     assert.equal(proxy.includes('supabase.auth.getUser()'), false);
     assert.equal(proxy.includes('timeoutMs = 1500'), false);
   });

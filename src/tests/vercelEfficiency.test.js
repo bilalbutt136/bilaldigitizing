@@ -36,11 +36,57 @@ test('Vercel efficiency: push registration and unread counts are guarded against
   assert.match(pushClient, /bdigi_push_subscription_synced_v1/);
 
   assert.match(unread, /CACHE_TTL_MS = 60_000/);
-  assert.match(unread, /DEDUPING_INTERVAL_MS = 45_000/);
+  assert.match(unread, /DEDUPING_INTERVAL_MS = 60_000/);
+  assert.match(unread, /STORAGE_PREFIX = 'bdigi_chat_unread_v2:'/);
   assert.match(unread, /document\.visibilityState === 'hidden'/);
   assert.match(unread, /authBlocked\.add\(identityKey\)/);
   assert.match(nextConfig, /source: '\/3d-puff-digitizing'/);
   assert.match(nextConfig, /destination: '\/services\/embroidery-digitizing'/);
+});
+
+test('Vercel efficiency: chat recovery is Realtime-first with 60 second guarded fallback', () => {
+  const adminChat = read('src/components/admin/AdminChatInbox.jsx');
+  const customerChat = read('src/components/customer/CustomerSupportChat.jsx');
+  const presence = read('src/services/presenceService.js');
+  const queryService = read('src/services/clientQueryService.js');
+
+  assert.match(adminChat, /now - lastRecoveryAt < 60_000/);
+  assert.match(customerChat, /now - lastRecoveryAt < 60_000/);
+  assert.match(presence, /REST_PRESENCE_MIN_INTERVAL_MS = 60_000/);
+  assert.match(presence, /now - lastRestPresenceReadAt < REST_PRESENCE_MIN_INTERVAL_MS/);
+  assert.match(queryService, /new QueryClient/);
+  assert.match(queryService, /staleTime: 60_000/);
+  assert.match(adminChat, /fetchClientQuery/);
+  assert.match(customerChat, /fetchClientQuery/);
+});
+
+test('Vercel efficiency: hot read routes use bounded projections and cache headers', () => {
+  const messages = read('app/api/chat/messages/route.js');
+  const conversations = read('app/api/chat/conversations/route.js');
+  const unread = read('app/api/chat/unread-counts/route.js');
+  const presence = read('app/api/chat/presence/route.js');
+  const clients = read('app/api/clients/route.js');
+  const orders = read('src/server/orders/handlers/get/fetchAll.js');
+
+  assert.match(messages, /MESSAGE_FIELDS/);
+  assert.match(messages, /\.limit\(150\)/);
+  assert.match(messages, /stale-while-revalidate=50/);
+  assert.match(conversations, /CONVERSATION_FIELDS/);
+  assert.match(conversations, /\.limit\(200\)/);
+  assert.match(conversations, /stale-while-revalidate=45/);
+  assert.match(unread, /stale-while-revalidate=60/);
+  assert.match(presence, /stale-while-revalidate=60/);
+  assert.match(clients, /stale-while-revalidate=90/);
+  assert.match(orders, /stale-while-revalidate=45/);
+});
+
+test('Vercel efficiency: web-push dependency is patched off deprecated url.parse', () => {
+  const patcher = read('scripts/patch-web-push-url.mjs');
+  const pkg = read('package.json');
+
+  assert.equal(JSON.parse(pkg).scripts.postinstall, 'node scripts/patch-web-push-url.mjs');
+  assert.match(patcher, /new URL\(subscription\.endpoint\)/);
+  assert.match(patcher, /new URL\(requestDetails\.endpoint\)/);
 });
 
 test('Vercel efficiency: legal pages use ISR instead of per-request SSR', () => {
