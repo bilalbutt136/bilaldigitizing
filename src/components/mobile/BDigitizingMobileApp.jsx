@@ -1634,27 +1634,34 @@ export const BDigitizingMobileApp = ({ initialTab = 'home' }) => {
 
           {/* Top Brand Header */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: isDark ? 'var(--color-surface, #111827)' : '#ffffff', padding: '0.75rem 1rem', borderRadius: '16px', border: isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid #cbd5e1', boxShadow: '0 2px 8px rgba(0,0,0,0.02)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
-              <img src={mobileAppIconUrl} alt="BDigitizing" style={{ width: '28px', height: '28px', objectFit: 'contain', borderRadius: '7px', background: '#ffffff' }} />
-              <span style={{ fontSize: '1.45rem', fontWeight: 900, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a', letterSpacing: '-0.03em' }}>
-                bdigitizing<span style={{ color: '#059669' }}>.com</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', minWidth: 0, flex: 1 }}>
+              <img
+                src={mobileAppIconUrl}
+                alt="BDigitizing"
+                style={{
+                  width: '30px',
+                  height: '30px',
+                  objectFit: 'contain',
+                  borderRadius: '8px',
+                  background: '#ffffff',
+                  flexShrink: 0
+                }}
+              />
+              <span style={{
+                minWidth: 0,
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+                fontSize: 'clamp(1.05rem, 5vw, 1.28rem)',
+                fontWeight: 900,
+                color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a',
+                letterSpacing: '-0.03em',
+                lineHeight: 1
+              }}>
+                bdigitizing
               </span>
-              {isAuthenticated && (
-                <span style={{
-                  background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
-                  color: '#ffffff',
-                  fontSize: '0.62rem',
-                  fontWeight: 900,
-                  padding: '0.15rem 0.45rem',
-                  borderRadius: '6px',
-                  letterSpacing: '0.04em'
-                }}>
-                  STUDIO
-                </span>
-              )}
             </div>
-
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', flexShrink: 0 }}>
               <button
                 type="button"
                 onClick={() => setIsNotifDrawerOpen(true)}

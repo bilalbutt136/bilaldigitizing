@@ -480,7 +480,28 @@ export const StateProvider = ({ children, initialCatalog = null }) => {
         return;
       }
 
-      const freshNotifs = await fetchNotificationsFromSupabase(emailToUse, isAdminToUse);
+      let freshNotifs = [];
+
+      if (isAdminToUse && typeof fetch !== 'undefined') {
+        try {
+          const response = await fetch('/api/admin/notifications?limit=200', {
+            method: 'GET',
+            credentials: 'include',
+            cache: 'no-store'
+          });
+          const payload = await response.json().catch(() => ({}));
+          if (!response.ok) {
+            throw new Error(payload?.error || `Admin notification history request failed (${response.status})`);
+          }
+          freshNotifs = Array.isArray(payload?.notifications) ? payload.notifications : [];
+        } catch (adminHistoryError) {
+          console.warn('Admin notification history server fetch notice:', adminHistoryError);
+          freshNotifs = await fetchNotificationsFromSupabase(emailToUse, true);
+        }
+      } else {
+        freshNotifs = await fetchNotificationsFromSupabase(emailToUse, false);
+      }
+
       if (Array.isArray(freshNotifs)) {
         const sanitized = filterAndSanitizeNotifications(freshNotifs, {
           currentUserEmail: emailToUse,
@@ -594,7 +615,14 @@ export const StateProvider = ({ children, initialCatalog = null }) => {
       saveNotificationsToStorage(nextList);
       return nextList;
     });
-    if (isSupabaseConfigured) {
+    if (authUser?.role === 'admin' || currentView === 'admin') {
+      fetch('/api/admin/notifications', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ action: 'mark_read', id })
+      }).catch(() => markNotificationAsReadInSupabase(id).catch(() => {}));
+    } else if (isSupabaseConfigured) {
       markNotificationAsReadInSupabase(id).catch(() => {});
     }
   };
@@ -610,8 +638,15 @@ export const StateProvider = ({ children, initialCatalog = null }) => {
       saveNotificationsToStorage(nextList);
       return nextList;
     });
-    if (isSupabaseConfigured) {
-      markAllNotificationsAsReadInSupabase().catch(() => {});
+    if (authUser?.role === 'admin' || currentView === 'admin') {
+      fetch('/api/admin/notifications', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ action: 'mark_all_read' })
+      }).catch(() => markAllNotificationsAsReadInSupabase().catch(() => {}));
+    } else if (isSupabaseConfigured) {
+      markAllNotificationsAsReadInSupabase(authUser?.email || '').catch(() => {});
     }
   };
 

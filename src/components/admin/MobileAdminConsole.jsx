@@ -375,8 +375,13 @@ export default function MobileAdminConsole() {
   const sortedNotifications = useMemo(() => {
     return [...(Array.isArray(notifications) ? notifications : [])]
       .sort((a, b) => new Date(b?.created_at || b?.timestamp || 0).getTime() - new Date(a?.created_at || a?.timestamp || 0).getTime())
-      .slice(0, 40);
+      .slice(0, 100);
   }, [notifications]);
+
+  useEffect(() => {
+    if (activeTab !== 'alerts') return;
+    refreshNotifications?.(authUser?.email || null, true);
+  }, [activeTab, authUser?.email, refreshNotifications]);
 
   const handleRefresh = useCallback(async () => {
     if (isRefreshing) return;
@@ -666,18 +671,39 @@ export default function MobileAdminConsole() {
               <div>
                 <div style={{ fontSize: '1rem', fontWeight: 900 }}>Notifications</div>
                 <div style={{ marginTop: '0.2rem', fontSize: '0.7rem', color: 'var(--text-muted, #64748b)' }}>
-                  Order and studio alerts only.
+                  Full admin notification history · newest first.
                 </div>
               </div>
-              {unreadNotificationsCount > 0 && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
                 <button
                   type="button"
-                  onClick={() => markAllNotificationsAsRead?.()}
-                  style={{ border: 0, background: 'none', color: '#ea580c', fontSize: '0.7rem', fontWeight: 900 }}
+                  onClick={() => refreshNotifications?.(authUser?.email || null, true)}
+                  aria-label="Refresh notification history"
+                  title="Refresh notification history"
+                  style={{
+                    width: '32px',
+                    height: '32px',
+                    borderRadius: '9px',
+                    border: '1px solid var(--border-color, #e2e8f0)',
+                    background: 'var(--bg-card, #ffffff)',
+                    color: '#64748b',
+                    display: 'grid',
+                    placeItems: 'center',
+                    cursor: 'pointer'
+                  }}
                 >
-                  Mark all read
+                  <RefreshCw size={15} />
                 </button>
-              )}
+                {unreadNotificationsCount > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => markAllNotificationsAsRead?.()}
+                    style={{ border: 0, background: 'none', color: '#ea580c', fontSize: '0.7rem', fontWeight: 900 }}
+                  >
+                    Mark all read
+                  </button>
+                )}
+              </div>
             </div>
 
             {sortedNotifications.length === 0 ? (

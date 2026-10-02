@@ -79,6 +79,7 @@ export const HeaderNav = () => {
     notifications = [],
     markNotificationAsRead,
     markAllNotificationsAsRead,
+    refreshNotifications,
     unreadNotificationsCount: _unreadNotificationsCount = 0,
     stopNotificationSound,
     setMobileMode,
@@ -702,6 +703,9 @@ export const HeaderNav = () => {
                 onClick={(e) => {
                   e.stopPropagation();
                   if (stopNotificationSound) stopNotificationSound();
+                  if (!isNotificationDropdownOpen) {
+                    refreshNotifications?.(safeAuthUser?.email || null, isAdmin);
+                  }
                   setIsNotificationDropdownOpen(!isNotificationDropdownOpen);
                 }}
                 style={{
@@ -1063,6 +1067,9 @@ export const HeaderNav = () => {
                       onClick={(e) => {
                         e.stopPropagation();
                         if (stopNotificationSound) stopNotificationSound();
+                        if (!isNotificationDropdownOpen) {
+                          refreshNotifications?.(safeAuthUser?.email || null, isAdmin);
+                        }
                         setIsNotificationDropdownOpen(!isNotificationDropdownOpen);
                       }}
                       style={{
