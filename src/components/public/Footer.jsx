@@ -176,7 +176,7 @@ export const Footer = () => {
                 </div>
               )}
               <span style={{ fontFamily: 'var(--font-heading)', fontWeight: 900, fontSize: '1.4rem', letterSpacing: '-0.02em' }}>
-                BDIGITIZING<span style={{ color: 'var(--orange-500)' }}>.COM</span>
+                BDigitizing
               </span>
             </div>
             <p style={{ fontSize: '0.875rem', lineHeight: 1.7, marginBottom: '1.25rem', color: '#cbd5e1' }}>

@@ -152,7 +152,7 @@ const renderEmailShell = ({
         <!-- HEADER -->
         <div style="background: #090d16; padding: 26px 24px; text-align: center; border-bottom: 3px solid ${badgeColor};">
           <div style="color: #ffffff; font-size: 22px; font-weight: 900; letter-spacing: -0.5px; font-family: 'Segoe UI', Arial, sans-serif;">
-            BDIGITIZING <span style="color: ${badgeColor};">STUDIO</span>
+            BDigitizing <span style="color: ${badgeColor};">STUDIO</span>
           </div>
           <div style="display: inline-block; background: rgba(255, 255, 255, 0.12); color: #f8fafc; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 1.2px; padding: 5px 12px; border-radius: 9999px; margin-top: 10px;">
             ${badge}
@@ -180,7 +180,7 @@ const renderEmailShell = ({
         <div style="background-color: #f8fafc; padding: 20px 24px; border-top: 1px solid #e2e8f0; text-align: center; font-size: 12px; color: #64748b; line-height: 1.5;">
           <p style="margin: 0 0 4px 0; font-weight: 600; color: #334155;">BDigitizing Studio — Embroidery Digitizing & Vector Laboratory</p>
           <p style="margin: 0 0 6px 0;">24/7 Production Support • High-Density Stitch Accuracy • Rapid Client Desk</p>
-          <p style="margin: 0; font-size: 11px; color: #94a3b8;">You received this automated notification because your email is registered on bdigitizing.com.</p>
+          <p style="margin: 0; font-size: 11px; color: #94a3b8;">You received this automated notification because your email is registered on BDigitizing.</p>
         </div>
 
       </div>

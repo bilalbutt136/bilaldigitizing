@@ -281,7 +281,7 @@ export async function sendNotificationEmail(params = {}) {
   const emailHeader = (titleBadge, titleText, color = '#ea580c') => `
     <div style="background: #090d16; padding: 24px; border-radius: 12px 12px 0 0; text-align: center; border-bottom: 3px solid ${color};">
       <h1 style="color: #ffffff; margin: 0 0 6px 0; font-size: 22px; font-weight: 800; letter-spacing: -0.5px; font-family: 'Segoe UI', Arial, sans-serif;">
-        BDIGITIZING <span style="color: ${color};">STUDIO</span>
+        BDigitizing <span style="color: ${color};">STUDIO</span>
       </h1>
       <div style="display: inline-block; background: rgba(255,255,255,0.1); color: #e2e8f0; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; padding: 4px 10px; border-radius: 9999px;">
         ${titleBadge}

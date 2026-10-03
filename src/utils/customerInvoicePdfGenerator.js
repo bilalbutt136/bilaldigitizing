@@ -314,7 +314,7 @@ export async function generateCustomerTaxInvoicePdf({
   doc.setTextColor(...primaryNavy);
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(22);
-  doc.text('BDIGITIZING', marginX, 20);
+  doc.text('BDigitizing', marginX, 20);
 
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(8.5);

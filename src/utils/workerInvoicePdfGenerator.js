@@ -104,7 +104,7 @@ export async function generateWorkerPayoutInvoicePdf({
   doc.setTextColor(...primaryColor);
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(20);
-  doc.text(stealthMode ? 'DIGITIZING TASK PORTAL' : 'BDIGITIZING', 14, 22);
+  doc.text(stealthMode ? 'DIGITIZING TASK PORTAL' : 'BDigitizing', 14, 22);
 
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(9);

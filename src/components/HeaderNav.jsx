@@ -354,7 +354,7 @@ export const HeaderNav = () => {
           )}
           <div>
             <div style={{ fontFamily: 'var(--font-heading)', fontWeight: 800, fontSize: '1.15rem', color: 'var(--text-main)', letterSpacing: '-0.02em', lineHeight: 1, whiteSpace: 'nowrap' }}>
-              BDIGITIZING<span style={{ color: 'var(--orange-500)' }}>.COM</span>
+              BDigitizing
             </div>
             <div className="desktop-only" style={{ fontSize: '0.68rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', marginTop: '2px' }}>
               Embroidery &amp; Vector Studio
@@ -1366,7 +1366,7 @@ export const HeaderNav = () => {
                 )}
                 <div>
                   <div style={{ fontFamily: 'var(--font-heading)', fontSize: '1.05rem', fontWeight: 900, color: isDark ? '#f8fafc' : '#0f172a', letterSpacing: '-0.02em', lineHeight: 1, whiteSpace: 'nowrap' }}>
-                    BDIGITIZING<span style={{ color: 'var(--orange-500)' }}>.COM</span>
+                    BDigitizing
                   </div>
                   <div style={{ fontSize: '0.62rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', marginTop: '2px' }}>
                     Embroidery &amp; Vector Studio

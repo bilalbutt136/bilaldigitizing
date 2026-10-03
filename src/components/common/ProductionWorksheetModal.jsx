@@ -157,7 +157,7 @@ export const ProductionWorksheetModal = ({ order, onClose }) => {
           }}>
             <div>
               <div style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--orange-600)', letterSpacing: '0.1em' }}>
-                BDIGITIZING STUDIO OPERATIONS
+                BDigitizing Studio Operations
               </div>
               <h1 style={{ fontSize: '1.85rem', color: 'var(--color-text-primary, #0f172a)', fontWeight: 800, margin: '0.2rem 0' }}>
                 EMBROIDERY PRODUCTION WORKSHEET
@@ -354,7 +354,7 @@ export const ProductionWorksheetModal = ({ order, onClose }) => {
             color: 'var(--text-muted)'
           }}>
             <div>
-              BDIGITIZING.COM • Verified Tajima, Brother, Melco & Wilcom Production Standard
+              BDigitizing • Verified Tajima, Brother, Melco & Wilcom Production Standard
             </div>
             <div>
               Operator Sign-off: _______________________

@@ -975,7 +975,7 @@ export const BDigitizingMobileApp = ({ initialTab = 'home' }) => {
         </div>
         <div style={{ textAlign: 'center' }}>
           <div style={{ fontSize: '1.35rem', fontWeight: 900, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a', letterSpacing: '-0.02em' }}>
-            BDigitizing<span style={{ color: '#059669' }}>.com</span>
+            BDigitizing
           </div>
           <div style={{ fontSize: '0.8rem', color: isDark ? 'var(--color-text-muted, #94a3b8)' : '#64748b', fontWeight: 600, marginTop: '0.25rem' }}>
             Embroidery Digitizing & Vector Art Studio
@@ -1051,7 +1051,7 @@ export const BDigitizingMobileApp = ({ initialTab = 'home' }) => {
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
               <img src={mobileAppIconUrl} alt="BDigitizing" style={{ width: '24px', height: '24px', objectFit: 'contain', borderRadius: '6px', background: '#ffffff' }} />
               <div style={{ fontSize: '1.15rem', fontWeight: 900, color: '#047857', letterSpacing: '-0.02em' }}>
-                bdigitizing<span style={{ color: '#10b981' }}>.com</span>
+                BDigitizing
               </div>
             </div>
 

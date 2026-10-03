@@ -78,7 +78,7 @@ export function generateCampaignHtml({
           <tr>
             <td style="background: #090d16; padding: 26px 30px; text-align: center; border-bottom: 3px solid #ea580c;">
               <h1 style="color: #ffffff; margin: 0 0 6px 0; font-size: 22px; font-weight: 800; letter-spacing: -0.5px;">
-                BDIGITIZING <span style="color: #ea580c;">STUDIO</span>
+                BDigitizing <span style="color: #ea580c;">STUDIO</span>
               </h1>
               <div style="color: #94a3b8; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">
                 Commercial Embroidery Digitizing &amp; Vector Lab

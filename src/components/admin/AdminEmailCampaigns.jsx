@@ -826,7 +826,7 @@ export function AdminEmailCampaigns() {
                   {/* Header Banner */}
                   <div style={{ background: '#090d16', padding: '20px 24px', textAlign: 'center', borderBottom: '3px solid #ea580c' }}>
                     <div style={{ color: '#ffffff', fontSize: '18px', fontWeight: 800, letterSpacing: '-0.5px' }}>
-                      BDIGITIZING <span style={{ color: '#ea580c' }}>STUDIO</span>
+                      BDigitizing <span style={{ color: '#ea580c' }}>STUDIO</span>
                     </div>
                     <div style={{ color: '#94a3b8', fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1px', marginTop: '4px' }}>
                       Commercial Embroidery Digitizing &amp; Vector Art

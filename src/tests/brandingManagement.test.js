@@ -144,7 +144,7 @@ test('mobile app uses dynamic white-background branding and the bdigitizing.com 
   assert.match(source, /mobileAppIconUrl = siteSettings\?\.appIconUrl/);
   assert.match(source, /src=\{mobileAppIconUrl\}/);
   assert.match(source, /background: '#ffffff'/);
-  assert.match(source, />\.com<\/span>/);
+  assert.match(source, /BDigitizing/);
   assert.equal(source.includes('.PRO'), false);
   assert.equal(source.includes('src="/favicon.png"'), false);
 });

@@ -499,7 +499,7 @@ export const CustomerInvoiceModal = ({
           <div className="invoice-print-keep" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem', borderBottom: '1px solid #e2e8f0', paddingBottom: '1.25rem', marginBottom: '1.5rem' }}>
             <div>
               <h1 style={{ margin: 0, fontSize: '1.6rem', fontWeight: 900, color: '#0f172a', letterSpacing: '-0.02em' }}>
-                BDIGITIZING
+                BDigitizing
               </h1>
               <p style={{ margin: '0.15rem 0 0', fontSize: '0.82rem', color: '#64748b' }}>
                 Commercial Embroidery Digitizing & Vector Art
