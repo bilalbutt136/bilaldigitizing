@@ -116,25 +116,73 @@ const CORE_PACKAGES = {
       defaultFormats: ['AI', 'EPS', 'SVG', 'PDF', 'CDR'],
       defaultWidth: '8.0',
       defaultHeight: '8.0',
-      defaultPlacement: 'Multi-Color Vector'
+      defaultPlacement: 'Color Separation'
+    },
+    {
+      id: 'vec-pro',
+      service_type: 'vector',
+      badge: 'COMPLEX / ILLUSTRATION',
+      is_popular: false,
+      title: 'Complex Illustration & Detailed Art',
+      subtitle: 'Intricate micro-details, gradients, halftones & photo redraws.',
+      price: 45,
+      original_price: 65,
+      turnaround: '12–24 Hours',
+      features: ['Intricate Micro-Detail Redraw', 'Custom Halftones & Gradients', 'Laser Engraving & CNC Ready'],
+      defaultFormats: ['AI', 'EPS', 'SVG', 'PDF', 'CDR', 'PNG'],
+      defaultWidth: '10.0',
+      defaultHeight: '10.0',
+      defaultPlacement: 'High-Res Print Ready'
     }
   ],
   patch: [
     {
-      id: 'patch-custom',
+      id: 'patch-basic',
       service_type: 'patch',
-      badge: 'CUSTOM PHYSICAL PATCHES',
+      badge: 'STARTER BATCH (50 PCS)',
+      is_popular: false,
+      title: 'Starter Run (50 Pcs)',
+      subtitle: 'Custom manufactured patches with iron-on or velcro backing.',
+      price: 3.50,
+      original_price: 5.00,
+      turnaround: '5–7 Days',
+      features: ['50 Pcs Minimum Order', 'Free Digital Proof', 'Iron-On or Velcro Backing'],
+      defaultFormats: ['DST', 'PDF Proof', 'Physical Shipment'],
+      defaultWidth: '3.0',
+      defaultHeight: '3.0',
+      defaultPlacement: 'Custom Laser Cut Shape'
+    },
+    {
+      id: 'patch-popular',
+      service_type: 'patch',
+      badge: 'MOST POPULAR (100+ PCS)',
       is_popular: true,
-      title: 'Custom Manufactured Patches',
-      subtitle: 'Embroidered, PVC Rubber, Woven, or Leather patches shipped to your door.',
-      price: 1.50,
-      original_price: 2.50,
-      turnaround: '5–7 Days Production',
-      features: ['Free Digital & Physical Mockup Proof', 'Laser-Cut Borders', 'Iron-On, Velcro, or Adhesive Backing'],
+      title: 'Production Batch (100–500 Pcs)',
+      subtitle: 'Uniform programs, merch drops, motorcycle clubs & business logos.',
+      price: 2.50,
+      original_price: 4.00,
+      turnaround: '5–7 Days',
+      features: ['Precision Laser-Cut Borders', 'Free Digital & Physical Mockup', 'Free Tracked Shipping'],
       defaultFormats: ['DST', 'PDF Proof', 'Physical Shipment'],
       defaultWidth: '3.5',
       defaultHeight: '3.5',
-      defaultPlacement: 'Custom Laser Cut Shape'
+      defaultPlacement: 'Round / Oval Emblem'
+    },
+    {
+      id: 'patch-pro',
+      service_type: 'patch',
+      badge: 'ENTERPRISE BULK (500+ PCS)',
+      is_popular: false,
+      title: 'Bulk Enterprise (500+ Pcs)',
+      subtitle: 'High volume wholesale manufacturing with best piece rates.',
+      price: 1.50,
+      original_price: 2.50,
+      turnaround: '7–10 Days',
+      features: ['Highest Volume Discount', 'Premium Thread & PVC Finishes', 'Priority Production Schedule'],
+      defaultFormats: ['DST', 'PDF Proof', 'Physical Shipment'],
+      defaultWidth: '3.5',
+      defaultHeight: '3.5',
+      defaultPlacement: 'Square / Shield'
     }
   ]
 };
@@ -218,8 +266,9 @@ export const MobileSimpleOrderModal = ({
   // 3-Step Flow State: 1: Service & Artwork, 2: Placement & Size, 3: Review & Submit, 4: Confirmed
   const [step, setStep] = useState(1);
 
-  // Step 1: Service & Artwork
+  // Step 1: Service, Packages & Artwork
   const [selectedService, setSelectedService] = useState('embroidery');
+  const [selectedPackage, setSelectedPackage] = useState(null);
   const [uploadedFiles, setUploadedFiles] = useState([]);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState(null);
@@ -322,22 +371,26 @@ export const MobileSimpleOrderModal = ({
       setIsAdvancedOpen(false);
       setGuestAuthRequested(false);
 
+      const pkgs = getPackagesForCategory(normService);
+      const initialPkg = pkgs.find(p => p.is_popular) || pkgs[0];
+      setSelectedPackage(initialPkg);
+
       const defaultPlacements = PLACEMENT_OPTIONS[normService] || PLACEMENT_OPTIONS.embroidery;
       const initialPlacement = defaultPlacements[0];
       setPlacement(initialPlacement.id);
-      setWidthInches(initialPlacement.defaultWidth);
-      setHeightInches(initialPlacement.defaultHeight);
+      setWidthInches(initialPkg?.defaultWidth || initialPlacement.defaultWidth);
+      setHeightInches(initialPkg?.defaultHeight || initialPlacement.defaultHeight);
 
       const defQty = normService === 'patch' ? 50 : 1;
       setQuantity(defQty);
       setQuantityInput(String(defQty));
 
       if (normService === 'vector') {
-        setSelectedFormats(['AI', 'EPS', 'SVG', 'PDF']);
+        setSelectedFormats(initialPkg?.defaultFormats || ['AI', 'EPS', 'SVG', 'PDF']);
       } else if (normService === 'patch') {
-        setSelectedFormats(['DST', 'PDF Proof']);
+        setSelectedFormats(initialPkg?.defaultFormats || ['DST', 'PDF Proof']);
       } else {
-        setSelectedFormats(['DST', 'PES', 'EMB', 'PDF']);
+        setSelectedFormats(initialPkg?.defaultFormats || ['DST', 'PES', 'EMB', 'PDF']);
       }
 
       // Check active live promotion from Supabase siteSettings
@@ -361,8 +414,8 @@ export const MobileSimpleOrderModal = ({
 
   // Active pricing calculation
   const currentPackages = getPackagesForCategory(selectedService);
-  const activePkg = currentPackages.find(p => p.is_popular) || currentPackages[0];
-  const unitPrice = Number(activePkg?.price || (selectedService === 'patch' ? 1.50 : selectedService === 'vector' ? 15 : 10));
+  const activePkg = selectedPackage || currentPackages.find(p => p.is_popular) || currentPackages[0];
+  const unitPrice = Number(activePkg?.price || (selectedService === 'patch' ? 2.50 : selectedService === 'vector' ? 25 : 20));
 
   const activePromotion = getActivePromotion(siteSettings?.promotions);
   const effectivePromo = appliedPromo?.promoObj || activePromotion;
@@ -395,23 +448,37 @@ export const MobileSimpleOrderModal = ({
     setSelectedService(serviceId);
     setFormValidationError(null);
 
+    const pkgs = getPackagesForCategory(serviceId);
+    const initialPkg = pkgs.find(p => p.is_popular) || pkgs[0];
+    setSelectedPackage(initialPkg);
+
     const defaultPlacements = PLACEMENT_OPTIONS[serviceId] || PLACEMENT_OPTIONS.embroidery;
     const initialPlacement = defaultPlacements[0];
-    setPlacement(initialPlacement.id);
-    setWidthInches(initialPlacement.defaultWidth);
-    setHeightInches(initialPlacement.defaultHeight);
+    setPlacement(initialPkg?.defaultPlacement || initialPlacement.id);
+    setWidthInches(initialPkg?.defaultWidth || initialPlacement.defaultWidth);
+    setHeightInches(initialPkg?.defaultHeight || initialPlacement.defaultHeight);
 
     const newQty = serviceId === 'patch' ? 50 : 1;
     setQuantity(newQty);
     setQuantityInput(String(newQty));
 
     if (serviceId === 'vector') {
-      setSelectedFormats(['AI', 'EPS', 'SVG', 'PDF']);
+      setSelectedFormats(initialPkg?.defaultFormats || ['AI', 'EPS', 'SVG', 'PDF']);
     } else if (serviceId === 'patch') {
-      setSelectedFormats(['DST', 'PDF Proof']);
+      setSelectedFormats(initialPkg?.defaultFormats || ['DST', 'PDF Proof']);
     } else {
-      setSelectedFormats(['DST', 'PES', 'EMB', 'PDF']);
+      setSelectedFormats(initialPkg?.defaultFormats || ['DST', 'PES', 'EMB', 'PDF']);
     }
+  };
+
+  // Package switch handler
+  const handleSelectPackage = (pkg) => {
+    setSelectedPackage(pkg);
+    setFormValidationError(null);
+    if (pkg.defaultPlacement) setPlacement(pkg.defaultPlacement);
+    if (pkg.defaultWidth) setWidthInches(pkg.defaultWidth);
+    if (pkg.defaultHeight) setHeightInches(pkg.defaultHeight);
+    if (pkg.defaultFormats) setSelectedFormats(pkg.defaultFormats);
   };
 
   // Placement chip switch handler
@@ -1044,11 +1111,110 @@ export const MobileSimpleOrderModal = ({
                 </div>
               </div>
 
+              {/* 2. CHOOSE PACKAGE TIER (3 PACKAGES PER SERVICE) */}
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.55rem' }}>
+                  <label style={{ fontSize: '0.82rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em', color: isDark ? '#94a3b8' : '#475569' }}>
+                    2. Choose {selectedService === 'vector' ? 'Vector' : selectedService === 'patch' ? 'Patch' : 'Embroidery'} Package
+                  </label>
+                  <span style={{ fontSize: '0.72rem', color: '#059669', fontWeight: 800 }}>
+                    {activePkg?.badge || 'STANDARD'}
+                  </span>
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.55rem' }}>
+                  {currentPackages.map(pkg => {
+                    const isSelected = (activePkg?.id === pkg.id) || (selectedPackage?.id === pkg.id);
+
+                    return (
+                      <div
+                        key={pkg.id}
+                        role="button"
+                        tabIndex={0}
+                        onClick={() => handleSelectPackage(pkg)}
+                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleSelectPackage(pkg); }}
+                        style={{
+                          minHeight: '64px',
+                          borderRadius: '14px',
+                          border: isSelected ? '2px solid #059669' : isDark ? '1.5px solid #334155' : '1.5px solid #e2e8f0',
+                          background: isSelected
+                            ? isDark ? 'rgba(5, 150, 105, 0.16)' : '#ecfdf5'
+                            : isDark ? '#1e293b' : '#ffffff',
+                          padding: '0.75rem 0.95rem',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.75rem',
+                          cursor: 'pointer',
+                          transition: 'all 0.15s ease'
+                        }}
+                      >
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', flexWrap: 'wrap' }}>
+                            <span style={{ fontSize: '0.88rem', fontWeight: 800, color: isDark ? '#ffffff' : '#0f172a' }}>
+                              {pkg.title}
+                            </span>
+                            {pkg.is_popular && (
+                              <span style={{
+                                fontSize: '0.62rem',
+                                fontWeight: 900,
+                                background: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
+                                color: '#ffffff',
+                                padding: '0.12rem 0.45rem',
+                                borderRadius: '4px',
+                                letterSpacing: '0.04em'
+                              }}>
+                                MOST POPULAR
+                              </span>
+                            )}
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '0.2rem' }}>
+                            <span style={{ fontSize: '0.72rem', color: isDark ? '#94a3b8' : '#64748b' }}>
+                              {pkg.subtitle || (pkg.features && pkg.features[0]) || ''}
+                            </span>
+                            <span style={{ fontSize: '0.68rem', color: isDark ? '#64748b' : '#94a3b8', flexShrink: 0, marginLeft: '0.5rem' }}>
+                              ⚡ {pkg.turnaround}
+                            </span>
+                          </div>
+                        </div>
+
+                        <div style={{ textAlign: 'right', flexShrink: 0, display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                          <div>
+                            <div style={{ fontSize: '0.98rem', fontWeight: 900, color: '#059669' }}>
+                              {selectedService === 'patch' ? `$${Number(pkg.price).toFixed(2)}/pc` : `$${Number(pkg.price).toFixed(2)}`}
+                            </div>
+                            {pkg.original_price && (
+                              <div style={{ fontSize: '0.68rem', color: isDark ? '#64748b' : '#94a3b8', textDecoration: 'line-through' }}>
+                                ${Number(pkg.original_price).toFixed(2)}
+                              </div>
+                            )}
+                          </div>
+
+                          <div style={{
+                            width: '20px',
+                            height: '20px',
+                            borderRadius: '50%',
+                            border: isSelected ? 'none' : '2px solid #94a3b8',
+                            background: isSelected ? '#059669' : 'transparent',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            color: '#ffffff',
+                            flexShrink: 0
+                          }}>
+                            {isSelected && <Check size={12} strokeWidth={3} />}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
               {/* ARTWORK UPLOAD ZONE */}
               <div ref={uploadAreaRef}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.55rem' }}>
                   <label style={{ fontSize: '0.82rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em', color: isDark ? '#94a3b8' : '#475569' }}>
-                    2. Upload Artwork / Reference <span style={{ color: '#ef4444' }}>*</span>
+                    3. Upload Artwork / Reference <span style={{ color: '#ef4444' }}>*</span>
                   </label>
                   {uploadedFiles.length > 0 && (
                     <span style={{ fontSize: '0.72rem', color: '#059669', fontWeight: 700 }}>
@@ -1201,7 +1367,7 @@ export const MobileSimpleOrderModal = ({
               {/* DESIGN NAME / REFERENCE */}
               <div>
                 <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em', color: isDark ? '#94a3b8' : '#475569', marginBottom: '0.45rem' }}>
-                  3. Design Name / Reference
+                  4. Design Name / Reference
                 </label>
                 <input
                   type="text"
@@ -1767,10 +1933,10 @@ export const MobileSimpleOrderModal = ({
                     </div>
                     <div>
                       <div style={{ fontSize: '0.88rem', fontWeight: 800, color: isDark ? '#ffffff' : '#0f172a' }}>
-                        {serviceDisplayName}
+                        {activePkg?.title || serviceDisplayName}
                       </div>
                       <div style={{ fontSize: '0.72rem', color: isDark ? '#94a3b8' : '#64748b' }}>
-                        {placement} • {widthInches}&quot; x {heightInches}&quot;
+                        {serviceDisplayName} • {placement} • {widthInches}&quot; x {heightInches}&quot;
                       </div>
                     </div>
                   </div>
@@ -2077,7 +2243,7 @@ export const MobileSimpleOrderModal = ({
                   boxShadow: '0 4px 16px rgba(5, 150, 105, 0.3)'
                 }}
               >
-                <span>Continue to Placement & Size</span>
+                <span>Continue to Placement & Size (${totalPrice.toFixed(2)})</span>
                 <ArrowRight size={18} />
               </button>
             )}
