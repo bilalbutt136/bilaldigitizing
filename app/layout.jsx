@@ -191,8 +191,7 @@ export default async function RootLayout({ children }) {
               (function() {
                 try {
                   var isStandalone = window.matchMedia('(display-mode: standalone)').matches ||
-                                     window.navigator.standalone === true ||
-                                     (document.referrer && document.referrer.indexOf('android-app://') !== -1);
+                                     window.navigator.standalone === true;
                   var params = new URLSearchParams(window.location.search);
                   var urlApp = params.get('app') === 'true' || params.get('mode') === 'app';
                   var urlWeb = params.get('web') === 'true' || params.get('mode') === 'web';

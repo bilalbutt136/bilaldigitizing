@@ -28,8 +28,7 @@ export const PWAInstallBanner = () => {
 
   useEffect(() => {
     const isApp = window.matchMedia('(display-mode: standalone)').matches ||
-                  window.navigator.standalone === true ||
-                  (document.referrer && document.referrer.includes('android-app://'));
+                  window.navigator.standalone === true;
     setIsStandalone(isApp);
     if (isApp) return;
 

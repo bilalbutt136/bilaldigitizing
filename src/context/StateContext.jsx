@@ -247,8 +247,7 @@ export const StateProvider = ({ children, initialCatalog = null }) => {
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const isStandalone = window.matchMedia('(display-mode: standalone)').matches ||
-                           window.navigator.standalone === true ||
-                           (document.referrer && document.referrer.includes('android-app://'));
+                           window.navigator.standalone === true;
       setIsStandaloneApp(isStandalone);
 
       const urlParams = new URLSearchParams(window.location.search);
