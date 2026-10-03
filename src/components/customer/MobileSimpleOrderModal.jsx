@@ -15,7 +15,6 @@ import {
   CheckCircle2,
   Trash2,
   Loader2,
-  Sparkles,
   ChevronDown,
   ChevronUp,
   AlertCircle,
@@ -218,22 +217,44 @@ const SERVICE_OPTIONS = [
   }
 ];
 
-// Visual selectable pill chips per service
+// Placement options per service with common industry positions
 const PLACEMENT_OPTIONS = {
   embroidery: [
+    { id: 'Left Chest', label: 'Left Chest', defaultWidth: '3.5', defaultHeight: '3.5' },
     { id: 'Left Chest / Cap', label: 'Left Chest / Cap', defaultWidth: '3.5', defaultHeight: '3.5' },
+    { id: 'Cap / Hat (Front)', label: 'Cap / Hat (Front)', defaultWidth: '2.5', defaultHeight: '2.5' },
+    { id: 'Cap (Side / Back)', label: 'Cap (Side / Back)', defaultWidth: '2.5', defaultHeight: '2.5' },
     { id: 'Full Jacket Back', label: 'Full Jacket Back', defaultWidth: '10.5', defaultHeight: '10.5' },
-    { id: 'Sleeve / Other', label: 'Sleeve / Other', defaultWidth: '4.0', defaultHeight: '4.0' }
+    { id: 'Full Front / Chest', label: 'Full Front / Chest', defaultWidth: '8.0', defaultHeight: '8.0' },
+    { id: 'Sleeve / Cuff', label: 'Sleeve / Cuff', defaultWidth: '3.5', defaultHeight: '3.5' },
+    { id: 'Jacket Front / Sleeve', label: 'Jacket Front / Sleeve', defaultWidth: '6.0', defaultHeight: '6.0' },
+    { id: 'Pocket / Collar', label: 'Pocket / Collar', defaultWidth: '3.0', defaultHeight: '3.0' },
+    { id: 'Visor / Beanie', label: 'Visor / Beanie', defaultWidth: '2.2', defaultHeight: '2.2' },
+    { id: 'Apron / Uniform', label: 'Apron / Uniform', defaultWidth: '4.5', defaultHeight: '4.5' },
+    { id: 'Towel / Blanket / Bag', label: 'Towel / Blanket / Bag', defaultWidth: '6.0', defaultHeight: '6.0' },
+    { id: 'Other / Custom Placement', label: 'Other / Custom Placement', defaultWidth: '3.5', defaultHeight: '3.5' }
   ],
   vector: [
     { id: 'Logo / Graphic Redraw', label: 'Logo / Graphic Redraw', defaultWidth: '5.0', defaultHeight: '5.0' },
+    { id: 'Vector Redraw', label: 'Vector Redraw', defaultWidth: '5.0', defaultHeight: '5.0' },
+    { id: 'Screen Printing Separation', label: 'Screen Printing Separation', defaultWidth: '10.0', defaultHeight: '10.0' },
     { id: 'Color Separation', label: 'Color Separation', defaultWidth: '8.0', defaultHeight: '8.0' },
-    { id: 'High-Res Print Ready', label: 'High-Res Print Ready', defaultWidth: '10.0', defaultHeight: '10.0' }
+    { id: 'High-Res Print Ready', label: 'High-Res Print Ready', defaultWidth: '11.0', defaultHeight: '11.0' },
+    { id: 'Embroidery Prep / Vector', label: 'Embroidery Prep / Vector', defaultWidth: '5.0', defaultHeight: '5.0' },
+    { id: 'Vinyl Cut / Decal', label: 'Vinyl Cut / Decal', defaultWidth: '6.0', defaultHeight: '6.0' },
+    { id: 'Signage / Banner', label: 'Signage / Banner', defaultWidth: '12.0', defaultHeight: '12.0' },
+    { id: 'Other / Custom Artwork', label: 'Other / Custom Artwork', defaultWidth: '5.0', defaultHeight: '5.0' }
   ],
   patch: [
-    { id: 'Custom Laser Cut Shape', label: 'Custom Shape Cut', defaultWidth: '3.5', defaultHeight: '3.5' },
-    { id: 'Round / Oval Emblem', label: 'Round / Oval', defaultWidth: '3.0', defaultHeight: '3.0' },
-    { id: 'Square / Shield', label: 'Square / Shield', defaultWidth: '3.5', defaultHeight: '3.5' }
+    { id: 'Custom Laser Cut Shape', label: 'Custom Laser-Cut Shape', defaultWidth: '3.5', defaultHeight: '3.5' },
+    { id: 'Round / Oval Emblem', label: 'Round / Oval Emblem', defaultWidth: '3.0', defaultHeight: '3.0' },
+    { id: 'Round / Circle Emblem', label: 'Round / Circle Emblem', defaultWidth: '3.0', defaultHeight: '3.0' },
+    { id: 'Square / Shield', label: 'Square / Shield', defaultWidth: '3.5', defaultHeight: '3.5' },
+    { id: 'Rectangle / Name Bar', label: 'Rectangle / Name Bar', defaultWidth: '4.0', defaultHeight: '2.0' },
+    { id: 'Shoulder / Sleeve Patch', label: 'Shoulder / Sleeve Patch', defaultWidth: '3.5', defaultHeight: '3.5' },
+    { id: 'Cap / Hat Patch', label: 'Cap / Hat Patch', defaultWidth: '2.5', defaultHeight: '2.5' },
+    { id: 'Full Back Rocker / Crest', label: 'Full Back Rocker / Crest', defaultWidth: '10.0', defaultHeight: '10.0' },
+    { id: 'Other Custom Shape', label: 'Other Custom Shape', defaultWidth: '3.5', defaultHeight: '3.5' }
   ]
 };
 
@@ -274,18 +295,16 @@ export const MobileSimpleOrderModal = ({
   const [uploadError, setUploadError] = useState(null);
   const [orderTitle, setOrderTitle] = useState('');
 
-  // Step 2: Placement, Size & Notes
-  const [placement, setPlacement] = useState('Left Chest / Cap');
-  const [sizeMode, setSizeMode] = useState('auto'); // 'auto' (Pro decision) or 'custom'
+  // Step 2 & 3: Placement, Size, Instructions & Specs
+  const [placement, setPlacement] = useState('Left Chest');
   const [widthInches, setWidthInches] = useState('3.5');
   const [heightInches, setHeightInches] = useState('3.5');
   const [notes, setNotes] = useState('');
-  const [isNotesOpen, setIsNotesOpen] = useState(false);
   const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
 
-  // Advanced Technical Options (Industry defaults applied)
+  // Technical Options (Industry defaults applied)
   const [selectedFormats, setSelectedFormats] = useState(['DST', 'PES', 'EMB', 'PDF']);
-  const [fabricType, setFabricType] = useState('Cotton / Pique Knit');
+  const fabricType = null;
   const [patchStyle, setPatchStyle] = useState('Embroidered');
   const [patchBacking, setPatchBacking] = useState('Iron-On');
   const [isRush, setIsRush] = useState(false);
@@ -366,8 +385,6 @@ export const MobileSimpleOrderModal = ({
       setOrderTitle('');
       setNotes('');
       setIsRush(false);
-      setSizeMode('auto');
-      setIsNotesOpen(false);
       setIsAdvancedOpen(false);
       setGuestAuthRequested(false);
 
@@ -493,12 +510,15 @@ export const MobileSimpleOrderModal = ({
     }, 180);
   };
 
-  // Placement chip switch handler
-  const handleSelectPlacement = (item) => {
-    setPlacement(item.id);
-    if (sizeMode === 'auto') {
-      setWidthInches(item.defaultWidth);
-      setHeightInches(item.defaultHeight);
+  // Placement dropdown switch handler
+  const handlePlacementChange = (e) => {
+    const val = e.target.value;
+    setPlacement(val);
+    const currentOptions = PLACEMENT_OPTIONS[selectedService] || PLACEMENT_OPTIONS.embroidery;
+    const match = currentOptions.find(o => o.id === val);
+    if (match) {
+      if (match.defaultWidth) setWidthInches(match.defaultWidth);
+      if (match.defaultHeight) setHeightInches(match.defaultHeight);
     }
   };
 
@@ -1246,11 +1266,89 @@ export const MobileSimpleOrderModal = ({
           {/* ================= STEP 3: ARTWORK & SPECIFICATIONS ================= */}
           {step === 3 && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-              {/* ARTWORK UPLOAD ZONE */}
+              {/* 1. QUANTITY SELECTOR (BEFORE UPLOAD) */}
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.45rem' }}>
+                  <label style={{ fontSize: '0.82rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em', color: isDark ? '#94a3b8' : '#475569' }}>
+                    Quantity {selectedService === 'patch' && '(Min. 50 Pcs)'}
+                  </label>
+                  <span style={{ fontSize: '0.72rem', color: isDark ? '#94a3b8' : '#64748b' }}>
+                    {selectedService === 'patch' ? 'Minimum 50 pieces' : 'Total designs/pieces'}
+                  </span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                  <button
+                    type="button"
+                    onClick={() => handleQuantityChange(-1)}
+                    style={{
+                      width: '48px',
+                      height: '48px',
+                      borderRadius: '12px',
+                      border: isDark ? '1.5px solid #334155' : '1.5px solid #cbd5e1',
+                      background: isDark ? '#1e293b' : '#ffffff',
+                      color: isDark ? '#ffffff' : '#0f172a',
+                      fontSize: '1.3rem',
+                      fontWeight: 800,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      cursor: 'pointer'
+                    }}
+                    aria-label="Decrease quantity"
+                  >
+                    -
+                  </button>
+                  <input
+                    type="number"
+                    value={quantityInput}
+                    onChange={(e) => {
+                      setQuantityInput(e.target.value);
+                      const parsed = parseInt(e.target.value, 10);
+                      if (!isNaN(parsed) && parsed > 0) setQuantity(parsed);
+                    }}
+                    style={{
+                      flex: 1,
+                      minHeight: '48px',
+                      borderRadius: '12px',
+                      border: isDark ? '1.5px solid #334155' : '1.5px solid #cbd5e1',
+                      background: isDark ? '#1e293b' : '#ffffff',
+                      color: isDark ? '#ffffff' : '#0f172a',
+                      textAlign: 'center',
+                      fontSize: '1.1rem',
+                      fontWeight: 800,
+                      outline: 'none'
+                    }}
+                    aria-label="Order quantity"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => handleQuantityChange(1)}
+                    style={{
+                      width: '48px',
+                      height: '48px',
+                      borderRadius: '12px',
+                      border: isDark ? '1.5px solid #334155' : '1.5px solid #cbd5e1',
+                      background: isDark ? '#1e293b' : '#ffffff',
+                      color: isDark ? '#ffffff' : '#0f172a',
+                      fontSize: '1.3rem',
+                      fontWeight: 800,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      cursor: 'pointer'
+                    }}
+                    aria-label="Increase quantity"
+                  >
+                    +
+                  </button>
+                </div>
+              </div>
+
+              {/* 2. ARTWORK UPLOAD ZONE */}
               <div ref={uploadAreaRef}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.55rem' }}>
                   <label style={{ fontSize: '0.82rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em', color: isDark ? '#94a3b8' : '#475569' }}>
-                    1. Upload Artwork / Reference <span style={{ color: '#ef4444' }}>*</span>
+                    Upload Artwork / Reference <span style={{ color: '#ef4444' }}>*</span>
                   </label>
                   {uploadedFiles.length > 0 && (
                     <span style={{ fontSize: '0.72rem', color: '#059669', fontWeight: 700 }}>
@@ -1400,248 +1498,189 @@ export const MobileSimpleOrderModal = ({
                 )}
               </div>
 
-              {/* DESIGN NAME / REFERENCE */}
+              {/* 3. PLACEMENT LOCATION (DROPDOWN LIST) */}
               <div>
                 <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em', color: isDark ? '#94a3b8' : '#475569', marginBottom: '0.45rem' }}>
-                  2. Design Name / Reference
+                  Placement Location
                 </label>
-                <input
-                  type="text"
-                  value={orderTitle}
-                  onChange={(e) => setOrderTitle(e.target.value)}
-                  placeholder="e.g., Summit Club Cap, Apex Logo"
+                <div style={{ position: 'relative' }}>
+                  <select
+                    value={placement}
+                    onChange={handlePlacementChange}
+                    style={{
+                      width: '100%',
+                      minHeight: '48px',
+                      borderRadius: '12px',
+                      border: isDark ? '1.5px solid #334155' : '1.5px solid #cbd5e1',
+                      background: isDark ? '#1e293b' : '#ffffff',
+                      color: isDark ? '#ffffff' : '#0f172a',
+                      padding: '0 2.5rem 0 0.85rem',
+                      fontSize: '0.9rem',
+                      fontWeight: 700,
+                      boxSizing: 'border-box',
+                      outline: 'none',
+                      appearance: 'none',
+                      WebkitAppearance: 'none',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    {(PLACEMENT_OPTIONS[selectedService] || PLACEMENT_OPTIONS.embroidery).map(opt => (
+                      <option
+                        key={opt.id}
+                        value={opt.id}
+                        style={{ background: isDark ? '#1e293b' : '#ffffff', color: isDark ? '#ffffff' : '#0f172a' }}
+                      >
+                        {opt.label}
+                      </option>
+                    ))}
+                  </select>
+                  <div style={{
+                    position: 'absolute',
+                    right: '14px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    pointerEvents: 'none',
+                    color: isDark ? '#94a3b8' : '#64748b',
+                    display: 'flex',
+                    alignItems: 'center'
+                  }}>
+                    <ChevronDown size={18} />
+                  </div>
+                </div>
+              </div>
+
+              {/* 4. TARGET SIZE (DIRECT INPUTS - NO AUTO/CUSTOM BUTTONS) */}
+              <div>
+                <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em', color: isDark ? '#94a3b8' : '#475569', marginBottom: '0.45rem' }}>
+                  Target Size (Inches)
+                </label>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.65rem' }}>
+                  <div>
+                    <span style={{ fontSize: '0.74rem', fontWeight: 700, color: isDark ? '#94a3b8' : '#64748b' }}>Width (Inches)</span>
+                    <input
+                      type="text"
+                      value={widthInches}
+                      onChange={(e) => setWidthInches(e.target.value)}
+                      placeholder="e.g., 3.5"
+                      style={{
+                        width: '100%',
+                        minHeight: '48px',
+                        borderRadius: '12px',
+                        border: isDark ? '1.5px solid #334155' : '1.5px solid #cbd5e1',
+                        background: isDark ? '#1e293b' : '#ffffff',
+                        color: isDark ? '#ffffff' : '#0f172a',
+                        padding: '0 0.85rem',
+                        fontSize: '0.9rem',
+                        fontWeight: 700,
+                        boxSizing: 'border-box',
+                        outline: 'none',
+                        marginTop: '0.25rem'
+                      }}
+                    />
+                  </div>
+                  <div>
+                    <span style={{ fontSize: '0.74rem', fontWeight: 700, color: isDark ? '#94a3b8' : '#64748b' }}>Height (Inches)</span>
+                    <input
+                      type="text"
+                      value={heightInches}
+                      onChange={(e) => setHeightInches(e.target.value)}
+                      placeholder="e.g., 3.5"
+                      style={{
+                        width: '100%',
+                        minHeight: '48px',
+                        borderRadius: '12px',
+                        border: isDark ? '1.5px solid #334155' : '1.5px solid #cbd5e1',
+                        background: isDark ? '#1e293b' : '#ffffff',
+                        color: isDark ? '#ffffff' : '#0f172a',
+                        padding: '0 0.85rem',
+                        fontSize: '0.9rem',
+                        fontWeight: 700,
+                        boxSizing: 'border-box',
+                        outline: 'none',
+                        marginTop: '0.25rem'
+                      }}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* 5. INSTRUCTIONS */}
+              <div>
+                <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em', color: isDark ? '#94a3b8' : '#475569', marginBottom: '0.45rem' }}>
+                  Instructions
+                </label>
+                <textarea
+                  rows={3}
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  placeholder=""
                   style={{
                     width: '100%',
-                    minHeight: '48px',
+                    minHeight: '80px',
                     borderRadius: '12px',
                     border: isDark ? '1.5px solid #334155' : '1.5px solid #cbd5e1',
                     background: isDark ? '#1e293b' : '#ffffff',
                     color: isDark ? '#ffffff' : '#0f172a',
-                    padding: '0 0.85rem',
-                    fontSize: '0.9rem',
+                    padding: '0.75rem 0.85rem',
+                    fontSize: '0.88rem',
                     boxSizing: 'border-box',
-                    outline: 'none'
+                    outline: 'none',
+                    fontFamily: 'inherit',
+                    resize: 'vertical'
                   }}
                 />
               </div>
 
-              {/* PLACEMENT SELECTABLE PILL CHIPS */}
+              {/* 6. MACHINE FORMATS (SELECTABLE PILLS - VISIBLE DIRECTLY) */}
               <div>
-                <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em', color: isDark ? '#94a3b8' : '#475569', marginBottom: '0.55rem' }}>
-                  3. Placement Location
-                </label>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.55rem' }}>
-                  {(PLACEMENT_OPTIONS[selectedService] || PLACEMENT_OPTIONS.embroidery).map(item => {
-                    const isSelected = placement === item.id;
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.45rem' }}>
+                  <label style={{ fontSize: '0.82rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em', color: isDark ? '#94a3b8' : '#475569' }}>
+                    Machine Formats
+                  </label>
+                  <span style={{ fontSize: '0.72rem', color: isDark ? '#94a3b8' : '#64748b' }}>
+                    Tap to toggle formats
+                  </span>
+                </div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.45rem' }}>
+                  {(selectedService === 'vector'
+                    ? ['AI', 'EPS', 'SVG', 'PDF', 'CDR']
+                    : ['DST', 'PES', 'EMB', 'EXP', 'PDF', 'VP3', 'JEF']
+                  ).map(fmt => {
+                    const isSelected = selectedFormats.includes(fmt);
                     return (
-                      <div
-                        key={item.id}
-                        role="button"
-                        tabIndex={0}
-                        onClick={() => handleSelectPlacement(item)}
-                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleSelectPlacement(item); }}
+                      <button
+                        key={fmt}
+                        type="button"
+                        onClick={() => handleToggleFormat(fmt)}
                         style={{
-                          minHeight: '50px',
-                          borderRadius: '14px',
-                          border: isSelected ? '2px solid #059669' : isDark ? '1.5px solid #334155' : '1.5px solid #e2e8f0',
+                          minHeight: '40px',
+                          padding: '0 0.85rem',
+                          borderRadius: '10px',
+                          border: isSelected ? '2px solid #059669' : isDark ? '1.5px solid #334155' : '1.5px solid #cbd5e1',
                           background: isSelected
-                            ? isDark ? 'rgba(5, 150, 105, 0.16)' : '#ecfdf5'
+                            ? isDark ? 'rgba(5, 150, 105, 0.2)' : '#ecfdf5'
                             : isDark ? '#1e293b' : '#ffffff',
-                          padding: '0.75rem 1rem',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
+                          color: isSelected
+                            ? '#059669'
+                            : isDark ? '#ffffff' : '#0f172a',
+                          fontSize: '0.82rem',
+                          fontWeight: 700,
                           cursor: 'pointer',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '0.35rem',
                           transition: 'all 0.15s ease'
                         }}
                       >
-                        <span style={{ fontSize: '0.9rem', fontWeight: 700, color: isDark ? '#ffffff' : '#0f172a' }}>
-                          {item.label}
-                        </span>
-                        <div style={{
-                          width: '20px',
-                          height: '20px',
-                          borderRadius: '50%',
-                          border: isSelected ? 'none' : '2px solid #94a3b8',
-                          background: isSelected ? '#059669' : 'transparent',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          color: '#ffffff'
-                        }}>
-                          {isSelected && <Check size={12} strokeWidth={3} />}
-                        </div>
-                      </div>
+                        {isSelected && <Check size={14} strokeWidth={3} />}
+                        .{fmt}
+                      </button>
                     );
                   })}
                 </div>
               </div>
 
-              {/* TARGET SIZE CONFIGURATION */}
-              <div>
-                <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em', color: isDark ? '#94a3b8' : '#475569', marginBottom: '0.55rem' }}>
-                  Target Size
-                </label>
-
-                {/* TOGGLE: AUTO VS CUSTOM */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', marginBottom: '0.75rem' }}>
-                  <button
-                    type="button"
-                    onClick={() => setSizeMode('auto')}
-                    style={{
-                      minHeight: '48px',
-                      borderRadius: '12px',
-                      border: sizeMode === 'auto' ? '2px solid #059669' : isDark ? '1px solid #334155' : '1px solid #cbd5e1',
-                      background: sizeMode === 'auto'
-                        ? isDark ? 'rgba(5, 150, 105, 0.16)' : '#ecfdf5'
-                        : isDark ? '#1e293b' : '#ffffff',
-                      color: isDark ? '#ffffff' : '#0f172a',
-                      fontSize: '0.82rem',
-                      fontWeight: 700,
-                      cursor: 'pointer'
-                    }}
-                  >
-                    Pro Scale (Auto)
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setSizeMode('custom')}
-                    style={{
-                      minHeight: '48px',
-                      borderRadius: '12px',
-                      border: sizeMode === 'custom' ? '2px solid #059669' : isDark ? '1px solid #334155' : '1px solid #cbd5e1',
-                      background: sizeMode === 'custom'
-                        ? isDark ? 'rgba(5, 150, 105, 0.16)' : '#ecfdf5'
-                        : isDark ? '#1e293b' : '#ffffff',
-                      color: isDark ? '#ffffff' : '#0f172a',
-                      fontSize: '0.82rem',
-                      fontWeight: 700,
-                      cursor: 'pointer'
-                    }}
-                  >
-                    Custom Inches
-                  </button>
-                </div>
-
-                {sizeMode === 'auto' ? (
-                  <div style={{
-                    padding: '0.75rem 0.85rem',
-                    borderRadius: '12px',
-                    background: isDark ? '#1e293b' : '#f8fafc',
-                    border: isDark ? '1px solid #334155' : '1px solid #e2e8f0',
-                    fontSize: '0.78rem',
-                    color: isDark ? '#94a3b8' : '#64748b',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.5rem'
-                  }}>
-                    <Sparkles size={18} style={{ color: '#059669', flexShrink: 0 }} />
-                    <span>Our master digitizer will calculate optimal proportions for best stitch quality ({widthInches}&quot; x {heightInches}&quot;).</span>
-                  </div>
-                ) : (
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.65rem' }}>
-                    <div>
-                      <span style={{ fontSize: '0.75rem', fontWeight: 700, color: isDark ? '#94a3b8' : '#64748b' }}>Width (Inches)</span>
-                      <input
-                        type="text"
-                        value={widthInches}
-                        onChange={(e) => setWidthInches(e.target.value)}
-                        placeholder="e.g., 3.5 inches"
-                        style={{
-                          width: '100%',
-                          minHeight: '48px',
-                          borderRadius: '12px',
-                          border: isDark ? '1.5px solid #334155' : '1.5px solid #cbd5e1',
-                          background: isDark ? '#1e293b' : '#ffffff',
-                          color: isDark ? '#ffffff' : '#0f172a',
-                          padding: '0 0.85rem',
-                          fontSize: '0.9rem',
-                          boxSizing: 'border-box',
-                          outline: 'none',
-                          marginTop: '0.25rem'
-                        }}
-                      />
-                    </div>
-                    <div>
-                      <span style={{ fontSize: '0.75rem', fontWeight: 700, color: isDark ? '#94a3b8' : '#64748b' }}>Height (Inches)</span>
-                      <input
-                        type="text"
-                        value={heightInches}
-                        onChange={(e) => setHeightInches(e.target.value)}
-                        placeholder="e.g., 3.5 inches"
-                        style={{
-                          width: '100%',
-                          minHeight: '48px',
-                          borderRadius: '12px',
-                          border: isDark ? '1.5px solid #334155' : '1.5px solid #cbd5e1',
-                          background: isDark ? '#1e293b' : '#ffffff',
-                          color: isDark ? '#ffffff' : '#0f172a',
-                          padding: '0 0.85rem',
-                          fontSize: '0.9rem',
-                          boxSizing: 'border-box',
-                          outline: 'none',
-                          marginTop: '0.25rem'
-                        }}
-                      />
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* SPECIAL INSTRUCTIONS (COLLAPSIBLE) */}
-              <div style={{
-                borderRadius: '14px',
-                border: isDark ? '1px solid #334155' : '1px solid #e2e8f0',
-                background: isDark ? '#1e293b' : '#ffffff',
-                overflow: 'hidden'
-              }}>
-                <button
-                  type="button"
-                  onClick={() => setIsNotesOpen(prev => !prev)}
-                  style={{
-                    width: '100%',
-                    minHeight: '48px',
-                    padding: '0.75rem 1rem',
-                    background: 'transparent',
-                    border: 'none',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    color: isDark ? '#ffffff' : '#0f172a',
-                    fontSize: '0.85rem',
-                    fontWeight: 700,
-                    cursor: 'pointer'
-                  }}
-                >
-                  <span>Add special notes / thread colors (optional)</span>
-                  {isNotesOpen ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
-                </button>
-
-                {isNotesOpen && (
-                  <div style={{ padding: '0 1rem 1rem' }}>
-                    <textarea
-                      rows={3}
-                      value={notes}
-                      onChange={(e) => setNotes(e.target.value)}
-                      placeholder="e.g., Thread colors: Madeira Polyneon 1801 White, 1842 Blue. Keep background transparent. 3D puff on bold lettering..."
-                      style={{
-                        width: '100%',
-                        borderRadius: '10px',
-                        border: isDark ? '1.5px solid #334155' : '1.5px solid #cbd5e1',
-                        background: isDark ? '#0f172a' : '#f8fafc',
-                        color: isDark ? '#ffffff' : '#0f172a',
-                        padding: '0.65rem 0.85rem',
-                        fontSize: '0.85rem',
-                        boxSizing: 'border-box',
-                        outline: 'none',
-                        fontFamily: 'inherit'
-                      }}
-                    />
-                  </div>
-                )}
-              </div>
-
-              {/* ADVANCED OPTIONS (OPTIONAL ACCORDION) */}
+              {/* 7. OPTIONAL ADD-ONS (RUSH, PROMO, PATCH CRAFT) */}
               <div style={{
                 borderRadius: '14px',
                 border: isDark ? '1px solid #334155' : '1px solid #e2e8f0',
@@ -1667,81 +1706,49 @@ export const MobileSimpleOrderModal = ({
                   }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <span>⚙️ Advanced Options (Optional)</span>
-                    <span style={{ fontSize: '0.68rem', color: '#059669', background: isDark ? 'rgba(5,150,105,0.2)' : '#ecfdf5', padding: '0.15rem 0.45rem', borderRadius: '4px' }}>
-                      Defaults Applied
-                    </span>
+                    <span>⚡ Optional Add-ons & Promo</span>
+                    {isRush && (
+                      <span style={{ fontSize: '0.68rem', color: '#f59e0b', background: isDark ? 'rgba(245,158,11,0.2)' : '#fef3c7', padding: '0.15rem 0.45rem', borderRadius: '4px', fontWeight: 800 }}>
+                        Rush Active
+                      </span>
+                    )}
                   </div>
                   {isAdvancedOpen ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
                 </button>
 
                 {isAdvancedOpen && (
                   <div style={{ padding: '0 1rem 1.15rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                    {/* FORMATS CHIPS */}
-                    <div>
-                      <span style={{ fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase', color: isDark ? '#94a3b8' : '#64748b' }}>
-                        Machine Formats
-                      </span>
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.45rem', marginTop: '0.35rem' }}>
-                        {(selectedService === 'vector' ? ['AI', 'EPS', 'SVG', 'PDF', 'CDR'] : ['DST', 'PES', 'EMB', 'EXP', 'PDF']).map(fmt => {
-                          const isSelected = selectedFormats.includes(fmt);
-                          return (
-                            <button
-                              key={fmt}
-                              type="button"
-                              onClick={() => handleToggleFormat(fmt)}
-                              style={{
-                                minHeight: '36px',
-                                padding: '0 0.75rem',
-                                borderRadius: '8px',
-                                border: isSelected ? '1.5px solid #059669' : isDark ? '1px solid #334155' : '1px solid #cbd5e1',
-                                background: isSelected ? '#059669' : isDark ? '#0f172a' : '#f8fafc',
-                                color: isSelected ? '#ffffff' : isDark ? '#94a3b8' : '#475569',
-                                fontSize: '0.78rem',
-                                fontWeight: 700,
-                                cursor: 'pointer'
-                              }}
-                            >
-                              .{fmt}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-
-                    {/* FABRIC TYPE / BACKING */}
-                    {selectedService === 'embroidery' && (
-                      <div>
-                        <span style={{ fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase', color: isDark ? '#94a3b8' : '#64748b' }}>
-                          Target Fabric / Substrate
-                        </span>
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.45rem', marginTop: '0.35rem' }}>
-                          {['Cotton / Pique Knit', 'Structured Cap', 'Fleece / Hoodie', 'Jacket / Nylon'].map(fab => (
-                            <button
-                              key={fab}
-                              type="button"
-                              onClick={() => setFabricType(fab)}
-                              style={{
-                                minHeight: '40px',
-                                padding: '0 0.55rem',
-                                borderRadius: '8px',
-                                border: fabricType === fab ? '1.5px solid #059669' : isDark ? '1px solid #334155' : '1px solid #cbd5e1',
-                                background: fabricType === fab ? (isDark ? 'rgba(5,150,105,0.2)' : '#ecfdf5') : 'transparent',
-                                color: isDark ? '#ffffff' : '#0f172a',
-                                fontSize: '0.75rem',
-                                fontWeight: fabricType === fab ? 800 : 500,
-                                cursor: 'pointer',
-                                textAlign: 'left'
-                              }}
-                            >
-                              {fab}
-                            </button>
-                          ))}
+                    {/* RUSH PRODUCTION TOGGLE */}
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      padding: '0.75rem',
+                      borderRadius: '10px',
+                      background: isDark ? '#0f172a' : '#f8fafc',
+                      border: isDark ? '1px solid #334155' : '1px solid #e2e8f0'
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <Zap size={18} style={{ color: '#f59e0b' }} />
+                        <div>
+                          <div style={{ fontSize: '0.82rem', fontWeight: 800, color: isDark ? '#ffffff' : '#0f172a' }}>
+                            Express Rush Turnaround
+                          </div>
+                          <div style={{ fontSize: '0.7rem', color: isDark ? '#94a3b8' : '#64748b' }}>
+                            Guaranteed delivery in 2–4 hours (+$10)
+                          </div>
                         </div>
                       </div>
-                    )}
 
-                    {/* PATCH BACKING & STYLE */}
+                      <input
+                        type="checkbox"
+                        checked={isRush}
+                        onChange={(e) => setIsRush(e.target.checked)}
+                        style={{ width: '20px', height: '20px', cursor: 'pointer', accentColor: '#059669' }}
+                      />
+                    </div>
+
+                    {/* PATCH BACKING & STYLE (ONLY FOR PATCHES) */}
                     {selectedService === 'patch' && (
                       <>
                         <div>
@@ -1803,99 +1810,6 @@ export const MobileSimpleOrderModal = ({
                         </div>
                       </>
                     )}
-
-                    {/* RUSH PRODUCTION TOGGLE */}
-                    <div style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      padding: '0.75rem',
-                      borderRadius: '10px',
-                      background: isDark ? '#0f172a' : '#f8fafc',
-                      border: isDark ? '1px solid #334155' : '1px solid #e2e8f0'
-                    }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <Zap size={18} style={{ color: '#f59e0b' }} />
-                        <div>
-                          <div style={{ fontSize: '0.82rem', fontWeight: 800, color: isDark ? '#ffffff' : '#0f172a' }}>
-                            Express Rush Turnaround
-                          </div>
-                          <div style={{ fontSize: '0.7rem', color: isDark ? '#94a3b8' : '#64748b' }}>
-                            Guaranteed delivery in 2–4 hours (+$10)
-                          </div>
-                        </div>
-                      </div>
-
-                      <input
-                        type="checkbox"
-                        checked={isRush}
-                        onChange={(e) => setIsRush(e.target.checked)}
-                        style={{ width: '20px', height: '20px', cursor: 'pointer', accentColor: '#059669' }}
-                      />
-                    </div>
-
-                    {/* QUANTITY SELECTOR (MAINLY FOR PATCHES) */}
-                    <div>
-                      <span style={{ fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase', color: isDark ? '#94a3b8' : '#64748b' }}>
-                        Quantity {selectedService === 'patch' && '(Min. 50 Pcs)'}
-                      </span>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', marginTop: '0.35rem' }}>
-                        <button
-                          type="button"
-                          onClick={() => handleQuantityChange(-1)}
-                          style={{
-                            width: '44px',
-                            height: '44px',
-                            borderRadius: '10px',
-                            border: isDark ? '1px solid #334155' : '1px solid #cbd5e1',
-                            background: isDark ? '#0f172a' : '#ffffff',
-                            color: isDark ? '#ffffff' : '#0f172a',
-                            fontSize: '1.2rem',
-                            fontWeight: 800,
-                            cursor: 'pointer'
-                          }}
-                        >
-                          -
-                        </button>
-                        <input
-                          type="number"
-                          value={quantityInput}
-                          onChange={(e) => {
-                            setQuantityInput(e.target.value);
-                            const parsed = parseInt(e.target.value, 10);
-                            if (!isNaN(parsed) && parsed > 0) setQuantity(parsed);
-                          }}
-                          style={{
-                            flex: 1,
-                            minHeight: '44px',
-                            borderRadius: '10px',
-                            border: isDark ? '1px solid #334155' : '1px solid #cbd5e1',
-                            background: isDark ? '#0f172a' : '#ffffff',
-                            color: isDark ? '#ffffff' : '#0f172a',
-                            textAlign: 'center',
-                            fontSize: '1rem',
-                            fontWeight: 800
-                          }}
-                        />
-                        <button
-                          type="button"
-                          onClick={() => handleQuantityChange(1)}
-                          style={{
-                            width: '44px',
-                            height: '44px',
-                            borderRadius: '10px',
-                            border: isDark ? '1px solid #334155' : '1px solid #cbd5e1',
-                            background: isDark ? '#0f172a' : '#ffffff',
-                            color: isDark ? '#ffffff' : '#0f172a',
-                            fontSize: '1.2rem',
-                            fontWeight: 800,
-                            cursor: 'pointer'
-                          }}
-                        >
-                          +
-                        </button>
-                      </div>
-                    </div>
 
                     {/* PROMO CODE INPUT */}
                     <div>
