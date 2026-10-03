@@ -169,7 +169,7 @@ export const Footer = () => {
                   boxSizing: 'border-box'
                 }}>
                   <img
-                    src="/favicon.png"
+                    src="/logo.png"
                     alt="BDigitizing Logo"
                     style={{ width: '26px', height: '30px', objectFit: 'contain', display: 'block' }}
                   />

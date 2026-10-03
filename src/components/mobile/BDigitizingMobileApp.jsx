@@ -139,7 +139,7 @@ export const BDigitizingMobileApp = ({ initialTab = 'home' }) => {
   const userInitial = (userName?.[0] || 'B').toUpperCase();
 
   const isDark = theme === 'dark';
-  const mobileAppIconUrl = siteSettings?.appIconUrl || '/icon-512x512.png';
+  const mobileAppIconUrl = siteSettings?.appIconUrl || siteSettings?.headerLogoUrl || siteSettings?.logoUrl || '/logo.png';
 
   const mobileCi = siteSettings?.contactInfo || {};
   const mobileWhatsapp = (mobileCi.whatsapp !== undefined ? mobileCi.whatsapp : (siteSettings?.whatsapp || '')).trim();
@@ -964,13 +964,13 @@ export const BDigitizingMobileApp = ({ initialTab = 'home' }) => {
           justifyContent: 'center',
           boxShadow: '0 10px 28px rgba(15, 23, 42, 0.12)',
           overflow: 'hidden',
-          padding: '4px',
+          padding: '6px',
           boxSizing: 'border-box'
         }}>
           <img
             src={mobileAppIconUrl}
             alt="BDigitizing"
-            style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block', borderRadius: '18px' }}
+            style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block' }}
           />
         </div>
         <div style={{ textAlign: 'center' }}>

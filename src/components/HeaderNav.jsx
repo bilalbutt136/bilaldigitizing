@@ -346,7 +346,7 @@ export const HeaderNav = () => {
               boxSizing: 'border-box'
             }}>
               <img
-                src="/favicon.png"
+                src="/logo.png"
                 alt="BDigitizing Logo"
                 style={{ width: '24px', height: '28px', objectFit: 'contain', display: 'block' }}
               />
@@ -1358,7 +1358,7 @@ export const HeaderNav = () => {
                     boxSizing: 'border-box'
                   }}>
                     <img
-                      src="/favicon.png"
+                      src="/logo.png"
                       alt="BDigitizing Logo"
                       style={{ width: '22px', height: '26px', objectFit: 'contain', display: 'block' }}
                     />

@@ -81,32 +81,9 @@ async function extractEmblem(sourcePath) {
   const meta = await sharp(sourcePath).metadata();
   if (!meta.width || !meta.height) throw new Error('Brand source dimensions could not be read.');
 
-  // The final full brand artwork includes the black Digitizing wordmark at the bottom.
-  // PWA/favicon icons intentionally use only the embroidered B + pink needle mark,
-  // because wordmarks become unreadable at launcher/favicon sizes.
-  const cropHeight = Math.round(meta.height * 0.82);
-  const { data, info } = await sharp(sourcePath)
-    .extract({ left: 0, top: 0, width: meta.width, height: cropHeight })
-    .ensureAlpha()
-    .raw()
-    .toBuffer({ resolveWithObject: true });
-
-  // The checked-in full logo currently has a dark flattened background.
-  // Recover the colored emblem by keeping only the green embroidery and pink needle.
-  // This preserves the authoritative brand mark without carrying the black box into icons.
-  for (let i = 0; i < data.length; i += info.channels) {
-    const r = data[i];
-    const g = data[i + 1];
-    const b = data[i + 2];
-
-    const isGreen = g >= 18 && g >= r + 5 && g >= b + 2;
-    const isPink = r >= 55 && r >= g + 10 && b >= g + 4;
-    data[i + 3] = (isGreen || isPink) ? 255 : 0;
-  }
-
-  return sharp(data, { raw: info })
+  // Preserve the complete authentic brand logo (embroidered B, needle, thread, and Digitizing wordmark).
+  return sharp(sourcePath)
     .png()
-    .trim({ background: { r: 0, g: 0, b: 0, alpha: 0 } })
     .toBuffer();
 }
 
