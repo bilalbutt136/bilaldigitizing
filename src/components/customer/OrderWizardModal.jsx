@@ -44,6 +44,7 @@ import {
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import { GoogleCustomSignInButton } from '../auth/GoogleCustomSignInButton';
 import { useModalBackNavigation } from '../../hooks/useModalBackNavigation';
+import { MobileSimpleOrderModal } from './MobileSimpleOrderModal';
 
 const GOOGLE_CLIENT_ID = (process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '421520521310-7appibeh1m7cdd90iid17lsq8thlq2oc.apps.googleusercontent.com').trim();
 
@@ -322,6 +323,18 @@ export const OrderWizardModal = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOrderWizardOpen, handleSafeClose]);
 
+  // Responsive Mobile Viewport Detection (< 768px)
+  const [isMobileViewport, setIsMobileViewport] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobileViewport(typeof window !== 'undefined' && window.innerWidth < 768);
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
   // Wizard Step State (1 to 5)
   const [step, setStep] = useState(1);
 
@@ -488,6 +501,21 @@ export const OrderWizardModal = () => {
   /* oxlint-enable react-hooks/exhaustive-deps */
 
   if (!isOrderWizardOpen) return null;
+
+  // On mobile viewports (< 768px, iOS/Android Chrome & PWA), render the ultra-simplified mobile 3-step wizard
+  if (isMobileViewport) {
+    return (
+      <MobileSimpleOrderModal
+        isOpen={isOrderWizardOpen}
+        onClose={handleSafeClose}
+        defaultService={selectedService || orderWizardInitialData?.type || 'embroidery'}
+        initialData={orderWizardInitialData}
+        onOrderCreated={(_newOrd) => {
+          setIsOrderWizardOpen(false);
+        }}
+      />
+    );
+  }
 
   const currentPackages = getPackagesForCategory(selectedService);
   const activePkg = selectedPackage || currentPackages[0];

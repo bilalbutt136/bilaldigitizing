@@ -8,27 +8,18 @@ import {
   Layers,
   PenTool,
   Package,
-  Clock as _Clock,
   Zap,
   ArrowRight,
   ArrowLeft,
   Check,
   CheckCircle2,
-  Sparkles as _Sparkles,
-  FileText as _FileText,
-  FileCheck,
   Trash2,
-  Minus,
-  Plus,
-  MessageSquare as _MessageSquare,
   Loader2,
-  Image as _ImageIcon,
-  ShieldCheck as _ShieldCheck,
-  Tag,
-  Sliders as _Sliders,
-  DollarSign as _DollarSign,
-  ChevronRight as _ChevronRight,
-  Info as _Info
+  Sparkles,
+  ChevronDown,
+  ChevronUp,
+  AlertCircle,
+  FileText
 } from 'lucide-react';
 import { uploadFileToCloudinaryFull } from '../../services/supabaseService';
 import { matchCategory } from '../../utils/categoryUtils';
@@ -40,6 +31,7 @@ import {
   normalizeServiceKey as _normalizeServiceKey
 } from '../../utils/promoUtils';
 import { GoogleCustomSignInButton } from '../auth/GoogleCustomSignInButton';
+import { useModalBackNavigation } from '../../hooks/useModalBackNavigation';
 
 // Standard fallback package tiers matching website /app/pricing/page.jsx
 const CORE_PACKAGES = {
@@ -54,16 +46,11 @@ const CORE_PACKAGES = {
       price: 10,
       original_price: 15,
       turnaround: '4–12 Hours',
-      features: [
-        'Up to 4" x 4" Dimensions',
-        '100% Manual Hand-Mapped Pathing',
-        'Cap Curved Optimization & Zero Thread Breaks',
-        'Tajima .DST, Wilcom .EMB, Brother .PES + PDF Sheet'
-      ],
+      features: ['Up to 4" x 4" Dimensions', 'Manual Pathing', 'Cap Curved Optimization', '.DST, .PES, .EMB + PDF'],
       defaultFormats: ['DST', 'PES', 'EMB', 'PDF'],
       defaultWidth: '3.5',
       defaultHeight: '3.5',
-      defaultPlacement: 'Left Chest / Polo (up to 4.0")'
+      defaultPlacement: 'Left Chest / Cap'
     },
     {
       id: 'emb-popular',
@@ -75,16 +62,11 @@ const CORE_PACKAGES = {
       price: 20,
       original_price: 30,
       turnaround: '6–12 Hours',
-      features: [
-        'Up to 7" x 7" Medium Artwork Area',
-        'Complex Multi-Color Layering & Pathing',
-        'Underlay Pull & Push Compensation',
-        'Free Unlimited Production Revisions'
-      ],
+      features: ['Up to 7" x 7" Medium Artwork Area', 'Multi-Color Layering', 'Free Unlimited Revisions'],
       defaultFormats: ['DST', 'PES', 'EMB', 'EXP', 'PDF'],
       defaultWidth: '6.0',
       defaultHeight: '6.0',
-      defaultPlacement: 'Jacket Front / Sleeve (up to 7.0")'
+      defaultPlacement: 'Jacket Front / Sleeve'
     },
     {
       id: 'emb-pro',
@@ -96,16 +78,11 @@ const CORE_PACKAGES = {
       price: 35,
       original_price: 50,
       turnaround: '8–12 Hours',
-      features: [
-        'Up to 12" x 12" Full Back Area',
-        'High Density 3D Puff Foam Layering',
-        'Heavy Fabric Calibration & Zero Distortion',
-        '24/7 Priority Master Digitizer Support'
-      ],
+      features: ['Up to 12" x 12" Full Back Area', '3D Puff Foam', '24/7 Priority Support'],
       defaultFormats: ['DST', 'PES', 'EMB', 'EXP', 'JEF', 'PDF'],
       defaultWidth: '10.5',
       defaultHeight: '10.5',
-      defaultPlacement: 'Full Jacket Back (up to 12.0")'
+      defaultPlacement: 'Full Jacket Back'
     }
   ],
   vector: [
@@ -119,134 +96,106 @@ const CORE_PACKAGES = {
       price: 15,
       original_price: 25,
       turnaround: '6–12 Hours',
-      features: [
-        'Clean Bézier Curves & Anchor Nodes',
-        'Sharp 100% Scalable Vector Paths',
-        'Master Suite: .AI, .EPS, .SVG, .PDF',
-        'Infinite Scale Without Pixelation'
-      ],
+      features: ['Clean Bézier Curves', 'Sharp 100% Scalable Vector Paths', 'Suite: .AI, .EPS, .SVG, .PDF'],
       defaultFormats: ['AI', 'EPS', 'SVG', 'PDF'],
-      defaultWidth: '8.0',
-      defaultHeight: '8.0',
-      defaultPlacement: 'Print / Vector Scalable'
+      defaultWidth: '5.0',
+      defaultHeight: '5.0',
+      defaultPlacement: 'Vector Redraw'
     },
     {
       id: 'vec-popular',
       service_type: 'vector',
-      badge: 'BEST VALUE',
+      badge: 'MOST POPULAR',
       is_popular: true,
-      title: 'Medium Detail Artwork with Colors',
-      subtitle: 'Multi-color badges, crests & illustrations with Pantone color separation.',
+      title: 'Standard Multi-Color Artwork',
+      subtitle: 'Multi-layer mascot logos, character illustrations & badge crests.',
       price: 25,
-      original_price: 35,
+      original_price: 40,
       turnaround: '6–12 Hours',
-      features: [
-        'Pantone (PMS) Spot Color Matching',
-        'Separated Layers for Screen Printing',
-        'Vinyl Cutting Smooth Cut-Paths',
-        'High-Res 300+ DPI PDF Master'
-      ],
-      defaultFormats: ['AI', 'EPS', 'SVG', 'PDF', 'High-Res PNG'],
-      defaultWidth: '10.0',
-      defaultHeight: '10.0',
-      defaultPlacement: 'Screen Print / Apparel'
-    },
-    {
-      id: 'vec-pro',
-      service_type: 'vector',
-      badge: 'MASTER DETAIL',
-      is_popular: false,
-      title: 'Complex Intricate Mascot & Illustration',
-      subtitle: 'Highly intricate artwork, photographic traces & heraldic crests.',
-      price: 45,
-      original_price: 65,
-      turnaround: '12–24 Hours',
-      features: [
-        'Ultra-Intricate Fine Vector Details',
-        'Complete Multi-Layer Organization',
-        'Print-Ready Color Separations Suite',
-        'Unlimited Revisions Until Press-Ready'
-      ],
-      defaultFormats: ['AI', 'EPS', 'SVG', 'PDF', 'CDR', 'PNG'],
-      defaultWidth: '12.0',
-      defaultHeight: '12.0',
-      defaultPlacement: 'Master Artwork / Large Print'
+      features: ['Multi-Color Separation', 'Production Ready Print Files', 'Unlimited Revisions'],
+      defaultFormats: ['AI', 'EPS', 'SVG', 'PDF', 'CDR'],
+      defaultWidth: '8.0',
+      defaultHeight: '8.0',
+      defaultPlacement: 'Multi-Color Vector'
     }
   ],
   patch: [
     {
-      id: 'patch-sample',
+      id: 'patch-custom',
       service_type: 'patch',
-      badge: 'SAMPLE RUN',
-      is_popular: false,
-      title: 'Sample Batch (50–100 Pcs)',
-      subtitle: 'Minimum run perfect for small brands, clubs, prototypes & events.',
-      price: 3.50,
-      original_price: 5.00,
-      turnaround: '3–5 Days',
-      features: [
-        '50 Pieces Minimum Order',
-        '12-Hour Free Digital Production Proof',
-        'Velcro Hook & Loop or Iron-On Backings',
-        'Custom Embroidered, Woven or 3D PVC'
-      ],
-      defaultFormats: ['DST', 'PDF Proof', 'Physical Patch Shipment'],
-      defaultWidth: '3.0',
-      defaultHeight: '3.0',
-      defaultPlacement: 'Custom Shape Cut'
-    },
-    {
-      id: 'patch-popular',
-      service_type: 'patch',
-      badge: 'POPULAR',
+      badge: 'CUSTOM PHYSICAL PATCHES',
       is_popular: true,
-      title: 'Production Batch (100–500 Pcs)',
-      subtitle: 'Ideal for uniform programs, merchandise drops & motorcycle clubs.',
-      price: 4.50,
-      original_price: 6.00,
-      turnaround: '5–7 Days',
-      features: [
-        'Precision Laser-Cut or Merrowed Border',
-        'Metallic Gold/Silver & Glow-in-Dark Threads',
-        'Pre-Production Physical Sew-Out Sample',
-        'Free Shipping Included'
-      ],
-      defaultFormats: ['DST', 'PDF Proof', 'Physical Patch Shipment'],
+      title: 'Custom Manufactured Patches',
+      subtitle: 'Embroidered, PVC Rubber, Woven, or Leather patches shipped to your door.',
+      price: 1.50,
+      original_price: 2.50,
+      turnaround: '5–7 Days Production',
+      features: ['Free Digital & Physical Mockup Proof', 'Laser-Cut Borders', 'Iron-On, Velcro, or Adhesive Backing'],
+      defaultFormats: ['DST', 'PDF Proof', 'Physical Shipment'],
       defaultWidth: '3.5',
       defaultHeight: '3.5',
-      defaultPlacement: 'Custom Shape Cut'
-    },
-    {
-      id: 'patch-bulk',
-      service_type: 'patch',
-      badge: 'WHOLESALE BULK',
-      is_popular: false,
-      title: 'Wholesale Bulk (500+ Pcs)',
-      subtitle: 'Maximum volume discount for apparel brands, military & distributors.',
-      price: 5.50,
-      original_price: 7.50,
-      turnaround: '7–10 Days',
-      features: [
-        'Maximum Factory Direct Wholesale Savings',
-        'Individual Poly-Bag Packaging',
-        'Custom Backing Paper & Barcodes',
-        'Dedicated Master Account Manager'
-      ],
-      defaultFormats: ['DST', 'PDF Proof', 'Physical Patch Shipment'],
-      defaultWidth: '3.5',
-      defaultHeight: '3.5',
-      defaultPlacement: 'Custom Shape Cut'
+      defaultPlacement: 'Custom Laser Cut Shape'
     }
   ]
 };
 
-const SERVICE_TABS = [
-  { id: 'embroidery', label: 'Embroidery', icon: Layers, color: '#059669', defaultCategory: 'embroidery' },
-{ id: 'vector', label: 'Vector Art', icon: PenTool, color: '#ea580c', defaultCategory: 'vector' },
-  { id: 'patch', label: 'Patches', icon: Package, color: '#0284c7', defaultCategory: 'patch' }
+// 3 Core Services configuration with tap-friendly visual cards
+const SERVICE_OPTIONS = [
+  {
+    id: 'embroidery',
+    title: 'Embroidery Digitizing',
+    badge: 'Caps, Polos & Hoodies',
+    icon: Layers,
+    color: '#059669',
+    startingPrice: '$10',
+    turnaround: '4–12 Hours'
+  },
+  {
+    id: 'vector',
+    title: 'Vector Art Tracing',
+    badge: 'Sharp Redraw & Print',
+    icon: PenTool,
+    color: '#ea580c',
+    startingPrice: '$15',
+    turnaround: '6–12 Hours'
+  },
+  {
+    id: 'patch',
+    title: 'Custom Patches',
+    badge: 'Physical Patches Shipped',
+    icon: Package,
+    color: '#0284c7',
+    startingPrice: 'From $1.50/pc',
+    turnaround: '5–7 Days'
+  }
 ];
 
-export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embroidery', onOrderCreated }) => {
+// Visual selectable pill chips per service
+const PLACEMENT_OPTIONS = {
+  embroidery: [
+    { id: 'Left Chest / Cap', label: 'Left Chest / Cap', defaultWidth: '3.5', defaultHeight: '3.5' },
+    { id: 'Full Jacket Back', label: 'Full Jacket Back', defaultWidth: '10.5', defaultHeight: '10.5' },
+    { id: 'Sleeve / Other', label: 'Sleeve / Other', defaultWidth: '4.0', defaultHeight: '4.0' }
+  ],
+  vector: [
+    { id: 'Logo / Graphic Redraw', label: 'Logo / Graphic Redraw', defaultWidth: '5.0', defaultHeight: '5.0' },
+    { id: 'Color Separation', label: 'Color Separation', defaultWidth: '8.0', defaultHeight: '8.0' },
+    { id: 'High-Res Print Ready', label: 'High-Res Print Ready', defaultWidth: '10.0', defaultHeight: '10.0' }
+  ],
+  patch: [
+    { id: 'Custom Laser Cut Shape', label: 'Custom Shape Cut', defaultWidth: '3.5', defaultHeight: '3.5' },
+    { id: 'Round / Oval Emblem', label: 'Round / Oval', defaultWidth: '3.0', defaultHeight: '3.0' },
+    { id: 'Square / Shield', label: 'Square / Shield', defaultWidth: '3.5', defaultHeight: '3.5' }
+  ]
+};
+
+export const MobileSimpleOrderModal = ({
+  isOpen,
+  onClose,
+  defaultService = 'embroidery',
+  onOrderCreated,
+  initialData = null
+}) => {
   const {
     createOrder,
     authUser,
@@ -256,7 +205,6 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
     login,
     loginWithGoogle,
     showToast,
-    setSelectedOrderForDrawer,
     setIsCheckoutModalOpen,
     setCheckoutSession,
     dynamicPricingTiers = [],
@@ -267,53 +215,64 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
 
   const isDark = theme === 'dark';
 
-  // Wizard Step (1: Service, 2: Package & Quantity, 3: Upload Artwork & Notes, 4: Specs, 5: Review, 6: Confirmation)
+  // 3-Step Flow State: 1: Service & Artwork, 2: Placement & Size, 3: Review & Submit, 4: Confirmed
   const [step, setStep] = useState(1);
 
-  // Selection State
+  // Step 1: Service & Artwork
   const [selectedService, setSelectedService] = useState('embroidery');
-  const [selectedPackage, setSelectedPackage] = useState(null);
+  const [uploadedFiles, setUploadedFiles] = useState([]);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadError, setUploadError] = useState(null);
+  const [orderTitle, setOrderTitle] = useState('');
 
-  // Quantity State
+  // Step 2: Placement, Size & Notes
+  const [placement, setPlacement] = useState('Left Chest / Cap');
+  const [sizeMode, setSizeMode] = useState('auto'); // 'auto' (Pro decision) or 'custom'
+  const [widthInches, setWidthInches] = useState('3.5');
+  const [heightInches, setHeightInches] = useState('3.5');
+  const [notes, setNotes] = useState('');
+  const [isNotesOpen, setIsNotesOpen] = useState(false);
+  const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
+
+  // Advanced Technical Options (Industry defaults applied)
+  const [selectedFormats, setSelectedFormats] = useState(['DST', 'PES', 'EMB', 'PDF']);
+  const [fabricType, setFabricType] = useState('Cotton / Pique Knit');
+  const [patchStyle, setPatchStyle] = useState('Embroidered');
+  const [patchBacking, setPatchBacking] = useState('Iron-On');
+  const [isRush, setIsRush] = useState(false);
   const [quantity, setQuantity] = useState(1);
   const [quantityInput, setQuantityInput] = useState('1');
 
-  // Promotional Discount State
+  // Promo Code State
   const [promoCodeInput, setPromoCodeInput] = useState('');
   const [appliedPromo, setAppliedPromo] = useState(null);
 
-  // Guest Authentication State
+  // Step 3: Guest Authentication State
   const [guestAuthMode, setGuestAuthMode] = useState('signup');
   const [guestName, setGuestName] = useState('');
   const [guestEmail, setGuestEmail] = useState('');
   const [guestPassword, setGuestPassword] = useState('');
-  const [guestCompany, setGuestCompany] = useState('');
+  const [guestCompany, _setGuestCompany] = useState('');
   const [isSubmittingAuth, setIsSubmittingAuth] = useState(false);
   const [guestAuthRequested, setGuestAuthRequested] = useState(false);
-
-  // Configuration Specs State
-  const [isRush, setIsRush] = useState(false);
-  const [selectedFormats, setSelectedFormats] = useState(['DST', 'PES', 'EMB']);
-  const [placement, setPlacement] = useState('Left Chest / Polo (up to 4.0")');
-  const [widthInches, setWidthInches] = useState('3.5');
-  const [heightInches, setHeightInches] = useState('3.5');
-  const [fabricType, setFabricType] = useState('Cotton / Pique Knit');
-  const [patchStyle, setPatchStyle] = useState('Embroidered');
-  const [patchBacking, setPatchBacking] = useState('Iron-On');
-  const [notes, setNotes] = useState('');
-
-  // Multiple Files Upload State
-  const [uploadedFiles, setUploadedFiles] = useState([]);
-  const [isUploading, setIsUploading] = useState(false);
-  const [uploadError, setUploadError] = useState(null);
+  const [formValidationError, setFormValidationError] = useState(null);
 
   // Submission State
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [createdOrderObj, setCreatedOrderObj] = useState(null);
 
+  // DOM Refs for smooth auto-scrolling
+  const uploadAreaRef = useRef(null);
   const fileInputRef = useRef(null);
   const guestAuthCardRef = useRef(null);
   const guestEmailInputRef = useRef(null);
+  const contentScrollRef = useRef(null);
+
+  const { handleSafeClose } = useModalBackNavigation({
+    isOpen,
+    onClose,
+    modalId: 'mobile_order_wizard'
+  });
 
   const getPackagesForCategory = (catKey) => {
     const coreList = CORE_PACKAGES[catKey] || CORE_PACKAGES.embroidery;
@@ -328,54 +287,65 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
         subtitle: t.subtitle || '',
         price: Number(t.price),
         original_price: t.original_price ? Number(t.original_price) : null,
-        turnaround: t.turnaround_time || (catKey === 'patch' ? '5–7 Days' : '6–12 Hours'),
+        turnaround: t.turnaround_time || (catKey === 'patch' ? '5–7 Days' : '4–12 Hours'),
         features: Array.isArray(t.features) ? t.features : [],
         defaultFormats: catKey === 'vector' ? ['AI', 'EPS', 'SVG', 'PDF'] : catKey === 'patch' ? ['DST', 'PDF Proof'] : ['DST', 'PES', 'EMB', 'PDF'],
         defaultWidth: '3.5',
         defaultHeight: '3.5',
-        defaultPlacement: catKey === 'patch' ? 'Custom Shape Cut' : 'Left Chest / Polo (up to 4.0")'
+        defaultPlacement: catKey === 'patch' ? 'Custom Laser Cut Shape' : 'Left Chest / Cap'
       }));
     }
     return coreList;
   };
 
-  // Reset and set default selections on open.
-  /* oxlint-disable react-hooks/exhaustive-deps -- selector identity is render-local and must not reset the wizard every render */
+  // Reset and initialize on open
+  /* oxlint-disable react-hooks/exhaustive-deps */
   useEffect(() => {
     if (isOpen) {
-      const normService = (defaultService === 'patch' || defaultService === 'patches' || defaultService === 'custom_patches')
+      const incomingRaw = initialData?.type || initialData?.serviceCategory || defaultService || 'embroidery';
+      const normService = (incomingRaw === 'patch' || incomingRaw === 'patches' || incomingRaw === 'custom_patches')
         ? 'patch'
-        : (defaultService === 'vector' || defaultService === 'vector-art' || defaultService === 'vector_art')
+        : (incomingRaw === 'vector' || incomingRaw === 'vector-art' || incomingRaw === 'vector_art')
           ? 'vector'
           : 'embroidery';
+
       setSelectedService(normService);
-      const pkgs = getPackagesForCategory(normService);
-      const initialPkg = pkgs.find(p => p.is_popular) || pkgs[0];
-      setSelectedPackage(initialPkg);
-
-      const defaultQty = normService === 'patch' ? 50 : 1;
-      setQuantity(defaultQty);
-      setQuantityInput(String(defaultQty));
-
-      if (initialPkg) {
-        setSelectedFormats(initialPkg.defaultFormats || (normService === 'vector' ? ['AI', 'EPS', 'SVG', 'PDF'] : ['DST', 'PES', 'EMB']));
-        setWidthInches(initialPkg.defaultWidth || '3.5');
-        setHeightInches(initialPkg.defaultHeight || '3.5');
-        setPlacement(initialPkg.defaultPlacement || 'Left Chest / Polo (up to 4.0")');
-      }
       setStep(1);
       setUploadedFiles([]);
       setUploadError(null);
-      setIsRush(false);
+      setFormValidationError(null);
+      setOrderTitle('');
       setNotes('');
+      setIsRush(false);
+      setSizeMode('auto');
+      setIsNotesOpen(false);
+      setIsAdvancedOpen(false);
       setGuestAuthRequested(false);
 
-      // Auto-populate active promotion
-      const livePromo = getActivePromotion(siteSettings?.promotions);
-      const initialCode = siteSettings?.announcement?.promoCode || livePromo?.promoCode || 'PROMO';
-      const hasPromo = Boolean(livePromo || (siteSettings?.service_discounts && siteSettings?.service_discounts?.enabled !== false));
+      const defaultPlacements = PLACEMENT_OPTIONS[normService] || PLACEMENT_OPTIONS.embroidery;
+      const initialPlacement = defaultPlacements[0];
+      setPlacement(initialPlacement.id);
+      setWidthInches(initialPlacement.defaultWidth);
+      setHeightInches(initialPlacement.defaultHeight);
 
-      if (hasPromo) {
+      const defQty = normService === 'patch' ? 50 : 1;
+      setQuantity(defQty);
+      setQuantityInput(String(defQty));
+
+      if (normService === 'vector') {
+        setSelectedFormats(['AI', 'EPS', 'SVG', 'PDF']);
+      } else if (normService === 'patch') {
+        setSelectedFormats(['DST', 'PDF Proof']);
+      } else {
+        setSelectedFormats(['DST', 'PES', 'EMB', 'PDF']);
+      }
+
+      // Check active live promotion from Supabase siteSettings
+      const livePromo = getActivePromotion(siteSettings?.promotions);
+      const initialCode = initialData?.promoCode || siteSettings?.announcement?.promoCode || livePromo?.promoCode || 'PROMO';
+      const hasServiceDiscount = Boolean(livePromo || (siteSettings?.service_discounts && siteSettings?.service_discounts?.enabled !== false));
+
+      if (hasServiceDiscount || initialData?.promoCode || siteSettings?.announcement?.promoCode) {
         setPromoCodeInput(initialCode);
         setAppliedPromo({
           code: initialCode.toUpperCase(),
@@ -384,19 +354,18 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
         });
       }
     }
-  }, [isOpen, defaultService, siteSettings?.promotions, siteSettings?.service_discounts]);
+  }, [isOpen, defaultService, initialData, siteSettings?.promotions, siteSettings?.service_discounts]);
   /* oxlint-enable react-hooks/exhaustive-deps */
 
   if (!isOpen) return null;
 
+  // Active pricing calculation
   const currentPackages = getPackagesForCategory(selectedService);
-  const activePkg = selectedPackage || currentPackages[0];
+  const activePkg = currentPackages.find(p => p.is_popular) || currentPackages[0];
+  const unitPrice = Number(activePkg?.price || (selectedService === 'patch' ? 1.50 : selectedService === 'vector' ? 15 : 10));
 
-  const unitPrice = Number(activePkg?.price || (selectedService === 'patch' ? 3.50 : 15));
   const activePromotion = getActivePromotion(siteSettings?.promotions);
   const effectivePromo = appliedPromo?.promoObj || activePromotion;
-
-  // Granular service discounts defined on active promo or siteSettings
   const hasGranularRates = Boolean(
     (effectivePromo && effectivePromo.serviceDiscounts && Object.keys(effectivePromo.serviceDiscounts).length > 0) ||
     (siteSettings?.service_discounts && siteSettings?.service_discounts?.enabled !== false)
@@ -419,49 +388,123 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
   const promoDiscountAmount = pricingResult.promoDiscountAmount;
   const rushFee = pricingResult.rushFee;
   const totalPrice = Math.max(0, parseFloat((baseSubtotal - volumeDiscountAmount - promoDiscountAmount + rushFee).toFixed(2)));
-  const serviceDisplayName = pricingResult.serviceName;
+  const serviceDisplayName = pricingResult.serviceName || getServiceDisplayName(selectedService);
 
+  // Service switch handler
   const handleSelectService = (serviceId) => {
     setSelectedService(serviceId);
-    const pkgs = getPackagesForCategory(serviceId);
-    const popularOrFirst = pkgs.find(p => p.is_popular) || pkgs[0];
-    setSelectedPackage(popularOrFirst);
+    setFormValidationError(null);
+
+    const defaultPlacements = PLACEMENT_OPTIONS[serviceId] || PLACEMENT_OPTIONS.embroidery;
+    const initialPlacement = defaultPlacements[0];
+    setPlacement(initialPlacement.id);
+    setWidthInches(initialPlacement.defaultWidth);
+    setHeightInches(initialPlacement.defaultHeight);
 
     const newQty = serviceId === 'patch' ? 50 : 1;
     setQuantity(newQty);
     setQuantityInput(String(newQty));
 
-    if (popularOrFirst) {
-      setSelectedFormats(popularOrFirst.defaultFormats || (serviceId === 'vector' ? ['AI', 'EPS', 'SVG', 'PDF'] : ['DST', 'PES', 'EMB']));
-      setWidthInches(popularOrFirst.defaultWidth || '3.5');
-      setHeightInches(popularOrFirst.defaultHeight || '3.5');
-      setPlacement(popularOrFirst.defaultPlacement || 'Left Chest / Polo (up to 4.0")');
+    if (serviceId === 'vector') {
+      setSelectedFormats(['AI', 'EPS', 'SVG', 'PDF']);
+    } else if (serviceId === 'patch') {
+      setSelectedFormats(['DST', 'PDF Proof']);
+    } else {
+      setSelectedFormats(['DST', 'PES', 'EMB', 'PDF']);
     }
   };
 
-  const handleSelectPackage = (pkg) => {
-    setSelectedPackage(pkg);
-    if (pkg.defaultFormats) setSelectedFormats(pkg.defaultFormats);
-    if (pkg.defaultWidth) setWidthInches(pkg.defaultWidth);
-    if (pkg.defaultHeight) setHeightInches(pkg.defaultHeight);
-    if (pkg.defaultPlacement) setPlacement(pkg.defaultPlacement);
+  // Placement chip switch handler
+  const handleSelectPlacement = (item) => {
+    setPlacement(item.id);
+    if (sizeMode === 'auto') {
+      setWidthInches(item.defaultWidth);
+      setHeightInches(item.defaultHeight);
+    }
+  };
+
+  // Multiple files upload handler
+  const handleMultipleFiles = async (e) => {
+    const rawFiles = Array.from(e.target.files || []);
+    if (rawFiles.length === 0) return;
+
+    const oversized = rawFiles.find(f => f.size > 50 * 1024 * 1024);
+    if (oversized) {
+      setUploadError(`"${oversized.name}" exceeds 50MB file limit.`);
+      return;
+    }
+
+    setUploadError(null);
+    setFormValidationError(null);
+    setIsUploading(true);
+
+    try {
+      const uploadPromises = rawFiles.map(async (file) => {
+        const result = await uploadFileToCloudinaryFull(file);
+        if (result && (result.url || result.secure_url)) {
+          return {
+            id: `file_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
+            url: result.secure_url || result.url,
+            name: file.name,
+            size: `${(file.size / (1024 * 1024)).toFixed(2)} MB`,
+            format: file.name.split('.').pop()?.toUpperCase() || 'FILE',
+            public_id: result.public_id || null
+          };
+        }
+        throw new Error(`Upload failed for ${file.name}`);
+      });
+
+      const newUploaded = await Promise.all(uploadPromises);
+      setUploadedFiles(prev => [...prev, ...newUploaded]);
+      if (showToast) showToast(`✓ ${newUploaded.length} artwork file(s) attached!`, 'success');
+      
+      // Auto-set title from first file if blank
+      if (!orderTitle.trim() && newUploaded[0]?.name) {
+        setOrderTitle(newUploaded[0].name.replace(/\.[^/.]+$/, ''));
+      }
+    } catch (err) {
+      console.error('Upload error:', err);
+      setUploadError(err.message || 'Error uploading artwork files.');
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
+  const handleRemoveFile = (fileId) => {
+    setUploadedFiles(prev => prev.filter(f => f.id !== fileId));
+  };
+
+  const handleToggleFormat = (fmt) => {
+    if (selectedFormats.includes(fmt)) {
+      if (selectedFormats.length > 1) {
+        setSelectedFormats(selectedFormats.filter(f => f !== fmt));
+      }
+    } else {
+      setSelectedFormats([...selectedFormats, fmt]);
+    }
+  };
+
+  const handleQuantityChange = (delta) => {
+    const minVal = selectedService === 'patch' ? 50 : 1;
+    const stepVal = selectedService === 'patch' ? 10 : 1;
+    const nextVal = Math.max(minVal, quantity + (delta * stepVal));
+    setQuantity(nextVal);
+    setQuantityInput(String(nextVal));
   };
 
   const handleApplyPromo = () => {
     if (!promoCodeInput || !promoCodeInput.trim()) return;
     const clean = promoCodeInput.trim().toUpperCase();
 
-    // 1. Identify active promotion from admin portal
     const livePromo = getActivePromotion(siteSettings?.promotions);
     const activeCode = (livePromo?.promoCode || siteSettings?.announcement?.promoCode || '').toUpperCase();
 
-    // 2. Check if active campaign defines granular service discounts
     const hasGranular = Boolean(
       (livePromo && livePromo.serviceDiscounts && Object.keys(livePromo.serviceDiscounts).length > 0) ||
       (siteSettings?.service_discounts && siteSettings?.service_discounts?.enabled !== false)
     );
 
-    // 3. Match active campaign code, announcement code, or studio keywords
     const isMatchingPromo = clean === activeCode ||
       clean === 'PROMO' ||
       clean === 'SALE' ||
@@ -484,145 +527,49 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
       return;
     }
 
-    // 4. Match explicit campaign from siteSettings.promotions
-    const matchedPromo = Array.isArray(siteSettings?.promotions)
-      ? siteSettings.promotions.find(p => p.status === 'active' && (p.promoCode?.toUpperCase() === clean || p.id === clean || p.name?.toUpperCase() === clean))
-      : null;
-
-    if (matchedPromo) {
-      setAppliedPromo({
-        code: clean,
-        isGranular: true,
-        promoObj: matchedPromo
-      });
-      const pct = getServiceDiscountPercent(selectedService, matchedPromo, siteSettings);
-      if (showToast) {
-        showToast(`Promo "${matchedPromo.name || clean}" applied! (${getServiceDisplayName(selectedService)}: ${pct}% OFF)`, 'success');
-      }
-      return;
-    }
-
-    // 5. Standalone custom percentage only if NO active granular campaign
-    const saveMatch = clean.match(/^SAVE(\d+)$/);
-    if (saveMatch && !hasGranular) {
-      const pct = parseInt(saveMatch[1], 10);
-      setAppliedPromo({ code: clean, isCustomPercent: true, discountPercent: pct });
-      if (showToast) showToast(`Coupon ${clean} applied! (-${pct}% OFF)`, 'success');
-      return;
-    }
-
-    // Fallback: apply active promo rates
-    setAppliedPromo({ code: clean, isGranular: true, promoObj: livePromo });
+    setAppliedPromo({
+      code: clean,
+      isGranular: true,
+      promoObj: livePromo
+    });
     const pct = getServiceDiscountPercent(selectedService, livePromo, siteSettings);
     if (showToast) showToast(`Promo ${clean} applied! (${getServiceDisplayName(selectedService)}: ${pct}% OFF)`, 'success');
   };
 
-  const handleQuantityChange = (delta) => {
-    const minVal = selectedService === 'patch' ? 50 : 1;
-    const stepVal = selectedService === 'patch' ? (quantity >= 100 ? 50 : 10) : 1;
-    const nextVal = Math.max(minVal, quantity + (delta * stepVal));
-    setQuantity(nextVal);
-    setQuantityInput(String(nextVal));
-  };
-
-  const handleQuantityInput = (val) => {
-    setQuantityInput(val);
-    const parsed = parseInt(val, 10);
-    const minVal = selectedService === 'patch' ? 50 : 1;
-    if (!isNaN(parsed) && parsed >= minVal) {
-      setQuantity(parsed);
-    } else if (!isNaN(parsed) && parsed > 0) {
-      setQuantity(parsed);
-    }
-  };
-
-  const handleQuantityBlur = () => {
-    const parsed = parseInt(quantityInput, 10);
-    const minVal = selectedService === 'patch' ? 50 : 1;
-    if (isNaN(parsed) || parsed < minVal) {
-      setQuantity(minVal);
-      setQuantityInput(String(minVal));
-      if (selectedService === 'patch' && showToast) {
-        showToast('Minimum order quantity for Custom Patches is 50 pieces.', 'warning');
+  // Step 1 Validation & Navigation
+  const handleProceedFromStep1 = () => {
+    if (uploadedFiles.length === 0) {
+      setUploadError('Please tap above to upload your artwork or reference image.');
+      setFormValidationError('Artwork file required to proceed.');
+      if (typeof window !== 'undefined') {
+        uploadAreaRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }
-    } else {
-      setQuantity(parsed);
-      setQuantityInput(String(parsed));
-    }
-  };
-
-  const handleSetPresetQuantity = (presetQty) => {
-    const minVal = selectedService === 'patch' ? 50 : 1;
-    const finalQty = Math.max(minVal, presetQty);
-    setQuantity(finalQty);
-    setQuantityInput(String(finalQty));
-  };
-
-  const handleMultipleFiles = async (e) => {
-    const rawFiles = Array.from(e.target.files || []);
-    if (rawFiles.length === 0) return;
-
-    const oversized = rawFiles.find(f => f.size > 50 * 1024 * 1024);
-    if (oversized) {
-      setUploadError(`"${oversized.name}" exceeds 50MB limit.`);
       return;
     }
-
     setUploadError(null);
-    setIsUploading(true);
-
-    try {
-      const uploadPromises = rawFiles.map(async (file) => {
-        const result = await uploadFileToCloudinaryFull(file);
-        if (result && (result.url || result.secure_url)) {
-          return {
-            id: `file_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
-            url: result.secure_url || result.url,
-            name: file.name,
-            size: `${(file.size / (1024 * 1024)).toFixed(2)} MB`,
-            format: file.name.split('.').pop()?.toUpperCase() || 'FILE',
-            public_id: result.public_id || null
-          };
-        }
-        throw new Error(`Upload failed for ${file.name}`);
-      });
-
-      const newUploaded = await Promise.all(uploadPromises);
-      setUploadedFiles(prev => [...prev, ...newUploaded]);
-      if (showToast) showToast(`✓ ${newUploaded.length} artwork file(s) attached successfully!`, 'success');
-    } catch (err) {
-      console.error('Multiple upload error:', err);
-      setUploadError(err.message || 'Error uploading artwork files.');
-    } finally {
-      setIsUploading(false);
-      if (fileInputRef.current) fileInputRef.current.value = '';
-    }
+    setFormValidationError(null);
+    setStep(2);
+    if (contentScrollRef.current) contentScrollRef.current.scrollTop = 0;
   };
 
-  const handleRemoveFile = (fileId) => {
-    setUploadedFiles(prev => prev.filter(f => f.id !== fileId));
+  // Step 2 Validation & Navigation
+  const handleProceedFromStep2 = () => {
+    setFormValidationError(null);
+    setStep(3);
+    if (contentScrollRef.current) contentScrollRef.current.scrollTop = 0;
   };
 
-  const handleToggleFormat = (fmt) => {
-    if (selectedFormats.includes(fmt)) {
-      if (selectedFormats.length > 1) {
-        setSelectedFormats(selectedFormats.filter(f => f !== fmt));
-      }
-    } else {
-      setSelectedFormats([...selectedFormats, fmt]);
-    }
-  };
-
+  // Guest authentication disclosure and smooth auto-scroll
   const revealGuestAuth = () => {
     setGuestAuthRequested(true);
-
+    setFormValidationError('Please enter your name and email to place your order.');
     if (typeof window !== 'undefined') {
       window.requestAnimationFrame(() => {
         guestAuthCardRef.current?.scrollIntoView({
           behavior: 'smooth',
           block: 'center'
         });
-        setTimeout(() => guestEmailInputRef.current?.focus(), 350);
+        setTimeout(() => guestEmailInputRef.current?.focus(), 300);
       });
     }
   };
@@ -653,6 +600,7 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
     }
   };
 
+  // Final Order Submission
   const handleSubmitOrder = async (authenticatedOverride = null) => {
     if (selectedService === 'patch' && quantity < 50) {
       if (showToast) showToast('Minimum order requirement for Custom Patches is 50 pieces.', 'error');
@@ -664,11 +612,10 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
 
     if (uploadedFiles.length === 0) {
       setUploadError('Please attach at least one artwork or reference file.');
-      setStep(3);
+      setStep(1);
       return;
     }
 
-    // 1. Ensure user is authenticated or authenticate them
     let clientEmail = (authenticatedOverride?.email || authUser?.email || currentUser?.email || '').toLowerCase().trim();
     let clientName = authenticatedOverride?.name || authUser?.user_metadata?.full_name || authUser?.name || currentUser?.name || 'Studio Client';
     const hasAuthenticatedOverride = Boolean(authenticatedOverride?.email);
@@ -714,13 +661,13 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
           ? 'Custom Patches'
           : 'Embroidery Digitizing';
 
-      const derivedTitle = selectedService === 'patch'
+      const derivedTitle = orderTitle.trim() || (selectedService === 'patch'
         ? `${patchStyle} Patches (${quantity} Pcs)`
-        : `${firstFileName} - ${cleanService} (Qty: ${quantity})`;
+        : `${firstFileName} - ${cleanService}`);
 
       const finalClientEmail = (clientEmail || authUser?.email || currentUser?.email || '').toLowerCase().trim();
       if (!finalClientEmail) {
-        if (showToast) showToast('Your authenticated account email could not be verified. Please sign in again before placing the order.', 'error');
+        if (showToast) showToast('Account email could not be verified. Please sign in again.', 'error');
         return;
       }
       const finalClientName = clientName || authUser?.user_metadata?.full_name || authUser?.name || currentUser?.name || finalClientEmail.split('@')[0];
@@ -730,7 +677,7 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
         title: derivedTitle,
         type: selectedService,
         serviceCategory: cleanService,
-        package_name: activePkg?.title,
+        package_name: activePkg?.title || `${cleanService} Standard`,
         package_tier: activePkg?.badge || 'STANDARD',
         quantity: quantity,
         price: totalPrice,
@@ -805,8 +752,8 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
       if (typeof onOrderCreated === 'function') {
         onOrderCreated(resultingOrder);
       }
-      setStep(6);
-      if (showToast) showToast('Order successfully generated! Complete payment to start production.', 'success');
+      setStep(4); // Success confirmation step
+      if (showToast) showToast('Order successfully generated! Complete payment to begin production.', 'success');
     } catch (err) {
       console.error('Order creation error:', err);
       if (showToast) showToast('Failed to create order: ' + (err.message || 'Unknown error'), 'error');
@@ -817,7 +764,7 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
 
   const handlePayNow = () => {
     if (createdOrderObj) {
-      const priceVal = parseFloat(createdOrderObj.totalPrice || createdOrderObj.price || totalPrice || 15);
+      const priceVal = parseFloat(createdOrderObj.totalPrice || createdOrderObj.price || totalPrice || 10);
       setCheckoutSession({
         amount: priceVal,
         price: priceVal,
@@ -834,43 +781,38 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
       if (typeof onOrderCreated === 'function') {
         onOrderCreated(createdOrderObj);
       }
-      onClose();
+      handleSafeClose();
     }
   };
 
   return (
     <div
+      role="dialog"
+      aria-modal="true"
       style={{
         position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        width: '100vw',
-        height: '100dvh',
-        background: 'rgba(15, 23, 42, 0.82)',
+        inset: 0,
+        zIndex: 99990,
+        background: 'rgba(15, 23, 42, 0.78)',
         backdropFilter: 'blur(6px)',
-        zIndex: 1000005,
         display: 'flex',
         alignItems: 'flex-end',
         justifyContent: 'center',
-        padding: 0,
-        margin: 0
+        padding: 0
       }}
-      onClick={onClose}
+      onClick={handleSafeClose}
     >
       <div
-        className="mobile-order-dialog modal-content"
         style={{
-          background: isDark ? 'var(--color-surface, #111827)' : '#ffffff',
+          background: isDark ? 'var(--color-surface, #0f172a)' : '#ffffff',
+          color: isDark ? '#f8fafc' : '#0f172a',
           width: '100%',
-          maxWidth: '560px',
-          height: '92dvh',
-          maxHeight: '92dvh',
+          maxWidth: '540px',
+          maxHeight: '94vh',
           borderRadius: '24px 24px 0 0',
           display: 'flex',
           flexDirection: 'column',
-          boxShadow: '0 -10px 40px rgba(0, 0, 0, 0.35)',
+          boxShadow: '0 -12px 48px rgba(0, 0, 0, 0.35)',
           overflow: 'hidden',
           animation: 'slideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
           fontFamily: "'Inter', system-ui, -apple-system, sans-serif",
@@ -878,1740 +820,1354 @@ export const MobileSimpleOrderModal = ({ isOpen, onClose, defaultService = 'embr
         }}
         onClick={(e) => e.stopPropagation()}
       >
+        {/* TOP PULL BAR */}
+        <div style={{ padding: '8px 0 2px', display: 'flex', justifyContent: 'center' }}>
+          <div style={{ width: '40px', height: '4px', background: isDark ? '#334155' : '#cbd5e1', borderRadius: '999px' }} />
+        </div>
 
-        {/* TOP MODAL HEADER */}
+        {/* MODAL HEADER */}
         <div style={{
-          padding: '1rem 1.25rem',
-          borderBottom: isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid #e2e8f0',
+          padding: '0.65rem 1.15rem 0.75rem',
+          borderBottom: isDark ? '1px solid #1e293b' : '1px solid #e2e8f0',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          background: isDark ? 'var(--color-surface, #111827)' : '#ffffff'
+          background: isDark ? 'var(--color-surface, #0f172a)' : '#ffffff'
         }}>
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
-              <span style={{
-                background: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
-                color: '#ffffff',
-                fontSize: '0.65rem',
-                fontWeight: 900,
-                padding: '0.18rem 0.5rem',
-                borderRadius: '6px',
-                letterSpacing: '0.05em'
-              }}>
-                STEP {step} OF 5
-              </span>
-              <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 900, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a' }}>
-                {step === 1 && 'Choose Studio Service'}
-                {step === 2 && 'Select Package & Quantity'}
-                {step === 3 && 'Upload Artwork & Details'}
-                {step === 4 && 'Technical Specifications'}
-                {step === 5 && 'Review & Confirm Order'}
-                {step === 6 && 'Order Successfully Placed!'}
-              </h3>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+            {step > 1 && step < 4 && (
+              <button
+                type="button"
+                onClick={() => setStep(s => s - 1)}
+                style={{
+                  background: isDark ? '#1e293b' : '#f1f5f9',
+                  border: 'none',
+                  borderRadius: '10px',
+                  width: '36px',
+                  height: '36px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: isDark ? '#f8fafc' : '#0f172a',
+                  cursor: 'pointer'
+                }}
+                aria-label="Previous Step"
+              >
+                <ArrowLeft size={18} />
+              </button>
+            )}
+
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                <span style={{
+                  background: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
+                  color: '#ffffff',
+                  fontSize: '0.65rem',
+                  fontWeight: 900,
+                  padding: '0.15rem 0.5rem',
+                  borderRadius: '6px',
+                  letterSpacing: '0.04em'
+                }}>
+                  {step < 4 ? `STEP ${step} OF 3` : 'CONFIRMED'}
+                </span>
+                <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 800 }}>
+                  {step === 1 && 'Service & Artwork'}
+                  {step === 2 && 'Placement & Size'}
+                  {step === 3 && 'Review & Submit'}
+                  {step === 4 && 'Order Placed!'}
+                </h3>
+              </div>
+              <p style={{ margin: '0.15rem 0 0', fontSize: '0.74rem', color: isDark ? '#94a3b8' : '#64748b' }}>
+                {step === 1 && 'Choose service and tap to attach reference artwork.'}
+                {step === 2 && 'Select placement chips and preferred dimensions.'}
+                {step === 3 && 'Instant dispatch with live turnaround & transparent pricing.'}
+                {step === 4 && 'Your order is booked into our live production queue.'}
+              </p>
             </div>
-            <p style={{ margin: '0.15rem 0 0', fontSize: '0.74rem', color: isDark ? 'var(--color-text-secondary, #cbd5e1)' : '#475569' }}>
-              {step === 1 && 'Select from our 3 primary professional digitizing services.'}
-              {step === 2 && 'Select transparent studio packages & customize quantity.'}
-              {step === 3 && 'Attach multiple reference files, artwork & special instructions.'}
-              {step === 4 && 'Configure dimensions, formats, placement & express speed.'}
-              {step === 5 && 'Review live pricing breakdown before instant dispatch.'}
-              {step === 6 && 'Your order has been recorded into the live system.'}
-            </p>
           </div>
 
           <button
             type="button"
-            onClick={onClose}
+            onClick={handleSafeClose}
             style={{
-              background: isDark ? 'var(--color-subtle, #1e293b)' : '#f1f5f9',
+              background: isDark ? '#1e293b' : '#f1f5f9',
               border: 'none',
               borderRadius: '50%',
-              width: '32px',
-              height: '32px',
+              width: '36px',
+              height: '36px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a',
+              color: isDark ? '#f8fafc' : '#0f172a',
               cursor: 'pointer'
             }}
+            aria-label="Close modal"
           >
             <X size={18} />
           </button>
         </div>
 
-        {/* STEP PROGRESS BAR */}
-        <div style={{ width: '100%', height: '4px', background: isDark ? 'var(--color-border, #334155)' : '#f1f5f9' }}>
+        {/* 3-SEGMENT PROGRESS BAR */}
+        {step < 4 && (
+          <div style={{ display: 'flex', gap: '4px', padding: '0.35rem 1.15rem 0.2rem', background: isDark ? '#0b1120' : '#f8fafc' }}>
+            {[1, 2, 3].map(i => (
+              <div
+                key={i}
+                style={{
+                  flex: 1,
+                  height: '4px',
+                  borderRadius: '999px',
+                  background: step >= i
+                    ? 'linear-gradient(90deg, #059669 0%, #10b981 100%)'
+                    : isDark ? '#1e293b' : '#e2e8f0',
+                  transition: 'background 0.3s ease'
+                }}
+              />
+            ))}
+          </div>
+        )}
+
+        {/* INLINE VALIDATION BANNER */}
+        {formValidationError && (
           <div style={{
-            height: '100%',
-            width: `${Math.min(100, (step / 5) * 100)}%`,
-            background: 'linear-gradient(90deg, #059669 0%, #10b981 100%)',
-            transition: 'width 0.3s ease'
-          }} />
-        </div>
+            margin: '0.5rem 1.15rem 0',
+            padding: '0.65rem 0.85rem',
+            borderRadius: '10px',
+            background: 'rgba(239, 68, 68, 0.12)',
+            border: '1px solid rgba(239, 68, 68, 0.4)',
+            color: '#ef4444',
+            fontSize: '0.8rem',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem'
+          }}>
+            <AlertCircle size={16} style={{ flexShrink: 0 }} />
+            <span>{formValidationError}</span>
+          </div>
+        )}
 
-        {/* BODY CONTENT AREA */}
-        <div style={{
-          flex: '1 1 auto',
-          overflowY: 'auto',
-          minHeight: 0,
-          WebkitOverflowScrolling: 'touch',
-          padding: '1.15rem 1.25rem 1.75rem',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '1rem',
-          background: isDark ? 'var(--color-surface, #111827)' : '#ffffff'
-        }}>
-
-          {/* =========================================================================
-              STEP 1: SELECT 1 OF 3 CORE SERVICES (HIGH CONTRAST & CLEAR LABELS)
-              ========================================================================= */}
+        {/* SCROLLABLE FORM BODY */}
+        <div
+          ref={contentScrollRef}
+          style={{
+            flex: 1,
+            overflowY: 'auto',
+            padding: '1rem 1.15rem 7rem 1.15rem',
+            WebkitOverflowScrolling: 'touch'
+          }}
+        >
+          {/* ================= STEP 1: SERVICE & ARTWORK ================= */}
           {step === 1 && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              <div style={{ textAlign: 'center', marginBottom: '0.2rem' }}>
-                <span style={{ fontSize: '0.72rem', fontWeight: 900, color: isDark ? '#34d399' : '#047857', background: isDark ? 'rgba(5, 150, 105, 0.15)' : '#ecfdf5', padding: '0.2rem 0.65rem', borderRadius: '999px', border: isDark ? '1px solid rgba(5, 150, 105, 0.3)' : '1px solid #a7f3d0', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                  Step 1: Choose Service
-                </span>
-                <h3 style={{ margin: '0.45rem 0 0.15rem', fontSize: '1.25rem', fontWeight: 900, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a' }}>
-                  What would you like created?
-                </h3>
-                <p style={{ margin: 0, fontSize: '0.8rem', color: isDark ? 'var(--color-text-secondary, #cbd5e1)' : '#475569' }}>
-                  Select a professional service below, then tap Continue to configure
-                </p>
-              </div>
-
-              {/* The 3 Core Services Cards */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.9rem' }}>
-                {(() => {
-                  const embPromoDiscount = getServiceDiscountPercent('embroidery', appliedPromo?.promoObj || activePromotion, siteSettings);
-                  const vecPromoDiscount = getServiceDiscountPercent('vector', appliedPromo?.promoObj || activePromotion, siteSettings);
-                  const patchPromoDiscount = getServiceDiscountPercent('patch', appliedPromo?.promoObj || activePromotion, siteSettings);
-
-                  return (
-                    <>
-                      {/* 1. Embroidery Digitizing */}
-                      <div
-                        onClick={() => {
-                          handleSelectService('embroidery');
-                          setStep(2);
-                        }}
-                        style={{
-                          border: selectedService === 'embroidery' ? '2.5px solid #059669' : (isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid #cbd5e1'),
-                          background: selectedService === 'embroidery' ? (isDark ? 'rgba(5, 150, 105, 0.15)' : '#f0fdf4') : (isDark ? 'var(--color-subtle, #1e293b)' : '#ffffff'),
-                          borderRadius: '18px',
-                          padding: '1.15rem',
-                          cursor: 'pointer',
-                          boxShadow: selectedService === 'embroidery' ? '0 4px 20px rgba(5, 150, 105, 0.18)' : '0 2px 8px rgba(0, 0, 0, 0.03)',
-                          display: 'flex',
-                          gap: '0.95rem',
-                          alignItems: 'center',
-                          transition: 'all 0.15s ease',
-                          position: 'relative'
-                        }}
-                      >
-                        {embPromoDiscount > 0 && (
-                          <div style={{
-                            position: 'absolute',
-                            top: '10px',
-                            right: '10px',
-                            background: '#059669',
-                            color: '#ffffff',
-                            fontSize: '0.66rem',
-                            fontWeight: 900,
-                            padding: '0.15rem 0.45rem',
-                            borderRadius: '999px',
-                            boxShadow: '0 2px 6px rgba(5, 150, 105, 0.35)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '0.2rem',
-                            letterSpacing: '0.02em'
-                          }}>
-                            🏷️ -{embPromoDiscount}% OFF
-                          </div>
-                        )}
-
-                        <div style={{
-                          width: '56px',
-                          height: '56px',
-                          borderRadius: '16px',
-                          background: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
-                          color: '#ffffff',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          flexShrink: 0,
-                          boxShadow: '0 4px 14px rgba(5, 150, 105, 0.35)'
-                        }}>
-                          <Layers size={30} strokeWidth={2.2} />
-                        </div>
-
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <h4 style={{ margin: 0, fontSize: '1.08rem', fontWeight: 900, color: selectedService === 'embroidery' ? (isDark ? '#34d399' : '#064e3b') : (isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a'), letterSpacing: '-0.01em' }}>
-                              Embroidery Digitizing
-                            </h4>
-                            <div style={{ textAlign: 'right' }}>
-                              {embPromoDiscount > 0 ? (
-                                <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.25rem', justifyContent: 'flex-end' }}>
-                                  <span style={{ fontSize: '0.72rem', color: isDark ? 'var(--color-text-muted, #94a3b8)' : '#94a3b8', textDecoration: 'line-through', fontWeight: 600 }}>
-                                    $10.00
-                                  </span>
-                                  <span style={{ fontSize: '0.95rem', fontWeight: 900, color: isDark ? '#34d399' : '#047857', background: isDark ? 'rgba(5, 150, 105, 0.2)' : '#ecfdf5', padding: '0.15rem 0.5rem', borderRadius: '6px', border: isDark ? '1px solid rgba(5, 150, 105, 0.4)' : '1px solid #86efac' }}>
-                                    From ${(10 * (1 - embPromoDiscount / 100)).toFixed(2)}
-                                  </span>
-                                </div>
-                              ) : (
-                                <span style={{ fontSize: '0.95rem', fontWeight: 900, color: isDark ? '#34d399' : '#047857', background: isDark ? 'rgba(5, 150, 105, 0.2)' : '#ecfdf5', padding: '0.15rem 0.5rem', borderRadius: '6px', border: isDark ? '1px solid rgba(5, 150, 105, 0.4)' : '1px solid #86efac' }}>
-                                  From $10.00
-                                </span>
-                              )}
-                            </div>
-                          </div>
-
-                          <p style={{ margin: '0.25rem 0 0', fontSize: '0.78rem', color: isDark ? 'var(--color-text-secondary, #cbd5e1)' : '#475569', lineHeight: 1.35, fontWeight: 500 }}>
-                            Commercial stitch files for Left Chest, Caps, 3D Puff Foam & Jacket Backs (.DST, .PES, .EMB)
-                          </p>
-
-                          <div style={{ display: 'flex', gap: '0.4rem', marginTop: '0.45rem', alignItems: 'center' }}>
-                            <span style={{ fontSize: '0.68rem', fontWeight: 900, color: isDark ? '#34d399' : '#047857', background: isDark ? 'rgba(5, 150, 105, 0.2)' : '#ecfdf5', padding: '0.12rem 0.45rem', borderRadius: '4px', border: isDark ? '1px solid rgba(5, 150, 105, 0.4)' : '1px solid #86efac' }}>
-                              ⚡ 4–12H Delivery
-                            </span>
-                            <span style={{ fontSize: '0.68rem', color: isDark ? '#a7f3d0' : '#065f46', fontWeight: 700 }}>
-                              Machine Tested
-                            </span>
-                            <span style={{ fontSize: '0.78rem', color: isDark ? '#34d399' : '#047857', fontWeight: 900, marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '0.15rem' }}>
-                              {selectedService === 'embroidery' ? '✓ Selected' : 'Select'} <ArrowRight size={14} />
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* 2. Vector Art Tracing */}
-                      <div
-                        onClick={() => {
-                          handleSelectService('vector');
-                          setStep(2);
-                        }}
-                        style={{
-                          border: selectedService === 'vector' ? '2.5px solid #ea580c' : (isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid #cbd5e1'),
-                          background: selectedService === 'vector' ? (isDark ? 'rgba(234, 88, 12, 0.15)' : '#fff7ed') : (isDark ? 'var(--color-subtle, #1e293b)' : '#ffffff'),
-                          borderRadius: '18px',
-                          padding: '1.15rem',
-                          cursor: 'pointer',
-                          boxShadow: selectedService === 'vector' ? '0 4px 20px rgba(234, 88, 12, 0.18)' : '0 2px 8px rgba(0, 0, 0, 0.03)',
-                          display: 'flex',
-                          gap: '0.95rem',
-                          alignItems: 'center',
-                          transition: 'all 0.15s ease',
-                          position: 'relative'
-                        }}
-                      >
-                        {vecPromoDiscount > 0 && (
-                          <div style={{
-                            position: 'absolute',
-                            top: '10px',
-                            right: '10px',
-                            background: '#ea580c',
-                            color: '#ffffff',
-                            fontSize: '0.66rem',
-                            fontWeight: 900,
-                            padding: '0.15rem 0.45rem',
-                            borderRadius: '999px',
-                            boxShadow: '0 2px 6px rgba(234, 88, 12, 0.35)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '0.2rem',
-                            letterSpacing: '0.02em'
-                          }}>
-                            🏷️ -{vecPromoDiscount}% OFF
-                          </div>
-                        )}
-
-                        <div style={{
-                          width: '56px',
-                          height: '56px',
-                          borderRadius: '16px',
-                          background: 'linear-gradient(135deg, #ea580c 0%, #c2410c 100%)',
-                          color: '#ffffff',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          flexShrink: 0,
-                          boxShadow: '0 4px 14px rgba(234, 88, 12, 0.35)'
-                        }}>
-                          <PenTool size={30} strokeWidth={2.2} />
-                        </div>
-
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <h4 style={{ margin: 0, fontSize: '1.08rem', fontWeight: 900, color: selectedService === 'vector' ? (isDark ? '#fb923c' : '#7c2d12') : (isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a'), letterSpacing: '-0.01em' }}>
-                              Vector Art Tracing
-                            </h4>
-                            <div style={{ textAlign: 'right' }}>
-                              {vecPromoDiscount > 0 ? (
-                                <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.25rem', justifyContent: 'flex-end' }}>
-                                  <span style={{ fontSize: '0.72rem', color: isDark ? 'var(--color-text-muted, #94a3b8)' : '#94a3b8', textDecoration: 'line-through', fontWeight: 600 }}>
-                                    $15.00
-                                  </span>
-                                  <span style={{ fontSize: '0.95rem', fontWeight: 900, color: isDark ? '#fb923c' : '#ea580c', background: isDark ? 'rgba(234, 88, 12, 0.2)' : '#fff7ed', padding: '0.15rem 0.5rem', borderRadius: '6px', border: isDark ? '1px solid rgba(234, 88, 12, 0.4)' : '1px solid #fdba74' }}>
-                                    From ${(15 * (1 - vecPromoDiscount / 100)).toFixed(2)}
-                                  </span>
-                                </div>
-                              ) : (
-                                <span style={{ fontSize: '0.95rem', fontWeight: 900, color: isDark ? '#fb923c' : '#ea580c', background: isDark ? 'rgba(234, 88, 12, 0.2)' : '#fff7ed', padding: '0.15rem 0.5rem', borderRadius: '6px', border: isDark ? '1px solid rgba(234, 88, 12, 0.4)' : '1px solid #fdba74' }}>
-                                  From $15.00
-                                </span>
-                              )}
-                            </div>
-                          </div>
-
-                          <p style={{ margin: '0.25rem 0 0', fontSize: '0.78rem', color: isDark ? 'var(--color-text-secondary, #cbd5e1)' : '#475569', lineHeight: 1.35, fontWeight: 500 }}>
-                            Logo Redraw, Screen Print Color Separation & Raster-to-Vector (.AI, .EPS, .SVG, .PDF)
-                          </p>
-
-                          <div style={{ display: 'flex', gap: '0.4rem', marginTop: '0.45rem', alignItems: 'center' }}>
-                            <span style={{ fontSize: '0.68rem', fontWeight: 900, color: isDark ? '#fb923c' : '#c2410c', background: isDark ? 'rgba(234, 88, 12, 0.2)' : '#fff7ed', padding: '0.12rem 0.45rem', borderRadius: '4px', border: isDark ? '1px solid rgba(234, 88, 12, 0.4)' : '1px solid #fdba74' }}>
-                              ⚡ 6–12H Delivery
-                            </span>
-                            <span style={{ fontSize: '0.68rem', color: isDark ? '#fed7aa' : '#9a3412', fontWeight: 700 }}>
-                              Pantone PMS Match
-                            </span>
-                            <span style={{ fontSize: '0.78rem', color: isDark ? '#fb923c' : '#ea580c', fontWeight: 900, marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '0.15rem' }}>
-                              {selectedService === 'vector' ? '✓ Selected' : 'Select'} <ArrowRight size={14} />
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* 3. Custom Physical Patches */}
-                      <div
-                        onClick={() => {
-                          handleSelectService('patch');
-                          setStep(2);
-                        }}
-                        style={{
-                          border: selectedService === 'patch' ? '2.5px solid #0284c7' : (isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid #cbd5e1'),
-                          background: selectedService === 'patch' ? (isDark ? 'rgba(2, 132, 199, 0.15)' : '#f0f9ff') : (isDark ? 'var(--color-subtle, #1e293b)' : '#ffffff'),
-                          borderRadius: '18px',
-                          padding: '1.15rem',
-                          cursor: 'pointer',
-                          boxShadow: selectedService === 'patch' ? '0 4px 20px rgba(2, 132, 199, 0.18)' : '0 2px 8px rgba(0, 0, 0, 0.03)',
-                          display: 'flex',
-                          gap: '0.95rem',
-                          alignItems: 'center',
-                          transition: 'all 0.15s ease',
-                          position: 'relative'
-                        }}
-                      >
-                        {patchPromoDiscount > 0 && (
-                          <div style={{
-                            position: 'absolute',
-                            top: '10px',
-                            right: '10px',
-                            background: '#0284c7',
-                            color: '#ffffff',
-                            fontSize: '0.66rem',
-                            fontWeight: 900,
-                            padding: '0.15rem 0.45rem',
-                            borderRadius: '999px',
-                            boxShadow: '0 2px 6px rgba(2, 132, 199, 0.35)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '0.2rem',
-                            letterSpacing: '0.02em'
-                          }}>
-                            🏷️ -{patchPromoDiscount}% OFF
-                          </div>
-                        )}
-
-                        <div style={{
-                          width: '56px',
-                          height: '56px',
-                          borderRadius: '16px',
-                          background: 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)',
-                          color: '#ffffff',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          flexShrink: 0,
-                          boxShadow: '0 4px 14px rgba(2, 132, 199, 0.35)'
-                        }}>
-                          <Package size={30} strokeWidth={2.2} />
-                        </div>
-
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <h4 style={{ margin: 0, fontSize: '1.08rem', fontWeight: 900, color: selectedService === 'patch' ? (isDark ? '#38bdf8' : '#0c4a6e') : (isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a'), letterSpacing: '-0.01em' }}>
-                              Custom Patches
-                            </h4>
-                            <div style={{ textAlign: 'right' }}>
-                              {patchPromoDiscount > 0 ? (
-                                <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.25rem', justifyContent: 'flex-end' }}>
-                                  <span style={{ fontSize: '0.72rem', color: isDark ? 'var(--color-text-muted, #94a3b8)' : '#94a3b8', textDecoration: 'line-through', fontWeight: 600 }}>
-                                    $3.50
-                                  </span>
-                                  <span style={{ fontSize: '0.85rem', fontWeight: 900, color: isDark ? '#38bdf8' : '#0284c7', background: isDark ? 'rgba(2, 132, 199, 0.2)' : '#f0f9ff', padding: '0.15rem 0.5rem', borderRadius: '6px', border: isDark ? '1px solid rgba(2, 132, 199, 0.4)' : '1px solid #7dd3fc' }}>
-                                    Starts ${(3.50 * (1 - patchPromoDiscount / 100)).toFixed(2)} / pc
-                                  </span>
-                                </div>
-                              ) : (
-                                <span style={{ fontSize: '0.85rem', fontWeight: 900, color: isDark ? '#38bdf8' : '#0284c7', background: isDark ? 'rgba(2, 132, 199, 0.2)' : '#f0f9ff', padding: '0.15rem 0.5rem', borderRadius: '6px', border: isDark ? '1px solid rgba(2, 132, 199, 0.4)' : '1px solid #7dd3fc' }}>
-                                  Starts $3.50 / pc
-                                </span>
-                              )}
-                            </div>
-                          </div>
-
-                          <p style={{ margin: '0.25rem 0 0', fontSize: '0.78rem', color: isDark ? 'var(--color-text-secondary, #cbd5e1)' : '#475569', lineHeight: 1.35, fontWeight: 500 }}>
-                            Embroidered, 3D Molded PVC Rubber, Woven & Leather Patches with physical shipment
-                          </p>
-
-                          <div style={{ display: 'flex', gap: '0.4rem', marginTop: '0.45rem', alignItems: 'center' }}>
-                            <span style={{ fontSize: '0.68rem', fontWeight: 900, color: isDark ? '#38bdf8' : '#0369a1', background: isDark ? 'rgba(2, 132, 199, 0.2)' : '#f0f9ff', padding: '0.12rem 0.45rem', borderRadius: '4px', border: isDark ? '1px solid rgba(2, 132, 199, 0.4)' : '1px solid #7dd3fc' }}>
-                              📦 3–7 Days Delivery
-                            </span>
-                            <span style={{ fontSize: '0.68rem', color: isDark ? '#bae6fd' : '#075985', fontWeight: 700 }}>
-                              50 Pcs Min • Starts $3.50 / pc
-                            </span>
-                            <span style={{ fontSize: '0.78rem', color: isDark ? '#38bdf8' : '#0284c7', fontWeight: 900, marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '0.15rem' }}>
-                              {selectedService === 'patch' ? '✓ Selected' : 'Select'} <ArrowRight size={14} />
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    </>
-                  );
-                })()}
-              </div>
-            </div>
-          )}
-
-          {/* =========================================================================
-              STEP 2: SELECT PACKAGE TIER & QUANTITY
-              ========================================================================= */}
-          {step === 2 && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.15rem' }}>
-
-              {/* Category Switcher Tabs */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.4rem', background: isDark ? 'var(--color-subtle, #1e293b)' : '#f8fafc', padding: '0.35rem', borderRadius: '12px', border: isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid #cbd5e1' }}>
-                {SERVICE_TABS.map(tab => {
-                  const isSelected = selectedService === tab.id;
-                  return (
-                    <button
-                      key={tab.id}
-                      type="button"
-                      onClick={() => handleSelectService(tab.id)}
-                      style={{
-                        padding: '0.6rem 0.35rem',
-                        borderRadius: '9px',
-                        border: isSelected ? '1.5px solid #059669' : '1px solid transparent',
-                        background: isSelected ? (isDark ? 'var(--color-surface, #111827)' : '#ffffff') : 'transparent',
-                        color: isSelected ? (isDark ? '#34d399' : '#047857') : (isDark ? 'var(--color-text-secondary, #cbd5e1)' : '#475569'),
-                        fontWeight: isSelected ? 900 : 700,
-                        fontSize: '0.8rem',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '0.3rem',
-                        cursor: 'pointer',
-                        boxShadow: isSelected ? '0 2px 8px rgba(0,0,0,0.06)' : 'none',
-                        transition: 'all 0.15s ease'
-                      }}
-                    >
-                      <span>{tab.label}</span>
-                    </button>
-                  );
-                })}
-              </div>
-
-              {/* QUANTITY SELECTOR WIDGET */}
-              <div style={{
-                background: isDark ? 'var(--color-subtle, #1e293b)' : '#f8fafc',
-                border: isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid #cbd5e1',
-                borderRadius: '16px',
-                padding: '0.95rem 1rem',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '0.65rem'
-              }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <div>
-                    <span style={{ fontSize: '0.82rem', fontWeight: 900, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a' }}>
-                      {selectedService === 'patch' ? 'Patch Order Quantity (Pcs)' : 'Design Order Quantity'}
-                    </span>
-                    <span style={{ fontSize: '0.7rem', color: isDark ? 'var(--color-text-muted, #94a3b8)' : '#64748b', display: 'block' }}>
-                      {selectedService === 'patch' ? 'Minimum 50 pcs • Factory wholesale pricing' : 'Add multiple designs to get volume discounts'}
-                    </span>
-                  </div>
-
-                  {/* Quantity Stepper */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', background: isDark ? 'var(--color-surface, #111827)' : '#ffffff', border: isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid #cbd5e1', borderRadius: '10px', padding: '0.2rem' }}>
-                    <button
-                      type="button"
-                      disabled={selectedService === 'patch' && quantity <= 50}
-                      onClick={() => handleQuantityChange(-1)}
-                      style={{
-                        width: '32px',
-                        height: '32px',
-                        borderRadius: '8px',
-                        border: 'none',
-                        background: isDark ? 'var(--color-border, #334155)' : '#f1f5f9',
-                        color: (selectedService === 'patch' && quantity <= 50) ? '#94a3b8' : (isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a'),
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        cursor: (selectedService === 'patch' && quantity <= 50) ? 'not-allowed' : 'pointer',
-                        fontWeight: 900
-                      }}
-                    >
-                      <Minus size={16} />
-                    </button>
-
-                    <input
-                      type="number"
-                      value={quantityInput}
-                      onChange={(e) => handleQuantityInput(e.target.value)}
-                      onBlur={handleQuantityBlur}
-                      style={{
-                        width: '54px',
-                        textAlign: 'center',
-                        fontWeight: 900,
-                        fontSize: '0.95rem',
-                        color: (selectedService === 'patch' && quantity < 50) ? '#dc2626' : (isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a'),
-                        border: 'none',
-                        background: 'transparent',
-                        outline: 'none'
-                      }}
-                    />
-
-                    <button
-                      type="button"
-                      onClick={() => handleQuantityChange(1)}
-                      style={{
-                        width: '32px',
-                        height: '32px',
-                        borderRadius: '8px',
-                        border: 'none',
-                        background: isDark ? 'rgba(5, 150, 105, 0.25)' : '#ecfdf5',
-                        color: isDark ? '#34d399' : '#047857',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        cursor: 'pointer',
-                        fontWeight: 900
-                      }}
-                    >
-                      <Plus size={16} />
-                    </button>
-                  </div>
-                </div>
-
-                {/* Warning notice if quantity is less than 50 for patches */}
-                {selectedService === 'patch' && (quantity < 50 || parseInt(quantityInput, 10) < 50) && (
-                  <div style={{
-                    background: '#fef2f2',
-                    border: '1px solid #fecaca',
-                    borderRadius: '8px',
-                    padding: '0.4rem 0.65rem',
-                    color: '#b91c1c',
-                    fontSize: '0.74rem',
-                    fontWeight: 800,
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.35rem'
-                  }}>
-                    ⚠️ Minimum order quantity for Custom Patches is 50 pcs.
-                  </div>
-                )}
-
-                {/* Quick Quantity Chips */}
-                <div style={{ display: 'flex', gap: '0.35rem', overflowX: 'auto', paddingBottom: '0.2rem' }}>
-                  {(selectedService === 'patch'
-                    ? [50, 100, 250, 500, 1000, 2500]
-                    : [1, 2, 3, 5, 10, 25]
-                  ).map(preset => (
-                    <button
-                      key={preset}
-                      type="button"
-                      onClick={() => handleSetPresetQuantity(preset)}
-                      style={{
-                        padding: '0.25rem 0.65rem',
-                        borderRadius: '6px',
-                        border: quantity === preset ? '1.5px solid #059669' : (isDark ? '1px solid var(--color-border, #334155)' : '1px solid #cbd5e1'),
-                        background: quantity === preset ? (isDark ? 'rgba(5, 150, 105, 0.25)' : '#ecfdf5') : (isDark ? 'var(--color-surface, #111827)' : '#ffffff'),
-                        color: quantity === preset ? (isDark ? '#34d399' : '#047857') : (isDark ? 'var(--color-text-secondary, #cbd5e1)' : '#475569'),
-                        fontWeight: 800,
-                        fontSize: '0.75rem',
-                        cursor: 'pointer',
-                        flexShrink: 0
-                      }}
-                    >
-                      {preset} {selectedService === 'patch' ? 'pcs' : (preset === 1 ? 'item' : 'items')}
-                    </button>
-                  ))}
-                </div>
-
-                {/* Real-time Dynamic Price Breakdown Banner */}
-                <div style={{
-                  background: (volumeDiscountAmount + promoDiscountAmount) > 0
-                    ? (isDark ? 'rgba(5, 150, 105, 0.12)' : '#f0fdf4')
-                    : (isDark ? 'var(--color-surface, #111827)' : '#ffffff'),
-                  borderRadius: '10px',
-                  border: (volumeDiscountAmount + promoDiscountAmount) > 0
-                    ? (isDark ? '1.5px solid rgba(5, 150, 105, 0.45)' : '1.5px solid #a7f3d0')
-                    : (isDark ? '1px solid var(--color-border, #334155)' : '1px solid #e2e8f0'),
-                  padding: '0.6rem 0.85rem',
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  fontSize: '0.78rem',
-                  flexWrap: 'wrap',
-                  gap: '0.4rem'
-                }}>
-                  <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '0.35rem' }}>
-                    <span style={{ color: isDark ? 'var(--color-text-muted, #94a3b8)' : '#64748b' }}>Rate: </span>
-                    <strong style={{ color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a' }}>${unitPrice.toFixed(2)}</strong> × <strong style={{ color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a' }}>{quantity} {selectedService === 'patch' ? 'pcs' : 'qty'}</strong>
-                    {volumeDiscountPercent > 0 && (
-                      <span style={{ color: isDark ? '#34d399' : '#059669', fontWeight: 900, background: isDark ? 'rgba(5, 150, 105, 0.2)' : '#ecfdf5', padding: '0.08rem 0.35rem', borderRadius: '4px', border: isDark ? '1px solid rgba(5, 150, 105, 0.35)' : '1px solid #86efac', fontSize: '0.72rem' }}>
-                        -{volumeDiscountPercent}% Vol (-${volumeDiscountAmount.toFixed(2)})
-                      </span>
-                    )}
-                    {promoDiscountPercent > 0 && (
-                      <span style={{ color: isDark ? '#34d399' : '#047857', fontWeight: 900, background: isDark ? 'rgba(5, 150, 105, 0.22)' : '#dcfce7', padding: '0.08rem 0.35rem', borderRadius: '4px', border: isDark ? '1px solid rgba(5, 150, 105, 0.45)' : '1px solid #86efac', fontSize: '0.72rem', display: 'inline-flex', alignItems: 'center', gap: '0.2rem' }}>
-                        🏷️ -{promoDiscountPercent}% Promo (-${promoDiscountAmount.toFixed(2)})
-                      </span>
-                    )}
-                  </div>
-                  <div style={{ textAlign: 'right', display: 'flex', alignItems: 'baseline', gap: '0.35rem' }}>
-                    {(volumeDiscountAmount + promoDiscountAmount) > 0 && (
-                      <span style={{ fontSize: '0.78rem', color: isDark ? 'var(--color-text-muted, #94a3b8)' : '#94a3b8', textDecoration: 'line-through', fontWeight: 600 }}>
-                        ${baseSubtotal.toFixed(2)}
-                      </span>
-                    )}
-                    <span style={{ fontSize: '1.05rem', fontWeight: 900, color: isDark ? '#34d399' : '#047857' }}>
-                      Subtotal: ${totalPrice.toFixed(2)}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Package Tier Cards List */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                <span style={{ fontSize: '0.8rem', fontWeight: 800, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                  Choose Package Tier ({currentPackages.length})
-                </span>
-
-                {currentPackages.map((pkg, idx) => {
-                  const isSelected = selectedPackage?.id === pkg.id || (!selectedPackage && idx === 0);
-                  const pkgOriginalPrice = Number(pkg.price);
-                  const hasPromoDiscount = promoDiscountPercent > 0;
-                  const pkgDiscountedPrice = hasPromoDiscount
-                    ? parseFloat((pkgOriginalPrice * (1 - promoDiscountPercent / 100)).toFixed(2))
-                    : pkgOriginalPrice;
-
-                  return (
-                    <div
-                      key={pkg.id || idx}
-                      onClick={() => handleSelectPackage(pkg)}
-                      style={{
-                        border: isSelected ? '2px solid #059669' : (isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid #cbd5e1'),
-                        background: isSelected ? (isDark ? 'rgba(5, 150, 105, 0.15)' : '#f0fdf4') : (isDark ? 'var(--color-subtle, #1e293b)' : '#ffffff'),
-                        borderRadius: '16px',
-                        padding: '1rem',
-                        cursor: 'pointer',
-                        position: 'relative',
-                        boxShadow: isSelected ? '0 4px 16px rgba(5, 150, 105, 0.12)' : '0 2px 6px rgba(0,0,0,0.02)',
-                        transition: 'all 0.15s ease'
-                      }}
-                    >
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.5rem' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
-                          <div style={{
-                            width: '20px',
-                            height: '20px',
-                            borderRadius: '50%',
-                            border: isSelected ? '5px solid #059669' : (isDark ? '2px solid var(--color-border, #475569)' : '2px solid #cbd5e1'),
-                            background: isDark ? 'var(--color-surface, #111827)' : '#ffffff',
-                            flexShrink: 0
-                          }} />
-                          <h4 style={{ margin: 0, fontSize: '0.98rem', fontWeight: 900, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a' }}>
-                            {pkg.title}
-                          </h4>
-                        </div>
-
-                        <div style={{ textAlign: 'right' }}>
-                          {hasPromoDiscount && (
-                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '0.25rem', marginBottom: '0.1rem' }}>
-                              <span style={{
-                                fontSize: '0.62rem',
-                                fontWeight: 900,
-                                color: '#ffffff',
-                                background: '#059669',
-                                padding: '0.06rem 0.3rem',
-                                borderRadius: '4px'
-                              }}>
-                                -{promoDiscountPercent}% OFF
-                              </span>
-                              <span style={{
-                                fontSize: '0.75rem',
-                                color: isDark ? 'var(--color-text-muted, #94a3b8)' : '#94a3b8',
-                                textDecoration: 'line-through',
-                                fontWeight: 600
-                              }}>
-                                ${pkgOriginalPrice.toFixed(pkgOriginalPrice % 1 === 0 ? 0 : 2)}
-                              </span>
-                            </div>
-                          )}
-                          <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.3rem', justifyContent: 'flex-end' }}>
-                            <span style={{ fontSize: '1.2rem', fontWeight: 900, color: isDark ? '#34d399' : '#047857' }}>
-                              ${pkgDiscountedPrice.toFixed(pkgDiscountedPrice % 1 === 0 ? 0 : 2)}
-                            </span>
-                          </div>
-                          <span style={{ fontSize: '0.65rem', fontWeight: 700, color: isDark ? 'var(--color-text-muted, #94a3b8)' : '#64748b', display: 'block' }}>
-                            {selectedService === 'patch' ? '/ piece' : 'flat rate'}
-                          </span>
-                        </div>
-                      </div>
-
-                      <p style={{ margin: '0.45rem 0 0.5rem', fontSize: '0.78rem', color: isDark ? 'var(--color-text-secondary, #cbd5e1)' : '#475569', lineHeight: 1.35 }}>
-                        {pkg.subtitle}
-                      </p>
-
-                      {Array.isArray(pkg.features) && pkg.features.length > 0 && (
-                        <div style={{ borderTop: isDark ? '1px dashed var(--color-border, #334155)' : '1px dashed #cbd5e1', paddingTop: '0.5rem', display: 'grid', gridTemplateColumns: '1fr', gap: '0.25rem' }}>
-                          {pkg.features.slice(0, 3).map((feat, fIdx) => (
-                            <div key={fIdx} style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.72rem', color: isDark ? 'var(--color-text-secondary, #cbd5e1)' : '#334155' }}>
-                              <CheckCircle2 size={13} style={{ color: '#059669', flexShrink: 0 }} />
-                              <span>{feat}</span>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-
-            </div>
-          )}
-
-          {/* =========================================================================
-              STEP 3: UPLOAD MULTIPLE ARTWORK FILES & DETAILS (NO ITEM NAME)
-              ========================================================================= */}
-          {step === 3 && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-
-              {/* Selected Package & Live Price Banner */}
-              <div style={{ background: isDark ? 'rgba(5, 150, 105, 0.15)' : '#f0fdf4', border: isDark ? '1.5px solid rgba(5, 150, 105, 0.3)' : '1.5px solid #a7f3d0', borderRadius: '14px', padding: '0.85rem 1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div>
-                  <span style={{ fontSize: '0.68rem', fontWeight: 800, color: isDark ? '#34d399' : '#047857', textTransform: 'uppercase' }}>
-                    Selected Service & Tier
-                  </span>
-                  <div style={{ fontSize: '0.92rem', fontWeight: 900, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a' }}>
-                    {activePkg?.title}
-                  </div>
-                  <div style={{ fontSize: '0.72rem', color: isDark ? '#34d399' : '#047857', fontWeight: 700 }}>
-                    Qty: {quantity} {selectedService === 'patch' ? 'pcs' : 'design(s)'}
-                  </div>
-                </div>
-
-                <div style={{ textAlign: 'right' }}>
-                  <div style={{ fontSize: '1.25rem', fontWeight: 900, color: isDark ? '#34d399' : '#047857' }}>
-                    ${totalPrice.toFixed(2)}
-                  </div>
-                  {volumeDiscountPercent > 0 && (
-                    <span style={{ fontSize: '0.65rem', color: isDark ? '#34d399' : '#059669', fontWeight: 800 }}>
-                      (-{volumeDiscountPercent}% Saved)
-                    </span>
-                  )}
-                </div>
-              </div>
-
-              {/* Multiple Artwork Upload Area */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+              {/* SERVICE SELECTION CARDS */}
               <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
-                  <label style={{ fontSize: '0.82rem', fontWeight: 900, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a' }}>
-                    Attach Artwork & Reference Files <span style={{ color: '#ef4444' }}>*</span>
-                  </label>
-                  <span style={{ fontSize: '0.7rem', color: isDark ? '#34d399' : '#047857', fontWeight: 800 }}>
-                    Multiple files supported
-                  </span>
-                </div>
-
-                <input
-                  type="file"
-                  ref={fileInputRef}
-                  style={{ display: 'none' }}
-                  onChange={handleMultipleFiles}
-                  multiple
-                  accept="*/*"
-                />
-
-                {/* Dropzone Container */}
-                <div
-                  onClick={() => fileInputRef.current?.click()}
-                  style={{
-                    border: '2px dashed #059669',
-                    borderRadius: '16px',
-                    padding: '1.4rem 1rem',
-                    textAlign: 'center',
-                    background: isDark ? 'var(--color-subtle, #1e293b)' : '#f8fafc',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    gap: '0.45rem',
-                    transition: 'all 0.2s ease'
-                  }}
-                >
-                  <div style={{
-                    width: '46px',
-                    height: '46px',
-                    borderRadius: '50%',
-                    background: isDark ? 'rgba(5, 150, 105, 0.25)' : '#ecfdf5',
-                    color: isDark ? '#34d399' : '#059669',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center'
-                  }}>
-                    {isUploading ? <Loader2 size={22} className="animate-spin" /> : <Upload size={22} />}
-                  </div>
-                  <div>
-                    <div style={{ fontSize: '0.92rem', fontWeight: 900, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a' }}>
-                      {isUploading ? 'Uploading and verifying files...' : 'Tap to Browse or Drop Multiple Files'}
-                    </div>
-                    <div style={{ fontSize: '0.72rem', color: isDark ? 'var(--color-text-secondary, #cbd5e1)' : '#64748b', marginTop: '0.15rem' }}>
-                      PNG, JPG, PDF, AI, EPS, SVG, CDR up to 50MB each
-                    </div>
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      fileInputRef.current?.click();
-                    }}
-                    style={{
-                      background: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
-                      color: '#ffffff',
-                      border: 'none',
-                      borderRadius: '10px',
-                      padding: '0.55rem 1.15rem',
-                      fontSize: '0.82rem',
-                      fontWeight: 800,
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.4rem',
-                      marginTop: '0.35rem',
-                      boxShadow: '0 2px 8px rgba(5, 150, 105, 0.25)'
-                    }}
-                  >
-                    <Upload size={15} /> Choose Artwork from Device
-                  </button>
-                </div>
-
-                {uploadError && (
-                  <div style={{ marginTop: '0.45rem', fontSize: '0.75rem', color: '#dc2626', fontWeight: 700 }}>
-                    ⚠️ {uploadError}
-                  </div>
-                )}
-
-                {/* Uploaded Files Gallery / List */}
-                {uploadedFiles.length > 0 && (
-                  <div style={{ marginTop: '0.75rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ fontSize: '0.75rem', fontWeight: 800, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a' }}>
-                        Attached Files ({uploadedFiles.length})
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => fileInputRef.current?.click()}
-                        style={{
-                          background: 'none',
-                          border: 'none',
-                          color: isDark ? '#34d399' : '#047857',
-                          fontSize: '0.75rem',
-                          fontWeight: 800,
-                          cursor: 'pointer',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '0.2rem'
-                        }}
-                      >
-                        <Plus size={14} /> Add Another File
-                      </button>
-                    </div>
-
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                      {uploadedFiles.map((file, fIdx) => (
-                        <div
-                          key={file.id || fIdx}
-                          style={{
-                            border: isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid #cbd5e1',
-                            background: isDark ? 'var(--color-subtle, #1e293b)' : '#f8fafc',
-                            borderRadius: '12px',
-                            padding: '0.65rem 0.85rem',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'space-between',
-                            gap: '0.65rem'
-                          }}
-                        >
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.55rem', overflow: 'hidden' }}>
-                            <div style={{
-                              width: '32px',
-                              height: '32px',
-                              borderRadius: '8px',
-                              background: isDark ? 'rgba(5, 150, 105, 0.25)' : '#ecfdf5',
-                              color: isDark ? '#34d399' : '#047857',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              flexShrink: 0
-                            }}>
-                              <FileCheck size={18} />
-                            </div>
-                            <div style={{ minWidth: 0 }}>
-                              <div style={{ fontSize: '0.82rem', fontWeight: 800, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
-                                {file.name}
-                              </div>
-                              <div style={{ fontSize: '0.68rem', color: isDark ? 'var(--color-text-muted, #94a3b8)' : '#64748b' }}>
-                                {file.size} • <span style={{ color: isDark ? '#34d399' : '#059669', fontWeight: 700 }}>{file.format} Verified</span>
-                              </div>
-                            </div>
-                          </div>
-
-                          <button
-                            type="button"
-                            onClick={() => handleRemoveFile(file.id)}
-                            style={{
-                              background: '#fee2e2',
-                              border: 'none',
-                              borderRadius: '50%',
-                              width: '26px',
-                              height: '26px',
-                              color: '#dc2626',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              cursor: 'pointer',
-                              flexShrink: 0
-                            }}
-                          >
-                            <Trash2 size={13} />
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Special Instructions & Notes Textarea */}
-              <div>
-                <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 900, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a', marginBottom: '0.35rem' }}>
-                  Special Instructions / Production Notes
+                <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em', color: isDark ? '#94a3b8' : '#475569', marginBottom: '0.55rem' }}>
+                  1. Select Studio Service
                 </label>
-                <textarea
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                  placeholder="Type instructions..."
-                  rows={3}
-                  style={{
-                    width: '100%',
-                    padding: '0.75rem 0.95rem',
-                    borderRadius: '12px',
-                    border: isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid #cbd5e1',
-                    fontSize: '0.85rem',
-                    color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a',
-                    background: isDark ? 'var(--color-subtle, #1e293b)' : '#ffffff',
-                    outline: 'none',
-                    boxSizing: 'border-box',
-                    resize: 'none'
-                  }}
-                />
-              </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '0.65rem' }}>
+                  {SERVICE_OPTIONS.map(svc => {
+                    const isSelected = selectedService === svc.id;
+                    const IconComp = svc.icon;
 
-            </div>
-          )}
-
-          {/* =========================================================================
-              STEP 4: SPECIFICATIONS & FORMATS
-              ========================================================================= */}
-          {step === 4 && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-
-              {/* Dimensions: Width & Height */}
-              <div>
-                <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 900, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a', marginBottom: '0.35rem' }}>
-                  Target Dimensions (Inches)
-                </label>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.65rem' }}>
-                  <div>
-                    <span style={{ fontSize: '0.7rem', color: isDark ? 'var(--color-text-muted, #94a3b8)' : '#64748b', fontWeight: 700 }}>Width</span>
-                    <input
-                      type="text"
-                      value={widthInches}
-                      onChange={(e) => setWidthInches(e.target.value)}
-                      placeholder='3.5"'
-                      style={{
-                        width: '100%',
-                        padding: '0.65rem 0.85rem',
-                        borderRadius: '10px',
-                        border: isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid #cbd5e1',
-                        fontSize: '0.85rem',
-                        fontWeight: 700,
-                        color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a',
-                        background: isDark ? 'var(--color-subtle, #1e293b)' : '#ffffff',
-                        boxSizing: 'border-box'
-                      }}
-                    />
-                  </div>
-                  <div>
-                    <span style={{ fontSize: '0.7rem', color: isDark ? 'var(--color-text-muted, #94a3b8)' : '#64748b', fontWeight: 700 }}>Height</span>
-                    <input
-                      type="text"
-                      value={heightInches}
-                      onChange={(e) => setHeightInches(e.target.value)}
-                      placeholder='3.5"'
-                      style={{
-                        width: '100%',
-                        padding: '0.65rem 0.85rem',
-                        borderRadius: '10px',
-                        border: isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid #cbd5e1',
-                        fontSize: '0.85rem',
-                        fontWeight: 700,
-                        color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a',
-                        background: isDark ? 'var(--color-subtle, #1e293b)' : '#ffffff',
-                        boxSizing: 'border-box'
-                      }}
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Placement / Style Selector */}
-              {selectedService === 'embroidery' && (
-                <>
-                  <div>
-                    <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 900, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a', marginBottom: '0.35rem' }}>
-                      Embroidery Placement
-                    </label>
-                    <select
-                      value={placement}
-                      onChange={(e) => setPlacement(e.target.value)}
-                      style={{
-                        width: '100%',
-                        padding: '0.7rem 0.85rem',
-                        borderRadius: '10px',
-                        border: isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid #cbd5e1',
-                        fontSize: '0.85rem',
-                        color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a',
-                        background: isDark ? 'var(--color-subtle, #1e293b)' : '#ffffff',
-                        boxSizing: 'border-box'
-                      }}
-                    >
-                      <option value='Left Chest / Polo (up to 4.0")'>Left Chest / Polo (up to 4.0")</option>
-                      <option value='Cap Front (Low Profile / Curved)'>Cap Front (Low Profile / Curved)</option>
-                      <option value='Full Jacket Back (up to 12.0")'>Full Jacket Back (up to 12.0")</option>
-                      <option value='Sleeve / Side Panel / Cuff'>Sleeve / Side Panel / Cuff</option>
-                      <option value='3D Puff Foam Hat'>3D Puff Foam Hat (Raised 3D)</option>
-                      <option value='Apron / Towel / Heavy Fleece'>Apron / Towel / Heavy Fleece</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 900, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a', marginBottom: '0.35rem' }}>
-                      Fabric Type Calibration
-                    </label>
-                    <select
-                      value={fabricType}
-                      onChange={(e) => setFabricType(e.target.value)}
-                      style={{
-                        width: '100%',
-                        padding: '0.7rem 0.85rem',
-                        borderRadius: '10px',
-                        border: isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid #cbd5e1',
-                        fontSize: '0.85rem',
-                        color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a',
-                        background: isDark ? 'var(--color-subtle, #1e293b)' : '#ffffff',
-                        boxSizing: 'border-box'
-                      }}
-                    >
-                      <option value='Cotton / Pique Knit'>Cotton / Pique Knit (Polos, T-Shirts)</option>
-                      <option value='Structured Twill / Canvas'>Structured Twill / Canvas (Caps, Bags)</option>
-                      <option value='Fleece / Hoodie / Sweatshirt'>Fleece / Hoodie / Sweatshirt</option>
-                      <option value='Polyester Performance / DRI-FIT'>Polyester Performance / DRI-FIT</option>
-                      <option value='Nylon / Softshell Jacket'>Nylon / Softshell Jacket</option>
-                      <option value='Leather / Vinyl / Denim'>Leather / Vinyl / Denim</option>
-                    </select>
-                  </div>
-                </>
-              )}
-
-              {selectedService === 'patch' && (
-                <>
-                  <div>
-                    <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 900, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a', marginBottom: '0.35rem' }}>
-                      Patch Style
-                    </label>
-                    <select
-                      value={patchStyle}
-                      onChange={(e) => setPatchStyle(e.target.value)}
-                      style={{
-                        width: '100%',
-                        padding: '0.7rem 0.85rem',
-                        borderRadius: '10px',
-                        border: isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid #cbd5e1',
-                        fontSize: '0.85rem',
-                        color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a',
-                        background: isDark ? 'var(--color-subtle, #1e293b)' : '#ffffff',
-                        boxSizing: 'border-box'
-                      }}
-                    >
-                      <option value='Embroidered'>🧵 100% Custom Embroidered Patch</option>
-                      <option value='PVC'>⚡ 3D Molded Rubber PVC Patch</option>
-                      <option value='Woven'>🌐 High-Density Micro Woven Patch</option>
-                      <option value='Leather'>🪵 Genuine Debossed Leather Patch</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 900, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a', marginBottom: '0.35rem' }}>
-                      Backing Attachment
-                    </label>
-                    <select
-                      value={patchBacking}
-                      onChange={(e) => setPatchBacking(e.target.value)}
-                      style={{
-                        width: '100%',
-                        padding: '0.7rem 0.85rem',
-                        borderRadius: '10px',
-                        border: isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid #cbd5e1',
-                        fontSize: '0.85rem',
-                        color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a',
-                        background: isDark ? 'var(--color-subtle, #1e293b)' : '#ffffff',
-                        boxSizing: 'border-box'
-                      }}
-                    >
-                      <option value='Iron-On'>Heat Press / Iron-On (Standard)</option>
-                      <option value='Velcro'>Hook & Loop (Velcro Tactical)</option>
-                      <option value='Sew-On'>Sew-On (Plastic Border)</option>
-                      <option value='Adhesive'>Peel & Stick (Self-Adhesive)</option>
-                    </select>
-                  </div>
-                </>
-              )}
-
-              {/* Target File Formats */}
-              <div>
-                <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 900, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a', marginBottom: '0.35rem' }}>
-                  Target Deliverable Formats
-                </label>
-                <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
-                  {(selectedService === 'vector'
-                    ? ['AI', 'EPS', 'SVG', 'PDF', 'CDR', 'PNG']
-                    : selectedService === 'patch'
-                      ? ['DST', 'PDF Proof', 'Physical Patch Shipment']
-                      : ['DST', 'PES', 'EMB', 'EXP', 'JEF', 'VP3', 'PDF Worksheet']
-                  ).map(fmt => {
-                    const isChecked = selectedFormats.includes(fmt);
                     return (
-                      <button
-                        key={fmt}
-                        type="button"
-                        onClick={() => handleToggleFormat(fmt)}
+                      <div
+                        key={svc.id}
+                        role="button"
+                        tabIndex={0}
+                        onClick={() => handleSelectService(svc.id)}
+                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleSelectService(svc.id); }}
                         style={{
-                          padding: '0.35rem 0.65rem',
-                          borderRadius: '8px',
-                          border: isChecked ? '1.5px solid #059669' : (isDark ? '1px solid var(--color-border, #334155)' : '1px solid #cbd5e1'),
-                          background: isChecked ? (isDark ? 'rgba(5, 150, 105, 0.25)' : '#ecfdf5') : (isDark ? 'var(--color-surface, #111827)' : '#ffffff'),
-                          color: isChecked ? (isDark ? '#34d399' : '#047857') : (isDark ? 'var(--color-text-secondary, #cbd5e1)' : '#475569'),
-                          fontWeight: 800,
-                          fontSize: '0.75rem',
+                          minHeight: '68px',
+                          borderRadius: '16px',
+                          border: isSelected ? '2px solid #059669' : isDark ? '1.5px solid #334155' : '1.5px solid #e2e8f0',
+                          background: isSelected
+                            ? isDark ? 'rgba(5, 150, 105, 0.16)' : '#ecfdf5'
+                            : isDark ? '#1e293b' : '#ffffff',
+                          padding: '0.75rem 1rem',
                           display: 'flex',
                           alignItems: 'center',
-                          gap: '0.25rem',
-                          cursor: 'pointer'
+                          gap: '0.85rem',
+                          cursor: 'pointer',
+                          transition: 'all 0.15s ease'
                         }}
                       >
-                        {isChecked ? <Check size={12} strokeWidth={3} /> : null}
-                        <span>{fmt}</span>
-                      </button>
+                        <div style={{
+                          width: '44px',
+                          height: '44px',
+                          borderRadius: '12px',
+                          background: isSelected ? '#059669' : isDark ? '#0f172a' : '#f1f5f9',
+                          color: isSelected ? '#ffffff' : svc.color,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          flexShrink: 0
+                        }}>
+                          <IconComp size={22} />
+                        </div>
+
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem' }}>
+                            <span style={{ fontSize: '0.95rem', fontWeight: 800, color: isDark ? '#ffffff' : '#0f172a' }}>
+                              {svc.title}
+                            </span>
+                            <span style={{ fontSize: '0.85rem', fontWeight: 800, color: '#059669' }}>
+                              {svc.startingPrice}
+                            </span>
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '0.2rem' }}>
+                            <span style={{ fontSize: '0.74rem', color: isDark ? '#94a3b8' : '#64748b' }}>
+                              {svc.badge}
+                            </span>
+                            <span style={{ fontSize: '0.7rem', color: isDark ? '#64748b' : '#94a3b8' }}>
+                              ⚡ {svc.turnaround}
+                            </span>
+                          </div>
+                        </div>
+
+                        <div style={{
+                          width: '22px',
+                          height: '22px',
+                          borderRadius: '50%',
+                          border: isSelected ? 'none' : '2px solid #94a3b8',
+                          background: isSelected ? '#059669' : 'transparent',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          color: '#ffffff',
+                          flexShrink: 0
+                        }}>
+                          {isSelected && <Check size={14} strokeWidth={3} />}
+                        </div>
+                      </div>
                     );
                   })}
                 </div>
               </div>
 
-              {/* Express Rush 2-6h Toggle */}
-              <div
-                onClick={() => setIsRush(!isRush)}
-                style={{
-                  border: isRush ? '1.5px solid #f59e0b' : (isDark ? '1px solid var(--color-border, #334155)' : '1px solid #cbd5e1'),
-                  background: isRush ? (isDark ? 'rgba(245, 158, 11, 0.15)' : '#fffbeb') : (isDark ? 'var(--color-subtle, #1e293b)' : '#ffffff'),
-                  borderRadius: '12px',
-                  padding: '0.75rem 1rem',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  cursor: 'pointer'
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-                  <div style={{
-                    width: '34px',
-                    height: '34px',
-                    borderRadius: '8px',
-                    background: isRush ? (isDark ? 'rgba(245, 158, 11, 0.25)' : '#fef3c7') : (isDark ? 'var(--color-border, #334155)' : '#f1f5f9'),
-                    color: isRush ? '#f59e0b' : (isDark ? 'var(--color-text-muted, #94a3b8)' : '#64748b'),
+              {/* ARTWORK UPLOAD ZONE */}
+              <div ref={uploadAreaRef}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.55rem' }}>
+                  <label style={{ fontSize: '0.82rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em', color: isDark ? '#94a3b8' : '#475569' }}>
+                    2. Upload Artwork / Reference <span style={{ color: '#ef4444' }}>*</span>
+                  </label>
+                  {uploadedFiles.length > 0 && (
+                    <span style={{ fontSize: '0.72rem', color: '#059669', fontWeight: 700 }}>
+                      ✓ {uploadedFiles.length} File(s) Attached
+                    </span>
+                  )}
+                </div>
+
+                {/* HIDDEN FILE INPUT */}
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleMultipleFiles}
+                  multiple
+                  accept="image/*,application/pdf,.ai,.eps,.dst,.pes,.emb,.svg"
+                  style={{ display: 'none' }}
+                />
+
+                {/* TAP TO UPLOAD BOX */}
+                <div
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => fileInputRef.current?.click()}
+                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') fileInputRef.current?.click(); }}
+                  style={{
+                    minHeight: '110px',
+                    borderRadius: '18px',
+                    border: uploadError
+                      ? '2px dashed #ef4444'
+                      : uploadedFiles.length > 0
+                        ? '1.5px dashed #059669'
+                        : isDark ? '2px dashed #334155' : '2px dashed #cbd5e1',
+                    background: uploadedFiles.length > 0
+                      ? isDark ? 'rgba(5, 150, 105, 0.08)' : '#f0fdf4'
+                      : isDark ? '#1e293b' : '#f8fafc',
+                    padding: '1.15rem 1rem',
                     display: 'flex',
+                    flexDirection: 'column',
                     alignItems: 'center',
-                    justifyContent: 'center'
-                  }}>
-                    <Zap size={18} />
-                  </div>
-                  <div>
-                    <div style={{ fontSize: '0.85rem', fontWeight: 900, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a' }}>
-                      Express Rush Delivery
+                    justifyContent: 'center',
+                    textAlign: 'center',
+                    cursor: 'pointer',
+                    transition: 'all 0.15s ease'
+                  }}
+                >
+                  {isUploading ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
+                      <Loader2 size={28} className="animate-spin" style={{ color: '#059669' }} />
+                      <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#059669' }}>
+                        Uploading artwork to secure cloud...
+                      </span>
                     </div>
-                    <div style={{ fontSize: '0.72rem', color: isDark ? 'var(--color-text-secondary, #cbd5e1)' : '#64748b' }}>
-                      Jump to front of queue (2–6 Hours)
-                    </div>
-                  </div>
+                  ) : (
+                    <>
+                      <div style={{
+                        width: '44px',
+                        height: '44px',
+                        borderRadius: '50%',
+                        background: isDark ? '#0f172a' : '#e0f2fe',
+                        color: '#0284c7',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        marginBottom: '0.5rem'
+                      }}>
+                        <Upload size={22} />
+                      </div>
+                      <div style={{ fontSize: '0.92rem', fontWeight: 800, color: isDark ? '#ffffff' : '#0f172a' }}>
+                        Tap to upload image/artwork
+                      </div>
+                      <div style={{ fontSize: '0.74rem', color: isDark ? '#94a3b8' : '#64748b', marginTop: '0.2rem' }}>
+                        Camera, Gallery, PDF, AI or EPS (up to 50MB)
+                      </div>
+                    </>
+                  )}
                 </div>
-                <div style={{ textAlign: 'right' }}>
-                  <div style={{ fontSize: '0.85rem', fontWeight: 900, color: '#f59e0b' }}>+$10.00</div>
-                  <div style={{ fontSize: '0.65rem', color: isRush ? '#10b981' : (isDark ? 'var(--color-text-muted, #94a3b8)' : '#94a3b8'), fontWeight: 800 }}>
-                    {isRush ? 'ACTIVE' : 'OFF'}
+
+                {uploadError && (
+                  <div style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '0.4rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                    <AlertCircle size={14} />
+                    <span>{uploadError}</span>
                   </div>
-                </div>
+                )}
+
+                {/* UPLOADED FILE PREVIEWS */}
+                {uploadedFiles.length > 0 && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '0.75rem' }}>
+                    {uploadedFiles.map(file => (
+                      <div
+                        key={file.id}
+                        style={{
+                          background: isDark ? '#1e293b' : '#ffffff',
+                          border: isDark ? '1px solid #334155' : '1px solid #e2e8f0',
+                          borderRadius: '12px',
+                          padding: '0.55rem 0.75rem',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.65rem'
+                        }}
+                      >
+                        {file.url && (file.format === 'PNG' || file.format === 'JPG' || file.format === 'JPEG' || file.format === 'WEBP') ? (
+                          <img
+                            src={file.url}
+                            alt="preview"
+                            style={{ width: '44px', height: '44px', borderRadius: '8px', objectFit: 'cover' }}
+                          />
+                        ) : (
+                          <div style={{ width: '44px', height: '44px', borderRadius: '8px', background: isDark ? '#0f172a' : '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#059669' }}>
+                            <FileText size={22} />
+                          </div>
+                        )}
+
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontSize: '0.82rem', fontWeight: 700, color: isDark ? '#ffffff' : '#0f172a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                            {file.name}
+                          </div>
+                          <div style={{ fontSize: '0.7rem', color: isDark ? '#94a3b8' : '#64748b' }}>
+                            {file.size} • {file.format}
+                          </div>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleRemoveFile(file.id);
+                          }}
+                          style={{
+                            background: 'transparent',
+                            border: 'none',
+                            color: '#ef4444',
+                            padding: '8px',
+                            minWidth: '40px',
+                            minHeight: '40px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            cursor: 'pointer'
+                          }}
+                          aria-label="Remove uploaded file"
+                        >
+                          <Trash2 size={18} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
+              {/* DESIGN NAME / REFERENCE */}
+              <div>
+                <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em', color: isDark ? '#94a3b8' : '#475569', marginBottom: '0.45rem' }}>
+                  3. Design Name / Reference
+                </label>
+                <input
+                  type="text"
+                  value={orderTitle}
+                  onChange={(e) => setOrderTitle(e.target.value)}
+                  placeholder="e.g., Summit Club Cap, Apex Logo"
+                  style={{
+                    width: '100%',
+                    minHeight: '48px',
+                    borderRadius: '12px',
+                    border: isDark ? '1.5px solid #334155' : '1.5px solid #cbd5e1',
+                    background: isDark ? '#1e293b' : '#ffffff',
+                    color: isDark ? '#ffffff' : '#0f172a',
+                    padding: '0 0.85rem',
+                    fontSize: '0.9rem',
+                    boxSizing: 'border-box',
+                    outline: 'none'
+                  }}
+                />
+              </div>
             </div>
           )}
 
-          {/* =========================================================================
-              STEP 5: REVIEW & PLACE ORDER
-              ========================================================================= */}
-          {step === 5 && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
-
-              {/* Order Summary Card */}
-              <div style={{ background: isDark ? 'var(--color-subtle, #1e293b)' : '#f8fafc', border: isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid #cbd5e1', borderRadius: '16px', padding: '1rem' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: isDark ? '1px solid var(--color-border, #334155)' : '1px solid #e2e8f0', paddingBottom: '0.65rem', marginBottom: '0.65rem' }}>
-                  <div>
-                    <span style={{ fontSize: '0.68rem', fontWeight: 800, color: isDark ? 'var(--color-text-muted, #94a3b8)' : '#64748b', textTransform: 'uppercase' }}>Service & Tier</span>
-                    <div style={{ fontSize: '0.95rem', fontWeight: 900, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a' }}>{activePkg?.title}</div>
-                  </div>
-                  <div style={{ textAlign: 'right' }}>
-                    <span style={{ fontSize: '0.68rem', fontWeight: 800, color: isDark ? 'var(--color-text-muted, #94a3b8)' : '#64748b', textTransform: 'uppercase' }}>Category</span>
-                    <div style={{ fontSize: '0.85rem', fontWeight: 800, color: isDark ? '#34d399' : '#059669', textTransform: 'capitalize' }}>{selectedService}</div>
-                  </div>
-                </div>
-
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', fontSize: '0.78rem' }}>
-                  <div>
-                    <span style={{ color: isDark ? 'var(--color-text-muted, #94a3b8)' : '#64748b' }}>Quantity: </span>
-                    <strong style={{ color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a' }}>{quantity} {selectedService === 'patch' ? 'pcs' : 'item(s)'}</strong>
-                  </div>
-                  <div>
-                    <span style={{ color: isDark ? 'var(--color-text-muted, #94a3b8)' : '#64748b' }}>Files Attached: </span>
-                    <strong style={{ color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a' }}>{uploadedFiles.length} file(s)</strong>
-                  </div>
-                  <div>
-                    <span style={{ color: isDark ? 'var(--color-text-muted, #94a3b8)' : '#64748b' }}>Dimensions: </span>
-                    <strong style={{ color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a' }}>{widthInches}" × {heightInches}"</strong>
-                  </div>
-                  <div>
-                    <span style={{ color: isDark ? 'var(--color-text-muted, #94a3b8)' : '#64748b' }}>Speed: </span>
-                    <strong style={{ color: isRush ? '#f59e0b' : (isDark ? '#34d399' : '#059669') }}>{isRush ? '⚡ Express 2-6H' : 'Standard 12-24H'}</strong>
-                  </div>
+          {/* ================= STEP 2: PLACEMENT & SIZE ================= */}
+          {step === 2 && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+              {/* PLACEMENT SELECTABLE PILL CHIPS */}
+              <div>
+                <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em', color: isDark ? '#94a3b8' : '#475569', marginBottom: '0.55rem' }}>
+                  Placement Location
+                </label>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.55rem' }}>
+                  {(PLACEMENT_OPTIONS[selectedService] || PLACEMENT_OPTIONS.embroidery).map(item => {
+                    const isSelected = placement === item.id;
+                    return (
+                      <div
+                        key={item.id}
+                        role="button"
+                        tabIndex={0}
+                        onClick={() => handleSelectPlacement(item)}
+                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleSelectPlacement(item); }}
+                        style={{
+                          minHeight: '50px',
+                          borderRadius: '14px',
+                          border: isSelected ? '2px solid #059669' : isDark ? '1.5px solid #334155' : '1.5px solid #e2e8f0',
+                          background: isSelected
+                            ? isDark ? 'rgba(5, 150, 105, 0.16)' : '#ecfdf5'
+                            : isDark ? '#1e293b' : '#ffffff',
+                          padding: '0.75rem 1rem',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          cursor: 'pointer',
+                          transition: 'all 0.15s ease'
+                        }}
+                      >
+                        <span style={{ fontSize: '0.9rem', fontWeight: 700, color: isDark ? '#ffffff' : '#0f172a' }}>
+                          {item.label}
+                        </span>
+                        <div style={{
+                          width: '20px',
+                          height: '20px',
+                          borderRadius: '50%',
+                          border: isSelected ? 'none' : '2px solid #94a3b8',
+                          background: isSelected ? '#059669' : 'transparent',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          color: '#ffffff'
+                        }}>
+                          {isSelected && <Check size={12} strokeWidth={3} />}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
 
-              {/* Price Calculation Box */}
-              <div style={{ background: isDark ? 'var(--color-subtle, #1e293b)' : '#ffffff', border: isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid #cbd5e1', borderRadius: '16px', padding: '1rem' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.82rem', marginBottom: '0.35rem', color: isDark ? 'var(--color-text-secondary, #cbd5e1)' : '#475569' }}>
-                  <span>Base Rate ({quantity} × ${unitPrice.toFixed(2)})</span>
-                  <span>${baseSubtotal.toFixed(2)}</span>
-                </div>
+              {/* TARGET SIZE CONFIGURATION */}
+              <div>
+                <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em', color: isDark ? '#94a3b8' : '#475569', marginBottom: '0.55rem' }}>
+                  Target Size
+                </label>
 
-                {volumeDiscountAmount > 0 && (
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.82rem', marginBottom: '0.35rem', color: isDark ? '#34d399' : '#059669' }}>
-                    <span>Volume Discount ({volumeDiscountPercent}% OFF)</span>
-                    <span>-${volumeDiscountAmount.toFixed(2)}</span>
-                  </div>
-                )}
-
-                {promoDiscountAmount > 0 && (
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.82rem', marginBottom: '0.35rem', color: isDark ? '#34d399' : '#059669', fontWeight: 700 }}>
-                    <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                      <Tag size={12} /> Promo ({serviceDisplayName}: {promoDiscountPercent}% OFF)
-                    </span>
-                    <span>-${promoDiscountAmount.toFixed(2)}</span>
-                  </div>
-                )}
-
-                {isRush && (
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.82rem', marginBottom: '0.35rem', color: '#f59e0b' }}>
-                    <span>Express Rush Queue</span>
-                    <span>+${rushFee.toFixed(2)}</span>
-                  </div>
-                )}
-
-                {/* Promo Code Input on Mobile */}
-                <div style={{ display: 'flex', gap: '0.35rem', marginTop: '0.4rem', marginBottom: '0.4rem' }}>
-                  <input
-                    type="text"
-                    value={promoCodeInput}
-                    onChange={(e) => setPromoCodeInput(e.target.value)}
-                    placeholder="Promo Code (e.g. SAVE20)"
-                    style={{
-                      flex: 1,
-                      padding: '0.4rem 0.65rem',
-                      borderRadius: '6px',
-                      border: '1px solid var(--color-border, #cbd5e1)',
-                      fontSize: '0.78rem',
-                      color: 'var(--color-text-primary, #0f172a)',
-                      background: 'var(--color-surface, #ffffff)',
-                      textTransform: 'uppercase'
-                    }}
-                  />
+                {/* TOGGLE: AUTO VS CUSTOM */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', marginBottom: '0.75rem' }}>
                   <button
                     type="button"
-                    onClick={handleApplyPromo}
+                    onClick={() => setSizeMode('auto')}
                     style={{
-                      background: isDark ? 'var(--color-primary, #ea580c)' : '#0f172a',
-                      color: '#ffffff',
-                      border: 'none',
-                      borderRadius: '6px',
-                      padding: '0.4rem 0.75rem',
-                      fontSize: '0.76rem',
+                      minHeight: '48px',
+                      borderRadius: '12px',
+                      border: sizeMode === 'auto' ? '2px solid #059669' : isDark ? '1px solid #334155' : '1px solid #cbd5e1',
+                      background: sizeMode === 'auto'
+                        ? isDark ? 'rgba(5, 150, 105, 0.16)' : '#ecfdf5'
+                        : isDark ? '#1e293b' : '#ffffff',
+                      color: isDark ? '#ffffff' : '#0f172a',
+                      fontSize: '0.82rem',
                       fontWeight: 700,
                       cursor: 'pointer'
                     }}
                   >
-                    Apply
+                    Pro Scale (Auto)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setSizeMode('custom')}
+                    style={{
+                      minHeight: '48px',
+                      borderRadius: '12px',
+                      border: sizeMode === 'custom' ? '2px solid #059669' : isDark ? '1px solid #334155' : '1px solid #cbd5e1',
+                      background: sizeMode === 'custom'
+                        ? isDark ? 'rgba(5, 150, 105, 0.16)' : '#ecfdf5'
+                        : isDark ? '#1e293b' : '#ffffff',
+                      color: isDark ? '#ffffff' : '#0f172a',
+                      fontSize: '0.82rem',
+                      fontWeight: 700,
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Custom Inches
                   </button>
                 </div>
 
-                <div style={{ borderTop: isDark ? '1px dashed var(--color-border, #334155)' : '1px dashed #cbd5e1', marginTop: '0.35rem', paddingTop: '0.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <div>
-                    <span style={{ fontSize: '0.95rem', fontWeight: 900, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a' }}>Total Amount</span>
-                    {(volumeDiscountAmount + promoDiscountAmount) > 0 && (
-                      <div style={{ fontSize: '0.72rem', color: isDark ? '#34d399' : '#059669', fontWeight: 800, marginTop: '0.1rem' }}>
-                        Total Savings: ${(volumeDiscountAmount + promoDiscountAmount).toFixed(2)}
-                      </div>
-                    )}
+                {sizeMode === 'auto' ? (
+                  <div style={{
+                    padding: '0.75rem 0.85rem',
+                    borderRadius: '12px',
+                    background: isDark ? '#1e293b' : '#f8fafc',
+                    border: isDark ? '1px solid #334155' : '1px solid #e2e8f0',
+                    fontSize: '0.78rem',
+                    color: isDark ? '#94a3b8' : '#64748b',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem'
+                  }}>
+                    <Sparkles size={18} style={{ color: '#059669', flexShrink: 0 }} />
+                    <span>Our master digitizer will calculate optimal proportions for best stitch quality ({widthInches}&quot; x {heightInches}&quot;).</span>
                   </div>
-                  <div style={{ textAlign: 'right', display: 'flex', alignItems: 'baseline', gap: '0.35rem' }}>
-                    {(volumeDiscountAmount + promoDiscountAmount) > 0 && (
-                      <span style={{ fontSize: '0.85rem', color: isDark ? 'var(--color-text-muted, #94a3b8)' : '#94a3b8', textDecoration: 'line-through', fontWeight: 600 }}>
-                        ${(baseSubtotal + rushFee).toFixed(2)}
-                      </span>
-                    )}
-                    <span style={{ fontSize: '1.35rem', fontWeight: 900, color: isDark ? '#34d399' : '#047857' }}>
-                      ${totalPrice.toFixed(2)}
+                ) : (
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.65rem' }}>
+                    <div>
+                      <span style={{ fontSize: '0.75rem', fontWeight: 700, color: isDark ? '#94a3b8' : '#64748b' }}>Width (Inches)</span>
+                      <input
+                        type="text"
+                        value={widthInches}
+                        onChange={(e) => setWidthInches(e.target.value)}
+                        placeholder="e.g., 3.5 inches"
+                        style={{
+                          width: '100%',
+                          minHeight: '48px',
+                          borderRadius: '12px',
+                          border: isDark ? '1.5px solid #334155' : '1.5px solid #cbd5e1',
+                          background: isDark ? '#1e293b' : '#ffffff',
+                          color: isDark ? '#ffffff' : '#0f172a',
+                          padding: '0 0.85rem',
+                          fontSize: '0.9rem',
+                          boxSizing: 'border-box',
+                          outline: 'none',
+                          marginTop: '0.25rem'
+                        }}
+                      />
+                    </div>
+                    <div>
+                      <span style={{ fontSize: '0.75rem', fontWeight: 700, color: isDark ? '#94a3b8' : '#64748b' }}>Height (Inches)</span>
+                      <input
+                        type="text"
+                        value={heightInches}
+                        onChange={(e) => setHeightInches(e.target.value)}
+                        placeholder="e.g., 3.5 inches"
+                        style={{
+                          width: '100%',
+                          minHeight: '48px',
+                          borderRadius: '12px',
+                          border: isDark ? '1.5px solid #334155' : '1.5px solid #cbd5e1',
+                          background: isDark ? '#1e293b' : '#ffffff',
+                          color: isDark ? '#ffffff' : '#0f172a',
+                          padding: '0 0.85rem',
+                          fontSize: '0.9rem',
+                          boxSizing: 'border-box',
+                          outline: 'none',
+                          marginTop: '0.25rem'
+                        }}
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* SPECIAL INSTRUCTIONS (COLLAPSIBLE) */}
+              <div style={{
+                borderRadius: '14px',
+                border: isDark ? '1px solid #334155' : '1px solid #e2e8f0',
+                background: isDark ? '#1e293b' : '#ffffff',
+                overflow: 'hidden'
+              }}>
+                <button
+                  type="button"
+                  onClick={() => setIsNotesOpen(prev => !prev)}
+                  style={{
+                    width: '100%',
+                    minHeight: '48px',
+                    padding: '0.75rem 1rem',
+                    background: 'transparent',
+                    border: 'none',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    color: isDark ? '#ffffff' : '#0f172a',
+                    fontSize: '0.85rem',
+                    fontWeight: 700,
+                    cursor: 'pointer'
+                  }}
+                >
+                  <span>Add special notes / thread colors (optional)</span>
+                  {isNotesOpen ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+                </button>
+
+                {isNotesOpen && (
+                  <div style={{ padding: '0 1rem 1rem' }}>
+                    <textarea
+                      rows={3}
+                      value={notes}
+                      onChange={(e) => setNotes(e.target.value)}
+                      placeholder="e.g., Thread colors: Madeira Polyneon 1801 White, 1842 Blue. Keep background transparent. 3D puff on bold lettering..."
+                      style={{
+                        width: '100%',
+                        borderRadius: '10px',
+                        border: isDark ? '1.5px solid #334155' : '1.5px solid #cbd5e1',
+                        background: isDark ? '#0f172a' : '#f8fafc',
+                        color: isDark ? '#ffffff' : '#0f172a',
+                        padding: '0.65rem 0.85rem',
+                        fontSize: '0.85rem',
+                        boxSizing: 'border-box',
+                        outline: 'none',
+                        fontFamily: 'inherit'
+                      }}
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* ADVANCED OPTIONS (OPTIONAL ACCORDION) */}
+              <div style={{
+                borderRadius: '14px',
+                border: isDark ? '1px solid #334155' : '1px solid #e2e8f0',
+                background: isDark ? '#1e293b' : '#ffffff',
+                overflow: 'hidden'
+              }}>
+                <button
+                  type="button"
+                  onClick={() => setIsAdvancedOpen(prev => !prev)}
+                  style={{
+                    width: '100%',
+                    minHeight: '48px',
+                    padding: '0.75rem 1rem',
+                    background: 'transparent',
+                    border: 'none',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    color: isDark ? '#ffffff' : '#0f172a',
+                    fontSize: '0.85rem',
+                    fontWeight: 700,
+                    cursor: 'pointer'
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <span>⚙️ Advanced Options (Optional)</span>
+                    <span style={{ fontSize: '0.68rem', color: '#059669', background: isDark ? 'rgba(5,150,105,0.2)' : '#ecfdf5', padding: '0.15rem 0.45rem', borderRadius: '4px' }}>
+                      Defaults Applied
                     </span>
                   </div>
+                  {isAdvancedOpen ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+                </button>
+
+                {isAdvancedOpen && (
+                  <div style={{ padding: '0 1rem 1.15rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                    {/* FORMATS CHIPS */}
+                    <div>
+                      <span style={{ fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase', color: isDark ? '#94a3b8' : '#64748b' }}>
+                        Machine Formats
+                      </span>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.45rem', marginTop: '0.35rem' }}>
+                        {(selectedService === 'vector' ? ['AI', 'EPS', 'SVG', 'PDF', 'CDR'] : ['DST', 'PES', 'EMB', 'EXP', 'PDF']).map(fmt => {
+                          const isSelected = selectedFormats.includes(fmt);
+                          return (
+                            <button
+                              key={fmt}
+                              type="button"
+                              onClick={() => handleToggleFormat(fmt)}
+                              style={{
+                                minHeight: '36px',
+                                padding: '0 0.75rem',
+                                borderRadius: '8px',
+                                border: isSelected ? '1.5px solid #059669' : isDark ? '1px solid #334155' : '1px solid #cbd5e1',
+                                background: isSelected ? '#059669' : isDark ? '#0f172a' : '#f8fafc',
+                                color: isSelected ? '#ffffff' : isDark ? '#94a3b8' : '#475569',
+                                fontSize: '0.78rem',
+                                fontWeight: 700,
+                                cursor: 'pointer'
+                              }}
+                            >
+                              .{fmt}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* FABRIC TYPE / BACKING */}
+                    {selectedService === 'embroidery' && (
+                      <div>
+                        <span style={{ fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase', color: isDark ? '#94a3b8' : '#64748b' }}>
+                          Target Fabric / Substrate
+                        </span>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.45rem', marginTop: '0.35rem' }}>
+                          {['Cotton / Pique Knit', 'Structured Cap', 'Fleece / Hoodie', 'Jacket / Nylon'].map(fab => (
+                            <button
+                              key={fab}
+                              type="button"
+                              onClick={() => setFabricType(fab)}
+                              style={{
+                                minHeight: '40px',
+                                padding: '0 0.55rem',
+                                borderRadius: '8px',
+                                border: fabricType === fab ? '1.5px solid #059669' : isDark ? '1px solid #334155' : '1px solid #cbd5e1',
+                                background: fabricType === fab ? (isDark ? 'rgba(5,150,105,0.2)' : '#ecfdf5') : 'transparent',
+                                color: isDark ? '#ffffff' : '#0f172a',
+                                fontSize: '0.75rem',
+                                fontWeight: fabricType === fab ? 800 : 500,
+                                cursor: 'pointer',
+                                textAlign: 'left'
+                              }}
+                            >
+                              {fab}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* PATCH BACKING & STYLE */}
+                    {selectedService === 'patch' && (
+                      <>
+                        <div>
+                          <span style={{ fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase', color: isDark ? '#94a3b8' : '#64748b' }}>
+                            Patch Backing Type
+                          </span>
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.45rem', marginTop: '0.35rem' }}>
+                            {['Iron-On', 'Velcro Hook & Loop', 'Peel & Stick', 'Sew-On / Plain'].map(bkg => (
+                              <button
+                                key={bkg}
+                                type="button"
+                                onClick={() => setPatchBacking(bkg)}
+                                style={{
+                                  minHeight: '40px',
+                                  padding: '0 0.55rem',
+                                  borderRadius: '8px',
+                                  border: patchBacking === bkg ? '1.5px solid #059669' : isDark ? '1px solid #334155' : '1px solid #cbd5e1',
+                                  background: patchBacking === bkg ? (isDark ? 'rgba(5,150,105,0.2)' : '#ecfdf5') : 'transparent',
+                                  color: isDark ? '#ffffff' : '#0f172a',
+                                  fontSize: '0.75rem',
+                                  fontWeight: patchBacking === bkg ? 800 : 500,
+                                  cursor: 'pointer',
+                                  textAlign: 'left'
+                                }}
+                              >
+                                {bkg}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        <div>
+                          <span style={{ fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase', color: isDark ? '#94a3b8' : '#64748b' }}>
+                            Patch Craft Style
+                          </span>
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.45rem', marginTop: '0.35rem' }}>
+                            {['Embroidered', 'PVC Rubber 3D', 'Woven Thread', 'Laser Leather'].map(sty => (
+                              <button
+                                key={sty}
+                                type="button"
+                                onClick={() => setPatchStyle(sty)}
+                                style={{
+                                  minHeight: '40px',
+                                  padding: '0 0.55rem',
+                                  borderRadius: '8px',
+                                  border: patchStyle === sty ? '1.5px solid #059669' : isDark ? '1px solid #334155' : '1px solid #cbd5e1',
+                                  background: patchStyle === sty ? (isDark ? 'rgba(5,150,105,0.2)' : '#ecfdf5') : 'transparent',
+                                  color: isDark ? '#ffffff' : '#0f172a',
+                                  fontSize: '0.75rem',
+                                  fontWeight: patchStyle === sty ? 800 : 500,
+                                  cursor: 'pointer',
+                                  textAlign: 'left'
+                                }}
+                              >
+                                {sty}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      </>
+                    )}
+
+                    {/* RUSH PRODUCTION TOGGLE */}
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      padding: '0.75rem',
+                      borderRadius: '10px',
+                      background: isDark ? '#0f172a' : '#f8fafc',
+                      border: isDark ? '1px solid #334155' : '1px solid #e2e8f0'
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <Zap size={18} style={{ color: '#f59e0b' }} />
+                        <div>
+                          <div style={{ fontSize: '0.82rem', fontWeight: 800, color: isDark ? '#ffffff' : '#0f172a' }}>
+                            Express Rush Turnaround
+                          </div>
+                          <div style={{ fontSize: '0.7rem', color: isDark ? '#94a3b8' : '#64748b' }}>
+                            Guaranteed delivery in 2–4 hours (+$10)
+                          </div>
+                        </div>
+                      </div>
+
+                      <input
+                        type="checkbox"
+                        checked={isRush}
+                        onChange={(e) => setIsRush(e.target.checked)}
+                        style={{ width: '20px', height: '20px', cursor: 'pointer', accentColor: '#059669' }}
+                      />
+                    </div>
+
+                    {/* QUANTITY SELECTOR (MAINLY FOR PATCHES) */}
+                    <div>
+                      <span style={{ fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase', color: isDark ? '#94a3b8' : '#64748b' }}>
+                        Quantity {selectedService === 'patch' && '(Min. 50 Pcs)'}
+                      </span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', marginTop: '0.35rem' }}>
+                        <button
+                          type="button"
+                          onClick={() => handleQuantityChange(-1)}
+                          style={{
+                            width: '44px',
+                            height: '44px',
+                            borderRadius: '10px',
+                            border: isDark ? '1px solid #334155' : '1px solid #cbd5e1',
+                            background: isDark ? '#0f172a' : '#ffffff',
+                            color: isDark ? '#ffffff' : '#0f172a',
+                            fontSize: '1.2rem',
+                            fontWeight: 800,
+                            cursor: 'pointer'
+                          }}
+                        >
+                          -
+                        </button>
+                        <input
+                          type="number"
+                          value={quantityInput}
+                          onChange={(e) => {
+                            setQuantityInput(e.target.value);
+                            const parsed = parseInt(e.target.value, 10);
+                            if (!isNaN(parsed) && parsed > 0) setQuantity(parsed);
+                          }}
+                          style={{
+                            flex: 1,
+                            minHeight: '44px',
+                            borderRadius: '10px',
+                            border: isDark ? '1px solid #334155' : '1px solid #cbd5e1',
+                            background: isDark ? '#0f172a' : '#ffffff',
+                            color: isDark ? '#ffffff' : '#0f172a',
+                            textAlign: 'center',
+                            fontSize: '1rem',
+                            fontWeight: 800
+                          }}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => handleQuantityChange(1)}
+                          style={{
+                            width: '44px',
+                            height: '44px',
+                            borderRadius: '10px',
+                            border: isDark ? '1px solid #334155' : '1px solid #cbd5e1',
+                            background: isDark ? '#0f172a' : '#ffffff',
+                            color: isDark ? '#ffffff' : '#0f172a',
+                            fontSize: '1.2rem',
+                            fontWeight: 800,
+                            cursor: 'pointer'
+                          }}
+                        >
+                          +
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* PROMO CODE INPUT */}
+                    <div>
+                      <span style={{ fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase', color: isDark ? '#94a3b8' : '#64748b' }}>
+                        Promo Code
+                      </span>
+                      <div style={{ display: 'flex', gap: '0.45rem', marginTop: '0.35rem' }}>
+                        <input
+                          type="text"
+                          value={promoCodeInput}
+                          onChange={(e) => setPromoCodeInput(e.target.value)}
+                          placeholder="e.g., PROMO, SAVE20"
+                          style={{
+                            flex: 1,
+                            minHeight: '40px',
+                            borderRadius: '8px',
+                            border: isDark ? '1px solid #334155' : '1px solid #cbd5e1',
+                            background: isDark ? '#0f172a' : '#ffffff',
+                            color: isDark ? '#ffffff' : '#0f172a',
+                            padding: '0 0.75rem',
+                            fontSize: '0.85rem'
+                          }}
+                        />
+                        <button
+                          type="button"
+                          onClick={handleApplyPromo}
+                          style={{
+                            minHeight: '40px',
+                            padding: '0 0.85rem',
+                            borderRadius: '8px',
+                            background: '#059669',
+                            color: '#ffffff',
+                            border: 'none',
+                            fontSize: '0.8rem',
+                            fontWeight: 700,
+                            cursor: 'pointer'
+                          }}
+                        >
+                          Apply
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* ================= STEP 3: QUICK REVIEW & SUBMIT ================= */}
+          {step === 3 && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.15rem' }}>
+              {/* COMPACT SUMMARY CARD */}
+              <div style={{
+                borderRadius: '16px',
+                border: isDark ? '1px solid #334155' : '1px solid #e2e8f0',
+                background: isDark ? '#1e293b' : '#f8fafc',
+                padding: '0.85rem 1rem',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '0.75rem'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: isDark ? '1px solid #334155' : '1px solid #e2e8f0', paddingBottom: '0.65rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.55rem' }}>
+                    <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: '#059669', color: '#ffffff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      {selectedService === 'vector' ? <PenTool size={16} /> : selectedService === 'patch' ? <Package size={16} /> : <Layers size={16} />}
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '0.88rem', fontWeight: 800, color: isDark ? '#ffffff' : '#0f172a' }}>
+                        {serviceDisplayName}
+                      </div>
+                      <div style={{ fontSize: '0.72rem', color: isDark ? '#94a3b8' : '#64748b' }}>
+                        {placement} • {widthInches}&quot; x {heightInches}&quot;
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style={{ textAlign: 'right' }}>
+                    <div style={{ fontSize: '1.05rem', fontWeight: 900, color: '#059669' }}>
+                      ${totalPrice.toFixed(2)}
+                    </div>
+                    <div style={{ fontSize: '0.7rem', color: isDark ? '#94a3b8' : '#64748b' }}>
+                      ⚡ {isRush ? '2–4h Rush' : activePkg?.turnaround || '4–12h Delivery'}
+                    </div>
+                  </div>
+                </div>
+
+                {/* UPLOADED FILE THUMBNAIL & REFERENCE */}
+                {uploadedFiles.length > 0 && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                    {uploadedFiles[0].url && (uploadedFiles[0].format === 'PNG' || uploadedFiles[0].format === 'JPG' || uploadedFiles[0].format === 'JPEG') ? (
+                      <img
+                        src={uploadedFiles[0].url}
+                        alt="thumbnail"
+                        style={{ width: '40px', height: '40px', borderRadius: '8px', objectFit: 'cover' }}
+                      />
+                    ) : (
+                      <div style={{ width: '40px', height: '40px', borderRadius: '8px', background: '#059669', color: '#ffffff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <FileText size={18} />
+                      </div>
+                    )}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: '0.78rem', fontWeight: 700, color: isDark ? '#ffffff' : '#0f172a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {uploadedFiles[0].name}
+                      </div>
+                      <div style={{ fontSize: '0.7rem', color: isDark ? '#94a3b8' : '#64748b' }}>
+                        {uploadedFiles.length > 1 ? `+ ${uploadedFiles.length - 1} more file(s)` : `${uploadedFiles[0].size}`}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* PRICE BREAKDOWN ITEMS */}
+                <div style={{ fontSize: '0.75rem', color: isDark ? '#94a3b8' : '#64748b', display: 'flex', flexDirection: 'column', gap: '0.25rem', borderTop: isDark ? '1px solid #334155' : '1px solid #e2e8f0', paddingTop: '0.5rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span>Standard Studio Base</span>
+                    <span>${baseSubtotal.toFixed(2)}</span>
+                  </div>
+                  {promoDiscountAmount > 0 && (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', color: '#059669', fontWeight: 700 }}>
+                      <span>Discount ({appliedPromo?.code || 'PROMO'})</span>
+                      <span>-${promoDiscountAmount.toFixed(2)}</span>
+                    </div>
+                  )}
+                  {isRush && (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', color: '#f59e0b', fontWeight: 700 }}>
+                      <span>Express 2–4h Turnaround</span>
+                      <span>+${rushFee.toFixed(2)}</span>
+                    </div>
+                  )}
                 </div>
               </div>
 
-              {/* Guest Authentication Card (Google & Email) */}
-              {!isAuthenticated && !authUser && (
+              {/* AUTHENTICATION / GUEST FORM */}
+              {isAuthenticated || authUser ? (
+                <div style={{
+                  padding: '0.85rem 1rem',
+                  borderRadius: '14px',
+                  background: isDark ? 'rgba(5, 150, 105, 0.14)' : '#ecfdf5',
+                  border: '1.5px solid #059669',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.65rem'
+                }}>
+                  <CheckCircle2 size={20} style={{ color: '#059669', flexShrink: 0 }} />
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ fontSize: '0.85rem', fontWeight: 800, color: isDark ? '#ffffff' : '#0f172a' }}>
+                      Logged in as {authUser?.user_metadata?.full_name || authUser?.name || 'Verified Client'}
+                    </div>
+                    <div style={{ fontSize: '0.74rem', color: '#059669', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      {authUser?.email || currentUser?.email}
+                    </div>
+                  </div>
+                </div>
+              ) : (
                 <div
                   ref={guestAuthCardRef}
                   style={{
-                  background: isDark ? 'var(--color-subtle, #1e293b)' : '#ffffff',
-                  border: guestAuthRequested
-                    ? '2px solid #059669'
-                    : (isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid #cbd5e1'),
-                  borderRadius: '16px',
-                  padding: '1rem',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '0.75rem',
-                  boxShadow: guestAuthRequested ? '0 0 0 4px rgba(5, 150, 105, 0.10)' : 'none'
-                }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div>
-                      <div style={{ fontSize: '0.88rem', fontWeight: 900, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a' }}>
-                        {guestAuthRequested
-                          ? 'Create an account or sign in to place this order'
-                          : 'Studio Account / Sign In'}
-                      </div>
-                      <div style={{ fontSize: '0.7rem', color: isDark ? 'var(--color-text-muted, #94a3b8)' : '#64748b', lineHeight: 1.45 }}>
-                        {guestAuthRequested
-                          ? 'Your order and artwork stay saved. Authenticate below and this same order will continue immediately.'
-                          : 'Sign in to track orders and download live deliverables.'}
-                      </div>
+                    borderRadius: '16px',
+                    border: guestAuthRequested ? '2px solid #059669' : isDark ? '1px solid #334155' : '1px solid #e2e8f0',
+                    background: isDark ? '#1e293b' : '#ffffff',
+                    padding: '1rem',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '0.85rem'
+                  }}
+                >
+                  <div>
+                    <div style={{ fontSize: '0.88rem', fontWeight: 800, color: isDark ? '#ffffff' : '#0f172a' }}>
+                      Customer Checkout Details
                     </div>
-                    <div style={{ display: 'flex', gap: '0.3rem' }}>
-                      <button
-                        type="button"
-                        onClick={() => setGuestAuthMode('signup')}
-                        style={{
-                          background: guestAuthMode === 'signup' ? '#059669' : (isDark ? 'var(--color-border, #334155)' : '#f1f5f9'),
-                          color: guestAuthMode === 'signup' ? '#ffffff' : (isDark ? 'var(--color-text-secondary, #cbd5e1)' : '#475569'),
-                          border: 'none',
-                          borderRadius: '6px',
-                          padding: '0.25rem 0.6rem',
-                          fontSize: '0.72rem',
-                          fontWeight: 800,
-                          cursor: 'pointer'
-                        }}
-                      >
-                        Sign Up
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setGuestAuthMode('login')}
-                        style={{
-                          background: guestAuthMode === 'login' ? '#059669' : (isDark ? 'var(--color-border, #334155)' : '#f1f5f9'),
-                          color: guestAuthMode === 'login' ? '#ffffff' : (isDark ? 'var(--color-text-secondary, #cbd5e1)' : '#475569'),
-                          border: 'none',
-                          borderRadius: '6px',
-                          padding: '0.25rem 0.6rem',
-                          fontSize: '0.72rem',
-                          fontWeight: 800,
-                          cursor: 'pointer'
-                        }}
-                      >
-                        Sign In
-                      </button>
-                    </div>
+                    <p style={{ margin: '0.15rem 0 0', fontSize: '0.74rem', color: isDark ? '#94a3b8' : '#64748b' }}>
+                      Your order and artwork stay saved in your secure client portal.
+                    </p>
                   </div>
 
-                  {/* 1-Click Social Sign-In Button */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                    <GoogleCustomSignInButton
-                      onAuthSuccess={handleGoogleAuthSuccess}
-                      onAuthError={(err) => {
-                        if (showToast) showToast(err || 'Google sign-in cancelled', 'error');
+                  {/* ONE-TAP GOOGLE SIGN IN */}
+                  <GoogleCustomSignInButton
+                    onAuthSuccess={handleGoogleAuthSuccess}
+                    onAuthError={(err) => {
+                      if (showToast) showToast(err || 'Google authentication notice', 'error');
+                    }}
+                    text="Instant One-Tap Google Checkout"
+                    style={{ width: '100%', minHeight: '48px', borderRadius: '12px' }}
+                  />
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', margin: '0.15rem 0' }}>
+                    <div style={{ flex: 1, height: '1px', background: isDark ? '#334155' : '#e2e8f0' }} />
+                    <span style={{ fontSize: '0.68rem', fontWeight: 800, color: isDark ? '#64748b' : '#94a3b8' }}>OR WITH EMAIL</span>
+                    <div style={{ flex: 1, height: '1px', background: isDark ? '#334155' : '#e2e8f0' }} />
+                  </div>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
+                    <input
+                      type="text"
+                      value={guestName}
+                      onChange={(e) => setGuestName(e.target.value)}
+                      placeholder="Your Full Name / Business"
+                      style={{
+                        width: '100%',
+                        minHeight: '48px',
+                        borderRadius: '12px',
+                        border: isDark ? '1.5px solid #334155' : '1.5px solid #cbd5e1',
+                        background: isDark ? '#0f172a' : '#ffffff',
+                        color: isDark ? '#ffffff' : '#0f172a',
+                        padding: '0 0.85rem',
+                        fontSize: '0.88rem',
+                        boxSizing: 'border-box'
                       }}
-                      style={{ height: '40px', borderRadius: '10px', fontSize: '0.82rem' }}
-                      text="Continue with Google"
                     />
-                  </div>
 
-                  {/* Divider */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', margin: '0.1rem 0' }}>
-                    <div style={{ flex: 1, height: '1px', background: isDark ? 'var(--color-border, #334155)' : '#e2e8f0' }} />
-                    <span style={{ fontSize: '0.68rem', color: isDark ? 'var(--color-text-muted, #94a3b8)' : '#94a3b8', fontWeight: 800, textTransform: 'uppercase' }}>
-                      or with email
-                    </span>
-                    <div style={{ flex: 1, height: '1px', background: isDark ? 'var(--color-border, #334155)' : '#e2e8f0' }} />
-                  </div>
-
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                    {guestAuthMode === 'signup' && (
-                      <input
-                        type="text"
-                        value={guestName}
-                        onChange={(e) => setGuestName(e.target.value)}
-                        placeholder="Your Full Name *"
-                        style={{
-                          padding: '0.5rem 0.75rem',
-                          borderRadius: '8px',
-                          border: isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid #cbd5e1',
-                          fontSize: '0.8rem',
-                          color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a',
-                          background: isDark ? 'var(--color-surface, #111827)' : '#ffffff'
-                        }}
-                      />
-                    )}
                     <input
                       ref={guestEmailInputRef}
                       type="email"
                       value={guestEmail}
                       onChange={(e) => setGuestEmail(e.target.value)}
-                      placeholder="Email Address *"
+                      placeholder="Email address / WhatsApp"
                       style={{
-                        padding: '0.5rem 0.75rem',
-                        borderRadius: '8px',
-                        border: isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid #cbd5e1',
-                        fontSize: '0.8rem',
-                        color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a',
-                        background: isDark ? 'var(--color-surface, #111827)' : '#ffffff'
+                        width: '100%',
+                        minHeight: '48px',
+                        borderRadius: '12px',
+                        border: isDark ? '1.5px solid #334155' : '1.5px solid #cbd5e1',
+                        background: isDark ? '#0f172a' : '#ffffff',
+                        color: isDark ? '#ffffff' : '#0f172a',
+                        padding: '0 0.85rem',
+                        fontSize: '0.88rem',
+                        boxSizing: 'border-box'
                       }}
                     />
+
                     <input
                       type="password"
                       value={guestPassword}
                       onChange={(e) => setGuestPassword(e.target.value)}
-                      placeholder="Password *"
+                      placeholder="Create password for order tracking"
                       style={{
-                        padding: '0.5rem 0.75rem',
-                        borderRadius: '8px',
-                        border: isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid #cbd5e1',
-                        fontSize: '0.8rem',
-                        color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a',
-                        background: isDark ? 'var(--color-surface, #111827)' : '#ffffff'
+                        width: '100%',
+                        minHeight: '48px',
+                        borderRadius: '12px',
+                        border: isDark ? '1.5px solid #334155' : '1.5px solid #cbd5e1',
+                        background: isDark ? '#0f172a' : '#ffffff',
+                        color: isDark ? '#ffffff' : '#0f172a',
+                        padding: '0 0.85rem',
+                        fontSize: '0.88rem',
+                        boxSizing: 'border-box'
                       }}
                     />
-                    {guestAuthMode === 'signup' && (
-                      <input
-                        type="text"
-                        value={guestCompany}
-                        onChange={(e) => setGuestCompany(e.target.value)}
-                        placeholder="Company / Brand (Optional)"
+
+                    <div style={{ display: 'flex', justifyContent: 'center' }}>
+                      <button
+                        type="button"
+                        onClick={() => setGuestAuthMode(m => m === 'signup' ? 'login' : 'signup')}
                         style={{
-                          padding: '0.5rem 0.75rem',
-                          borderRadius: '8px',
-                          border: isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid #cbd5e1',
-                          fontSize: '0.8rem',
-                          color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a',
-                          background: isDark ? 'var(--color-surface, #111827)' : '#ffffff'
+                          background: 'transparent',
+                          border: 'none',
+                          color: '#059669',
+                          fontSize: '0.76rem',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                          padding: '0.35rem'
                         }}
-                      />
-                    )}
+                      >
+                        {guestAuthMode === 'signup' ? 'Already have an account? Sign In' : 'New customer? Create Account'}
+                      </button>
+                    </div>
                   </div>
                 </div>
               )}
-
             </div>
           )}
 
-          {/* =========================================================================
-              STEP 6: CONFIRMATION VIEW
-              ========================================================================= */}
-          {step === 6 && (
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: '1.5rem 0.5rem', gap: '0.85rem' }}>
-
+          {/* ================= STEP 4: ORDER CONFIRMED ================= */}
+          {step === 4 && (
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', padding: '1.5rem 0' }}>
               <div style={{
                 width: '64px',
                 height: '64px',
                 borderRadius: '50%',
-                background: isDark ? 'rgba(5, 150, 105, 0.25)' : '#ecfdf5',
-                color: isDark ? '#34d399' : '#059669',
+                background: 'linear-gradient(135deg, #059669 0%, #10b981 100%)',
+                color: '#ffffff',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                margin: '0 auto'
+                boxShadow: '0 8px 24px rgba(5, 150, 105, 0.4)',
+                marginBottom: '1rem'
               }}>
-                <CheckCircle2 size={36} />
+                <Check size={36} strokeWidth={3} />
               </div>
 
-              <h3 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 900, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a' }}>
+              <h3 style={{ margin: '0 0 0.35rem', fontSize: '1.35rem', fontWeight: 900 }}>
                 Order Successfully Placed!
               </h3>
-
-              <div style={{ background: isDark ? 'var(--color-subtle, #1e293b)' : '#f8fafc', border: isDark ? '1px solid var(--color-border, #334155)' : '1px solid #cbd5e1', borderRadius: '12px', padding: '0.65rem 1rem', display: 'inline-block' }}>
-                <span style={{ fontSize: '0.75rem', color: isDark ? 'var(--color-text-muted, #94a3b8)' : '#64748b' }}>Order Identifier: </span>
-                <strong style={{ fontSize: '0.85rem', color: isDark ? '#34d399' : '#059669' }}>
-                  {createdOrderObj?.id || 'Pending'}
-                </strong>
-              </div>
-
-              <p style={{ margin: 0, fontSize: '0.8rem', color: isDark ? 'var(--color-text-secondary, #cbd5e1)' : '#475569', lineHeight: 1.4, maxWidth: '380px' }}>
-                Our master digitizers are reviewing your artwork specifications. You will receive production stitch test updates straight to your dashboard.
+              <p style={{ margin: '0 0 1.25rem', fontSize: '0.82rem', color: isDark ? '#94a3b8' : '#64748b', maxWidth: '320px' }}>
+                Your order #{createdOrderObj?.id || 'ORD'} has been recorded into the live production queue.
               </p>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', width: '100%', maxWidth: '340px', marginTop: '0.5rem' }}>
-                <button
-                  type="button"
-                  onClick={handlePayNow}
-                  style={{
-                    background: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
-                    color: '#ffffff',
-                    border: 'none',
-                    borderRadius: '12px',
-                    padding: '0.85rem',
-                    fontWeight: 900,
-                    fontSize: '0.9rem',
-                    cursor: 'pointer',
-                    boxShadow: '0 4px 14px rgba(5, 150, 105, 0.3)'
-                  }}
-                >
-                  Pay & Instant Dispatch (${totalPrice.toFixed(2)})
-                </button>
+              <div style={{
+                width: '100%',
+                borderRadius: '14px',
+                background: isDark ? '#1e293b' : '#f8fafc',
+                border: isDark ? '1px solid #334155' : '1px solid #e2e8f0',
+                padding: '1rem',
+                textAlign: 'left',
+                marginBottom: '1.25rem'
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', fontWeight: 800 }}>
+                  <span>{createdOrderObj?.title || serviceDisplayName}</span>
+                  <span style={{ color: '#059669' }}>${totalPrice.toFixed(2)}</span>
+                </div>
+                <div style={{ fontSize: '0.74rem', color: isDark ? '#94a3b8' : '#64748b', marginTop: '0.25rem' }}>
+                  Delivery Turnaround: ⚡ {isRush ? '2–4 Hours Express' : '4–12 Hours Standard'}
+                </div>
+              </div>
 
+              <button
+                type="button"
+                onClick={handlePayNow}
+                style={{
+                  width: '100%',
+                  minHeight: '52px',
+                  borderRadius: '14px',
+                  background: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
+                  color: '#ffffff',
+                  border: 'none',
+                  fontSize: '0.98rem',
+                  fontWeight: 900,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '0.5rem',
+                  boxShadow: '0 6px 20px rgba(5, 150, 105, 0.35)'
+                }}
+              >
+                <span>Proceed to Secure Payment (${totalPrice.toFixed(2)})</span>
+                <ArrowRight size={18} />
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* STICKY BOTTOM CTA BAR */}
+        {step < 4 && (
+          <div style={{
+            position: 'absolute',
+            bottom: 0,
+            left: 0,
+            right: 0,
+            padding: '0.75rem 1.15rem calc(0.75rem + env(safe-area-inset-bottom, 0px))',
+            background: isDark ? 'rgba(15, 23, 42, 0.95)' : 'rgba(255, 255, 255, 0.95)',
+            backdropFilter: 'blur(8px)',
+            borderTop: isDark ? '1px solid #1e293b' : '1px solid #e2e8f0',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.65rem',
+            zIndex: 10
+          }}>
+            {step === 1 && (
+              <button
+                type="button"
+                onClick={handleProceedFromStep1}
+                disabled={isUploading}
+                style={{
+                  flex: 1,
+                  minHeight: '52px',
+                  borderRadius: '14px',
+                  background: isUploading ? '#94a3b8' : 'linear-gradient(135deg, #059669 0%, #047857 100%)',
+                  color: '#ffffff',
+                  border: 'none',
+                  fontSize: '0.95rem',
+                  fontWeight: 800,
+                  cursor: isUploading ? 'not-allowed' : 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '0.5rem',
+                  boxShadow: '0 4px 16px rgba(5, 150, 105, 0.3)'
+                }}
+              >
+                <span>Continue to Placement & Size</span>
+                <ArrowRight size={18} />
+              </button>
+            )}
+
+            {step === 2 && (
+              <>
                 <button
                   type="button"
-                  onClick={() => {
-                    if (createdOrderObj && setSelectedOrderForDrawer) setSelectedOrderForDrawer(createdOrderObj);
-                    if (typeof onOrderCreated === 'function') onOrderCreated(createdOrderObj);
-                    onClose();
-                  }}
+                  onClick={() => setStep(1)}
                   style={{
-                    background: isDark ? 'var(--color-subtle, #1e293b)' : '#f8fafc',
-                    color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a',
-                    border: isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid #cbd5e1',
-                    borderRadius: '12px',
-                    padding: '0.75rem',
-                    fontWeight: 800,
-                    fontSize: '0.85rem',
+                    minWidth: '90px',
+                    minHeight: '52px',
+                    borderRadius: '14px',
+                    border: isDark ? '1.5px solid #334155' : '1.5px solid #cbd5e1',
+                    background: isDark ? '#1e293b' : '#ffffff',
+                    color: isDark ? '#ffffff' : '#0f172a',
+                    fontSize: '0.88rem',
+                    fontWeight: 700,
                     cursor: 'pointer'
                   }}
                 >
-                  Track Order in Dashboard
+                  ← Back
                 </button>
-              </div>
+                <button
+                  type="button"
+                  onClick={handleProceedFromStep2}
+                  style={{
+                    flex: 1,
+                    minHeight: '52px',
+                    borderRadius: '14px',
+                    background: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
+                    color: '#ffffff',
+                    border: 'none',
+                    fontSize: '0.95rem',
+                    fontWeight: 800,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.5rem',
+                    boxShadow: '0 4px 16px rgba(5, 150, 105, 0.3)'
+                  }}
+                >
+                  <span>Review Order (${totalPrice.toFixed(2)})</span>
+                  <ArrowRight size={18} />
+                </button>
+              </>
+            )}
 
-            </div>
-          )}
-
-        </div>
-
-        {/* BOTTOM NAVIGATION CONTROLS */}
-        {step <= 5 && (
-          <div style={{
-            flexShrink: 0,
-            position: 'sticky',
-            bottom: 0,
-            padding: '0.85rem 1.25rem calc(0.85rem + env(safe-area-inset-bottom, 0px)) 1.25rem',
-            borderTop: isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid #cbd5e1',
-            background: isDark ? 'var(--color-surface, #111827)' : '#ffffff',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: '0.75rem',
-            boxShadow: '0 -6px 20px rgba(0, 0, 0, 0.08)',
-            zIndex: 40
-          }}>
-            {step > 1 ? (
+            {step === 3 && (
               <button
                 type="button"
-                onClick={() => setStep(step - 1)}
+                onClick={() => handleSubmitOrder()}
+                disabled={isSubmitting || isSubmittingAuth}
                 style={{
-                  background: isDark ? 'var(--color-subtle, #1e293b)' : '#f8fafc',
-                  border: isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid #cbd5e1',
-                  borderRadius: '10px',
-                  padding: '0.65rem 0.85rem',
-                  fontSize: '0.82rem',
-                  fontWeight: 800,
-                  color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a',
+                  flex: 1,
+                  minHeight: '52px',
+                  borderRadius: '14px',
+                  background: (isSubmitting || isSubmittingAuth) ? '#94a3b8' : 'linear-gradient(135deg, #059669 0%, #047857 100%)',
+                  color: '#ffffff',
+                  border: 'none',
+                  fontSize: '0.98rem',
+                  fontWeight: 900,
+                  cursor: (isSubmitting || isSubmittingAuth) ? 'not-allowed' : 'pointer',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '0.35rem',
-                  cursor: 'pointer',
-                  flexShrink: 0
+                  justifyContent: 'center',
+                  gap: '0.5rem',
+                  boxShadow: '0 6px 20px rgba(5, 150, 105, 0.35)'
                 }}
               >
-                <ArrowLeft size={16} /> Back
+                {isSubmitting || isSubmittingAuth ? (
+                  <>
+                    <Loader2 size={20} className="animate-spin" />
+                    <span>Placing Order...</span>
+                  </>
+                ) : (
+                  <>
+                    <span>
+                      {isAuthenticated || authUser
+                        ? `Place Order Now ($${totalPrice.toFixed(2)})`
+                        : `${guestAuthMode === 'signup' ? 'Create Account' : 'Sign In'} & Place Order`}
+                    </span>
+                    <ArrowRight size={18} />
+                  </>
+                )}
               </button>
-            ) : <div />}
-
-            <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', justifyContent: 'center', marginLeft: 'auto', marginRight: '0.35rem' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '0.3rem' }}>
-                <span style={{ fontSize: '0.65rem', color: isDark ? 'var(--color-text-muted, #94a3b8)' : '#64748b', fontWeight: 700 }}>Total</span>
-                {(volumeDiscountAmount + promoDiscountAmount) > 0 && (
-                  <span style={{
-                    fontSize: '0.62rem',
-                    fontWeight: 900,
-                    color: isDark ? '#34d399' : '#059669',
-                    background: isDark ? 'rgba(5, 150, 105, 0.2)' : '#ecfdf5',
-                    padding: '0.05rem 0.32rem',
-                    borderRadius: '4px',
-                    border: isDark ? '1px solid rgba(5, 150, 105, 0.35)' : '1px solid #a7f3d0'
-                  }}>
-                    Save ${(volumeDiscountAmount + promoDiscountAmount).toFixed(2)}
-                  </span>
-                )}
-              </div>
-              <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'flex-end', gap: '0.3rem' }}>
-                {(volumeDiscountAmount + promoDiscountAmount) > 0 && (
-                  <span style={{
-                    fontSize: '0.78rem',
-                    color: isDark ? 'var(--color-text-muted, #94a3b8)' : '#94a3b8',
-                    textDecoration: 'line-through',
-                    fontWeight: 600
-                  }}>
-                    ${(baseSubtotal + rushFee).toFixed(2)}
-                  </span>
-                )}
-                <span style={{ fontSize: '1.15rem', fontWeight: 900, color: isDark ? '#34d399' : '#047857' }}>
-                  ${totalPrice.toFixed(2)}
-                </span>
-              </div>
-            </div>
-
-            <button
-              type="button"
-              disabled={isSubmitting || isSubmittingAuth}
-              onClick={() => {
-                if (step === 1) {
-                  setStep(2);
-                } else if (step === 2) {
-                  const parsed = parseInt(quantityInput, 10);
-                  if (selectedService === 'patch' && (quantity < 50 || isNaN(parsed) || parsed < 50)) {
-                    setQuantity(50);
-                    setQuantityInput('50');
-                    if (showToast) showToast('Minimum order quantity for Custom Patches is 50 pieces.', 'warning');
-                    return;
-                  }
-                  setStep(3);
-                } else if (step === 3) {
-                  if (uploadedFiles.length === 0) {
-                    setUploadError('Please attach at least one artwork or reference file.');
-                    if (fileInputRef.current) fileInputRef.current.click();
-                    return;
-                  }
-                  setStep(4);
-                } else if (step === 4) {
-                  setStep(5);
-                } else if (step === 5) {
-                  handleSubmitOrder();
-                }
-              }}
-              style={{
-                background: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
-                color: '#ffffff',
-                border: 'none',
-                borderRadius: '10px',
-                padding: '0.65rem 1.15rem',
-                fontSize: '0.85rem',
-                fontWeight: 900,
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.45rem',
-                cursor: (isSubmitting || isSubmittingAuth) ? 'not-allowed' : 'pointer',
-                boxShadow: '0 4px 14px rgba(5, 150, 105, 0.3)',
-                flexShrink: 0
-              }}
-            >
-              {isSubmitting ? (
-                <>
-                  <Loader2 size={16} className="animate-spin" /> Recording Order...
-                </>
-              ) : step === 1 ? (
-                <>
-                  Next: Package & Quantity <ArrowRight size={16} />
-                </>
-              ) : step === 2 ? (
-                <>
-                  Next: Upload Artwork <ArrowRight size={16} />
-                </>
-              ) : step === 3 ? (
-                uploadedFiles.length === 0 ? (
-                  <>
-                    <Upload size={16} /> Choose Artwork & Continue
-                  </>
-                ) : (
-                  <>
-                    Next: Technical Specs <ArrowRight size={16} />
-                  </>
-                )
-              ) : step === 4 ? (
-                <>
-                  Next: Review Order <ArrowRight size={16} />
-                </>
-              ) : (
-                !isAuthenticated && !authUser ? (
-                  <>
-                    {guestAuthMode === 'signup' ? 'Create Account' : 'Sign In'} & Place Order (${totalPrice.toFixed(2)}) <Check size={16} />
-                  </>
-                ) : (
-                  <>
-                    Confirm & Place Order (${totalPrice.toFixed(2)}) <Check size={16} />
-                  </>
-                )
-              )}
-            </button>
+            )}
           </div>
         )}
-
       </div>
     </div>
   );
