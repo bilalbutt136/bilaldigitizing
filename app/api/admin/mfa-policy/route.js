@@ -21,12 +21,16 @@ async function GET_impl(request) {
       );
     }
 
-    const enabled = await getAdminMfaPolicy(null, { force: true });
+    const enabled = await getAdminMfaPolicy(null, { force: false });
     return NextResponse.json({
       success: true,
       enabled,
       currentLevel: authLevel || 'aal1',
       verified: authLevel === 'aal2'
+    }, {
+      headers: {
+        'Cache-Control': 'private, max-age=15, stale-while-revalidate=30'
+      }
     });
   } catch (error) {
     return NextResponse.json(

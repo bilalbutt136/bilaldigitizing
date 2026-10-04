@@ -4,6 +4,8 @@ import { createAdminClient } from '../../../src/lib/supabase/admin';
 import { checkDistributedRateLimit, getClientIp, getRateLimitHeaders } from '../../../src/lib/rateLimit';
 import { createHash } from 'node:crypto';
 
+let trackingTableHasMetadataColumn = null;
+
 async function POST_impl(request) {
   try {
     const ip = getClientIp(request);
@@ -78,13 +80,22 @@ async function POST_impl(request) {
         event_time: nowIso
       };
 
-      // 3. Insert record (trying with metadata JSONB column first; gracefully falling back if column not yet applied)
-      let { error } = await supabase.from('tracking_events').insert([{
-        ...baseRecord,
-        metadata: fullTelemetry
-      }]);
-
-      if (error && (error.code === '42703' || error.message?.includes('metadata'))) {
+      // 3. Insert record (cached check to avoid repeating failing column roundtrip)
+      let error = null;
+      if (trackingTableHasMetadataColumn !== false) {
+        const attempt = await supabase.from('tracking_events').insert([{
+          ...baseRecord,
+          metadata: fullTelemetry
+        }]);
+        error = attempt.error;
+        if (error && (error.code === '42703' || error.message?.includes('metadata'))) {
+          trackingTableHasMetadataColumn = false;
+          const fallback = await supabase.from('tracking_events').insert([baseRecord]);
+          error = fallback.error;
+        } else if (!error) {
+          trackingTableHasMetadataColumn = true;
+        }
+      } else {
         const fallback = await supabase.from('tracking_events').insert([baseRecord]);
         error = fallback.error;
       }

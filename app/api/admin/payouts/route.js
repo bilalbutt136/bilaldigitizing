@@ -129,7 +129,8 @@ async function GET_impl(request) {
 
     const { data: allOrders } = await adminClient
       .from('orders')
-      .select('id, worker_id, status, worker_status, quoted_price, quoted_price_pkr, worker_payout, worker_payment_status');
+      .select('id, worker_id, status, worker_status, quoted_price, quoted_price_pkr, worker_payout, worker_payment_status')
+      .not('worker_id', 'is', null);
 
     // Aggregate by worker
     const workerBalanceMap = {};

@@ -988,14 +988,16 @@ export async function updateHomePageSettingsInSupabase(payloadArray) {
 // patch cards, store products, portfolio items, sew outs, hero slides, digitizers,
 // and the cms_content key/value store). Returns null when not configured.
 export async function fetchCatalogFromSupabase() {
-  try {
-    const res = await fetch('/api/catalog?action=fetchAll');
-    if (!res.ok) return null;
-    const data = await res.json();
-    return normalizePublicCatalog(data);
-  } catch {
-    return null;
-  }
+  return runDedupedApiRead('public-catalog-all', async () => {
+    try {
+      const res = await fetch('/api/catalog?action=fetchAll');
+      if (!res.ok) return null;
+      const data = await res.json();
+      return normalizePublicCatalog(data);
+    } catch {
+      return null;
+    }
+  }, { ttlMs: 60_000 });
 }
 
 // ============================================================
@@ -1838,8 +1840,17 @@ export async function markAllNotificationsAsReadInSupabase(userEmail = '') {
 // META PIXEL / TRACKING LOGS
 // ============================================================
 
+const recentTrackingEvents = new Map();
+
 export async function logTrackingEventToSupabase(eventData) {
   try {
+    const key = `${eventData?.eventName || ''}:${eventData?.pagePath || ''}`;
+    const now = Date.now();
+    const lastTime = recentTrackingEvents.get(key) || 0;
+    if (now - lastTime < 3000) return;
+    recentTrackingEvents.set(key, now);
+    if (recentTrackingEvents.size > 100) recentTrackingEvents.clear();
+
     await fetch('/api/tracking', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -1895,13 +1906,15 @@ export async function fetchTrackingEventsFromSupabase() {
 // ============================================================
 
 export async function fetchMediaAssetsFromSupabase() {
-  try {
-    const portRes = await fetch('/api/catalog?action=fetchAll');
-    const data = await portRes.json();
-    return { portfolio: data.portfolio || [], sew_outs: data.sew_outs || [] };
-  } catch {
-    return { portfolio: [], sew_outs: [] };
-  }
+  return runDedupedApiRead('public-media-assets', async () => {
+    try {
+      const portRes = await fetch('/api/catalog?action=fetchAll');
+      const data = await portRes.json();
+      return { portfolio: data.portfolio || [], sew_outs: data.sew_outs || [] };
+    } catch {
+      return { portfolio: [], sew_outs: [] };
+    }
+  }, { ttlMs: 60_000 });
 }
 
 // Helper to upload files directly to Cloudinary / Supabase Storage and return full details (url, public_id, size)

@@ -257,35 +257,35 @@ export const Footer = () => {
             </h4>
             <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '0.85rem', fontSize: '0.9rem' }}>
               <li>
-                <Link href="/services/embroidery-digitizing" style={{ color: '#94a3b8', textDecoration: 'none', transition: 'color 0.2s', cursor: 'pointer', fontSize: 'inherit', textAlign: 'left', display: 'inline-block' }}
+                <Link href="/services/embroidery-digitizing" prefetch={false} style={{ color: '#94a3b8', textDecoration: 'none', transition: 'color 0.2s', cursor: 'pointer', fontSize: 'inherit', textAlign: 'left', display: 'inline-block' }}
                    onMouseEnter={(e) => e.currentTarget.style.color = 'var(--orange-500)'}
                    onMouseLeave={(e) => e.currentTarget.style.color = '#94a3b8'}>
                   Embroidery Digitizing
                 </Link>
               </li>
               <li>
-                <Link href="/services/vector-tracing" style={{ color: '#94a3b8', textDecoration: 'none', transition: 'color 0.2s', cursor: 'pointer', fontSize: 'inherit', textAlign: 'left', display: 'inline-block' }}
+                <Link href="/services/vector-tracing" prefetch={false} style={{ color: '#94a3b8', textDecoration: 'none', transition: 'color 0.2s', cursor: 'pointer', fontSize: 'inherit', textAlign: 'left', display: 'inline-block' }}
                    onMouseEnter={(e) => e.currentTarget.style.color = 'var(--orange-500)'}
                    onMouseLeave={(e) => e.currentTarget.style.color = '#94a3b8'}>
                   Vector Art Conversion
                 </Link>
               </li>
               <li>
-                <Link href="/custom-patches" style={{ color: '#94a3b8', textDecoration: 'none', transition: 'color 0.2s', cursor: 'pointer', fontSize: 'inherit', textAlign: 'left', display: 'inline-block' }}
+                <Link href="/custom-patches" prefetch={false} style={{ color: '#94a3b8', textDecoration: 'none', transition: 'color 0.2s', cursor: 'pointer', fontSize: 'inherit', textAlign: 'left', display: 'inline-block' }}
                    onMouseEnter={(e) => e.currentTarget.style.color = 'var(--orange-500)'}
                    onMouseLeave={(e) => e.currentTarget.style.color = '#94a3b8'}>
                   Custom Physical Patches
                 </Link>
               </li>
               <li>
-                <Link href="/pricing" style={{ color: '#94a3b8', textDecoration: 'none', transition: 'color 0.2s', cursor: 'pointer', fontSize: 'inherit', textAlign: 'left', display: 'inline-block' }}
+                <Link href="/pricing" prefetch={false} style={{ color: '#94a3b8', textDecoration: 'none', transition: 'color 0.2s', cursor: 'pointer', fontSize: 'inherit', textAlign: 'left', display: 'inline-block' }}
                    onMouseEnter={(e) => e.currentTarget.style.color = 'var(--orange-500)'}
                    onMouseLeave={(e) => e.currentTarget.style.color = '#94a3b8'}>
                   Live Pricing & Packages
                 </Link>
               </li>
               <li>
-                <Link href="/portfolio" style={{ color: '#94a3b8', textDecoration: 'none', transition: 'color 0.2s', cursor: 'pointer', fontSize: 'inherit', textAlign: 'left', display: 'inline-block' }}
+                <Link href="/portfolio" prefetch={false} style={{ color: '#94a3b8', textDecoration: 'none', transition: 'color 0.2s', cursor: 'pointer', fontSize: 'inherit', textAlign: 'left', display: 'inline-block' }}
                    onMouseEnter={(e) => e.currentTarget.style.color = 'var(--orange-500)'}
                    onMouseLeave={(e) => e.currentTarget.style.color = '#94a3b8'}>
                   Sew-Out Portfolio
@@ -301,14 +301,14 @@ export const Footer = () => {
             </h4>
             <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '0.85rem', fontSize: '0.9rem' }}>
               <li>
-                <Link href="/faqs" style={{ color: '#94a3b8', textDecoration: 'none', transition: 'color 0.2s', cursor: 'pointer', fontSize: 'inherit', textAlign: 'left', fontWeight: 600, display: 'inline-block' }}
+                <Link href="/faqs" prefetch={false} style={{ color: '#94a3b8', textDecoration: 'none', transition: 'color 0.2s', cursor: 'pointer', fontSize: 'inherit', textAlign: 'left', fontWeight: 600, display: 'inline-block' }}
                    onMouseEnter={(e) => e.currentTarget.style.color = 'var(--orange-500)'}
                    onMouseLeave={(e) => e.currentTarget.style.color = '#94a3b8'}>
                   Ask the Community / FAQs
                 </Link>
               </li>
               <li>
-                <Link href="/blogs" style={{ color: '#94a3b8', textDecoration: 'none', transition: 'color 0.2s', cursor: 'pointer', fontSize: 'inherit', textAlign: 'left', fontWeight: 600, display: 'inline-block' }}
+                <Link href="/blogs" prefetch={false} style={{ color: '#94a3b8', textDecoration: 'none', transition: 'color 0.2s', cursor: 'pointer', fontSize: 'inherit', textAlign: 'left', fontWeight: 600, display: 'inline-block' }}
                    onMouseEnter={(e) => e.currentTarget.style.color = 'var(--orange-500)'}
                    onMouseLeave={(e) => e.currentTarget.style.color = '#94a3b8'}>
                   Industry Insights & Blogs
@@ -504,22 +504,22 @@ export const Footer = () => {
           </div>
 
           <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'center' }}>
-            <Link href="/privacy" style={{ textDecoration: 'none', color: 'inherit', transition: 'color 0.2s', cursor: 'pointer', fontSize: 'inherit' }}
+            <Link href="/privacy" prefetch={false} style={{ textDecoration: 'none', color: 'inherit', transition: 'color 0.2s', cursor: 'pointer', fontSize: 'inherit' }}
                onMouseEnter={(e) => e.currentTarget.style.color = 'var(--orange-500)'}
                onMouseLeave={(e) => e.currentTarget.style.color = 'inherit'}>
               Privacy Policy
             </Link>
-            <Link href="/terms" style={{ textDecoration: 'none', color: 'inherit', transition: 'color 0.2s', cursor: 'pointer', fontSize: 'inherit' }}
+            <Link href="/terms" prefetch={false} style={{ textDecoration: 'none', color: 'inherit', transition: 'color 0.2s', cursor: 'pointer', fontSize: 'inherit' }}
                onMouseEnter={(e) => e.currentTarget.style.color = 'var(--orange-500)'}
                onMouseLeave={(e) => e.currentTarget.style.color = 'inherit'}>
               Terms & Conditions
             </Link>
-            <Link href="/faqs" style={{ textDecoration: 'none', color: 'inherit', transition: 'color 0.2s', cursor: 'pointer', fontSize: 'inherit' }}
+            <Link href="/faqs" prefetch={false} style={{ textDecoration: 'none', color: 'inherit', transition: 'color 0.2s', cursor: 'pointer', fontSize: 'inherit' }}
                onMouseEnter={(e) => e.currentTarget.style.color = 'var(--orange-500)'}
                onMouseLeave={(e) => e.currentTarget.style.color = 'inherit'}>
               FAQs
             </Link>
-            <Link href="/blogs" style={{ textDecoration: 'none', color: 'inherit', transition: 'color 0.2s', cursor: 'pointer', fontSize: 'inherit' }}
+            <Link href="/blogs" prefetch={false} style={{ textDecoration: 'none', color: 'inherit', transition: 'color 0.2s', cursor: 'pointer', fontSize: 'inherit' }}
                onMouseEnter={(e) => e.currentTarget.style.color = 'var(--orange-500)'}
                onMouseLeave={(e) => e.currentTarget.style.color = 'inherit'}>
               Blogs

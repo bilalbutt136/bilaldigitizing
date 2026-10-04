@@ -37,8 +37,12 @@ async function GET_impl(request) {
       .from('conversations')
       .select('id, tags, order_title, unread_admin_count, unread_client_count');
 
-    if (!isAdmin) {
-      query = query.ilike('client_email', user.email.toLowerCase().trim());
+    if (isAdmin) {
+      query = query.gt('unread_admin_count', 0);
+    } else {
+      query = query
+        .ilike('client_email', user.email.toLowerCase().trim())
+        .gt('unread_client_count', 0);
     }
 
     const { data, error } = await query;

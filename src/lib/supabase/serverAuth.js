@@ -5,8 +5,8 @@ import { createAdminClient } from './admin';
 
 const requestAuthCache = new WeakMap();
 const trustedAccessCache = new Map();
-const TRUSTED_ACCESS_CACHE_TTL_MS = 15_000;
-const ADMIN_MFA_POLICY_TTL_MS = 5000;
+const TRUSTED_ACCESS_CACHE_TTL_MS = 60_000;
+const ADMIN_MFA_POLICY_TTL_MS = 30_000;
 let adminMfaPolicyCache = { value: true, expiresAt: 0 };
 
 export function invalidateAdminMfaPolicyCache() {
@@ -129,6 +129,10 @@ export async function resolveTrustedUserAccess(user, dbClientOverride = null) {
         role: 'worker'
       }
     };
+  }
+
+  if (user.app_metadata?.role === 'customer') {
+    return { isAdmin: false, isWorker: false, workerData: null };
   }
 
   const cached = trustedAccessCache.get(email);

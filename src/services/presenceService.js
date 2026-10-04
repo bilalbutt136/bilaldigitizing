@@ -14,6 +14,25 @@ let restPresenceReadInFlight = null;
 let lastRestPresenceReadAt = 0;
 let restPresenceAuthBlocked = false;
 
+function getLastRestPresenceWriteAt() {
+  if (typeof window === 'undefined') return lastRestPresenceWriteAt;
+  try {
+    const stored = Number(window.sessionStorage.getItem('bdigi_last_presence_write') || 0);
+    return Math.max(lastRestPresenceWriteAt, stored);
+  } catch {
+    return lastRestPresenceWriteAt;
+  }
+}
+
+function recordRestPresenceWrite(time) {
+  lastRestPresenceWriteAt = time;
+  if (typeof window !== 'undefined') {
+    try {
+      window.sessionStorage.setItem('bdigi_last_presence_write', String(time));
+    } catch {}
+  }
+}
+
 function isValidPresenceSessionId(value) {
   return /^[a-zA-Z0-9_-]{8,128}$/.test(String(value || ''));
 }
@@ -226,11 +245,11 @@ export async function trackUserPresence({
   }
 
   const now = Date.now();
-  if (restPresenceWriteInFlight || now - lastRestPresenceWriteAt < REST_PRESENCE_MIN_INTERVAL_MS) {
+  if (restPresenceWriteInFlight || now - getLastRestPresenceWriteAt() < REST_PRESENCE_MIN_INTERVAL_MS) {
     return;
   }
 
-  lastRestPresenceWriteAt = now;
+  recordRestPresenceWrite(now);
   restPresenceWriteInFlight = fetch('/api/chat/presence', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

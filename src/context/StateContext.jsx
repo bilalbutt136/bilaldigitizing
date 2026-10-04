@@ -467,51 +467,71 @@ export const StateProvider = ({ children, initialCatalog = null }) => {
     } catch {}
   };
 
+  const notifRefreshInFlightRef = React.useRef(null);
+  const lastNotifRefreshAtRef = React.useRef(0);
+
   /* oxlint-disable react-hooks/exhaustive-deps -- storage helper closes over the same auth identity already listed below */
   const refreshNotifications = React.useCallback(async (forcedEmail = null, forcedIsAdmin = null) => {
-    try {
-      const emailToUse = (forcedEmail || authUser?.email || '').toLowerCase().trim();
-      const isAdminToUse = forcedIsAdmin !== null ? forcedIsAdmin : (authUser?.role === 'admin' || currentView === 'admin');
-
-      // Unauthenticated sessions should never fetch or show notifications
-      if (!emailToUse && !isAdminToUse) {
-        setNotifications([]);
-        return;
-      }
-
-      let freshNotifs = [];
-
-      if (isAdminToUse && typeof fetch !== 'undefined') {
-        try {
-          const response = await fetch('/api/admin/notifications?limit=200', {
-            method: 'GET',
-            credentials: 'include',
-            cache: 'no-store'
-          });
-          const payload = await response.json().catch(() => ({}));
-          if (!response.ok) {
-            throw new Error(payload?.error || `Admin notification history request failed (${response.status})`);
-          }
-          freshNotifs = Array.isArray(payload?.notifications) ? payload.notifications : [];
-        } catch (adminHistoryError) {
-          console.warn('Admin notification history server fetch notice:', adminHistoryError);
-          freshNotifs = await fetchNotificationsFromSupabase(emailToUse, true);
-        }
-      } else {
-        freshNotifs = await fetchNotificationsFromSupabase(emailToUse, false);
-      }
-
-      if (Array.isArray(freshNotifs)) {
-        const sanitized = filterAndSanitizeNotifications(freshNotifs, {
-          currentUserEmail: emailToUse,
-          isAdmin: isAdminToUse
-        });
-        setNotifications(sanitized);
-        saveNotificationsToStorage(sanitized, emailToUse);
-      }
-    } catch (err) {
-      console.warn('refreshNotifications notice:', err);
+    const isForced = Boolean(forcedEmail || forcedIsAdmin !== null);
+    const now = Date.now();
+    if (!isForced && now - lastNotifRefreshAtRef.current < 10000) {
+      return;
     }
+    if (notifRefreshInFlightRef.current) {
+      return notifRefreshInFlightRef.current;
+    }
+    lastNotifRefreshAtRef.current = now;
+
+    const task = (async () => {
+      try {
+        const emailToUse = (forcedEmail || authUser?.email || '').toLowerCase().trim();
+        const isAdminToUse = forcedIsAdmin !== null ? forcedIsAdmin : (authUser?.role === 'admin' || currentView === 'admin');
+
+        // Unauthenticated sessions should never fetch or show notifications
+        if (!emailToUse && !isAdminToUse) {
+          setNotifications([]);
+          return;
+        }
+
+        let freshNotifs = [];
+
+        if (isAdminToUse && typeof fetch !== 'undefined') {
+          try {
+            const response = await fetch('/api/admin/notifications?limit=200', {
+              method: 'GET',
+              credentials: 'include',
+              cache: 'no-store'
+            });
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok) {
+              throw new Error(payload?.error || `Admin notification history request failed (${response.status})`);
+            }
+            freshNotifs = Array.isArray(payload?.notifications) ? payload.notifications : [];
+          } catch (adminHistoryError) {
+            console.warn('Admin notification history server fetch notice:', adminHistoryError);
+            freshNotifs = await fetchNotificationsFromSupabase(emailToUse, true);
+          }
+        } else {
+          freshNotifs = await fetchNotificationsFromSupabase(emailToUse, false);
+        }
+
+        if (Array.isArray(freshNotifs)) {
+          const sanitized = filterAndSanitizeNotifications(freshNotifs, {
+            currentUserEmail: emailToUse,
+            isAdmin: isAdminToUse
+          });
+          setNotifications(sanitized);
+          saveNotificationsToStorage(sanitized, emailToUse);
+        }
+      } catch (err) {
+        console.warn('refreshNotifications notice:', err);
+      } finally {
+        notifRefreshInFlightRef.current = null;
+      }
+    })();
+
+    notifRefreshInFlightRef.current = task;
+    return task;
   }, [authUser?.email, authUser?.role, currentView]);
   /* oxlint-enable react-hooks/exhaustive-deps */
 
