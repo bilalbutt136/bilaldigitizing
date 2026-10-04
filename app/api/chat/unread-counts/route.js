@@ -17,6 +17,9 @@ function isSupportConversation(conversation) {
     title.includes('support');
 }
 
+const unreadMemoryCache = new Map();
+const UNREAD_CACHE_TTL_MS = 15_000;
+
 async function GET_impl(request) {
   const burst = checkRateLimit(`chat-unread:${getClientIp(request)}`, 12, 60_000);
   if (!burst.success) {
@@ -29,6 +32,18 @@ async function GET_impl(request) {
   const { user, isAdmin } = await getServerAuthUser(request);
   if (!user?.email) {
     return NextResponse.json({ error: 'Authentication required.' }, { status: 401 });
+  }
+
+  const userKey = isAdmin ? 'admin' : user.email.toLowerCase().trim();
+  const cached = unreadMemoryCache.get(userKey);
+  const now = Date.now();
+  if (cached && cached.expiresAt > now) {
+    return NextResponse.json(cached.data, {
+      headers: {
+        ...getRateLimitHeaders(burst),
+        'Cache-Control': 'private, max-age=30, stale-while-revalidate=60'
+      }
+    });
   }
 
   try {
@@ -61,8 +76,20 @@ async function GET_impl(request) {
       else inbox += count;
     }
 
+    const resultData = { inbox, support, total: inbox + support };
+    unreadMemoryCache.set(userKey, {
+      data: resultData,
+      expiresAt: now + UNREAD_CACHE_TTL_MS
+    });
+
+    if (unreadMemoryCache.size > 200) {
+      for (const [k, v] of unreadMemoryCache.entries()) {
+        if (now > v.expiresAt) unreadMemoryCache.delete(k);
+      }
+    }
+
     return NextResponse.json(
-      { inbox, support, total: inbox + support },
+      resultData,
       {
         headers: {
           ...getRateLimitHeaders(burst),

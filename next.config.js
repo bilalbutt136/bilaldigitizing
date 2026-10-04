@@ -190,6 +190,46 @@ const nextConfig = {
         destination: '/faqs',
         permanent: true,
       },
+      {
+        source: '/legal/privacy',
+        destination: '/privacy',
+        permanent: true,
+      },
+      {
+        source: '/legal/terms',
+        destination: '/terms',
+        permanent: true,
+      },
+      {
+        source: '/legal/refund',
+        destination: '/terms',
+        permanent: true,
+      },
+      {
+        source: '/about',
+        destination: '/',
+        permanent: true,
+      },
+      {
+        source: '/locations',
+        destination: '/contact',
+        permanent: true,
+      },
+      {
+        source: '/vector-art-conversion',
+        destination: '/services/vector-tracing',
+        permanent: true,
+      },
+      {
+        source: '/jacket-back-digitizing',
+        destination: '/services/embroidery-digitizing',
+        permanent: true,
+      },
+      {
+        source: '/glossary',
+        destination: '/faqs',
+        permanent: true,
+      },
     ];
   },
 };

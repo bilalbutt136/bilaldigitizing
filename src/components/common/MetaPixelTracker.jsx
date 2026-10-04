@@ -108,6 +108,10 @@ export const MetaPixelTracker = () => {
     if (prevPathRef.current === pathname) return;
     prevPathRef.current = pathname;
 
+    // Do not log page views or conversion telemetry on 404 error routes
+    if (pathname.includes('404') || (typeof document !== 'undefined' && document.title.includes('404'))) return;
+    if (pathname.startsWith('/legal/') || pathname === '/about' || pathname === '/locations' || pathname === '/glossary') return;
+
     const matchData = buildAdvancedMatchingData(authUser);
     if (activePixelId) {
       injectMetaPixel(activePixelId, matchData);

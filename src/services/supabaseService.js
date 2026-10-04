@@ -1844,18 +1844,23 @@ const recentTrackingEvents = new Map();
 
 export async function logTrackingEventToSupabase(eventData) {
   try {
-    const key = `${eventData?.eventName || ''}:${eventData?.pagePath || ''}`;
+    if (typeof window === 'undefined') return;
+    const path = String(eventData?.pagePath || window.location.pathname || '').toLowerCase();
+    if (path.includes('404') || (typeof document !== 'undefined' && document.title.includes('404'))) return;
+    if (path.startsWith('/legal/') || path === '/locations' || path === '/about' || path === '/glossary') return;
+
+    const key = `${eventData?.eventName || ''}:${path}`;
     const now = Date.now();
     const lastTime = recentTrackingEvents.get(key) || 0;
     if (now - lastTime < 3000) return;
     recentTrackingEvents.set(key, now);
     if (recentTrackingEvents.size > 100) recentTrackingEvents.clear();
 
-    await fetch('/api/tracking', {
+    fetch('/api/tracking', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'logEvent', payload: eventData })
-    });
+    }).catch(() => {});
   } catch (e) {
     console.warn('Could not log tracking event', e);
   }

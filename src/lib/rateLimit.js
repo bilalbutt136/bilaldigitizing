@@ -70,6 +70,9 @@ export function checkRateLimit(identifier, maxRequests = 30, windowMs = 60000) {
   };
 }
 
+const distributedLocalCache = new Map();
+const DISTRIBUTED_CACHE_MAX_AGE_MS = 10_000;
+
 /**
  * Atomic, deployment-wide rate limiting backed by Supabase/Postgres.
  * This prevents bypassing limits by hopping between Vercel serverless instances.
@@ -91,6 +94,32 @@ export async function checkDistributedRateLimit(identifier, maxRequests = 30, wi
     };
   }
 
+  const now = Date.now();
+  const cached = distributedLocalCache.get(safeIdentifier);
+  if (cached && cached.expiresAt > now) {
+    if (cached.blocked) {
+      return {
+        success: false,
+        unavailable: false,
+        limit,
+        remaining: 0,
+        reset: cached.reset,
+        retryAfter: Math.max(1, Math.ceil((cached.expiresAt - now) / 1000))
+      };
+    }
+    if (cached.remaining > 2) {
+      cached.remaining -= 1;
+      return {
+        success: true,
+        unavailable: false,
+        limit,
+        remaining: cached.remaining,
+        reset: cached.reset,
+        retryAfter: 0
+      };
+    }
+  }
+
   try {
     const supabase = createAdminClient();
     const { data, error } = await supabase.rpc('consume_rate_limit', {
@@ -106,13 +135,41 @@ export async function checkDistributedRateLimit(identifier, maxRequests = 30, wi
       throw new Error('Shared rate limiter returned an invalid response.');
     }
 
+    const resetEpoch = Number(row.reset_epoch) || Math.ceil((now + window) / 1000);
+    const retryAfter = Math.max(0, Number(row.retry_after) || 0);
+    const remaining = Math.max(0, Number(row.remaining) || 0);
+
+    if (row.allowed) {
+      const windowExpiry = resetEpoch * 1000;
+      distributedLocalCache.set(safeIdentifier, {
+        blocked: false,
+        remaining,
+        reset: resetEpoch,
+        expiresAt: Math.min(now + DISTRIBUTED_CACHE_MAX_AGE_MS, windowExpiry)
+      });
+    } else {
+      const retryMs = (retryAfter > 0 ? retryAfter : 5) * 1000;
+      distributedLocalCache.set(safeIdentifier, {
+        blocked: true,
+        remaining: 0,
+        reset: resetEpoch,
+        expiresAt: now + retryMs
+      });
+    }
+
+    if (distributedLocalCache.size > 1000) {
+      for (const [k, v] of distributedLocalCache.entries()) {
+        if (now > v.expiresAt) distributedLocalCache.delete(k);
+      }
+    }
+
     return {
       success: row.allowed,
       unavailable: false,
       limit,
-      remaining: Math.max(0, Number(row.remaining) || 0),
-      reset: Number(row.reset_epoch) || Math.ceil((Date.now() + window) / 1000),
-      retryAfter: Math.max(0, Number(row.retry_after) || 0)
+      remaining,
+      reset: resetEpoch,
+      retryAfter
     };
   } catch (error) {
     console.error('[rateLimit] Shared limiter unavailable:', error?.message || error);
