@@ -15,8 +15,8 @@ import { normalizeCategory } from '../../utils/categoryUtils';
 export default function HomePageClient({ initialAppMode = false, initialAppTab = 'home' }) {
   const { currentView, setCurrentView, activeHomeServiceTab, mobileMode, isAuthInitialized, isAuthenticated, authUser } = useAppState();
   const activeTab = normalizeCategory(activeHomeServiceTab || 'all');
-  // Rule: Unauthenticated visitors or standard mobile browser visitors must always see the public website first.
-  const shouldRenderApp = Boolean(isAuthenticated && (initialAppMode || mobileMode === 'app'));
+  // Render mobile app if explicitly launched via ?app=true, PWA standalone, or mobileMode === 'app'. Standard mobile web visitors see website first.
+  const shouldRenderApp = Boolean(initialAppMode || mobileMode === 'app');
 
   const isAdminAccount = Boolean(isAuthInitialized && isAuthenticated && authUser?.role === 'admin');
 

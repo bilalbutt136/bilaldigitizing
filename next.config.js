@@ -116,6 +116,11 @@ const nextConfig = {
   async redirects() {
     return [
       {
+        source: '/app',
+        destination: '/?app=true&tab=home',
+        permanent: false,
+      },
+      {
         source: '/order',
         destination: '/?app=true&tab=home',
         permanent: false,
