@@ -9,9 +9,6 @@ import BrandingAssetManager from './BrandingAssetManager';
 
 export const ThemeBrandingSettings = () => {
   const {
-    colorTheme,
-    setColorTheme,
-    availableThemes = THEME_PRESETS,
     theme,
     setTheme,
     customBrandColors,
@@ -42,7 +39,7 @@ export const ThemeBrandingSettings = () => {
 
       // Persist to Supabase site_settings
       await updateSiteSettings({
-        themePreset: colorTheme,
+        themePreset: 'studio-orange',
         customBrandColors: brandPayload,
         themeMode: theme
       });
@@ -55,19 +52,6 @@ export const ThemeBrandingSettings = () => {
     }
   };
 
-  const handleSelectPreset = async (presetId) => {
-    setColorTheme(presetId);
-    try {
-      await updateSiteSettings({
-        themePreset: presetId,
-        themeMode: theme
-      });
-      showToast(`Active theme preset changed to ${THEME_PRESETS.find(t => t.id === presetId)?.name || presetId}`, 'success');
-    } catch {
-      showToast('Theme applied locally. Syncing to database...', 'info');
-    }
-  };
-
   const handleResetBrandColors = async () => {
     setCustomBrandColors(null);
     setIsCustomBrandActive(false);
@@ -76,9 +60,6 @@ export const ThemeBrandingSettings = () => {
     });
     showToast('Reset brand colors to theme default palette.', 'info');
   };
-
-  const activePresetObj = availableThemes.find(t => t.id === colorTheme) || availableThemes[0];
-
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
@@ -98,7 +79,7 @@ export const ThemeBrandingSettings = () => {
               </h3>
             </div>
             <p style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)', margin: 0 }}>
-              Select from the top 5 curated international studio presets, configure brand color overrides, and set default light/dark moods.
+              Official brand theme (Executive Studio Pro), brand color overrides, and light/dark display moods.
             </p>
           </div>
 
@@ -155,36 +136,29 @@ export const ThemeBrandingSettings = () => {
         </div>
       </div>
 
-      {/* 2. Global Preset Selector Grid */}
+      {/* 2. Official Brand Theme Card */}
       <div className="card" style={{ padding: '2rem', background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '20px', boxShadow: 'var(--shadow-sm)' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '0.75rem' }}>
           <div>
             <h4 style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--color-text-primary)', margin: '0 0 0.25rem' }}>
-              International Theme Presets
+              Official Brand Theme
             </h4>
             <p style={{ fontSize: '0.825rem', color: 'var(--color-text-muted)', margin: 0 }}>
-              Click any theme to apply its complete typography, surface tokens, and contrast rules studio-wide.
+              High-end commercial digitizing and vector studio design system applied platform-wide.
             </p>
           </div>
           <span style={{ fontSize: '0.75rem', fontWeight: 800, background: 'var(--color-primary-light, rgba(249, 115, 22, 0.12))', color: 'var(--color-primary, #ea580c)', padding: '0.3rem 0.75rem', borderRadius: '9999px' }}>
-            Active: {activePresetObj?.name}
+            Active: {THEME_PRESETS[0]?.name || 'Executive Studio Pro'}
           </span>
         </div>
 
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 300px), 1fr))',
-          gap: '1.25rem'
-        }}>
-          {availableThemes.map((preset) => (
-            <ThemePreviewCard
-              key={preset.id}
-              themePreset={preset}
-              isSelected={colorTheme === preset.id}
-              mode={theme}
-              onSelect={handleSelectPreset}
-            />
-          ))}
+        <div style={{ maxWidth: '420px' }}>
+          <ThemePreviewCard
+            themePreset={THEME_PRESETS[0]}
+            isSelected={true}
+            mode={theme}
+            onSelect={() => {}}
+          />
         </div>
       </div>
 

@@ -81,7 +81,6 @@ import { fetchChatUnreadCounts } from '../../services/chatUnreadService';
 import MobileSimpleOrderModal from '../customer/MobileSimpleOrderModal';
 import MobileStudioHub from './MobileStudioHub';
 import { getMobileOrderTrackingState } from '../../utils/orderTracking';
-import { THEME_PRESETS } from '../../utils/themePresets';
 import {
   handleNotificationClick,
   filterAndSanitizeNotifications,
@@ -4022,42 +4021,30 @@ export const BDigitizingMobileApp = ({ initialTab = 'home' }) => {
               </button>
             </div>
 
-            {/* Color Theme Selector */}
-            <div>
-              <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 800, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a', marginBottom: '0.35rem' }}>
-                Color Theme Preset
-              </label>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
-                {THEME_PRESETS.map(preset => {
-                  const isSelected = colorTheme === preset.id;
-                  return (
-                    <button
-                      key={preset.id}
-                      type="button"
-                      onClick={() => {
-                        if (setColorTheme) setColorTheme(preset.id);
-                      }}
-                      style={{
-                        padding: '0.65rem 0.75rem',
-                        borderRadius: '10px',
-                        border: isSelected ? '2px solid #059669' : (isDark ? '1px solid var(--color-border, #334155)' : '1px solid #cbd5e1'),
-                        background: isSelected ? (isDark ? 'rgba(16, 185, 129, 0.15)' : '#ecfdf5') : (isDark ? 'var(--color-subtle, #1e293b)' : '#ffffff'),
-                        color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a',
-                        fontWeight: 800,
-                        fontSize: '0.78rem',
-                        textAlign: 'left',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.45rem',
-                        cursor: 'pointer'
-                      }}
-                    >
-                      <span style={{ width: '12px', height: '12px', borderRadius: '50%', background: preset.color }} />
-                      <span>{preset.name}</span>
-                    </button>
-                  );
-                })}
+            {/* Studio Brand Theme Indicator */}
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              padding: '0.65rem 0.85rem',
+              borderRadius: '12px',
+              background: isDark ? 'var(--color-subtle, #1e293b)' : '#f8fafc',
+              border: isDark ? '1px solid var(--color-border, #334155)' : '1px solid #e2e8f0'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <span style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#ea580c' }} />
+                <div>
+                  <div style={{ fontSize: '0.82rem', fontWeight: 800, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a' }}>
+                    Executive Studio Pro
+                  </div>
+                  <div style={{ fontSize: '0.7rem', color: isDark ? 'var(--color-text-secondary, #94a3b8)' : '#64748b' }}>
+                    Official BDigitizing Brand Theme
+                  </div>
+                </div>
               </div>
+              <span style={{ fontSize: '0.68rem', fontWeight: 800, color: '#ea580c', background: isDark ? 'rgba(234, 88, 12, 0.15)' : '#fff7ed', padding: '0.2rem 0.5rem', borderRadius: '9999px' }}>
+                Active
+              </span>
             </div>
 
             {/* Audio Alerts */}

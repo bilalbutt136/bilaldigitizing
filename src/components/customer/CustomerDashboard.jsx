@@ -46,8 +46,6 @@ import { CustomerInvoiceModal } from '../common/CustomerInvoiceModal';
 import { EmbroideryDigitizingPage } from '../public/EmbroideryDigitizingPage';
 import { VectorArtPage } from '../public/VectorArtPage';
 import { CustomPatchesSection } from '../public/CustomPatchesSection';
-import ThemePreviewCard from '../common/ThemePreviewCard';
-import { THEME_PRESETS } from '../../utils/themePresets';
 import {
   fetchNotificationsFromSupabase,
   subscribeToNotificationListeners,
@@ -82,7 +80,6 @@ export const CustomerDashboard = () => {
     setColorTheme,
     setMobileMode,
     isStandaloneApp,
-    availableThemes = THEME_PRESETS,
     activeCustomerTab,
     setActiveCustomerTab,
     unreadNotificationsCount = 0,
@@ -2831,16 +2828,16 @@ export const CustomerDashboard = () => {
             {activeTab === 'settings' && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
 
-                {/* 1. APPEARANCE & THEME CUSTOMIZATION CARD */}
+                {/* 1. APPEARANCE & DISPLAY MODE CARD */}
                 <div className="card" style={{ padding: '2rem', background: 'var(--bg-card)', border: '1.5px solid var(--border-color)', borderRadius: '20px', boxShadow: 'var(--shadow-sm)' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.5rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '1rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.25rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '1rem' }}>
                     <div>
                       <h2 style={{ fontSize: '1.35rem', fontWeight: 800, color: 'var(--navy-950)', margin: '0 0 0.25rem 0', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                         <Palette size={22} style={{ color: 'var(--orange-500)' }} />
-                        Appearance & Theme System
+                        Appearance & Display Mode
                       </h2>
                       <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', margin: 0 }}>
-                        Choose your preferred studio brand theme and color palette. Updates instantly across your portal.
+                        Switch between Light and Dark display modes across your portal.
                       </p>
                     </div>
 
@@ -2893,21 +2890,32 @@ export const CustomerDashboard = () => {
                     </div>
                   </div>
 
-                  {/* Themes Grid */}
+                  {/* Active Theme Info Card */}
                   <div style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 300px), 1fr))',
-                    gap: '1.25rem'
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '1rem 1.25rem',
+                    background: 'var(--bg-subtle)',
+                    borderRadius: '14px',
+                    border: '1px solid var(--border-color)',
+                    flexWrap: 'wrap',
+                    gap: '0.75rem'
                   }}>
-                    {availableThemes.map((preset) => (
-                      <ThemePreviewCard
-                        key={preset.id}
-                        themePreset={preset}
-                        isSelected={colorTheme === preset.id}
-                        mode={theme}
-                        onSelect={(id) => setColorTheme(id)}
-                      />
-                    ))}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                      <div style={{ width: '14px', height: '14px', borderRadius: '50%', background: 'var(--color-primary, #ea580c)', boxShadow: '0 0 8px var(--color-primary-glow, rgba(234, 88, 12, 0.4))' }} />
+                      <div>
+                        <div style={{ fontSize: '0.9rem', fontWeight: 800, color: 'var(--navy-950)' }}>
+                          Executive Studio Pro (Official Brand Theme)
+                        </div>
+                        <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                          Standard studio precision theme with warm amber CTAs and high-contrast surfaces.
+                        </div>
+                      </div>
+                    </div>
+                    <span style={{ fontSize: '0.72rem', fontWeight: 800, background: 'var(--color-primary-light, rgba(249, 115, 22, 0.12))', color: 'var(--color-primary, #ea580c)', padding: '0.25rem 0.65rem', borderRadius: '9999px' }}>
+                      Active Theme
+                    </span>
                   </div>
                 </div>
 

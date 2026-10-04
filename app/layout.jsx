@@ -150,10 +150,9 @@ export default async function RootLayout({ children }) {
               (function() {
                 try {
                   var savedTheme = localStorage.getItem('bdigi_theme') || 'light';
-                  var savedPreset = localStorage.getItem('bdigi_color_theme') || 'studio-orange';
                   var root = document.documentElement;
                   root.setAttribute('data-theme', savedTheme === 'dark' ? 'dark' : 'light');
-                  root.setAttribute('data-theme-preset', savedPreset);
+                  root.setAttribute('data-theme-preset', 'studio-orange');
                   root.style.colorScheme = savedTheme === 'dark' ? 'dark' : 'light';
                   if (savedTheme === 'dark') {
                     root.classList.add('dark', 'dark-mode');

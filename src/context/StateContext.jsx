@@ -165,21 +165,24 @@ export const StateProvider = ({ children, initialCatalog = null }) => {
 
   useEffect(() => {
     const savedMode = (typeof window !== 'undefined' && localStorage.getItem('bdigi_theme')) || 'light';
-    const savedPreset = (typeof window !== 'undefined' && localStorage.getItem('bdigi_color_theme')) || 'studio-orange';
     const savedBrand = (typeof window !== 'undefined' && JSON.parse(localStorage.getItem('bdigi_custom_brand') || 'null')) || null;
 
     setThemeState(savedMode);
-    setColorThemeState(savedPreset);
+    setColorThemeState('studio-orange');
     setCustomBrandColorsState(savedBrand);
 
-    applyThemePresetToDOM(savedPreset, savedMode, savedBrand);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('bdigi_color_theme', 'studio-orange');
+    }
+
+    applyThemePresetToDOM('studio-orange', savedMode, savedBrand);
   }, []);
 
   const toggleTheme = () => {
     const nextTheme = theme === 'light' ? 'dark' : 'light';
     setThemeState(nextTheme);
 
-    const activePreset = colorTheme || 'studio-orange';
+    const activePreset = 'studio-orange';
 
     if (typeof window !== 'undefined') {
       localStorage.setItem('bdigi_theme', nextTheme);
@@ -192,7 +195,7 @@ export const StateProvider = ({ children, initialCatalog = null }) => {
     const validTheme = newTheme === 'dark' ? 'dark' : 'light';
     setThemeState(validTheme);
 
-    const activePreset = colorTheme || 'studio-orange';
+    const activePreset = 'studio-orange';
 
     if (typeof window !== 'undefined') {
       localStorage.setItem('bdigi_theme', validTheme);
@@ -200,8 +203,8 @@ export const StateProvider = ({ children, initialCatalog = null }) => {
     applyThemePresetToDOM(activePreset, validTheme, customBrandColors);
   };
 
-  const setColorTheme = (presetId, customBrand = null) => {
-    const targetPreset = THEME_PRESETS.find(t => t.id === presetId)?.id || 'studio-orange';
+  const setColorTheme = (_presetId = 'studio-orange', customBrand = null) => {
+    const targetPreset = 'studio-orange';
     setColorThemeState(targetPreset);
     if (customBrand) {
       setCustomBrandColorsState(customBrand);
@@ -213,7 +216,6 @@ export const StateProvider = ({ children, initialCatalog = null }) => {
       }
     }
     applyThemePresetToDOM(targetPreset, theme, customBrand || customBrandColors);
-    showToast(`Theme updated to ${THEME_PRESETS.find(t => t.id === targetPreset)?.name || 'New Theme'} ✨`, 'success');
   };
 
   // Mobile view starts deterministically for SSR/hydration; browser display mode is resolved after mount.

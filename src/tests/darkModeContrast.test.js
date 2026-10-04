@@ -1,4 +1,4 @@
-﻿import { test, describe } from 'node:test';
+import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 import { THEME_PRESETS, applyThemePresetToDOM } from '../utils/themePresets.js';
 
@@ -43,6 +43,13 @@ describe('Dark Mode & Theme Contrast Standards (WCAG 2.1 AA)', () => {
 
     const sameRatio = getContrastRatio('#111827', '#111827');
     assert.equal(Math.round(sameRatio), 1);
+  });
+
+  test('THEME_PRESETS maintains exactly one official brand theme (Executive Studio Pro)', () => {
+    assert.equal(THEME_PRESETS.length, 1);
+    assert.equal(THEME_PRESETS[0].id, 'studio-orange');
+    assert.equal(THEME_PRESETS[0].name, 'Executive Studio Pro');
+    assert.equal(THEME_PRESETS[0].palette.primary, '#ea580c');
   });
 
   test('All theme presets meet WCAG 2.1 AA text contrast requirements in dark mode', () => {
