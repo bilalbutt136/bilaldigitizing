@@ -6,7 +6,7 @@ export async function handleCancelOrder(context) {
       const { orderId } = payload;
       let orderData = null;
       if (!isAdmin) {
-        const { data: ord, error: orderError } = await supabase.from('orders').select('*').eq('id', orderId).single();
+        const { data: ord, error: orderError } = await supabase.from('orders').select('id, client_email, status').eq('id', orderId).single();
         if (orderError || ord?.client_email?.toLowerCase().trim() !== user.email.toLowerCase().trim()) {
           return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
         }

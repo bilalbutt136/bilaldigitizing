@@ -59,7 +59,7 @@ export async function handleFetchOne(context) {
       try {
         const { data: revData, error: revErr } = await supabase
           .from('revisions')
-          .select('*')
+          .select('id, order_id, instructions, details, note, notes, status, created_at, updated_at')
           .in('order_id', Array.from(new Set([orderRow.id, ...candidateIds])))
           .order('created_at', { ascending: false });
         if (!revErr && Array.isArray(revData)) {

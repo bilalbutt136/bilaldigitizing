@@ -1,4 +1,5 @@
 import { supabase, isSupabaseConfigured } from '../lib/supabase/client';
+import { dedupeRouteTransition } from '../utils/throttleDebounce.js';
 
 let presenceChannel = null;
 let isChannelSubscribed = false;
@@ -8,6 +9,8 @@ const presenceListeners = new Set();
 let realtimeOnlineEmails = new Set();
 let restOnlineEmails = new Set();
 const REST_PRESENCE_MIN_INTERVAL_MS = 60_000;
+const PRESENCE_ROUTE_THROTTLE_MS = 5000;
+let pendingOfflineTimeout = null;
 let lastRestPresenceWriteAt = 0;
 let restPresenceWriteInFlight = null;
 let restPresenceReadInFlight = null;
@@ -213,6 +216,12 @@ export async function trackUserPresence({
 }) {
   if (!email || typeof email !== 'string') return;
 
+  // Immediately cancel any scheduled offline untrack (route navigation occurred)
+  if (pendingOfflineTimeout) {
+    clearTimeout(pendingOfflineTimeout);
+    pendingOfflineTimeout = null;
+  }
+
   const cleanEmail = email.toLowerCase().trim();
   const sessionId = getPresenceSessionId();
 
@@ -245,7 +254,12 @@ export async function trackUserPresence({
   }
 
   const now = Date.now();
-  if (restPresenceWriteInFlight || now - getLastRestPresenceWriteAt() < REST_PRESENCE_MIN_INTERVAL_MS) {
+  const dedupeKey = `presence:write:${cleanEmail}`;
+  if (
+    restPresenceWriteInFlight ||
+    now - getLastRestPresenceWriteAt() < REST_PRESENCE_MIN_INTERVAL_MS ||
+    !dedupeRouteTransition(dedupeKey, PRESENCE_ROUTE_THROTTLE_MS)
+  ) {
     return;
   }
 
@@ -278,7 +292,7 @@ export async function trackUserPresence({
   await restPresenceWriteInFlight;
 }
 
-export async function untrackUserPresence(email) {
+export async function untrackUserPresence(email, { immediate = false } = {}) {
   if (!email) return;
 
   const cleanEmail = email.toLowerCase().trim();
@@ -299,28 +313,47 @@ export async function untrackUserPresence(email) {
   // A successful Realtime untrack is authoritative; only use REST/beacon as fallback.
   if (realtimeUntracked) return;
 
-  const body = JSON.stringify({
-    status: 'offline',
-    sessionId
-  });
+  const executeOffline = () => {
+    pendingOfflineTimeout = null;
+    const dedupeKey = `presence:offline:${cleanEmail}`;
+    if (!dedupeRouteTransition(dedupeKey, PRESENCE_ROUTE_THROTTLE_MS)) return;
 
-  try {
-    if (typeof navigator !== 'undefined' && navigator.sendBeacon) {
-      const payload = typeof Blob !== 'undefined'
-        ? new Blob([body], { type: 'application/json' })
-        : body;
-      navigator.sendBeacon('/api/chat/presence', payload);
-    } else {
-      fetch('/api/chat/presence', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        cache: 'no-store',
-        body,
-        keepalive: true
-      }).catch(() => {});
-    }
-  } catch {}
+    const body = JSON.stringify({
+      status: 'offline',
+      sessionId
+    });
+
+    try {
+      if (typeof navigator !== 'undefined' && navigator.sendBeacon) {
+        const payload = typeof Blob !== 'undefined'
+          ? new Blob([body], { type: 'application/json' })
+          : body;
+        navigator.sendBeacon('/api/chat/presence', payload);
+      } else {
+        fetch('/api/chat/presence', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          cache: 'no-store',
+          body,
+          keepalive: true
+        }).catch(() => {});
+      }
+    } catch {}
+  };
+
+  if (pendingOfflineTimeout) {
+    clearTimeout(pendingOfflineTimeout);
+    pendingOfflineTimeout = null;
+  }
+
+  // If immediate (e.g. beforeunload / page exit), execute right away.
+  // Otherwise, debounce by 5 seconds to coalesce route transitions and prevent ping-ponging.
+  if (immediate) {
+    executeOffline();
+  } else {
+    pendingOfflineTimeout = setTimeout(executeOffline, PRESENCE_ROUTE_THROTTLE_MS);
+  }
 }
 
 export async function syncPresenceFromRest() {

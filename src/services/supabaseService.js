@@ -3,6 +3,7 @@ import { getSiteUrl } from '../utils/siteUrl.js';
 import { filterAndSanitizeNotifications } from '../utils/notificationRouter.js';
 import { normalizePublicCatalog } from '../lib/catalog/normalizePublicCatalog.js';
 import { fetchClientQuery, invalidateClientQuery } from './clientQueryService.js';
+import { dedupeRouteTransition } from '../utils/throttleDebounce.js';
 
 export { isSupabaseConfigured };
 
@@ -1840,7 +1841,8 @@ export async function markAllNotificationsAsReadInSupabase(userEmail = '') {
 // META PIXEL / TRACKING LOGS
 // ============================================================
 
-const recentTrackingEvents = new Map();
+const TRACKING_MIN_INTERVAL_MS = 5000;
+const inFlightTrackingRequests = new Map();
 
 export async function logTrackingEventToSupabase(eventData) {
   try {
@@ -1849,18 +1851,30 @@ export async function logTrackingEventToSupabase(eventData) {
     if (path.includes('404') || (typeof document !== 'undefined' && document.title.includes('404'))) return;
     if (path.startsWith('/legal/') || path === '/locations' || path === '/about' || path === '/glossary') return;
 
-    const key = `${eventData?.eventName || ''}:${path}`;
-    const now = Date.now();
-    const lastTime = recentTrackingEvents.get(key) || 0;
-    if (now - lastTime < 3000) return;
-    recentTrackingEvents.set(key, now);
-    if (recentTrackingEvents.size > 100) recentTrackingEvents.clear();
+    const eventName = String(eventData?.eventName || 'PageView').trim();
+    const key = `tracking:${eventName}:${path}`;
 
-    fetch('/api/tracking', {
+    // Throttle & debounce: deduplicate calls per route transition (minimum 5 seconds)
+    if (!dedupeRouteTransition(key, TRACKING_MIN_INTERVAL_MS)) {
+      return;
+    }
+
+    if (inFlightTrackingRequests.has(key)) {
+      return inFlightTrackingRequests.get(key);
+    }
+
+    const request = fetch('/api/tracking', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'logEvent', payload: eventData })
-    }).catch(() => {});
+    })
+      .catch(() => {})
+      .finally(() => {
+        inFlightTrackingRequests.delete(key);
+      });
+
+    inFlightTrackingRequests.set(key, request);
+    return request;
   } catch (e) {
     console.warn('Could not log tracking event', e);
   }

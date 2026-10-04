@@ -5,6 +5,8 @@ import { checkDistributedRateLimit, getClientIp, getRateLimitHeaders } from '../
 import { createHash } from 'node:crypto';
 
 let trackingTableHasMetadataColumn = null;
+const recentServerTrackingDedupe = new Map();
+const SERVER_TRACKING_DEDUPE_MS = 5000;
 
 async function POST_impl(request) {
   try {
@@ -29,6 +31,22 @@ async function POST_impl(request) {
     }
 
     if (action === 'logEvent' && payload && typeof payload === 'object') {
+      const rawPagePath = String(payload.pagePath || payload.page_path || payload.path || '/').toLowerCase().trim();
+      const rawEventName = String(payload.eventName || payload.event_name || 'PageView').trim();
+      const dedupeKey = `${ip}:${rawEventName}:${rawPagePath}`;
+      const nowTs = Date.now();
+      const lastSeen = recentServerTrackingDedupe.get(dedupeKey) || 0;
+      if (nowTs - lastSeen < SERVER_TRACKING_DEDUPE_MS) {
+        return NextResponse.json({ success: true, deduplicated: true });
+      }
+      recentServerTrackingDedupe.set(dedupeKey, nowTs);
+      if (recentServerTrackingDedupe.size > 500) {
+        for (const [k, v] of recentServerTrackingDedupe.entries()) {
+          if (nowTs - v > SERVER_TRACKING_DEDUPE_MS * 2) {
+            recentServerTrackingDedupe.delete(k);
+          }
+        }
+      }
       // 1. Extract high-fidelity server headers (Client IP, Geo, User Agent, Referer)
       const headers = request.headers;
       const forwardedFor = headers.get('x-forwarded-for') || '';

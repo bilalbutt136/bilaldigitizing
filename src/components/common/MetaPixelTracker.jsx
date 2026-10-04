@@ -4,6 +4,7 @@ import React, { useEffect, useRef } from 'react';
 import { useLocation } from '../../utils/navigation';
 import { useAppState } from '../../context/StateContext';
 import { getVisitorTelemetry, generateUUID, resolveUserIdentity } from '../../utils/visitorTracker';
+import { dedupeRouteTransition } from '../../utils/throttleDebounce.js';
 
 /**
  * Direct DOM injector for official Meta Pixel to guarantee instant detection by Meta Pixel Helper
@@ -106,6 +107,7 @@ export const MetaPixelTracker = () => {
   useEffect(() => {
     if (typeof window === 'undefined') return;
     if (prevPathRef.current === pathname) return;
+    if (!dedupeRouteTransition(`meta_pixel_nav:${pathname}`, 5000)) return;
     prevPathRef.current = pathname;
 
     // Do not log page views or conversion telemetry on 404 error routes

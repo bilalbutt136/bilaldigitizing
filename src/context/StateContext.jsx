@@ -1622,7 +1622,7 @@ export const StateProvider = ({ children, initialCatalog = null }) => {
     });
 
     const handleUnload = () => {
-      untrackUserPresence(cleanEmail);
+      untrackUserPresence(cleanEmail, { immediate: true });
     };
 
     window.addEventListener('beforeunload', handleUnload);
