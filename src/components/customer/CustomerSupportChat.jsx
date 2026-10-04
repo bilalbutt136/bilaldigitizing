@@ -1040,7 +1040,7 @@ export default function CustomerSupportChat({
           display: 'flex',
           flexDirection: 'column',
           gap: '0.2rem',
-          background: '#f8fafc',
+          background: 'var(--color-background, #090d16)',
           WebkitOverflowScrolling: 'touch'
         }}
       >
@@ -1066,10 +1066,10 @@ export default function CustomerSupportChat({
             }}>
               {chatType === 'support' ? <Headphones size={26} /> : <MessageSquare size={26} />}
             </div>
-            <h4 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#0f172a', margin: '0 0 0.35rem 0' }}>
+            <h4 style={{ fontSize: '1.05rem', fontWeight: 800, color: 'var(--color-text-primary, #0f172a)', margin: '0 0 0.35rem 0' }}>
               {chatType === 'support' ? '24/7 Studio Customer Support' : 'BDigitizing Live Chat'}
             </h4>
-            <p style={{ fontSize: '0.82rem', margin: '0 0 1.25rem', maxWidth: '380px', marginInline: 'auto', color: '#64748b', lineHeight: 1.5 }}>
+            <p style={{ fontSize: '0.82rem', margin: '0 0 1.25rem', maxWidth: '380px', marginInline: 'auto', color: 'var(--color-text-muted, #64748b)', lineHeight: 1.5 }}>
               {chatType === 'support'
                 ? 'Need assistance with an existing order, stitch simulation, format conversion, or urgent revision? Our team is standing by 24/7.'
                 : 'Directly discuss stitch designs, vector conversions, patches, and custom turnaround times with our expert digitizers.'}
@@ -1093,12 +1093,12 @@ export default function CustomerSupportChat({
                     }
                   }}
                   style={{
-                    background: '#ffffff',
-                    border: '1px solid #e2e8f0',
+                    background: 'var(--color-surface, #ffffff)',
+                    border: '1px solid var(--color-border, #e2e8f0)',
                     borderRadius: '20px',
                     padding: '0.4rem 0.85rem',
                     fontSize: '0.76rem',
-                    color: '#475569',
+                    color: 'var(--color-text-secondary, #475569)',
                     fontWeight: 600,
                     cursor: 'pointer',
                     boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
@@ -1184,14 +1184,14 @@ export default function CustomerSupportChat({
                     /* REGULAR MESSAGE BUBBLE */
                     <div style={{
                       maxWidth: '85%',
-                      background: isClient ? 'linear-gradient(135deg, #ff7a00 0%, #ea580c 100%)' : '#ffffff',
-                      color: isClient ? '#ffffff' : '#0f172a',
+                      background: isClient ? 'linear-gradient(135deg, #ff7a00 0%, #ea580c 100%)' : 'var(--color-surface, #ffffff)',
+                      color: isClient ? '#ffffff' : 'var(--color-text-primary, #0f172a)',
                       padding: '0.65rem 0.95rem',
                       borderRadius: isClient
                         ? (isGrouped ? '16px 6px 6px 16px' : '16px 16px 4px 16px')
                         : (isGrouped ? '6px 16px 16px 6px' : '16px 16px 16px 4px'),
                       boxShadow: isClient ? '0 2px 8px rgba(234, 88, 12, 0.22)' : '0 1px 4px rgba(15, 23, 42, 0.05)',
-                      border: isClient ? 'none' : '1px solid #e2e8f0',
+                      border: isClient ? 'none' : '1px solid var(--color-border, #e2e8f0)',
                       wordBreak: 'break-word',
                       fontSize: '0.88rem',
                       lineHeight: 1.45,
@@ -1278,8 +1278,8 @@ export default function CustomerSupportChat({
                                     padding: '0.4rem 0.65rem',
                                     fontSize: '0.72rem',
                                     gap: '0.5rem',
-                                    borderTop: isClient ? '1px solid rgba(255,255,255,0.15)' : '1px solid #e2e8f0',
-                                    background: isClient ? 'rgba(0,0,0,0.22)' : '#ffffff'
+                                    borderTop: isClient ? '1px solid rgba(255,255,255,0.15)' : '1px solid var(--color-border, #e2e8f0)',
+                                    background: isClient ? 'rgba(0,0,0,0.22)' : 'var(--color-surface, #ffffff)'
                                   }}>
                                     <div style={{ minWidth: 0, flex: 1 }}>
                                       <div style={{
@@ -1287,7 +1287,7 @@ export default function CustomerSupportChat({
                                         overflow: 'hidden',
                                         textOverflow: 'ellipsis',
                                         whiteSpace: 'nowrap',
-                                        color: isClient ? '#ffffff' : '#334155'
+                                        color: isClient ? '#ffffff' : 'var(--color-text-primary, #334155)'
                                       }}>
                                         {att.name}
                                       </div>
@@ -1504,11 +1504,11 @@ export default function CustomerSupportChat({
             display: 'inline-flex',
             alignItems: 'center',
             gap: '0.5rem',
-            background: '#ffffff',
-            border: '1px solid #e2e8f0',
+            background: 'var(--color-surface, #ffffff)',
+            border: '1px solid var(--color-border, #e2e8f0)',
             padding: '0.35rem 0.75rem',
             borderRadius: '16px',
-            color: '#64748b',
+            color: 'var(--color-text-muted, #64748b)',
             fontSize: '0.76rem',
             fontWeight: 600,
             alignSelf: 'flex-start',
@@ -1526,8 +1526,8 @@ export default function CustomerSupportChat({
       {replyingTo && (
         <div style={{
           padding: '0.45rem 0.9rem',
-          background: '#ffffff',
-          borderTop: '1px solid #e2e8f0',
+          background: 'var(--color-surface, #ffffff)',
+          borderTop: '1px solid var(--color-border, #e2e8f0)',
           display: 'flex',
           alignItems: 'center',
           gap: '0.6rem',
@@ -1555,13 +1555,13 @@ export default function CustomerSupportChat({
 
       {/* PENDING ATTACHMENTS PREVIEW */}
       {pendingAttachments.length > 0 && (
-        <div style={{ padding: '0.5rem 1rem', background: '#f8fafc', borderTop: '1px solid #e2e8f0', display: 'flex', gap: '0.5rem', flexWrap: 'wrap', flexShrink: 0 }}>
+        <div style={{ padding: '0.5rem 1rem', background: 'var(--color-surface-elevated, #f8fafc)', borderTop: '1px solid var(--color-border, #e2e8f0)', display: 'flex', gap: '0.5rem', flexWrap: 'wrap', flexShrink: 0 }}>
           {pendingAttachments.map((att, idx) => (
             <div
               key={idx}
               style={{
-                background: '#ffffff',
-                border: '1px solid #cbd5e1',
+                background: 'var(--color-surface, #ffffff)',
+                border: '1px solid var(--color-border, #cbd5e1)',
                 borderRadius: '6px',
                 padding: '0.25rem 0.65rem',
                 fontSize: '0.75rem',
@@ -1577,7 +1577,7 @@ export default function CustomerSupportChat({
                   style={{ width: '22px', height: '22px', borderRadius: '4px', objectFit: 'cover' }}
                 />
               )}
-              <span style={{ fontWeight: 600, color: '#0f172a' }}>{att.name}</span>
+              <span style={{ fontWeight: 600, color: 'var(--color-text-primary, #0f172a)' }}>{att.name}</span>
               <button
                 type="button"
                 onClick={() => setPendingAttachments(prev => prev.filter((_, i) => i !== idx))}
@@ -1596,8 +1596,8 @@ export default function CustomerSupportChat({
         className="customer-chat-composer"
         style={{
           padding: '0.65rem 0.85rem',
-          borderTop: '1px solid #e2e8f0',
-          background: '#ffffff',
+          borderTop: '1px solid var(--color-border, #e2e8f0)',
+          background: 'var(--color-surface, #ffffff)',
           display: 'flex',
           alignItems: 'flex-end',
           gap: '0.55rem',
@@ -1621,8 +1621,8 @@ export default function CustomerSupportChat({
           onClick={() => fileInputRef.current?.click()}
           disabled={isUploading}
           style={{
-            background: '#f1f5f9',
-            border: '1px solid #e2e8f0',
+            background: 'var(--color-surface-elevated, #f1f5f9)',
+            border: '1px solid var(--color-border, #e2e8f0)',
             borderRadius: '50%',
             width: '40px',
             height: '40px',
@@ -1630,7 +1630,7 @@ export default function CustomerSupportChat({
             alignItems: 'center',
             justifyContent: 'center',
             cursor: isUploading ? 'wait' : 'pointer',
-            color: '#475569',
+            color: 'var(--color-text-secondary, #475569)',
             flexShrink: 0,
             marginBottom: '1px',
             transition: 'all 0.15s ease'
@@ -1666,8 +1666,8 @@ export default function CustomerSupportChat({
           className="customer-chat-input"
           style={{
             flex: 1,
-            border: '1.5px solid #cbd5e1',
-            background: '#f8fafc',
+            border: '1.5px solid var(--color-border, #cbd5e1)',
+            background: 'var(--color-input, #f8fafc)',
             borderRadius: '22px',
             padding: '0.62rem 1.05rem',
             fontSize: '0.95rem',
@@ -1679,7 +1679,7 @@ export default function CustomerSupportChat({
             lineHeight: 1.45,
             boxSizing: 'border-box',
             overflowY: 'hidden',
-            color: '#0f172a',
+            color: 'var(--color-text-primary, #0f172a)',
             transition: 'border-color 0.18s ease, background-color 0.18s ease, box-shadow 0.18s ease'
           }}
         />

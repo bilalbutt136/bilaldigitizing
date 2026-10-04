@@ -653,9 +653,9 @@ export const CustomerDashboard = () => {
       <span
         className="badge"
         style={{
-          background: 'linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%)',
-          color: '#c2410c',
-          border: '1.5px solid #fdba74',
+          background: isDark ? 'rgba(234, 88, 12, 0.18)' : 'linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%)',
+          color: isDark ? '#fb923c' : '#c2410c',
+          border: isDark ? '1.5px solid rgba(251, 146, 60, 0.35)' : '1.5px solid #fdba74',
           fontWeight: 900,
           fontSize: '0.725rem',
           padding: '0.2rem 0.6rem',
@@ -664,10 +664,10 @@ export const CustomerDashboard = () => {
           alignItems: 'center',
           gap: '0.25rem',
           whiteSpace: 'nowrap',
-          boxShadow: '0 2px 6px rgba(234, 88, 12, 0.12)'
+          boxShadow: isDark ? 'none' : '0 2px 6px rgba(234, 88, 12, 0.12)'
         }}
       >
-        <Clock size={11} style={{ color: '#ea580c' }} /> WAITING FOR PAYMENT
+        <Clock size={11} style={{ color: isDark ? '#fb923c' : '#ea580c' }} /> WAITING FOR PAYMENT
       </span>
     );
   };
@@ -682,9 +682,9 @@ export const CustomerDashboard = () => {
     if (isUnpaid && !isPaid) {
       return (
         <span style={{
-          background: 'linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%)',
-          color: '#c2410c',
-          border: '1.5px solid #fdba74',
+          background: isDark ? 'rgba(234, 88, 12, 0.18)' : 'linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%)',
+          color: isDark ? '#fb923c' : '#c2410c',
+          border: isDark ? '1px solid rgba(251, 146, 60, 0.35)' : '1.5px solid #fdba74',
           padding: '0.25rem 0.7rem',
           borderRadius: '9999px',
           fontSize: '0.74rem',
@@ -692,7 +692,7 @@ export const CustomerDashboard = () => {
           display: 'inline-flex',
           alignItems: 'center',
           gap: '0.3rem',
-          boxShadow: '0 2px 6px rgba(234, 88, 12, 0.15)',
+          boxShadow: isDark ? 'none' : '0 2px 6px rgba(234, 88, 12, 0.15)',
           whiteSpace: 'nowrap'
         }}>
           Waiting for Payment
@@ -709,9 +709,9 @@ export const CustomerDashboard = () => {
     if (isCompleted) {
       return (
         <span style={{
-          background: '#dcfce7',
-          color: '#15803d',
-          border: '1px solid #86efac',
+          background: isDark ? 'rgba(34, 197, 94, 0.15)' : '#dcfce7',
+          color: isDark ? '#4ade80' : '#15803d',
+          border: isDark ? '1px solid rgba(74, 222, 128, 0.3)' : '1px solid #86efac',
           padding: '0.25rem 0.65rem',
           borderRadius: '9999px',
           fontSize: '0.74rem',
@@ -749,9 +749,9 @@ export const CustomerDashboard = () => {
     if (isRevision) {
       return (
         <span style={{
-          background: '#fff1f2',
-          color: '#e11d48',
-          border: '1px solid #fecdd3',
+          background: isDark ? 'rgba(244, 63, 94, 0.15)' : '#fff1f2',
+          color: isDark ? '#fb7185' : '#e11d48',
+          border: isDark ? '1px solid rgba(251, 113, 133, 0.3)' : '1px solid #fecdd3',
           padding: '0.25rem 0.65rem',
           borderRadius: '9999px',
           fontSize: '0.74rem',
@@ -769,9 +769,9 @@ export const CustomerDashboard = () => {
     if (isQC) {
       return (
         <span style={{
-          background: '#e0e7ff',
-          color: '#4338ca',
-          border: '1px solid #c7d2fe',
+          background: isDark ? 'rgba(99, 102, 241, 0.15)' : '#e0e7ff',
+          color: isDark ? '#818cf8' : '#4338ca',
+          border: isDark ? '1px solid rgba(129, 140, 248, 0.3)' : '1px solid #c7d2fe',
           padding: '0.25rem 0.65rem',
           borderRadius: '9999px',
           fontSize: '0.74rem',
@@ -789,9 +789,9 @@ export const CustomerDashboard = () => {
     if (isInProgress) {
       return (
         <span style={{
-          background: '#e0f2fe',
-          color: '#0369a1',
-          border: '1px solid #bae6fd',
+          background: isDark ? 'rgba(14, 165, 233, 0.15)' : '#e0f2fe',
+          color: isDark ? '#38bdf8' : '#0369a1',
+          border: isDark ? '1px solid rgba(56, 189, 248, 0.3)' : '1px solid #bae6fd',
           padding: '0.25rem 0.65rem',
           borderRadius: '9999px',
           fontSize: '0.74rem',
@@ -808,9 +808,9 @@ export const CustomerDashboard = () => {
 
     return (
       <span style={{
-        background: '#fef3c7',
-        color: '#b45309',
-        border: '1px solid #fde68a',
+        background: isDark ? 'rgba(245, 158, 11, 0.15)' : '#fef3c7',
+        color: isDark ? '#fbbf24' : '#b45309',
+        border: isDark ? '1px solid rgba(251, 191, 36, 0.3)' : '1px solid #fde68a',
         padding: '0.25rem 0.65rem',
         borderRadius: '9999px',
         fontSize: '0.74rem',
@@ -1996,8 +1996,12 @@ export const CustomerDashboard = () => {
                               key={getStableOrderKey(ord, rowIndex, 'mobile-order')}
                               className="mobile-order-card"
                               style={{
-                                border: isDelivered ? '1.5px solid #86efac' : (isPaid ? '1px solid var(--border-color)' : '1.5px solid #fed7aa'),
-                                background: isDelivered ? '#f0fdf4' : (isPaid ? '#ffffff' : '#fffcf6'),
+                                border: isDark
+                                  ? (isDelivered ? '1.5px solid rgba(134, 239, 172, 0.4)' : (isPaid ? '1px solid var(--border-color)' : '1.5px solid rgba(254, 215, 170, 0.35)'))
+                                  : (isDelivered ? '1.5px solid #86efac' : (isPaid ? '1px solid var(--border-color)' : '1.5px solid #fed7aa')),
+                                background: isDark
+                                  ? (isDelivered ? 'rgba(16, 185, 129, 0.08)' : (isPaid ? 'var(--color-surface, #111827)' : 'rgba(234, 88, 12, 0.08)'))
+                                  : (isDelivered ? '#f0fdf4' : (isPaid ? '#ffffff' : '#fffcf6')),
                                 borderRadius: '12px',
                                 padding: '0.85rem',
                                 marginBottom: '0.75rem',
@@ -2052,7 +2056,7 @@ export const CustomerDashboard = () => {
                                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.35rem' }}>
                                     <div>
                                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', flexWrap: 'wrap' }}>
-                                        <span style={{ fontSize: '0.68rem', fontWeight: 800, color: 'var(--orange-600)', background: '#fff7ed', padding: '0.1rem 0.4rem', borderRadius: '4px' }}>
+                                        <span style={{ fontSize: '0.68rem', fontWeight: 800, color: isDark ? '#fb923c' : 'var(--orange-600)', background: isDark ? 'rgba(234, 88, 12, 0.18)' : '#fff7ed', padding: '0.1rem 0.4rem', borderRadius: '4px' }}>
                                           {formatOrderId(ord?.id)}
                                         </span>
                                         {ord?.isRush && (
@@ -2081,7 +2085,7 @@ export const CustomerDashboard = () => {
                               </div>
 
                               {/* Card Footer Actions */}
-                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.75rem', paddingTop: '0.65rem', borderTop: '1px solid #f1f5f9', flexWrap: 'wrap', gap: '0.4rem' }}>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.75rem', paddingTop: '0.65rem', borderTop: isDark ? '1px solid var(--color-border, #334155)' : '1px solid #f1f5f9', flexWrap: 'wrap', gap: '0.4rem' }}>
                                 <div>
                                   {getPaymentStatusBadge(ord)}
                                 </div>
@@ -2091,9 +2095,9 @@ export const CustomerDashboard = () => {
                                       type="button"
                                       onClick={() => setSelectedOrderForDrawer(ord)}
                                       style={{
-                                        background: '#dcfce7',
-                                        color: '#15803d',
-                                        border: '1px solid #bbf7d0',
+                                        background: isDark ? 'rgba(34, 197, 94, 0.15)' : '#dcfce7',
+                                        color: isDark ? '#4ade80' : '#15803d',
+                                        border: isDark ? '1px solid rgba(74, 222, 128, 0.3)' : '1px solid #bbf7d0',
                                         padding: '0.35rem 0.7rem',
                                         borderRadius: '6px',
                                         fontWeight: 800,
@@ -2108,9 +2112,9 @@ export const CustomerDashboard = () => {
                                     </button>
                                   ) : isRevision ? (
                                     <span style={{
-                                      background: '#fff1f2',
-                                      color: '#e11d48',
-                                      border: '1px solid #fecdd3',
+                                      background: isDark ? 'rgba(244, 63, 94, 0.15)' : '#fff1f2',
+                                      color: isDark ? '#fb7185' : '#e11d48',
+                                      border: isDark ? '1px solid rgba(251, 113, 133, 0.3)' : '1px solid #fecdd3',
                                       padding: '0.3rem 0.6rem',
                                       borderRadius: '6px',
                                       fontWeight: 800,
@@ -2171,9 +2175,9 @@ export const CustomerDashboard = () => {
                                     type="button"
                                     onClick={() => setInvoiceModalOrder(ord)}
                                     style={{
-                                      background: '#f8fafc',
-                                      border: '1px solid #cbd5e1',
-                                      color: 'var(--navy-800)',
+                                      background: isDark ? 'var(--color-surface-elevated, #1e293b)' : '#f8fafc',
+                                      border: isDark ? '1px solid var(--color-border, #334155)' : '1px solid #cbd5e1',
+                                      color: isDark ? 'var(--color-text-primary, #ffffff)' : 'var(--navy-800)',
                                       padding: '0.35rem 0.65rem',
                                       borderRadius: '6px',
                                       fontWeight: 700,
@@ -2192,9 +2196,9 @@ export const CustomerDashboard = () => {
                                     type="button"
                                     onClick={() => setSelectedOrderForDrawer(ord)}
                                     style={{
-                                      background: '#f8fafc',
-                                      border: '1px solid #cbd5e1',
-                                      color: 'var(--navy-800)',
+                                      background: isDark ? 'var(--color-surface-elevated, #1e293b)' : '#f8fafc',
+                                      border: isDark ? '1px solid var(--color-border, #334155)' : '1px solid #cbd5e1',
+                                      color: isDark ? 'var(--color-text-primary, #ffffff)' : 'var(--navy-800)',
                                       padding: '0.35rem 0.75rem',
                                       borderRadius: '6px',
                                       fontWeight: 700,

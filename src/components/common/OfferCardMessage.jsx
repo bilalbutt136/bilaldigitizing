@@ -175,8 +175,8 @@ export default function OfferCardMessage({
 
   return (
     <div style={{
-      background: '#ffffff',
-      border: isPaid ? '1.5px solid #86efac' : isAcceptedUnpaid ? '1.5px solid #fde68a' : '1.5px solid #e2e8f0',
+      background: 'var(--color-surface, #ffffff)',
+      border: isPaid ? '1.5px solid #86efac' : isAcceptedUnpaid ? '1.5px solid #fde68a' : '1.5px solid var(--color-border, #e2e8f0)',
       borderRadius: compact ? '12px' : '14px',
       padding: compact ? '1rem' : '1.25rem',
       maxWidth: '460px',
@@ -227,7 +227,7 @@ export default function OfferCardMessage({
             </span>
           )}
           {isDeclined && (
-            <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', background: '#f1f5f9', padding: '0.2rem 0.55rem', borderRadius: '12px' }}>
+            <span style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--color-text-muted, #64748b)', background: 'var(--color-subtle, #f1f5f9)', padding: '0.2rem 0.55rem', borderRadius: '12px' }}>
               Declined
             </span>
           )}
@@ -240,11 +240,11 @@ export default function OfferCardMessage({
       </div>
 
       {/* OFFER TITLE & DESCRIPTION */}
-      <h4 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#0f172a', margin: '0 0 0.4rem 0', lineHeight: 1.3 }}>
+      <h4 style={{ fontSize: '1.05rem', fontWeight: 800, color: 'var(--color-text-primary, #0f172a)', margin: '0 0 0.4rem 0', lineHeight: 1.3 }}>
         {title}
       </h4>
       {description && (
-        <p style={{ fontSize: '0.82rem', color: '#475569', margin: '0 0 0.9rem 0', lineHeight: 1.5, whiteSpace: 'pre-line' }}>
+        <p style={{ fontSize: '0.82rem', color: 'var(--color-text-secondary, #475569)', margin: '0 0 0.9rem 0', lineHeight: 1.5, whiteSpace: 'pre-line' }}>
           {description}
         </p>
       )}
@@ -254,35 +254,35 @@ export default function OfferCardMessage({
         display: 'grid',
         gridTemplateColumns: compact ? '1fr' : 'repeat(3, 1fr)',
         gap: compact ? '0.65rem' : '0.5rem',
-        background: '#f8fafc',
+        background: 'var(--color-surface-elevated, #f8fafc)',
         borderRadius: '10px',
         padding: '0.65rem 0.75rem',
-        border: '1px solid #f1f5f9',
+        border: '1px solid var(--color-border, #f1f5f9)',
         marginBottom: '0.9rem'
       }}>
         <div>
-          <span style={{ fontSize: '0.65rem', color: '#64748b', textTransform: 'uppercase', fontWeight: 700, display: 'block' }}>
+          <span style={{ fontSize: '0.65rem', color: 'var(--color-text-muted, #64748b)', textTransform: 'uppercase', fontWeight: 700, display: 'block' }}>
             Price
           </span>
-          <span style={{ fontSize: '1.15rem', fontWeight: 900, color: '#0f172a', display: 'flex', alignItems: 'center' }}>
+          <span style={{ fontSize: '1.15rem', fontWeight: 900, color: 'var(--color-text-primary, #0f172a)', display: 'flex', alignItems: 'center' }}>
             ${displayPrice}
           </span>
         </div>
 
         <div>
-          <span style={{ fontSize: '0.65rem', color: '#64748b', textTransform: 'uppercase', fontWeight: 700, display: 'block' }}>
+          <span style={{ fontSize: '0.65rem', color: 'var(--color-text-muted, #64748b)', textTransform: 'uppercase', fontWeight: 700, display: 'block' }}>
             Delivery
           </span>
-          <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#1e293b', display: 'flex', alignItems: 'center', gap: '0.25rem', marginTop: '0.15rem' }}>
+          <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--color-text-primary, #1e293b)', display: 'flex', alignItems: 'center', gap: '0.25rem', marginTop: '0.15rem' }}>
             <Clock size={13} color="#ea580c" /> {delivery_time_text}
           </span>
         </div>
 
         <div>
-          <span style={{ fontSize: '0.65rem', color: '#64748b', textTransform: 'uppercase', fontWeight: 700, display: 'block' }}>
+          <span style={{ fontSize: '0.65rem', color: 'var(--color-text-muted, #64748b)', textTransform: 'uppercase', fontWeight: 700, display: 'block' }}>
             Revisions
           </span>
-          <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#1e293b', display: 'flex', alignItems: 'center', gap: '0.25rem', marginTop: '0.15rem' }}>
+          <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--color-text-primary, #1e293b)', display: 'flex', alignItems: 'center', gap: '0.25rem', marginTop: '0.15rem' }}>
             <RotateCcw size={13} color="#ea580c" /> {revisions_allowed}
           </span>
         </div>
@@ -379,9 +379,9 @@ export default function OfferCardMessage({
                     type="button"
                     onClick={() => handleViewOrder(orderId)}
                     style={{
-                      background: '#f8fafc',
-                      color: '#475569',
-                      border: '1px solid #cbd5e1',
+                      background: 'var(--color-surface-elevated, #f8fafc)',
+                      color: 'var(--color-text-secondary, #475569)',
+                      border: '1px solid var(--color-border, #cbd5e1)',
                       padding: '0.65rem 0.85rem',
                       borderRadius: '8px',
                       fontSize: '0.8rem',
@@ -414,9 +414,9 @@ export default function OfferCardMessage({
                   onClick={() => handleViewOrder(orderId)}
                   style={{
                     width: '100%',
-                    background: '#f8fafc',
-                    color: '#0f172a',
-                    border: '1.5px solid #cbd5e1',
+                    background: 'var(--color-surface-elevated, #f8fafc)',
+                    color: 'var(--color-text-primary, #0f172a)',
+                    border: '1.5px solid var(--color-border, #cbd5e1)',
                     padding: '0.55rem 0.85rem',
                     borderRadius: '8px',
                     fontSize: '0.82rem',
@@ -456,7 +456,7 @@ export default function OfferCardMessage({
                   type="button"
                   onClick={() => handleViewOrder(orderId)}
                   style={{
-                    background: '#ffffff',
+                    background: 'var(--color-surface, #ffffff)',
                     color: '#b45309',
                     border: '1px solid #fde68a',
                     padding: '0.25rem 0.55rem',
@@ -485,7 +485,7 @@ export default function OfferCardMessage({
                   type="button"
                   onClick={() => handleViewOrder(orderId)}
                   style={{
-                    background: '#ffffff',
+                    background: 'var(--color-surface, #ffffff)',
                     color: '#16a34a',
                     border: '1px solid #bbf7d0',
                     padding: '0.25rem 0.55rem',

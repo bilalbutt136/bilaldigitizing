@@ -999,11 +999,11 @@ export const AuthModal = ({ isStandalonePage = false, initialMode = null }) => {
                     <strong style={{ color: 'var(--navy-900)' }}>{forgotEmail}</strong>.
                   </p>
 
-                  <div style={{ background: '#f8fafc', border: '1px solid var(--border-color)', borderRadius: '14px', padding: '0.85rem 1rem', textAlign: 'left', marginBottom: '1.15rem', fontSize: '0.82rem', color: 'var(--navy-800)' }}>
-                    <div style={{ fontWeight: 800, color: 'var(--navy-900)', marginBottom: '0.3rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                  <div style={{ background: 'var(--color-surface-elevated, #f8fafc)', border: '1px solid var(--border-color)', borderRadius: '14px', padding: '0.85rem 1rem', textAlign: 'left', marginBottom: '1.15rem', fontSize: '0.82rem', color: 'var(--color-text-secondary, #475569)' }}>
+                    <div style={{ fontWeight: 800, color: 'var(--color-text-primary, var(--navy-900))', marginBottom: '0.3rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                       <span>📬</span> Next Steps:
                     </div>
-                    <p style={{ margin: 0, color: 'var(--text-muted)', lineHeight: 1.5 }}>
+                    <p style={{ margin: 0, color: 'var(--color-text-muted, #64748b)', lineHeight: 1.5 }}>
                       Click the link inside your email to set a new password. If you don't see the email in your inbox within 2 minutes, please check your <strong>Spam or Junk folder</strong>.
                     </p>
                   </div>

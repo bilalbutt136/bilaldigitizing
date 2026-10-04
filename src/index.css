@@ -705,7 +705,7 @@ body.dark-mode h3,
 body.dark-mode h4,
 body.dark-mode h5,
 body.dark-mode h6 {
-  color: var(--color-text-primary) !important;
+  color: var(--color-text-primary);
 }
 
 /* Paragraphs & general text */
@@ -944,7 +944,7 @@ body.dark-mode th {
 .dark h1, .dark h2, .dark h3, .dark h4, .dark h5, .dark h6,
 body.dark-mode h1, body.dark-mode h2, body.dark-mode h3,
 body.dark-mode h4, body.dark-mode h5, body.dark-mode h6 {
-  color: var(--color-text-primary, #ffffff) !important;
+  color: var(--color-text-primary, #ffffff);
 }
 
 [data-theme="dark"] p, .dark p, body.dark-mode p,
@@ -1120,6 +1120,7 @@ body.dark-mode [style*="background-color: #ffffff"],
 body.dark-mode [style*="background-color:#ffffff"] {
   background: var(--color-surface, #111827) !important;
   background-color: var(--color-surface, #111827) !important;
+  color: var(--color-text-primary, #ffffff) !important;
 }
 
 [data-theme="dark"] [style*="background: #f8fafc"],
@@ -1136,6 +1137,7 @@ body.dark-mode [style*="background: #f1f5f9"],
 body.dark-mode [style*="background:#f1f5f9"] {
   background: var(--color-surface-elevated, #1e293b) !important;
   background-color: var(--color-surface-elevated, #1e293b) !important;
+  color: var(--color-text-primary, #ffffff) !important;
 }
 
 /* Hardcoded Light Accent Containers */

@@ -292,6 +292,7 @@ export const CustomerInvoiceModal = ({
           #customer-invoice-print-content,
           #customer-invoice-print-content * {
             visibility: visible !important;
+            color: #0f172a !important;
           }
           .customer-invoice-overlay {
             position: absolute !important;
@@ -352,13 +353,14 @@ export const CustomerInvoiceModal = ({
           width: '100%',
           maxWidth: '820px',
           maxHeight: '92vh',
-          background: '#ffffff',
+          background: 'var(--color-surface, #ffffff)',
           borderRadius: '16px',
           display: 'flex',
           flexDirection: 'column',
           boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.45)',
-          border: '1px solid #e2e8f0',
-          overflow: 'hidden'
+          border: '1px solid var(--color-border, #e2e8f0)',
+          overflow: 'hidden',
+          color: 'var(--color-text-primary, #0f172a)'
         }}
       >
         {/* TOP ACTION BAR (Hidden from print) */}
@@ -369,8 +371,8 @@ export const CustomerInvoiceModal = ({
             justifyContent: 'space-between',
             alignItems: 'center',
             padding: '0.8rem 1.4rem',
-            background: '#f8fafc',
-            borderBottom: '1px solid #e2e8f0',
+            background: 'var(--color-surface-elevated, #f8fafc)',
+            borderBottom: '1px solid var(--color-border, #e2e8f0)',
             flexShrink: 0
           }}
         >
@@ -388,10 +390,10 @@ export const CustomerInvoiceModal = ({
               <FileText size={16} />
             </div>
             <div>
-              <span style={{ fontSize: '0.9rem', fontWeight: 800, color: '#0f172a' }}>
+              <span style={{ fontSize: '0.9rem', fontWeight: 800, color: 'var(--color-text-primary, #0f172a)' }}>
                 Commercial Tax Invoice
               </span>
-              <span style={{ fontSize: '0.75rem', color: '#64748b', marginLeft: '0.5rem' }}>
+              <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted, #64748b)', marginLeft: '0.5rem' }}>
                 {invoiceNumber}
               </span>
             </div>
@@ -485,8 +487,8 @@ export const CustomerInvoiceModal = ({
             flex: 1,
             overflowY: 'auto',
             padding: '1.75rem 2.25rem',
-            background: '#ffffff',
-            color: '#0f172a',
+            background: 'var(--color-surface, #ffffff)',
+            color: 'var(--color-text-primary, #0f172a)',
             fontSize: '0.85rem',
             lineHeight: 1.5,
             boxSizing: 'border-box'
@@ -496,15 +498,15 @@ export const CustomerInvoiceModal = ({
           <div style={{ height: '4px', background: '#ea580c', borderRadius: '2px', marginBottom: '1.5rem' }} />
 
           {/* Header Row */}
-          <div className="invoice-print-keep" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem', borderBottom: '1px solid #e2e8f0', paddingBottom: '1.25rem', marginBottom: '1.5rem' }}>
+          <div className="invoice-print-keep" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem', borderBottom: '1px solid var(--color-border, #e2e8f0)', paddingBottom: '1.25rem', marginBottom: '1.5rem' }}>
             <div>
-              <h1 style={{ margin: 0, fontSize: '1.6rem', fontWeight: 900, color: '#0f172a', letterSpacing: '-0.02em' }}>
+              <h1 style={{ margin: 0, fontSize: '1.6rem', fontWeight: 900, color: 'var(--color-text-primary, #0f172a)', letterSpacing: '-0.02em' }}>
                 BDigitizing
               </h1>
-              <p style={{ margin: '0.15rem 0 0', fontSize: '0.82rem', color: '#64748b' }}>
+              <p style={{ margin: '0.15rem 0 0', fontSize: '0.82rem', color: 'var(--color-text-muted, #64748b)' }}>
                 Commercial Embroidery Digitizing & Vector Art
               </p>
-              <p style={{ margin: '0.1rem 0 0', fontSize: '0.78rem', color: '#94a3b8' }}>
+              <p style={{ margin: '0.1rem 0 0', fontSize: '0.78rem', color: 'var(--color-text-muted, #94a3b8)' }}>
                 support@bdigitizing.com • www.bdigitizing.com
               </p>
               <div style={{ marginTop: '0.35rem', fontSize: '0.62rem', fontWeight: 900, color: '#ea580c', letterSpacing: '0.12em', textTransform: 'uppercase' }}>
@@ -513,13 +515,13 @@ export const CustomerInvoiceModal = ({
             </div>
 
             <div style={{ textAlign: 'right' }}>
-              <div style={{ fontSize: '1.35rem', fontWeight: 900, color: '#0f172a', letterSpacing: '0.02em' }}>
+              <div style={{ fontSize: '1.35rem', fontWeight: 900, color: 'var(--color-text-primary, #0f172a)', letterSpacing: '0.02em' }}>
                 TAX INVOICE
               </div>
-              <div style={{ fontSize: '0.82rem', fontWeight: 700, color: '#475569', marginTop: '0.15rem' }}>
+              <div style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--color-text-secondary, #475569)', marginTop: '0.15rem' }}>
                 {invoiceNumber}
               </div>
-              <div style={{ fontSize: '0.78rem', color: '#64748b', marginTop: '0.1rem' }}>
+              <div style={{ fontSize: '0.78rem', color: 'var(--color-text-muted, #64748b)', marginTop: '0.1rem' }}>
                 Date: {issueDateFormatted}
               </div>
               <div style={{ marginTop: '0.45rem' }}>
@@ -550,26 +552,26 @@ export const CustomerInvoiceModal = ({
               <div style={{ fontSize: '0.72rem', fontWeight: 800, color: '#ea580c', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '0.35rem' }}>
                 Billed To
               </div>
-              <div style={{ fontSize: '0.98rem', fontWeight: 800, color: '#0f172a' }}>
+              <div style={{ fontSize: '0.98rem', fontWeight: 800, color: 'var(--color-text-primary, #0f172a)' }}>
                 {clientName}
               </div>
               {clientCompany && (
-                <div style={{ fontSize: '0.82rem', color: '#475569', marginTop: '0.1rem' }}>
+                <div style={{ fontSize: '0.82rem', color: 'var(--color-text-secondary, #475569)', marginTop: '0.1rem' }}>
                   {clientCompany}
                 </div>
               )}
               {clientEmail && (
-                <div style={{ fontSize: '0.8rem', color: '#64748b', marginTop: '0.1rem' }}>
+                <div style={{ fontSize: '0.8rem', color: 'var(--color-text-muted, #64748b)', marginTop: '0.1rem' }}>
                   {clientEmail}
                 </div>
               )}
               {clientPhone && (
-                <div style={{ fontSize: '0.78rem', color: '#64748b', marginTop: '0.1rem' }}>
+                <div style={{ fontSize: '0.78rem', color: 'var(--color-text-muted, #64748b)', marginTop: '0.1rem' }}>
                   Tel: {clientPhone}
                 </div>
               )}
               {clientAddress && (
-                <div style={{ fontSize: '0.78rem', color: '#64748b', marginTop: '0.1rem' }}>
+                <div style={{ fontSize: '0.78rem', color: 'var(--color-text-muted, #64748b)', marginTop: '0.1rem' }}>
                   {clientAddress}
                 </div>
               )}
@@ -581,26 +583,26 @@ export const CustomerInvoiceModal = ({
                 Order Details
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '105px 1fr', rowGap: '0.25rem', fontSize: '0.82rem' }}>
-                <span style={{ color: '#64748b' }}>Order ID:</span>
-                <span style={{ fontWeight: 800, color: '#0f172a' }}>{formatOrderId(order?.id)}</span>
+                <span style={{ color: 'var(--color-text-muted, #64748b)' }}>Order ID:</span>
+                <span style={{ fontWeight: 800, color: 'var(--color-text-primary, #0f172a)' }}>{formatOrderId(order?.id)}</span>
 
-                <span style={{ color: '#64748b' }}>Payment:</span>
+                <span style={{ color: 'var(--color-text-muted, #64748b)' }}>Payment:</span>
                 <span style={{ fontWeight: 700, color: isPaid ? '#10b981' : '#ea580c' }}>
                   {isPaid ? `Paid in Full (${paymentDateFormatted})` : 'Awaiting Payment'}
                 </span>
 
-                <span style={{ color: '#64748b' }}>Method:</span>
-                <span style={{ fontWeight: 600, color: '#334155' }}>
+                <span style={{ color: 'var(--color-text-muted, #64748b)' }}>Method:</span>
+                <span style={{ fontWeight: 600, color: 'var(--color-text-secondary, #334155)' }}>
                   {paymentMethod}
                 </span>
 
-                <span style={{ color: '#64748b' }}>Turnaround:</span>
-                <span style={{ fontWeight: 600, color: '#334155' }}>
+                <span style={{ color: 'var(--color-text-muted, #64748b)' }}>Turnaround:</span>
+                <span style={{ fontWeight: 600, color: 'var(--color-text-secondary, #334155)' }}>
                   {turnaroundTier}
                 </span>
 
-                <span style={{ color: '#64748b' }}>Currency:</span>
-                <span style={{ fontWeight: 700, color: '#0f172a' }}>USD ($)</span>
+                <span style={{ color: 'var(--color-text-muted, #64748b)' }}>Currency:</span>
+                <span style={{ fontWeight: 700, color: 'var(--color-text-primary, #0f172a)' }}>USD ($)</span>
               </div>
             </div>
 
@@ -609,8 +611,8 @@ export const CustomerInvoiceModal = ({
           {/* Optional Production Specs Strip */}
           {specsParts.length > 0 && (
             <div className="invoice-print-keep" style={{
-              background: '#f8fafc',
-              border: '1px solid #e2e8f0',
+              background: 'var(--color-surface-elevated, #f8fafc)',
+              border: '1px solid var(--color-border, #e2e8f0)',
               borderRadius: '7px',
               padding: '0.55rem 0.85rem',
               marginBottom: '1.25rem',
@@ -618,7 +620,7 @@ export const CustomerInvoiceModal = ({
               alignItems: 'center',
               gap: '0.5rem',
               fontSize: '0.78rem',
-              color: '#334155',
+              color: 'var(--color-text-secondary, #334155)',
               flexWrap: 'wrap'
             }}>
               <span style={{ fontWeight: 800, color: '#ea580c', fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.03em' }}>
@@ -629,10 +631,10 @@ export const CustomerInvoiceModal = ({
           )}
 
           {/* Simple Clean Table */}
-          <div className="invoice-print-keep" style={{ border: '1px solid #e2e8f0', borderRadius: '8px', overflow: 'hidden', marginBottom: '1.5rem' }}>
+          <div className="invoice-print-keep" style={{ border: '1px solid var(--color-border, #e2e8f0)', borderRadius: '8px', overflow: 'hidden', marginBottom: '1.5rem' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.825rem' }}>
               <thead>
-                <tr style={{ background: '#f8fafc', color: '#475569', fontSize: '0.74rem', fontWeight: 800, textTransform: 'uppercase', borderBottom: '1px solid #e2e8f0' }}>
+                <tr style={{ background: 'var(--color-surface-elevated, #f8fafc)', color: 'var(--color-text-secondary, #475569)', fontSize: '0.74rem', fontWeight: 800, textTransform: 'uppercase', borderBottom: '1px solid var(--color-border, #e2e8f0)' }}>
                   <th style={{ padding: '0.65rem 0.85rem', width: '5%' }}>#</th>
                   <th style={{ padding: '0.65rem 0.85rem', width: '50%' }}>Description</th>
                   <th style={{ padding: '0.65rem 0.85rem', width: '20%' }}>Formats</th>
@@ -642,29 +644,29 @@ export const CustomerInvoiceModal = ({
               </thead>
               <tbody>
                 <tr>
-                  <td style={{ padding: '0.75rem 0.85rem', verticalAlign: 'top', color: '#94a3b8' }}>1</td>
+                  <td style={{ padding: '0.75rem 0.85rem', verticalAlign: 'top', color: 'var(--color-text-muted, #94a3b8)' }}>1</td>
                   <td style={{ padding: '0.75rem 0.85rem', verticalAlign: 'top' }}>
-                    <div style={{ fontWeight: 800, color: '#0f172a' }}>
+                    <div style={{ fontWeight: 800, color: 'var(--color-text-primary, #0f172a)' }}>
                       {serviceTitle}
                     </div>
                     {designTitle && (
-                      <div style={{ fontSize: '0.78rem', color: '#64748b', marginTop: '0.15rem' }}>
+                      <div style={{ fontSize: '0.78rem', color: 'var(--color-text-muted, #64748b)', marginTop: '0.15rem' }}>
                         Design: {designTitle}
                       </div>
                     )}
                     {specsParts.length > 0 && (
-                      <div style={{ fontSize: '0.72rem', color: '#94a3b8', marginTop: '0.15rem' }}>
+                      <div style={{ fontSize: '0.72rem', color: 'var(--color-text-muted, #94a3b8)', marginTop: '0.15rem' }}>
                         Specs: {specsParts.join(', ')}
                       </div>
                     )}
                   </td>
-                  <td style={{ padding: '0.75rem 0.85rem', verticalAlign: 'top', color: '#475569', fontSize: '0.78rem' }}>
+                  <td style={{ padding: '0.75rem 0.85rem', verticalAlign: 'top', color: 'var(--color-text-secondary, #475569)', fontSize: '0.78rem' }}>
                     {formatsString}
                   </td>
-                  <td style={{ padding: '0.75rem 0.85rem', verticalAlign: 'top', textAlign: 'center', fontWeight: 700 }}>
+                  <td style={{ padding: '0.75rem 0.85rem', verticalAlign: 'top', textAlign: 'center', fontWeight: 700, color: 'var(--color-text-primary, #0f172a)' }}>
                     {quantity}
                   </td>
-                  <td style={{ padding: '0.75rem 0.85rem', verticalAlign: 'top', textAlign: 'right', fontWeight: 800, color: '#0f172a' }}>
+                  <td style={{ padding: '0.75rem 0.85rem', verticalAlign: 'top', textAlign: 'right', fontWeight: 800, color: 'var(--color-text-primary, #0f172a)' }}>
                     ${price.toFixed(2)}
                   </td>
                 </tr>
@@ -675,9 +677,9 @@ export const CustomerInvoiceModal = ({
           {/* Simple Right-Aligned Summary */}
           <div className="invoice-print-keep" style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1.5rem' }}>
             <div style={{ width: '250px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.82rem', color: '#64748b', marginBottom: '0.35rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.82rem', color: 'var(--color-text-muted, #64748b)', marginBottom: '0.35rem' }}>
                 <span>Subtotal:</span>
-                <span style={{ fontWeight: 700, color: '#0f172a' }}>${subtotal.toFixed(2)}</span>
+                <span style={{ fontWeight: 700, color: 'var(--color-text-primary, #0f172a)' }}>${subtotal.toFixed(2)}</span>
               </div>
               {discountAmount > 0 && (
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.82rem', color: '#10b981', marginBottom: '0.35rem' }}>
@@ -691,13 +693,13 @@ export const CustomerInvoiceModal = ({
                   <span style={{ fontWeight: 700 }}>+${rushFee.toFixed(2)}</span>
                 </div>
               )}
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.82rem', color: '#64748b', marginBottom: '0.45rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.82rem', color: 'var(--color-text-muted, #64748b)', marginBottom: '0.45rem' }}>
                 <span>Tax (0% Export/B2B):</span>
                 <span>$0.00</span>
               </div>
-              <div style={{ height: '1px', background: '#e2e8f0', marginBottom: '0.45rem' }} />
+              <div style={{ height: '1px', background: 'var(--color-border, #e2e8f0)', marginBottom: '0.45rem' }} />
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontWeight: 800, fontSize: '0.9rem', color: '#0f172a' }}>
+                <span style={{ fontWeight: 800, fontSize: '0.9rem', color: 'var(--color-text-primary, #0f172a)' }}>
                   {isPaid ? 'Total Paid:' : 'Total Due:'}
                 </span>
                 <span style={{ fontWeight: 900, fontSize: '1.2rem', color: isPaid ? '#10b981' : '#ea580c' }}>
@@ -710,8 +712,8 @@ export const CustomerInvoiceModal = ({
           {/* Customer reference / special instructions */}
           {customerNotes && (
             <div style={{
-              background: '#f8fafc',
-              border: '1px solid #e2e8f0',
+              background: 'var(--color-surface-elevated, #f8fafc)',
+              border: '1px solid var(--color-border, #e2e8f0)',
               borderRadius: '10px',
               padding: '0.9rem 1rem',
               borderLeft: '4px solid #ea580c',
@@ -720,7 +722,7 @@ export const CustomerInvoiceModal = ({
               <div style={{ fontSize: '0.72rem', fontWeight: 800, color: '#ea580c', marginBottom: '0.2rem', textTransform: 'uppercase', letterSpacing: '0.03em' }}>
                 Customer Reference / Special Instructions
               </div>
-              <div style={{ fontSize: '0.82rem', color: '#334155', lineHeight: 1.6, whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>
+              <div style={{ fontSize: '0.82rem', color: 'var(--color-text-secondary, #334155)', lineHeight: 1.6, whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>
                 {customerNotes}
               </div>
             </div>
@@ -728,8 +730,8 @@ export const CustomerInvoiceModal = ({
 
           {/* System Generated Invoice - No signature required */}
           <div className="invoice-print-keep" style={{
-            background: '#f8fafc',
-            border: '1px solid #e2e8f0',
+            background: 'var(--color-surface-elevated, #f8fafc)',
+            border: '1px solid var(--color-border, #e2e8f0)',
             borderRadius: '8px',
             padding: '0.6rem 0.9rem',
             marginBottom: '1.25rem',
@@ -739,7 +741,7 @@ export const CustomerInvoiceModal = ({
             gap: '0.4rem',
             fontSize: '0.78rem',
             fontWeight: 600,
-            color: '#64748b'
+            color: 'var(--color-text-muted, #64748b)'
           }}>
             <ShieldCheck size={14} style={{ color: '#10b981' }} />
             <span>This is a system-generated invoice. No signature required.</span>

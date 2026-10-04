@@ -58,7 +58,7 @@ body.dark-mode h3,
 body.dark-mode h4,
 body.dark-mode h5,
 body.dark-mode h6 {
-  color: #ffffff !important;
+  color: var(--color-text-primary, #ffffff);
 }
 
 /* Body & Descriptions: font-sans font-normal text-slate-600 dark:text-slate-300 leading-relaxed */
@@ -77,7 +77,7 @@ p,
 body.dark-mode p,
 body.dark-mode .body-text,
 body.dark-mode .text-description {
-  color: #cbd5e1 !important; /* text-slate-300 */
+  color: var(--color-text-secondary, #cbd5e1);
 }
 
 /* Badges & Small Meta Text: text-xs font-semibold uppercase tracking-wider */

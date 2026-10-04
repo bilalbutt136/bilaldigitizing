@@ -77,7 +77,7 @@ export function ClientPortalClient() {
   if (isApp) {
     return (
       <ErrorBoundary fallback={<CustomerDashboard />}>
-        <div className="mobile-app-wrapper" style={{ width: '100%', minHeight: '100vh', background: '#ffffff' }}>
+        <div className="mobile-app-wrapper" style={{ width: '100%', minHeight: '100vh', background: 'var(--color-background, #090d16)' }}>
           <BDigitizingMobileApp />
         </div>
       </ErrorBoundary>

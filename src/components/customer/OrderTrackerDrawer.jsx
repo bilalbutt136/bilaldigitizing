@@ -1926,20 +1926,24 @@ export const OrderTrackerDrawer = () => {
                   <div
                     key={activeDelivery.id || selectedDeliveryIndex}
                     style={{
-                      background: selectedDeliveryIndex === 0 ? '#f0fdf4' : '#f8fafc',
-                      border: selectedDeliveryIndex === 0 ? '1.5px solid #86efac' : '1px solid #e2e8f0',
+                      background: selectedDeliveryIndex === 0
+                        ? (isDark ? 'rgba(16, 185, 129, 0.12)' : '#f0fdf4')
+                        : (isDark ? 'var(--color-surface, #111827)' : '#f8fafc'),
+                      border: selectedDeliveryIndex === 0
+                        ? (isDark ? '1.5px solid rgba(134, 239, 172, 0.4)' : '1.5px solid #86efac')
+                        : (isDark ? '1px solid var(--color-border, #334155)' : '1px solid #e2e8f0'),
                       borderRadius: '14px',
                       padding: '1.25rem',
                       boxShadow: selectedDeliveryIndex === 0 ? '0 4px 14px rgba(16, 185, 129, 0.08)' : 'none'
                     }}
                   >
                     {/* Delivery Header */}
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.85rem', flexWrap: 'wrap', gap: '0.5rem', borderBottom: selectedDeliveryIndex === 0 ? '1px solid #bbf7d0' : '1px solid #e2e8f0', paddingBottom: '0.65rem' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.85rem', flexWrap: 'wrap', gap: '0.5rem', borderBottom: selectedDeliveryIndex === 0 ? (isDark ? '1px solid rgba(134, 239, 172, 0.3)' : '1px solid #bbf7d0') : (isDark ? '1px solid var(--color-border, #334155)' : '1px solid #e2e8f0'), paddingBottom: '0.65rem' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                         <span style={{ fontSize: '1.15rem' }}>📦</span>
                         <div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
-                            <strong style={{ fontSize: '0.95rem', color: selectedDeliveryIndex === 0 ? '#065f46' : 'var(--navy-900)' }}>
+                            <strong style={{ fontSize: '0.95rem', color: selectedDeliveryIndex === 0 ? (isDark ? '#34d399' : '#065f46') : (isDark ? 'var(--color-text-primary, #ffffff)' : 'var(--navy-900)') }}>
                               {activeDelivery.title || `Delivery #${activeDelivery.deliveryNumber || (allDeliveries.length - selectedDeliveryIndex)}`}
                             </strong>
                             {selectedDeliveryIndex === 0 && (
@@ -2081,23 +2085,30 @@ export const OrderTrackerDrawer = () => {
             )}
 
             {!isDelivered && (
-              <div style={{ padding: '1.5rem', background: '#f8fafc', borderRadius: '12px', border: '1px solid #e2e8f0', textAlign: 'center', marginBottom: '1.25rem' }}>
+              <div style={{
+                padding: '1.5rem',
+                background: isDark ? 'var(--color-surface-elevated, #1e293b)' : '#f8fafc',
+                borderRadius: '12px',
+                border: isDark ? '1px solid var(--color-border, #334155)' : '1px solid #e2e8f0',
+                textAlign: 'center',
+                marginBottom: '1.25rem'
+              }}>
                 <Clock size={24} style={{ color: 'var(--orange-500)', margin: '0 auto 0.4rem' }} />
-                <div style={{ fontWeight: 800, color: 'var(--navy-900)', fontSize: '0.92rem' }}>Order Currently in Master Digitizing Production</div>
+                <div style={{ fontWeight: 800, color: isDark ? 'var(--color-text-primary, #ffffff)' : 'var(--navy-900)', fontSize: '0.92rem' }}>Order Currently in Master Digitizing Production</div>
                 <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>Files are being processed and tested. Once completed, your machine packages will appear here.</div>
               </div>
             )}
 
             {/* CUSTOMER REVISION IN PROGRESS BANNER */}
             {!isAdmin && isInRevision && (
-              <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', background: '#fff1f2', padding: '1rem 1.25rem', borderRadius: '12px', border: '1.5px solid #fecdd3', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', background: isDark ? 'rgba(244, 63, 94, 0.12)' : '#fff1f2', padding: '1rem 1.25rem', borderRadius: '12px', border: isDark ? '1.5px solid rgba(251, 113, 133, 0.3)' : '1.5px solid #fecdd3', alignItems: 'center', justifyContent: 'space-between' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                   <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: '#e11d48', color: '#ffffff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                     <RotateCcw size={18} />
                   </div>
                   <div>
-                    <div style={{ fontWeight: 900, color: '#9f1239', fontSize: '0.92rem' }}>Modification Currently Under Production</div>
-                    <div style={{ fontSize: '0.76rem', color: '#be123c', marginTop: '0.1rem' }}>Our digitizing team is currently revising your design according to your instructions.</div>
+                    <div style={{ fontWeight: 900, color: isDark ? '#fb7185' : '#9f1239', fontSize: '0.92rem' }}>Modification Currently Under Production</div>
+                    <div style={{ fontSize: '0.76rem', color: isDark ? '#fda4af' : '#be123c', marginTop: '0.1rem' }}>Our digitizing team is currently revising your design according to your instructions.</div>
                   </div>
                 </div>
               </div>
@@ -2105,14 +2116,14 @@ export const OrderTrackerDrawer = () => {
 
             {/* CUSTOMER COMPLETED & APPROVED CELEBRATION ROW */}
             {!isAdmin && isCompleted && (
-              <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', background: '#ecfdf5', padding: '1rem 1.25rem', borderRadius: '12px', border: '1.5px solid #a7f3d0', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', background: isDark ? 'rgba(16, 185, 129, 0.12)' : '#ecfdf5', padding: '1rem 1.25rem', borderRadius: '12px', border: isDark ? '1.5px solid rgba(52, 211, 153, 0.3)' : '1.5px solid #a7f3d0', alignItems: 'center', justifyContent: 'space-between' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                   <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: '#10b981', color: '#ffffff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                     <CheckCircle2 size={20} />
                   </div>
                   <div>
-                    <div style={{ fontWeight: 900, color: '#065f46', fontSize: '0.92rem' }}>Order Approved & Completed Successfully!</div>
-                    <div style={{ fontSize: '0.76rem', color: '#047857', marginTop: '0.1rem' }}>All stitch files, source documents, and production worksheets are permanently archived in your studio.</div>
+                    <div style={{ fontWeight: 900, color: isDark ? '#34d399' : '#065f46', fontSize: '0.92rem' }}>Order Approved & Completed Successfully!</div>
+                    <div style={{ fontSize: '0.76rem', color: isDark ? '#6ee7b7' : '#047857', marginTop: '0.1rem' }}>All stitch files, source documents, and production worksheets are permanently archived in your studio.</div>
                   </div>
                 </div>
 
@@ -2131,7 +2142,7 @@ export const OrderTrackerDrawer = () => {
                       type="button"
                       onClick={() => setShowCustomerReviewModal(true)}
                       className="btn btn-outline btn-sm"
-                      style={{ fontWeight: 800, gap: '0.35rem', borderColor: '#f59e0b', color: '#b45309', background: '#fffbeb' }}
+                      style={{ fontWeight: 800, gap: '0.35rem', borderColor: isDark ? 'rgba(245, 158, 11, 0.4)' : '#f59e0b', color: isDark ? '#fbbf24' : '#b45309', background: isDark ? 'rgba(245, 158, 11, 0.12)' : '#fffbeb' }}
                     >
                       <Star size={14} /> Leave feedback
                     </button>
@@ -2144,9 +2155,9 @@ export const OrderTrackerDrawer = () => {
                       gap: '0.35rem',
                       padding: '0.45rem 0.7rem',
                       borderRadius: '8px',
-                      background: '#ffffff',
-                      border: '1px solid #bbf7d0',
-                      color: '#047857',
+                      background: isDark ? 'rgba(16, 185, 129, 0.15)' : '#ffffff',
+                      border: isDark ? '1px solid rgba(74, 222, 128, 0.3)' : '1px solid #bbf7d0',
+                      color: isDark ? '#4ade80' : '#047857',
                       fontSize: '0.76rem',
                       fontWeight: 800
                     }}>
@@ -2544,9 +2555,15 @@ export const OrderTrackerDrawer = () => {
 
                   {/* Worker Notes / Feedback */}
                   {ord.admin_worker_feedback && (
-                    <div style={{ background: '#f8fafc', padding: '0.75rem 1rem', borderRadius: '8px', border: '1px solid #e2e8f0', fontSize: '0.8rem' }}>
-                      <strong style={{ color: 'var(--navy-900)' }}>Instructions dispatched to worker:</strong>
-                      <div style={{ color: '#475569', marginTop: '0.15rem' }}>{ord.admin_worker_feedback}</div>
+                    <div style={{
+                      background: isDark ? 'var(--color-surface-elevated, #1e293b)' : '#f8fafc',
+                      padding: '0.75rem 1rem',
+                      borderRadius: '8px',
+                      border: isDark ? '1px solid var(--color-border, #334155)' : '1px solid #e2e8f0',
+                      fontSize: '0.8rem'
+                    }}>
+                      <strong style={{ color: isDark ? 'var(--color-text-primary, #ffffff)' : 'var(--navy-900)' }}>Instructions dispatched to worker:</strong>
+                      <div style={{ color: isDark ? 'var(--color-text-secondary, #94a3b8)' : '#475569', marginTop: '0.15rem' }}>{ord.admin_worker_feedback}</div>
                     </div>
                   )}
                 </div>
@@ -2582,7 +2599,15 @@ export const OrderTrackerDrawer = () => {
                 </div>
 
                 {isCompleted && (
-                  <span style={{ background: '#dcfce7', color: '#166534', border: '1px solid #bbf7d0', padding: '0.2rem 0.65rem', borderRadius: '9999px', fontSize: '0.72rem', fontWeight: 800 }}>
+                  <span style={{
+                    background: isDark ? 'rgba(34, 197, 94, 0.15)' : '#dcfce7',
+                    color: isDark ? '#4ade80' : '#166534',
+                    border: isDark ? '1px solid rgba(74, 222, 128, 0.3)' : '1px solid #bbf7d0',
+                    padding: '0.2rem 0.65rem',
+                    borderRadius: '9999px',
+                    fontSize: '0.72rem',
+                    fontWeight: 800
+                  }}>
                     ✅ Completed & Locked
                   </span>
                 )}
@@ -2590,13 +2615,22 @@ export const OrderTrackerDrawer = () => {
 
               {/* Revision In Progress Banner */}
               {isInRevision && (
-                <div style={{ background: '#fff1f2', border: '1.5px solid #fecdd3', borderRadius: '12px', padding: '1rem 1.2rem', marginBottom: '1rem', display: 'flex', alignItems: 'flex-start', gap: '0.75rem' }}>
+                <div style={{
+                  background: isDark ? 'rgba(244, 63, 94, 0.12)' : '#fff1f2',
+                  border: isDark ? '1.5px solid rgba(251, 113, 133, 0.3)' : '1.5px solid #fecdd3',
+                  borderRadius: '12px',
+                  padding: '1rem 1.2rem',
+                  marginBottom: '1rem',
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  gap: '0.75rem'
+                }}>
                   <RotateCcw size={20} style={{ color: '#e11d48', flexShrink: 0, marginTop: '0.15rem' }} />
                   <div>
-                    <div style={{ fontWeight: 800, color: '#9f1239', fontSize: '0.88rem' }}>
+                    <div style={{ fontWeight: 800, color: isDark ? '#fb7185' : '#9f1239', fontSize: '0.88rem' }}>
                       {isAdmin ? 'Order In Revision Status' : 'Modification Currently Under Production'}
                     </div>
-                    <div style={{ fontSize: '0.78rem', color: '#be123c', marginTop: '0.2rem', lineHeight: 1.4 }}>
+                    <div style={{ fontSize: '0.78rem', color: isDark ? '#fda4af' : '#be123c', marginTop: '0.2rem', lineHeight: 1.4 }}>
                       {isAdmin
                         ? 'Customer has requested changes on this order. Deliver updated stitch files to fulfill revision.'
                         : 'Our master digitizer team is working on your requested changes. You will receive an instant notification as soon as updated stitch files are uploaded.'}
@@ -2791,9 +2825,9 @@ export const OrderTrackerDrawer = () => {
                       gap: '0.35rem',
                       flex: isMobileLayout ? 1 : undefined,
                       justifyContent: 'center',
-                      borderColor: '#f59e0b',
-                      color: '#b45309',
-                      background: '#fffbeb'
+                      borderColor: isDark ? 'rgba(245, 158, 11, 0.4)' : '#f59e0b',
+                      color: isDark ? '#fbbf24' : '#b45309',
+                      background: isDark ? 'rgba(245, 158, 11, 0.12)' : '#fffbeb'
                     }}
                   >
                     <Star size={14} /> Leave feedback
@@ -2801,7 +2835,7 @@ export const OrderTrackerDrawer = () => {
                 )}
               </>
             ) : isInRevision && !isAdmin ? (
-              <span style={{ background: '#fff1f2', color: '#e11d48', border: '1px solid #fecdd3', padding: '0.4rem 0.8rem', borderRadius: '8px', fontSize: '0.78rem', fontWeight: 800, display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
+              <span style={{ background: isDark ? 'rgba(244, 63, 94, 0.15)' : '#fff1f2', color: isDark ? '#fb7185' : '#e11d48', border: isDark ? '1px solid rgba(251, 113, 133, 0.3)' : '1px solid #fecdd3', padding: '0.4rem 0.8rem', borderRadius: '8px', fontSize: '0.78rem', fontWeight: 800, display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
                 <RotateCcw size={13} /> Modification Under Production
               </span>
             ) : null}
@@ -2810,9 +2844,9 @@ export const OrderTrackerDrawer = () => {
 
             {ord.status === 'cancelled' && (
               <span style={{
-                background: '#fee2e2',
-                color: '#991b1b',
-                border: '1px solid #fca5a5',
+                background: isDark ? 'rgba(239, 68, 68, 0.15)' : '#fee2e2',
+                color: isDark ? '#f87171' : '#991b1b',
+                border: isDark ? '1px solid rgba(248, 113, 113, 0.3)' : '1px solid #fca5a5',
                 padding: '0.4rem 0.75rem',
                 borderRadius: '8px',
                 fontSize: '0.78rem',

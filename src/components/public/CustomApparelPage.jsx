@@ -304,7 +304,7 @@ export const CustomApparelPage = () => {
           <button
             type="button"
             className="btn btn-primary-orange btn-lg"
-            style={{ fontWeight: 800, padding: '1rem 2.5rem', background: '#ffffff', color: 'var(--navy-950)' }}
+            style={{ fontWeight: 800, padding: '1rem 2.5rem', background: '#ffffff', color: '#090d16' }}
             onClick={() => protectedNavigate('customer', true)}
           >
             Start Apparel Order <ArrowRight size={18} />
