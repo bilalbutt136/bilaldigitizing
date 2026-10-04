@@ -6,6 +6,7 @@ import {
   isModalBackConsumed,
   hasActiveModals,
   getModalStackDepth,
+  popTopModal,
   resetModalStack
 } from '../utils/modalHistoryManager.js';
 
@@ -123,10 +124,23 @@ describe('Universal Mobile & Desktop Modal History Manager', () => {
   });
 
   test('5. Duplicate push of the same modal id does not create duplicate history entries', () => {
-    let _callCount = 0;
+    let callCount = 0;
     pushModal('pdf_preview_modal', () => { callCount++; });
     pushModal('pdf_preview_modal', () => { callCount++; });
 
     assert.equal(getModalStackDepth(), 1, 'Duplicate modal ID must not be pushed twice');
+  });
+
+  test('6. popTopModal programmatically pops top modal and invokes onClose', () => {
+    let closed = false;
+    assert.equal(popTopModal(), false, 'Returns false when modal stack is empty');
+
+    pushModal('test_overlay', () => { closed = true; });
+    assert.equal(hasActiveModals(), true);
+
+    const result = popTopModal();
+    assert.equal(result, true, 'Returns true when modal was successfully popped');
+    assert.equal(closed, true, 'onClose callback was executed');
+    assert.equal(hasActiveModals(), false, 'Modal stack is empty');
   });
 });

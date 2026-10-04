@@ -214,6 +214,13 @@ export const HeaderNav = () => {
     };
   }, [isMobileMenuOpen]);
 
+  useEffect(() => {
+    if (!isMobileMenuOpen) return;
+    const handleClose = () => setIsMobileMenuOpen(false);
+    window.addEventListener('bdigi_close_menu', handleClose);
+    return () => window.removeEventListener('bdigi_close_menu', handleClose);
+  }, [isMobileMenuOpen]);
+
   const servicesDropdownRef = useRef(null);
   const notificationDropdownRef = useRef(null);
   const mobileNotificationDropdownRef = useRef(null);

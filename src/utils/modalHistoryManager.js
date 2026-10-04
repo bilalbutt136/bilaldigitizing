@@ -118,6 +118,27 @@ export function getModalStackDepth() {
 }
 
 /**
+ * Programmatically pops and closes the top-most modal in the active stack.
+ * Useful for native Capacitor backButton handlers or programmatic escape keys.
+ * @returns {boolean} True if a modal was popped and closed, false if stack was empty.
+ */
+export function popTopModal() {
+  if (modalStack.length > 0) {
+    const topModal = modalStack.pop();
+    lastBackConsumedTimestamp = Date.now();
+    if (topModal && typeof topModal.onClose === 'function') {
+      try {
+        topModal.onClose();
+      } catch (err) {
+        console.error('[modalHistoryManager] Error closing modal:', err);
+      }
+    }
+    return true;
+  }
+  return false;
+}
+
+/**
  * Resets the modal stack (useful for test suites or hard navigation resets).
  */
 export function resetModalStack() {

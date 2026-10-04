@@ -256,8 +256,23 @@ async function getServerAuthUserUncached(request) {
           if (!claimError && claimData?.claims) {
             user = claimsToUser(claimData.claims);
             authLevel = claimData.claims?.aal === 'aal2' ? 'aal2' : 'aal1';
+          } else {
+            const { data: userData, error: userError } = await verifier.auth.getUser(token);
+            if (!userError && userData?.user) {
+              user = userData.user;
+              authLevel = userData.user.app_metadata?.aal === 'aal2' ? 'aal2' : 'aal1';
+            }
           }
-        } catch {}
+        } catch {
+          try {
+            const verifier = (hasServiceRole && supabaseAdmin) ? supabaseAdmin : createAdminClient();
+            const { data: userData, error: userError } = await verifier.auth.getUser(token);
+            if (!userError && userData?.user) {
+              user = userData.user;
+              authLevel = userData.user.app_metadata?.aal === 'aal2' ? 'aal2' : 'aal1';
+            }
+          } catch {}
+        }
       }
     }
 
@@ -289,6 +304,12 @@ async function getServerAuthUserUncached(request) {
         if (!cookieError && cookieClaims?.claims) {
           user = claimsToUser(cookieClaims.claims);
           authLevel = cookieClaims.claims?.aal === 'aal2' ? 'aal2' : 'aal1';
+        } else {
+          const { data: cookieUserData, error: cookieUserError } = await supabase.auth.getUser();
+          if (!cookieUserError && cookieUserData?.user) {
+            user = cookieUserData.user;
+            authLevel = cookieUserData.user.app_metadata?.aal === 'aal2' ? 'aal2' : 'aal1';
+          }
         }
       } catch {
         // Bearer authentication may still have succeeded above.

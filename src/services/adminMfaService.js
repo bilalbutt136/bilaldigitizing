@@ -1,12 +1,11 @@
 'use client';
 
-import { supabase } from '../lib/supabase/client';
+import { getAuthHeaders } from './supabaseService';
 
 async function getAdminAuthHeaders() {
   try {
-    const { data } = await supabase.auth.getSession();
-    const token = data?.session?.access_token;
-    return token ? { Authorization: `Bearer ${token}` } : {};
+    const headers = await getAuthHeaders();
+    return headers.Authorization ? { Authorization: headers.Authorization } : {};
   } catch {
     return {};
   }

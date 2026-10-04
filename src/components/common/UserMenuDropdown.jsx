@@ -12,7 +12,8 @@ import {
   Wallet, 
   PlusCircle,
   Palette,
-  Check
+  Check,
+  Globe
 } from 'lucide-react';
 
 export const UserMenuDropdown = () => {
@@ -72,11 +73,7 @@ export const UserMenuDropdown = () => {
     try {
       await logout();
     } catch {}
-    if (typeof window !== 'undefined') {
-      window.location.href = '/';
-    } else {
-      navigate('/');
-    }
+    navigate('/', { replace: true });
     showToast('Signed out successfully', 'info');
   };
 
@@ -250,6 +247,38 @@ export const UserMenuDropdown = () => {
               <User size={16} style={{ color: 'var(--color-primary, var(--orange-500))' }} /> Client Dashboard
             </button>
 
+            {/* Visit Public Website Option */}
+            <button
+              type="button"
+              onClick={() => {
+                setIsOpen(false);
+                if (protectedNavigate) {
+                  protectedNavigate('public');
+                } else {
+                  navigate('/');
+                }
+              }}
+              style={{
+                width: '100%',
+                padding: '0.65rem 1rem',
+                border: 'none',
+                background: 'transparent',
+                textAlign: 'left',
+                fontSize: '0.875rem',
+                fontWeight: 600,
+                color: 'var(--color-text-primary, var(--navy-900))',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.65rem',
+                cursor: 'pointer',
+                transition: 'background 0.15s'
+              }}
+              onMouseOver={(e) => e.currentTarget.style.background = 'var(--color-subtle, #f1f5f9)'}
+              onMouseOut={(e) => e.currentTarget.style.background = 'transparent'}
+            >
+              <Globe size={16} style={{ color: 'var(--color-primary, var(--orange-500))' }} /> Visit Public Website
+            </button>
+
             {/* Account Settings Option */}
             <button
               type="button"
@@ -262,7 +291,7 @@ export const UserMenuDropdown = () => {
                     protectedNavigate('customer', false, 'wallet');
                     if (setIsDepositModalOpen) setIsDepositModalOpen(true);
                   } else {
-                    window.location.href = '/client-portal?tab=wallet';
+                    navigate('/client-portal?tab=wallet');
                   }
                 } else if (setIsDepositModalOpen) {
                   setIsDepositModalOpen(true);

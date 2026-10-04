@@ -15,12 +15,57 @@ export async function getAuthHeaders() {
   const headers = { 'Content-Type': 'application/json' };
   try {
     if (supabase) {
-      // The browser Supabase client already refreshes tokens. Calling refreshSession()
-      // from every API helper can fan out concurrent refreshes, emit repeated auth
-      // events, and restart portal hydration/presence work.
+      // The browser Supabase client already refreshes tokens.
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.access_token) {
         headers['Authorization'] = `Bearer ${session.access_token}`;
+      }
+    }
+
+    // Mobile / WebView / Safari ITP Fallback: If Authorization is still missing,
+    // check localStorage for Supabase or session access tokens
+    if (!headers['Authorization'] && typeof window !== 'undefined') {
+      try {
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          if (key && (key.startsWith('sb-') && key.endsWith('-auth-token') || key === 'supabase.auth.token')) {
+            const raw = localStorage.getItem(key);
+            if (raw) {
+              const parsed = JSON.parse(raw);
+              const token = parsed?.access_token || parsed?.session?.access_token || parsed?.token;
+              if (token && typeof token === 'string') {
+                headers['Authorization'] = `Bearer ${token}`;
+                break;
+              }
+            }
+          }
+        }
+
+        // Secondary check for access token in document.cookie
+        if (!headers['Authorization'] && typeof document !== 'undefined' && document.cookie) {
+          const cookies = document.cookie.split(';');
+          for (const c of cookies) {
+            const [name, val] = c.trim().split('=');
+            if (name && (name.includes('auth-token') || name === 'sb-access-token') && val) {
+              try {
+                const decoded = decodeURIComponent(val);
+                const parsed = JSON.parse(decoded);
+                const token = parsed?.access_token || (typeof parsed === 'string' ? parsed : null);
+                if (token && typeof token === 'string') {
+                  headers['Authorization'] = `Bearer ${token}`;
+                  break;
+                }
+              } catch {
+                if (val && val.length > 50) {
+                  headers['Authorization'] = `Bearer ${decodeURIComponent(val)}`;
+                  break;
+                }
+              }
+            }
+          }
+        }
+      } catch (storageErr) {
+        console.warn('[getAuthHeaders] Storage fallback notice:', storageErr);
       }
     }
   } catch {}

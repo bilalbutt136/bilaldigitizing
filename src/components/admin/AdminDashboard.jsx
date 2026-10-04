@@ -45,7 +45,8 @@ import {
   Scissors,
   MessageSquare,
   Headphones,
-  Star
+  Star,
+  Globe
 } from 'lucide-react';
 
 export const AdminDashboard = () => {
@@ -72,6 +73,8 @@ export const AdminDashboard = () => {
   const [unreadChatCount, setUnreadChatCount] = useState(0);
   const [unreadSupportCount, setUnreadSupportCount] = useState(0);
   const [pendingReviewsCount, setPendingReviewsCount] = useState(0);
+  const [isDataLoading, setIsDataLoading] = useState(false);
+  const [dataLoadError, setDataLoadError] = useState(null);
 
   // Sync unread chat/support badges from Realtime changes instead of an 8-second poll.
   const prevUnreadTotalRef = React.useRef(null);
@@ -237,6 +240,13 @@ export const AdminDashboard = () => {
   const configuredAdminEmail = (siteSettings?.adminEmail || authUser?.email || '').toLowerCase().trim();
   const isMasterAdmin = mounted && isAuthenticated && authUser?.role === 'admin';
 
+  const handleRetryDataLoad = React.useCallback(() => {
+    setIsDataLoading(true);
+    if (typeof window !== 'undefined') {
+      window.location.reload();
+    }
+  }, []);
+
   if (!mounted) {
     return (
       <div style={{
@@ -348,6 +358,15 @@ export const AdminDashboard = () => {
         { id: 'settings-admin', label: 'Admin Team & Security', icon: ShieldCheck },
         { id: 'settings-email', label: 'Email & Alert Routing', icon: Mail },
         { id: 'settings-general', label: 'Studio Profile & Defaults', icon: Building2 },
+        {
+          id: 'public-website',
+          label: 'Visit Public Website',
+          icon: Globe,
+          onClick: () => {
+            setIsMobileSidebarOpen(false);
+            protectedNavigate('public');
+          }
+        },
         { id: 'signout', label: 'Sign Out', icon: LogOut, danger: true }
       ]
     }
@@ -820,6 +839,69 @@ export const AdminDashboard = () => {
         display: (activeTab === 'inbox' || activeTab === 'support') ? 'flex' : 'block',
         flexDirection: (activeTab === 'inbox' || activeTab === 'support') ? 'column' : undefined
       }}>
+        {/* Error Alert Banner with Retry for Mobile and Desktop Resiliency */}
+        {dataLoadError && (
+          <div style={{
+            background: 'rgba(239, 68, 68, 0.12)',
+            border: '1.5px solid rgba(239, 68, 68, 0.4)',
+            borderRadius: '12px',
+            padding: '0.85rem 1.15rem',
+            marginBottom: '0.85rem',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '1rem',
+            color: '#ef4444'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+              <AlertCircle size={18} />
+              <span style={{ fontSize: '0.85rem', fontWeight: 700 }}>{dataLoadError}</span>
+            </div>
+            <button
+              type="button"
+              onClick={handleRetryDataLoad}
+              disabled={isDataLoading}
+              style={{
+                background: '#dc2626',
+                color: '#ffffff',
+                border: 'none',
+                borderRadius: '8px',
+                padding: '0.45rem 0.95rem',
+                fontSize: '0.8rem',
+                fontWeight: 800,
+                cursor: isDataLoading ? 'wait' : 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.4rem',
+                boxShadow: '0 2px 6px rgba(220, 38, 38, 0.3)'
+              }}
+            >
+              <RefreshCw size={13} className={isDataLoading ? 'animate-spin' : ''} />
+              Retry Sync
+            </button>
+          </div>
+        )}
+
+        {/* Loading Skeletons when Initializing Empty Admin Portal State */}
+        {isDataLoading && orders.length === 0 && (
+          <div style={{
+            padding: '2.5rem 1rem',
+            textAlign: 'center',
+            background: 'var(--bg-card)',
+            borderRadius: '16px',
+            border: '1px solid var(--border-color)',
+            marginBottom: '1rem'
+          }}>
+            <RefreshCw size={28} className="spin-icon" style={{ color: 'var(--orange-500)', margin: '0 auto 0.75rem' }} />
+            <div style={{ fontSize: '0.95rem', fontWeight: 800, color: 'var(--text-main)' }}>
+              Loading Admin Portal Records...
+            </div>
+            <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
+              Syncing live digitizing orders, clients, and metrics from Supabase database
+            </div>
+          </div>
+        )}
+
         {activeTab !== 'dashboard' && activeTab !== 'inbox' && activeTab !== 'support' && (
           <div style={{
             display: 'flex',

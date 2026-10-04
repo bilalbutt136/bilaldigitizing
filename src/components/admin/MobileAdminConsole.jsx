@@ -15,7 +15,8 @@ import {
   RotateCcw,
   ShieldCheck,
   Truck,
-  Zap
+  Zap,
+  Globe
 } from 'lucide-react';
 import { useAppState, formatOrderId } from '../../context/StateContext';
 import { useNavigate } from '../../utils/navigation';
@@ -495,10 +496,22 @@ export default function MobileAdminConsole() {
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
             <button
               type="button"
+              onClick={() => {
+                if (setCurrentView) setCurrentView('public');
+                navigate('/');
+              }}
+              title="Visit Public Website"
+              aria-label="Visit Public Website"
+              style={{ width: '38px', height: '38px', borderRadius: '11px', border: '1px solid #0284c7', background: '#075985', color: '#e0f2fe', display: 'grid', placeItems: 'center', cursor: 'pointer' }}
+            >
+              <Globe size={17} />
+            </button>
+            <button
+              type="button"
               onClick={handleRefresh}
               disabled={isRefreshing}
               aria-label="Refresh mobile admin data"
-              style={{ width: '38px', height: '38px', borderRadius: '11px', border: '1px solid #334155', background: '#1e293b', color: '#ffffff', display: 'grid', placeItems: 'center' }}
+              style={{ width: '38px', height: '38px', borderRadius: '11px', border: '1px solid #334155', background: '#1e293b', color: '#ffffff', display: 'grid', placeItems: 'center', cursor: 'pointer' }}
             >
               <RefreshCw size={17} className={isRefreshing ? 'animate-spin' : ''} />
             </button>
@@ -506,7 +519,7 @@ export default function MobileAdminConsole() {
               type="button"
               onClick={handleLogout}
               aria-label="Sign out"
-              style={{ width: '38px', height: '38px', borderRadius: '11px', border: '1px solid #7f1d1d', background: '#450a0a', color: '#fecaca', display: 'grid', placeItems: 'center' }}
+              style={{ width: '38px', height: '38px', borderRadius: '11px', border: '1px solid #7f1d1d', background: '#450a0a', color: '#fecaca', display: 'grid', placeItems: 'center', cursor: 'pointer' }}
             >
               <LogOut size={17} />
             </button>
@@ -555,6 +568,26 @@ export default function MobileAdminConsole() {
                 <div style={{ marginTop: '0.3rem', fontSize: '0.72rem', color: '#cbd5e1', lineHeight: 1.45 }}>
                   Full settings, CMS, staff tools and reporting stay on desktop.
                 </div>
+                <button
+                  type="button"
+                  onClick={() => navigate('/admin-portal')}
+                  style={{
+                    marginTop: '0.65rem',
+                    background: 'linear-gradient(135deg, #ea580c 0%, #c2410c 100%)',
+                    color: '#ffffff',
+                    border: 'none',
+                    borderRadius: '8px',
+                    padding: '0.45rem 0.85rem',
+                    fontSize: '0.75rem',
+                    fontWeight: 800,
+                    cursor: 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.35rem'
+                  }}
+                >
+                  Open Full Admin Desk <ChevronRight size={14} />
+                </button>
               </div>
               <Zap size={28} color="#fb923c" />
             </section>

@@ -3249,11 +3249,14 @@ export const BDigitizingMobileApp = ({ initialTab = 'home' }) => {
                 <ChevronRight size={18} style={{ color: isDark ? '#94a3b8' : '#94a3b8' }} />
               </div>
 
-              {/* Switch to Website View */}
+              {/* Switch to Website View / Visit Public Website */}
               <div
                 onClick={() => {
                   if (setMobileMode) setMobileMode('website');
-                  showToast('Switched to Website view 🌐', 'info');
+                  if (typeof _navigate === 'function') {
+                    _navigate('/');
+                  }
+                  showToast('Navigating to Public Website View 🌐', 'info');
                 }}
                 style={{
                   display: 'flex',
@@ -3268,8 +3271,8 @@ export const BDigitizingMobileApp = ({ initialTab = 'home' }) => {
                     <Globe size={18} />
                   </div>
                   <div>
-                    <span style={{ fontSize: '0.9rem', fontWeight: 800, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a', display: 'block' }}>Switch to Website View</span>
-                    <span style={{ fontSize: '0.72rem', color: isDark ? 'var(--color-text-secondary, #94a3b8)' : '#64748b' }}>Browse full desktop layout</span>
+                    <span style={{ fontSize: '0.9rem', fontWeight: 800, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a', display: 'block' }}>Visit Public Website</span>
+                    <span style={{ fontSize: '0.72rem', color: isDark ? 'var(--color-text-secondary, #94a3b8)' : '#64748b' }}>Browse full public website layout</span>
                   </div>
                 </div>
                 <ChevronRight size={18} style={{ color: isDark ? '#94a3b8' : '#94a3b8' }} />

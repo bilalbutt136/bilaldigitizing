@@ -13,6 +13,7 @@ import { PWAInstallBanner } from '../common/PWAInstallBanner';
 import { PWARegistrar } from '../common/PWARegistrar';
 import { WhatsAppMessagePopup } from '../common/WhatsAppMessagePopup';
 import { DynamicFavicon } from './DynamicFavicon';
+import { HardwareBackHandler } from '../common/HardwareBackHandler';
 
 const AuthModal = dynamic(() => import('../auth/AuthModal').then(mod => mod.AuthModal), { ssr: false });
 const OrderWizardModal = dynamic(() => import('../customer/OrderWizardModal').then(mod => mod.OrderWizardModal), { ssr: false });
@@ -37,6 +38,7 @@ export const ClientLayoutShell = ({ children }) => {
     return (
       <div className="stealth-worker-portal min-h-screen bg-slate-950 text-slate-100 font-sans antialiased">
         <DynamicFavicon />
+        <HardwareBackHandler />
         <main style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
           {children}
         </main>
@@ -77,6 +79,7 @@ export const ClientLayoutShell = ({ children }) => {
         </>
       )}
       {!isDedicatedAuthRoute && <AuthModal />}
+      <HardwareBackHandler />
       <ToastContainer />
       <MetaPixelTracker />
 

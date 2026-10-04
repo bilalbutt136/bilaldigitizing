@@ -1679,17 +1679,32 @@ export const StateProvider = ({ children, initialCatalog = null }) => {
     persistAuth(uData, role);
     setWalletBalance(balance);
 
-    // Immediately load orders for the authenticated user so Customer Portal has live data
+    // Immediately load orders and clients for the authenticated user so portals have live data
     try {
       fetchOrdersFromSupabase(
         role === 'admin' ? null : sbUser.email,
         null,
-        role === 'admin' ? null : sbUser.id
+        role === 'admin' ? null : sbUser.id,
+        { force: true }
       ).then(freshOrders => {
         if (freshOrders && Array.isArray(freshOrders)) {
           setOrders(freshOrders);
         }
       }).catch(err => console.warn('Order hydration after auth notice:', err));
+
+      if (role === 'admin') {
+        fetchClientsFromSupabase({ force: true }).then(freshClients => {
+          if (freshClients && Array.isArray(freshClients)) {
+            setClients(freshClients);
+          }
+        }).catch(err => console.warn('Clients hydration after auth notice:', err));
+
+        fetchAdminUsers(sbUser.email).then(adminList => {
+          if (adminList?.length) {
+            setAdminUsers(adminList.map(a => ({ email: a.email, name: a.name || a.email })));
+          }
+        }).catch(() => {});
+      }
     } catch {}
 
     return { success: true, role, user: uData };
@@ -1842,6 +1857,20 @@ export const StateProvider = ({ children, initialCatalog = null }) => {
   };
 
   const protectedNavigate = (targetView, triggerOrderWizard = false, initialData = null) => {
+    const navigateClient = (targetPath) => {
+      if (typeof window === 'undefined') return;
+      try {
+        window.dispatchEvent(new CustomEvent('bdigi_navigate', { detail: { path: targetPath } }));
+        setTimeout(() => {
+          if (window.location.pathname !== targetPath) {
+            window.location.href = targetPath;
+          }
+        }, 100);
+      } catch {
+        window.location.href = targetPath;
+      }
+    };
+
     let isAuthed = isAuthenticated || Boolean(authUser?.email);
     if (!isAuthed && typeof window !== 'undefined') {
       try {
@@ -1867,7 +1896,7 @@ export const StateProvider = ({ children, initialCatalog = null }) => {
           showToast('Administrator accounts use the Admin Portal, not the Client Portal.', 'info');
           setCurrentView('admin');
           if (typeof window !== 'undefined') {
-            window.location.href = '/admin-portal';
+            navigateClient('/admin-portal');
           }
         } else if (isAuthed) {
           setCurrentView('customer');
@@ -1887,7 +1916,7 @@ export const StateProvider = ({ children, initialCatalog = null }) => {
         if (isAuthed && authUser?.role === 'admin') {
           setCurrentView('admin');
           if (typeof window !== 'undefined') {
-            window.location.href = '/admin-portal';
+            navigateClient('/admin-portal');
           }
         } else {
           showToast('Access Restricted to Studio Admin.', 'warning');
@@ -1900,7 +1929,7 @@ export const StateProvider = ({ children, initialCatalog = null }) => {
     if (targetView === 'public') {
       setCurrentView('public');
       if (typeof window !== 'undefined' && window.location.pathname !== '/') {
-        window.location.href = '/';
+        navigateClient('/');
       }
       return;
     }
@@ -1910,7 +1939,7 @@ export const StateProvider = ({ children, initialCatalog = null }) => {
         showToast('Administrator accounts cannot enter the Client Portal.', 'info');
         setCurrentView('admin');
         if (typeof window !== 'undefined') {
-          window.location.href = '/admin-portal';
+          navigateClient('/admin-portal');
         }
       } else if (isAuthed) {
         setCurrentView('customer');
@@ -1918,7 +1947,7 @@ export const StateProvider = ({ children, initialCatalog = null }) => {
           openOrderWizard(initialData);
         } else if (typeof window !== 'undefined') {
           if (!window.location.pathname.includes('client-portal') && !window.location.pathname.includes('client')) {
-            window.location.href = '/client-portal';
+            navigateClient('/client-portal');
           } else {
             window.dispatchEvent(new CustomEvent('bdigi_switch_tab', { detail: { tab: 'dashboard' } }));
             try {
@@ -1945,7 +1974,7 @@ export const StateProvider = ({ children, initialCatalog = null }) => {
         setCurrentView('admin');
         if (typeof window !== 'undefined') {
           if (!window.location.pathname.includes('admin-portal') && !window.location.pathname.includes('admin')) {
-            window.location.href = '/admin-portal';
+            navigateClient('/admin-portal');
           } else {
             window.scrollTo({ top: 0, behavior: 'smooth' });
           }
