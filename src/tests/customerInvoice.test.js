@@ -148,4 +148,18 @@ describe('Customer Tax Invoice Generator & Legal Compliance', () => {
     assert.equal(result.invoiceNumber, 'INV-BD-2026-MINIMAL1');
     assert.ok(result.blob.size > 1000);
   });
+
+  test('generateCustomerTaxInvoicePdf excludes customer special instructions from invoice output', async () => {
+    const orderWithNotes = {
+      id: 'ORD-NOTES999',
+      price: 20.00,
+      notes: 'Uploaded PNG is a mockup, not vector. Digitize from the shapes, ignore the fake stitch texture.\nUse house icon + "SyncHaus" only.\nSize: 3.75" wide, left chest, pique polo.'
+    };
+    const result = await generateCustomerTaxInvoicePdf({ order: orderWithNotes, client: null });
+    assert.ok(result);
+    assert.equal(result.doc.getNumberOfPages(), 1);
+    const pdfString = result.doc.output();
+    assert.doesNotMatch(pdfString, /CUSTOMER REFERENCE \/ SPECIAL INSTRUCTIONS/i);
+    assert.doesNotMatch(pdfString, /SyncHaus/i);
+  });
 });

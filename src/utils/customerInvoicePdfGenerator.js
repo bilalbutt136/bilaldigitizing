@@ -304,7 +304,6 @@ export async function generateCustomerTaxInvoicePdf({
   const rushFee = Math.max(0, parseFloat(order?.rush_fee || order?.rushFee || 0));
   const subtotal = discountAmount > 0 ? (price + discountAmount - rushFee) : price;
   const designTitle = order?.title || order?.design_name || order?.name || '';
-  const customerNotes = getCustomerInstructionText(order);
 
   // 1. Top Accent Stripe
   doc.setFillColor(...brandOrange);
@@ -642,86 +641,33 @@ export async function generateCustomerTaxInvoicePdf({
   doc.setTextColor(...(isPaid ? paidGreen : brandOrange));
   doc.text(`$${price.toFixed(2)} USD`, valX, curSumY, { align: 'right' });
 
-  // 8. Customer reference / special instructions
-  let noteBoxY = curSumY + 14;
-  if (customerNotes) {
-    const allNoteLines = doc.splitTextToSize(customerNotes, contentWidth - 12);
-    const lineHeight = 4.1;
-    const maxLinesPerBox = 48;
-    let remainingLines = [...allNoteLines];
-    let partNumber = 1;
-
-    while (remainingLines.length > 0) {
-      const pageLines = remainingLines.splice(0, maxLinesPerBox);
-      const boxHeight = 14 + (pageLines.length * lineHeight);
-
-      if (noteBoxY + boxHeight > safeContentBottom) {
-        doc.addPage();
-        noteBoxY = 18;
-      }
-
-      doc.setFillColor(248, 250, 252);
-      doc.setDrawColor(...borderLight);
-      doc.setLineWidth(0.35);
-      doc.roundedRect(marginX, noteBoxY, contentWidth, boxHeight, 1.5, 1.5, 'FD');
-
-      doc.setFillColor(...brandOrange);
-      doc.rect(marginX, noteBoxY, 1.6, boxHeight, 'F');
-
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(7.7);
-      doc.setTextColor(...primaryNavy);
-      doc.text(
-        partNumber === 1
-          ? 'CUSTOMER REFERENCE / SPECIAL INSTRUCTIONS'
-          : 'CUSTOMER REFERENCE / SPECIAL INSTRUCTIONS (CONTINUED)',
-        marginX + 5,
-        noteBoxY + 5
-      );
-
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(7.2);
-      doc.setTextColor(...textMuted);
-      doc.text('Provided by customer • Applies to this order and production requirements', marginX + 5, noteBoxY + 9);
-
-      doc.setFontSize(8.2);
-      doc.setTextColor(...textDark);
-      doc.text(pageLines, marginX + 5, noteBoxY + 14);
-      noteBoxY += boxHeight + 5;
-      partNumber += 1;
-
-      if (remainingLines.length > 0) {
-        doc.addPage();
-        noteBoxY = 18;
-      }
-    }
-  }
-
-  // 9. Minimalist System-Generated Notice (No signature required)
+  // 8. Minimalist System-Generated Notice (No signature required)
+  const noticeY = curSumY + 14;
   const noteBoxH = 8;
-  if (noteBoxY + noteBoxH > safeContentBottom + 4) {
+  let finalNoticeY = noticeY;
+  if (finalNoticeY + noteBoxH > safeContentBottom + 4) {
     doc.addPage();
-    noteBoxY = 18;
+    finalNoticeY = 18;
   }
   doc.setFillColor(248, 250, 252);
-  doc.roundedRect(marginX, noteBoxY, contentWidth, noteBoxH, 1.5, 1.5, 'F');
+  doc.roundedRect(marginX, finalNoticeY, contentWidth, noteBoxH, 1.5, 1.5, 'F');
   doc.setDrawColor(...borderLight);
   doc.setLineWidth(0.3);
-  doc.roundedRect(marginX, noteBoxY, contentWidth, noteBoxH, 1.5, 1.5, 'S');
+  doc.roundedRect(marginX, finalNoticeY, contentWidth, noteBoxH, 1.5, 1.5, 'S');
 
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(8);
   doc.setTextColor(...textMuted);
-  doc.text('This is a system-generated invoice. No signature required.', pageWidth / 2, noteBoxY + 5.2, { align: 'center' });
+  doc.text('This is a system-generated invoice. No signature required.', pageWidth / 2, finalNoticeY + 5.2, { align: 'center' });
 
-  // 10. Footer
+  // 9. Footer
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(7.5);
   doc.setTextColor(...textMuted);
   doc.text(`Record ID: ${invoiceNumber} • Thank you for your business!`, marginX, footerY);
   doc.text('BDigitizing Commercial Studio • www.bdigitizing.com', contentRight, footerY, { align: 'right' });
 
-  // 11. Generate Output
+  // 10. Generate Output
   const blob = doc.output('blob');
   const filename = `${invoiceNumber}_Invoice.pdf`;
 

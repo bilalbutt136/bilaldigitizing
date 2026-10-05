@@ -23,8 +23,7 @@ import {
   getOrderPriceNumeric,
   isOrderPaidStatus,
   formatFabricSpec,
-  formatDimensionsSpec,
-  getCustomerInstructionText
+  formatDimensionsSpec
 } from '../../utils/customerInvoicePdfGenerator';
 import { useModalBackNavigation } from '../../hooks/useModalBackNavigation';
 
@@ -100,7 +99,6 @@ export const CustomerInvoiceModal = ({
   const rushFee = Math.max(0, parseFloat(order?.rush_fee || order?.rushFee || 0));
   const subtotal = discountAmount > 0 ? (price + discountAmount - rushFee) : price;
   const designTitle = order?.title || order?.design_name || order?.name || '';
-  const customerNotes = getCustomerInstructionText(order);
 
 
 
@@ -708,25 +706,6 @@ export const CustomerInvoiceModal = ({
               </div>
             </div>
           </div>
-
-          {/* Customer reference / special instructions */}
-          {customerNotes && (
-            <div style={{
-              background: 'var(--color-surface-elevated, #f8fafc)',
-              border: '1px solid var(--color-border, #e2e8f0)',
-              borderRadius: '10px',
-              padding: '0.9rem 1rem',
-              borderLeft: '4px solid #ea580c',
-              marginBottom: '1.25rem'
-            }}>
-              <div style={{ fontSize: '0.72rem', fontWeight: 800, color: '#ea580c', marginBottom: '0.2rem', textTransform: 'uppercase', letterSpacing: '0.03em' }}>
-                Customer Reference / Special Instructions
-              </div>
-              <div style={{ fontSize: '0.82rem', color: 'var(--color-text-secondary, #334155)', lineHeight: 1.6, whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>
-                {customerNotes}
-              </div>
-            </div>
-          )}
 
           {/* System Generated Invoice - No signature required */}
           <div className="invoice-print-keep" style={{
