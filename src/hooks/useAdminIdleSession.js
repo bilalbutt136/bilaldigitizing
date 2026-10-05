@@ -5,9 +5,15 @@ import { useEffect } from 'react';
 const ADMIN_ACTIVITY_KEY = 'bdigi_admin_last_activity';
 
 function parseAdminIdleTimeout(value) {
-  const raw = String(value || '30m').trim().toLowerCase();
+  const raw = String(value || 'never').trim().toLowerCase();
+  if (raw === 'never' || raw === 'disabled' || raw === 'none' || raw === 'off' || raw === '30m') {
+    // 30m was the old aggressive default that caused unexpected auto-logouts.
+    // Return Infinity so the admin remains permanently active and receives messages uninterrupted.
+    return Infinity;
+  }
+
   const match = raw.match(/^(\d+)(m|h|d)$/);
-  if (!match) return 30 * 60 * 1000;
+  if (!match) return Infinity;
 
   const amount = Math.max(1, Number(match[1]));
   const multiplier = match[2] === 'd'
@@ -19,7 +25,7 @@ function parseAdminIdleTimeout(value) {
 
 export function useAdminIdleSession({
   enabled,
-  timeoutValue = '30m',
+  timeoutValue = 'never',
   logout,
   onExpired
 }) {
@@ -27,6 +33,11 @@ export function useAdminIdleSession({
     if (!enabled || typeof window === 'undefined') return undefined;
 
     const timeoutMs = parseAdminIdleTimeout(timeoutValue);
+    if (!Number.isFinite(timeoutMs) || timeoutMs === Infinity || timeoutMs <= 0) {
+      // Idle timeout disabled: keep administrator session continuously active
+      return undefined;
+    }
+
     let lastActivity = Date.now();
     let expiring = false;
 

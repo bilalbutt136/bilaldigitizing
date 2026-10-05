@@ -1635,6 +1635,56 @@ export const StateProvider = ({ children, initialCatalog = null }) => {
     };
   }, [authUser?.email, authUser?.name, authUser?.role]);
 
+  // Proactive Session Keep-Alive & Presence Refresh:
+  // Ensures authentication tokens never expire while the user is active or backgrounded,
+  // and keeps Realtime chat subscriptions and presence permanently alive so messages are received 24/7.
+  useEffect(() => {
+    if (!isSupabaseConfigured || !supabase || !isAuthenticated) return;
+
+    const keepSessionAlive = async () => {
+      try {
+        const { data: sessionData, error } = await supabase.auth.getSession();
+        if (error) {
+          console.warn('[KeepAlive] Session verification error:', error);
+          return;
+        }
+
+        const session = sessionData?.session;
+        if (session?.user) {
+          clearChatUnreadCache();
+          resetPresenceAuthBlock();
+          if (authUser?.email) {
+            trackUserPresence({
+              email: authUser.email.toLowerCase().trim(),
+              name: authUser.name || '',
+              role: authUser.role || 'client'
+            });
+          }
+        }
+      } catch (err) {
+        console.warn('[KeepAlive] Heartbeat check error:', err);
+      }
+    };
+
+    // Heartbeat every 10 minutes to keep Supabase token and presence fresh
+    const heartbeatTimer = window.setInterval(keepSessionAlive, 10 * 60 * 1000);
+
+    const handleWindowActive = () => {
+      if (document.visibilityState === 'visible') {
+        keepSessionAlive();
+      }
+    };
+
+    window.addEventListener('focus', handleWindowActive);
+    document.addEventListener('visibilitychange', handleWindowActive);
+
+    return () => {
+      window.clearInterval(heartbeatTimer);
+      window.removeEventListener('focus', handleWindowActive);
+      document.removeEventListener('visibilitychange', handleWindowActive);
+    };
+  }, [isAuthenticated, authUser?.email, authUser?.name, authUser?.role]);
+
   const persistAuth = (uData, view) => {
     setAuthUser(uData);
     setIsAuthenticated(true);

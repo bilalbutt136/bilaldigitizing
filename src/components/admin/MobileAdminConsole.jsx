@@ -334,7 +334,7 @@ export default function MobileAdminConsole() {
 
   useAdminIdleSession({
     enabled: Boolean(authUser?.role === 'admin'),
-    timeoutValue: siteSettings?.sessionTimeout || '30m',
+    timeoutValue: siteSettings?.sessionTimeout || 'never',
     logout,
     onExpired: handleIdleExpired
   });
