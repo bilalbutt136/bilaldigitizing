@@ -71,10 +71,71 @@ const TABLES_ORDER = [
   'media_assets'
 ];
 
-function escapeSqlValue(value) {
+const ARRAY_COLUMNS = new Set([
+  'orders.requested_formats',
+  'conversations.tags'
+]);
+
+function escapeSqlValue(tableName, columnName, value) {
   if (value === null || value === undefined) return 'NULL';
   if (typeof value === 'boolean') return value ? 'TRUE' : 'FALSE';
   if (typeof value === 'number') return Number.isFinite(value) ? String(value) : 'NULL';
+
+  const colKey = `${tableName}.${columnName}`;
+
+  if (ARRAY_COLUMNS.has(colKey)) {
+    if (Array.isArray(value)) {
+      if (value.length === 0) return "'{}'::text[]";
+      const escapedItems = value.map(item => `'${String(item).replace(/'/g, "''")}'`).join(', ');
+      return `ARRAY[${escapedItems}]::text[]`;
+    }
+    const str = String(value).trim();
+    if (str.startsWith('{') && str.endsWith('}')) {
+      return `'${str.replace(/'/g, "''")}'::text[]`;
+    }
+    if (str.startsWith('[') && str.endsWith(']')) {
+      try {
+        const arr = JSON.parse(str);
+        if (Array.isArray(arr)) {
+          if (arr.length === 0) return "'{}'::text[]";
+          const escaped = arr.map(i => `'${String(i).replace(/'/g, "''")}'`).join(', ');
+          return `ARRAY[${escaped}]::text[]`;
+        }
+      } catch {}
+    }
+    return `ARRAY['${str.replace(/'/g, "''")}']::text[]`;
+  }
+
+  const isJson = 
+    (tableName === 'site_config' && columnName === 'value') ||
+    (tableName === 'cms_content' && columnName === 'value') ||
+    (tableName === 'home_page_settings' && columnName === 'data') ||
+    (tableName === 'home_page_settings' && columnName === 'value') ||
+    (tableName === 'email_campaigns' && columnName === 'stats') ||
+    (tableName === 'pricing_cards' && (columnName === 'features' || columnName === 'turnaround_options')) ||
+    (tableName === 'pricing_static_cards' && (columnName === 'features' || columnName === 'turnaround_options')) ||
+    (tableName === 'store_products' && columnName === 'formats') ||
+    (tableName === 'custom_offers' && columnName === 'details') ||
+    (tableName === 'orders' && (columnName === 'details' || columnName === 'workflow_steps' || columnName === 'extra_options')) ||
+    (tableName === 'messages' && (columnName === 'attachments' || columnName === 'metadata')) ||
+    (tableName === 'notifications' && columnName === 'metadata') ||
+    (tableName === 'push_subscriptions' && (columnName === 'subscription' || columnName === 'keys')) ||
+    (tableName === 'tracking_events' && columnName === 'metadata') ||
+    (tableName === 'media_assets' && columnName === 'metadata');
+
+  if (isJsonCol) {
+    if (typeof value === 'object') {
+      return `'${JSON.stringify(value).replace(/'/g, "''")}'::jsonb`;
+    }
+    const str = String(value).trim();
+    try {
+      JSON.parse(str);
+      return `'${str.replace(/'/g, "''")}'::jsonb`;
+    } catch {
+      return `to_jsonb('${str.replace(/'/g, "''")}'::text)`;
+    }
+  }
+
   if (typeof value === 'object') {
     return `'${JSON.stringify(value).replace(/'/g, "''")}'::jsonb`;
   }
@@ -104,7 +165,7 @@ for (const tableName of TABLES_ORDER) {
     for (const row of rows) {
       const columns = Object.keys(row);
       const colList = columns.map(c => `"${c}"`).join(', ');
-      const valList = columns.map(c => escapeSqlValue(row[c])).join(', ');
+      const valList = columns.map(c => escapeSqlValue(tableName, c, row[c])).join(', ');
       sqlLines.push(
         `INSERT INTO public.${tableName} (${colList}) VALUES (${valList}) ON CONFLICT DO NOTHING;`
       );
