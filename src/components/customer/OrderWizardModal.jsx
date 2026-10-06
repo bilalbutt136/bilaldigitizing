@@ -45,6 +45,7 @@ import { GoogleOAuthProvider } from '@react-oauth/google';
 import { GoogleCustomSignInButton } from '../auth/GoogleCustomSignInButton';
 import { useModalBackNavigation } from '../../hooks/useModalBackNavigation';
 import { MobileSimpleOrderModal } from './MobileSimpleOrderModal';
+import { getPackageSizeInfo } from '../../utils/packageSizeUtils';
 
 const GOOGLE_CLIENT_ID = (process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '421520521310-7appibeh1m7cdd90iid17lsq8thlq2oc.apps.googleusercontent.com').trim();
 
@@ -1663,6 +1664,30 @@ export const OrderWizardModal = () => {
                         <h4 style={{ margin: 0, fontSize: '0.98rem', fontWeight: 900, color: 'var(--color-text-primary, #0f172a)' }}>
                           {pkg.title}
                         </h4>
+
+                        {/* Prominent Package Size Boundary Badge */}
+                        {(() => {
+                          const sizeInfo = getPackageSizeInfo(pkg, selectedService, idx);
+                          return (
+                            <div style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '0.35rem',
+                              background: isSelected ? (isDark ? 'rgba(5, 150, 105, 0.25)' : '#d1fae5') : (isDark ? 'rgba(255,255,255,0.06)' : '#f1f5f9'),
+                              color: isSelected ? (isDark ? '#34d399' : '#047857') : 'var(--color-text-primary, #0f172a)',
+                              border: isSelected ? '1px solid rgba(5, 150, 105, 0.45)' : '1px solid var(--color-border, #cbd5e1)',
+                              padding: '0.2rem 0.55rem',
+                              borderRadius: '7px',
+                              fontSize: '0.76rem',
+                              fontWeight: 800,
+                              alignSelf: 'flex-start'
+                            }}>
+                              <span>📏</span>
+                              <span>Max Size: <strong style={{ color: isSelected ? (isDark ? '#34d399' : '#047857') : '#ea580c' }}>{sizeInfo.limit}</strong></span>
+                              <span style={{ opacity: 0.8, fontWeight: 600, fontSize: '0.72rem' }}>• {sizeInfo.label}</span>
+                            </div>
+                          );
+                        })()}
 
                         {/* Mobile Concise Details (Shows clean summary on mobile) */}
                         <div className="mobile-only-package-summary" style={{ fontSize: '0.74rem', color: 'var(--color-text-muted, #64748b)', fontWeight: 600 }}>

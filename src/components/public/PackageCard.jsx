@@ -4,6 +4,7 @@ import React from 'react';
 import { CheckCircle, Zap, Trophy, Sparkles, Clock, ArrowRight, Layers, PenTool, Tag } from 'lucide-react';
 import { useAppState } from '../../context/StateContext';
 import { getServiceDiscountPercent, normalizeServiceKey as _normalizeServiceKey } from '../../utils/promoUtils';
+import { getPackageSizeInfo } from '../../utils/packageSizeUtils';
 
 const PALETTES = [
   {
@@ -164,6 +165,31 @@ export const PackageCard = ({ cat = {}, idx = 0, onSelect, forceCategory = '' })
             <h3 style={{ fontSize: '1.125rem', fontFamily: 'var(--font-heading, "Inter", sans-serif)', fontWeight: 900, margin: '0.1rem 0 0', color: 'var(--color-text-primary)', lineHeight: 1.25, minHeight: '2.8rem', display: 'flex', alignItems: 'center' }}>
               {cat.title}
             </h3>
+
+            {/* Prominent Max Size Badge */}
+            {(() => {
+              const sizeInfo = getPackageSizeInfo(cat, rawService, idx);
+              return (
+                <div style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.35rem',
+                  background: tierTheme.bgLight,
+                  color: tierTheme.color,
+                  border: `1px solid ${tierTheme.border}`,
+                  padding: '0.22rem 0.6rem',
+                  borderRadius: '7px',
+                  fontSize: '0.76rem',
+                  fontWeight: 800,
+                  marginTop: '0.45rem',
+                  marginBottom: '0.35rem'
+                }}>
+                  <span>📏</span>
+                  <span>Max Size: <strong>{sizeInfo.limit}</strong></span>
+                  <span style={{ opacity: 0.85, fontWeight: 700, fontSize: '0.72rem' }}>• {sizeInfo.label}</span>
+                </div>
+              );
+            })()}
           </div>
         </div>
 

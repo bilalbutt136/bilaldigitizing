@@ -31,6 +31,7 @@ import {
 } from '../../utils/promoUtils';
 import { GoogleCustomSignInButton } from '../auth/GoogleCustomSignInButton';
 import { useModalBackNavigation } from '../../hooks/useModalBackNavigation';
+import { getPackageSizeInfo } from '../../utils/packageSizeUtils';
 
 // Standard fallback package tiers matching website /app/pricing/page.jsx
 const CORE_PACKAGES = {
@@ -1173,9 +1174,10 @@ export const MobileSimpleOrderModal = ({
                   Choose the package tier that fits your artwork
                 </p>
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
-                  {currentPackages.map(pkg => {
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                  {currentPackages.map((pkg, pIdx) => {
                     const isSelected = (activePkg?.id === pkg.id) || (selectedPackage?.id === pkg.id);
+                    const sizeInfo = getPackageSizeInfo(pkg, selectedService, pIdx);
 
                     return (
                       <div
@@ -1185,25 +1187,25 @@ export const MobileSimpleOrderModal = ({
                         onClick={() => handleSelectPackage(pkg)}
                         onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleSelectPackage(pkg); }}
                         style={{
-                          minHeight: '74px',
                           borderRadius: '16px',
-                          border: isSelected ? '2px solid #059669' : isDark ? '1.5px solid #334155' : '1.5px solid #e2e8f0',
+                          border: isSelected ? '2.5px solid #059669' : isDark ? '1.5px solid #334155' : '1.5px solid #e2e8f0',
                           background: isSelected
                             ? isDark ? 'rgba(5, 150, 105, 0.16)' : '#ecfdf5'
                             : isDark ? '#1e293b' : '#ffffff',
-                          padding: '0.85rem 1rem',
+                          padding: '0.9rem 1rem',
                           display: 'flex',
-                          alignItems: 'center',
-                          gap: '0.85rem',
+                          flexDirection: 'column',
+                          gap: '0.45rem',
                           cursor: 'pointer',
                           transition: 'all 0.15s ease',
-                          boxShadow: isSelected ? '0 4px 16px rgba(5, 150, 105, 0.15)' : 'none'
+                          boxShadow: isSelected ? '0 4px 16px rgba(5, 150, 105, 0.16)' : '0 1px 3px rgba(0,0,0,0.03)'
                         }}
                       >
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem' }}>
+                        {/* Top Row: Title, Badge, Price, Selection Radio */}
+                        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '0.5rem' }}>
+                          <div style={{ flex: 1, minWidth: 0 }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', flexWrap: 'wrap' }}>
-                              <span style={{ fontSize: '0.92rem', fontWeight: 800, color: isDark ? '#ffffff' : '#0f172a' }}>
+                              <span style={{ fontSize: '0.96rem', fontWeight: 800, color: isDark ? '#ffffff' : '#0f172a' }}>
                                 {pkg.title}
                               </span>
                               {pkg.badge && (
@@ -1220,40 +1222,71 @@ export const MobileSimpleOrderModal = ({
                                 </span>
                               )}
                             </div>
+                          </div>
+
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
                             <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                              <span style={{ fontSize: '0.98rem', fontWeight: 900, color: '#059669' }}>
-                                {selectedService === 'patch' ? `$${Number(pkg.price).toFixed(2)}/pc` : `$${Number(pkg.price).toFixed(2)}`}
+                              <span style={{ fontSize: '1.05rem', fontWeight: 900, color: '#059669' }}>
+                                {selectedService === 'patch' ? `${Number(pkg.price).toFixed(2)}/pc` : `${Number(pkg.price).toFixed(2)}`}
                               </span>
                               {pkg.original_price && (
-                                <span style={{ fontSize: '0.72rem', color: isDark ? '#64748b' : '#94a3b8', textDecoration: 'line-through', marginLeft: '0.35rem' }}>
+                                <span style={{ fontSize: '0.72rem', color: isDark ? '#64748b' : '#94a3b8', textDecoration: 'line-through', display: 'block' }}>
                                   ${Number(pkg.original_price).toFixed(2)}
                                 </span>
                               )}
                             </div>
-                          </div>
-                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '0.25rem' }}>
-                            <span style={{ fontSize: '0.74rem', color: isDark ? '#94a3b8' : '#64748b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                              {pkg.subtitle || (pkg.features && pkg.features[0]) || ''}
-                            </span>
-                            <span style={{ fontSize: '0.7rem', color: isDark ? '#64748b' : '#94a3b8', flexShrink: 0, marginLeft: '0.5rem' }}>
-                              ⚡ {pkg.turnaround}
-                            </span>
+                            <div style={{
+                              width: '22px',
+                              height: '22px',
+                              borderRadius: '50%',
+                              border: isSelected ? 'none' : '2px solid #94a3b8',
+                              background: isSelected ? '#059669' : 'transparent',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              color: '#ffffff',
+                              flexShrink: 0
+                            }}>
+                              {isSelected && <Check size={14} strokeWidth={3} />}
+                            </div>
                           </div>
                         </div>
 
-                        <div style={{
-                          width: '22px',
-                          height: '22px',
-                          borderRadius: '50%',
-                          border: isSelected ? 'none' : '2px solid #94a3b8',
-                          background: isSelected ? '#059669' : 'transparent',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          color: '#ffffff',
-                          flexShrink: 0
-                        }}>
-                          {isSelected && <Check size={14} strokeWidth={3} />}
+                        {/* CRITICAL: PROMINENT SIZE BADGE */}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', flexWrap: 'wrap', marginTop: '0.1rem' }}>
+                          <span style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '0.3rem',
+                            background: isSelected ? (isDark ? 'rgba(5, 150, 105, 0.3)' : '#d1fae5') : (isDark ? 'rgba(249, 115, 22, 0.16)' : '#fff7ed'),
+                            color: isSelected ? (isDark ? '#34d399' : '#047857') : '#ea580c',
+                            border: isSelected ? '1px solid rgba(5, 150, 105, 0.5)' : '1px solid #fed7aa',
+                            padding: '0.22rem 0.55rem',
+                            borderRadius: '7px',
+                            fontSize: '0.78rem',
+                            fontWeight: 800
+                          }}>
+                            <span>📏</span>
+                            <span>Max Size: <strong>{sizeInfo.limit}</strong></span>
+                          </span>
+
+                          <span style={{
+                            fontSize: '0.72rem',
+                            fontWeight: 700,
+                            color: isDark ? '#cbd5e1' : '#475569'
+                          }}>
+                            • {sizeInfo.examples ? `Fits: ${sizeInfo.examples}` : sizeInfo.label}
+                          </span>
+                        </div>
+
+                        {/* Subtitle & Turnaround Row */}
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem', marginTop: '0.1rem' }}>
+                          <span style={{ fontSize: '0.74rem', color: isDark ? '#94a3b8' : '#64748b', lineHeight: 1.35 }}>
+                            {pkg.subtitle || (pkg.features && pkg.features[0]) || ''}
+                          </span>
+                          <span style={{ fontSize: '0.7rem', color: isDark ? '#64748b' : '#94a3b8', flexShrink: 0 }}>
+                            ⚡ {pkg.turnaround}
+                          </span>
                         </div>
                       </div>
                     );
@@ -1549,11 +1582,110 @@ export const MobileSimpleOrderModal = ({
                 </div>
               </div>
 
-              {/* 4. TARGET SIZE (DIRECT INPUTS - NO AUTO/CUSTOM BUTTONS) */}
+              {/* 4. TARGET SIZE (DIRECT INPUTS WITH ACTIVE PACKAGE BOUNDARIES) */}
               <div>
                 <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em', color: isDark ? '#94a3b8' : '#475569', marginBottom: '0.45rem' }}>
                   Target Size (Inches)
                 </label>
+
+                {/* Selected Package Size Context Callout */}
+                {activePkg && (() => {
+                  const activePkgSize = getPackageSizeInfo(activePkg, selectedService);
+                  const wNum = parseFloat(widthInches);
+                  const hNum = parseFloat(heightInches);
+                  const isExceeding = (!isNaN(wNum) && wNum > activePkgSize.maxInches) || (!isNaN(hNum) && hNum > activePkgSize.maxInches);
+
+                  return (
+                    <div style={{ marginBottom: '0.65rem' }}>
+                      <div style={{
+                        background: isDark ? 'rgba(5, 150, 105, 0.12)' : '#ecfdf5',
+                        border: '1.5px solid rgba(5, 150, 105, 0.35)',
+                        borderRadius: '12px',
+                        padding: '0.65rem 0.85rem',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        gap: '0.5rem'
+                      }}>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
+                            <span style={{ fontSize: '0.82rem', fontWeight: 800, color: isDark ? '#34d399' : '#047857' }}>
+                              📦 {activePkg.title}
+                            </span>
+                            <span style={{
+                              background: '#059669',
+                              color: '#ffffff',
+                              fontSize: '0.65rem',
+                              fontWeight: 900,
+                              padding: '0.1rem 0.4rem',
+                              borderRadius: '5px'
+                            }}>
+                              MAX: {activePkgSize.limit}
+                            </span>
+                          </div>
+                          <div style={{ fontSize: '0.72rem', color: isDark ? '#94a3b8' : '#64748b', marginTop: '0.15rem' }}>
+                            {activePkgSize.examples ? `Standard for ${activePkgSize.examples}. ` : ''}Specify desired width & height below:
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setStep(2)}
+                          style={{
+                            background: 'transparent',
+                            border: 'none',
+                            color: '#059669',
+                            fontSize: '0.72rem',
+                            fontWeight: 800,
+                            cursor: 'pointer',
+                            textDecoration: 'underline',
+                            padding: 0,
+                            flexShrink: 0
+                          }}
+                        >
+                          Change Tier
+                        </button>
+                      </div>
+
+                      {isExceeding && (
+                        <div style={{
+                          marginTop: '0.45rem',
+                          padding: '0.6rem 0.75rem',
+                          borderRadius: '10px',
+                          background: '#fffbeb',
+                          border: '1.5px solid #fcd34d',
+                          color: '#92400e',
+                          fontSize: '0.74rem',
+                          display: 'flex',
+                          alignItems: 'flex-start',
+                          gap: '0.45rem'
+                        }}>
+                          <AlertCircle size={15} style={{ flexShrink: 0, marginTop: '2px', color: '#d97706' }} />
+                          <div style={{ flex: 1 }}>
+                            Entered size ({widthInches}" × {heightInches}") exceeds this tier's limit ({activePkgSize.limit}).
+                            <button
+                              type="button"
+                              onClick={() => setStep(2)}
+                              style={{
+                                display: 'block',
+                                marginTop: '0.25rem',
+                                background: 'none',
+                                border: 'none',
+                                color: '#b45309',
+                                fontWeight: 800,
+                                textDecoration: 'underline',
+                                padding: 0,
+                                cursor: 'pointer',
+                                fontSize: '0.73rem'
+                              }}
+                            >
+                              Tap here to choose Mid-Size or Full-Back package →
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.65rem' }}>
                   <div>
                     <span style={{ fontSize: '0.74rem', fontWeight: 700, color: isDark ? '#94a3b8' : '#64748b' }}>Width (Inches)</span>
