@@ -113,7 +113,7 @@ const fetchPublicCatalogBundle = unstable_cache(
       testimonials: combinedTestimonials
     };
   },
-  ['public-catalog-bundle-v2'],
+  ['public-catalog-bundle-v4'],
   { revalidate: 300, tags: ['catalog', 'portfolio', 'site-branding'] }
 );
 
@@ -126,7 +126,7 @@ async function GET_impl(request) {
       const catalog = await fetchPublicCatalogBundle();
       return NextResponse.json(catalog, {
         headers: {
-          'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=86400'
+          'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300'
         }
       });
     }

@@ -831,21 +831,21 @@ export const HeroSection = () => {
                 </div>
               </div>
 
-              {/* Full, Clear Showcase Image Container (Exact 4:3 / 1200x900 Ratio - Fills completely edge-to-edge) */}
+              {/* Full, Clear Showcase Image Container (Fills frame edge-to-edge with ambient backdrop + 100% uncut artwork) */}
               <div
                 className="hero-showcase-image-box"
                 style={{
                   position: 'relative',
                   width: '100%',
                   aspectRatio: '4/3',
-                  minHeight: '260px',
+                  minHeight: '280px',
                   maxHeight: '440px',
                   borderRadius: '16px',
                   overflow: 'hidden',
-                  background: 'var(--color-surface, #ffffff)',
+                  background: 'radial-gradient(ellipse at center, rgba(255,255,255,0.98) 0%, rgba(241,245,249,0.9) 100%)',
+                  boxShadow: 'inset 0 0 0 1px rgba(0, 0, 0, 0.05), 0 8px 30px rgba(0, 0, 0, 0.06)',
                   opacity: isFading ? 0.35 : 1,
                   transition: 'opacity 0.25s ease-in-out',
-                  border: '1px solid var(--color-border, #e2e8f0)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center'
@@ -853,25 +853,58 @@ export const HeroSection = () => {
               >
                 {/* Full, Auto-Adjusted Showcase Image or Empty State */}
                 {currentImage?.imageUrl ? (
-                  <img
-                    src={getOptimizedImageUrl(currentImage.imageUrl, 1080)}
-                    alt={currentImage?.title || "Studio Showcase"}
-                    loading="lazy"
-                    decoding="async"
-                    onError={(e) => {
-                      e.currentTarget.onerror = null;
-                      e.currentTarget.src = '/artwork-placeholder.svg';
-                    }}
-                    style={{
-                      width: '100%',
-                      height: '100%',
-                      objectFit: 'contain',
-                      objectPosition: 'center',
-                      display: 'block',
-                      transition: 'transform 0.4s cubic-bezier(0.4, 0, 0.2, 1)'
-                    }}
-                    draggable="false"
-                  />
+                  <>
+                    {/* Ambient Blurred Artwork Backdrop: Fills entire frame edge-to-edge with rich matching hues */}
+                    <div
+                      aria-hidden="true"
+                      style={{
+                        position: 'absolute',
+                        inset: '-15px',
+                        backgroundImage: `url(${getOptimizedImageUrl(currentImage.imageUrl, 400)})`,
+                        backgroundPosition: 'center',
+                        backgroundSize: 'cover',
+                        filter: 'blur(30px) saturate(1.3) brightness(0.94)',
+                        opacity: 0.52,
+                        transform: 'scale(1.18)',
+                        pointerEvents: 'none'
+                      }}
+                    />
+                    {/* Subtle vignette layer to elevate foreground artwork contrast */}
+                    <div
+                      aria-hidden="true"
+                      style={{
+                        position: 'absolute',
+                        inset: 0,
+                        background: 'radial-gradient(circle at center, rgba(255,255,255,0.05) 0%, rgba(15,23,42,0.12) 100%)',
+                        pointerEvents: 'none',
+                        zIndex: 1
+                      }}
+                    />
+
+                    {/* Master Uncut Artwork: Full 100% resolution, never cropped or truncated */}
+                    <img
+                      src={getOptimizedImageUrl(currentImage.imageUrl, 1080)}
+                      alt={currentImage?.title || "Studio Showcase"}
+                      loading="lazy"
+                      decoding="async"
+                      onError={(e) => {
+                        e.currentTarget.onerror = null;
+                        e.currentTarget.src = '/artwork-placeholder.svg';
+                      }}
+                      style={{
+                        position: 'relative',
+                        zIndex: 2,
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'contain',
+                        objectPosition: 'center',
+                        display: 'block',
+                        transition: 'transform 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+                        filter: 'drop-shadow(0 8px 24px rgba(0, 0, 0, 0.16))'
+                      }}
+                      draggable="false"
+                    />
+                  </>
                 ) : (
                   <div style={{
                     display: 'flex',
@@ -974,7 +1007,7 @@ export const HeroSection = () => {
                   justifyContent: 'center',
                   alignItems: 'center',
                   gap: '0.45rem',
-                  marginTop: '0.55rem'
+                  marginTop: '0.65rem'
                 }}>
                   {activeShowcaseImages.map((imgItem, idx) => {
                     const isActive = idx === currentSlideIdx;
@@ -985,10 +1018,10 @@ export const HeroSection = () => {
                         onClick={() => handleDotClick(idx)}
                         style={{
                           height: '6px',
-                          width: isActive ? '22px' : '6px',
+                          width: isActive ? '24px' : '6px',
                           borderRadius: '9999px',
                           border: 'none',
-                          background: isActive ? 'var(--orange-500, #ea580c)' : 'rgba(255, 255, 255, 0.25)',
+                          background: isActive ? 'var(--orange-500, #ea580c)' : 'var(--color-border, rgba(148, 163, 184, 0.45))',
                           cursor: 'pointer',
                           transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
                           padding: 0,

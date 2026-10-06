@@ -117,7 +117,7 @@ async function loadPublicCatalogRows() {
 
 export const fetchPublicCatalogServer = unstable_cache(
   loadPublicCatalogRows,
-  ['bdigitizing-public-catalog-v2'],
+  ['bdigitizing-public-catalog-v4'],
   {
     revalidate: 300,
     tags: ['catalog', 'homepage', 'portfolio', 'site-branding']
