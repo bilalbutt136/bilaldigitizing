@@ -23,7 +23,7 @@ import {
   fetchAdminUsers,
   addAdminUserInSupabase,
   resetAdminPasswordInSupabase,
-  removeAdminUserInSupabase as _removeAdminUserInSupabase,
+  removeAdminUserInSupabase,
   depositWalletViaApi,
   deductWalletViaApi,
   fetchWalletBalanceFromSupabase,
@@ -2955,6 +2955,22 @@ export const StateProvider = ({ children, initialCatalog = null }) => {
     return { success: false, error: res.error };
   };
 
+  const removeAdminUser = async (email) => {
+    const cleanEmail = (email || '').toLowerCase().trim();
+    if (!cleanEmail) {
+      showToast('Email is required to revoke administrator access.', 'error');
+      return { success: false, error: 'Missing email' };
+    }
+    const res = await removeAdminUserInSupabase(cleanEmail, authUser?.email);
+    if (res.success) {
+      setAdminUsers(prev => prev.filter(a => (a.email || a || '').toLowerCase().trim() !== cleanEmail));
+      showToast(`Admin privileges revoked for ${cleanEmail}`, 'info');
+      return { success: true };
+    }
+    showToast(res.error || 'Failed to revoke admin.', 'error');
+    return { success: false, error: res.error };
+  };
+
   const fetchHomePageContent = async () => {
     try {
       const data = await fetchHomePageContentFromSupabase();
@@ -3018,7 +3034,7 @@ export const StateProvider = ({ children, initialCatalog = null }) => {
       homePageConfig, setHomePageConfig, fetchHomePageContent, updateHomePageConfigSettings,
       digitizers, setDigitizers,
       siteSettings, setSiteSettings, updateSiteSettings,
-      adminUsers, setAdminUsers, addAdminUser, resetAdminPassword,
+      adminUsers, setAdminUsers, addAdminUser, removeAdminUser, resetAdminPassword,
       activeHomeServiceTab, setActiveHomeServiceTab,
       serviceCmsContent, setServiceCmsContent, updateServiceCmsContent,
       testimonials, setTestimonials,

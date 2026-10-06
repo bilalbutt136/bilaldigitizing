@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAppState } from '../../../context/StateContext';
 import { getAdminMfaPolicy, getAdminMfaStatus, updateAdminMfaPolicy } from '../../../services/adminMfaService';
+import { getAuthHeaders } from '../../../services/supabaseService';
 import {
   ShieldCheck,
   UserPlus,
@@ -33,6 +34,7 @@ export const AdminSecuritySettings = () => {
     showToast,
     adminUsers = [],
     addAdminUser,
+    removeAdminUser,
     resetAdminPassword
   } = useAppState();
 
@@ -106,7 +108,11 @@ export const AdminSecuritySettings = () => {
   const loadAdminsFromApi = async () => {
     setLoadingAdmins(true);
     try {
-      const res = await fetch('/api/admin/users');
+      const headers = await getAuthHeaders();
+      const res = await fetch('/api/admin/users', {
+        headers,
+        cache: 'no-store'
+      });
       const data = await res.json();
       if (data?.success && Array.isArray(data.admins)) {
         setLiveAdmins(data.admins);
@@ -337,15 +343,9 @@ export const AdminSecuritySettings = () => {
   const handleRevokeAdmin = async (emailToRevoke) => {
     if (!confirm(`Are you sure you want to revoke admin privileges for ${emailToRevoke}?`)) return;
     try {
-      const res = await fetch(`/api/admin/users?email=${encodeURIComponent(emailToRevoke)}`, {
-        method: 'DELETE'
-      });
-      const data = await res.json();
-      if (data?.success) {
-        showToast(`Access revoked for ${emailToRevoke}`, 'info');
+      const res = await removeAdminUser(emailToRevoke);
+      if (res && res.success) {
         await loadAdminsFromApi();
-      } else {
-        showToast(data?.error || 'Failed to revoke access.', 'error');
       }
     } catch {
       showToast('Error revoking access.', 'error');

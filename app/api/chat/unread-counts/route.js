@@ -31,6 +31,8 @@ async function fetchUnreadCountsFromDb(email, isAdmin) {
     .from('conversations')
     .select(isAdmin ? 'id, tags, order_title, unread_admin_count' : 'id, tags, order_title, unread_client_count');
 
+  query = query.or('is_archived.is.null,is_archived.eq.false');
+
   if (isAdmin) {
     query = query.gt('unread_admin_count', 0);
   } else {

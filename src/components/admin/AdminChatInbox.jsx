@@ -24,7 +24,10 @@ import {
   Download,
   Sparkles,
   Tag,
-  MoreHorizontal as _MoreHorizontal,
+  MoreHorizontal,
+  Mail,
+  Archive,
+  Inbox,
   X,
   Check as _Check,
   CheckCheck,
@@ -32,7 +35,7 @@ import {
   RefreshCw,
   Clock as _Clock,
   Plus,
-  Trash2 as _Trash2,
+  Trash2,
   CornerDownLeft,
   Undo2,
   ExternalLink,
@@ -84,8 +87,13 @@ export default function AdminChatInbox({ initialChannel = 'inbox', compactMobile
 
   // Filters & Search
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeFilter, setActiveFilter] = useState('all'); // 'all' | 'unread' | 'starred'
+  const [activeFilter, setActiveFilter] = useState('all'); // 'all' | 'unread' | 'starred' | 'archived'
   const [isFilterDropdownOpen, setIsFilterDropdownOpen] = useState(false);
+
+  // 3-Dots More Menu State
+  const [showMoreMenu, setShowMoreMenu] = useState(false);
+  const moreMenuRef = useRef(null);
+  const manuallyUnreadThreadsRef = useRef(new Set());
 
   // Tabs: 'messages' | 'saved'
   const [activeTab, setActiveTab] = useState('messages');
@@ -224,6 +232,23 @@ export default function AdminChatInbox({ initialChannel = 'inbox', compactMobile
     return true;
   });
 
+  // Close More menu when conversation changes
+  useEffect(() => {
+    setShowMoreMenu(false);
+  }, [activeConversationId]);
+
+  // Close More menu on click outside
+  useEffect(() => {
+    if (!showMoreMenu) return;
+    const handleClickOutside = (e) => {
+      if (moreMenuRef.current && !moreMenuRef.current.contains(e.target)) {
+        setShowMoreMenu(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showMoreMenu]);
+
   const handleToggleSound = () => {
     const nextVal = !isAudioEnabled;
     setIsAudioEnabled(nextVal);
@@ -339,7 +364,7 @@ export default function AdminChatInbox({ initialChannel = 'inbox', compactMobile
         message?.sender === 'client' && message?.is_read === false
       );
       stopNotificationSound();
-      if (hasUnreadIncoming) {
+      if (hasUnreadIncoming && !manuallyUnreadThreadsRef.current.has(convId)) {
         await fetch('/api/chat/conversations', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -580,6 +605,128 @@ export default function AdminChatInbox({ initialChannel = 'inbox', compactMobile
     return conversations.find(c => c.id === activeConversationId) || null;
   }, [conversations, activeConversationId]);
 
+  // Toggle Read / Unread Status
+  const handleToggleRead = async (convId) => {
+    setShowMoreMenu(false);
+    const target = conversations.find(c => c.id === convId);
+    if (!target) return;
+    const isCurrentlyUnread = (target.unread_admin_count || 0) > 0;
+    const nextUnread = !isCurrentlyUnread;
+
+    if (nextUnread) {
+      manuallyUnreadThreadsRef.current.add(convId);
+      setConversations(prev => prev.map(c => c.id === convId ? { ...c, unread_admin_count: 1 } : c));
+      try {
+        await fetch('/api/chat/conversations', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'markUnread', conversationId: convId })
+        });
+        showToast('Marked conversation as unread', 'info');
+        fetchChannelUnreadCounts(true);
+      } catch {
+        showToast('Failed to mark conversation as unread', 'error');
+      }
+    } else {
+      manuallyUnreadThreadsRef.current.delete(convId);
+      setConversations(prev => prev.map(c => c.id === convId ? { ...c, unread_admin_count: 0 } : c));
+      try {
+        await fetch('/api/chat/conversations', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'markRead', conversationId: convId })
+        });
+        showToast('Marked conversation as read', 'info');
+        fetchChannelUnreadCounts(true);
+      } catch {
+        showToast('Failed to mark conversation as read', 'error');
+      }
+    }
+  };
+
+  // Toggle Archive Status
+  const handleToggleArchive = async (convId) => {
+    setShowMoreMenu(false);
+    const target = conversations.find(c => c.id === convId);
+    if (!target) return;
+    const nextArchived = !Boolean(target.is_archived);
+
+    setConversations(prev => {
+      if (activeFilter === 'archived' && !nextArchived) {
+        return prev.filter(c => c.id !== convId);
+      } else if (activeFilter !== 'archived' && nextArchived) {
+        return prev.filter(c => c.id !== convId);
+      } else {
+        return prev.map(c => c.id === convId ? { ...c, is_archived: nextArchived } : c);
+      }
+    });
+
+    if (activeFilter !== 'archived' && nextArchived && activeConversationId === convId) {
+      const remaining = conversations.filter(c => c.id !== convId);
+      if (remaining.length > 0) {
+        setActiveConversationId(remaining[0].id);
+      } else {
+        setActiveConversationId(null);
+        setMessages([]);
+      }
+    }
+
+    try {
+      const res = await fetch('/api/chat/conversations', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'toggleArchive', conversationId: convId, isArchived: nextArchived })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to update archive status');
+      showToast(nextArchived ? 'Conversation moved to archive' : 'Conversation moved to inbox', 'success');
+      invalidateClientQuery(['admin-chat-conversations']);
+      fetchChannelUnreadCounts(true);
+    } catch (err) {
+      showToast(err?.message || 'Failed to update archive status', 'error');
+      fetchConversations(activeFilter, searchQuery, activeChannel, true);
+    }
+  };
+
+  // Delete Chat Permanently
+  const handleDeleteChat = async (convId) => {
+    setShowMoreMenu(false);
+    const target = conversations.find(c => c.id === convId);
+    if (!target) return;
+
+    const confirmDelete = window.confirm(
+      `Are you sure you want to delete the chat with ${target.client_name || target.client_email}? All messages and history will be permanently deleted.`
+    );
+    if (!confirmDelete) return;
+
+    const remaining = conversations.filter(c => c.id !== convId);
+    setConversations(remaining);
+    if (activeConversationId === convId) {
+      if (remaining.length > 0) {
+        setActiveConversationId(remaining[0].id);
+      } else {
+        setActiveConversationId(null);
+        setMessages([]);
+      }
+    }
+
+    try {
+      const res = await fetch('/api/chat/conversations', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'deleteChat', conversationId: convId })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to delete chat');
+      showToast('Chat deleted permanently', 'success');
+      invalidateClientQuery(['admin-chat-conversations']);
+      fetchChannelUnreadCounts(true);
+    } catch (err) {
+      showToast(err?.message || 'Failed to delete chat', 'error');
+      fetchConversations(activeFilter, searchQuery, activeChannel, true);
+    }
+  };
+
   // Toggle Star Conversation
   const handleToggleStar = async (convId, e) => {
     e?.stopPropagation();
@@ -803,6 +950,7 @@ export default function AdminChatInbox({ initialChannel = 'inbox', compactMobile
     };
 
     stopNotificationSound();
+    manuallyUnreadThreadsRef.current.delete(activeConversationId);
     setIsSendingMessage(true);
     setInputText('');
     setPendingAttachments([]);
@@ -1034,6 +1182,7 @@ export default function AdminChatInbox({ initialChannel = 'inbox', compactMobile
               {activeFilter === 'all' && 'All messages'}
               {activeFilter === 'unread' && 'Unread'}
               {activeFilter === 'starred' && 'Starred'}
+              {activeFilter === 'archived' && 'Archived'}
               <ChevronDown size={16} color="#64748b" />
             </button>
 
@@ -1053,7 +1202,8 @@ export default function AdminChatInbox({ initialChannel = 'inbox', compactMobile
                 {[
                   { id: 'all', label: 'All messages' },
                   { id: 'unread', label: 'Unread' },
-                  { id: 'starred', label: 'Starred' }
+                  { id: 'starred', label: 'Starred' },
+                  { id: 'archived', label: 'Archived' }
                 ].map(opt => (
                   <button
                     key={opt.id}
@@ -1530,19 +1680,164 @@ export default function AdminChatInbox({ initialChannel = 'inbox', compactMobile
                 <button
                   type="button"
                   onClick={(e) => handleToggleStar(activeConversation.id, e)}
-                  style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '6px', color: activeConversation.is_starred ? '#f59e0b' : '#64748b' }}
+                  style={{
+                    width: '34px',
+                    height: '34px',
+                    borderRadius: '8px',
+                    border: '1px solid #e2e8f0',
+                    background: '#ffffff',
+                    color: activeConversation.is_starred ? '#f59e0b' : '#64748b',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer',
+                    transition: 'all 0.15s ease'
+                  }}
                   title="Star conversation"
                 >
-                  <Star size={19} fill={activeConversation.is_starred ? '#f59e0b' : 'none'} />
+                  <Star size={18} fill={activeConversation.is_starred ? '#f59e0b' : 'none'} />
                 </button>
                 <button
                   type="button"
                   onClick={() => showToast(`Client Email: ${activeConversation.client_email}`, 'info')}
-                  style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '6px', color: '#64748b' }}
+                  style={{
+                    width: '34px',
+                    height: '34px',
+                    borderRadius: '8px',
+                    border: '1px solid #e2e8f0',
+                    background: '#ffffff',
+                    color: '#64748b',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer',
+                    transition: 'all 0.15s ease'
+                  }}
                   title="Tag / View Details"
                 >
-                  <Tag size={19} />
+                  <Tag size={18} />
                 </button>
+
+                {/* 3-DOTS MORE ACTIONS DROPDOWN (Mark read/unread, Archive, Delete chat) */}
+                <div style={{ position: 'relative', display: 'inline-block' }}>
+                  <button
+                    type="button"
+                    onClick={() => setShowMoreMenu(prev => !prev)}
+                    style={{
+                      width: '34px',
+                      height: '34px',
+                      borderRadius: '8px',
+                      border: '1px solid #e2e8f0',
+                      background: showMoreMenu ? '#f1f5f9' : '#ffffff',
+                      color: '#475569',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      cursor: 'pointer',
+                      transition: 'all 0.15s ease'
+                    }}
+                    title="More options"
+                    aria-label="More options"
+                  >
+                    <MoreHorizontal size={18} />
+                  </button>
+
+                  {showMoreMenu && (
+                    <div
+                      ref={moreMenuRef}
+                      style={{
+                        position: 'absolute',
+                        top: 'calc(100% + 6px)',
+                        right: 0,
+                        zIndex: 1000,
+                        background: '#ffffff',
+                        border: '1px solid #e2e8f0',
+                        borderRadius: '12px',
+                        boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05)',
+                        padding: '6px',
+                        minWidth: '190px'
+                      }}
+                    >
+                      <button
+                        type="button"
+                        onClick={() => handleToggleRead(activeConversation.id)}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '10px',
+                          width: '100%',
+                          padding: '8px 12px',
+                          borderRadius: '8px',
+                          fontSize: '0.875rem',
+                          fontWeight: 500,
+                          color: '#1e293b',
+                          background: 'transparent',
+                          border: 'none',
+                          cursor: 'pointer',
+                          textAlign: 'left',
+                          transition: 'background 0.15s ease'
+                        }}
+                        onMouseOver={e => e.currentTarget.style.background = '#f8fafc'}
+                        onMouseOut={e => e.currentTarget.style.background = 'transparent'}
+                      >
+                        <Mail size={16} color="#475569" />
+                        <span>{(activeConversation.unread_admin_count || 0) > 0 ? 'Mark as read' : 'Mark as unread'}</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => handleToggleArchive(activeConversation.id)}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '10px',
+                          width: '100%',
+                          padding: '8px 12px',
+                          borderRadius: '8px',
+                          fontSize: '0.875rem',
+                          fontWeight: 500,
+                          color: '#1e293b',
+                          background: 'transparent',
+                          border: 'none',
+                          cursor: 'pointer',
+                          textAlign: 'left',
+                          transition: 'background 0.15s ease'
+                        }}
+                        onMouseOver={e => e.currentTarget.style.background = '#f8fafc'}
+                        onMouseOut={e => e.currentTarget.style.background = 'transparent'}
+                      >
+                        <Archive size={16} color="#475569" />
+                        <span>{activeConversation.is_archived ? 'Move to inbox' : 'Move to archive'}</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteChat(activeConversation.id)}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '10px',
+                          width: '100%',
+                          padding: '8px 12px',
+                          borderRadius: '8px',
+                          fontSize: '0.875rem',
+                          fontWeight: 500,
+                          color: '#dc2626',
+                          background: 'transparent',
+                          border: 'none',
+                          cursor: 'pointer',
+                          textAlign: 'left',
+                          transition: 'background 0.15s ease'
+                        }}
+                        onMouseOver={e => e.currentTarget.style.background = '#fef2f2'}
+                        onMouseOut={e => e.currentTarget.style.background = 'transparent'}
+                      >
+                        <Trash2 size={16} color="#dc2626" />
+                        <span>Delete chat</span>
+                      </button>
+                    </div>
+                  )}
+                </div>
                   </>
                 )}
                 <button
