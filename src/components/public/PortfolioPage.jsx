@@ -20,6 +20,7 @@ import {
   ShieldCheck,
   FileCheck as _FileCheck
 } from 'lucide-react';
+import { getOptimizedImageUrl } from '../../utils/imageOptimizer';
 
 const CATEGORIES = [
   { key: 'all', label: 'All Projects', icon: Sparkles },
@@ -313,8 +314,10 @@ export const PortfolioPage = () => {
                         justifyContent: 'center'
                       }}>
                         <img
-                          src={item.afterImg}
-                          alt={item.title}
+                          src={getOptimizedImageUrl(item.afterImg, 828)}
+                          alt={item.title || 'Portfolio Work'}
+                          loading="lazy"
+                          decoding="async"
                           style={{
                             width: '100%',
                             height: '100%',
@@ -469,8 +472,10 @@ export const PortfolioPage = () => {
               position: 'relative'
             }}>
               <img
-                src={showOriginalInModal && activeItemModal.beforeImg ? activeItemModal.beforeImg : activeItemModal.afterImg}
-                alt={activeItemModal.title}
+                src={getOptimizedImageUrl(showOriginalInModal && activeItemModal.beforeImg ? activeItemModal.beforeImg : activeItemModal.afterImg, 1200)}
+                alt={activeItemModal.title || 'Portfolio Work'}
+                loading="lazy"
+                decoding="async"
                 style={{
                   maxWidth: '100%',
                   maxHeight: '400px',

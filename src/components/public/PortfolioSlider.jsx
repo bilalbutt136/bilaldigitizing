@@ -3,6 +3,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useAppState } from '../../context/StateContext';
 import { MoveHorizontal, Eye, Scissors, CheckCircle, ChevronLeft, ChevronRight } from 'lucide-react';
+import { getOptimizedImageUrl } from '../../utils/imageOptimizer';
 
 export const PortfolioSlider = ({ isHero = false }) => {
   const { portfolioSamples = [], sewOuts = [] } = useAppState();
@@ -225,8 +226,10 @@ export const PortfolioSlider = ({ isHero = false }) => {
 
         {/* Background Layer: Digitized Stitched Result (Right Side) */}
         <img 
-          src={currentItem.after || currentItem.afterImg || ''} 
+          src={getOptimizedImageUrl(currentItem.after || currentItem.afterImg || '', 1080)} 
           alt={`${currentItem.title || 'Showcase'} After Digitizing`}
+          loading="lazy"
+          decoding="async"
           style={{
             position: 'absolute',
             inset: 0,
@@ -265,8 +268,10 @@ export const PortfolioSlider = ({ isHero = false }) => {
           transition: isDragging ? 'none' : 'width 0.1s ease-out'
         }}>
           <img 
-            src={currentItem.before || currentItem.beforeImg || ''} 
+            src={getOptimizedImageUrl(currentItem.before || currentItem.beforeImg || '', 1080)} 
             alt={`${currentItem.title || 'Showcase'} Before Digitizing`}
+            loading="lazy"
+            decoding="async"
             style={{
               position: 'absolute',
               top: 0,

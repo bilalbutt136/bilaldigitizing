@@ -22,6 +22,7 @@ import {
   EyeOff,
   Clock
 } from 'lucide-react';
+import { compressImageClient } from '../../utils/imageOptimizer';
 
 import { saveHeroServiceViaApi, getAuthHeaders } from '../../services/supabaseService';
 
@@ -294,8 +295,9 @@ export const HeroServicesEditor = () => {
     setUploadingState(prev => ({ ...prev, [imageIndex]: true }));
 
     try {
+      const uploadableFile = await compressImageClient(file, { maxWidth: 1600, maxHeight: 1600, quality: 0.82 });
       const formData = new FormData();
-      formData.append('file', file);
+      formData.append('file', uploadableFile);
       formData.append('folder', 'showcase-gallery');
       formData.append('bucket', 'portfolio-images');
 

@@ -5,7 +5,7 @@ import { ArrowRight, Layers, PenTool, Hexagon, Sparkles } from 'lucide-react';
 import { useAppState } from '../../context/StateContext';
 import { useNavigate } from '../../utils/navigation';
 import { normalizeCategory } from '../../utils/categoryUtils';
-
+import { getOptimizedImageUrl } from '../../utils/imageOptimizer';
 
 export const PortfolioPreview = () => {
   const { portfolioSamples = [], setPortfolioSamples, activeHomeServiceTab, homePageConfig = {} } = useAppState();
@@ -129,8 +129,10 @@ export const PortfolioPreview = () => {
               >
                 {/* Background Image */}
                 <img 
-                  src={item.image} 
-                  alt={item.title}
+                  src={getOptimizedImageUrl(item.image, 640)} 
+                  alt={item.title || 'Portfolio Work'}
+                  loading="lazy"
+                  decoding="async"
                   style={{
                     width: '100%',
                     height: '100%',

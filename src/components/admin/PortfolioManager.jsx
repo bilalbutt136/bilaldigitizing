@@ -23,6 +23,7 @@ import {
   Maximize2
 } from 'lucide-react';
 import { savePortfolioItemViaApi, deletePortfolioItemViaApi, getAuthHeaders, fetchCatalogFromSupabase as _fetchCatalogFromSupabase } from '../../services/supabaseService';
+import { compressImageClient } from '../../utils/imageOptimizer';
 
 const CATEGORY_OPTIONS = [
   { value: 'Embroidery', label: 'Embroidery Digitizing', icon: Layers, color: '#f97316' },
@@ -119,8 +120,9 @@ export const PortfolioManager = () => {
     else setIsUploadingMain(true);
 
     try {
+      const uploadableFile = await compressImageClient(file, { maxWidth: 1600, maxHeight: 1600, quality: 0.82 });
       const formData = new FormData();
-      formData.append('file', file);
+      formData.append('file', uploadableFile);
       formData.append('folder', 'portfolio-gallery');
       formData.append('bucket', 'portfolio-images');
 

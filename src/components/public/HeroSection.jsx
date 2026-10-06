@@ -5,6 +5,7 @@ import { useNavigate } from '../../utils/navigation';
 import { useAppState } from '../../context/StateContext';
 import { normalizeCategory } from '../../utils/categoryUtils';
 import { supabase as _supabase } from '../../lib/supabase/client';
+import { getOptimizedImageUrl } from '../../utils/imageOptimizer';
 import {
   CheckCircle2,
   ArrowRight,
@@ -853,7 +854,7 @@ export const HeroSection = () => {
                 {/* Full, Auto-Adjusted Showcase Image or Empty State */}
                 {currentImage?.imageUrl ? (
                   <img
-                    src={currentImage.imageUrl}
+                    src={getOptimizedImageUrl(currentImage.imageUrl, 1080)}
                     alt={currentImage?.title || "Studio Showcase"}
                     loading="lazy"
                     decoding="async"
