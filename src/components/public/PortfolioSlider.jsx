@@ -230,6 +230,10 @@ export const PortfolioSlider = ({ isHero = false }) => {
           alt={`${currentItem.title || 'Showcase'} After Digitizing`}
           loading="lazy"
           decoding="async"
+          onError={(e) => {
+            e.currentTarget.onerror = null;
+            e.currentTarget.src = '/artwork-placeholder.svg';
+          }}
           style={{
             position: 'absolute',
             inset: 0,
@@ -272,6 +276,10 @@ export const PortfolioSlider = ({ isHero = false }) => {
             alt={`${currentItem.title || 'Showcase'} Before Digitizing`}
             loading="lazy"
             decoding="async"
+            onError={(e) => {
+              e.currentTarget.onerror = null;
+              e.currentTarget.src = '/artwork-placeholder.svg';
+            }}
             style={{
               position: 'absolute',
               top: 0,

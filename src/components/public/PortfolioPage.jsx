@@ -318,6 +318,10 @@ export const PortfolioPage = () => {
                           alt={item.title || 'Portfolio Work'}
                           loading="lazy"
                           decoding="async"
+                          onError={(e) => {
+                            e.currentTarget.onerror = null;
+                            e.currentTarget.src = '/artwork-placeholder.svg';
+                          }}
                           style={{
                             width: '100%',
                             height: '100%',
@@ -476,6 +480,10 @@ export const PortfolioPage = () => {
                 alt={activeItemModal.title || 'Portfolio Work'}
                 loading="lazy"
                 decoding="async"
+                onError={(e) => {
+                  e.currentTarget.onerror = null;
+                  e.currentTarget.src = '/artwork-placeholder.svg';
+                }}
                 style={{
                   maxWidth: '100%',
                   maxHeight: '400px',

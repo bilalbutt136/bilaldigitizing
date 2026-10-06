@@ -858,6 +858,10 @@ export const HeroSection = () => {
                     alt={currentImage?.title || "Studio Showcase"}
                     loading="lazy"
                     decoding="async"
+                    onError={(e) => {
+                      e.currentTarget.onerror = null;
+                      e.currentTarget.src = '/artwork-placeholder.svg';
+                    }}
                     style={{
                       width: '100%',
                       height: '100%',

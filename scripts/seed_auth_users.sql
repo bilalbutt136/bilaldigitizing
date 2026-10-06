@@ -1,0 +1,93 @@
+-- Provision authentic client auth records in auth.users to preserve historical orders & foreign keys
+INSERT INTO auth.users (
+  id,
+  instance_id,
+  aud,
+  role,
+  email,
+  encrypted_password,
+  email_confirmed_at,
+  raw_app_meta_data,
+  raw_user_meta_data,
+  created_at,
+  updated_at,
+  confirmation_token,
+  recovery_token
+)
+VALUES
+(
+  '9d241293-4fac-4613-a215-8dbed26862eb',
+  '00000000-0000-0000-0000-000000000000',
+  'authenticated',
+  'authenticated',
+  'bilalsadiq612@gmail.com',
+  '',
+  NOW(),
+  '{"provider": "email", "providers": ["email"]}'::jsonb,
+  '{"full_name": "MUHAMMAD BILAL", "name": "MUHAMMAD BILAL"}'::jsonb,
+  NOW(),
+  NOW(),
+  '',
+  ''
+),
+(
+  '41a9ac0d-a760-4e11-bca2-bd70bec30943',
+  '00000000-0000-0000-0000-000000000000',
+  'authenticated',
+  'authenticated',
+  'shahidbutt59191@gmail.com',
+  '',
+  NOW(),
+  '{"provider": "email", "providers": ["email"]}'::jsonb,
+  '{"full_name": "Muhammad Shahid", "name": "Muhammad Shahid"}'::jsonb,
+  NOW(),
+  NOW(),
+  '',
+  ''
+),
+(
+  '2d659ffb-69f8-4b0c-8d1d-ac3e5fc56c03',
+  '00000000-0000-0000-0000-000000000000',
+  'authenticated',
+  'authenticated',
+  'asdf123@gmail.com',
+  '',
+  NOW(),
+  '{"provider": "email", "providers": ["email"]}'::jsonb,
+  '{"full_name": "asdf123", "name": "asdf123"}'::jsonb,
+  NOW(),
+  NOW(),
+  '',
+  ''
+),
+(
+  '0b00a69f-1016-4b10-9ef6-6e28df18323a',
+  '00000000-0000-0000-0000-000000000000',
+  'authenticated',
+  'authenticated',
+  'it.ghssmitroo@gmail.com',
+  '',
+  NOW(),
+  '{"provider": "email", "providers": ["email"]}'::jsonb,
+  '{"full_name": "GHSS MITROO", "name": "GHSS MITROO"}'::jsonb,
+  NOW(),
+  NOW(),
+  '',
+  ''
+),
+(
+  '0e783b24-6797-4046-8e08-d567e1fa48e0',
+  '00000000-0000-0000-0000-000000000000',
+  'authenticated',
+  'authenticated',
+  'taofeeklihaira@gmail.com',
+  '',
+  NOW(),
+  '{"provider": "email", "providers": ["email"]}'::jsonb,
+  '{"full_name": "Taofeek Adedokun", "name": "Taofeek Adedokun"}'::jsonb,
+  NOW(),
+  NOW(),
+  '',
+  ''
+)
+ON CONFLICT (id) DO NOTHING;

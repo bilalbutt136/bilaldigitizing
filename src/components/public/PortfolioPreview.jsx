@@ -60,7 +60,7 @@ export const PortfolioPreview = () => {
       mappedCategory: (item.category || '').toLowerCase().includes('vector') ? 'Vector Art' 
                     : (item.category || '').toLowerCase().includes('patch') ? 'Custom Patches' 
                     : 'Embroidery',
-      image: item.digitized_image || item.original_image || item.after_img || item.before_img || item.afterImg || item.image || 'https://qkgvgrscjlijajuzouke.supabase.co/storage/v1/object/public/portfolio-images/portfolio-gallery/9e3dcdd7-e3b4-4886-9f18-a94361029147.png'
+      image: item.digitized_image || item.original_image || item.after_img || item.before_img || item.afterImg || item.image || '/artwork-placeholder.svg'
     }))
     .filter(item => Boolean(item.image) && !item.image.includes('unsplash.com'));
 
@@ -133,6 +133,10 @@ export const PortfolioPreview = () => {
                   alt={item.title || 'Portfolio Work'}
                   loading="lazy"
                   decoding="async"
+                  onError={(e) => {
+                    e.currentTarget.onerror = null;
+                    e.currentTarget.src = '/artwork-placeholder.svg';
+                  }}
                   style={{
                     width: '100%',
                     height: '100%',
