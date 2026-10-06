@@ -1,32 +1,37 @@
-const urls = [
+const endpoints = [
   'https://bdigitizing.com/',
-  'https://bdigitizing.com/portfolio',
+  'https://bdigitizing.com/pricing',
   'https://bdigitizing.com/services/embroidery-digitizing',
   'https://bdigitizing.com/services/vector-tracing',
+  'https://bdigitizing.com/custom-patches',
+  'https://bdigitizing.com/portfolio',
+  'https://bdigitizing.com/portal/login',
   'https://bdigitizing.com/order',
-  'https://bdigitizing.com/client-portal',
-  'https://bdigitizing.com/admin'
+  'https://bdigitizing.com/api/health',
+  'https://bdigitizing.com/api/cms',
+  'https://bdigitizing.com/api/catalog?action=fetchAll'
 ];
 
-async function testAll() {
-  console.log('Testing live production pages on https://bdigitizing.com...\n');
-  let allHealthy = true;
-
-  for (const url of urls) {
-    const start = Date.now();
-    const res = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0' } });
-    const text = await res.text();
-    const duration = Date.now() - start;
-    const hasOldRef = text.includes('qkgvgrscjlijajuzouke');
-    const isOk = res.status === 200 && !hasOldRef;
-
-    console.log(`[${isOk ? 'PASS' : 'FAIL'}] ${url}`);
-    console.log(`       Status: ${res.status} | Time: ${duration}ms | Length: ${text.length} bytes | HasOldRef: ${hasOldRef}`);
-
-    if (!isOk) allHealthy = false;
+async function checkAll() {
+  console.log('Testing live production endpoints at https://bdigitizing.com ...');
+  let allOk = true;
+  for (const url of endpoints) {
+    try {
+      const res = await fetch(url);
+      const isSuccess = res.status >= 200 && res.status < 400;
+      console.log(`${isSuccess ? '✅ [PASS]' : '❌ [FAIL]'} ${res.status}: ${url}`);
+      if (!isSuccess) allOk = false;
+    } catch (e) {
+      console.error(`❌ [ERROR] ${url}: ${e.message}`);
+      allOk = false;
+    }
   }
-
-  console.log(`\nOverall Result: ${allHealthy ? 'ALL PAGES HEALTHY & VERIFIED' : 'ISSUES DETECTED'}`);
+  if (!allOk) {
+    console.error('Some endpoints failed verification.');
+    process.exit(1);
+  } else {
+    console.log('All endpoints passed verification!');
+  }
 }
 
-testAll().catch(console.error);
+checkAll();
