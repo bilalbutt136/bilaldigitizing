@@ -23,7 +23,7 @@ const DEFAULT_ALL_PACKAGES = {
         'Up to 4" x 4" Dimensions',
         '100% Manual Hand-Mapped Pathing (No Auto-Trace)',
         'Cap Curved Profile Optimization',
-        'Zero Thread Breaks Guaranteed',
+        'Optimized Stitch Pathing for Smooth Production',
         'All Machine Formats: Tajima .DST, Wilcom .EMB, Brother .PES',
         'Production PDF Color Sequence Sheet Included'
       ]

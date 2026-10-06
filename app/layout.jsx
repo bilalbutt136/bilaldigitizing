@@ -54,10 +54,10 @@ export async function generateMetadata() {
       title: 'BDigitizing'
     },
     title: {
-      default: 'BDigitizing | Premier Machine Embroidery Digitizing & Vector Art Lab',
+      default: 'Embroidery Digitizing Services | BDigitizing',
       template: '%s | BDigitizing Studio'
     },
-    description: 'Commercial Machine Embroidery Digitizing, Vector Art Tracing, & Custom Physical Patches with 4-8 Hour Express Turnaround.',
+    description: 'Professional embroidery digitizing for commercial shops with production-ready DST, PES and EMB files, vector art conversion, and custom patch manufacturing.',
     keywords: [
       'Embroidery Digitizing',
       'Machine Embroidery Files',
@@ -79,8 +79,8 @@ export async function generateMetadata() {
       telephone: false
     },
     openGraph: {
-      title: 'BDigitizing | Premier Machine Embroidery Digitizing & Vector Art Lab',
-      description: 'Commercial Machine Embroidery Digitizing, Vector Art Tracing, & Custom Physical Patches with 4-8 Hour Express Turnaround.',
+      title: 'Embroidery Digitizing Services | BDigitizing',
+      description: 'Professional embroidery digitizing for commercial shops with production-ready DST, PES and EMB files, vector art conversion, and custom patch manufacturing.',
       url: '/',
       siteName: 'BDigitizing Studio',
       locale: 'en_US',
@@ -90,7 +90,7 @@ export async function generateMetadata() {
     twitter: {
       card: 'summary_large_image',
       title: 'BDigitizing | Premier Machine Embroidery Digitizing & Vector Art Lab',
-      description: 'Commercial Machine Embroidery Digitizing, Vector Art Tracing, & Custom Physical Patches with 4-8 Hour Express Turnaround.',
+      description: 'Professional embroidery digitizing for commercial shops with production-ready DST, PES and EMB files, vector art conversion, and custom patch manufacturing.',
       images: [ogImageUrl]
     },
     robots: {

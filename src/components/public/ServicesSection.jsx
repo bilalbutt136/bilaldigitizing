@@ -110,11 +110,11 @@ export const ServicesSection = () => {
       },
       {
         q: 'How fast is your standard delivery turnaround?',
-        a: 'Standard orders are delivered in 8–12 hours. Express rush orders are prioritized and delivered in 4–6 hours. We operate 24/7 so you never miss a client press deadline.'
+        a: 'Most embroidery digitizing packages are estimated at 4–12 hours depending on size and complexity. Any rush availability is confirmed at order time so production expectations stay accurate.'
       },
       {
         q: 'Do you provide free revisions?',
-        a: 'Yes, unlimited minor revisions and format adjustments are 100% free of charge until your design sews out with zero thread breaks.'
+        a: 'Yes. Minor production revisions and format adjustments are free so the delivered file can be tuned for your approved size, fabric, and machine setup.'
       },
       {
         q: 'Can you digitize 3D Puff / Foam embroidery for caps?',
@@ -208,7 +208,7 @@ export const ServicesSection = () => {
             margin: '0 auto',
           }}>
             {activeTab === 'all' && 'Three specialized production departments under one roof: commercial machine stitch files, scalable vector separations, and manufactured custom patches.'}
-            {activeTab === 'embroidery' && 'Master machine-ready embroidery stitch files (.DST, .PES, .EMB) with zero thread breaks, calculated pull compensation, and free unlimited revisions.'}
+            {activeTab === 'embroidery' && 'Machine-ready embroidery stitch files (.DST, .PES, .EMB) with efficient pathing, calculated pull compensation, and free minor production revisions.'}
             {activeTab === 'vector-art' && 'Clean, infinitely scalable vector graphics (.AI, .EPS, .SVG, .PDF) with hand-drawn Bézier curves and Pantone color separations ready for press.'}
             {activeTab === 'patches' && 'Custom embroidered, high-density woven, 3D molded PVC, and laser-engraved leather emblems delivered straight to your door.'}
           </p>
@@ -899,7 +899,7 @@ export const ServicesSection = () => {
                   <Layers size={16} /> Factory-Grade Machine Embroidery Digitizing
                 </div>
                 <h3 style={{ fontSize: 'clamp(1.85rem, 3.2vw, 2.4rem)', fontWeight: 900, marginBottom: '1rem', lineHeight: 1.2, color: 'var(--banner-title)' }}>
-                  Engineered For Smooth Running With Zero Thread Breaks
+                  Engineered for Clean, Efficient Commercial Sew-Outs
                 </h3>
                 <p style={{ color: 'var(--banner-desc)', fontSize: '1.05rem', lineHeight: 1.65, marginBottom: '2rem' }}>
                   We convert your logos and artwork into high-efficiency stitch files designed specifically for your fabric type (caps, pique polos, fleece hoodies, performance wear, or leather) and machine make.
@@ -925,7 +925,7 @@ export const ServicesSection = () => {
               <div className="grid-responsive-4">
                 {[
                   { title: '100% Manual Digitizing', desc: 'No automated auto-tracing shortcuts. Every stitch angle and density point is manually mapped by master digitizers.' },
-                  { title: 'Zero Thread Breaks', desc: 'Optimized stitch pathing, smart trim count reductions, and proper push-pull compensation ensure fast runs.' },
+                  { title: 'Efficient Stitch Pathing', desc: 'Optimized sequencing, smart trim reductions, and proper push-pull compensation help reduce production interruptions.' },
                   { title: 'All Machine Formats', desc: 'Full compatibility with Tajima (.DST), Wilcom (.EMB), Brother (.PES), Melco (.EXP), Barudan, and Janome.' },
                   { title: '4–12 Hr Fast Delivery', desc: 'Fast turnaround with production simulation run-sheets, thread sequence charts, and free revisions.' }
                 ].map((item) => (

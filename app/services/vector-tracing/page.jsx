@@ -2,10 +2,10 @@ import React from 'react';
 import { VectorClient } from './VectorClient';
 
 export const metadata = {
-  title: 'Raster to Scalable Vector Tracing Services | B Digitizing Studio',
+  title: 'Vector Art Conversion Service | AI, EPS & SVG',
   description: 'Convert low-res JPG, PNG, or hand sketches into clean, infinitely scalable AI, EPS, SVG vector graphics for screen printing & vinyl.',
   openGraph: {
-    title: 'Raster to Scalable Vector Tracing Services | B Digitizing Studio',
+    title: 'Vector Art Conversion Service | AI, EPS & SVG',
     description: 'Convert low-res JPG, PNG, or hand sketches into clean, infinitely scalable AI, EPS, SVG vector graphics for screen printing & vinyl.'
   }
 };

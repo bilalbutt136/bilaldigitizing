@@ -347,14 +347,14 @@ export const Footer = () => {
                 </Link>
               </li>
               <li>
-                <Link href="/terms" style={{ color: '#94a3b8', textDecoration: 'none', transition: 'color 0.2s', cursor: 'pointer', fontSize: 'inherit', textAlign: 'left', display: 'inline-block' }}
+                <Link href="/terms#refund-policy" style={{ color: '#94a3b8', textDecoration: 'none', transition: 'color 0.2s', cursor: 'pointer', fontSize: 'inherit', textAlign: 'left', display: 'inline-block' }}
                    onMouseEnter={(e) => e.currentTarget.style.color = 'var(--orange-500)'}
                    onMouseLeave={(e) => e.currentTarget.style.color = '#94a3b8'}>
                   Refund & Cancellation Policy
                 </Link>
               </li>
               <li>
-                <Link href="/terms" style={{ color: '#94a3b8', textDecoration: 'none', transition: 'color 0.2s', cursor: 'pointer', fontSize: 'inherit', textAlign: 'left', display: 'inline-block' }}
+                <Link href="/terms#shipping-policy" style={{ color: '#94a3b8', textDecoration: 'none', transition: 'color 0.2s', cursor: 'pointer', fontSize: 'inherit', textAlign: 'left', display: 'inline-block' }}
                    onMouseEnter={(e) => e.currentTarget.style.color = 'var(--orange-500)'}
                    onMouseLeave={(e) => e.currentTarget.style.color = '#94a3b8'}>
                   Delivery & Shipping Terms

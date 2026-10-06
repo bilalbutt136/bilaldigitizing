@@ -101,7 +101,7 @@ export const ServicesGrid = () => {
               </h3>
 
               <p style={{ color: 'var(--color-text-muted)', fontSize: '0.95rem', lineHeight: 1.6, marginBottom: '1.25rem' }}>
-                Commercial machine-ready stitch files engineered for Tajima, Brother, Melco, Janome & Barudan machines with zero thread breaks and precise density underlay.
+                Commercial machine-ready stitch files engineered for Tajima, Brother, Melco, Janome & Barudan machines with efficient pathing, precise density, and fabric-specific underlay.
               </p>
 
               {/* Pricing Tiers Badge */}

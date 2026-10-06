@@ -2,11 +2,11 @@ import React from 'react';
 import { EmbroideryClient } from './EmbroideryClient';
 
 export const metadata = {
-  title: 'Commercial Embroidery Digitizing Services | B Digitizing Studio',
-  description: 'Production-ready embroidery machine files engineered for Tajima, Brother, Melco, Janome & Barudan machines with 4-12 hour turnaround.',
+  title: 'Professional Embroidery Digitizing | DST, PES & EMB',
+  description: 'Professional embroidery digitizing for commercial shops. Production-ready DST, PES and EMB files with fabric-specific pathing and free minor revisions.',
   openGraph: {
-    title: 'Commercial Embroidery Digitizing Services | B Digitizing Studio',
-    description: 'Production-ready embroidery machine files engineered for Tajima, Brother, Melco, Janome & Barudan machines with 4-12 hour turnaround.'
+    title: 'Professional Embroidery Digitizing | DST, PES & EMB',
+    description: 'Professional embroidery digitizing for commercial shops. Production-ready DST, PES and EMB files with fabric-specific pathing and free minor revisions.'
   }
 };
 

@@ -2,11 +2,11 @@ import React from 'react';
 import { CustomPatchesClient } from './CustomPatchesClient';
 
 export const metadata = {
-  title: 'Custom Embroidered, Woven & PVC Patches | B Digitizing Studio',
-  description: 'Order custom physical embroidered emblems, merrowed border patches, 3D raised PVC rubber, and debossed genuine leather emblems.',
+  title: 'Custom Embroidered Patches | Velcro, Iron-On & Sew-On',
+  description: 'Custom embroidered, woven, PVC and leather patches with digital proofing, backing options, 50-piece minimums, and worldwide shipping.',
   openGraph: {
-    title: 'Custom Embroidered, Woven & PVC Patches | B Digitizing Studio',
-    description: 'Order custom physical embroidered emblems, merrowed border patches, 3D raised PVC rubber, and debossed genuine leather emblems.'
+    title: 'Custom Embroidered Patches | Velcro, Iron-On & Sew-On',
+    description: 'Custom embroidered, woven, PVC and leather patches with digital proofing, backing options, 50-piece minimums, and worldwide shipping.'
   }
 };
 

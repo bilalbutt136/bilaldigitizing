@@ -35,9 +35,9 @@ export const FinalCTA = () => {
       };
     }
     return {
-      title: dbSettings.cta_emb_title || 'Transform Your Designs Into Production-Ready Masterpieces',
-      desc: dbSettings.cta_emb_desc || 'Precision embroidery digitizing with zero thread breaks. Get machine-ready stitch files engineered for your specific fabric and equipment.',
-      btnText: dbSettings.cta_emb_btn || 'Start Digitizing Now'
+      title: dbSettings.cta_emb_title || 'Need a Production-Ready Embroidery File?',
+      desc: dbSettings.cta_emb_desc || 'Upload your artwork, size, placement, and garment details. We will prepare machine-ready stitch files optimized for your production setup.',
+      btnText: dbSettings.cta_emb_btn || 'Upload Artwork & Start Order'
     };
   };
 
@@ -46,8 +46,8 @@ export const FinalCTA = () => {
   const ctaSecondaryBtn = dbSettings.cta_secondary_btn || 'View Pricing & Packages';
   const badge1 = dbSettings.cta_trust_badge_1 || 'Secure Payments';
   const badge2 = dbSettings.cta_trust_badge_2 || 'Worldwide Delivery';
-  const badge3 = dbSettings.cta_trust_badge_3 || '4-Hour Express';
-  const badge4 = dbSettings.cta_trust_badge_4 || '100% Satisfaction';
+  const badge3 = dbSettings.cta_trust_badge_3 || 'Fast Turnaround';
+  const badge4 = dbSettings.cta_trust_badge_4 || 'Free Minor Revisions';
 
   return (
     <section className="theme-final-cta-section" style={{

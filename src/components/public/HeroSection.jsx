@@ -38,24 +38,24 @@ const ICON_MAP = {
 
 const DEFAULT_SERVICE_DATA = {
   all: {
-    badge: 'Complete Studio Capabilities',
-    title: 'Commercial Embroidery, Scalable Vector Art & Custom Patches',
-    highlight: 'Three Master Services. Factory-Grade Precision. 4–12 Hr Delivery.',
-    description: 'From machine-ready stitch files (.DST, .PES, .EMB) and crisp spot-color vector art (.AI, .EPS, .SVG) to physical custom patches with Velcro and Iron-On backings delivered straight to your door.',
+    badge: 'Commercial Embroidery Digitizing Studio',
+    title: 'Professional Embroidery Digitizing for Commercial Shops',
+    highlight: 'Production-Ready DST, PES & EMB Files · Fast Turnaround · Free Revisions',
+    description: 'Manual embroidery digitizing built for decorators, embroidery shops, uniform suppliers, and apparel production teams. Vector art conversion and custom patch manufacturing are also available from the same studio.',
     features: [
-      'Embroidery Digitizing: Starts $10.00 Flat · 100% Hand Pathing · 0 Thread Breaks',
+      'Embroidery Digitizing: Starts $10 · Manual Pathing · Fabric-Specific Optimization',
       'Vector Art Redraw: Starts $15.00 Flat · Pantone Spot Colors · Master AI/EPS/SVG',
-      'Custom Physical Patches: Starts $3.50 / Piece · Velcro & Iron-On · Doorstep Delivery'
+      'Custom Physical Patches: 50-Piece Minimum · Digital Proof · Worldwide Shipping'
     ],
     stats: [
-      { value: '4–12h', label: 'Turnaround', icon: 'Clock' },
+      { value: '4–12h', label: 'Typical Embroidery', icon: 'Clock' },
       { value: '100%', label: 'Manual Pathing', icon: 'Zap' },
       { value: 'All Formats', label: 'DST, PES, EMB & AI', icon: 'Layers' },
-      { value: 'Unlimited', label: 'Free Revisions', icon: 'ShieldCheck' }
+      { value: 'Free', label: 'Minor Revisions', icon: 'ShieldCheck' }
     ],
-    primary_cta: 'Get Started Now',
+    primary_cta: 'Upload Artwork & Start Order',
     primary_btn_action: '/order',
-    secondary_cta: 'Explore Packages',
+    secondary_cta: 'View Pricing',
     secondary_btn_action: '/pricing',
     previewTitle: 'Live Studio Production Showcase',
     slideshow_interval: 5
@@ -63,16 +63,16 @@ const DEFAULT_SERVICE_DATA = {
   embroidery: {
     badge: 'Factory-Grade Machine Digitizing',
     title: 'Commercial Embroidery Digitizing Services',
-    highlight: 'Zero Thread Breaks. Calculated Pull Compensation. Press Ready.',
+    highlight: 'Clean Commercial Sew-Outs. Calculated Pull Compensation. Production Ready.',
     description: 'Engineered by master digitizers with 11+ years factory experience. Hand-mapped stitch pathing for caps, left chest polos, 3D puff foam, and jacket backs with free unlimited revisions.',
     features: [
       '100% Manual Digitizing (Zero Auto-Trace Shortcuts)',
       'All Machine Formats: Tajima (.DST), Wilcom (.EMB), Brother (.PES)',
-      'Guaranteed Zero Thread Breaks & Free Unlimited Production Edits'
+      'Optimized Stitch Pathing & Free Production Revisions'
     ],
     stats: [
       { value: '100%', label: 'Manual Digitizing', icon: 'Star' },
-      { value: '0', label: 'Thread Breaks', icon: 'Zap' },
+      { value: 'Clean', label: 'Sew-Out Pathing', icon: 'Zap' },
       { value: '4–12 Hr', label: 'Delivery', icon: 'Clock' },
       { value: 'Wilcom & Tajima', label: 'Industry Standard', icon: 'ShieldCheck' }
     ],
@@ -117,7 +117,7 @@ const DEFAULT_SERVICE_DATA = {
       'Free 12-Hour Digital Proof & Doorstep Worldwide Shipping'
     ],
     stats: [
-      { value: '50 Pcs', label: 'Low Minimum', icon: 'Star' },
+      { value: '50+ Pcs', label: 'Minimum Order', icon: 'Star' },
       { value: '12-Hr', label: 'Free Digital Proof', icon: 'Zap' },
       { value: 'Velcro & Iron-On', label: 'Backing Options', icon: 'ShieldCheck' },
       { value: 'Worldwide', label: 'Doorstep Shipping', icon: 'Globe' }

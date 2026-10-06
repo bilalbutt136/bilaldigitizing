@@ -627,7 +627,7 @@ export const PortfolioPage = () => {
                   <ArrowRight size={18} />
                 </button>
                 <div style={{ textAlign: 'center', fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '0.6rem' }}>
-                  Free Unlimited Revisions · 4–12 Hour Turnaround
+                  Free Minor Revisions · Turnaround Shown by Service Tier
                 </div>
               </div>
 

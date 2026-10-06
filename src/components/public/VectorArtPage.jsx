@@ -427,7 +427,7 @@ export const VectorArtPage = ({ hideHero = false }) => {
                 }}
                 style={{ fontWeight: 800, padding: '0.85rem 2rem', fontSize: '1.05rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
               >
-                {dbSettings.vector_hero_btn_primary || 'Order Digitizing Design'} <ArrowRight size={20} />
+                {dbSettings.vector_hero_btn_primary || 'Order Vector Conversion'} <ArrowRight size={20} />
               </button>
 
               <button

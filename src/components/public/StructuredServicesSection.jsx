@@ -109,7 +109,7 @@ export const StructuredServicesSection = () => {
                 {(embHero.trustPoints || [
                   { title: 'Machine Formats: Tajima (.DST), Brother (.PES), Melco (.EXP), Janome (.JEF), Wilcom (.EMB)' },
                   { title: 'Custom Underlay & Pull Compensation for pique cotton, fleece, jackets & structured caps' },
-                  { title: 'Center-out sequencing for 3D puff foam caps with zero thread breaks' },
+                  { title: 'Center-out sequencing for 3D puff foam caps with production-focused stitch pathing' },
                   { title: 'High stitch-count jacket back crests & left-chest logos with free unlimited revisions' }
                 ]).map((feat, idx) => (
                   <div key={idx} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.65rem' }}>

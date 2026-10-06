@@ -6,10 +6,10 @@ import { PortfolioClient } from './PortfolioClient';
 export const revalidate = 300;
 
 export const metadata = {
-  title: 'Embroidery & Vector Portfolio Showcase | B Digitizing Studio',
+  title: 'Embroidery Sew-Out & Vector Portfolio | BDigitizing',
   description: 'Explore high-density embroidery digitizing sew-outs, 3D raised cap foam samples, and crisp vector artwork transformations.',
   openGraph: {
-    title: 'Embroidery & Vector Portfolio Showcase | B Digitizing Studio',
+    title: 'Embroidery Sew-Out & Vector Portfolio | BDigitizing',
     description: 'Explore high-density embroidery digitizing sew-outs, 3D raised cap foam samples, and crisp vector artwork transformations.'
   }
 };

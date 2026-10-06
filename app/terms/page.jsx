@@ -69,15 +69,15 @@ export default async function TermsAndConditionsPage() {
                 </p>
               </section>
 
-              <section style={{ marginBottom: '2.5rem' }}>
+              <section id="shipping-policy" style={{ marginBottom: '2.5rem', scrollMarginTop: '110px' }}>
                 <h2 style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--navy-900)', marginBottom: '1rem' }}>2. Services & Delivery</h2>
                 <h3 style={{ fontSize: '1.2rem', fontWeight: 700, marginTop: '1.5rem', marginBottom: '0.5rem' }}>2.1 Digital Delivery (Digitizing & Vector Art)</h3>
                 <p style={{ marginBottom: '1rem' }}>
-                  All embroidery digitizing and vector art conversion files are delivered digitally via our platform or email. No physical goods are shipped for these services. Standard turnaround time is 12-24 hours. Delivery is considered complete once the digital file is uploaded to your account dashboard and marked as "Delivered."
+                  All embroidery digitizing and vector art conversion files are delivered digitally via our platform or email. No physical goods are shipped for these services. Turnaround depends on artwork complexity and the service tier selected at checkout; the estimate shown with the selected package or confirmed quote is the applicable delivery estimate. Delivery is considered complete once the digital file is uploaded to your account dashboard and marked as "Delivered."
                 </p>
                 <h3 style={{ fontSize: '1.2rem', fontWeight: 700, marginTop: '1.5rem', marginBottom: '0.5rem' }}>2.2 Physical Delivery (Custom Patches)</h3>
                 <p style={{ marginBottom: '1rem' }}>
-                  Custom patches are physical goods manufactured upon order. Production typically takes 7-10 business days after digital proof approval. Shipping via international couriers (DHL/FedEx) takes an additional 3-5 business days. Delivery times are estimates and may be subject to carrier delays.
+                  Custom patches are physical goods manufactured upon order. Standard production typically takes 10–14 business days after digital proof approval, unless a different production estimate is confirmed in writing for the order. Shipping via international couriers (DHL/FedEx) typically takes an additional 3–5 business days. Delivery times are estimates and may be subject to carrier delays.
                 </p>
               </section>
 
@@ -88,7 +88,7 @@ export default async function TermsAndConditionsPage() {
                 </p>
               </section>
 
-              <section style={{ marginBottom: '2.5rem' }}>
+              <section id="refund-policy" style={{ marginBottom: '2.5rem', scrollMarginTop: '110px' }}>
                 <h2 style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--navy-900)', marginBottom: '1rem' }}>4. Refund & Dispute Policy</h2>
                 <p style={{ marginBottom: '1rem' }}>
                   Due to the custom nature of our digital and physical services, refunds are strictly governed by the following rules:

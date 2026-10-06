@@ -39,7 +39,7 @@ export const EmbroideryDigitizingPage = ({ hideHero = false }) => {
         'Up to 4" x 4" Dimensions',
         '100% Hand-Mapped Stitch Pathing',
         'Cap Curved Profile Optimization',
-        'Zero Thread Breaks Guaranteed',
+        'Optimized Stitch Pathing for Smooth Production',
         'All Machine Formats (.DST/.PES/.EMB)'
       ]
     },
@@ -232,7 +232,7 @@ export const EmbroideryDigitizingPage = ({ hideHero = false }) => {
               onClick={handleStartOrder}
               style={{ fontWeight: 800, padding: '0.85rem 2rem', fontSize: '1.05rem' }}
             >
-              {dbSettings.emb_hero_btn_primary || 'Order Digitizing Design'} <ArrowRight size={20} />
+              {dbSettings.emb_hero_btn_primary || 'Order Embroidery Digitizing'} <ArrowRight size={20} />
             </button>
 
             <a

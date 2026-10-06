@@ -15,8 +15,8 @@ const MASTER_DEFAULT_FAQS = [
         a: 'We export to all commercial and home machine formats: Tajima (.DST), Wilcom Master (.EMB), Brother/Baby Lock (.PES, .PEC), Barudan (.DSB, .DAT), Melco (.EXP), Janome (.JEF, .SEW), Husqvarna/Pfaff (.VP3, .VIP, .HUS), and Singer (.XXX). Every delivery also includes a high-resolution PDF Production Worksheet with stitch count, exact dimensions, thread color run sheet, and machine run-time calculations.'
       },
       {
-        q: 'How do you guarantee zero thread breaks and machine-ready sew-outs?',
-        a: 'Backed by 11+ years of factory digitizing experience, every design is 100% manually digitized (zero auto-trace). We engineer fabric-specific push-and-pull compensation (piqué knit, performance fleece, twill, leather, canvas), apply structured dual-underlay pathing, and program gradual lead-in stitch angles to eliminate needle deflection and thread breaks at high speeds (1,000+ SPM).'
+        q: 'How do you optimize files for clean, machine-ready sew-outs?',
+        a: 'Backed by 11+ years of factory digitizing experience, every design is manually digitized rather than auto-traced. We engineer fabric-specific push-and-pull compensation, structured underlay, efficient sequencing, and trim control to support clean production on commercial embroidery equipment.'
       },
       {
         q: 'How do you digitize 3D Puff / Foam embroidery for structured caps and hats?',
@@ -24,7 +24,7 @@ const MASTER_DEFAULT_FAQS = [
       },
       {
         q: 'What is the standard turnaround time for digitizing orders?',
-        a: 'Our standard turnaround is 12 to 24 hours. We also offer an express rush service delivered within 4 to 6 hours for time-sensitive commercial production deadlines, operating 24 hours a day, 7 days a week.'
+        a: 'Turnaround depends on design complexity and service tier. Most embroidery digitizing packages are estimated at 4–12 hours, while complex vector work may take up to 24 hours. Any rush availability is confirmed at order time.'
       },
       {
         q: 'Can you digitize tiny text and intricate small details for left chest logos?',

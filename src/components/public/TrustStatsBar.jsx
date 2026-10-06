@@ -106,7 +106,7 @@ export const TrustStatsBar = () => {
     displayStats = [
       { id: '1', icon: <Zap size={24} color="var(--orange-500)" />, value: '4–12h', suffix: '', label: 'Average Turnaround', isStatic: true, staticText: '4–12h' },
       { id: '2', icon: <ShieldCheck size={24} color="var(--orange-500)" />, value: '100%', suffix: '', label: 'Manual Pathing Guarantee', isStatic: true, staticText: '100%' },
-      { id: '3', icon: <FileCheck size={24} color="var(--orange-500)" />, value: 'Zero', suffix: '', label: 'Thread Breaks Policy', isStatic: true, staticText: 'Zero' },
+      { id: '3', icon: <FileCheck size={24} color="var(--orange-500)" />, value: 'Clean', suffix: '', label: 'Production-Ready Pathing', isStatic: true, staticText: 'Clean' },
       { id: '4', icon: <Award size={24} color="var(--orange-500)" />, value: 'Free', suffix: '', label: 'Unlimited Revisions', isStatic: true, staticText: 'Free' }
     ];
   }
