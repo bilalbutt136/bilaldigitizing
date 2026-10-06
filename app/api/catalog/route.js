@@ -113,7 +113,7 @@ const fetchPublicCatalogBundle = unstable_cache(
       testimonials: combinedTestimonials
     };
   },
-  ['public-catalog-bundle-v1'],
+  ['public-catalog-bundle-v2'],
   { revalidate: 300, tags: ['catalog', 'portfolio', 'site-branding'] }
 );
 
