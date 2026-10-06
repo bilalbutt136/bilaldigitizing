@@ -10,6 +10,7 @@
     "lint": "oxlint",
     "icons:generate": "node scripts/generateFavicon.cjs",
     "migrate": "node run_migrations.js",
+    "backup": "node scripts/process_backup.mjs",
     "test": "node --test src/tests/*.test.js",
     "test:api-security": "npm run build && node scripts/adversarial-api-tests.mjs"
   },
