@@ -32,7 +32,8 @@ export const injectMetaPixel = (pixelId, advancedMatching = null) => {
   }
 
   // 2. Ensure official https://connect.facebook.net/en_US/fbevents.js script is in document.head
-  let scriptEl = document.getElementById('facebook-jssdk-pixel');
+  let scriptEl = document.getElementById('facebook-jssdk-pixel') ||
+    document.querySelector('script[src*="connect.facebook.net/en_US/fbevents.js"]');
   if (!scriptEl) {
     scriptEl = document.createElement('script');
     scriptEl.id = 'facebook-jssdk-pixel';
@@ -46,7 +47,8 @@ export const injectMetaPixel = (pixelId, advancedMatching = null) => {
     }
   }
 
-  // 3. Initialize the Pixel ID with Advanced Matching and track initial PageView
+  // 3. Initialize the Pixel ID with Advanced Matching.
+  // Route tracking below emits exactly one PageView per initial load/navigation.
   const matchPayload = (advancedMatching && typeof advancedMatching === 'object') ? advancedMatching : {};
   if (window._fbq_active_pixel_id !== cleanId) {
     if (Object.keys(matchPayload).length > 0) {
@@ -54,7 +56,6 @@ export const injectMetaPixel = (pixelId, advancedMatching = null) => {
     } else {
       window.fbq('init', cleanId);
     }
-    window.fbq('track', 'PageView');
     window._fbq_active_pixel_id = cleanId;
     try {
       localStorage.setItem('meta_pixel_id', cleanId);
@@ -124,7 +125,7 @@ export const MetaPixelTracker = () => {
     const eventId = generateUUID();
 
     // Fire PageView to Meta Pixel with rich event metadata
-    if (window.fbq) {
+    if (activePixelId && window.fbq) {
       window.fbq('track', 'PageView', {
         page_title: telemetry.pageTitle,
         page_path: telemetry.pagePath,
