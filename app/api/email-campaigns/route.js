@@ -27,16 +27,42 @@ export function generateCampaignHtml({
   offerCode = '',
   buttonText = '',
   buttonUrl = '',
-  siteUrl = 'https://bdigitizing.com'
+  siteUrl = 'https://bdigitizing.com',
+  emailType = 'campaign',
+  attachments = []
 }) {
-  const cleanHeadline = (headline || subject || 'Special Announcement from BDigitizing Studio').trim();
+  const isSupport = emailType === 'support';
+  const cleanHeadline = (headline || subject || (isSupport ? 'BDigitizing Support Assistance' : 'Special Announcement from BDigitizing Studio')).trim();
   const rawParagraphs = (message || '').split(/\n\s*\n/).map(p => p.trim()).filter(Boolean);
 
   const paragraphsHtml = rawParagraphs.length > 0
     ? rawParagraphs.map(p => `<p style="margin: 0 0 16px 0; color: #334155; font-size: 15px; line-height: 1.7; white-space: pre-wrap;">${escapeHtml(p)}</p>`).join('')
     : `<p style="margin: 0 0 16px 0; color: #334155; font-size: 15px; line-height: 1.7;">${escapeHtml(message || '')}</p>`;
 
-  const offerHtml = offerCode && offerCode.trim() ? `
+  // Attachments Section
+  const attachmentsHtml = Array.isArray(attachments) && attachments.length > 0 ? `
+    <div style="margin: 24px 0 16px 0; padding: 16px 20px; background-color: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 10px;">
+      <div style="font-size: 12px; font-weight: 800; color: #475569; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px;">
+        📎 Attached Files (${attachments.length})
+      </div>
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+        ${attachments.map(att => `
+          <tr>
+            <td style="padding: 8px 0; border-bottom: 1px solid #edf2f7; font-size: 13px; color: #1e293b; font-weight: 600;">
+              📄 ${escapeHtml(att.name || 'File')} ${att.size ? `<span style="font-size: 11px; color: #64748b; font-weight: 400;">(${escapeHtml(att.size)})</span>` : ''}
+            </td>
+            <td align="right" style="padding: 8px 0; border-bottom: 1px solid #edf2f7;">
+              <a href="${escapeHtml(att.url)}" target="_blank" rel="noopener noreferrer" style="display: inline-block; padding: 5px 14px; background: ${isSupport ? '#2563eb' : '#ea580c'}; color: #ffffff; text-decoration: none; border-radius: 6px; font-size: 12px; font-weight: 700;">
+                Download
+              </a>
+            </td>
+          </tr>
+        `).join('')}
+      </table>
+    </div>
+  ` : '';
+
+  const offerHtml = !isSupport && offerCode && offerCode.trim() ? `
     <div style="background: #fff7ed; border: 2px dashed #ea580c; border-radius: 10px; padding: 18px 24px; text-align: center; margin: 24px 0;">
       <div style="font-size: 11px; font-weight: 800; color: #c2410c; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 6px;">
         EXCLUSIVE PROMOTION / COUPON
@@ -55,11 +81,73 @@ export function generateCampaignHtml({
 
   const buttonHtml = targetButtonText ? `
     <div style="text-align: center; margin: 28px 0 14px 0;">
-      <a href="${escapeHtml(targetButtonUrl)}" style="display: inline-block; background: #ea580c; color: #ffffff; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: 800; font-size: 15px; box-shadow: 0 4px 12px rgba(234, 88, 12, 0.3);">
+      <a href="${escapeHtml(targetButtonUrl)}" style="display: inline-block; background: ${isSupport ? '#0f172a' : '#ea580c'}; color: #ffffff; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: 800; font-size: 15px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);">
         ${escapeHtml(targetButtonText)}
       </a>
     </div>
   ` : '';
+
+  const headerHtml = isSupport ? `
+    <tr>
+      <td style="background: #0f172a; padding: 22px 30px; border-bottom: 3px solid #2563eb;">
+        <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+          <tr>
+            <td>
+              <div style="color: #ffffff; font-size: 20px; font-weight: 800; letter-spacing: -0.3px;">
+                BDigitizing <span style="color: #3b82f6;">SUPPORT</span>
+              </div>
+              <div style="color: #94a3b8; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 2px;">
+                Client Assistance &amp; Direct Desk
+              </div>
+            </td>
+            <td align="right">
+              <span style="display: inline-block; background: rgba(59, 130, 246, 0.18); border: 1px solid rgba(59, 130, 246, 0.4); color: #60a5fa; font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 999px;">
+                Direct Message
+              </span>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  ` : `
+    <tr>
+      <td style="background: #090d16; padding: 26px 30px; text-align: center; border-bottom: 3px solid #ea580c;">
+        <h1 style="color: #ffffff; margin: 0 0 6px 0; font-size: 22px; font-weight: 800; letter-spacing: -0.5px;">
+          BDigitizing <span style="color: #ea580c;">STUDIO</span>
+        </h1>
+        <div style="color: #94a3b8; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">
+          Commercial Embroidery Digitizing &amp; Vector Lab
+        </div>
+      </td>
+    </tr>
+  `;
+
+  const footerHtml = isSupport ? `
+    <tr>
+      <td style="background-color: #f8fafc; padding: 22px 30px; border-top: 1px solid #e2e8f0; font-size: 12px; color: #64748b; line-height: 1.6;">
+        <div style="font-weight: 800; color: #1e293b; font-size: 13px; margin-bottom: 2px;">BDigitizing Client Support Desk</div>
+        <div>Master Craftsmanship • 8-12h Express Turnaround</div>
+        <div style="margin-top: 8px;">
+          Need more help? Simply reply directly to this email or reach us at <a href="mailto:support@bdigitizing.com" style="color: #2563eb; text-decoration: none; font-weight: 700;">support@bdigitizing.com</a>
+        </div>
+        <div style="margin-top: 10px; font-size: 11px; color: #94a3b8;">
+          Website: <a href="${siteUrl}" style="color: #64748b; text-decoration: underline;">bdigitizing.com</a> • <a href="${siteUrl}/client-portal" style="color: #64748b; text-decoration: underline;">Client Portal</a>
+        </div>
+      </td>
+    </tr>
+  ` : `
+    <tr>
+      <td style="background-color: #f8fafc; padding: 22px 30px; text-align: center; border-top: 1px solid #e2e8f0; font-size: 12px; color: #64748b; line-height: 1.6;">
+        <div style="font-weight: 700; color: #334155; margin-bottom: 4px;">BDigitizing Studio</div>
+        <div>Support: <a href="mailto:support@bdigitizing.com" style="color: #ea580c; text-decoration: none;">support@bdigitizing.com</a> • <a href="${siteUrl}" style="color: #ea580c; text-decoration: none;">bdigitizing.com</a></div>
+        <div style="margin-top: 12px; font-size: 11px; color: #94a3b8;">
+          You received this email because you are a registered customer of BDigitizing Studio.
+          <br>
+          <a href="${siteUrl}/client-portal" style="color: #64748b; text-decoration: underline;">Manage account or preferences</a>
+        </div>
+      </td>
+    </tr>
+  `;
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -73,45 +161,19 @@ export function generateCampaignHtml({
     <tr>
       <td align="center">
         <table role="presentation" width="100%" style="max-width: 600px; background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 14px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.05);">
-
-          <!-- Header -->
-          <tr>
-            <td style="background: #090d16; padding: 26px 30px; text-align: center; border-bottom: 3px solid #ea580c;">
-              <h1 style="color: #ffffff; margin: 0 0 6px 0; font-size: 22px; font-weight: 800; letter-spacing: -0.5px;">
-                BDigitizing <span style="color: #ea580c;">STUDIO</span>
-              </h1>
-              <div style="color: #94a3b8; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">
-                Commercial Embroidery Digitizing &amp; Vector Lab
-              </div>
-            </td>
-          </tr>
-
-          <!-- Main Content -->
+          ${headerHtml}
           <tr>
             <td style="padding: 32px 32px 24px 32px; color: #1e293b;">
               <h2 style="font-size: 19px; font-weight: 800; color: #0f172a; margin: 0 0 16px 0; line-height: 1.35;">
                 ${escapeHtml(cleanHeadline)}
               </h2>
-
               ${paragraphsHtml}
               ${offerHtml}
+              ${attachmentsHtml}
               ${buttonHtml}
             </td>
           </tr>
-
-          <!-- Footer -->
-          <tr>
-            <td style="background-color: #f8fafc; padding: 22px 30px; text-align: center; border-top: 1px solid #e2e8f0; font-size: 12px; color: #64748b; line-height: 1.6;">
-              <div style="font-weight: 700; color: #334155; margin-bottom: 4px;">BDigitizing Studio</div>
-              <div>Support: <a href="mailto:support@bdigitizing.com" style="color: #ea580c; text-decoration: none;">support@bdigitizing.com</a> • <a href="${siteUrl}" style="color: #ea580c; text-decoration: none;">bdigitizing.com</a></div>
-              <div style="margin-top: 12px; font-size: 11px; color: #94a3b8;">
-                You received this email because you are a registered customer of BDigitizing Studio.
-                <br>
-                <a href="${siteUrl}/client-portal" style="color: #64748b; text-decoration: underline;">Manage account or preferences</a>
-              </div>
-            </td>
-          </tr>
-
+          ${footerHtml}
         </table>
       </td>
     </tr>
@@ -120,7 +182,7 @@ export function generateCampaignHtml({
 </html>`;
 }
 
-async function dispatchSingleEmail({ from, to, subject, html }) {
+async function dispatchSingleEmail({ from, to, subject, html, attachments = [] }) {
   // Option 1: Direct SMTP (Namecheap Private Email / Custom SMTP) if configured
   const smtpPass = process.env.SMTP_PASS;
   if (smtpPass) {
@@ -136,13 +198,21 @@ async function dispatchSingleEmail({ from, to, subject, html }) {
         auth: { user: smtpUser, pass: smtpPass }
       });
 
-      const info = await transporter.sendMail({
+      const mailOptions = {
         from: from || `BDigitizing Support <${smtpUser}>`,
         to,
         subject,
         html
-      });
+      };
 
+      if (Array.isArray(attachments) && attachments.length > 0) {
+        mailOptions.attachments = attachments.map(att => ({
+          filename: att.name || 'attachment',
+          path: att.url
+        }));
+      }
+
+      const info = await transporter.sendMail(mailOptions);
       return { success: true, provider: 'smtp', id: info.messageId };
     } catch (smtpErr) {
       console.warn('[email-campaigns] SMTP dispatch failed, trying Resend fallback:', smtpErr.message);
@@ -158,12 +228,21 @@ async function dispatchSingleEmail({ from, to, subject, html }) {
   const resend = new Resend(resendApiKey);
 
   try {
-    const res = await resend.emails.send({
+    const resendPayload = {
       from,
       to,
       subject,
       html
-    });
+    };
+
+    if (Array.isArray(attachments) && attachments.length > 0) {
+      resendPayload.attachments = attachments.map(att => ({
+        filename: att.name || 'attachment',
+        path: att.url
+      }));
+    }
+
+    const res = await resend.emails.send(resendPayload);
 
     if (res?.error) {
       throw new Error(res.error.message || 'Resend dispatch rejected');
@@ -176,12 +255,19 @@ async function dispatchSingleEmail({ from, to, subject, html }) {
     const isOwner = Array.isArray(to) ? to.includes(RESEND_SANDBOX_OWNER) : to === RESEND_SANDBOX_OWNER;
     if (errMsg.includes('not verified') && isOwner) {
       console.log('[email-campaigns] Falling back to onboarding@resend.dev for verified owner test...');
-      const fallback = await resend.emails.send({
+      const fallbackPayload = {
         from: 'BDigitizing <onboarding@resend.dev>',
         to: RESEND_SANDBOX_OWNER,
         subject: `[TEST] ${subject}`,
         html
-      });
+      };
+      if (Array.isArray(attachments) && attachments.length > 0) {
+        fallbackPayload.attachments = attachments.map(att => ({
+          filename: att.name || 'attachment',
+          path: att.url
+        }));
+      }
+      const fallback = await resend.emails.send(fallbackPayload);
 
       if (!fallback?.error) {
         return {
@@ -197,20 +283,19 @@ async function dispatchSingleEmail({ from, to, subject, html }) {
   }
 }
 
-// ─── GET: list all campaigns stored in Supabase ───────────────────────────────
+// ─── GET: list all campaigns and registered clients stored in Supabase ──────────────────
 async function GET_impl(req) {
   try {
     const { isAdmin } = await getServerAuthUser(req);
     if (!isAdmin) return NextResponse.json({ error: 'Unauthorized: Admin authentication required.' }, { status: 401 });
 
     const supabase = createAdminClient();
-    const { data, error } = await supabase
-      .from('email_campaigns')
-      .select('*')
-      .order('created_at', { ascending: false })
-      .limit(100);
+    const [campaignsResult, clientsResult] = await Promise.all([
+      supabase.from('email_campaigns').select('*').order('created_at', { ascending: false }).limit(100),
+      supabase.from('clients').select('id, name, email').not('email', 'is', null).order('created_at', { ascending: false }).limit(200)
+    ]);
 
-    if (error) throw error;
+    if (campaignsResult.error) throw campaignsResult.error;
 
     // Check configuration health
     const hasSmtp = Boolean(process.env.SMTP_PASS);
@@ -218,7 +303,8 @@ async function GET_impl(req) {
 
     return NextResponse.json({
       success: true,
-      campaigns: data || [],
+      campaigns: campaignsResult.data || [],
+      clients: clientsResult.data || [],
       config: {
         hasSmtp,
         hasResend,
@@ -250,16 +336,18 @@ async function POST_impl(req) {
     const body = await req.json().catch(() => ({}));
     const {
       campaignName,
+      emailType = 'campaign', // 'support' | 'campaign'
       subject,
       headline,
       message,
       offerCode,
       buttonText,
       buttonUrl,
-      recipientMode,   // 'test' | 'single' | 'all_clients'
+      attachments = [],      // [{ name, url, size, type }]
+      recipientMode,         // 'test' | 'single' | 'all_clients'
       testEmail,
       singleEmail,
-      preview          // if true: dry-run, returns recipient count
+      preview                // if true: dry-run, returns recipient count
     } = body;
 
     if (!subject || !subject.trim()) {
@@ -274,13 +362,15 @@ async function POST_impl(req) {
 
     // Auto-generate clean HTML template from simple text inputs
     const html = generateCampaignHtml({
+      emailType,
       subject,
       headline,
       message,
       offerCode,
       buttonText,
       buttonUrl,
-      siteUrl
+      siteUrl,
+      attachments: Array.isArray(attachments) ? attachments : []
     });
 
     // ── Resolve Recipients ───────────────────────────────────────────────────
@@ -346,7 +436,8 @@ async function POST_impl(req) {
           from: fromAddress,
           to: recipient,
           subject,
-          html
+          html,
+          attachments: Array.isArray(attachments) ? attachments : []
         });
         sentCount++;
       } catch (sendErr) {
@@ -365,12 +456,15 @@ async function POST_impl(req) {
       name: campaignName?.trim() || subject.slice(0, 80),
       subject: subject.trim(),
       from_address: fromAddress,
-      recipient_mode: recipientMode || 'all_clients',
+      recipient_mode: recipientMode || (emailType === 'support' ? 'single' : 'all_clients'),
       recipient_count: recipients.length,
       sent_count: sentCount,
       fail_count: failCount,
       status: campaignStatus,
       error_message: firstErrorMessage || null,
+      email_type: emailType,
+      target_email: recipientMode === 'single' ? (singleEmail || recipients[0]) : recipientMode === 'test' ? (testEmail || recipients[0]) : null,
+      attachments: Array.isArray(attachments) ? attachments : [],
       created_at: new Date().toISOString()
     }]);
 
