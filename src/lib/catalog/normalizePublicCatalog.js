@@ -142,6 +142,7 @@ export function normalizePublicCatalog(data = {}) {
       metaPixelId: rawSettings.metaPixelId || configMap.meta_pixel_id || configMap.metaPixelId || null,
       googleAnalyticsId: rawSettings.googleAnalyticsId || configMap.google_analytics_id || configMap.googleAnalyticsId || null,
       tiktokPixelId: rawSettings.tiktokPixelId || configMap.tiktok_pixel_id || configMap.tiktokPixelId || null,
+      customHeaderScript: rawSettings.customHeaderScript || configMap.custom_header_script || configMap.customHeaderScript || null,
       promotions: parsedPromotions,
       service_discounts: parsedServiceDiscounts,
       serviceDiscounts: parsedServiceDiscounts,

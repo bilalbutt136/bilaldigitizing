@@ -387,6 +387,8 @@ export const AdminDashboard = () => {
     contact: 'Contact Information',
     'settings-theme': 'Theme & Brand',
     'settings-meta': 'Meta Pixel & SEO',
+    'meta-pixel': 'Meta Pixel & SEO',
+    meta: 'Meta Pixel & SEO',
     'settings-admin': 'Admin Team & Security',
     'settings-email': 'Email & Alerts',
     'settings-general': 'Studio Profile & Defaults'
@@ -991,7 +993,7 @@ export const AdminDashboard = () => {
         {activeTab === 'contact' && <ContactInfoManager />}
         {activeTab === 'settings' && <SystemSettingsManager activeSubTab="theme" />}
         {activeTab === 'settings-theme' && <SystemSettingsManager activeSubTab="theme" />}
-        {activeTab === 'settings-meta' && <SystemSettingsManager activeSubTab="meta" />}
+        {(activeTab === 'settings-meta' || activeTab === 'meta-pixel' || activeTab === 'meta') && <SystemSettingsManager activeSubTab="meta" />}
         {activeTab === 'settings-admin' && <SystemSettingsManager activeSubTab="security" />}
         {activeTab === 'settings-email' && <SystemSettingsManager activeSubTab="notifications" />}
         {activeTab === 'settings-notifications' && <SystemSettingsManager activeSubTab="notifications" />}

@@ -2798,6 +2798,9 @@ export const StateProvider = ({ children, initialCatalog = null }) => {
     if (newSettings.tiktokPixelId !== undefined) {
       await saveCmsConfigToSupabase('tiktok_pixel_id', newSettings.tiktokPixelId);
     }
+    if (newSettings.customHeaderScript !== undefined) {
+      await saveCmsConfigToSupabase('custom_header_script', newSettings.customHeaderScript);
+    }
     if (newSettings.promotions) {
       await saveCmsConfigToSupabase('promotions', newSettings.promotions);
     }

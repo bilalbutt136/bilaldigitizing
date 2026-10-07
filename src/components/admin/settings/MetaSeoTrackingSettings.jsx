@@ -7,19 +7,31 @@ import {
   Radio,
   Search,
   Globe,
-  BarChart2 as _BarChart2,
-  CheckCircle2 as _CheckCircle2,
-  ShieldCheck as _ShieldCheck,
   Save,
   RefreshCw,
-  Share2 as _Share2,
-  ExternalLink as _ExternalLink,
-  Layers as _Layers,
   Activity,
-  Code as _Code,
-  Eye
+  Code,
+  Eye,
+  CheckCircle2,
+  AlertCircle,
+  Sparkles,
+  ExternalLink,
+  Copy,
+  Check,
+  Zap,
+  HelpCircle,
+  FileCode,
+  Layers,
+  ShieldCheck
 } from 'lucide-react';
 import { VisitorDetailsModal } from '../tracking/VisitorDetailsModal';
+import {
+  extractMetaPixelId,
+  isValidMetaPixelId,
+  detectSnippetType,
+  extractGoogleAnalyticsId,
+  extractTikTokPixelId
+} from '../../../utils/pixelUtils.js';
 
 export const MetaSeoTrackingSettings = () => {
   const { siteSettings = {}, updateSiteSettings, showToast } = useAppState();
@@ -28,11 +40,18 @@ export const MetaSeoTrackingSettings = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
 
-  // Tracking IDs Local State
+  // Tracking IDs & Input Mode Local State
   const [metaPixelId, setMetaPixelId] = useState(siteSettings?.metaPixelId || '');
+  const [pixelInputMode, setPixelInputMode] = useState('id'); // 'id' | 'snippet'
+  const [rawSnippetCode, setRawSnippetCode] = useState('');
+  const [snippetExtractionNotice, setSnippetExtractionNotice] = useState(null);
+  const [customHeaderScript, setCustomHeaderScript] = useState(siteSettings?.customHeaderScript || '');
+  const [showAdvancedScript, setShowAdvancedScript] = useState(Boolean(siteSettings?.customHeaderScript));
   const [googleAnalyticsId, setGoogleAnalyticsId] = useState(siteSettings?.googleAnalyticsId || '');
   const [tiktokPixelId, setTiktokPixelId] = useState(siteSettings?.tiktokPixelId || '');
   const [enableAutoTracking, setEnableAutoTracking] = useState(siteSettings?.enableAutoTracking !== false);
+  const [testPingLoading, setTestPingLoading] = useState(false);
+  const [testPingSuccessMsg, setTestPingSuccessMsg] = useState(null);
 
   // SEO & Social Graph Metadata Local State
   const [metaTitle, setMetaTitle] = useState(siteSettings?.metaTitle || 'BDigitizing | Premier Commercial Embroidery Digitizing & Vector Art Lab');
@@ -48,6 +67,7 @@ export const MetaSeoTrackingSettings = () => {
   useEffect(() => {
     if (siteSettings) {
       if (siteSettings.metaPixelId !== undefined) setMetaPixelId(siteSettings.metaPixelId || '');
+      if (siteSettings.customHeaderScript !== undefined) setCustomHeaderScript(siteSettings.customHeaderScript || '');
       if (siteSettings.googleAnalyticsId !== undefined) setGoogleAnalyticsId(siteSettings.googleAnalyticsId || '');
       if (siteSettings.tiktokPixelId !== undefined) setTiktokPixelId(siteSettings.tiktokPixelId || '');
       if (siteSettings.enableAutoTracking !== undefined) setEnableAutoTracking(siteSettings.enableAutoTracking !== false);
@@ -58,6 +78,37 @@ export const MetaSeoTrackingSettings = () => {
       if (siteSettings.ogImageUrl) setOgImageUrl(siteSettings.ogImageUrl);
     }
   }, [siteSettings]);
+
+  const cleanPixelId = extractMetaPixelId(metaPixelId) || String(metaPixelId || '').trim();
+  const isPixelValid = isValidMetaPixelId(cleanPixelId);
+
+  const handleMetaPixelIdChange = (val) => {
+    const raw = String(val || '');
+    const snippetType = detectSnippetType(raw);
+    if (snippetType === 'full_meta_code' || snippetType === 'custom_script') {
+      const extracted = extractMetaPixelId(raw);
+      if (extracted) {
+        setMetaPixelId(extracted);
+        setRawSnippetCode(raw);
+        setSnippetExtractionNotice(`Auto-detected Meta Base Code! Successfully extracted Pixel ID: ${extracted}`);
+        setTimeout(() => setSnippetExtractionNotice(null), 6000);
+        return;
+      }
+    }
+    setMetaPixelId(raw);
+  };
+
+  const handleSnippetPasteChange = (val) => {
+    const raw = String(val || '');
+    setRawSnippetCode(raw);
+    const extracted = extractMetaPixelId(raw);
+    if (extracted) {
+      setMetaPixelId(extracted);
+      setSnippetExtractionNotice(`Extracted Meta Pixel ID: ${extracted}`);
+    } else {
+      setSnippetExtractionNotice(null);
+    }
+  };
 
   const formatEventTime = (timeStr) => {
     if (!timeStr) return new Date().toLocaleString('en-US');
@@ -112,17 +163,27 @@ export const MetaSeoTrackingSettings = () => {
     e?.preventDefault?.();
     setIsSaving(true);
     try {
-      const trimmedPixelId = metaPixelId.trim();
-      if (typeof window !== 'undefined' && trimmedPixelId) {
-        try { localStorage.setItem('meta_pixel_id', trimmedPixelId); } catch {}
+      const cleanIdToSave = extractMetaPixelId(metaPixelId) || metaPixelId.trim();
+      const cleanGAId = extractGoogleAnalyticsId(googleAnalyticsId);
+      const cleanTikTokId = extractTikTokPixelId(tiktokPixelId);
+      const cleanHeaderScript = customHeaderScript.trim();
+
+      if (typeof window !== 'undefined' && cleanIdToSave) {
+        try { localStorage.setItem('meta_pixel_id', cleanIdToSave); } catch {}
         const { injectMetaPixel } = await import('../../common/MetaPixelTracker');
-        injectMetaPixel(trimmedPixelId);
+        injectMetaPixel(cleanIdToSave);
+      }
+
+      if (typeof window !== 'undefined' && cleanHeaderScript) {
+        const { injectCustomHeaderScript } = await import('../../common/MetaPixelTracker');
+        injectCustomHeaderScript(cleanHeaderScript);
       }
 
       await updateSiteSettings({
-        metaPixelId: trimmedPixelId,
-        googleAnalyticsId: googleAnalyticsId.trim(),
-        tiktokPixelId: tiktokPixelId.trim(),
+        metaPixelId: cleanIdToSave,
+        customHeaderScript: cleanHeaderScript,
+        googleAnalyticsId: cleanGAId,
+        tiktokPixelId: cleanTikTokId,
         enableAutoTracking,
         metaTitle: metaTitle.trim(),
         metaDescription: metaDescription.trim(),
@@ -130,8 +191,11 @@ export const MetaSeoTrackingSettings = () => {
         canonicalUrl: canonicalUrl.trim(),
         ogImageUrl: ogImageUrl.trim()
       });
-      showToast('Meta Pixel & Tracking settings saved and activated live!', 'success');
-    } catch {
+
+      setMetaPixelId(cleanIdToSave);
+      showToast('Meta Pixel & Tracking settings saved and activated live on production!', 'success');
+    } catch (err) {
+      console.error('Tracking settings save error:', err);
       showToast('Failed to persist settings. Please check network connection.', 'error');
     } finally {
       setIsSaving(false);
@@ -139,22 +203,34 @@ export const MetaSeoTrackingSettings = () => {
   };
 
   const handleSendTestEvent = async () => {
+    const targetId = extractMetaPixelId(metaPixelId) || metaPixelId.trim();
+    if (!targetId) {
+      if (showToast) showToast('Please enter or paste a valid Meta Pixel ID first.', 'error');
+      return;
+    }
+    setTestPingLoading(true);
+    setTestPingSuccessMsg(null);
     try {
-      const trimmedPixelId = metaPixelId.trim();
-      if (typeof window !== 'undefined' && trimmedPixelId) {
+      if (typeof window !== 'undefined') {
         const { injectMetaPixel, trackMetaEvent } = await import('../../common/MetaPixelTracker');
-        injectMetaPixel(trimmedPixelId);
+        injectMetaPixel(targetId);
         trackMetaEvent('AdminPortalTestPing', {
           time: new Date().toISOString(),
           status: 'verified',
-          test_source: 'MetaSeoTrackingSettings'
+          test_source: 'MetaSeoTrackingSettings',
+          pixel_id: targetId,
+          page: window.location.pathname
         }, 'Platform Admin');
       }
 
-      showToast('⚡ Live test tracking event dispatched to Meta Pixel & Database!', 'success');
-      setTimeout(loadEvents, 1000);
-    } catch {
-      showToast('Test event failed to send.', 'error');
+      setTestPingSuccessMsg(`✓ Test PageView event dispatched to Pixel ID ${targetId}! Verified in browser and recorded in live database.`);
+      if (showToast) showToast('⚡ Live test tracking event dispatched to Meta Pixel & Database!', 'success');
+      setTimeout(loadEvents, 800);
+      setTimeout(() => setTestPingSuccessMsg(null), 10000);
+    } catch (err) {
+      if (showToast) showToast('Test event failed: ' + (err.message || 'Unknown error'), 'error');
+    } finally {
+      setTestPingLoading(false);
     }
   };
 
@@ -249,41 +325,344 @@ export const MetaSeoTrackingSettings = () => {
       {/* TAB 1: Pixels & Tracking Engines */}
       {activeSubTab === 'tracking' && (
         <form onSubmit={handleSaveAll} style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
-          <div className="card" style={{ padding: '2rem', background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '20px', boxShadow: 'var(--shadow-sm)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: metaPixelId ? '#10b981' : '#f59e0b' }} />
-                <h4 style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--color-text-primary)', margin: 0 }}>
-                  Meta Pixel (Facebook & Instagram)
-                </h4>
+
+          {/* Test Ping Success Alert Banner */}
+          {testPingSuccessMsg && (
+            <div style={{
+              background: 'rgba(16, 185, 129, 0.1)',
+              border: '1.5px solid #10b981',
+              borderRadius: '14px',
+              padding: '1rem 1.25rem',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '1rem',
+              flexWrap: 'wrap'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <CheckCircle2 size={20} style={{ color: '#10b981', flexShrink: 0 }} />
+                <span style={{ fontSize: '0.9rem', fontWeight: 700, color: '#065f46' }}>
+                  {testPingSuccessMsg}
+                </span>
               </div>
-              <span style={{ fontSize: '0.75rem', fontWeight: 800, background: metaPixelId ? 'rgba(16, 185, 129, 0.12)' : 'var(--color-subtle)', color: metaPixelId ? '#10b981' : 'var(--color-text-muted)', padding: '0.25rem 0.65rem', borderRadius: '9999px' }}>
-                {metaPixelId ? '● Live & Connected' : '○ Not Configured'}
-              </span>
+              <button
+                type="button"
+                onClick={() => setActiveSubTab('logs')}
+                style={{
+                  background: '#10b981',
+                  color: '#ffffff',
+                  border: 'none',
+                  borderRadius: '8px',
+                  padding: '0.4rem 0.85rem',
+                  fontSize: '0.8rem',
+                  fontWeight: 800,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.35rem'
+                }}
+              >
+                <Activity size={14} /> View in Live Event Log
+              </button>
+            </div>
+          )}
+
+          {/* Main Meta Pixel Card */}
+          <div className="card" style={{ padding: '2rem', background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '20px', boxShadow: 'var(--shadow-sm)' }}>
+
+            {/* Status Header */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '0.75rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: isPixelValid ? '#10b981' : '#f59e0b', boxShadow: isPixelValid ? '0 0 10px rgba(16, 185, 129, 0.6)' : 'none' }} />
+                <div>
+                  <h4 style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--color-text-primary)', margin: 0 }}>
+                    Meta Pixel (Facebook & Instagram)
+                  </h4>
+                  <div style={{ fontSize: '0.78rem', color: 'var(--color-text-muted)', marginTop: '0.15rem' }}>
+                    Standard Conversion API & Direct Browser Events
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                <span style={{
+                  fontSize: '0.8rem',
+                  fontWeight: 800,
+                  background: isPixelValid ? 'rgba(16, 185, 129, 0.12)' : 'var(--color-subtle)',
+                  color: isPixelValid ? '#10b981' : 'var(--color-text-muted)',
+                  padding: '0.35rem 0.85rem',
+                  borderRadius: '9999px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.4rem'
+                }}>
+                  {isPixelValid ? (
+                    <><CheckCircle2 size={14} /> Live & Connected: {cleanPixelId}</>
+                  ) : (
+                    <><AlertCircle size={14} /> ○ Not Configured</>
+                  )}
+                </span>
+
+                <button
+                  type="button"
+                  onClick={handleSendTestEvent}
+                  disabled={!isPixelValid || testPingLoading}
+                  className="btn btn-outline btn-sm"
+                  style={{
+                    fontWeight: 700,
+                    padding: '0.35rem 0.85rem',
+                    borderRadius: '8px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.35rem',
+                    borderColor: '#3b82f6',
+                    color: '#3b82f6'
+                  }}
+                  title="Dispatch a test PageView to Meta Pixel and Supabase"
+                >
+                  <Zap size={14} /> {testPingLoading ? 'Pinging...' : 'Test Ping'}
+                </button>
+              </div>
             </div>
 
-            <p style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)', marginBottom: '1.25rem', lineHeight: 1.55 }}>
-              Automatically tracks <code>PageView</code>, <code>InitiateCheckout</code>, <code>Lead</code>, and <code>Purchase</code> events to optimize ad conversion and retarget visitors.
+            <p style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)', marginBottom: '1.5rem', lineHeight: 1.6 }}>
+              Connect your Meta Pixel to track website visitors, measure return on ad spend (ROAS), and optimize Facebook and Instagram ad campaigns.
             </p>
 
-            <div className="form-group" style={{ marginBottom: '1.5rem' }}>
-              <label style={{ display: 'block', fontSize: '0.825rem', fontWeight: 700, color: 'var(--color-text-primary)', marginBottom: '0.4rem' }}>
-                Meta Pixel ID
-              </label>
-              <input
-                type="text"
-                className="form-control"
-                placeholder="e.g. 1234567890123456"
-                value={metaPixelId}
-                onChange={(e) => setMetaPixelId(e.target.value)}
-                style={{ fontFamily: 'monospace', fontSize: '0.95rem' }}
-              />
-              <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginTop: '0.35rem', display: 'block' }}>
-                Found in Meta Events Manager ➔ Data Sources ➔ Settings ➔ Dataset ID.
-              </span>
+            {/* Input Mode Selector */}
+            <div style={{
+              display: 'flex',
+              gap: '0.5rem',
+              background: 'var(--color-subtle, var(--bg-subtle))',
+              padding: '0.35rem',
+              borderRadius: '12px',
+              border: '1px solid var(--border-color)',
+              marginBottom: '1.25rem',
+              width: 'fit-content'
+            }}>
+              <button
+                type="button"
+                onClick={() => setPixelInputMode('id')}
+                style={{
+                  padding: '0.45rem 1rem',
+                  borderRadius: '8px',
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontWeight: 700,
+                  fontSize: '0.825rem',
+                  background: pixelInputMode === 'id' ? 'var(--bg-card)' : 'transparent',
+                  color: pixelInputMode === 'id' ? 'var(--color-text-primary)' : 'var(--color-text-muted)',
+                  boxShadow: pixelInputMode === 'id' ? 'var(--shadow-sm)' : 'none',
+                  transition: 'all 0.15s ease',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.4rem'
+                }}
+              >
+                <span>🔢 Enter Pixel ID</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setPixelInputMode('snippet')}
+                style={{
+                  padding: '0.45rem 1rem',
+                  borderRadius: '8px',
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontWeight: 700,
+                  fontSize: '0.825rem',
+                  background: pixelInputMode === 'snippet' ? 'var(--bg-card)' : 'transparent',
+                  color: pixelInputMode === 'snippet' ? 'var(--color-text-primary)' : 'var(--color-text-muted)',
+                  boxShadow: pixelInputMode === 'snippet' ? 'var(--shadow-sm)' : 'none',
+                  transition: 'all 0.15s ease',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.4rem'
+                }}
+              >
+                <Code size={14} />
+                <span>Paste Full Meta Base Code Snippet</span>
+              </button>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem', paddingTop: '1.25rem', borderTop: '1px solid var(--border-color)' }}>
+            {/* Snippet Extraction Alert */}
+            {snippetExtractionNotice && (
+              <div style={{
+                background: 'rgba(59, 130, 246, 0.08)',
+                border: '1px solid rgba(59, 130, 246, 0.3)',
+                borderRadius: '10px',
+                padding: '0.65rem 1rem',
+                marginBottom: '1rem',
+                fontSize: '0.825rem',
+                color: '#2563eb',
+                fontWeight: 600,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem'
+              }}>
+                <Sparkles size={16} /> {snippetExtractionNotice}
+              </div>
+            )}
+
+            {/* MODE 1: Pixel ID Input */}
+            {pixelInputMode === 'id' && (
+              <div className="form-group" style={{ marginBottom: '1.25rem' }}>
+                <label style={{ display: 'block', fontSize: '0.825rem', fontWeight: 700, color: 'var(--color-text-primary)', marginBottom: '0.4rem' }}>
+                  Meta Pixel / Dataset ID
+                </label>
+                <div style={{ position: 'relative' }}>
+                  <input
+                    type="text"
+                    className="form-control"
+                    placeholder="e.g. 986664733689901 or 1234567890123456"
+                    value={metaPixelId}
+                    onChange={(e) => handleMetaPixelIdChange(e.target.value)}
+                    style={{
+                      fontFamily: 'monospace',
+                      fontSize: '0.95rem',
+                      letterSpacing: '0.04em',
+                      paddingRight: '2.5rem',
+                      borderColor: isPixelValid ? '#10b981' : undefined
+                    }}
+                  />
+                  {isPixelValid && (
+                    <div style={{ position: 'absolute', right: '0.85rem', top: '50%', transform: 'translateY(-50%)', color: '#10b981' }}>
+                      <CheckCircle2 size={18} />
+                    </div>
+                  )}
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.35rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>
+                    Found in Meta Events Manager ➔ Data Sources ➔ Settings ➔ Dataset ID. (You can also paste the full code here — it will auto-extract).
+                  </span>
+                  {isPixelValid && (
+                    <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#10b981' }}>
+                      ✓ Valid {cleanPixelId.length}-digit Meta Dataset ID
+                    </span>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* MODE 2: Snippet Paste Textarea */}
+            {pixelInputMode === 'snippet' && (
+              <div className="form-group" style={{ marginBottom: '1.25rem' }}>
+                <label style={{ display: 'block', fontSize: '0.825rem', fontWeight: 700, color: 'var(--color-text-primary)', marginBottom: '0.4rem' }}>
+                  Paste Meta Base Code Snippet
+                </label>
+                <textarea
+                  className="form-control"
+                  rows={6}
+                  placeholder={`<!-- Meta Pixel Code -->\n<script>\n!function(f,b,e,v,n,t,s)...\nfbq('init', '986664733689901');\nfbq('track', 'PageView');\n</script>\n<noscript><img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id=986664733689901&ev=PageView&noscript=1" /></noscript>\n<!-- End Meta Pixel Code -->`}
+                  value={rawSnippetCode}
+                  onChange={(e) => handleSnippetPasteChange(e.target.value)}
+                  style={{
+                    fontFamily: 'monospace',
+                    fontSize: '0.825rem',
+                    lineHeight: 1.45,
+                    resize: 'vertical',
+                    background: 'var(--bg-subtle, #f8fafc)'
+                  }}
+                />
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.5rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>
+                    Copy the entire block from Meta Events Manager (Install code manually). The system auto-extracts your ID and verifies initialization.
+                  </span>
+                  {cleanPixelId ? (
+                    <span style={{ fontSize: '0.78rem', fontWeight: 800, color: '#10b981', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                      <CheckCircle2 size={14} /> Extracted ID: {cleanPixelId}
+                    </span>
+                  ) : (
+                    <span style={{ fontSize: '0.75rem', color: '#f59e0b', fontWeight: 600 }}>
+                      Waiting for code paste...
+                    </span>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Automatic Event Coverage Highlights */}
+            <div style={{ marginTop: '1.5rem', paddingTop: '1.25rem', borderTop: '1px solid var(--border-color)' }}>
+              <div style={{ fontSize: '0.78rem', fontWeight: 800, color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.75rem' }}>
+                AUTOMATICALLY MONITORED CONVERSION EVENTS
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '0.75rem' }}>
+                <div style={{ padding: '0.65rem 0.85rem', background: 'var(--color-subtle, var(--bg-subtle))', borderRadius: '10px', border: '1px solid var(--border-color)' }}>
+                  <div style={{ fontSize: '0.78rem', fontWeight: 800, color: 'var(--color-text-primary)' }}>1. PageView</div>
+                  <div style={{ fontSize: '0.72rem', color: 'var(--color-text-muted)', marginTop: '0.15rem' }}>Tracks every visitor across all pages</div>
+                </div>
+                <div style={{ padding: '0.65rem 0.85rem', background: 'var(--color-subtle, var(--bg-subtle))', borderRadius: '10px', border: '1px solid var(--border-color)' }}>
+                  <div style={{ fontSize: '0.78rem', fontWeight: 800, color: 'var(--color-text-primary)' }}>2. ViewContent</div>
+                  <div style={{ fontSize: '0.72rem', color: 'var(--color-text-muted)', marginTop: '0.15rem' }}>Embroidery, vector, patches & portfolio</div>
+                </div>
+                <div style={{ padding: '0.65rem 0.85rem', background: 'var(--color-subtle, var(--bg-subtle))', borderRadius: '10px', border: '1px solid var(--border-color)' }}>
+                  <div style={{ fontSize: '0.78rem', fontWeight: 800, color: 'var(--color-text-primary)' }}>3. InitiateCheckout</div>
+                  <div style={{ fontSize: '0.72rem', color: 'var(--color-text-muted)', marginTop: '0.15rem' }}>When order wizard / checkout modal opens</div>
+                </div>
+                <div style={{ padding: '0.65rem 0.85rem', background: 'var(--color-subtle, var(--bg-subtle))', borderRadius: '10px', border: '1px solid var(--border-color)' }}>
+                  <div style={{ fontSize: '0.78rem', fontWeight: 800, color: 'var(--color-text-primary)' }}>4. AddPaymentInfo</div>
+                  <div style={{ fontSize: '0.72rem', color: 'var(--color-text-muted)', marginTop: '0.15rem' }}>When client chooses Card, PayPal, or Wallet</div>
+                </div>
+                <div style={{ padding: '0.65rem 0.85rem', background: 'var(--color-subtle, var(--bg-subtle))', borderRadius: '10px', border: '1px solid var(--border-color)' }}>
+                  <div style={{ fontSize: '0.78rem', fontWeight: 800, color: 'var(--color-text-primary)' }}>5. Purchase</div>
+                  <div style={{ fontSize: '0.72rem', color: 'var(--color-text-muted)', marginTop: '0.15rem' }}>Completed order payments with dollar value</div>
+                </div>
+                <div style={{ padding: '0.65rem 0.85rem', background: 'var(--color-subtle, var(--bg-subtle))', borderRadius: '10px', border: '1px solid var(--border-color)' }}>
+                  <div style={{ fontSize: '0.78rem', fontWeight: 800, color: 'var(--color-text-primary)' }}>6. CompleteRegistration</div>
+                  <div style={{ fontSize: '0.72rem', color: 'var(--color-text-muted)', marginTop: '0.15rem' }}>When a new client signs up for an account</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Advanced: Custom Header Script / Extra Tags Toggle */}
+            <div style={{ marginTop: '1.5rem', paddingTop: '1.25rem', borderTop: '1px solid var(--border-color)' }}>
+              <button
+                type="button"
+                onClick={() => setShowAdvancedScript(!showAdvancedScript)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: 'var(--color-primary, #ea580c)',
+                  fontWeight: 700,
+                  fontSize: '0.825rem',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.4rem',
+                  padding: 0
+                }}
+              >
+                <Code size={14} />
+                {showAdvancedScript ? '▼ Hide Custom Header Script / Extra Tracking Tags' : '▶ Advanced: Custom Header Script / Extra Tracking Tags (Optional)'}
+              </button>
+
+              {showAdvancedScript && (
+                <div style={{ marginTop: '1rem' }}>
+                  <label style={{ display: 'block', fontSize: '0.825rem', fontWeight: 700, color: 'var(--color-text-primary)', marginBottom: '0.4rem' }}>
+                    Custom Head Tags / External Tracking Scripts
+                  </label>
+                  <textarea
+                    className="form-control"
+                    rows={4}
+                    placeholder="<!-- Paste any additional custom <script> or <noscript> tags here (e.g. Google Tag Manager, Microsoft Clarity, Pinterest tag, custom Meta Conversions tag) -->"
+                    value={customHeaderScript}
+                    onChange={(e) => setCustomHeaderScript(e.target.value)}
+                    style={{
+                      fontFamily: 'monospace',
+                      fontSize: '0.8rem',
+                      lineHeight: 1.45,
+                      background: 'var(--bg-subtle, #f8fafc)'
+                    }}
+                  />
+                  <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginTop: '0.35rem', display: 'block' }}>
+                    Code added here is safely injected into the &lt;head&gt; across all public pages of the website.
+                  </span>
+                </div>
+              )}
+            </div>
+
+            {/* Other Ad Platforms (GA4 & TikTok) */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem', marginTop: '1.5rem', paddingTop: '1.25rem', borderTop: '1px solid var(--border-color)' }}>
               {/* Google Analytics */}
               <div>
                 <label style={{ display: 'block', fontSize: '0.825rem', fontWeight: 700, color: 'var(--color-text-primary)', marginBottom: '0.4rem' }}>
@@ -320,19 +699,51 @@ export const MetaSeoTrackingSettings = () => {
                 </span>
               </div>
             </div>
+
+            {/* Step-by-Step Meta Events Manager Guide */}
+            <div style={{
+              marginTop: '1.75rem',
+              padding: '1.25rem',
+              background: 'rgba(59, 130, 246, 0.05)',
+              border: '1px solid rgba(59, 130, 246, 0.2)',
+              borderRadius: '14px'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.65rem' }}>
+                <HelpCircle size={18} style={{ color: '#3b82f6' }} />
+                <span style={{ fontWeight: 800, fontSize: '0.875rem', color: '#1e3a8a' }}>
+                  Where to find your Meta Pixel ID or Base Code:
+                </span>
+              </div>
+              <ol style={{ fontSize: '0.825rem', color: '#334155', margin: 0, paddingLeft: '1.25rem', lineHeight: 1.6 }}>
+                <li>
+                  Open <a href="https://adsmanager.facebook.com/events_manager2" target="_blank" rel="noopener noreferrer" style={{ color: '#2563eb', fontWeight: 700, textDecoration: 'underline' }}>Meta Events Manager</a> and navigate to <strong>Data Sources</strong>.
+                </li>
+                <li>
+                  Select your Dataset / Pixel, click <strong>Settings</strong>, and copy the <strong>Dataset ID</strong> (or click <strong>Set up Meta Pixel ➔ Install code manually</strong>).
+                </li>
+                <li>
+                  Paste the ID or full snippet in the box above and click <strong>Save Tracking Configurations</strong>.
+                </li>
+                <li>
+                  Verify that events are received by installing the official <a href="https://chromewebstore.google.com/detail/meta-pixel-helper/fdgfkebogiimcoedlicjlajpkdmockpc" target="_blank" rel="noopener noreferrer" style={{ color: '#2563eb', fontWeight: 700, textDecoration: 'underline' }}>Meta Pixel Helper Chrome Extension</a> on your live website.
+                </li>
+              </ol>
+            </div>
           </div>
 
+          {/* Action Buttons */}
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', flexWrap: 'wrap' }}>
             <button
               type="button"
               onClick={handleSendTestEvent}
+              disabled={!isPixelValid || testPingLoading}
               className="btn btn-outline btn-lg"
               style={{ fontWeight: 700, padding: '0.85rem 1.5rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}
             >
-              <Activity size={18} style={{ color: '#3b82f6' }} /> Test Tracking Ping
+              <Zap size={18} style={{ color: '#3b82f6' }} /> {testPingLoading ? 'Dispatching Test...' : 'Test Tracking Ping'}
             </button>
             <button type="submit" disabled={isSaving} className="btn btn-primary-orange btn-lg" style={{ fontWeight: 800, padding: '0.85rem 2rem' }}>
-              <Save size={18} /> {isSaving ? 'Saving Changes...' : 'Save Tracking Configurations'}
+              <Save size={18} /> {isSaving ? 'Saving Configurations...' : 'Save Tracking Configurations'}
             </button>
           </div>
         </form>

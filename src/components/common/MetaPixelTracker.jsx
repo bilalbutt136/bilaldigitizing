@@ -5,14 +5,48 @@ import { useLocation } from '../../utils/navigation';
 import { useAppState } from '../../context/StateContext';
 import { getVisitorTelemetry, generateUUID, resolveUserIdentity } from '../../utils/visitorTracker';
 import { dedupeRouteTransition } from '../../utils/throttleDebounce.js';
+import { extractMetaPixelId } from '../../utils/pixelUtils.js';
+
+/**
+ * Direct DOM injector for custom header tracking scripts (e.g. noscript tags or extra analytics)
+ */
+export const injectCustomHeaderScript = (scriptContent) => {
+  if (typeof window === 'undefined' || !scriptContent) return;
+  const trimmed = String(scriptContent).trim();
+  if (!trimmed) return;
+
+  const existingEl = document.getElementById('bdigi-custom-header-script');
+  if (existingEl) {
+    if (existingEl.getAttribute('data-content-hash') === String(trimmed.length)) {
+      return;
+    }
+    existingEl.remove();
+  }
+
+  const container = document.createElement('div');
+  container.id = 'bdigi-custom-header-script';
+  container.setAttribute('data-content-hash', String(trimmed.length));
+  container.style.display = 'none';
+  container.innerHTML = trimmed;
+
+  const scripts = container.querySelectorAll('script');
+  scripts.forEach((oldScript) => {
+    const newScript = document.createElement('script');
+    Array.from(oldScript.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value));
+    newScript.appendChild(document.createTextNode(oldScript.innerHTML));
+    oldScript.parentNode.replaceChild(newScript, oldScript);
+  });
+
+  document.head.appendChild(container);
+};
 
 /**
  * Direct DOM injector for official Meta Pixel to guarantee instant detection by Meta Pixel Helper
  */
 export const injectMetaPixel = (pixelId, advancedMatching = null) => {
   if (typeof window === 'undefined') return;
-  const cleanId = String(pixelId || '').trim();
-  if (!cleanId) return;
+  const cleanId = extractMetaPixelId(pixelId) || String(pixelId || '').trim();
+  if (!cleanId || !/^\d{9,20}$/.test(cleanId)) return;
 
   // 1. Initialize official fbq queue stub
   if (!window.fbq) {
@@ -88,13 +122,21 @@ export const MetaPixelTracker = () => {
   const pathname = location?.pathname || '';
   const prevPathRef = useRef('');
 
-  // Extract pixel ID with multiple robust fallbacks
-  const activePixelId = (
+  // Extract pixel ID with multiple robust fallbacks and smart extraction
+  const rawPixelId = (
     siteSettings?.metaPixelId ||
     (typeof window !== 'undefined' ? localStorage.getItem('meta_pixel_id') : '') ||
     process.env.NEXT_PUBLIC_META_PIXEL_ID ||
     ''
-  ).trim();
+  );
+  const activePixelId = extractMetaPixelId(rawPixelId) || String(rawPixelId || '').trim();
+
+  // 0. Inject custom header tracking script if configured
+  useEffect(() => {
+    if (siteSettings?.customHeaderScript) {
+      injectCustomHeaderScript(siteSettings.customHeaderScript);
+    }
+  }, [siteSettings?.customHeaderScript]);
 
   // 1. Immediately inject and initialize when ID is available
   useEffect(() => {
@@ -208,6 +250,17 @@ export const MetaPixelTracker = () => {
         content_category: 'Studio Checkout', 
         content_type: 'order' 
       };
+    } else if (typeof window !== 'undefined' && (window.location.search.includes('payment=success') || pathname.includes('payment=success'))) {
+      standardEventName = 'Purchase';
+      const searchParams = new URLSearchParams(window.location.search);
+      const paidOrderId = searchParams.get('orderId') || '';
+      viewContentData = { 
+        content_name: 'Studio Completed Payment', 
+        content_category: 'Order Payment', 
+        content_type: 'product',
+        order_id: paidOrderId || undefined,
+        currency: 'USD' 
+      };
     }
 
     if (viewContentData && window.fbq) {
@@ -254,11 +307,12 @@ export const MetaPixelTracker = () => {
 export const trackMetaEvent = (eventName, data = {}, customUserRole = null) => {
   if (typeof window === 'undefined') return;
 
-  const currentId = (
+  const rawCurrentId = (
     (typeof window !== 'undefined' ? localStorage.getItem('meta_pixel_id') : '') ||
     process.env.NEXT_PUBLIC_META_PIXEL_ID ||
     ''
-  ).trim();
+  );
+  const currentId = extractMetaPixelId(rawCurrentId) || String(rawCurrentId || '').trim();
 
   if (currentId) {
     injectMetaPixel(currentId);

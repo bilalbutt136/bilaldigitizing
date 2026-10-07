@@ -20,6 +20,8 @@ export const PUBLIC_SITE_CONFIG_KEYS = [
   'googleAnalyticsId',
   'tiktok_pixel_id',
   'tiktokPixelId',
+  'custom_header_script',
+  'customHeaderScript',
   'trust_features',
   'why_choose_us_steps',
   'vector_format_options',

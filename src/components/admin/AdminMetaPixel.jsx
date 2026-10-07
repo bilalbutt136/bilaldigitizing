@@ -2,15 +2,21 @@
 
 import React, { useState, useEffect } from 'react';
 import { useAppState } from '../../context/StateContext';
-import { BookOpen, Radio, BarChart2, Megaphone, Activity, RefreshCw, CheckCircle2 as _CheckCircle2, ShieldCheck, Save, Eye } from 'lucide-react';
+import { BookOpen, Radio, BarChart2, Megaphone, Activity, RefreshCw, CheckCircle2, ShieldCheck, Save, Eye, Code, Zap, AlertCircle, Sparkles } from 'lucide-react';
 import { VisitorDetailsModal } from './tracking/VisitorDetailsModal';
+import { extractMetaPixelId, isValidMetaPixelId, detectSnippetType } from '../../utils/pixelUtils.js';
 
 export const AdminMetaPixel = () => {
   const { siteSettings, updateSiteSettings, showToast } = useAppState();
 
   // Local state for the input
   const [pixelId, setPixelId] = useState('');
+  const [inputMode, setInputMode] = useState('id'); // 'id' | 'snippet'
+  const [snippetCode, setSnippetCode] = useState('');
+  const [snippetNotice, setSnippetNotice] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [testLoading, setTestLoading] = useState(false);
+  const [testResult, setTestResult] = useState(null);
   const [activeTab, setActiveTab] = useState('setup');
   const [events, setEvents] = useState([]);
   const [loadingEvents, setLoadingEvents] = useState(false);
@@ -41,21 +47,81 @@ export const AdminMetaPixel = () => {
     }
   }, [siteSettings?.metaPixelId]);
 
+  const cleanPixelId = extractMetaPixelId(pixelId) || String(pixelId || '').trim();
+  const isValid = isValidMetaPixelId(cleanPixelId);
+
+  const handleIdChange = (val) => {
+    const raw = String(val || '');
+    const snippetType = detectSnippetType(raw);
+    if (snippetType === 'full_meta_code' || snippetType === 'custom_script') {
+      const extracted = extractMetaPixelId(raw);
+      if (extracted) {
+        setPixelId(extracted);
+        setSnippetCode(raw);
+        setSnippetNotice(`Detected Meta Base Code! Successfully extracted Pixel ID: ${extracted}`);
+        setTimeout(() => setSnippetNotice(null), 6000);
+        return;
+      }
+    }
+    setPixelId(raw);
+  };
+
+  const handleSnippetChange = (val) => {
+    const raw = String(val || '');
+    setSnippetCode(raw);
+    const extracted = extractMetaPixelId(raw);
+    if (extracted) {
+      setPixelId(extracted);
+      setSnippetNotice(`Extracted Meta Pixel ID: ${extracted}`);
+    } else {
+      setSnippetNotice(null);
+    }
+  };
+
+  const handleSendTestPing = async () => {
+    const targetId = extractMetaPixelId(pixelId) || pixelId.trim();
+    if (!targetId) {
+      if (showToast) showToast('Please enter or paste a valid Meta Pixel ID first.', 'error');
+      return;
+    }
+    setTestLoading(true);
+    setTestResult(null);
+    try {
+      if (typeof window !== 'undefined') {
+        const { injectMetaPixel, trackMetaEvent } = await import('../common/MetaPixelTracker');
+        injectMetaPixel(targetId);
+        trackMetaEvent('AdminTestPing', {
+          time: new Date().toISOString(),
+          status: 'verified',
+          test_source: 'AdminMetaPixel',
+          pixel_id: targetId
+        }, 'Platform Admin');
+      }
+      setTestResult(`✓ Test PageView dispatched to Pixel ID ${targetId}! Recorded in live telemetry.`);
+      if (showToast) showToast('⚡ Test tracking event dispatched to Meta Pixel & Database!', 'success');
+      setTimeout(loadEvents, 800);
+      setTimeout(() => setTestResult(null), 8000);
+    } catch (err) {
+      if (showToast) showToast('Test failed: ' + (err.message || 'Unknown error'), 'error');
+    } finally {
+      setTestLoading(false);
+    }
+  };
+
   const handleSave = async (e) => {
     e.preventDefault();
     setIsSaving(true);
 
     try {
-      const trimmedId = pixelId.trim();
-      if (typeof window !== 'undefined' && trimmedId) {
-        try { localStorage.setItem('meta_pixel_id', trimmedId); } catch {}
-        if (window.fbq) {
-          window.fbq('init', trimmedId);
-          window.fbq('track', 'PageView');
-        }
+      const cleanId = extractMetaPixelId(pixelId) || pixelId.trim();
+      if (typeof window !== 'undefined' && cleanId) {
+        try { localStorage.setItem('meta_pixel_id', cleanId); } catch {}
+        const { injectMetaPixel } = await import('../common/MetaPixelTracker');
+        injectMetaPixel(cleanId);
       }
-      await updateSiteSettings({ metaPixelId: trimmedId });
-      showToast('Meta Pixel ID saved successfully. Tracking is now active.', 'success');
+      await updateSiteSettings({ metaPixelId: cleanId });
+      setPixelId(cleanId);
+      showToast('Meta Pixel ID saved successfully. Tracking is now active live on production.', 'success');
     } catch {
       showToast('Failed to save Meta Pixel ID.', 'error');
     } finally {
@@ -282,25 +348,123 @@ export const AdminMetaPixel = () => {
                 1
               </div>
               <div style={{ flex: 1 }}>
-                <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--navy-900)', margin: '0 0 0.25rem 0' }}>
-                  Connect your Meta Pixel
-                </h3>
-                <p style={{ color: '#475569', fontSize: '0.95rem', margin: 0 }}>
-                  Paste the ID from Meta Events Manager — tracking goes live immediately.
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem', marginBottom: '0.35rem' }}>
+                  <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--navy-900)', margin: 0 }}>
+                    Connect your Meta Pixel
+                  </h3>
+                  {isValid && (
+                    <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#10b981', background: 'rgba(16, 185, 129, 0.1)', padding: '0.25rem 0.65rem', borderRadius: '999px', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                      <CheckCircle2 size={13} /> Active Pixel: {cleanPixelId}
+                    </span>
+                  )}
+                </div>
+                <p style={{ color: '#475569', fontSize: '0.9rem', margin: '0 0 1rem 0' }}>
+                  Paste your numeric Pixel ID or paste the complete code snippet from Meta Events Manager.
                 </p>
 
-                <form onSubmit={handleSave} style={{ marginTop: '1.5rem', display: 'flex', gap: '1rem', maxWidth: '500px' }}>
-                  <input
-                    type="text"
-                    className="form-control"
-                    placeholder="Enter Meta Pixel ID (e.g. 1234567890)"
-                    value={pixelId}
-                    onChange={(e) => setPixelId(e.target.value)}
-                    style={{ flex: 1 }}
-                  />
-                  <button type="submit" className="btn btn-primary-orange" disabled={isSaving}>
-                    {isSaving ? 'Saving...' : <><Save size={16} /> Save</>}
+                {/* Mode Selector */}
+                <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
+                  <button
+                    type="button"
+                    onClick={() => setInputMode('id')}
+                    style={{
+                      padding: '0.4rem 0.85rem',
+                      borderRadius: '8px',
+                      border: 'none',
+                      cursor: 'pointer',
+                      fontWeight: 700,
+                      fontSize: '0.8rem',
+                      background: inputMode === 'id' ? '#ffffff' : 'transparent',
+                      color: inputMode === 'id' ? '#0f172a' : '#64748b',
+                      boxShadow: inputMode === 'id' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'
+                    }}
+                  >
+                    🔢 Enter Pixel ID
                   </button>
+                  <button
+                    type="button"
+                    onClick={() => setInputMode('snippet')}
+                    style={{
+                      padding: '0.4rem 0.85rem',
+                      borderRadius: '8px',
+                      border: 'none',
+                      cursor: 'pointer',
+                      fontWeight: 700,
+                      fontSize: '0.8rem',
+                      background: inputMode === 'snippet' ? '#ffffff' : 'transparent',
+                      color: inputMode === 'snippet' ? '#0f172a' : '#64748b',
+                      boxShadow: inputMode === 'snippet' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.35rem'
+                    }}
+                  >
+                    <Code size={13} /> Paste Code Snippet
+                  </button>
+                </div>
+
+                {snippetNotice && (
+                  <div style={{ background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '8px', padding: '0.5rem 0.85rem', marginBottom: '0.85rem', fontSize: '0.8rem', color: '#1d4ed8', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    <Sparkles size={14} /> {snippetNotice}
+                  </div>
+                )}
+
+                {testResult && (
+                  <div style={{ background: '#ecfdf5', border: '1px solid #a7f3d0', borderRadius: '8px', padding: '0.5rem 0.85rem', marginBottom: '0.85rem', fontSize: '0.8rem', color: '#065f46', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    <CheckCircle2 size={14} /> {testResult}
+                  </div>
+                )}
+
+                <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem', maxWidth: '620px' }}>
+                  {inputMode === 'id' ? (
+                    <div style={{ display: 'flex', gap: '0.75rem' }}>
+                      <input
+                        type="text"
+                        className="form-control"
+                        placeholder="Enter Meta Pixel ID (e.g. 986664733689901)"
+                        value={pixelId}
+                        onChange={(e) => handleIdChange(e.target.value)}
+                        style={{ flex: 1, fontFamily: 'monospace' }}
+                      />
+                      <button type="submit" className="btn btn-primary-orange" disabled={isSaving}>
+                        {isSaving ? 'Saving...' : <><Save size={16} /> Save</>}
+                      </button>
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
+                      <textarea
+                        className="form-control"
+                        rows={5}
+                        placeholder="<!-- Paste Meta Pixel Code here -->&#10;<script>&#10;!function(f,b,e,v,n,t,s)...&#10;fbq('init', '1234567890123456');&#10;fbq('track', 'PageView');&#10;</script>"
+                        value={snippetCode}
+                        onChange={(e) => handleSnippetChange(e.target.value)}
+                        style={{ fontFamily: 'monospace', fontSize: '0.8rem' }}
+                      />
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ fontSize: '0.75rem', color: '#64748b' }}>
+                          {cleanPixelId ? `Detected Pixel ID: ${cleanPixelId}` : 'Paste script above to extract ID'}
+                        </span>
+                        <button type="submit" className="btn btn-primary-orange" disabled={isSaving || !cleanPixelId}>
+                          {isSaving ? 'Saving...' : <><Save size={16} /> Save Extracted ID</>}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginTop: '0.35rem' }}>
+                    <button
+                      type="button"
+                      onClick={handleSendTestPing}
+                      disabled={!isValid || testLoading}
+                      className="btn btn-outline btn-sm"
+                      style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', borderColor: '#3b82f6', color: '#3b82f6', fontWeight: 700 }}
+                    >
+                      <Zap size={14} /> {testLoading ? 'Pinging...' : 'Test Tracking Ping'}
+                    </button>
+                    <span style={{ fontSize: '0.75rem', color: '#64748b' }}>
+                      Dispatches a live PageView event to test browser & server tracking.
+                    </span>
+                  </div>
                 </form>
               </div>
             </div>
