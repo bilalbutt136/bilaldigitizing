@@ -21,7 +21,9 @@ import {
   Sparkles,
   Zap,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  ZoomIn,
+  X
 } from 'lucide-react';
 
 const ICON_MAP = {
@@ -145,6 +147,7 @@ export const HeroSection = () => {
   const [currentSlideIdx, setCurrentSlideIdx] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
   const [isFading, setIsFading] = useState(false);
+  const [lightboxSample, setLightboxSample] = useState(null);
 
   const activeTab = normalizeCategory(activeHomeServiceTab || 'all');
   const defaultContent = DEFAULT_SERVICE_DATA[activeTab] || DEFAULT_SERVICE_DATA.all;
@@ -299,6 +302,57 @@ export const HeroSection = () => {
     }, 200);
   };
 
+  const touchStartXRef = React.useRef(null);
+  const touchEndXRef = React.useRef(null);
+
+  const handleTouchStart = (e) => {
+    if (e.touches && e.touches.length > 0) {
+      touchStartXRef.current = e.touches[0].clientX;
+      touchEndXRef.current = e.touches[0].clientX;
+      setIsHovered(true);
+    }
+  };
+
+  const handleTouchMove = (e) => {
+    if (e.touches && e.touches.length > 0) {
+      touchEndXRef.current = e.touches[0].clientX;
+    }
+  };
+
+  const handleTouchEnd = () => {
+    setIsHovered(false);
+    if (touchStartXRef.current === null || touchEndXRef.current === null) return;
+    const diff = touchStartXRef.current - touchEndXRef.current;
+    const threshold = 40;
+    if (diff > threshold) {
+      handleNext();
+    } else if (diff < -threshold) {
+      handlePrev();
+    }
+    touchStartXRef.current = null;
+    touchEndXRef.current = null;
+  };
+
+  const handleImageClick = () => {
+    if (currentImage?.imageUrl) {
+      setLightboxSample(currentImage);
+    }
+  };
+
+  useEffect(() => {
+    if (!lightboxSample) return;
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') setLightboxSample(null);
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.body.style.overflow = prevOverflow || 'unset';
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [lightboxSample]);
+
   const resolveAction = (actionStr, defaultBehavior) => {
     if (!actionStr) {
       defaultBehavior();
@@ -423,18 +477,46 @@ export const HeroSection = () => {
         }
         @media (max-width: 1024px) {
           .hero-grid-layout {
-            grid-template-columns: 1fr !important;
-            gap: 2rem !important;
+            display: flex !important;
+            flex-direction: column !important;
+            gap: 1.75rem !important;
             width: 100% !important;
             max-width: 100% !important;
           }
+          .hero-right-visual {
+            order: 1 !important;
+            width: 100% !important;
+            display: flex !important;
+            flex-direction: column !important;
+            align-items: center !important;
+          }
           .hero-left-content {
+            order: 2 !important;
             text-align: center !important;
             width: 100% !important;
             max-width: 100% !important;
           }
+          .hero-badge-container {
+            display: flex !important;
+            justify-content: center !important;
+          }
+          .hero-highlight-row {
+            justify-content: center !important;
+          }
+          .hero-description-text {
+            margin-left: auto !important;
+            margin-right: auto !important;
+            max-width: 620px !important;
+          }
+          .hero-features-box {
+            margin-left: auto !important;
+            margin-right: auto !important;
+            max-width: 600px !important;
+          }
           .hero-trust-badges-row {
             justify-content: center !important;
+            margin-left: auto !important;
+            margin-right: auto !important;
           }
           .hero-cta-buttons-row {
             justify-content: center !important;
@@ -450,14 +532,30 @@ export const HeroSection = () => {
         }
         @media (max-width: 992px) {
           .hero-grid-layout {
-            grid-template-columns: 1fr !important;
+            display: flex !important;
+            flex-direction: column !important;
             gap: 1.5rem !important;
+          }
+          .hero-right-visual {
+            order: 1 !important;
+          }
+          .hero-left-content {
+            order: 2 !important;
           }
         }
         @media (max-width: 768px) {
           .hero-grid-layout {
-            grid-template-columns: 1fr !important;
+            display: flex !important;
+            flex-direction: column !important;
             gap: 1.25rem !important;
+          }
+          .hero-right-visual {
+            order: 1 !important;
+            width: 100% !important;
+          }
+          .hero-left-content {
+            order: 2 !important;
+            width: 100% !important;
           }
           .hero-nav-tabs-wrapper {
             border-radius: 14px !important;
@@ -503,15 +601,22 @@ export const HeroSection = () => {
             font-size: 0.75rem !important;
           }
           .hero-showcase-card {
-            padding: 0.8rem !important;
-            border-radius: 16px !important;
+            padding: 0.85rem !important;
+            border-radius: 18px !important;
             width: 100% !important;
             max-width: 100% !important;
+            box-shadow: 0 10px 30px -8px rgba(15, 23, 42, 0.15) !important;
           }
           .hero-showcase-image-box {
-            min-height: 220px !important;
+            min-height: 240px !important;
             max-height: 380px !important;
             aspect-ratio: 4/3 !important;
+          }
+          .hero-sample-mobile-hint {
+            display: flex !important;
+          }
+          .hero-mobile-vip-banner {
+            display: flex !important;
           }
         }
       `}} />
@@ -588,22 +693,23 @@ export const HeroSection = () => {
           <div className="hero-left-content" style={{ textAlign: 'left' }}>
 
             {/* Dynamic Badge */}
-            <div className="badge-pill-glow" style={{
-              marginBottom: '0.55rem',
-              background: 'var(--color-primary-light)',
-              border: '1px solid var(--color-border)',
-              color: 'var(--color-primary)',
-              fontWeight: 800,
-              fontSize: '0.78rem',
-              padding: '0.25rem 0.75rem',
-              boxShadow: '0 2px 8px var(--color-primary-glow)'
-            }}>
-              <Sparkles size={13} style={{ color: 'var(--color-primary)' }} />
-              <span>{badge}</span>
+            <div className="hero-badge-container" style={{ display: 'inline-flex', marginBottom: '0.55rem' }}>
+              <div className="badge-pill-glow" style={{
+                background: 'var(--color-primary-light)',
+                border: '1px solid var(--color-border)',
+                color: 'var(--color-primary)',
+                fontWeight: 800,
+                fontSize: '0.78rem',
+                padding: '0.25rem 0.75rem',
+                boxShadow: '0 2px 8px var(--color-primary-glow)'
+              }}>
+                <Sparkles size={13} style={{ color: 'var(--color-primary)' }} />
+                <span>{badge}</span>
+              </div>
             </div>
 
             {/* Dynamic Main Title */}
-            <h1 style={{
+            <h1 className="hero-title" style={{
               fontSize: 'clamp(1.5rem, 2.7vw, 2.35rem)',
               fontWeight: 900,
               lineHeight: 1.16,
@@ -628,7 +734,7 @@ export const HeroSection = () => {
             </h1>
 
             {/* Dynamic Highlight / Subheading */}
-            <div style={{
+            <div className="hero-highlight-row" style={{
               fontSize: 'clamp(0.88rem, 1.55vw, 1.05rem)',
               fontWeight: 800,
               color: 'var(--color-primary)',
@@ -644,7 +750,7 @@ export const HeroSection = () => {
             </div>
 
             {/* Dynamic Description */}
-            <p style={{
+            <p className="hero-description-text" style={{
               fontSize: 'clamp(0.82rem, 1.3vw, 0.92rem)',
               lineHeight: 1.5,
               color: 'var(--color-text-secondary)',
@@ -657,7 +763,7 @@ export const HeroSection = () => {
             </p>
 
             {/* Service Features Checkmarks List */}
-            <div style={{
+            <div className="hero-features-box" style={{
               display: 'flex',
               flexDirection: 'column',
               gap: '0.4rem',
@@ -761,10 +867,35 @@ export const HeroSection = () => {
 
           {/* Right Column: Clean, Full Showcase Image Card (Auto-rotates every 5s) */}
           <div
-            style={{ width: '100%', display: 'flex', justifyContent: 'center' }}
+            className="hero-right-visual"
+            style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}
           >
+            {/* VIP Mobile Real Sew-Outs Banner */}
+            <div
+              className="hero-mobile-vip-banner"
+              style={{
+                display: 'none',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '0.45rem',
+                marginBottom: '0.65rem',
+                fontSize: '0.74rem',
+                fontWeight: 800,
+                color: 'var(--color-primary, #ea580c)',
+                background: 'var(--color-primary-light, rgba(234, 88, 12, 0.08))',
+                border: '1px solid var(--color-border)',
+                padding: '0.35rem 0.85rem',
+                borderRadius: '9999px',
+                letterSpacing: '0.04em',
+                boxShadow: 'var(--shadow-sm)'
+              }}
+            >
+              <Sparkles size={13} style={{ color: 'var(--color-primary)' }} />
+              <span>100% Real Studio Sew-Out Samples</span>
+            </div>
+
             <div
               className="hero-showcase-card"
               style={{
@@ -834,6 +965,10 @@ export const HeroSection = () => {
               {/* Full, Clear Showcase Image Container (Fills frame edge-to-edge with ambient backdrop + 100% uncut artwork) */}
               <div
                 className="hero-showcase-image-box"
+                onTouchStart={handleTouchStart}
+                onTouchMove={handleTouchMove}
+                onTouchEnd={handleTouchEnd}
+                onClick={handleImageClick}
                 style={{
                   position: 'relative',
                   width: '100%',
@@ -848,8 +983,10 @@ export const HeroSection = () => {
                   transition: 'opacity 0.25s ease-in-out',
                   display: 'flex',
                   alignItems: 'center',
-                  justifyContent: 'center'
+                  justifyContent: 'center',
+                  cursor: currentImage?.imageUrl ? 'zoom-in' : 'default'
                 }}
+                title={currentImage?.imageUrl ? 'Tap to inspect high-resolution sample' : undefined}
               >
                 {/* Full, Auto-Adjusted Showcase Image or Empty State */}
                 {currentImage?.imageUrl ? (
@@ -904,6 +1041,31 @@ export const HeroSection = () => {
                       }}
                       draggable="false"
                     />
+
+                    {/* Tap to inspect badge */}
+                    <div
+                      style={{
+                        position: 'absolute',
+                        bottom: '10px',
+                        right: '10px',
+                        background: 'rgba(15, 23, 42, 0.72)',
+                        backdropFilter: 'blur(8px)',
+                        color: '#ffffff',
+                        fontSize: '0.7rem',
+                        fontWeight: 700,
+                        padding: '0.24rem 0.6rem',
+                        borderRadius: '9999px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.3rem',
+                        pointerEvents: 'none',
+                        zIndex: 5,
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.25)'
+                      }}
+                    >
+                      <ZoomIn size={12} />
+                      <span>Tap to inspect</span>
+                    </div>
                   </>
                 ) : (
                   <div style={{
@@ -1034,12 +1196,195 @@ export const HeroSection = () => {
                 </div>
               )}
 
+              {/* Mobile swipe and navigation hint */}
+              {hasMultipleImages && (
+                <div
+                  className="hero-sample-mobile-hint"
+                  style={{
+                    display: 'none',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.35rem',
+                    marginTop: '0.45rem',
+                    fontSize: '0.72rem',
+                    fontWeight: 700,
+                    color: 'var(--color-primary)'
+                  }}
+                >
+                  <span>✦ Swipe or tap arrows to see more samples</span>
+                </div>
+              )}
+
             </div>
           </div>
 
         </div>
 
       </div>
+
+      {/* VIP Interactive Fullscreen Sample Lightbox */}
+      {lightboxSample && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          className="modal-overlay"
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 99999,
+            background: 'rgba(9, 13, 22, 0.88)',
+            backdropFilter: 'blur(10px)',
+            WebkitBackdropFilter: 'blur(10px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: 'clamp(0.75rem, 3vw, 1.5rem)'
+          }}
+          onClick={() => setLightboxSample(null)}
+        >
+          <div
+            className="hero-sample-lightbox-card"
+            style={{
+              background: 'var(--color-surface, #ffffff)',
+              color: 'var(--color-text-primary, #0f172a)',
+              borderRadius: '20px',
+              maxWidth: '720px',
+              width: '100%',
+              maxHeight: '92vh',
+              display: 'flex',
+              flexDirection: 'column',
+              boxShadow: '0 25px 60px -15px rgba(0, 0, 0, 0.5)',
+              border: '1px solid var(--color-border)',
+              overflow: 'hidden',
+              position: 'relative'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Lightbox Header */}
+            <div style={{
+              padding: '0.9rem 1.25rem',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              borderBottom: '1px solid var(--color-border)',
+              gap: '0.75rem'
+            }}>
+              <div style={{ minWidth: 0 }}>
+                <div style={{ fontSize: '0.72rem', fontWeight: 800, color: 'var(--color-primary)', letterSpacing: '0.06em', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                  <span className="blinking-green-dot" /> LIVE STUDIO SAMPLE
+                </div>
+                <div style={{ fontSize: '1rem', fontWeight: 800, color: 'var(--color-text-primary)', marginTop: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {(lightboxSample.title || previewTitle || '').replace(/Emrboidery/gi, 'Embroidery')}
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setLightboxSample(null)}
+                style={{
+                  background: 'var(--color-subtle, rgba(0,0,0,0.06))',
+                  border: 'none',
+                  borderRadius: '50%',
+                  width: '36px',
+                  height: '36px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  color: 'var(--color-text-primary)'
+                }}
+                aria-label="Close Preview"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Lightbox Image View */}
+            <div style={{
+              flex: 1,
+              minHeight: '260px',
+              maxHeight: '58vh',
+              background: 'radial-gradient(ellipse at center, rgba(255,255,255,0.98) 0%, rgba(241,245,249,0.9) 100%)',
+              position: 'relative',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '1rem',
+              overflow: 'hidden'
+            }}>
+              <img
+                src={getOptimizedImageUrl(lightboxSample.imageUrl, 1440)}
+                alt={lightboxSample.title || 'Studio Sample'}
+                style={{
+                  maxWidth: '100%',
+                  maxHeight: '100%',
+                  objectFit: 'contain',
+                  filter: 'drop-shadow(0 10px 30px rgba(0,0,0,0.2))'
+                }}
+              />
+            </div>
+
+            {/* Lightbox Footer with Specs & High-Converting CTA */}
+            <div style={{
+              padding: '0.9rem 1.25rem',
+              background: 'var(--color-surface)',
+              borderTop: '1px solid var(--color-border)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              flexWrap: 'wrap',
+              gap: '0.75rem'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                {lightboxSample.stitchCount && (
+                  <span style={{
+                    fontSize: '0.76rem',
+                    fontWeight: 800,
+                    background: 'rgba(249, 115, 22, 0.12)',
+                    color: 'var(--orange-600, #ea580c)',
+                    border: '1px solid rgba(249, 115, 22, 0.25)',
+                    padding: '0.22rem 0.65rem',
+                    borderRadius: '9999px'
+                  }}>
+                    ★ {lightboxSample.stitchCount}
+                  </span>
+                )}
+                {lightboxSample.formats && (
+                  <span style={{ fontSize: '0.76rem', fontWeight: 700, color: 'var(--color-text-secondary)' }}>
+                    {lightboxSample.formats}
+                  </span>
+                )}
+              </div>
+
+              <button
+                type="button"
+                className="btn btn-primary-orange"
+                onClick={() => {
+                  setLightboxSample(null);
+                  handlePrimaryAction();
+                }}
+                style={{
+                  background: 'linear-gradient(135deg, var(--color-secondary) 0%, var(--color-primary) 100%)',
+                  color: '#ffffff',
+                  padding: '0.65rem 1.3rem',
+                  borderRadius: '10px',
+                  fontSize: '0.88rem',
+                  fontWeight: 800,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.4rem',
+                  border: 'none',
+                  cursor: 'pointer'
+                }}
+              >
+                <Upload size={15} />
+                <span>Order Similar Quality</span>
+                <ArrowRight size={15} />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   );
 };

@@ -1392,7 +1392,9 @@ button, input, select, textarea, a {
   .admin-main-content { margin-left: 0 !important; width: 100% !important; padding: 1rem 0.75rem 4rem !important; }
   .client-portal-fluid-container { padding: 0 0.75rem calc(5.5rem + env(safe-area-inset-bottom, 1rem)) !important; }
   .client-sidebar-saas { display: none !important; }
-  .hero-grid-layout { grid-template-columns: 1fr !important; gap: 1.5rem !important; }
+  .hero-grid-layout { display: flex !important; flex-direction: column !important; gap: 1.5rem !important; }
+  .hero-right-visual { order: 1 !important; width: 100% !important; }
+  .hero-left-content { order: 2 !important; width: 100% !important; }
 }
 
 @media (max-width: 768px) {
