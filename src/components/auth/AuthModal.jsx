@@ -46,7 +46,14 @@ export const AuthModal = ({ isStandalonePage = false, initialMode = null }) => {
     if (!isStandalonePage || redirectStartedRef.current) return;
     const urlParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
     const redirectParam = urlParams?.get('redirect');
-    const defaultRoute = role === 'admin' ? '/admin-portal' : '/client-portal';
+    let defaultRoute = role === 'admin' ? '/admin-portal' : '/client-portal';
+    if (role !== 'admin' && typeof window !== 'undefined') {
+      try {
+        if (localStorage.getItem('bdigi_pending_order_wizard') || localStorage.getItem('bdigi_pending_order_draft')) {
+          defaultRoute = '/order';
+        }
+      } catch {}
+    }
     const targetRoute = (redirectParam && redirectParam.startsWith('/') && !redirectParam.startsWith('/login'))
       ? redirectParam
       : defaultRoute;
@@ -231,6 +238,36 @@ export const AuthModal = ({ isStandalonePage = false, initialMode = null }) => {
     );
   }
 
+  const handlePostCustomerAuth = React.useCallback(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('bdigi_customer_tab', 'dashboard');
+    }
+    if (setActiveCustomerTab) {
+      setActiveCustomerTab('dashboard');
+    }
+
+    let pendingOrder = orderWizardInitialData;
+    if (!pendingOrder && typeof window !== 'undefined') {
+      try {
+        const saved = localStorage.getItem('bdigi_pending_order_wizard') || localStorage.getItem('bdigi_pending_order_draft');
+        if (saved) pendingOrder = JSON.parse(saved);
+      } catch {}
+    }
+
+    if (isStandalonePage) {
+      redirectStandaloneAfterAuth('customer');
+    } else {
+      setIsAuthModalOpen(false);
+      if (pendingOrder) {
+        setTimeout(() => {
+          if (openOrderWizard) openOrderWizard(pendingOrder);
+        }, 150);
+      } else {
+        navigate('/client-portal');
+      }
+    }
+  }, [isStandalonePage, orderWizardInitialData, redirectStandaloneAfterAuth, openOrderWizard, setIsAuthModalOpen, navigate, setActiveCustomerTab]);
+
   const handleLoginSubmit = async (e) => {
     e.preventDefault();
 
@@ -268,19 +305,7 @@ export const AuthModal = ({ isStandalonePage = false, initialMode = null }) => {
         if (isStandalonePage) redirectStandaloneAfterAuth('admin');
         else navigate('/admin-portal');
       } else {
-        if (typeof window !== 'undefined') {
-          localStorage.setItem('bdigi_customer_tab', 'dashboard');
-        }
-        if (setActiveCustomerTab) {
-          setActiveCustomerTab('dashboard');
-        }
-        if (isStandalonePage) redirectStandaloneAfterAuth('customer');
-        else navigate('/client-portal');
-        if (orderWizardInitialData) {
-          setTimeout(() => {
-            if (openOrderWizard) openOrderWizard();
-          }, 150);
-        }
+        handlePostCustomerAuth();
       }
     } catch {
       setIsLoading(false);
@@ -323,19 +348,7 @@ export const AuthModal = ({ isStandalonePage = false, initialMode = null }) => {
         trackMetaEvent('CompleteRegistration', { method: 'email', status: 'success' }, userRole);
       }).catch(() => {});
 
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('bdigi_customer_tab', 'dashboard');
-      }
-      if (setActiveCustomerTab) {
-        setActiveCustomerTab('dashboard');
-      }
-      if (isStandalonePage) redirectStandaloneAfterAuth('customer');
-      else navigate('/client-portal');
-      if (orderWizardInitialData) {
-        setTimeout(() => {
-          if (openOrderWizard) openOrderWizard();
-        }, 150);
-      }
+      handlePostCustomerAuth();
     } catch {
       setIsLoading(false);
       showToast('An unexpected registration error occurred. Please try again.', 'error');
@@ -350,19 +363,7 @@ export const AuthModal = ({ isStandalonePage = false, initialMode = null }) => {
       if (res?.success) {
         setIsAuthModalOpen(false);
         showToast(`Welcome ${res.user?.name || res.user?.email || 'back'}!`, 'success');
-        if (typeof window !== 'undefined') {
-          localStorage.setItem('bdigi_customer_tab', 'dashboard');
-        }
-        if (setActiveCustomerTab) {
-          setActiveCustomerTab('dashboard');
-        }
-        if (isStandalonePage) redirectStandaloneAfterAuth('customer');
-        else navigate('/client-portal');
-        if (orderWizardInitialData) {
-          setTimeout(() => {
-            if (openOrderWizard) openOrderWizard();
-          }, 150);
-        }
+        handlePostCustomerAuth();
       } else {
         const errorMsg = typeof res?.error === 'object' ? JSON.stringify(res.error) : res?.error;
         setErrorModalText(errorMsg || 'Google authentication failed.');

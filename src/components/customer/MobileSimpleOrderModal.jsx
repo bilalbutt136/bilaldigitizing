@@ -29,7 +29,7 @@ import {
   getServiceDisplayName,
   normalizeServiceKey as _normalizeServiceKey
 } from '../../utils/promoUtils';
-import { GoogleCustomSignInButton } from '../auth/GoogleCustomSignInButton';
+import { navigateTo } from '../../utils/navigation';
 import { useModalBackNavigation } from '../../hooks/useModalBackNavigation';
 import { getPackageSizeInfo } from '../../utils/packageSizeUtils';
 
@@ -316,14 +316,6 @@ export const MobileSimpleOrderModal = ({
   const [promoCodeInput, setPromoCodeInput] = useState('');
   const [appliedPromo, setAppliedPromo] = useState(null);
 
-  // Step 3: Guest Authentication State
-  const [guestAuthMode, setGuestAuthMode] = useState('signup');
-  const [guestName, setGuestName] = useState('');
-  const [guestEmail, setGuestEmail] = useState('');
-  const [guestPassword, setGuestPassword] = useState('');
-  const [guestCompany, _setGuestCompany] = useState('');
-  const [isSubmittingAuth, setIsSubmittingAuth] = useState(false);
-  const [guestAuthRequested, setGuestAuthRequested] = useState(false);
   const [formValidationError, setFormValidationError] = useState(null);
 
   // Submission State
@@ -333,8 +325,6 @@ export const MobileSimpleOrderModal = ({
   // DOM Refs for smooth auto-scrolling
   const uploadAreaRef = useRef(null);
   const fileInputRef = useRef(null);
-  const guestAuthCardRef = useRef(null);
-  const guestEmailInputRef = useRef(null);
   const contentScrollRef = useRef(null);
 
   const { handleSafeClose } = useModalBackNavigation({
@@ -371,6 +361,38 @@ export const MobileSimpleOrderModal = ({
   /* oxlint-disable react-hooks/exhaustive-deps */
   useEffect(() => {
     if (isOpen) {
+      let savedDraft = null;
+      if (typeof window !== 'undefined') {
+        try {
+          const raw = localStorage.getItem('bdigi_pending_order_draft');
+          if (raw) {
+            savedDraft = JSON.parse(raw);
+            localStorage.removeItem('bdigi_pending_order_draft');
+          }
+        } catch {}
+      }
+
+      if (savedDraft) {
+        if (savedDraft.selectedService) setSelectedService(savedDraft.selectedService);
+        if (savedDraft.selectedPackage) setSelectedPackage(savedDraft.selectedPackage);
+        if (savedDraft.quantity) {
+          setQuantity(savedDraft.quantity);
+          setQuantityInput(String(savedDraft.quantity));
+        }
+        if (savedDraft.widthInches) setWidthInches(savedDraft.widthInches);
+        if (savedDraft.heightInches) setHeightInches(savedDraft.heightInches);
+        if (savedDraft.placement) setPlacement(savedDraft.placement);
+        if (savedDraft.fabricType) setFabricType(savedDraft.fabricType);
+        if (savedDraft.notes) setNotes(savedDraft.notes);
+        if (savedDraft.orderTitle) setOrderTitle(savedDraft.orderTitle);
+        if (savedDraft.uploadedFiles && Array.isArray(savedDraft.uploadedFiles) && savedDraft.uploadedFiles.length > 0) {
+          setUploadedFiles(savedDraft.uploadedFiles);
+        }
+        if (savedDraft.appliedPromo) setAppliedPromo(savedDraft.appliedPromo);
+        setStep(savedDraft.step || 4);
+        return;
+      }
+
       const incomingRaw = initialData?.type || initialData?.serviceCategory || defaultService || 'embroidery';
       const normService = (incomingRaw === 'patch' || incomingRaw === 'patches' || incomingRaw === 'custom_patches')
         ? 'patch'
@@ -666,47 +688,6 @@ export const MobileSimpleOrderModal = ({
     if (contentScrollRef.current) contentScrollRef.current.scrollTop = 0;
   };
 
-  // Guest authentication disclosure and smooth auto-scroll
-  const revealGuestAuth = () => {
-    setGuestAuthRequested(true);
-    setFormValidationError('Please enter your name and email to place your order.');
-    if (typeof window !== 'undefined') {
-      window.requestAnimationFrame(() => {
-        guestAuthCardRef.current?.scrollIntoView({
-          behavior: 'smooth',
-          block: 'center'
-        });
-        setTimeout(() => guestEmailInputRef.current?.focus(), 300);
-      });
-    }
-  };
-
-  const handleGoogleAuthSuccess = async (googleUser) => {
-    try {
-      if (loginWithGoogle) {
-        const res = await loginWithGoogle(googleUser);
-        if (res?.success && res?.user) {
-          setGuestEmail(res.user.email || '');
-          setGuestName(res.user.name || '');
-          if (showToast) showToast(`✓ Connected with Google (${res.user.email})`, 'success');
-          await handleSubmitOrder({
-            email: res.user.email,
-            name: res.user.name || res.user.user_metadata?.full_name || 'Studio Client'
-          });
-          return;
-        }
-      }
-      if (googleUser?.email) {
-        setGuestEmail(googleUser.email);
-        setGuestName(googleUser.name || '');
-        if (showToast) showToast(`✓ Connected with Google (${googleUser.email})`, 'success');
-      }
-    } catch (err) {
-      console.warn('Google auth notice:', err);
-      if (showToast) showToast(err.message || 'Google sign-in notice', 'error');
-    }
-  };
-
   // Final Order Submission
   const handleSubmitOrder = async (authenticatedOverride = null) => {
     if (selectedService === 'patch' && quantity < 50) {
@@ -723,41 +704,52 @@ export const MobileSimpleOrderModal = ({
       return;
     }
 
+    // 1. Ensure user is authenticated
+    let isAuthed = Boolean(authenticatedOverride?.email) || isAuthenticated || Boolean(authUser?.email);
+    if (!isAuthed && typeof window !== 'undefined') {
+      try {
+        const savedUser = localStorage.getItem('bdigi_auth_user');
+        if (savedUser) {
+          const parsed = JSON.parse(savedUser);
+          if (parsed && parsed.email) isAuthed = true;
+        }
+      } catch {}
+    }
+
+    if (!isAuthed) {
+      const draftPayload = {
+        selectedService,
+        selectedPackage,
+        quantity,
+        quantityInput,
+        widthInches,
+        heightInches,
+        placement,
+        fabricType,
+        patchStyle,
+        patchBacking,
+        selectedFormats,
+        isRush,
+        notes,
+        orderTitle,
+        uploadedFiles,
+        appliedPromo,
+        step: 4
+      };
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem('bdigi_pending_order_draft', JSON.stringify(draftPayload));
+          localStorage.setItem('bdigi_pending_order_wizard', JSON.stringify({ type: selectedService }));
+        } catch {}
+      }
+      if (onClose) onClose();
+      if (showToast) showToast('Please sign in or create an account to finalize your order. Your order details are saved.', 'info');
+      navigateTo('/login?redirect=/order');
+      return;
+    }
+
     let clientEmail = (authenticatedOverride?.email || authUser?.email || currentUser?.email || '').toLowerCase().trim();
     let clientName = authenticatedOverride?.name || authUser?.user_metadata?.full_name || authUser?.name || currentUser?.name || 'Studio Client';
-    const hasAuthenticatedOverride = Boolean(authenticatedOverride?.email);
-
-    if (!hasAuthenticatedOverride && !isAuthenticated && !authUser) {
-      if (!guestEmail.trim() || !guestPassword.trim()) {
-        revealGuestAuth();
-        return;
-      }
-
-      setIsSubmittingAuth(true);
-      try {
-        if (guestAuthMode === 'signup') {
-          const regRes = await register(guestName.trim() || 'Client', guestEmail.trim(), guestPassword.trim(), guestCompany.trim());
-          if (!regRes || !regRes.success) {
-            if (showToast) showToast(regRes?.error || 'Registration failed. Please check your details.', 'error');
-            return;
-          }
-          clientEmail = guestEmail.trim().toLowerCase();
-          clientName = guestName.trim() || 'Client';
-        } else {
-          const logRes = await login(guestEmail.trim(), guestPassword.trim());
-          if (!logRes || !logRes.success) {
-            if (showToast) showToast(logRes?.error || 'Login failed. Please check your credentials.', 'error');
-            return;
-          }
-          clientEmail = guestEmail.trim().toLowerCase();
-        }
-      } catch (authErr) {
-        if (showToast) showToast('Authentication error: ' + authErr.message, 'error');
-        return;
-      } finally {
-        setIsSubmittingAuth(false);
-      }
-    }
 
     setIsSubmitting(true);
     try {
@@ -2074,8 +2066,8 @@ export const MobileSimpleOrderModal = ({
                 </div>
               </div>
 
-              {/* AUTHENTICATION / GUEST FORM */}
-              {isAuthenticated || authUser ? (
+              {/* AUTHENTICATION BADGE (IF LOGGED IN) */}
+              {(isAuthenticated || authUser) && (
                 <div style={{
                   padding: '0.85rem 1rem',
                   borderRadius: '14px',
@@ -2092,119 +2084,6 @@ export const MobileSimpleOrderModal = ({
                     </div>
                     <div style={{ fontSize: '0.74rem', color: '#059669', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                       {authUser?.email || currentUser?.email}
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <div
-                  ref={guestAuthCardRef}
-                  style={{
-                    borderRadius: '16px',
-                    border: guestAuthRequested ? '2px solid #059669' : isDark ? '1px solid #334155' : '1px solid #e2e8f0',
-                    background: isDark ? '#1e293b' : '#ffffff',
-                    padding: '1rem',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '0.85rem'
-                  }}
-                >
-                  <div>
-                    <div style={{ fontSize: '0.88rem', fontWeight: 800, color: isDark ? '#ffffff' : '#0f172a' }}>
-                      Customer Checkout Details
-                    </div>
-                    <p style={{ margin: '0.15rem 0 0', fontSize: '0.74rem', color: isDark ? '#94a3b8' : '#64748b' }}>
-                      Your order and artwork stay saved in your secure client portal.
-                    </p>
-                  </div>
-
-                  {/* ONE-TAP GOOGLE SIGN IN */}
-                  <GoogleCustomSignInButton
-                    onAuthSuccess={handleGoogleAuthSuccess}
-                    onAuthError={(err) => {
-                      if (showToast) showToast(err || 'Google authentication notice', 'error');
-                    }}
-                    text="Instant One-Tap Google Checkout"
-                    style={{ width: '100%', minHeight: '48px', borderRadius: '12px' }}
-                  />
-
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', margin: '0.15rem 0' }}>
-                    <div style={{ flex: 1, height: '1px', background: isDark ? '#334155' : '#e2e8f0' }} />
-                    <span style={{ fontSize: '0.68rem', fontWeight: 800, color: isDark ? '#64748b' : '#94a3b8' }}>OR WITH EMAIL</span>
-                    <div style={{ flex: 1, height: '1px', background: isDark ? '#334155' : '#e2e8f0' }} />
-                  </div>
-
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
-                    <input
-                      type="text"
-                      value={guestName}
-                      onChange={(e) => setGuestName(e.target.value)}
-                      placeholder="Your Full Name / Business"
-                      style={{
-                        width: '100%',
-                        minHeight: '48px',
-                        borderRadius: '12px',
-                        border: isDark ? '1.5px solid #334155' : '1.5px solid #cbd5e1',
-                        background: isDark ? '#0f172a' : '#ffffff',
-                        color: isDark ? '#ffffff' : '#0f172a',
-                        padding: '0 0.85rem',
-                        fontSize: '0.88rem',
-                        boxSizing: 'border-box'
-                      }}
-                    />
-
-                    <input
-                      ref={guestEmailInputRef}
-                      type="email"
-                      value={guestEmail}
-                      onChange={(e) => setGuestEmail(e.target.value)}
-                      placeholder="Email address / WhatsApp"
-                      style={{
-                        width: '100%',
-                        minHeight: '48px',
-                        borderRadius: '12px',
-                        border: isDark ? '1.5px solid #334155' : '1.5px solid #cbd5e1',
-                        background: isDark ? '#0f172a' : '#ffffff',
-                        color: isDark ? '#ffffff' : '#0f172a',
-                        padding: '0 0.85rem',
-                        fontSize: '0.88rem',
-                        boxSizing: 'border-box'
-                      }}
-                    />
-
-                    <input
-                      type="password"
-                      value={guestPassword}
-                      onChange={(e) => setGuestPassword(e.target.value)}
-                      placeholder="Create password for order tracking"
-                      style={{
-                        width: '100%',
-                        minHeight: '48px',
-                        borderRadius: '12px',
-                        border: isDark ? '1.5px solid #334155' : '1.5px solid #cbd5e1',
-                        background: isDark ? '#0f172a' : '#ffffff',
-                        color: isDark ? '#ffffff' : '#0f172a',
-                        padding: '0 0.85rem',
-                        fontSize: '0.88rem',
-                        boxSizing: 'border-box'
-                      }}
-                    />
-
-                    <div style={{ display: 'flex', justifyContent: 'center' }}>
-                      <button
-                        type="button"
-                        onClick={() => setGuestAuthMode(m => m === 'signup' ? 'login' : 'signup')}
-                        style={{
-                          background: 'transparent',
-                          border: 'none',
-                          color: '#059669',
-                          fontSize: '0.76rem',
-                          fontWeight: 700,
-                          cursor: 'pointer',
-                          padding: '0.35rem'
-                        }}
-                      >
-                        {guestAuthMode === 'signup' ? 'Already have an account? Sign In' : 'New customer? Create Account'}
-                      </button>
                     </div>
                   </div>
                 </div>
@@ -2429,7 +2308,7 @@ export const MobileSimpleOrderModal = ({
                     color: isDark ? '#ffffff' : '#0f172a',
                     fontSize: '0.88rem',
                     fontWeight: 700,
-                    cursor: (isSubmitting || isSubmittingAuth) ? 'not-allowed' : 'pointer'
+                    cursor: isSubmitting ? 'not-allowed' : 'pointer'
                   }}
                 >
                   ← Back
@@ -2437,17 +2316,17 @@ export const MobileSimpleOrderModal = ({
                 <button
                   type="button"
                   onClick={() => handleSubmitOrder()}
-                  disabled={isSubmitting || isSubmittingAuth}
+                  disabled={isSubmitting}
                   style={{
                     flex: 1,
                     minHeight: '52px',
                     borderRadius: '14px',
-                    background: (isSubmitting || isSubmittingAuth) ? '#94a3b8' : 'linear-gradient(135deg, #059669 0%, #047857 100%)',
+                    background: isSubmitting ? '#94a3b8' : 'linear-gradient(135deg, #059669 0%, #047857 100%)',
                     color: '#ffffff',
                     border: 'none',
                     fontSize: '0.98rem',
                     fontWeight: 900,
-                    cursor: (isSubmitting || isSubmittingAuth) ? 'not-allowed' : 'pointer',
+                    cursor: isSubmitting ? 'not-allowed' : 'pointer',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -2455,7 +2334,7 @@ export const MobileSimpleOrderModal = ({
                     boxShadow: '0 6px 20px rgba(5, 150, 105, 0.35)'
                   }}
                 >
-                  {isSubmitting || isSubmittingAuth ? (
+                  {isSubmitting ? (
                     <>
                       <Loader2 size={20} className="animate-spin" />
                       <span>Placing Order...</span>
@@ -2465,7 +2344,7 @@ export const MobileSimpleOrderModal = ({
                       <span>
                         {isAuthenticated || authUser
                           ? `Place Order Now ($${totalPrice.toFixed(2)})`
-                          : `${guestAuthMode === 'signup' ? 'Create Account' : 'Sign In'} & Place Order`}
+                          : `Sign In to Place Order ($${totalPrice.toFixed(2)})`}
                       </span>
                       <ArrowRight size={18} />
                     </>

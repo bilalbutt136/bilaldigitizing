@@ -42,10 +42,10 @@ import {
   normalizeServiceKey as _normalizeServiceKey
 } from '../../utils/promoUtils';
 import { GoogleOAuthProvider } from '@react-oauth/google';
-import { GoogleCustomSignInButton } from '../auth/GoogleCustomSignInButton';
 import { useModalBackNavigation } from '../../hooks/useModalBackNavigation';
 import { MobileSimpleOrderModal } from './MobileSimpleOrderModal';
 import { getPackageSizeInfo } from '../../utils/packageSizeUtils';
+import { navigateTo } from '../../utils/navigation';
 
 const GOOGLE_CLIENT_ID = (process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '421520521310-7appibeh1m7cdd90iid17lsq8thlq2oc.apps.googleusercontent.com').trim();
 
@@ -368,21 +368,10 @@ export const OrderWizardModal = () => {
   const [promoCodeInput, setPromoCodeInput] = useState('');
   const [appliedPromo, setAppliedPromo] = useState(null);
 
-  // Auth for Guest Users
-  const [guestName, setGuestName] = useState('');
-  const [guestEmail, setGuestEmail] = useState('');
-  const [guestPassword, setGuestPassword] = useState('');
-  const [guestCompany, setGuestCompany] = useState('');
-  const [guestAuthMode, setGuestAuthMode] = useState('signup');
-  const [isSubmittingAuth, setIsSubmittingAuth] = useState(false);
-  const [guestAuthRequested, setGuestAuthRequested] = useState(false);
-
   // Order Submission State
   const [isSubmittingOrder, setIsSubmittingOrder] = useState(false);
 
   const fileInputRef = useRef(null);
-  const guestAuthCardRef = useRef(null);
-  const guestEmailInputRef = useRef(null);
 
   const getPackagesForCategory = (catKey) => {
     const coreList = CORE_PACKAGES[catKey] || CORE_PACKAGES.embroidery;
@@ -440,6 +429,42 @@ export const OrderWizardModal = () => {
   /* oxlint-disable react-hooks/exhaustive-deps -- selector identity is render-local and must not reset the wizard every render */
   useEffect(() => {
     if (isOrderWizardOpen) {
+      let savedDraft = null;
+      if (typeof window !== 'undefined') {
+        try {
+          const raw = localStorage.getItem('bdigi_pending_order_draft');
+          if (raw) {
+            savedDraft = JSON.parse(raw);
+            localStorage.removeItem('bdigi_pending_order_draft');
+          }
+        } catch {}
+      }
+
+      if (savedDraft) {
+        if (savedDraft.selectedService) setSelectedService(savedDraft.selectedService);
+        if (savedDraft.selectedPackage) setSelectedPackage(savedDraft.selectedPackage);
+        if (savedDraft.quantity) {
+          setQuantity(savedDraft.quantity);
+          setQuantityInput(String(savedDraft.quantity));
+        }
+        if (savedDraft.widthInches) setWidthInches(savedDraft.widthInches);
+        if (savedDraft.heightInches) setHeightInches(savedDraft.heightInches);
+        if (savedDraft.placement) setPlacement(savedDraft.placement);
+        if (savedDraft.fabricType) setFabricType(savedDraft.fabricType);
+        if (savedDraft.patchStyle) setPatchStyle(savedDraft.patchStyle);
+        if (savedDraft.patchBacking) setPatchBacking(savedDraft.patchBacking);
+        if (savedDraft.selectedFormats) setSelectedFormats(savedDraft.selectedFormats);
+        if (savedDraft.isRush !== undefined) setIsRush(savedDraft.isRush);
+        if (savedDraft.notes) setNotes(savedDraft.notes);
+        if (savedDraft.orderTitle) setOrderTitle(savedDraft.orderTitle);
+        if (savedDraft.uploadedFiles && Array.isArray(savedDraft.uploadedFiles) && savedDraft.uploadedFiles.length > 0) {
+          setUploadedFiles(savedDraft.uploadedFiles);
+        }
+        if (savedDraft.appliedPromo) setAppliedPromo(savedDraft.appliedPromo);
+        setStep(savedDraft.step || 5);
+        return;
+      }
+
       let initialType = 'embroidery';
       let targetStep = 1;
 
@@ -748,46 +773,6 @@ export const OrderWizardModal = () => {
     if (showToast) showToast(`Promo ${clean} applied! (${getServiceDisplayName(selectedService)}: ${pct}% OFF)`, 'success');
   };
 
-  const revealGuestAuth = () => {
-    setGuestAuthRequested(true);
-
-    if (typeof window !== 'undefined') {
-      window.requestAnimationFrame(() => {
-        guestAuthCardRef.current?.scrollIntoView({
-          behavior: 'smooth',
-          block: 'center'
-        });
-        setTimeout(() => guestEmailInputRef.current?.focus(), 350);
-      });
-    }
-  };
-
-  const handleGoogleAuthSuccess = async (googleUser) => {
-    try {
-      if (loginWithGoogle) {
-        const res = await loginWithGoogle(googleUser);
-        if (res?.success && res?.user) {
-          setGuestEmail(res.user.email || '');
-          setGuestName(res.user.name || '');
-          if (showToast) showToast(`✓ Connected with Google (${res.user.email})`, 'success');
-          await handleSubmitOrder({
-            email: res.user.email,
-            name: res.user.name || res.user.user_metadata?.full_name || 'Studio Client'
-          });
-          return;
-        }
-      }
-      if (googleUser?.email) {
-        setGuestEmail(googleUser.email);
-        setGuestName(googleUser.name || '');
-        if (showToast) showToast(`✓ Connected with Google (${googleUser.email})`, 'success');
-      }
-    } catch (err) {
-      console.warn('Google sign-in notice:', err);
-      if (showToast) showToast(err.message || 'Google authentication notice', 'error');
-    }
-  };
-
   const handleSubmitOrder = async (authenticatedOverride = null) => {
     if (selectedService === 'patch' && quantity < 50) {
       if (showToast) showToast('Minimum order requirement for Custom Patches is 50 pieces.', 'error');
@@ -797,42 +782,52 @@ export const OrderWizardModal = () => {
       return;
     }
 
-    // 1. Ensure user is authenticated or authenticate them
+    // 1. Ensure user is authenticated
+    let isAuthed = Boolean(authenticatedOverride?.email) || isAuthenticated || Boolean(authUser?.email);
+    if (!isAuthed && typeof window !== 'undefined') {
+      try {
+        const savedUser = localStorage.getItem('bdigi_auth_user');
+        if (savedUser) {
+          const parsed = JSON.parse(savedUser);
+          if (parsed && parsed.email) isAuthed = true;
+        }
+      } catch {}
+    }
+
+    if (!isAuthed) {
+      const draftPayload = {
+        selectedService,
+        selectedPackage: activePkg,
+        quantity,
+        quantityInput,
+        widthInches,
+        heightInches,
+        placement,
+        fabricType,
+        patchStyle,
+        patchBacking,
+        selectedFormats,
+        isRush,
+        notes,
+        orderTitle,
+        uploadedFiles,
+        appliedPromo,
+        step: 5
+      };
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem('bdigi_pending_order_draft', JSON.stringify(draftPayload));
+          localStorage.setItem('bdigi_pending_order_wizard', JSON.stringify({ type: selectedService }));
+        } catch {}
+      }
+      setIsOrderWizardOpen(false);
+      showToast('Please sign in or create an account to finalize your order. Your order details are saved.', 'info');
+      navigateTo('/login?redirect=/order');
+      return;
+    }
+
     let clientEmail = (authenticatedOverride?.email || authUser?.email || currentUser?.email || '').toLowerCase().trim();
     let clientName = authenticatedOverride?.name || authUser?.user_metadata?.full_name || authUser?.name || currentUser?.name || 'Studio Client';
-    const hasAuthenticatedOverride = Boolean(authenticatedOverride?.email);
-
-    if (!hasAuthenticatedOverride && !isAuthenticated && !authUser) {
-      if (!guestEmail.trim() || !guestPassword.trim()) {
-        revealGuestAuth();
-        return;
-      }
-
-      setIsSubmittingAuth(true);
-      try {
-        if (guestAuthMode === 'signup') {
-          const regRes = await register(guestName.trim() || 'Client', guestEmail.trim(), guestPassword.trim(), guestCompany.trim());
-          if (!regRes || !regRes.success) {
-            showToast(regRes?.error || 'Registration failed. Please check your credentials.', 'error');
-            return;
-          }
-          clientEmail = guestEmail.trim().toLowerCase();
-          clientName = guestName.trim() || 'Client';
-        } else {
-          const logRes = await login(guestEmail.trim(), guestPassword.trim());
-          if (!logRes || !logRes.success) {
-            showToast(logRes?.error || 'Login failed. Please check your password.', 'error');
-            return;
-          }
-          clientEmail = guestEmail.trim().toLowerCase();
-        }
-      } catch (authErr) {
-        showToast('Authentication error: ' + authErr.message, 'error');
-        return;
-      } finally {
-        setIsSubmittingAuth(false);
-      }
-    }
 
     setIsSubmittingOrder(true);
     try {
@@ -2433,158 +2428,6 @@ export const OrderWizardModal = () => {
                   </div>
                 </div>
 
-                {/* Inline Auth for Guest Users */}
-                {!isAuthenticated && !authUser && (
-                  <div
-                    ref={guestAuthCardRef}
-                    style={{
-                    background: 'var(--color-subtle, #ffffff)',
-                    border: guestAuthRequested
-                      ? '2px solid #059669'
-                      : '1.5px solid var(--color-border, #cbd5e1)',
-                    borderRadius: '16px',
-                    padding: '1.15rem',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '0.75rem',
-                    boxShadow: guestAuthRequested ? '0 0 0 4px rgba(5, 150, 105, 0.10)' : 'none'
-                  }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.75rem', flexWrap: 'wrap' }}>
-                      <div style={{ minWidth: 0, flex: '1 1 240px' }}>
-                        <div style={{ fontSize: '0.88rem', fontWeight: 900, color: 'var(--color-text-primary, #0f172a)' }}>
-                          {guestAuthRequested
-                            ? 'Create an account or sign in to place this order'
-                            : 'Studio Account Setup / Sign In'}
-                        </div>
-                        {guestAuthRequested && (
-                          <div style={{ fontSize: '0.72rem', color: 'var(--color-text-muted, #64748b)', marginTop: '0.2rem', lineHeight: 1.45 }}>
-                            Your order details and uploaded artwork are saved here. Authenticate below and this same order will continue immediately.
-                          </div>
-                        )}
-                      </div>
-                      <div style={{ display: 'flex', gap: '0.35rem', flexShrink: 0 }}>
-                        <button
-                          type="button"
-                          onClick={() => setGuestAuthMode('signup')}
-                          style={{
-                            background: guestAuthMode === 'signup' ? '#059669' : 'var(--color-surface, #f1f5f9)',
-                            color: guestAuthMode === 'signup' ? '#ffffff' : 'var(--color-text-secondary, #475569)',
-                            border: 'none',
-                            borderRadius: '6px',
-                            padding: '0.25rem 0.65rem',
-                            fontSize: '0.72rem',
-                            fontWeight: 800,
-                            cursor: 'pointer'
-                          }}
-                        >
-                          Create Account
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setGuestAuthMode('login')}
-                          style={{
-                            background: guestAuthMode === 'login' ? '#059669' : 'var(--color-surface, #f1f5f9)',
-                            color: guestAuthMode === 'login' ? '#ffffff' : 'var(--color-text-secondary, #475569)',
-                            border: 'none',
-                            borderRadius: '6px',
-                            padding: '0.25rem 0.65rem',
-                            fontSize: '0.72rem',
-                            fontWeight: 800,
-                            cursor: 'pointer'
-                          }}
-                        >
-                          Sign In
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* 1-Click Social Login (Google) */}
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))', gap: '0.65rem' }}>
-                      <GoogleCustomSignInButton
-                        onAuthSuccess={handleGoogleAuthSuccess}
-                        onAuthError={(err) => {
-                          if (showToast) showToast(err || 'Google sign-in cancelled', 'error');
-                        }}
-                        style={{ height: '42px', borderRadius: '10px', fontSize: '0.84rem' }}
-                        text="Continue with Google"
-                      />
-                    </div>
-
-                    {/* Divider */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', margin: '0.1rem 0' }}>
-                      <div style={{ flex: 1, height: '1px', background: 'var(--color-border, #e2e8f0)' }} />
-                      <span style={{ fontSize: '0.7rem', color: 'var(--color-text-muted, #94a3b8)', fontWeight: 800, textTransform: 'uppercase' }}>
-                        or {guestAuthMode === 'signup' ? 'create with email' : 'sign in with email'}
-                      </span>
-                      <div style={{ flex: 1, height: '1px', background: 'var(--color-border, #e2e8f0)' }} />
-                    </div>
-
-                    <div style={{ display: 'grid', gridTemplateColumns: guestAuthMode === 'signup' ? '1fr 1fr' : '1fr 1fr', gap: '0.65rem' }}>
-                      {guestAuthMode === 'signup' && (
-                        <input
-                          type="text"
-                          value={guestName}
-                          onChange={(e) => setGuestName(e.target.value)}
-                          placeholder="Your Full Name *"
-                          style={{
-                            padding: '0.55rem 0.85rem',
-                            borderRadius: '8px',
-                            border: '1.5px solid var(--color-border, #cbd5e1)',
-                            fontSize: '0.82rem',
-                            color: 'var(--color-text-primary, #0f172a)',
-                            background: 'var(--color-input, #ffffff)'
-                          }}
-                        />
-                      )}
-                      <input
-                        ref={guestEmailInputRef}
-                        type="email"
-                        value={guestEmail}
-                        onChange={(e) => setGuestEmail(e.target.value)}
-                        placeholder="Email Address *"
-                        style={{
-                          padding: '0.55rem 0.85rem',
-                          borderRadius: '8px',
-                          border: '1.5px solid var(--color-border, #cbd5e1)',
-                          fontSize: '0.82rem',
-                          color: 'var(--color-text-primary, #0f172a)',
-                          background: 'var(--color-input, #ffffff)'
-                        }}
-                      />
-                      <input
-                        type="password"
-                        value={guestPassword}
-                        onChange={(e) => setGuestPassword(e.target.value)}
-                        placeholder="Password *"
-                        style={{
-                          padding: '0.55rem 0.85rem',
-                          borderRadius: '8px',
-                          border: '1.5px solid var(--color-border, #cbd5e1)',
-                          fontSize: '0.82rem',
-                          color: 'var(--color-text-primary, #0f172a)',
-                          background: 'var(--color-input, #ffffff)'
-                        }}
-                      />
-                      {guestAuthMode === 'signup' && (
-                        <input
-                          type="text"
-                          value={guestCompany}
-                          onChange={(e) => setGuestCompany(e.target.value)}
-                          placeholder="Company / Brand (Optional)"
-                          style={{
-                            padding: '0.55rem 0.85rem',
-                            borderRadius: '8px',
-                            border: '1.5px solid var(--color-border, #cbd5e1)',
-                            fontSize: '0.82rem',
-                            color: 'var(--color-text-primary, #0f172a)',
-                            background: 'var(--color-input, #ffffff)'
-                          }}
-                        />
-                      )}
-                    </div>
-                  </div>
-                )}
-
               </div>
             )}
 
@@ -2662,7 +2505,7 @@ export const OrderWizardModal = () => {
 
               <button
                 type="button"
-                disabled={isSubmittingOrder || isSubmittingAuth}
+                disabled={isSubmittingOrder}
                 onClick={() => {
                   if (step === 1) {
                     setStep(2);
@@ -2699,7 +2542,7 @@ export const OrderWizardModal = () => {
                   display: 'flex',
                   alignItems: 'center',
                   gap: '0.45rem',
-                  cursor: (isSubmittingOrder || isSubmittingAuth) ? 'not-allowed' : 'pointer',
+                  cursor: isSubmittingOrder ? 'not-allowed' : 'pointer',
                   boxShadow: '0 4px 14px rgba(5, 150, 105, 0.3)'
                 }}
               >
@@ -2732,7 +2575,7 @@ export const OrderWizardModal = () => {
                 ) : (
                   !isAuthenticated && !authUser ? (
                     <>
-                      {guestAuthMode === 'signup' ? 'Create Account' : 'Sign In'} & Place Order (${totalPrice.toFixed(2)}) <Check size={16} />
+                      Sign In to Place Order (${totalPrice.toFixed(2)}) <ArrowRight size={16} />
                     </>
                   ) : (
                     <>
