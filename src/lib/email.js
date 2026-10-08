@@ -1,5 +1,6 @@
 import { Resend } from 'resend';
 import { createAdminClient } from './supabase/admin.js';
+import { checkAndSetEmailDedup } from './emailService.js';
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -202,6 +203,18 @@ export async function sendOrderNotification({
   adminEmail: explicitAdmin,
   adminEmails: explicitAdminEmails
 }) {
+  const cleanOrderId = String(orderId || '').replace(/^#+/, '').trim().toLowerCase();
+  if (cleanOrderId && cleanOrderId !== 'direct' && checkAndSetEmailDedup(`NEW_ORDER:${cleanOrderId}`)) {
+    console.log(`[sendOrderNotification] Suppressed duplicate order notification for #${cleanOrderId}`);
+    return {
+      success: true,
+      duplicateSuppressed: true,
+      adminSuccess: true,
+      clientSuccess: true,
+      message: `Duplicate order notification for #${cleanOrderId} suppressed.`
+    };
+  }
+
   const siteUrl = getSiteUrl();
   const formattedPrice = typeof amount === 'number' ? `$${amount.toFixed(2)}` : (String(amount).startsWith('$') ? amount : `$${amount}`);
 
@@ -350,7 +363,9 @@ export async function sendOrderNotification({
     }
   }
 
-  if ((targetRole === 'client' || targetRole === 'both') && clientEmail && EMAIL_REGEX.test(clientEmail.trim())) {
+  const cleanClientEmail = (clientEmail || '').trim().toLowerCase();
+  const isClientAlsoAdmin = adminRecipients.includes(cleanClientEmail);
+  if ((targetRole === 'client' || targetRole === 'both') && cleanClientEmail && EMAIL_REGEX.test(cleanClientEmail) && !isClientAlsoAdmin) {
     const clientSubject = `🌟 Order Confirmation #${orderId} — BDigitizing`;
     const clientUrl = `${siteUrl}/client-portal?tab=orders&trackOrder=${encodeURIComponent(orderId)}`;
 

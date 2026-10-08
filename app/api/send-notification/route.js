@@ -2,6 +2,7 @@ import { withApiObservability, logServerCaughtError } from '../../../src/lib/obs
 import { NextResponse } from 'next/server';
 import { checkDistributedRateLimit, getClientIp, getRateLimitHeaders } from '../../../src/lib/rateLimit.js';
 import { sendOrderNotification } from '../../../src/lib/email.js';
+import { checkAndSetEmailDedup } from '../../../src/lib/emailService.js';
 import { getPrivateTextConfig } from '../../../src/lib/privateServerConfig.js';
 
 export const dynamic = 'force-dynamic';
@@ -97,6 +98,18 @@ async function POST_impl(req) {
       const data = isSupabaseDbWebhook ? record : payload;
 
       const orderId = String(data.order_id || data.id || data.orderId || 'Direct').trim();
+      const cleanOrderId = orderId.replace(/^#+/, '').trim().toLowerCase();
+
+      // Check deduplication cache to prevent duplicate dispatches from webhooks or retries
+      if (cleanOrderId && cleanOrderId !== 'direct' && checkAndSetEmailDedup(`NEW_ORDER:${cleanOrderId}`)) {
+        console.log(`[send-notification API] Suppressed duplicate order notification for #${cleanOrderId}`);
+        return NextResponse.json({
+          success: true,
+          duplicateSuppressed: true,
+          message: `Duplicate order notification for #${cleanOrderId} suppressed.`
+        });
+      }
+
       const clientEmail = data.client_email || data.clientEmail || '';
       const clientName = data.client_name || data.clientName || 'Valued Client';
       const serviceName = data.service_category || data.service_type || data.serviceName || data.title || 'Embroidery Digitizing';

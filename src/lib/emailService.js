@@ -5,6 +5,33 @@ export const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 // Resend account owner verified on sandbox domain
 export const RESEND_VERIFIED_FALLBACK_EMAIL = 'bilalsadiq612@gmail.com';
 
+// In-memory deduplication cache with 10-minute TTL to prevent duplicate dispatches
+export const emailNotificationDedupCache = new Map();
+const DEDUP_TTL_MS = 10 * 60 * 1000; // 10 minutes
+
+/**
+ * Checks if a notification with this key was already dispatched recently.
+ * If not, marks it as sent and returns false (not duplicate).
+ * If already sent, returns true (is duplicate).
+ */
+export function checkAndSetEmailDedup(key) {
+  if (!key) return false;
+  const now = Date.now();
+  if (emailNotificationDedupCache.size > 1000) {
+    for (const [k, v] of emailNotificationDedupCache.entries()) {
+      if (now - v > DEDUP_TTL_MS) emailNotificationDedupCache.delete(k);
+    }
+  }
+
+  const existingTime = emailNotificationDedupCache.get(key);
+  if (existingTime && (now - existingTime) < DEDUP_TTL_MS) {
+    return true;
+  }
+
+  emailNotificationDedupCache.set(key, now);
+  return false;
+}
+
 
 async function sendResendEmail(apiKey, payload) {
   const response = await fetch('https://api.resend.com/emails', {
@@ -196,6 +223,20 @@ export async function sendNotificationEmail(params = {}) {
     return { success: false, warning: 'RESEND_API_KEY is not configured' };
   }
 
+  // Idempotency / Deduplication Guard: suppress duplicate dispatches for the same order and event
+  const cleanOrderId = orderId ? String(orderId).replace(/^#+/, '').trim().toLowerCase() : null;
+  if (cleanOrderId && (type === 'NEW_ORDER' || type === 'ORDER_DELIVERED' || type === 'ORDER_COMPLETED')) {
+    const dedupKey = `${type}:${cleanOrderId}`;
+    if (checkAndSetEmailDedup(dedupKey)) {
+      console.log(`[emailService] Suppressed duplicate email notification for ${dedupKey}`);
+      return {
+        success: true,
+        duplicateSuppressed: true,
+        message: `Duplicate ${type} notification for order #${cleanOrderId} suppressed.`
+      };
+    }
+  }
+
   try {
     const { adminEmail: dynamicAdminEmail, adminEmails: dynamicAdminEmails, notificationPrefs } = await resolveAdminNotificationConfig();
 
@@ -220,7 +261,7 @@ export async function sendNotificationEmail(params = {}) {
     const configuredFrom = process.env.RESEND_FROM_ADDRESS || 'BDigitizing <support@bdigitizing.com>';
 
   // Shared send wrapper with automatic fallback if recipient is rejected by sandbox domain restriction
-  const executeSend = async ({ to, subject, html }) => {
+  const executeSend = async ({ to, subject, html, isClientReceipt = false }) => {
     if (!to || !EMAIL_REGEX.test(to)) {
       console.warn(`[emailService] Skipped sending due to invalid recipient email: "${to}"`);
       return null;
@@ -242,6 +283,13 @@ export async function sendNotificationEmail(params = {}) {
       return { ...response, recipient: to, fallbackApplied: false };
     } catch (sendErr) {
       console.warn(`[emailService] First delivery attempt to "${to}" failed:`, sendErr.message);
+
+      // If this was a client receipt, do NOT fallback to RESEND_VERIFIED_FALLBACK_EMAIL!
+      // Otherwise, the admin receives their own admin alert PLUS the client receipt fallback in the same inbox!
+      if (isClientReceipt) {
+        console.warn(`[emailService] Suppressing sandbox fallback for client confirmation email to "${to}" to avoid duplicate admin inbox notifications.`);
+        return { error: sendErr.message, fallbackSuppressed: true, recipient: to };
+      }
 
       // If the failure is due to Resend sandbox restriction ("only send testing emails to your own email address")
       // OR recipient is not the account owner, immediately failover to RESEND_VERIFIED_FALLBACK_EMAIL
@@ -442,7 +490,10 @@ export async function sendNotificationEmail(params = {}) {
       dispatchResults.adminOrders = adminResults;
 
       // Dispatch Confirmation to Client (if email is valid)
-      if (targetClientEmail && EMAIL_REGEX.test(targetClientEmail)) {
+      // DEDUPLICATION: If client email matches an admin email, suppress the client receipt
+      // so the admin does not receive duplicate emails in the same inbox for the same order.
+      const isClientAlsoAdmin = targetAdminEmails.includes(targetClientEmail);
+      if (targetClientEmail && EMAIL_REGEX.test(targetClientEmail) && !isClientAlsoAdmin) {
         try {
           dispatchResults.clientOrder = await executeSend({
             to: targetClientEmail,
@@ -470,7 +521,8 @@ export async function sendNotificationEmail(params = {}) {
                 </div>
                 ${emailFooter}
               </div>
-            `
+            `,
+            isClientReceipt: true
           });
         } catch (clientErr) {
           console.warn('[emailService] Client confirmation email notice:', clientErr.message);
@@ -556,7 +608,8 @@ export async function sendNotificationEmail(params = {}) {
             </div>
             ${emailFooter}
           </div>
-        `
+        `,
+        isClientReceipt: true
       });
     }
   }

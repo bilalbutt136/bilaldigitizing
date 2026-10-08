@@ -2184,7 +2184,11 @@ export const StateProvider = ({ children, initialCatalog = null }) => {
       created_at: new Date().toISOString()
     };
     broadcastLiveNotification(adminNotif);
-    triggerEmailNotification('NEW_ORDER', canonicalOrder);
+    // Server (/api/orders) authoritatively dispatches new order notification emails when Supabase is configured.
+    // Frontend trigger is preserved exclusively as an offline/local development fallback to prevent duplicate dispatches.
+    if (!isSupabaseConfigured) {
+      triggerEmailNotification('NEW_ORDER', canonicalOrder);
+    }
 
     // Log Purchase Tracking Event with exact customer name and email
     try {
@@ -2332,9 +2336,15 @@ export const StateProvider = ({ children, initialCatalog = null }) => {
         soundType: 'delivery'
       }, true);
 
-      triggerEmailNotification('ORDER_DELIVERED', { ...(targetOrder || {}), id: orderId, ...safeExtraData });
+      // Server (/api/orders updateStatus) authoritatively dispatches delivery emails when Supabase is configured.
+      // Frontend trigger is kept strictly for offline/local fallback to prevent duplicate notifications.
+      if (!isSupabaseConfigured) {
+        triggerEmailNotification('ORDER_DELIVERED', { ...(targetOrder || {}), id: orderId, ...safeExtraData });
+      }
     } else if (newStatus === 'completed') {
-      triggerEmailNotification('ORDER_COMPLETED', { ...(targetOrder || {}), id: orderId, ...safeExtraData });
+      if (!isSupabaseConfigured) {
+        triggerEmailNotification('ORDER_COMPLETED', { ...(targetOrder || {}), id: orderId, ...safeExtraData });
+      }
     }
 
     return { success: true };
