@@ -16,7 +16,7 @@ test('StreamlinedOrderFlow includes initial 3-service selection screen and trans
 
   // Verify the 3 core service cards exist in Step 1
   assert.equal(source.includes('Embroidery Digitizing'), true);
-  assert.equal(source.includes('Vector Art Conversion'), true);
+  assert.equal(source.includes('Vector Art'), true);
   assert.equal(source.includes('Custom Patches'), true);
 
   // Verify Change Service button exists in Step 2 to return to service selection

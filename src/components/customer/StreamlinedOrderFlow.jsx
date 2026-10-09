@@ -15,13 +15,11 @@ import {
   ChevronDown,
   ShieldCheck,
   X,
-  Sparkles,
   ArrowRight,
   ArrowLeft,
   Palette,
   Award,
-  Zap,
-  CheckCircle2
+  Zap
 } from 'lucide-react';
 import { uploadFileToCloudinaryFull } from '../../services/supabaseService';
 
@@ -822,57 +820,37 @@ export const StreamlinedOrderFlow = ({
 
       {/* STEP 1: SERVICE SELECTION SCREEN (SHOWN WHEN STARTING ORDER) */}
       {!hasSelectedService ? (
-        <div style={{ padding: '0.5rem 0 1rem' }}>
-          {/* Header */}
-          <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-            <div style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '0.4rem',
-              fontSize: '0.78rem',
-              fontWeight: 800,
-              letterSpacing: '0.06em',
-              textTransform: 'uppercase',
-              color: '#ea580c',
-              background: isDark ? 'rgba(234, 88, 12, 0.15)' : '#fff7ed',
-              border: '1px solid #fed7aa',
-              padding: '0.35rem 0.95rem',
-              borderRadius: '9999px',
-              marginBottom: '0.75rem'
-            }}>
-              <Sparkles size={14} style={{ color: '#ea580c' }} />
-              Step 1 of 2 • Select Studio Service
-            </div>
-
+        <div style={{ padding: '0.25rem 0 0.5rem' }}>
+          {/* Clean Minimal Header */}
+          <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
             <h2 style={{
-              fontSize: 'clamp(1.5rem, 3.2vw, 2.2rem)',
+              fontSize: 'clamp(1.35rem, 2.5vw, 1.75rem)',
               fontFamily: 'var(--font-heading)',
               fontWeight: 900,
-              lineHeight: 1.2,
-              margin: '0 0 0.5rem',
-              color: 'var(--color-text-primary, #0f172a)',
-              letterSpacing: '-0.02em'
+              lineHeight: 1.25,
+              margin: '0 0 0.3rem',
+              color: 'var(--color-text-primary, #0f172a)'
             }}>
-              What Would You Like Us to Create?
+              Select a Service
             </h2>
 
             <p style={{
-              fontSize: '0.94rem',
+              fontSize: '0.86rem',
               color: 'var(--color-text-muted, #64748b)',
-              maxWidth: '560px',
+              maxWidth: '460px',
               margin: '0 auto',
-              lineHeight: 1.55
+              lineHeight: 1.4
             }}>
-              Select your service below to start your order with instant live pricing and fastest turnaround.
+              Choose the service you need to start placing your order.
             </p>
           </div>
 
-          {/* 3 Interactive Service Cards */}
+          {/* 3 Clean Compact Service Cards */}
           <div
             style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-              gap: '1.25rem',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+              gap: '1rem',
               alignItems: 'stretch'
             }}
           >
@@ -880,112 +858,82 @@ export const StreamlinedOrderFlow = ({
             <div
               onClick={() => handleSelectService('embroidery')}
               style={{
-                borderRadius: '18px',
-                border: '2px solid var(--color-border, #e2e8f0)',
+                borderRadius: '16px',
+                border: '1.5px solid var(--color-border, #e2e8f0)',
                 background: isDark ? '#1e293b' : '#ffffff',
-                padding: '1.6rem 1.4rem',
+                padding: '1.4rem 1.15rem',
                 cursor: 'pointer',
-                transition: 'all 0.22s ease',
+                transition: 'all 0.18s ease',
                 display: 'flex',
                 flexDirection: 'column',
                 justifyContent: 'space-between',
-                position: 'relative',
-                boxShadow: '0 4px 18px rgba(0, 0, 0, 0.04)'
+                boxShadow: '0 2px 10px rgba(0, 0, 0, 0.03)',
+                textAlign: 'center'
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.borderColor = '#ea580c';
-                e.currentTarget.style.transform = 'translateY(-4px)';
-                e.currentTarget.style.boxShadow = '0 12px 30px rgba(234, 88, 12, 0.15)';
+                e.currentTarget.style.transform = 'translateY(-3px)';
+                e.currentTarget.style.boxShadow = '0 10px 24px rgba(234, 88, 12, 0.12)';
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.borderColor = 'var(--color-border, #e2e8f0)';
                 e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = '0 4px 18px rgba(0, 0, 0, 0.04)';
+                e.currentTarget.style.boxShadow = '0 2px 10px rgba(0, 0, 0, 0.03)';
               }}
             >
               <div>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.1rem' }}>
-                  <div
-                    style={{
-                      width: '48px',
-                      height: '48px',
-                      borderRadius: '12px',
-                      background: '#fff7ed',
-                      border: '1.5px solid #fed7aa',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      color: '#ea580c'
-                    }}
-                  >
-                    <Zap size={24} />
-                  </div>
-                  <span
-                    style={{
-                      fontSize: '0.72rem',
-                      fontWeight: 800,
-                      color: '#ea580c',
-                      background: '#fff7ed',
-                      border: '1px solid #fed7aa',
-                      padding: '3px 9px',
-                      borderRadius: '9999px'
-                    }}
-                  >
-                    ⚡ 4–12H Delivery
-                  </span>
+                <div
+                  style={{
+                    width: '52px',
+                    height: '52px',
+                    borderRadius: '14px',
+                    background: '#fff7ed',
+                    border: '1.5px solid #fed7aa',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: '#ea580c',
+                    margin: '0 auto 0.85rem'
+                  }}
+                >
+                  <Zap size={26} />
                 </div>
 
-                <h3 style={{ fontSize: '1.25rem', fontWeight: 900, margin: '0 0 0.35rem', color: 'var(--color-text-primary, #0f172a)' }}>
+                <h3 style={{ fontSize: '1.12rem', fontWeight: 900, margin: '0 0 0.3rem', color: 'var(--color-text-primary, #0f172a)' }}>
                   Embroidery Digitizing
                 </h3>
-                <p style={{ fontSize: '0.86rem', color: 'var(--color-text-muted, #64748b)', margin: '0 0 1.1rem', lineHeight: 1.45 }}>
-                  Master-level stitch files with 100% hand pathing & zero auto-digitize errors.
-                </p>
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '1.4rem', fontSize: '0.82rem', color: 'var(--color-text-secondary, #475569)' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
-                    <CheckCircle2 size={14} style={{ color: '#059669', flexShrink: 0 }} />
-                    <span>Left Chest, Caps, 3D Puff, Full Back</span>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
-                    <CheckCircle2 size={14} style={{ color: '#059669', flexShrink: 0 }} />
-                    <span>Tajima .DST, Wilcom .EMB, Brother .PES</span>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
-                    <CheckCircle2 size={14} style={{ color: '#059669', flexShrink: 0 }} />
-                    <span>Free Unlimited Machine Revisions</span>
-                  </div>
-                </div>
+                <p style={{ fontSize: '0.82rem', color: 'var(--color-text-muted, #64748b)', margin: '0 0 1rem', lineHeight: 1.4 }}>
+                  DST, PES, EMB stitch files for machines
+                </p>
               </div>
 
               <div>
-                <div style={{ borderTop: '1px solid var(--color-border, #e2e8f0)', paddingTop: '0.9rem', marginBottom: '0.9rem', display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
-                  <span style={{ fontSize: '0.78rem', color: 'var(--color-text-muted, #64748b)', fontWeight: 700 }}>Starting at</span>
-                  <span style={{ fontSize: '1.3rem', fontWeight: 900, color: '#ea580c' }}>
-                    $10.00 <span style={{ fontSize: '0.76rem', fontWeight: 700, color: 'var(--color-text-muted, #64748b)' }}>/ design</span>
-                  </span>
+                <div style={{ marginBottom: '0.75rem' }}>
+                  <span style={{ fontSize: '0.76rem', color: 'var(--color-text-muted, #64748b)', fontWeight: 700 }}>From </span>
+                  <span style={{ fontSize: '1.15rem', fontWeight: 900, color: '#ea580c' }}>$10.00</span>
                 </div>
 
                 <button
                   type="button"
                   style={{
                     width: '100%',
-                    padding: '0.72rem',
+                    padding: '0.62rem 1rem',
                     borderRadius: '10px',
                     border: 'none',
-                    background: 'linear-gradient(135deg, #ea580c 0%, #c2410c 100%)',
+                    background: '#ea580c',
                     color: '#ffffff',
-                    fontWeight: 900,
-                    fontSize: '0.88rem',
+                    fontWeight: 800,
+                    fontSize: '0.85rem',
                     cursor: 'pointer',
-                    display: 'flex',
+                    display: 'inline-flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    gap: '0.4rem',
-                    boxShadow: '0 4px 12px rgba(234, 88, 12, 0.25)'
+                    gap: '0.35rem',
+                    transition: 'all 0.15s ease'
                   }}
                 >
-                  Start Digitizing Order <ArrowRight size={15} />
+                  Select <ArrowRight size={14} />
                 </button>
               </div>
             </div>
@@ -994,112 +942,82 @@ export const StreamlinedOrderFlow = ({
             <div
               onClick={() => handleSelectService('vector')}
               style={{
-                borderRadius: '18px',
-                border: '2px solid var(--color-border, #e2e8f0)',
+                borderRadius: '16px',
+                border: '1.5px solid var(--color-border, #e2e8f0)',
                 background: isDark ? '#1e293b' : '#ffffff',
-                padding: '1.6rem 1.4rem',
+                padding: '1.4rem 1.15rem',
                 cursor: 'pointer',
-                transition: 'all 0.22s ease',
+                transition: 'all 0.18s ease',
                 display: 'flex',
                 flexDirection: 'column',
                 justifyContent: 'space-between',
-                position: 'relative',
-                boxShadow: '0 4px 18px rgba(0, 0, 0, 0.04)'
+                boxShadow: '0 2px 10px rgba(0, 0, 0, 0.03)',
+                textAlign: 'center'
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.borderColor = '#7c3aed';
-                e.currentTarget.style.transform = 'translateY(-4px)';
-                e.currentTarget.style.boxShadow = '0 12px 30px rgba(124, 58, 237, 0.15)';
+                e.currentTarget.style.transform = 'translateY(-3px)';
+                e.currentTarget.style.boxShadow = '0 10px 24px rgba(124, 58, 237, 0.12)';
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.borderColor = 'var(--color-border, #e2e8f0)';
                 e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = '0 4px 18px rgba(0, 0, 0, 0.04)';
+                e.currentTarget.style.boxShadow = '0 2px 10px rgba(0, 0, 0, 0.03)';
               }}
             >
               <div>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.1rem' }}>
-                  <div
-                    style={{
-                      width: '48px',
-                      height: '48px',
-                      borderRadius: '12px',
-                      background: '#faf5ff',
-                      border: '1.5px solid #e9d5ff',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      color: '#7c3aed'
-                    }}
-                  >
-                    <Palette size={24} />
-                  </div>
-                  <span
-                    style={{
-                      fontSize: '0.72rem',
-                      fontWeight: 800,
-                      color: '#7c3aed',
-                      background: '#faf5ff',
-                      border: '1px solid #e9d5ff',
-                      padding: '3px 9px',
-                      borderRadius: '9999px'
-                    }}
-                  >
-                    🎨 6–12H Delivery
-                  </span>
+                <div
+                  style={{
+                    width: '52px',
+                    height: '52px',
+                    borderRadius: '14px',
+                    background: '#faf5ff',
+                    border: '1.5px solid #e9d5ff',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: '#7c3aed',
+                    margin: '0 auto 0.85rem'
+                  }}
+                >
+                  <Palette size={26} />
                 </div>
 
-                <h3 style={{ fontSize: '1.25rem', fontWeight: 900, margin: '0 0 0.35rem', color: 'var(--color-text-primary, #0f172a)' }}>
-                  Vector Art Conversion
+                <h3 style={{ fontSize: '1.12rem', fontWeight: 900, margin: '0 0 0.3rem', color: 'var(--color-text-primary, #0f172a)' }}>
+                  Vector Art
                 </h3>
-                <p style={{ fontSize: '0.86rem', color: 'var(--color-text-muted, #64748b)', margin: '0 0 1.1rem', lineHeight: 1.45 }}>
-                  Raster artwork redrawn into crystal-clear scalable vector files for print & cut.
-                </p>
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '1.4rem', fontSize: '0.82rem', color: 'var(--color-text-secondary, #475569)' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
-                    <CheckCircle2 size={14} style={{ color: '#059669', flexShrink: 0 }} />
-                    <span>Screen Print, Vinyl Cut & DTF Ready</span>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
-                    <CheckCircle2 size={14} style={{ color: '#059669', flexShrink: 0 }} />
-                    <span>Adobe Illustrator (.AI), .SVG, .EPS, .PDF</span>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
-                    <CheckCircle2 size={14} style={{ color: '#059669', flexShrink: 0 }} />
-                    <span>Clean Bézier curves & spot color separation</span>
-                  </div>
-                </div>
+                <p style={{ fontSize: '0.82rem', color: 'var(--color-text-muted, #64748b)', margin: '0 0 1rem', lineHeight: 1.4 }}>
+                  AI, EPS, SVG vector redraws for print & cut
+                </p>
               </div>
 
               <div>
-                <div style={{ borderTop: '1px solid var(--color-border, #e2e8f0)', paddingTop: '0.9rem', marginBottom: '0.9rem', display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
-                  <span style={{ fontSize: '0.78rem', color: 'var(--color-text-muted, #64748b)', fontWeight: 700 }}>Starting at</span>
-                  <span style={{ fontSize: '1.3rem', fontWeight: 900, color: '#7c3aed' }}>
-                    $15.00 <span style={{ fontSize: '0.76rem', fontWeight: 700, color: 'var(--color-text-muted, #64748b)' }}>/ design</span>
-                  </span>
+                <div style={{ marginBottom: '0.75rem' }}>
+                  <span style={{ fontSize: '0.76rem', color: 'var(--color-text-muted, #64748b)', fontWeight: 700 }}>From </span>
+                  <span style={{ fontSize: '1.15rem', fontWeight: 900, color: '#7c3aed' }}>$15.00</span>
                 </div>
 
                 <button
                   type="button"
                   style={{
                     width: '100%',
-                    padding: '0.72rem',
+                    padding: '0.62rem 1rem',
                     borderRadius: '10px',
                     border: 'none',
-                    background: 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)',
+                    background: '#7c3aed',
                     color: '#ffffff',
-                    fontWeight: 900,
-                    fontSize: '0.88rem',
+                    fontWeight: 800,
+                    fontSize: '0.85rem',
                     cursor: 'pointer',
-                    display: 'flex',
+                    display: 'inline-flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    gap: '0.4rem',
-                    boxShadow: '0 4px 12px rgba(124, 58, 237, 0.25)'
+                    gap: '0.35rem',
+                    transition: 'all 0.15s ease'
                   }}
                 >
-                  Start Vector Order <ArrowRight size={15} />
+                  Select <ArrowRight size={14} />
                 </button>
               </div>
             </div>
@@ -1108,112 +1026,82 @@ export const StreamlinedOrderFlow = ({
             <div
               onClick={() => handleSelectService('patch')}
               style={{
-                borderRadius: '18px',
-                border: '2px solid var(--color-border, #e2e8f0)',
+                borderRadius: '16px',
+                border: '1.5px solid var(--color-border, #e2e8f0)',
                 background: isDark ? '#1e293b' : '#ffffff',
-                padding: '1.6rem 1.4rem',
+                padding: '1.4rem 1.15rem',
                 cursor: 'pointer',
-                transition: 'all 0.22s ease',
+                transition: 'all 0.18s ease',
                 display: 'flex',
                 flexDirection: 'column',
                 justifyContent: 'space-between',
-                position: 'relative',
-                boxShadow: '0 4px 18px rgba(0, 0, 0, 0.04)'
+                boxShadow: '0 2px 10px rgba(0, 0, 0, 0.03)',
+                textAlign: 'center'
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.borderColor = '#0284c7';
-                e.currentTarget.style.transform = 'translateY(-4px)';
-                e.currentTarget.style.boxShadow = '0 12px 30px rgba(2, 132, 199, 0.15)';
+                e.currentTarget.style.transform = 'translateY(-3px)';
+                e.currentTarget.style.boxShadow = '0 10px 24px rgba(2, 132, 199, 0.12)';
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.borderColor = 'var(--color-border, #e2e8f0)';
                 e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = '0 4px 18px rgba(0, 0, 0, 0.04)';
+                e.currentTarget.style.boxShadow = '0 2px 10px rgba(0, 0, 0, 0.03)';
               }}
             >
               <div>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.1rem' }}>
-                  <div
-                    style={{
-                      width: '48px',
-                      height: '48px',
-                      borderRadius: '12px',
-                      background: '#f0f9ff',
-                      border: '1.5px solid #bae6fd',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      color: '#0284c7'
-                    }}
-                  >
-                    <Award size={24} />
-                  </div>
-                  <span
-                    style={{
-                      fontSize: '0.72rem',
-                      fontWeight: 800,
-                      color: '#0284c7',
-                      background: '#f0f9ff',
-                      border: '1px solid #bae6fd',
-                      padding: '3px 9px',
-                      borderRadius: '9999px'
-                    }}
-                  >
-                    🏷️ Min 50 Pcs • Physical
-                  </span>
+                <div
+                  style={{
+                    width: '52px',
+                    height: '52px',
+                    borderRadius: '14px',
+                    background: '#f0f9ff',
+                    border: '1.5px solid #bae6fd',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: '#0284c7',
+                    margin: '0 auto 0.85rem'
+                  }}
+                >
+                  <Award size={26} />
                 </div>
 
-                <h3 style={{ fontSize: '1.25rem', fontWeight: 900, margin: '0 0 0.35rem', color: 'var(--color-text-primary, #0f172a)' }}>
+                <h3 style={{ fontSize: '1.12rem', fontWeight: 900, margin: '0 0 0.3rem', color: 'var(--color-text-primary, #0f172a)' }}>
                   Custom Patches
                 </h3>
-                <p style={{ fontSize: '0.86rem', color: 'var(--color-text-muted, #64748b)', margin: '0 0 1.1rem', lineHeight: 1.45 }}>
-                  Physical manufactured embroidered, woven, PVC & leather patches delivered to door.
-                </p>
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '1.4rem', fontSize: '0.82rem', color: 'var(--color-text-secondary, #475569)' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
-                    <CheckCircle2 size={14} style={{ color: '#059669', flexShrink: 0 }} />
-                    <span>Embroidered, Woven, PVC 3D & Leather</span>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
-                    <CheckCircle2 size={14} style={{ color: '#059669', flexShrink: 0 }} />
-                    <span>Velcro, Iron-On, Sew-On or Sticker Backing</span>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
-                    <CheckCircle2 size={14} style={{ color: '#059669', flexShrink: 0 }} />
-                    <span>100% Free Digital Proof before production</span>
-                  </div>
-                </div>
+                <p style={{ fontSize: '0.82rem', color: 'var(--color-text-muted, #64748b)', margin: '0 0 1rem', lineHeight: 1.4 }}>
+                  Physical embroidered & PVC patches (Min 50 pcs)
+                </p>
               </div>
 
               <div>
-                <div style={{ borderTop: '1px solid var(--color-border, #e2e8f0)', paddingTop: '0.9rem', marginBottom: '0.9rem', display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
-                  <span style={{ fontSize: '0.78rem', color: 'var(--color-text-muted, #64748b)', fontWeight: 700 }}>Starting at</span>
-                  <span style={{ fontSize: '1.3rem', fontWeight: 900, color: '#0284c7' }}>
-                    $3.50 <span style={{ fontSize: '0.76rem', fontWeight: 700, color: 'var(--color-text-muted, #64748b)' }}>/ piece</span>
-                  </span>
+                <div style={{ marginBottom: '0.75rem' }}>
+                  <span style={{ fontSize: '0.76rem', color: 'var(--color-text-muted, #64748b)', fontWeight: 700 }}>From </span>
+                  <span style={{ fontSize: '1.15rem', fontWeight: 900, color: '#0284c7' }}>$3.50<span style={{ fontSize: '0.76rem', fontWeight: 600 }}>/pc</span></span>
                 </div>
 
                 <button
                   type="button"
                   style={{
                     width: '100%',
-                    padding: '0.72rem',
+                    padding: '0.62rem 1rem',
                     borderRadius: '10px',
                     border: 'none',
-                    background: 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)',
+                    background: '#0284c7',
                     color: '#ffffff',
-                    fontWeight: 900,
-                    fontSize: '0.88rem',
+                    fontWeight: 800,
+                    fontSize: '0.85rem',
                     cursor: 'pointer',
-                    display: 'flex',
+                    display: 'inline-flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    gap: '0.4rem',
-                    boxShadow: '0 4px 12px rgba(2, 132, 199, 0.25)'
+                    gap: '0.35rem',
+                    transition: 'all 0.15s ease'
                   }}
                 >
-                  Start Patches Order <ArrowRight size={15} />
+                  Select <ArrowRight size={14} />
                 </button>
               </div>
             </div>
