@@ -309,6 +309,7 @@ export const CheckoutModal = () => {
             type: checkoutSession?.offerId ? 'custom_offer' : 'order_payment',
             orderId: checkoutSession?.orderId || null,
             offerId: checkoutSession?.offerId || null,
+            clientEmail: (checkoutSession?.clientEmail || checkoutSession?.client_email || authUser?.email || currentUser?.email || '').toLowerCase().trim(),
             isApp: mobileMode === 'app'
           })
         });

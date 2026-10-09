@@ -25,19 +25,21 @@ async function POST_impl(req) {
       }, { status: 503 });
     }
 
+    const body = await req.json().catch(() => ({}));
     const { user, isAdmin } = await getServerAuthUser(req);
-    if (!user) {
+    const guestEmail = String(body.clientEmail || body.email || '').trim().toLowerCase();
+
+    if (!user && !(guestEmail && body.orderId)) {
       return NextResponse.json({ success: false, error: 'Authentication required.' }, { status: 401 });
     }
 
-    const body = await req.json().catch(() => ({}));
     const supabase = createAdminClient();
     const payment = await resolveAuthoritativePayment({
       supabase,
       user,
       isAdmin,
       body,
-      allowDeposit: true
+      allowDeposit: Boolean(user)
     });
 
     const stripe = new Stripe(stripeKey, { apiVersion: '2023-10-16' });

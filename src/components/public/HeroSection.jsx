@@ -40,24 +40,24 @@ const ICON_MAP = {
 
 const DEFAULT_SERVICE_DATA = {
   all: {
-    badge: 'Commercial Embroidery Digitizing Studio',
-    title: 'Professional Embroidery Digitizing for Commercial Shops',
-    highlight: 'Production-Ready DST, PES & EMB Files · Fast Turnaround · Free Revisions',
-    description: 'Manual embroidery digitizing built for decorators, embroidery shops, uniform suppliers, and apparel production teams. Vector art conversion and custom patch manufacturing are also available from the same studio.',
+    badge: 'Commercial Embroidery Digitizing & Custom Patches',
+    title: 'Professional Embroidery Digitizing & Custom Patches Studio',
+    highlight: 'Production-Ready DST, PES & EMB Files in 4–12 Hours · Free Revisions · Custom Physical Patches',
+    description: 'Precision manual digitizing built for decorators, apparel shops, and uniform suppliers with zero thread breaks. Custom manufactured physical patches with military-grade backings and doorstep worldwide delivery.',
     features: [
-      'Embroidery Digitizing: Starts $10 · Manual Pathing · Fabric-Specific Optimization',
-      'Vector Art Redraw: Starts $15.00 Flat · Pantone Spot Colors · Master AI/EPS/SVG',
-      'Custom Physical Patches: 50-Piece Minimum · Digital Proof · Worldwide Shipping'
+      'Embroidery Digitizing: Starts $10 · Manual Hand Pathing · Cap & Left Chest Optimization',
+      'Custom Physical Patches: From $1.50/pc · 50-Piece Minimum · Free 12-Hour Digital Proof',
+      'Quality Guarantee: Zero Thread Breaks · Free Unlimited Revisions · 4–12h Fast Turnaround'
     ],
     stats: [
-      { value: '4–12h', label: 'Typical Embroidery', icon: 'Clock' },
+      { value: '4–12h', label: 'Delivery Turnaround', icon: 'Clock' },
       { value: '100%', label: 'Manual Pathing', icon: 'Zap' },
-      { value: 'All Formats', label: 'DST, PES, EMB & AI', icon: 'Layers' },
+      { value: 'All Formats', label: 'DST, PES, EMB & EXP', icon: 'Layers' },
       { value: 'Free', label: 'Minor Revisions', icon: 'ShieldCheck' }
     ],
-    primary_cta: 'Upload Artwork & Start Order',
+    primary_cta: 'Upload Artwork & Order Now',
     primary_btn_action: '/order',
-    secondary_cta: 'View Pricing',
+    secondary_cta: 'View Packages & Pricing',
     secondary_btn_action: '/pricing',
     previewTitle: 'Live Studio Production Showcase',
     slideshow_interval: 5
@@ -406,9 +406,8 @@ export const HeroSection = () => {
 
   const tabs = [
     { id: 'all', label: 'All Services', icon: LayoutGrid },
-    { id: 'embroidery', label: 'Embroidery', icon: Layers },
-    { id: 'vector-art', label: 'Vector Art', icon: PenTool },
-    { id: 'patches', label: 'Patches', icon: Tag }
+    { id: 'embroidery', label: 'Embroidery Digitizing', icon: Layers },
+    { id: 'patches', label: 'Custom Patches', icon: Tag }
   ];
 
   return (
@@ -623,8 +622,8 @@ export const HeroSection = () => {
 
       <div className="container" style={{ position: 'relative', zIndex: 1, maxWidth: '1380px', width: '100%', boxSizing: 'border-box' }}>
 
-        {/* Top 4 Navigation Tabs Switcher */}
-        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 'clamp(0.85rem, 1.8vw, 1.25rem)', width: '100%' }}>
+        {/* Top Navigation Tabs Switcher (Embroidery & Custom Patches Focus) */}
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 'clamp(0.85rem, 1.8vw, 1.25rem)', width: '100%' }}>
           <div
             className="hero-nav-tabs-wrapper"
             style={{
@@ -676,6 +675,29 @@ export const HeroSection = () => {
                 </button>
               );
             })}
+          </div>
+
+          {/* Subtle Vector Art Secondary Pill */}
+          <div style={{ marginTop: '0.45rem', textAlign: 'center', fontSize: '0.78rem', color: 'var(--hero-tabs-text, var(--color-text-muted))' }}>
+            <span>Need logo redraw or vector conversion? </span>
+            <button
+              type="button"
+              onClick={() => {
+                if (openOrderWizard) openOrderWizard({ type: 'vector' });
+                else navigate('/services/vector-tracing');
+              }}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: 'var(--color-primary, #ea580c)',
+                fontWeight: 800,
+                cursor: 'pointer',
+                textDecoration: 'underline',
+                padding: 0
+              }}
+            >
+              Vector Redraw from $15 Flat →
+            </button>
           </div>
         </div>
 

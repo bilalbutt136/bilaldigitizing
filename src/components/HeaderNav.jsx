@@ -364,7 +364,7 @@ export const HeaderNav = () => {
               BDigitizing
             </div>
             <div className="desktop-only" style={{ fontSize: '0.68rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', marginTop: '2px' }}>
-              Embroidery &amp; Vector Studio
+              Embroidery &amp; Patches Studio
             </div>
           </div>
         </Link>
@@ -486,43 +486,7 @@ export const HeaderNav = () => {
                       <PenTool size={16} /> Embroidery Digitizing
                     </Link>
 
-                    {/* Option 2: Vector Art */}
-                    <Link
-                      href="/services/vector-tracing"
-                      onClick={() => {
-                        setIsServicesOpen(false);
-                      }}
-                      style={{
-                        textDecoration: 'none',
-                        width: '100%',
-                        textAlign: 'left',
-                        padding: '0.55rem 0.85rem',
-                        background: 'transparent',
-                        border: 'none',
-                        borderRadius: '8px',
-                        cursor: 'pointer',
-                        color: 'var(--text-main)',
-                        fontSize: '0.875rem',
-                        fontWeight: 700,
-                        transition: 'all 0.18s ease',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.5rem',
-                        boxSizing: 'border-box'
-                      }}
-                      onMouseOver={(e) => {
-                        e.currentTarget.style.background = 'rgba(249, 115, 22, 0.12)';
-                        e.currentTarget.style.color = 'var(--orange-500)';
-                      }}
-                      onMouseOut={(e) => {
-                        e.currentTarget.style.background = 'transparent';
-                        e.currentTarget.style.color = 'var(--text-main)';
-                      }}
-                    >
-                      <ImageIcon size={16} /> Vector Art
-                    </Link>
-
-                    {/* Option 3: Custom Patches */}
+                    {/* Option 2: Custom Patches */}
                     <Link
                       href="/custom-patches"
                       onClick={() => {
@@ -557,6 +521,44 @@ export const HeaderNav = () => {
                     >
                       <Award size={16} /> Custom Patches
                     </Link>
+
+                    {/* Option 3: Vector Art */}
+                    <Link
+                      href="/services/vector-tracing"
+                      onClick={() => {
+                        setIsServicesOpen(false);
+                      }}
+                      style={{
+                        textDecoration: 'none',
+                        width: '100%',
+                        textAlign: 'left',
+                        padding: '0.55rem 0.85rem',
+                        background: 'transparent',
+                        border: 'none',
+                        borderRadius: '8px',
+                        cursor: 'pointer',
+                        color: 'var(--text-main)',
+                        fontSize: '0.875rem',
+                        fontWeight: 700,
+                        transition: 'all 0.18s ease',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.5rem',
+                        boxSizing: 'border-box'
+                      }}
+                      onMouseOver={(e) => {
+                        e.currentTarget.style.background = 'rgba(249, 115, 22, 0.12)';
+                        e.currentTarget.style.color = 'var(--orange-500)';
+                      }}
+                      onMouseOut={(e) => {
+                        e.currentTarget.style.background = 'transparent';
+                        e.currentTarget.style.color = 'var(--text-main)';
+                      }}
+                    >
+                      <ImageIcon size={16} /> Vector Art (Add-on)
+                    </Link>
+
+                    
                   </div>
                 </div>
               )}
@@ -1376,7 +1378,7 @@ export const HeaderNav = () => {
                     BDigitizing
                   </div>
                   <div style={{ fontSize: '0.62rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', marginTop: '2px' }}>
-                    Embroidery &amp; Vector Studio
+                    Embroidery &amp; Patches Studio
                   </div>
                 </div>
               </Link>
@@ -1761,7 +1763,7 @@ export const HeaderNav = () => {
                         }}
                       >
                         <ImageIcon size={15} style={{ color: '#3b82f6' }} />
-                        <span>Vector Art Tracing</span>
+                        <span>Vector Art (Add-on)</span>
                       </Link>
 
                       <Link

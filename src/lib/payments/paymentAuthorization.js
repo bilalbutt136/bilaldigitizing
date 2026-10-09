@@ -31,10 +31,10 @@ function orderIdCandidates(rawOrderId) {
   return Array.from(new Set([raw, clean, clean ? `#${clean}` : ''])).filter(Boolean);
 }
 
-function assertOwner({ ownerEmail, ownerUserId, user, isAdmin, resource }) {
+function assertOwner({ ownerEmail, ownerUserId, user, clientEmail, isAdmin, resource }) {
   if (isAdmin) return;
-  const userEmail = normalizeEmail(user?.email);
-  const emailMatches = ownerEmail && normalizeEmail(ownerEmail) === userEmail;
+  const effectiveEmail = normalizeEmail(user?.email || clientEmail);
+  const emailMatches = ownerEmail && normalizeEmail(ownerEmail) === effectiveEmail;
   const idMatches = ownerUserId && user?.id && String(ownerUserId) === String(user.id);
   if (!emailMatches && !idMatches) {
     throw new PaymentAuthorizationError(`You are not authorized to pay this ${resource}.`, 403);
@@ -48,8 +48,9 @@ export async function resolveAuthoritativePayment({
   body = {},
   allowDeposit = false
 }) {
-  if (!user?.email) {
-    throw new PaymentAuthorizationError('Authentication is required to create a payment.', 401);
+  const callerEmail = normalizeEmail(user?.email || body.clientEmail || body.email);
+  if (!callerEmail) {
+    throw new PaymentAuthorizationError('Authentication or client email is required to create a payment.', 401);
   }
 
   const requestedType = String(body.type || '').trim();
@@ -81,6 +82,7 @@ export async function resolveAuthoritativePayment({
       ownerEmail: offer.client_email,
       ownerUserId: offer.customer_id,
       user,
+      clientEmail: callerEmail,
       isAdmin,
       resource: 'custom offer'
     });
@@ -94,8 +96,8 @@ export async function resolveAuthoritativePayment({
       type,
       amount,
       amountCents: Math.round(amount * 100),
-      targetEmail: normalizeEmail(offer.client_email || user.email),
-      targetUserId: offer.customer_id || user.id,
+      targetEmail: normalizeEmail(offer.client_email || user?.email || callerEmail),
+      targetUserId: offer.customer_id || user?.id || null,
       orderId: offer.order_id || null,
       offerId: offer.id,
       conversationId: offer.conversation_id || offer.thread_id || null,
@@ -122,6 +124,7 @@ export async function resolveAuthoritativePayment({
       ownerEmail: order.client_email,
       ownerUserId: order.user_id,
       user,
+      clientEmail: callerEmail,
       isAdmin,
       resource: 'order'
     });
@@ -135,8 +138,8 @@ export async function resolveAuthoritativePayment({
       type,
       amount,
       amountCents: Math.round(amount * 100),
-      targetEmail: normalizeEmail(order.client_email || user.email),
-      targetUserId: order.user_id || user.id,
+      targetEmail: normalizeEmail(order.client_email || user?.email || callerEmail),
+      targetUserId: order.user_id || user?.id || null,
       orderId: order.id,
       offerId: null,
       conversationId: null,

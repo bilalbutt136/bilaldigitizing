@@ -356,10 +356,10 @@ export default function PricingPage() {
   const displayedPackages = getPackages();
 
   const tabButtons = [
-    { key: 'all', label: 'All 3 Core Services', icon: Sparkles },
-    { key: 'embroidery', label: `🧵 Embroidery (${getCategoryCount('embroidery')} Packages)`, icon: Layers },
-    { key: 'vector_art', label: `✒️ Vector Art (${getCategoryCount('vector_art')} Packages)`, icon: PenTool },
-    { key: 'patches', label: `🏷️ Custom Patches (${getCategoryCount('patches')} Packages)`, icon: Tag }
+    { key: 'all', label: 'All Core Services', icon: Sparkles },
+    { key: 'embroidery', label: `🧵 Embroidery Digitizing (${getCategoryCount('embroidery')} Packages)`, icon: Layers },
+    { key: 'patches', label: `🏷️ Custom Patches (${getCategoryCount('patches')} Packages)`, icon: Tag },
+    { key: 'vector_art', label: `✒️ Vector Redraw (${getCategoryCount('vector_art')} Packages)`, icon: PenTool }
   ];
 
 

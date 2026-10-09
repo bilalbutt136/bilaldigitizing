@@ -2677,46 +2677,26 @@ export const StateProvider = ({ children, initialCatalog = null }) => {
 
 
   const openOrderWizard = (initialData = null) => {
-    let isAuthed = isAuthenticated || Boolean(authUser?.email);
-    if (!isAuthed && typeof window !== 'undefined') {
+    // Save any pending data
+    const orderData = initialData || { type: 'embroidery' };
+    if (typeof window !== 'undefined') {
       try {
-        const savedUser = localStorage.getItem('bdigi_auth_user');
-        if (savedUser) {
-          const parsed = JSON.parse(savedUser);
-          if (parsed && parsed.email) isAuthed = true;
-        }
+        localStorage.setItem('bdigi_pending_order_wizard', JSON.stringify(orderData));
       } catch {}
-    }
-
-    if (!isAuthed) {
-      const orderData = initialData || { type: 'all' };
-      setOrderWizardInitialData(orderData);
-      if (typeof window !== 'undefined') {
-        try {
-          localStorage.setItem('bdigi_pending_order_wizard', JSON.stringify(orderData));
-        } catch {}
-      }
-      if (mobileMode === 'app') {
-        setMobileTab('login');
-      } else {
-        navigateTo('/login?redirect=/order');
-      }
-      showToast('Please sign in or create an account to start your order.', 'info');
-      return;
     }
 
     // Only in standalone installed mobile app mode, trigger the mobile app order sheet
     if (mobileMode === 'app') {
       setMobileTab('home');
       if (typeof window !== 'undefined') {
-        window.dispatchEvent(new CustomEvent('bdigi_open_mobile_order', { detail: initialData }));
+        window.dispatchEvent(new CustomEvent('bdigi_open_mobile_order', { detail: orderData }));
       }
       return;
     }
 
     // In responsive website (mobile browser & desktop), open standard responsive OrderWizardModal
-    if (initialData !== undefined && initialData !== null) {
-      setOrderWizardInitialData(initialData);
+    if (orderData !== undefined && orderData !== null) {
+      setOrderWizardInitialData(orderData);
     }
     setIsOrderWizardOpen(true);
   };

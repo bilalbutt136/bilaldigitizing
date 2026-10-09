@@ -207,7 +207,7 @@ export const ServicesSection = () => {
             lineHeight: '1.65',
             margin: '0 auto',
           }}>
-            {activeTab === 'all' && 'Three specialized production departments under one roof: commercial machine stitch files, scalable vector separations, and manufactured custom patches.'}
+            {activeTab === 'all' && 'Our two specialized production departments: commercial machine stitch files (.DST, .PES, .EMB) and factory-direct custom manufactured physical patches.'}
             {activeTab === 'embroidery' && 'Machine-ready embroidery stitch files (.DST, .PES, .EMB) with efficient pathing, calculated pull compensation, and free minor production revisions.'}
             {activeTab === 'vector-art' && 'Clean, infinitely scalable vector graphics (.AI, .EPS, .SVG, .PDF) with hand-drawn Bézier curves and Pantone color separations ready for press.'}
             {activeTab === 'patches' && 'Custom embroidered, high-density woven, 3D molded PVC, and laser-engraved leather emblems delivered straight to your door.'}
@@ -218,6 +218,7 @@ export const ServicesSection = () => {
             VIEW 1: ALL SERVICES MASTER OVERVIEW GRID
            ==================================================================== */}
         {activeTab === 'all' && (
+          <>
           <div style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 340px), 1fr))',
@@ -441,224 +442,7 @@ export const ServicesSection = () => {
               </div>
             </div>
 
-            {/* Service 2: Vector Art Conversion */}
-            <div
-              className="capability-card"
-              style={{
-                position: 'relative',
-                padding: 'clamp(1.5rem, 2.8vw, 2rem)',
-                background: 'var(--color-surface, #ffffff)',
-                borderRadius: '24px',
-                border: '1.5px solid rgba(37, 99, 235, 0.32)',
-                boxShadow: 'var(--shadow-md, 0 8px 30px -4px rgba(37, 99, 235, 0.08))',
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'space-between',
-                transition: 'all 0.35s cubic-bezier(0.16, 1, 0.3, 1)',
-                overflow: 'hidden'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = 'translateY(-8px)';
-                e.currentTarget.style.boxShadow = '0 25px 50px -12px rgba(37, 99, 235, 0.25), 0 4px 16px rgba(0,0,0,0.1)';
-                e.currentTarget.style.borderColor = '#2563eb';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = 'var(--shadow-md, 0 8px 30px -4px rgba(37, 99, 235, 0.08))';
-                e.currentTarget.style.borderColor = 'rgba(37, 99, 235, 0.32)';
-              }}
-            >
-              {/* Top Accent Gradient Bar */}
-              <div style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                right: 0,
-                height: '5px',
-                background: 'linear-gradient(90deg, #2563eb 0%, #3b82f6 50%, #60a5fa 100%)'
-              }} />
-
-              <div>
-                {/* Header Row: Icon, Service Badge & Starting Price */}
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.25rem', gap: '0.75rem' }}>
-                  <div style={{
-                    width: '52px',
-                    height: '52px',
-                    borderRadius: '16px',
-                    background: 'linear-gradient(135deg, rgba(37, 99, 235, 0.16) 0%, rgba(59, 130, 246, 0.06) 100%)',
-                    border: '1.5px solid rgba(37, 99, 235, 0.28)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: '#2563eb',
-                    boxShadow: '0 4px 12px rgba(37, 99, 235, 0.12)'
-                  }}>
-                    <PenTool size={26} />
-                  </div>
-
-                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.35rem' }}>
-                    <span style={{
-                      fontSize: '0.7rem',
-                      fontWeight: 800,
-                      background: 'rgba(37, 99, 235, 0.1)',
-                      color: '#2563eb',
-                      border: '1px solid rgba(37, 99, 235, 0.25)',
-                      padding: '0.25rem 0.75rem',
-                      borderRadius: '9999px',
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.06em'
-                    }}>
-                      ⚡ Scalable Vector
-                    </span>
-                    <span style={{
-                      fontSize: '0.85rem',
-                      fontWeight: 800,
-                      color: '#2563eb',
-                      background: 'rgba(37, 99, 235, 0.08)',
-                      border: '1px solid rgba(37, 99, 235, 0.25)',
-                      padding: '0.2rem 0.65rem',
-                      borderRadius: '8px'
-                    }}>
-                      Starts <strong>${vecMinPrice.toFixed(2)}</strong> Flat
-                    </span>
-                  </div>
-                </div>
-
-                {/* Title & Description */}
-                <h3 style={{
-                  fontSize: '1.38rem',
-                  fontWeight: 900,
-                  color: 'var(--color-text-primary, var(--navy-950, #0f172a))',
-                  margin: '0 0 0.45rem 0',
-                  lineHeight: 1.25,
-                  fontFamily: 'var(--font-heading)'
-                }}>
-                  Vector Art Conversion
-                </h3>
-
-                <p style={{
-                  color: 'var(--color-text-muted, #64748b)',
-                  fontSize: '0.9rem',
-                  lineHeight: 1.55,
-                  margin: '0 0 1.2rem 0'
-                }}>
-                  Crisp scalable vector separations (.AI, .EPS, .SVG, .PDF) traced by hand for screen printing & signage.
-                </p>
-
-                {/* Quality Highlights Checklist */}
-                <ul style={{
-                  listStyle: 'none',
-                  padding: 0,
-                  margin: '0 0 1.4rem 0',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '0.6rem',
-                  fontSize: '0.86rem',
-                  color: 'var(--color-text-secondary, var(--navy-800, #1e293b))'
-                }}>
-                  <li style={{ display: 'flex', alignItems: 'center', gap: '0.55rem' }}>
-                    <div style={{ background: 'rgba(16, 185, 129, 0.12)', color: '#059669', borderRadius: '50%', width: '18px', height: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                      <CheckCircle2 size={13} />
-                    </div>
-                    <span><strong>Master Vector Suite:</strong> Fully editable .AI, .EPS, .SVG & Print PDF</span>
-                  </li>
-                  <li style={{ display: 'flex', alignItems: 'center', gap: '0.55rem' }}>
-                    <div style={{ background: 'rgba(16, 185, 129, 0.12)', color: '#059669', borderRadius: '50%', width: '18px', height: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                      <CheckCircle2 size={13} />
-                    </div>
-                    <span><strong>Pantone Calibrated:</strong> Spot color separation & PMS swatches</span>
-                  </li>
-                  <li style={{ display: 'flex', alignItems: 'center', gap: '0.55rem' }}>
-                    <div style={{ background: 'rgba(16, 185, 129, 0.12)', color: '#059669', borderRadius: '50%', width: '18px', height: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                      <CheckCircle2 size={13} />
-                    </div>
-                    <span><strong>Print & Cut Ready:</strong> Clean Bézier paths for vinyl & screen print</span>
-                  </li>
-                </ul>
-              </div>
-
-              {/* Card Footer: Turnaround & Action Buttons */}
-              <div>
-                <div style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  paddingTop: '0.95rem',
-                  borderTop: '1px solid var(--color-border, rgba(15, 23, 42, 0.08))',
-                  fontSize: '0.82rem',
-                  color: 'var(--color-text-secondary, var(--navy-700, #334155))',
-                  marginBottom: '1.25rem'
-                }}>
-                  <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontWeight: 700 }}>
-                    <Clock size={15} style={{ color: '#2563eb' }} /> 6–12h Turnaround
-                  </span>
-                  <span style={{
-                    fontWeight: 800,
-                    color: '#059669',
-                    background: 'rgba(16, 185, 129, 0.1)',
-                    padding: '0.2rem 0.6rem',
-                    borderRadius: '6px',
-                    fontSize: '0.75rem',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '0.35rem'
-                  }}>
-                    <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#10b981' }} />
-                    Instant Download
-                  </span>
-                </div>
-
-                <div style={{ display: 'flex', gap: '0.6rem' }}>
-                  <button
-                    type="button"
-                    style={{
-                      flex: 1,
-                      background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
-                      color: '#ffffff',
-                      border: 'none',
-                      borderRadius: '12px',
-                      padding: '0.8rem 1rem',
-                      fontWeight: 800,
-                      fontSize: '0.9rem',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '0.45rem',
-                      cursor: 'pointer',
-                      boxShadow: '0 4px 14px rgba(37, 99, 235, 0.35)',
-                      transition: 'all 0.2s ease'
-                    }}
-                    onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.filter = 'brightness(1.08)'; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.filter = 'none'; }}
-                    onClick={() => handleLaunchOrder('vector')}
-                  >
-                    <span>Order Now</span>
-                    <ArrowRight size={15} />
-                  </button>
-                  <button
-                    type="button"
-                    style={{
-                      background: 'var(--color-surface, #ffffff)',
-                      color: 'var(--color-text-primary, var(--navy-800, #1e293b))',
-                      border: '1.5px solid var(--color-border, #e2e8f0)',
-                      borderRadius: '12px',
-                      padding: '0.8rem 0.95rem',
-                      fontWeight: 800,
-                      fontSize: '0.85rem',
-                      cursor: 'pointer',
-                      transition: 'all 0.2s ease'
-                    }}
-                    onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--color-subtle, #f8fafc)'; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.background = 'var(--color-surface, #ffffff)'; }}
-                    onClick={() => handleSelectTabAndScrollToPackages('vector-art')}
-                  >
-                    Details
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {/* Service 3: Custom Physical Patches */}
+            {/* Service 2: Custom Physical Patches */}
             <div
               className="capability-card"
               style={{
@@ -875,6 +659,60 @@ export const ServicesSection = () => {
               </div>
             </div>
           </div>
+
+          {/* Elegant Secondary Mention Banner for Vector Tracing */}
+          <div style={{
+            marginTop: '2.5rem',
+            padding: '1.5rem clamp(1.25rem, 3vw, 2rem)',
+            borderRadius: '20px',
+            background: 'var(--color-surface, #ffffff)',
+            border: '1.5px solid var(--color-border, #e2e8f0)',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: '1.25rem',
+            boxShadow: 'var(--shadow-sm)'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', minWidth: '260px', flex: 1 }}>
+              <div style={{ width: '48px', height: '48px', borderRadius: '14px', background: 'rgba(37, 99, 235, 0.12)', color: '#2563eb', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <PenTool size={24} />
+              </div>
+              <div>
+                <h4 style={{ margin: '0 0 0.25rem', fontSize: '1.05rem', fontWeight: 800, color: 'var(--color-text-primary, #0f172a)' }}>
+                  Also Need Vector Art or Blurry Logo Redraw?
+                </h4>
+                <p style={{ margin: 0, fontSize: '0.86rem', color: 'var(--color-text-muted, #64748b)', lineHeight: 1.45 }}>
+                  We convert low-resolution JPGs, sketches, and screenshots into infinitely scalable .AI, .EPS, .SVG &amp; .PDF files with Pantone PMS color matching from ${vecMinPrice.toFixed(2)} flat.
+                </p>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+              <button
+                type="button"
+                onClick={() => handleLaunchOrder('vector')}
+                style={{
+                  background: '#2563eb',
+                  color: '#ffffff',
+                  border: 'none',
+                  borderRadius: '12px',
+                  padding: '0.75rem 1.4rem',
+                  fontWeight: 800,
+                  fontSize: '0.88rem',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.45rem',
+                  boxShadow: '0 4px 14px rgba(37, 99, 235, 0.3)'
+                }}
+              >
+                <span>Order Vector Art (${vecMinPrice.toFixed(2)})</span>
+                <ArrowRight size={15} />
+              </button>
+            </div>
+          </div>
+        </>
         )}
 
         {/* ====================================================================
