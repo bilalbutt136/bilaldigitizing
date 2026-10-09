@@ -142,44 +142,44 @@ export const StreamlinedOrderFlow = ({
   // Helper Labels for Summary
   const getComplexityLabel = () => {
     if (selectedService === 'embroidery') {
-      if (complexity === 'simple') return 'Simple (Text Only) - $10';
-      if (complexity === 'medium') return 'Medium (Logo / Monogram) - $15';
-      if (complexity === 'complex') return 'Complex (Detail Work) - $25';
-      return 'Hardcore (3D Puff / Jacket Back) - $35';
+      if (complexity === 'simple') return 'Simple ($10)';
+      if (complexity === 'medium') return 'Medium ($15)';
+      if (complexity === 'complex') return 'Complex ($25)';
+      return '3D Puff / Back ($35)';
     }
     if (selectedService === 'patch') {
-      return `${patchQuantityTier} Pieces (${patchStyle})`;
+      return `${patchQuantityTier} Pcs (${patchStyle})`;
     }
     if (selectedService === 'vector') {
-      if (vectorComplexity === 'simple') return 'Simple Vector - $15';
-      if (vectorComplexity === 'standard') return 'Standard Logo - $25';
-      return 'Complex Vector - $45';
+      if (vectorComplexity === 'simple') return 'Simple ($15)';
+      if (vectorComplexity === 'standard') return 'Standard ($25)';
+      return 'Complex ($45)';
     }
     return 'Standard';
   };
 
   const getSizeLabel = () => {
     if (selectedService === 'embroidery') {
-      if (sizeOption === 'custom') return `${customWidth}" × ${customHeight}" (Custom)`;
-      if (sizeOption === 'cap') return 'Cap / Hat (2.5")';
-      if (sizeOption === 'sleeve') return 'Sleeve / Front (7")';
-      if (sizeOption === 'jacket-back') return 'Full Jacket Back (12")';
-      return 'Left Chest (3.5" - 4")';
+      if (sizeOption === 'custom') return `${customWidth}" × ${customHeight}"`;
+      if (sizeOption === 'cap') return 'Cap (2.5")';
+      if (sizeOption === 'sleeve') return 'Sleeve (7")';
+      if (sizeOption === 'jacket-back') return 'Jacket Back (12")';
+      return 'Left Chest (4")';
     }
-    if (selectedService === 'patch') return 'Standard Custom Patch';
-    return 'Scalable Vector Art';
+    if (selectedService === 'patch') return 'Standard';
+    return 'Scalable Vector';
   };
 
   const getFormatLabel = () => {
     if (selectedService === 'embroidery') {
-      if (fileFormat === 'all') return 'All Formats (.DST, .PES, .EMB + PDF)';
+      if (fileFormat === 'all') return 'All Formats';
       return fileFormat.toUpperCase();
     }
     if (selectedService === 'vector') {
-      if (vectorFormat === 'all') return 'Master Suite (.AI, .EPS, .SVG, .PDF)';
+      if (vectorFormat === 'all') return 'All Formats';
       return vectorFormat.toUpperCase();
     }
-    return 'Physical Patch Delivery';
+    return 'Physical Delivery';
   };
 
   // File Upload Logic
@@ -587,7 +587,7 @@ export const StreamlinedOrderFlow = ({
             transition: 'all 0.16s ease'
           }}
         >
-          🧵 Embroidery Digitizing
+          Embroidery Digitizing
         </button>
 
         <button
@@ -605,7 +605,7 @@ export const StreamlinedOrderFlow = ({
             transition: 'all 0.16s ease'
           }}
         >
-          🏷️ Custom Patches (50 Pcs Min)
+          Custom Patches
         </button>
 
         <button
@@ -623,7 +623,7 @@ export const StreamlinedOrderFlow = ({
             transition: 'all 0.16s ease'
           }}
         >
-          📐 Vector Art ($15)
+          Vector Art
         </button>
       </div>
 
@@ -645,13 +645,13 @@ export const StreamlinedOrderFlow = ({
                     onChange={(e) => setFileFormat(e.target.value)}
                     className="bdigi-select"
                   >
-                    <option value="all">All Formats (DST, PES, EMB + PDF) [Recommended]</option>
+                    <option value="all">All Formats (.DST, .PES, .EMB, .PDF)</option>
                     <option value="dst">DST (Tajima)</option>
                     <option value="pes">PES (Brother)</option>
                     <option value="emb">EMB (Wilcom)</option>
                     <option value="exp">EXP (Melco)</option>
                     <option value="jef">JEF (Janome)</option>
-                    <option value="other">Other / Spec Sheet PDF</option>
+                    <option value="other">Other</option>
                   </select>
                   <div className="bdigi-select-arrow">
                     <ChevronDown size={17} />
@@ -669,10 +669,10 @@ export const StreamlinedOrderFlow = ({
                       onChange={(e) => setSizeOption(e.target.value)}
                       className="bdigi-select"
                     >
-                      <option value="left-chest">Left Chest (3.5" - 4")</option>
+                      <option value="left-chest">Left Chest (4")</option>
                       <option value="cap">Cap / Hat (2.5")</option>
-                      <option value="sleeve">Sleeve / Front (7")</option>
-                      <option value="jacket-back">Full Jacket Back (12")</option>
+                      <option value="sleeve">Sleeve (7")</option>
+                      <option value="jacket-back">Jacket Back (12")</option>
                       <option value="custom">Custom Size</option>
                     </select>
                     <div className="bdigi-select-arrow">
@@ -714,8 +714,8 @@ export const StreamlinedOrderFlow = ({
                     onChange={(e) => setTurnaround(e.target.value)}
                     className="bdigi-select"
                   >
-                    <option value="standard">Standard (4–12 Hours) — Free</option>
-                    <option value="rush">Express Rush (2–4 Hours) — +$10.00</option>
+                    <option value="standard">Standard (4–12h) — Free</option>
+                    <option value="rush">Rush (2–4h) — +$10</option>
                   </select>
                   <div className="bdigi-select-arrow">
                     <ChevronDown size={17} />
@@ -732,10 +732,10 @@ export const StreamlinedOrderFlow = ({
                     onChange={(e) => setComplexity(e.target.value)}
                     className="bdigi-select"
                   >
-                    <option value="simple">Simple (Text Only) — $10.00</option>
-                    <option value="medium">Medium (Logo / Monogram) — $15.00</option>
-                    <option value="complex">Complex (Detail Work) — $25.00</option>
-                    <option value="hardcore">Hardcore (3D Puff / Jacket Back) — $35.00</option>
+                    <option value="simple">Simple ($10)</option>
+                    <option value="medium">Medium / Logo ($15)</option>
+                    <option value="complex">Complex ($25)</option>
+                    <option value="hardcore">3D Puff / Back ($35)</option>
                   </select>
                   <div className="bdigi-select-arrow">
                     <ChevronDown size={17} />
@@ -745,12 +745,12 @@ export const StreamlinedOrderFlow = ({
 
               {/* Additional Details */}
               <div className="bdigi-form-row" style={{ alignItems: 'flex-start' }}>
-                <label className="bdigi-label" style={{ paddingTop: '0.45rem' }}>Additional Details</label>
+                <label className="bdigi-label" style={{ paddingTop: '0.45rem' }}>Notes</label>
                 <textarea
                   rows={2}
                   value={additionalDetails}
                   onChange={(e) => setAdditionalDetails(e.target.value)}
-                  placeholder="Write fabric type (Cotton polo, Structured cap, Fleece, Leather), thread colors or notes..."
+                  placeholder="Fabric, thread colors, or special notes..."
                   className="bdigi-textarea"
                 />
               </div>
@@ -762,17 +762,17 @@ export const StreamlinedOrderFlow = ({
             <div>
               {/* Patch Style */}
               <div className="bdigi-form-row">
-                <label className="bdigi-label">Patch Style</label>
+                <label className="bdigi-label">Style</label>
                 <div className="bdigi-select-wrapper">
                   <select
                     value={patchStyle}
                     onChange={(e) => setPatchStyle(e.target.value)}
                     className="bdigi-select"
                   >
-                    <option value="Embroidered Twill">Embroidered Twill (Classic Textured)</option>
-                    <option value="Woven High-Def">Woven High-Def (Micro Details)</option>
-                    <option value="PVC Rubber 3D">PVC Rubber 3D (Waterproof Outdoor)</option>
-                    <option value="Laser Leather">Leather / Laser Engraved</option>
+                    <option value="Embroidered Twill">Embroidered Twill</option>
+                    <option value="Woven High-Def">Woven High-Def</option>
+                    <option value="PVC Rubber 3D">PVC Rubber 3D</option>
+                    <option value="Laser Leather">Leather / Engraved</option>
                   </select>
                   <div className="bdigi-select-arrow">
                     <ChevronDown size={17} />
@@ -782,17 +782,17 @@ export const StreamlinedOrderFlow = ({
 
               {/* Patch Backing */}
               <div className="bdigi-form-row">
-                <label className="bdigi-label">Patch Backing</label>
+                <label className="bdigi-label">Backing</label>
                 <div className="bdigi-select-wrapper">
                   <select
                     value={patchBacking}
                     onChange={(e) => setPatchBacking(e.target.value)}
                     className="bdigi-select"
                   >
-                    <option value="Velcro (Hook & Loop)">Velcro (Hook & Loop)</option>
-                    <option value="Heat-Seal Iron-On">Heat-Seal Iron-On</option>
-                    <option value="Plain Sew-On">Plain Sew-On</option>
-                    <option value="Peel & Stick">Peel & Stick Adhesive</option>
+                    <option value="Velcro (Hook & Loop)">Velcro</option>
+                    <option value="Heat-Seal Iron-On">Iron-On</option>
+                    <option value="Plain Sew-On">Sew-On</option>
+                    <option value="Peel & Stick">Peel & Stick</option>
                   </select>
                   <div className="bdigi-select-arrow">
                     <ChevronDown size={17} />
@@ -809,10 +809,10 @@ export const StreamlinedOrderFlow = ({
                     onChange={(e) => setPatchQuantityTier(e.target.value)}
                     className="bdigi-select"
                   >
-                    <option value="50">50 Pieces — Starter Batch ($3.50/pc - $175 Total)</option>
-                    <option value="100">100 Pieces — Production Batch ($2.50/pc - $250 Total) [Popular]</option>
-                    <option value="250">250 Pieces — Wholesale Batch ($1.80/pc - $450 Total)</option>
-                    <option value="500">500 Pieces — Factory Bulk ($1.50/pc - $750 Total)</option>
+                    <option value="50">50 Pcs ($3.50/pc — $175)</option>
+                    <option value="100">100 Pcs ($2.50/pc — $250)</option>
+                    <option value="250">250 Pcs ($1.80/pc — $450)</option>
+                    <option value="500">500 Pcs ($1.50/pc — $750)</option>
                   </select>
                   <div className="bdigi-select-arrow">
                     <ChevronDown size={17} />
@@ -829,8 +829,8 @@ export const StreamlinedOrderFlow = ({
                     onChange={(e) => setPatchTurnaround(e.target.value)}
                     className="bdigi-select"
                   >
-                    <option value="standard">Standard (5–7 Days Production) — Free Air Delivery</option>
-                    <option value="rush">Express Rush (3–4 Days Production) — +$25.00</option>
+                    <option value="standard">Standard (5–7 Days) — Free</option>
+                    <option value="rush">Rush (3–4 Days) — +$25</option>
                   </select>
                   <div className="bdigi-select-arrow">
                     <ChevronDown size={17} />
@@ -840,12 +840,12 @@ export const StreamlinedOrderFlow = ({
 
               {/* Patch Additional Details */}
               <div className="bdigi-form-row" style={{ alignItems: 'flex-start' }}>
-                <label className="bdigi-label" style={{ paddingTop: '0.45rem' }}>Additional Details</label>
+                <label className="bdigi-label" style={{ paddingTop: '0.45rem' }}>Notes</label>
                 <textarea
                   rows={2}
                   value={additionalDetails}
                   onChange={(e) => setAdditionalDetails(e.target.value)}
-                  placeholder="Specify custom shape, dimensions, border type (Merrowed or Laser cut), notes..."
+                  placeholder="Custom shape, size, border type, or notes..."
                   className="bdigi-textarea"
                 />
               </div>
@@ -864,9 +864,9 @@ export const StreamlinedOrderFlow = ({
                     onChange={(e) => setVectorComplexity(e.target.value)}
                     className="bdigi-select"
                   >
-                    <option value="simple">Simple (Text Only / Line Art) — $15.00</option>
-                    <option value="standard">Medium (Multi-Color Logo / Mascot) — $25.00</option>
-                    <option value="complex">Complex (Detailed Artwork / Separation) — $45.00</option>
+                    <option value="simple">Simple ($15)</option>
+                    <option value="standard">Standard Logo ($25)</option>
+                    <option value="complex">Complex Art ($45)</option>
                   </select>
                   <div className="bdigi-select-arrow">
                     <ChevronDown size={17} />
@@ -883,10 +883,10 @@ export const StreamlinedOrderFlow = ({
                     onChange={(e) => setVectorFormat(e.target.value)}
                     className="bdigi-select"
                   >
-                    <option value="all">All Formats (.AI, .EPS, .SVG, .PDF, PNG) [Best]</option>
+                    <option value="all">All Formats (.AI, .EPS, .SVG, .PDF)</option>
                     <option value="ai">Adobe Illustrator (.AI)</option>
                     <option value="svg">Scalable Vector (.SVG)</option>
-                    <option value="pdf">Vector Print PDF</option>
+                    <option value="pdf">Print PDF</option>
                   </select>
                   <div className="bdigi-select-arrow">
                     <ChevronDown size={17} />
@@ -903,8 +903,8 @@ export const StreamlinedOrderFlow = ({
                     onChange={(e) => setVectorTurnaround(e.target.value)}
                     className="bdigi-select"
                   >
-                    <option value="standard">Standard (6–12 Hours) — Free</option>
-                    <option value="rush">Express Rush (2–4 Hours) — +$10.00</option>
+                    <option value="standard">Standard (6–12h) — Free</option>
+                    <option value="rush">Rush (2–4h) — +$10</option>
                   </select>
                   <div className="bdigi-select-arrow">
                     <ChevronDown size={17} />
@@ -914,22 +914,84 @@ export const StreamlinedOrderFlow = ({
 
               {/* Vector Details */}
               <div className="bdigi-form-row" style={{ alignItems: 'flex-start' }}>
-                <label className="bdigi-label" style={{ paddingTop: '0.45rem' }}>Additional Details</label>
+                <label className="bdigi-label" style={{ paddingTop: '0.45rem' }}>Notes</label>
                 <textarea
                   rows={2}
                   value={additionalDetails}
                   onChange={(e) => setAdditionalDetails(e.target.value)}
-                  placeholder="Pantone PMS color codes, font names, vinyl cutting notes..."
+                  placeholder="Colors, fonts, or vector notes..."
                   className="bdigi-textarea"
                 />
               </div>
             </div>
           )}
 
+          {/* NUMBER OF DESIGNS (Placed BEFORE upload so customer selects count first) */}
+          <div className="bdigi-form-row">
+            <label className="bdigi-label">
+              {selectedService === 'patch' ? 'Patch Designs' : 'Number of Designs'}
+            </label>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+              <div
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  border: '1.5px solid var(--color-border, #cbd5e1)',
+                  borderRadius: '10px',
+                  background: 'var(--color-surface, #ffffff)',
+                  overflow: 'hidden'
+                }}
+              >
+                <button
+                  type="button"
+                  onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                  style={{
+                    width: '38px',
+                    height: '38px',
+                    background: 'none',
+                    border: 'none',
+                    color: 'var(--color-text-primary, #0f172a)',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}
+                  aria-label="Decrease quantity"
+                >
+                  <Minus size={14} />
+                </button>
+                <span style={{ width: '38px', textAlign: 'center', fontSize: '1rem', fontWeight: 900, color: 'var(--color-text-primary, #0f172a)' }}>
+                  {quantity}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setQuantity(quantity + 1)}
+                  style={{
+                    width: '38px',
+                    height: '38px',
+                    background: 'none',
+                    border: 'none',
+                    color: 'var(--color-text-primary, #0f172a)',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}
+                  aria-label="Increase quantity"
+                >
+                  <Plus size={14} />
+                </button>
+              </div>
+              <span style={{ fontSize: '0.84rem', fontWeight: 700, color: 'var(--color-text-muted, #64748b)' }}>
+                {selectedService === 'patch' ? `${pricing.patchPieces} patches total` : `$${pricing.unitPrice.toFixed(2)} each`}
+              </span>
+            </div>
+          </div>
+
           {/* UPLOAD DESIGN FILES (Compact Drag & Drop Box) */}
-          <div className="bdigi-form-row" style={{ alignItems: 'flex-start', marginTop: '0.5rem' }}>
+          <div className="bdigi-form-row" style={{ alignItems: 'flex-start' }}>
             <label className="bdigi-label" style={{ paddingTop: '0.45rem' }}>
-              Upload Design<span style={{ color: '#ef4444' }}>*</span>
+              Upload Files<span style={{ color: '#ef4444' }}>*</span>
             </label>
             <div>
               <div
@@ -977,10 +1039,10 @@ export const StreamlinedOrderFlow = ({
                   </div>
                   <div style={{ textAlign: 'left' }}>
                     <div style={{ fontSize: '0.88rem', fontWeight: 800, color: 'var(--color-text-primary, #0f172a)' }}>
-                      Click or drag artwork here
+                      Upload {quantity} {quantity === 1 ? 'Design File' : 'Design Files'}
                     </div>
                     <div style={{ fontSize: '0.74rem', color: 'var(--color-text-muted, #64748b)' }}>
-                      PNG, JPG, PDF, AI, EPS, DST (Max 50MB)
+                      JPG, PNG, PDF, AI, DST (Max 50MB)
                     </div>
                   </div>
                 </div>
@@ -997,7 +1059,18 @@ export const StreamlinedOrderFlow = ({
                     whiteSpace: 'nowrap'
                   }}
                 >
-                  Choose File
+                  Browse
+                </span>
+              </div>
+
+              {/* Upload Counter & Guidance */}
+              <div style={{ marginTop: '0.35rem', fontSize: '0.75rem' }}>
+                <span style={{ color: uploadedFiles.length >= quantity ? '#059669' : 'var(--color-text-muted, #64748b)', fontWeight: 700 }}>
+                  {uploadedFiles.length === 0
+                    ? `0 of ${quantity} files attached`
+                    : uploadedFiles.length >= quantity
+                      ? `✓ ${uploadedFiles.length} of ${quantity} files attached`
+                      : `${uploadedFiles.length} of ${quantity} attached (please upload ${quantity - uploadedFiles.length} more)`}
                 </span>
               </div>
 
@@ -1060,35 +1133,35 @@ export const StreamlinedOrderFlow = ({
             </div>
           </div>
 
-          {/* DELIVER FILES TO (CLIENT CONTACT) */}
+          {/* CONTACT DETAILS */}
           <div style={{ marginTop: '1.25rem', paddingTop: '1.1rem', borderTop: '1px dashed var(--color-border, #cbd5e1)' }}>
-            <div style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--color-text-secondary, #475569)', marginBottom: '0.65rem' }}>
-              Deliver Finished Files To:
+            <div style={{ fontSize: '0.84rem', fontWeight: 800, color: 'var(--color-text-secondary, #475569)', marginBottom: '0.65rem' }}>
+              Contact Details
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: '0.65rem', marginBottom: '0.5rem' }}>
               <div>
                 <label style={{ display: 'block', fontSize: '0.76rem', fontWeight: 800, color: 'var(--color-text-muted, #64748b)', marginBottom: '0.25rem' }}>
-                  Full Name <span style={{ color: '#ef4444' }}>*</span>
+                  Name <span style={{ color: '#ef4444' }}>*</span>
                 </label>
                 <input
                   type="text"
                   value={clientName}
                   onChange={(e) => setClientName(e.target.value)}
-                  placeholder="Your Name / Business"
+                  placeholder="Your Name"
                   className="bdigi-input"
                 />
               </div>
 
               <div>
                 <label style={{ display: 'block', fontSize: '0.76rem', fontWeight: 800, color: 'var(--color-text-muted, #64748b)', marginBottom: '0.25rem' }}>
-                  Email Address <span style={{ color: '#ef4444' }}>*</span>
+                  Email <span style={{ color: '#ef4444' }}>*</span>
                 </label>
                 <input
                   type="email"
                   value={clientEmail}
                   onChange={(e) => setClientEmail(e.target.value)}
-                  placeholder="you@example.com"
+                  placeholder="your@email.com"
                   className="bdigi-input"
                 />
               </div>
@@ -1115,24 +1188,24 @@ export const StreamlinedOrderFlow = ({
           </div>
         </div>
 
-        {/* RIGHT COLUMN: STICKY ORDER SUMMARY, QUANTITY & PRICE COUNT */}
+        {/* RIGHT COLUMN: STICKY ORDER SUMMARY & PRICE COUNT */}
         <div>
           <div className="bdigi-summary-card">
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem', paddingBottom: '0.75rem', borderBottom: '1px solid var(--color-border, #e2e8f0)' }}>
-              <div style={{ fontSize: '1rem', fontWeight: 900, color: 'var(--color-text-primary, #0f172a)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.85rem', paddingBottom: '0.65rem', borderBottom: '1px solid var(--color-border, #e2e8f0)' }}>
+              <div style={{ fontSize: '0.96rem', fontWeight: 900, color: 'var(--color-text-primary, #0f172a)' }}>
                 Order Summary
               </div>
               <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#059669', background: '#ecfdf5', padding: '2px 8px', borderRadius: '9999px', border: '1px solid #a7f3d0' }}>
-                Live Quote
+                Instant Quote
               </span>
             </div>
 
             {/* Spec breakdown items */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.55rem', fontSize: '0.82rem', marginBottom: '1.15rem' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem', fontSize: '0.82rem', marginBottom: '1rem' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--color-text-secondary, #475569)' }}>
                 <span>Service:</span>
                 <strong style={{ color: 'var(--color-text-primary, #0f172a)' }}>
-                  {selectedService === 'embroidery' ? 'Embroidery Digitizing' : selectedService === 'patch' ? 'Custom Patches' : 'Vector Art'}
+                  {selectedService === 'embroidery' ? 'Embroidery' : selectedService === 'patch' ? 'Custom Patches' : 'Vector Art'}
                 </strong>
               </div>
 
@@ -1142,117 +1215,53 @@ export const StreamlinedOrderFlow = ({
               </div>
 
               <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--color-text-secondary, #475569)' }}>
-                <span>Placement / Size:</span>
+                <span>Size:</span>
                 <strong style={{ color: 'var(--color-text-primary, #0f172a)' }}>{getSizeLabel()}</strong>
               </div>
 
               <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--color-text-secondary, #475569)' }}>
-                <span>Delivery Format:</span>
+                <span>Format:</span>
                 <strong style={{ color: 'var(--color-text-primary, #0f172a)' }}>{getFormatLabel()}</strong>
               </div>
 
               <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--color-text-secondary, #475569)' }}>
                 <span>Turnaround:</span>
                 <strong style={{ color: turnaround === 'rush' || patchTurnaround === 'rush' || vectorTurnaround === 'rush' ? '#ea580c' : '#059669' }}>
-                  {turnaround === 'rush' || patchTurnaround === 'rush' || vectorTurnaround === 'rush' ? '⚡ Rush (2–4 Hours)' : 'Standard (4–12h Free)'}
+                  {turnaround === 'rush' || patchTurnaround === 'rush' || vectorTurnaround === 'rush' ? 'Rush (2–4h)' : 'Standard (Free)'}
+                </strong>
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--color-text-secondary, #475569)' }}>
+                <span>Quantity:</span>
+                <strong style={{ color: 'var(--color-text-primary, #0f172a)' }}>
+                  {selectedService === 'patch' ? `${pricing.patchPieces} Pieces` : `${quantity} ${quantity === 1 ? 'Design' : 'Designs'}`}
                 </strong>
               </div>
 
               <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--color-text-secondary, #475569)' }}>
                 <span>Files:</span>
                 <strong style={{ color: uploadedFiles.length > 0 ? '#059669' : '#94a3b8' }}>
-                  {uploadedFiles.length > 0 ? `${uploadedFiles.length} File Attached` : 'No file chosen'}
+                  {uploadedFiles.length > 0 ? `${uploadedFiles.length} of ${quantity} Attached` : 'None'}
                 </strong>
               </div>
             </div>
 
-            {/* CLEAR QUANTITY SELECTOR */}
-            <div style={{ background: isDark ? 'rgba(0,0,0,0.2)' : '#ffffff', border: '1.5px solid var(--color-border, #e2e8f0)', borderRadius: '12px', padding: '0.85rem 1rem', marginBottom: '1.15rem' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <div style={{ display: 'flex', flexDirection: 'column' }}>
-                  <span style={{ fontSize: '0.84rem', fontWeight: 800, color: 'var(--color-text-primary, #0f172a)' }}>
-                    {selectedService === 'patch' ? 'Batch Quantity:' : 'Number of Designs:'}
-                  </span>
-                  <span style={{ fontSize: '0.72rem', color: 'var(--color-text-muted, #64748b)' }}>
-                    {selectedService === 'patch' ? `${pricing.patchPieces} Total Patches` : `$${pricing.unitPrice.toFixed(2)} per design`}
-                  </span>
-                </div>
-
-                {selectedService !== 'patch' ? (
-                  <div
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      border: '1.5px solid var(--color-border, #cbd5e1)',
-                      borderRadius: '8px',
-                      background: 'var(--color-surface, #ffffff)',
-                      overflow: 'hidden'
-                    }}
-                  >
-                    <button
-                      type="button"
-                      onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                      style={{
-                        width: '32px',
-                        height: '36px',
-                        background: 'none',
-                        border: 'none',
-                        color: 'var(--color-text-primary, #0f172a)',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center'
-                      }}
-                      aria-label="Decrease quantity"
-                    >
-                      <Minus size={13} />
-                    </button>
-                    <span style={{ width: '32px', textAlign: 'center', fontSize: '1rem', fontWeight: 900 }}>
-                      {quantity}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => setQuantity(quantity + 1)}
-                      style={{
-                        width: '32px',
-                        height: '36px',
-                        background: 'none',
-                        border: 'none',
-                        color: 'var(--color-text-primary, #0f172a)',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center'
-                      }}
-                      aria-label="Increase quantity"
-                    >
-                      <Plus size={13} />
-                    </button>
-                  </div>
-                ) : (
-                  <span style={{ fontSize: '1rem', fontWeight: 900, color: '#0284c7' }}>
-                    {pricing.patchPieces} Pcs
-                  </span>
-                )}
-              </div>
-            </div>
-
             {/* LIVE PRICE COUNT BREAKDOWN */}
-            <div style={{ borderTop: '1px solid var(--color-border, #e2e8f0)', paddingTop: '0.85rem', marginBottom: '1.25rem' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.84rem', color: 'var(--color-text-secondary, #475569)', marginBottom: '0.35rem' }}>
+            <div style={{ borderTop: '1px solid var(--color-border, #e2e8f0)', paddingTop: '0.75rem', marginBottom: '1.15rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.84rem', color: 'var(--color-text-secondary, #475569)', marginBottom: '0.3rem' }}>
                 <span>Subtotal:</span>
                 <span>${pricing.subtotal.toFixed(2)}</span>
               </div>
 
               {pricing.rush > 0 && (
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.84rem', color: '#ea580c', fontWeight: 700, marginBottom: '0.35rem' }}>
-                  <span>Priority Rush Fee:</span>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.84rem', color: '#ea580c', fontWeight: 700, marginBottom: '0.3rem' }}>
+                  <span>Rush Fee:</span>
                   <span>+${pricing.rush.toFixed(2)}</span>
                 </div>
               )}
 
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginTop: '0.65rem', paddingTop: '0.65rem', borderTop: '1.5px solid var(--color-border, #e2e8f0)' }}>
-                <span style={{ fontSize: '0.96rem', fontWeight: 800, color: 'var(--color-text-primary, #0f172a)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginTop: '0.5rem', paddingTop: '0.5rem', borderTop: '1.5px solid var(--color-border, #e2e8f0)' }}>
+                <span style={{ fontSize: '0.94rem', fontWeight: 800, color: 'var(--color-text-primary, #0f172a)' }}>
                   Total Due:
                 </span>
                 <span style={{ fontSize: '1.75rem', fontWeight: 900, color: selectedService === 'patch' ? '#0284c7' : '#ea580c', lineHeight: 1 }}>
@@ -1268,7 +1277,7 @@ export const StreamlinedOrderFlow = ({
               onClick={handleFinalSubmitOrder}
               style={{
                 width: '100%',
-                height: '48px',
+                height: '46px',
                 padding: '0 1.25rem',
                 borderRadius: '12px',
                 border: 'none',
@@ -1278,7 +1287,7 @@ export const StreamlinedOrderFlow = ({
                     ? 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)'
                     : 'linear-gradient(135deg, #ea580c 0%, #c2410c 100%)',
                 color: '#ffffff',
-                fontSize: '1rem',
+                fontSize: '0.96rem',
                 fontWeight: 900,
                 cursor: isSubmitting || isUploading ? 'not-allowed' : 'pointer',
                 display: 'flex',
@@ -1291,7 +1300,7 @@ export const StreamlinedOrderFlow = ({
             >
               {isSubmitting ? (
                 <>
-                  <Loader2 size={16} className="animate-spin" /> Submitting Order...
+                  <Loader2 size={16} className="animate-spin" /> Submitting...
                 </>
               ) : (
                 <>
@@ -1301,12 +1310,9 @@ export const StreamlinedOrderFlow = ({
             </button>
 
             {/* TRUST BADGES STRIP */}
-            <div style={{ textAlign: 'center', marginTop: '0.85rem', fontSize: '0.72rem', color: 'var(--color-text-muted, #64748b)', fontWeight: 600, display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+            <div style={{ textAlign: 'center', marginTop: '0.75rem', fontSize: '0.72rem', color: 'var(--color-text-muted, #64748b)', fontWeight: 600 }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.3rem' }}>
-                <Lock size={12} style={{ color: '#059669' }} /> 256-Bit SSL Encrypted • Instant Stripe Checkout
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.3rem' }}>
-                <ShieldCheck size={12} style={{ color: '#059669' }} /> 100% Free Revisions Guarantee
+                <ShieldCheck size={13} style={{ color: '#059669' }} /> Secure Checkout • Free Revisions
               </div>
             </div>
           </div>
