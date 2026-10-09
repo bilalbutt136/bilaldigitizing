@@ -559,6 +559,22 @@ h1, h2, h3, h4, h5, h6 {
   to { transform: translateX(0) scale(1); opacity: 1; }
 }
 
+@keyframes bdigiErrorShake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-6px); }
+  40%, 80% { transform: translateX(6px); }
+}
+
+@keyframes bdigiErrorPulse {
+  0%, 100% {
+    box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.22), 0 4px 14px rgba(239, 68, 68, 0.16);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(239, 68, 68, 0.38), 0 6px 18px rgba(239, 68, 68, 0.26);
+  }
+}
+
+
 /* Responsive Modal Backdrop */
 .modal-overlay {
   position: fixed;

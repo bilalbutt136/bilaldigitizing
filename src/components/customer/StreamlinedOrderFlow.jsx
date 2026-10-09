@@ -13,7 +13,8 @@ import {
   Minus,
   Trash2,
   ChevronDown,
-  ShieldCheck
+  ShieldCheck,
+  X
 } from 'lucide-react';
 import { uploadFileToCloudinaryFull } from '../../services/supabaseService';
 
@@ -198,7 +199,12 @@ export const StreamlinedOrderFlow = ({
   const [isUploading, setIsUploading] = useState(false);
   const [isDragOver, setIsDragOver] = useState(false);
   const [uploadError, setUploadError] = useState('');
+  const [isUploadHighlighted, setIsUploadHighlighted] = useState(false);
+  const [validationAlert, setValidationAlert] = useState(null);
+  const [isCustomSizeHighlighted, setIsCustomSizeHighlighted] = useState(false);
   const fileInputRef = useRef(null);
+  const uploadSectionRef = useRef(null);
+  const customSizeRef = useRef(null);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -340,6 +346,8 @@ export const StreamlinedOrderFlow = ({
     if (!files || !files.length) return;
 
     setUploadError('');
+    setIsUploadHighlighted(false);
+    setValidationAlert(null);
     setIsUploading(true);
 
     const uploadedList = [];
@@ -347,7 +355,26 @@ export const StreamlinedOrderFlow = ({
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
       if (file.size > 50 * 1024 * 1024) {
-        setUploadError(`File "${file.name}" exceeds the 50MB limit.`);
+        const errorMsg = `File "${file.name}" exceeds the 50MB limit.`;
+        setUploadError(errorMsg);
+        setIsUploadHighlighted(true);
+        setValidationAlert({
+          title: 'File Exceeds 50MB Limit',
+          message: `The file "${file.name}" is too large. Please select a design file under 50MB.`,
+          actionText: 'Choose Another File',
+          onAction: () => {
+            if (uploadSectionRef.current) {
+              uploadSectionRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+            setTimeout(() => fileInputRef.current?.click(), 120);
+          }
+        });
+        if (showToast) {
+          showToast(`⚠️ ${errorMsg}`, 'error', true);
+        }
+        if (uploadSectionRef.current) {
+          uploadSectionRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
         setIsUploading(false);
         return;
       }
@@ -425,7 +452,62 @@ export const StreamlinedOrderFlow = ({
 
   // Submit Order and Launch Instant Stripe Checkout / Payment Page
   const handleFinalSubmitOrder = async () => {
-    // 1. If not logged in -> SHOW POPUP TO LOGIN PAGE!
+    // 1. Validate required design file upload
+    if (uploadedFiles.length === 0) {
+      const errorMsg = 'Please choose or upload your design file before continuing.';
+      setUploadError(errorMsg);
+      setIsUploadHighlighted(true);
+      setValidationAlert({
+        title: 'Design File Required',
+        message: 'Please choose or upload your artwork or design file (JPG, PNG, PDF, AI, DST) to place your order.',
+        actionText: 'Upload File Now',
+        onAction: () => {
+          setIsUploadHighlighted(true);
+          if (uploadSectionRef.current) {
+            uploadSectionRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+          setTimeout(() => fileInputRef.current?.click(), 120);
+        }
+      });
+      if (showToast) {
+        showToast(`⚠️ ${errorMsg}`, 'error', true);
+      }
+      if (uploadSectionRef.current) {
+        uploadSectionRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+      return;
+    }
+
+    // 2. Validate custom dimensions if custom size is selected
+    if (selectedService === 'embroidery' && sizeOption === 'custom') {
+      const numW = parseFloat(customWidth);
+      const numH = parseFloat(customHeight);
+      if (!customWidth || !customHeight || isNaN(numW) || isNaN(numH) || numW <= 0 || numH <= 0) {
+        setIsCustomSizeHighlighted(true);
+        const errorMsg = 'Please enter valid width and height dimensions for your custom size.';
+        setValidationAlert({
+          title: 'Custom Dimensions Required',
+          message: 'Please specify valid width and height dimensions (e.g. 3.5" × 3.5") for your embroidery design.',
+          actionText: 'Enter Dimensions',
+          onAction: () => {
+            if (customSizeRef.current) {
+              customSizeRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              const inp = customSizeRef.current.querySelector('input');
+              if (inp) inp.focus();
+            }
+          }
+        });
+        if (showToast) {
+          showToast(`⚠️ ${errorMsg}`, 'error', true);
+        }
+        if (customSizeRef.current) {
+          customSizeRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        return;
+      }
+    }
+
+    // 3. Require Login/Signup if visitor is not authenticated
     if (!isUserAuthenticated) {
       saveDraft();
       if (setAuthModalMode) setAuthModalMode('login');
@@ -434,12 +516,6 @@ export const StreamlinedOrderFlow = ({
       } else if (typeof window !== 'undefined') {
         window.location.href = `/login?redirect=${encodeURIComponent(window.location.pathname + window.location.search)}`;
       }
-      return;
-    }
-
-    // 2. If already logged in -> Validate design files
-    if (uploadedFiles.length === 0) {
-      setUploadError('Please choose or upload your design file.');
       return;
     }
 
@@ -857,23 +933,50 @@ export const StreamlinedOrderFlow = ({
                   </div>
 
                   {sizeOption === 'custom' && (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', marginTop: '0.5rem' }}>
+                    <div
+                      ref={customSizeRef}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.45rem',
+                        marginTop: '0.5rem',
+                        padding: isCustomSizeHighlighted ? '0.35rem 0.5rem' : '0',
+                        borderRadius: '8px',
+                        border: isCustomSizeHighlighted ? '1.5px solid #ef4444' : 'none',
+                        background: isCustomSizeHighlighted ? (isDark ? 'rgba(239, 68, 68, 0.15)' : '#fee2e2') : 'transparent',
+                        animation: isCustomSizeHighlighted ? 'bdigiErrorShake 0.4s ease-in-out' : 'none'
+                      }}
+                    >
                       <input
                         type="text"
                         value={customWidth}
-                        onChange={(e) => setCustomWidth(e.target.value)}
+                        onChange={(e) => {
+                          setCustomWidth(e.target.value);
+                          setIsCustomSizeHighlighted(false);
+                        }}
                         placeholder="Width"
                         className="bdigi-input"
-                        style={{ maxWidth: '90px', textAlign: 'center' }}
+                        style={{
+                          maxWidth: '90px',
+                          textAlign: 'center',
+                          borderColor: isCustomSizeHighlighted ? '#ef4444' : undefined
+                        }}
                       />
                       <span style={{ color: '#94a3b8', fontWeight: 900 }}>×</span>
                       <input
                         type="text"
                         value={customHeight}
-                        onChange={(e) => setCustomHeight(e.target.value)}
+                        onChange={(e) => {
+                          setCustomHeight(e.target.value);
+                          setIsCustomSizeHighlighted(false);
+                        }}
                         placeholder="Height"
                         className="bdigi-input"
-                        style={{ maxWidth: '90px', textAlign: 'center' }}
+                        style={{
+                          maxWidth: '90px',
+                          textAlign: 'center',
+                          borderColor: isCustomSizeHighlighted ? '#ef4444' : undefined
+                        }}
                       />
                       <span style={{ fontSize: '0.82rem', color: '#64748b', fontWeight: 700 }}>Inches</span>
                     </div>
@@ -1162,7 +1265,11 @@ export const StreamlinedOrderFlow = ({
           </div>
 
           {/* UPLOAD DESIGN FILES (Compact Drag & Drop Box) */}
-          <div className="bdigi-form-row" style={{ alignItems: 'flex-start' }}>
+          <div
+            ref={uploadSectionRef}
+            className="bdigi-form-row"
+            style={{ alignItems: 'flex-start' }}
+          >
             <label className="bdigi-label" style={{ paddingTop: '0.45rem' }}>
               Upload Files<span style={{ color: '#ef4444' }}>*</span>
             </label>
@@ -1171,18 +1278,34 @@ export const StreamlinedOrderFlow = ({
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
-                onClick={() => fileInputRef.current?.click()}
+                onClick={() => {
+                  setIsUploadHighlighted(false);
+                  setUploadError('');
+                  fileInputRef.current?.click();
+                }}
                 style={{
-                  border: isDragOver ? '2px dashed #ea580c' : '1.5px dashed var(--color-border, #cbd5e1)',
+                  border: isUploadHighlighted
+                    ? '2px solid #ef4444'
+                    : isDragOver
+                      ? '2px dashed #ea580c'
+                      : '1.5px dashed var(--color-border, #cbd5e1)',
                   borderRadius: '10px',
-                  background: isDragOver ? (isDark ? 'rgba(234, 88, 12, 0.12)' : '#fff7ed') : (isDark ? '#1e293b' : '#f8fafc'),
+                  background: isUploadHighlighted
+                    ? (isDark ? 'rgba(239, 68, 68, 0.15)' : '#fef2f2')
+                    : isDragOver
+                      ? (isDark ? 'rgba(234, 88, 12, 0.12)' : '#fff7ed')
+                      : (isDark ? '#1e293b' : '#f8fafc'),
+                  boxShadow: isUploadHighlighted
+                    ? '0 0 0 4px rgba(239, 68, 68, 0.22), 0 4px 14px rgba(239, 68, 68, 0.16)'
+                    : 'none',
                   padding: '0.85rem 1rem',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between',
                   cursor: 'pointer',
-                  transition: 'all 0.16s ease',
-                  gap: '0.75rem'
+                  transition: 'all 0.18s ease',
+                  gap: '0.75rem',
+                  animation: isUploadHighlighted ? 'bdigiErrorShake 0.4s ease-in-out' : 'none'
                 }}
               >
                 <input
@@ -1200,8 +1323,8 @@ export const StreamlinedOrderFlow = ({
                       width: '36px',
                       height: '36px',
                       borderRadius: '8px',
-                      background: '#fff7ed',
-                      color: '#ea580c',
+                      background: isUploadHighlighted ? '#fee2e2' : '#fff7ed',
+                      color: isUploadHighlighted ? '#dc2626' : '#ea580c',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
@@ -1211,7 +1334,11 @@ export const StreamlinedOrderFlow = ({
                     <Upload size={18} />
                   </div>
                   <div style={{ textAlign: 'left' }}>
-                    <div style={{ fontSize: '0.88rem', fontWeight: 800, color: 'var(--color-text-primary, #0f172a)' }}>
+                    <div style={{
+                      fontSize: '0.88rem',
+                      fontWeight: 800,
+                      color: isUploadHighlighted ? '#dc2626' : 'var(--color-text-primary, #0f172a)'
+                    }}>
                       Upload {quantity} {quantity === 1 ? 'Design File' : 'Design Files'}
                     </div>
                     <div style={{ fontSize: '0.74rem', color: 'var(--color-text-muted, #64748b)' }}>
@@ -1224,9 +1351,9 @@ export const StreamlinedOrderFlow = ({
                   style={{
                     fontSize: '0.78rem',
                     fontWeight: 800,
-                    color: '#ea580c',
-                    background: '#fff7ed',
-                    border: '1px solid #fed7aa',
+                    color: isUploadHighlighted ? '#dc2626' : '#ea580c',
+                    background: isUploadHighlighted ? '#fee2e2' : '#fff7ed',
+                    border: isUploadHighlighted ? '1px solid #fca5a5' : '1px solid #fed7aa',
                     padding: '0.3rem 0.75rem',
                     borderRadius: '6px',
                     whiteSpace: 'nowrap'
@@ -1246,6 +1373,30 @@ export const StreamlinedOrderFlow = ({
                       : `${uploadedFiles.length} of ${quantity} attached (please upload ${quantity - uploadedFiles.length} more)`}
                 </span>
               </div>
+
+              {/* HIGHLIGHTED INLINE WARNING (if upload error or missing file) */}
+              {(isUploadHighlighted || uploadError) && (
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.4rem',
+                    color: '#b91c1c',
+                    background: '#fee2e2',
+                    border: '1px solid #fca5a5',
+                    borderRadius: '8px',
+                    padding: '0.45rem 0.75rem',
+                    fontSize: '0.8rem',
+                    fontWeight: 800,
+                    marginTop: '0.5rem',
+                    boxShadow: '0 2px 6px rgba(220, 38, 38, 0.1)',
+                    animation: 'bdigiErrorShake 0.4s ease-in-out'
+                  }}
+                >
+                  <AlertCircle size={15} style={{ color: '#dc2626', flexShrink: 0 }} />
+                  <span>{uploadError || 'Please choose or upload your design file to proceed.'}</span>
+                </div>
+              )}
 
               {isUploading && (
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', marginTop: '0.4rem', color: '#ea580c', fontSize: '0.8rem', fontWeight: 700 }}>
@@ -1295,12 +1446,6 @@ export const StreamlinedOrderFlow = ({
                       </button>
                     </div>
                   ))}
-                </div>
-              )}
-
-              {uploadError && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', color: '#ef4444', fontSize: '0.78rem', fontWeight: 700, marginTop: '0.4rem' }}>
-                  <AlertCircle size={13} /> {uploadError}
                 </div>
               )}
             </div>
@@ -1442,6 +1587,150 @@ export const StreamlinedOrderFlow = ({
         </div>
 
       </div>
+
+      {/* ON-SCREEN VALIDATION ALERT POPUP MODAL */}
+      {validationAlert && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 999999,
+            background: 'rgba(2, 6, 23, 0.75)',
+            backdropFilter: 'blur(6px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '1rem',
+            animation: 'fadeIn 0.2s ease-out'
+          }}
+          onClick={() => setValidationAlert(null)}
+          role="dialog"
+          aria-modal="true"
+        >
+          <div
+            style={{
+              background: isDark ? '#1e293b' : '#ffffff',
+              border: isDark ? '1.5px solid #334155' : '1.5px solid #fecaca',
+              borderRadius: '16px',
+              padding: '1.75rem 1.5rem',
+              maxWidth: '420px',
+              width: '100%',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(239, 68, 68, 0.1)',
+              textAlign: 'center',
+              position: 'relative'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              type="button"
+              onClick={() => setValidationAlert(null)}
+              style={{
+                position: 'absolute',
+                top: '12px',
+                right: '12px',
+                background: 'none',
+                border: 'none',
+                color: 'var(--color-text-muted, #64748b)',
+                cursor: 'pointer',
+                padding: '4px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                borderRadius: '6px'
+              }}
+              aria-label="Close"
+            >
+              <X size={18} />
+            </button>
+
+            <div
+              style={{
+                width: '54px',
+                height: '54px',
+                borderRadius: '50%',
+                background: '#fee2e2',
+                border: '2px solid #fca5a5',
+                color: '#dc2626',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                margin: '0 auto 1rem',
+                boxShadow: '0 4px 12px rgba(220, 38, 38, 0.2)'
+              }}
+            >
+              <AlertCircle size={28} />
+            </div>
+
+            <h3
+              style={{
+                fontSize: '1.15rem',
+                fontWeight: 900,
+                margin: '0 0 0.5rem',
+                color: isDark ? '#f8fafc' : '#0f172a',
+                letterSpacing: '-0.01em'
+              }}
+            >
+              {validationAlert.title}
+            </h3>
+
+            <p
+              style={{
+                fontSize: '0.88rem',
+                color: isDark ? '#cbd5e1' : '#475569',
+                lineHeight: 1.5,
+                margin: '0 0 1.4rem'
+              }}
+            >
+              {validationAlert.message}
+            </p>
+
+            <div style={{ display: 'flex', gap: '0.65rem', justifyContent: 'center' }}>
+              <button
+                type="button"
+                onClick={() => {
+                  const action = validationAlert.onAction;
+                  setValidationAlert(null);
+                  if (action) action();
+                }}
+                style={{
+                  background: '#ea580c',
+                  color: '#ffffff',
+                  border: 'none',
+                  borderRadius: '10px',
+                  padding: '0.65rem 1.4rem',
+                  fontSize: '0.88rem',
+                  fontWeight: 800,
+                  cursor: 'pointer',
+                  boxShadow: '0 4px 12px rgba(234, 88, 12, 0.3)',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.4rem',
+                  transition: 'all 0.15s ease'
+                }}
+              >
+                <Upload size={16} />
+                {validationAlert.actionText || 'Upload File Now'}
+              </button>
+              <button
+                type="button"
+                onClick={() => setValidationAlert(null)}
+                style={{
+                  background: isDark ? '#334155' : '#f1f5f9',
+                  color: isDark ? '#f8fafc' : '#475569',
+                  border: 'none',
+                  borderRadius: '10px',
+                  padding: '0.65rem 1rem',
+                  fontSize: '0.85rem',
+                  fontWeight: 700,
+                  cursor: 'pointer'
+                }}
+              >
+                Dismiss
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
