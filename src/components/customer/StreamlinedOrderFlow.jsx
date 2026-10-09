@@ -369,9 +369,6 @@ export const StreamlinedOrderFlow = ({
             setTimeout(() => fileInputRef.current?.click(), 120);
           }
         });
-        if (showToast) {
-          showToast(`⚠️ ${errorMsg}`, 'error', true);
-        }
         if (uploadSectionRef.current) {
           uploadSectionRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
@@ -469,9 +466,6 @@ export const StreamlinedOrderFlow = ({
           setTimeout(() => fileInputRef.current?.click(), 120);
         }
       });
-      if (showToast) {
-        showToast(`⚠️ ${errorMsg}`, 'error', true);
-      }
       if (uploadSectionRef.current) {
         uploadSectionRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }
@@ -484,7 +478,6 @@ export const StreamlinedOrderFlow = ({
       const numH = parseFloat(customHeight);
       if (!customWidth || !customHeight || isNaN(numW) || isNaN(numH) || numW <= 0 || numH <= 0) {
         setIsCustomSizeHighlighted(true);
-        const errorMsg = 'Please enter valid width and height dimensions for your custom size.';
         setValidationAlert({
           title: 'Custom Dimensions Required',
           message: 'Please specify valid width and height dimensions (e.g. 3.5" × 3.5") for your embroidery design.',
@@ -497,9 +490,6 @@ export const StreamlinedOrderFlow = ({
             }
           }
         });
-        if (showToast) {
-          showToast(`⚠️ ${errorMsg}`, 'error', true);
-        }
         if (customSizeRef.current) {
           customSizeRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
@@ -650,9 +640,14 @@ export const StreamlinedOrderFlow = ({
       if (onOrderComplete) onOrderComplete(resultingId);
     } catch (err) {
       console.error('[Order submit exception]:', err);
-      if (showToast) {
-        showToast(err?.message || 'Failed to submit order. Please retry.', 'error');
-      }
+      setValidationAlert({
+        title: 'Order Submission Issue',
+        message: err?.message || 'We could not submit your order. Please check your connection and try again.',
+        actionText: 'Retry Submission',
+        onAction: () => {
+          handleFinalSubmitOrder();
+        }
+      });
     } finally {
       setIsSubmitting(false);
     }

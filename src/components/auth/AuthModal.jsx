@@ -310,7 +310,6 @@ export const AuthModal = ({ isStandalonePage = false, initialMode = null }) => {
       setIsLoading(false);
       const errText = 'An unexpected authentication error occurred. Please try again.';
       setErrorModalText(errText);
-      showToast(errText, 'error');
     }
   };
 
@@ -335,7 +334,6 @@ export const AuthModal = ({ isStandalonePage = false, initialMode = null }) => {
       if (result && !result.success) {
         const errMsg = result.error || 'Account creation failed. An account with this email may already exist.';
         setErrorModalText(errMsg);
-        showToast(errMsg, 'error');
         return;
       }
 
@@ -366,7 +364,6 @@ export const AuthModal = ({ isStandalonePage = false, initialMode = null }) => {
       } else {
         const errorMsg = typeof res?.error === 'object' ? JSON.stringify(res.error) : res?.error;
         setErrorModalText(errorMsg || 'Google authentication failed.');
-        showToast('Authentication failed', 'error');
       }
     } catch (err) {
       setIsLoading(false);
