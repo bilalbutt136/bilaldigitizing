@@ -14,7 +14,14 @@ import {
   Trash2,
   ChevronDown,
   ShieldCheck,
-  X
+  X,
+  Sparkles,
+  ArrowRight,
+  ArrowLeft,
+  Palette,
+  Award,
+  Zap,
+  CheckCircle2
 } from 'lucide-react';
 import { uploadFileToCloudinaryFull } from '../../services/supabaseService';
 
@@ -42,7 +49,7 @@ const CANONICAL_DEFAULT_PACKAGES = {
       service_type: 'embroidery',
       display_order: 3,
       title: 'Full Back & 3D Puff Foam',
-      price: 35.00,
+      price: 30.00,
       turnaround_time: '8–12 Hours'
     }
   ],
@@ -67,53 +74,44 @@ const CANONICAL_DEFAULT_PACKAGES = {
       id: 'vec-complex',
       service_type: 'vector_art',
       display_order: 3,
-      title: 'Complex Illustration & Mascot',
-      price: 45.00,
+      title: 'Complex Intricate Mascot & Illustration',
+      price: 40.00,
       turnaround_time: '12–24 Hours'
     }
   ],
   patch: [
     {
-      id: 'pat-50',
+      id: 'pat-sample',
       service_type: 'patches',
       display_order: 1,
-      title: 'Sample Batch (50 Pcs)',
+      title: 'Sample Batch (50+ Pcs)',
       min_pieces: 50,
       price: 3.50,
       turnaround_time: '3–5 Days'
     },
     {
-      id: 'pat-100',
+      id: 'pat-standard',
       service_type: 'patches',
       display_order: 2,
-      title: 'Production Batch (100 Pcs)',
-      min_pieces: 100,
-      price: 2.50,
+      title: 'Standard Batch (50+ Pcs)',
+      min_pieces: 50,
+      price: 4.50,
       turnaround_time: '4–7 Days'
     },
     {
-      id: 'pat-250',
+      id: 'pat-premium',
       service_type: 'patches',
       display_order: 3,
-      title: 'Wholesale Batch (250 Pcs)',
-      min_pieces: 250,
-      price: 1.80,
+      title: 'Premium Batch (50+ Pcs)',
+      min_pieces: 50,
+      price: 5.50,
       turnaround_time: '5–8 Days'
-    },
-    {
-      id: 'pat-500',
-      service_type: 'patches',
-      display_order: 4,
-      title: 'Factory Bulk (500 Pcs)',
-      min_pieces: 500,
-      price: 1.50,
-      turnaround_time: '7–10 Days'
     }
   ]
 };
 
 export const StreamlinedOrderFlow = ({
-  initialService = 'embroidery',
+  initialService = null,
   initialPackage = null,
   _initialPackage = null,
   onOrderComplete = null,
@@ -136,6 +134,13 @@ export const StreamlinedOrderFlow = ({
 
   const isDark = theme === 'dark';
   const incomingPackage = initialPackage || _initialPackage;
+
+  // Has the customer chosen a service yet?
+  // When starting the order from general entry points, show the 3 services selection screen first!
+  const [hasSelectedService, setHasSelectedService] = useState(() => {
+    if (!initialService || initialService === 'all') return false;
+    return true;
+  });
 
   // Service switcher: 'embroidery' | 'patch' | 'vector'
   const [selectedService, setSelectedService] = useState(() => {
@@ -190,8 +195,11 @@ export const StreamlinedOrderFlow = ({
   const [vectorFormat, setVectorFormat] = useState('all');
   const [vectorTurnaround, setVectorTurnaround] = useState('standard'); // standard (free), rush (+$10)
 
-  // Universal fields
-  const [quantity, setQuantity] = useState(1);
+  // Separated Quantity States to prevent cross-service contamination:
+  // - designQuantity: For Embroidery & Vector (1, 2, 3 designs; default 1, min 1)
+  // - patchQuantity: For Custom Patches (physical patches batch; default 50, STRICT MINIMUM 50)
+  const [designQuantity, setDesignQuantity] = useState(1);
+  const [patchQuantity, setPatchQuantity] = useState(50);
   const [additionalDetails, setAdditionalDetails] = useState('');
 
   // Artwork Uploads
@@ -208,6 +216,13 @@ export const StreamlinedOrderFlow = ({
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Helper to select service and proceed to order customization
+  const handleSelectService = (serviceKey) => {
+    setSelectedService(serviceKey);
+    setSelectedTierId('');
+    setHasSelectedService(true);
+  };
+
   // Restore pending order draft if returning from auth (e.g. Google Login redirect)
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -215,9 +230,11 @@ export const StreamlinedOrderFlow = ({
       const rawDraft = localStorage.getItem('bdigi_pending_order_draft');
       if (rawDraft) {
         const draft = JSON.parse(rawDraft);
+        if (typeof draft.hasSelectedService === 'boolean') setHasSelectedService(draft.hasSelectedService);
         if (draft.selectedService) setSelectedService(draft.selectedService);
         if (draft.selectedTierId) setSelectedTierId(draft.selectedTierId);
-        if (draft.quantity) setQuantity(Number(draft.quantity) || 1);
+        if (draft.designQuantity) setDesignQuantity(Math.max(1, Number(draft.designQuantity) || 1));
+        if (draft.patchQuantity) setPatchQuantity(Math.max(50, Number(draft.patchQuantity) || 50));
         if (draft.turnaround) setTurnaround(draft.turnaround);
         if (draft.patchTurnaround) setPatchTurnaround(draft.patchTurnaround);
         if (draft.vectorTurnaround) setVectorTurnaround(draft.vectorTurnaround);
@@ -243,9 +260,11 @@ export const StreamlinedOrderFlow = ({
     if (typeof window === 'undefined') return;
     try {
       const draft = {
+        hasSelectedService,
         selectedService,
         selectedTierId: currentTier?.id || currentTier?.title,
-        quantity,
+        designQuantity,
+        patchQuantity: Math.max(50, Number(patchQuantity) || 50),
         turnaround,
         patchTurnaround,
         vectorTurnaround,
@@ -269,49 +288,51 @@ export const StreamlinedOrderFlow = ({
   const calculatePricing = () => {
     const unitBase = Number(currentTier?.price) || 15;
     let rushFee = 0;
-    const orderQty = Math.max(1, quantity);
 
     if (selectedService === 'embroidery') {
+      const orderQty = Math.max(1, designQuantity);
       if (turnaround === 'rush') rushFee = 10;
       return {
         unitPrice: unitBase,
         subtotal: unitBase * orderQty,
         rush: rushFee,
         total: (unitBase * orderQty) + rushFee,
+        quantity: orderQty,
         tierTitle: currentTier?.title || 'Left Chest & Cap Small Logo'
       };
     }
 
     if (selectedService === 'patch') {
-      let pieces = Number(currentTier?.min_pieces);
-      if (!pieces) {
-        const matchDigits = String(currentTier?.title || '').match(/\b(\d+)\b/);
-        pieces = matchDigits ? Number(matchDigits[1]) : 100;
-      }
+      // Patch Quantity strictly defaults to 50, minimum 50
+      const parsedQty = parseInt(patchQuantity, 10);
+      const safePatchQty = Math.max(50, isNaN(parsedQty) ? 50 : parsedQty);
       if (patchTurnaround === 'rush') rushFee = 25;
-      const patchSubtotal = unitBase * pieces;
+      const patchSubtotal = unitBase * safePatchQty;
       return {
         unitPrice: unitBase,
         subtotal: patchSubtotal,
         rush: rushFee,
         total: patchSubtotal + rushFee,
-        patchPieces: pieces,
-        tierTitle: currentTier?.title || `${pieces} Pieces`
+        patchPieces: safePatchQty,
+        quantity: safePatchQty,
+        tierTitle: currentTier?.title || 'Sample Batch (50+ Pcs)'
       };
     }
 
     if (selectedService === 'vector') {
+      const orderQty = Math.max(1, designQuantity);
       if (vectorTurnaround === 'rush') rushFee = 10;
       return {
         unitPrice: unitBase,
         subtotal: unitBase * orderQty,
         rush: rushFee,
         total: (unitBase * orderQty) + rushFee,
+        quantity: orderQty,
         tierTitle: currentTier?.title || 'Simple Logo & Typography Redraw'
       };
     }
 
-    return { unitPrice: 15, subtotal: 15, rush: 0, total: 15, tierTitle: 'Standard' };
+    return { unitPrice: 15, subtotal: 15, rush: 0, total: 15, quantity: 1, tierTitle: 'Standard' };
   };
 
   const pricing = calculatePricing();
@@ -451,12 +472,16 @@ export const StreamlinedOrderFlow = ({
   const handleFinalSubmitOrder = async () => {
     // 1. Validate required design file upload
     if (uploadedFiles.length === 0) {
-      const errorMsg = 'Please choose or upload your design file before continuing.';
+      const errorMsg = selectedService === 'patch'
+        ? 'Please choose or upload your patch artwork or logo before continuing.'
+        : 'Please choose or upload your design file before continuing.';
       setUploadError(errorMsg);
       setIsUploadHighlighted(true);
       setValidationAlert({
-        title: 'Design File Required',
-        message: 'Please choose or upload your artwork or design file (JPG, PNG, PDF, AI, DST) to place your order.',
+        title: selectedService === 'patch' ? 'Patch Artwork Required' : 'Design File Required',
+        message: selectedService === 'patch'
+          ? 'Please choose or upload your artwork or logo (JPG, PNG, PDF, AI, DST) to place your patch order.'
+          : 'Please choose or upload your artwork or design file (JPG, PNG, PDF, AI, DST) to place your order.',
         actionText: 'Upload File Now',
         onAction: () => {
           setIsUploadHighlighted(true);
@@ -469,6 +494,18 @@ export const StreamlinedOrderFlow = ({
       if (uploadSectionRef.current) {
         uploadSectionRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }
+      return;
+    }
+
+    // 1b. Validate strictly minimum 50 patches for Custom Patches
+    if (selectedService === 'patch' && (Number(patchQuantity) < 50 || isNaN(Number(patchQuantity)))) {
+      setPatchQuantity(50);
+      setValidationAlert({
+        title: 'Minimum 50 Patches Required',
+        message: 'Custom patch manufacturing requires a minimum order of 50 pieces. We have set your quantity to 50.',
+        actionText: 'Continue with 50 Patches',
+        onAction: () => {}
+      });
       return;
     }
 
@@ -558,9 +595,9 @@ export const StreamlinedOrderFlow = ({
         else targetFormats = ['DST', 'PES', 'EMB', 'PDF Spec Sheet'];
 
       } else if (selectedService === 'patch') {
-        derivedTitle = `${patchStyle} Patches (${pricing.patchPieces} Pcs)`;
+        derivedTitle = `${firstFileName} - ${patchStyle} Patches (${pricing.patchPieces} Pcs)`;
         isRush = patchTurnaround === 'rush';
-        derivedSize = 'Standard Patch Size';
+        derivedSize = `${patchStyle} (${patchBacking})`;
         targetFormats = ['DST', 'PDF Proof Sheet', 'Physical Courier Delivery'];
       } else if (selectedService === 'vector') {
         isRush = vectorTurnaround === 'rush';
@@ -576,7 +613,7 @@ export const StreamlinedOrderFlow = ({
         serviceCategory: cleanService,
         package_name: orderPackageName,
         package_tier: orderPackageName,
-        quantity: selectedService === 'patch' ? pricing.patchPieces : Math.max(1, quantity),
+        quantity: selectedService === 'patch' ? pricing.patchPieces : Math.max(1, designQuantity),
         price: pricing.total,
         totalPrice: pricing.total,
         base_price: pricing.subtotal,
@@ -783,805 +820,1462 @@ export const StreamlinedOrderFlow = ({
         }
       `}</style>
 
-      {/* SERVICE SWITCHER BUTTONS TOP */}
-      <div
-        style={{
-          display: 'flex',
-          gap: '0.5rem',
-          marginBottom: '1.5rem',
-          paddingBottom: '1rem',
-          borderBottom: '1px solid var(--color-border, #e2e8f0)',
-          flexWrap: 'wrap'
-        }}
-      >
-        <button
-          type="button"
-          onClick={() => setSelectedService('embroidery')}
-          style={{
-            padding: '0.55rem 1.1rem',
-            borderRadius: '9999px',
-            border: selectedService === 'embroidery' ? '2px solid #ea580c' : '1.5px solid var(--color-border, #cbd5e1)',
-            background: selectedService === 'embroidery' ? (isDark ? 'rgba(234, 88, 12, 0.15)' : '#fff7ed') : 'transparent',
-            color: selectedService === 'embroidery' ? '#ea580c' : 'var(--color-text-secondary, #475569)',
-            fontWeight: 800,
-            fontSize: '0.88rem',
-            cursor: 'pointer',
-            transition: 'all 0.16s ease'
-          }}
-        >
-          Embroidery Digitizing
-        </button>
+      {/* STEP 1: SERVICE SELECTION SCREEN (SHOWN WHEN STARTING ORDER) */}
+      {!hasSelectedService ? (
+        <div style={{ padding: '0.5rem 0 1rem' }}>
+          {/* Header */}
+          <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
+            <div style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.4rem',
+              fontSize: '0.78rem',
+              fontWeight: 800,
+              letterSpacing: '0.06em',
+              textTransform: 'uppercase',
+              color: '#ea580c',
+              background: isDark ? 'rgba(234, 88, 12, 0.15)' : '#fff7ed',
+              border: '1px solid #fed7aa',
+              padding: '0.35rem 0.95rem',
+              borderRadius: '9999px',
+              marginBottom: '0.75rem'
+            }}>
+              <Sparkles size={14} style={{ color: '#ea580c' }} />
+              Step 1 of 2 • Select Studio Service
+            </div>
 
-        <button
-          type="button"
-          onClick={() => setSelectedService('patch')}
-          style={{
-            padding: '0.55rem 1.1rem',
-            borderRadius: '9999px',
-            border: selectedService === 'patch' ? '2px solid #0284c7' : '1.5px solid var(--color-border, #cbd5e1)',
-            background: selectedService === 'patch' ? (isDark ? 'rgba(2, 132, 199, 0.15)' : '#f0f9ff') : 'transparent',
-            color: selectedService === 'patch' ? '#0284c7' : 'var(--color-text-secondary, #475569)',
-            fontWeight: 800,
-            fontSize: '0.88rem',
-            cursor: 'pointer',
-            transition: 'all 0.16s ease'
-          }}
-        >
-          Custom Patches
-        </button>
+            <h2 style={{
+              fontSize: 'clamp(1.5rem, 3.2vw, 2.2rem)',
+              fontFamily: 'var(--font-heading)',
+              fontWeight: 900,
+              lineHeight: 1.2,
+              margin: '0 0 0.5rem',
+              color: 'var(--color-text-primary, #0f172a)',
+              letterSpacing: '-0.02em'
+            }}>
+              What Would You Like Us to Create?
+            </h2>
 
-        <button
-          type="button"
-          onClick={() => setSelectedService('vector')}
-          style={{
-            padding: '0.55rem 1.1rem',
-            borderRadius: '9999px',
-            border: selectedService === 'vector' ? '2px solid #7c3aed' : '1.5px solid var(--color-border, #cbd5e1)',
-            background: selectedService === 'vector' ? (isDark ? 'rgba(124, 58, 237, 0.15)' : '#faf5ff') : 'transparent',
-            color: selectedService === 'vector' ? '#7c3aed' : 'var(--color-text-secondary, #475569)',
-            fontWeight: 800,
-            fontSize: '0.88rem',
-            cursor: 'pointer',
-            transition: 'all 0.16s ease'
-          }}
-        >
-          Vector Art
-        </button>
-      </div>
+            <p style={{
+              fontSize: '0.94rem',
+              color: 'var(--color-text-muted, #64748b)',
+              maxWidth: '560px',
+              margin: '0 auto',
+              lineHeight: 1.55
+            }}>
+              Select your service below to start your order with instant live pricing and fastest turnaround.
+            </p>
+          </div>
 
-      {/* 2-COLUMN ORDER DESK: LEFT OPTIONS & UPLOAD VS RIGHT STICKY PRICE & QUANTITY */}
-      <div className="bdigi-order-container">
+          {/* 3 Interactive Service Cards */}
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+              gap: '1.25rem',
+              alignItems: 'stretch'
+            }}
+          >
+            {/* Card 1: Embroidery Digitizing */}
+            <div
+              onClick={() => handleSelectService('embroidery')}
+              style={{
+                borderRadius: '18px',
+                border: '2px solid var(--color-border, #e2e8f0)',
+                background: isDark ? '#1e293b' : '#ffffff',
+                padding: '1.6rem 1.4rem',
+                cursor: 'pointer',
+                transition: 'all 0.22s ease',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between',
+                position: 'relative',
+                boxShadow: '0 4px 18px rgba(0, 0, 0, 0.04)'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.borderColor = '#ea580c';
+                e.currentTarget.style.transform = 'translateY(-4px)';
+                e.currentTarget.style.boxShadow = '0 12px 30px rgba(234, 88, 12, 0.15)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = 'var(--color-border, #e2e8f0)';
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = '0 4px 18px rgba(0, 0, 0, 0.04)';
+              }}
+            >
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.1rem' }}>
+                  <div
+                    style={{
+                      width: '48px',
+                      height: '48px',
+                      borderRadius: '12px',
+                      background: '#fff7ed',
+                      border: '1.5px solid #fed7aa',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: '#ea580c'
+                    }}
+                  >
+                    <Zap size={24} />
+                  </div>
+                  <span
+                    style={{
+                      fontSize: '0.72rem',
+                      fontWeight: 800,
+                      color: '#ea580c',
+                      background: '#fff7ed',
+                      border: '1px solid #fed7aa',
+                      padding: '3px 9px',
+                      borderRadius: '9999px'
+                    }}
+                  >
+                    ⚡ 4–12H Delivery
+                  </span>
+                </div>
 
-        {/* LEFT COLUMN: CUSTOMER INSTRUCTIONS & OPTIONS */}
+                <h3 style={{ fontSize: '1.25rem', fontWeight: 900, margin: '0 0 0.35rem', color: 'var(--color-text-primary, #0f172a)' }}>
+                  Embroidery Digitizing
+                </h3>
+                <p style={{ fontSize: '0.86rem', color: 'var(--color-text-muted, #64748b)', margin: '0 0 1.1rem', lineHeight: 1.45 }}>
+                  Master-level stitch files with 100% hand pathing & zero auto-digitize errors.
+                </p>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '1.4rem', fontSize: '0.82rem', color: 'var(--color-text-secondary, #475569)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                    <CheckCircle2 size={14} style={{ color: '#059669', flexShrink: 0 }} />
+                    <span>Left Chest, Caps, 3D Puff, Full Back</span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                    <CheckCircle2 size={14} style={{ color: '#059669', flexShrink: 0 }} />
+                    <span>Tajima .DST, Wilcom .EMB, Brother .PES</span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                    <CheckCircle2 size={14} style={{ color: '#059669', flexShrink: 0 }} />
+                    <span>Free Unlimited Machine Revisions</span>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <div style={{ borderTop: '1px solid var(--color-border, #e2e8f0)', paddingTop: '0.9rem', marginBottom: '0.9rem', display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
+                  <span style={{ fontSize: '0.78rem', color: 'var(--color-text-muted, #64748b)', fontWeight: 700 }}>Starting at</span>
+                  <span style={{ fontSize: '1.3rem', fontWeight: 900, color: '#ea580c' }}>
+                    $10.00 <span style={{ fontSize: '0.76rem', fontWeight: 700, color: 'var(--color-text-muted, #64748b)' }}>/ design</span>
+                  </span>
+                </div>
+
+                <button
+                  type="button"
+                  style={{
+                    width: '100%',
+                    padding: '0.72rem',
+                    borderRadius: '10px',
+                    border: 'none',
+                    background: 'linear-gradient(135deg, #ea580c 0%, #c2410c 100%)',
+                    color: '#ffffff',
+                    fontWeight: 900,
+                    fontSize: '0.88rem',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.4rem',
+                    boxShadow: '0 4px 12px rgba(234, 88, 12, 0.25)'
+                  }}
+                >
+                  Start Digitizing Order <ArrowRight size={15} />
+                </button>
+              </div>
+            </div>
+
+            {/* Card 2: Vector Art */}
+            <div
+              onClick={() => handleSelectService('vector')}
+              style={{
+                borderRadius: '18px',
+                border: '2px solid var(--color-border, #e2e8f0)',
+                background: isDark ? '#1e293b' : '#ffffff',
+                padding: '1.6rem 1.4rem',
+                cursor: 'pointer',
+                transition: 'all 0.22s ease',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between',
+                position: 'relative',
+                boxShadow: '0 4px 18px rgba(0, 0, 0, 0.04)'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.borderColor = '#7c3aed';
+                e.currentTarget.style.transform = 'translateY(-4px)';
+                e.currentTarget.style.boxShadow = '0 12px 30px rgba(124, 58, 237, 0.15)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = 'var(--color-border, #e2e8f0)';
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = '0 4px 18px rgba(0, 0, 0, 0.04)';
+              }}
+            >
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.1rem' }}>
+                  <div
+                    style={{
+                      width: '48px',
+                      height: '48px',
+                      borderRadius: '12px',
+                      background: '#faf5ff',
+                      border: '1.5px solid #e9d5ff',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: '#7c3aed'
+                    }}
+                  >
+                    <Palette size={24} />
+                  </div>
+                  <span
+                    style={{
+                      fontSize: '0.72rem',
+                      fontWeight: 800,
+                      color: '#7c3aed',
+                      background: '#faf5ff',
+                      border: '1px solid #e9d5ff',
+                      padding: '3px 9px',
+                      borderRadius: '9999px'
+                    }}
+                  >
+                    🎨 6–12H Delivery
+                  </span>
+                </div>
+
+                <h3 style={{ fontSize: '1.25rem', fontWeight: 900, margin: '0 0 0.35rem', color: 'var(--color-text-primary, #0f172a)' }}>
+                  Vector Art Conversion
+                </h3>
+                <p style={{ fontSize: '0.86rem', color: 'var(--color-text-muted, #64748b)', margin: '0 0 1.1rem', lineHeight: 1.45 }}>
+                  Raster artwork redrawn into crystal-clear scalable vector files for print & cut.
+                </p>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '1.4rem', fontSize: '0.82rem', color: 'var(--color-text-secondary, #475569)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                    <CheckCircle2 size={14} style={{ color: '#059669', flexShrink: 0 }} />
+                    <span>Screen Print, Vinyl Cut & DTF Ready</span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                    <CheckCircle2 size={14} style={{ color: '#059669', flexShrink: 0 }} />
+                    <span>Adobe Illustrator (.AI), .SVG, .EPS, .PDF</span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                    <CheckCircle2 size={14} style={{ color: '#059669', flexShrink: 0 }} />
+                    <span>Clean Bézier curves & spot color separation</span>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <div style={{ borderTop: '1px solid var(--color-border, #e2e8f0)', paddingTop: '0.9rem', marginBottom: '0.9rem', display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
+                  <span style={{ fontSize: '0.78rem', color: 'var(--color-text-muted, #64748b)', fontWeight: 700 }}>Starting at</span>
+                  <span style={{ fontSize: '1.3rem', fontWeight: 900, color: '#7c3aed' }}>
+                    $15.00 <span style={{ fontSize: '0.76rem', fontWeight: 700, color: 'var(--color-text-muted, #64748b)' }}>/ design</span>
+                  </span>
+                </div>
+
+                <button
+                  type="button"
+                  style={{
+                    width: '100%',
+                    padding: '0.72rem',
+                    borderRadius: '10px',
+                    border: 'none',
+                    background: 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)',
+                    color: '#ffffff',
+                    fontWeight: 900,
+                    fontSize: '0.88rem',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.4rem',
+                    boxShadow: '0 4px 12px rgba(124, 58, 237, 0.25)'
+                  }}
+                >
+                  Start Vector Order <ArrowRight size={15} />
+                </button>
+              </div>
+            </div>
+
+            {/* Card 3: Custom Patches */}
+            <div
+              onClick={() => handleSelectService('patch')}
+              style={{
+                borderRadius: '18px',
+                border: '2px solid var(--color-border, #e2e8f0)',
+                background: isDark ? '#1e293b' : '#ffffff',
+                padding: '1.6rem 1.4rem',
+                cursor: 'pointer',
+                transition: 'all 0.22s ease',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between',
+                position: 'relative',
+                boxShadow: '0 4px 18px rgba(0, 0, 0, 0.04)'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.borderColor = '#0284c7';
+                e.currentTarget.style.transform = 'translateY(-4px)';
+                e.currentTarget.style.boxShadow = '0 12px 30px rgba(2, 132, 199, 0.15)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = 'var(--color-border, #e2e8f0)';
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = '0 4px 18px rgba(0, 0, 0, 0.04)';
+              }}
+            >
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.1rem' }}>
+                  <div
+                    style={{
+                      width: '48px',
+                      height: '48px',
+                      borderRadius: '12px',
+                      background: '#f0f9ff',
+                      border: '1.5px solid #bae6fd',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: '#0284c7'
+                    }}
+                  >
+                    <Award size={24} />
+                  </div>
+                  <span
+                    style={{
+                      fontSize: '0.72rem',
+                      fontWeight: 800,
+                      color: '#0284c7',
+                      background: '#f0f9ff',
+                      border: '1px solid #bae6fd',
+                      padding: '3px 9px',
+                      borderRadius: '9999px'
+                    }}
+                  >
+                    🏷️ Min 50 Pcs • Physical
+                  </span>
+                </div>
+
+                <h3 style={{ fontSize: '1.25rem', fontWeight: 900, margin: '0 0 0.35rem', color: 'var(--color-text-primary, #0f172a)' }}>
+                  Custom Patches
+                </h3>
+                <p style={{ fontSize: '0.86rem', color: 'var(--color-text-muted, #64748b)', margin: '0 0 1.1rem', lineHeight: 1.45 }}>
+                  Physical manufactured embroidered, woven, PVC & leather patches delivered to door.
+                </p>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '1.4rem', fontSize: '0.82rem', color: 'var(--color-text-secondary, #475569)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                    <CheckCircle2 size={14} style={{ color: '#059669', flexShrink: 0 }} />
+                    <span>Embroidered, Woven, PVC 3D & Leather</span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                    <CheckCircle2 size={14} style={{ color: '#059669', flexShrink: 0 }} />
+                    <span>Velcro, Iron-On, Sew-On or Sticker Backing</span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                    <CheckCircle2 size={14} style={{ color: '#059669', flexShrink: 0 }} />
+                    <span>100% Free Digital Proof before production</span>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <div style={{ borderTop: '1px solid var(--color-border, #e2e8f0)', paddingTop: '0.9rem', marginBottom: '0.9rem', display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
+                  <span style={{ fontSize: '0.78rem', color: 'var(--color-text-muted, #64748b)', fontWeight: 700 }}>Starting at</span>
+                  <span style={{ fontSize: '1.3rem', fontWeight: 900, color: '#0284c7' }}>
+                    $3.50 <span style={{ fontSize: '0.76rem', fontWeight: 700, color: 'var(--color-text-muted, #64748b)' }}>/ piece</span>
+                  </span>
+                </div>
+
+                <button
+                  type="button"
+                  style={{
+                    width: '100%',
+                    padding: '0.72rem',
+                    borderRadius: '10px',
+                    border: 'none',
+                    background: 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)',
+                    color: '#ffffff',
+                    fontWeight: 900,
+                    fontSize: '0.88rem',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.4rem',
+                    boxShadow: '0 4px 12px rgba(2, 132, 199, 0.25)'
+                  }}
+                >
+                  Start Patches Order <ArrowRight size={15} />
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : (
+        /* STEP 2: ORDER CUSTOMIZATION DESK (SHOWN ONCE SERVICE IS SELECTED) */
         <div>
+          {/* TOP BAR: CHANGE SERVICE BUTTON & SERVICE SWITCHER */}
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '0.75rem',
+              marginBottom: '1.5rem',
+              paddingBottom: '1rem',
+              borderBottom: '1px solid var(--color-border, #e2e8f0)',
+              flexWrap: 'wrap'
+            }}
+          >
+            {/* Left: Change Service Back Button */}
+            <button
+              type="button"
+              onClick={() => setHasSelectedService(false)}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.4rem',
+                padding: '0.48rem 0.95rem',
+                borderRadius: '9999px',
+                border: '1.5px solid var(--color-border, #cbd5e1)',
+                background: 'var(--color-subtle, #f8fafc)',
+                color: 'var(--color-text-secondary, #475569)',
+                fontWeight: 800,
+                fontSize: '0.82rem',
+                cursor: 'pointer',
+                transition: 'all 0.16s ease'
+              }}
+              title="Return to service selection"
+            >
+              <ArrowLeft size={14} />
+              <span>Change Service</span>
+            </button>
 
-          {/* EMBROIDERY OPTIONS */}
-          {selectedService === 'embroidery' && (
+            {/* Right: Quick Service Tabs */}
+            <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedService('embroidery');
+                  setSelectedTierId('');
+                }}
+                style={{
+                  padding: '0.48rem 0.95rem',
+                  borderRadius: '9999px',
+                  border: selectedService === 'embroidery' ? '2px solid #ea580c' : '1.5px solid var(--color-border, #cbd5e1)',
+                  background: selectedService === 'embroidery' ? (isDark ? 'rgba(234, 88, 12, 0.15)' : '#fff7ed') : 'transparent',
+                  color: selectedService === 'embroidery' ? '#ea580c' : 'var(--color-text-secondary, #475569)',
+                  fontWeight: 800,
+                  fontSize: '0.82rem',
+                  cursor: 'pointer',
+                  transition: 'all 0.16s ease'
+                }}
+              >
+                ⚡ Embroidery Digitizing
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedService('patch');
+                  setSelectedTierId('');
+                }}
+                style={{
+                  padding: '0.48rem 0.95rem',
+                  borderRadius: '9999px',
+                  border: selectedService === 'patch' ? '2px solid #0284c7' : '1.5px solid var(--color-border, #cbd5e1)',
+                  background: selectedService === 'patch' ? (isDark ? 'rgba(2, 132, 199, 0.15)' : '#f0f9ff') : 'transparent',
+                  color: selectedService === 'patch' ? '#0284c7' : 'var(--color-text-secondary, #475569)',
+                  fontWeight: 800,
+                  fontSize: '0.82rem',
+                  cursor: 'pointer',
+                  transition: 'all 0.16s ease'
+                }}
+              >
+                🏷️ Custom Patches (Min 50)
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedService('vector');
+                  setSelectedTierId('');
+                }}
+                style={{
+                  padding: '0.48rem 0.95rem',
+                  borderRadius: '9999px',
+                  border: selectedService === 'vector' ? '2px solid #7c3aed' : '1.5px solid var(--color-border, #cbd5e1)',
+                  background: selectedService === 'vector' ? (isDark ? 'rgba(124, 58, 237, 0.15)' : '#faf5ff') : 'transparent',
+                  color: selectedService === 'vector' ? '#7c3aed' : 'var(--color-text-secondary, #475569)',
+                  fontWeight: 800,
+                  fontSize: '0.82rem',
+                  cursor: 'pointer',
+                  transition: 'all 0.16s ease'
+                }}
+              >
+                🎨 Vector Art
+              </button>
+            </div>
+          </div>
+
+          {/* 2-COLUMN ORDER DESK: LEFT OPTIONS & UPLOAD VS RIGHT STICKY PRICE & QUANTITY */}
+          <div className="bdigi-order-container">
+
+            {/* LEFT COLUMN: CUSTOMER INSTRUCTIONS & OPTIONS */}
             <div>
-              {/* Package Tier Dropdown (Live from Admin Dynamic Pricing Tiers) */}
-              <div className="bdigi-form-row">
-                <label className="bdigi-label">Package</label>
-                <div className="bdigi-select-wrapper">
-                  <select
-                    value={currentTier?.id || currentTier?.title || ''}
-                    onChange={(e) => setSelectedTierId(e.target.value)}
-                    className="bdigi-select"
-                  >
-                    {currentServiceTiers.map(tier => {
-                      const val = String(tier.id || tier.title);
-                      const displayPrice = Number(tier.price).toFixed(2);
-                      return (
-                        <option key={val} value={val}>
-                          {tier.title} — ${displayPrice}
-                        </option>
-                      );
-                    })}
-                  </select>
-                  <div className="bdigi-select-arrow">
-                    <ChevronDown size={17} />
-                  </div>
-                </div>
-              </div>
 
-              {/* File Format Dropdown */}
-              <div className="bdigi-form-row">
-                <label className="bdigi-label">File Format</label>
-                <div className="bdigi-select-wrapper">
-                  <select
-                    value={fileFormat}
-                    onChange={(e) => setFileFormat(e.target.value)}
-                    className="bdigi-select"
-                  >
-                    <option value="all">All Formats (.DST, .PES, .EMB, .PDF)</option>
-                    <option value="dst">DST (Tajima)</option>
-                    <option value="pes">PES (Brother)</option>
-                    <option value="emb">EMB (Wilcom)</option>
-                    <option value="exp">EXP (Melco)</option>
-                    <option value="jef">JEF (Janome)</option>
-                    <option value="other">Other</option>
-                  </select>
-                  <div className="bdigi-select-arrow">
-                    <ChevronDown size={17} />
-                  </div>
-                </div>
-              </div>
-
-              {/* Size Dropdown */}
-              <div className="bdigi-form-row">
-                <label className="bdigi-label">Size</label>
+              {/* 1. EMBROIDERY OPTIONS */}
+              {selectedService === 'embroidery' && (
                 <div>
-                  <div className="bdigi-select-wrapper">
-                    <select
-                      value={sizeOption}
-                      onChange={(e) => setSizeOption(e.target.value)}
-                      className="bdigi-select"
-                    >
-                      <option value="left-chest">Left Chest (4")</option>
-                      <option value="cap">Cap / Hat (2.5")</option>
-                      <option value="sleeve">Sleeve (7")</option>
-                      <option value="jacket-back">Jacket Back (12")</option>
-                      <option value="custom">Custom Size</option>
-                    </select>
-                    <div className="bdigi-select-arrow">
-                      <ChevronDown size={17} />
+                  {/* Package Tier Dropdown (Live from Admin Dynamic Pricing Tiers) */}
+                  <div className="bdigi-form-row">
+                    <label className="bdigi-label">Package</label>
+                    <div className="bdigi-select-wrapper">
+                      <select
+                        value={currentTier?.id || currentTier?.title || ''}
+                        onChange={(e) => setSelectedTierId(e.target.value)}
+                        className="bdigi-select"
+                      >
+                        {currentServiceTiers.map(tier => {
+                          const val = String(tier.id || tier.title);
+                          const displayPrice = Number(tier.price).toFixed(2);
+                          return (
+                            <option key={val} value={val}>
+                              {tier.title} — ${displayPrice}
+                            </option>
+                          );
+                        })}
+                      </select>
+                      <div className="bdigi-select-arrow">
+                        <ChevronDown size={17} />
+                      </div>
                     </div>
                   </div>
 
-                  {sizeOption === 'custom' && (
+                  {/* File Format Dropdown */}
+                  <div className="bdigi-form-row">
+                    <label className="bdigi-label">File Format</label>
+                    <div className="bdigi-select-wrapper">
+                      <select
+                        value={fileFormat}
+                        onChange={(e) => setFileFormat(e.target.value)}
+                        className="bdigi-select"
+                      >
+                        <option value="all">All Formats (.DST, .PES, .EMB, .PDF)</option>
+                        <option value="dst">DST (Tajima)</option>
+                        <option value="pes">PES (Brother)</option>
+                        <option value="emb">EMB (Wilcom)</option>
+                        <option value="exp">EXP (Melco)</option>
+                        <option value="jef">JEF (Janome)</option>
+                        <option value="other">Other</option>
+                      </select>
+                      <div className="bdigi-select-arrow">
+                        <ChevronDown size={17} />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Size Dropdown */}
+                  <div className="bdigi-form-row">
+                    <label className="bdigi-label">Size</label>
+                    <div>
+                      <div className="bdigi-select-wrapper">
+                        <select
+                          value={sizeOption}
+                          onChange={(e) => setSizeOption(e.target.value)}
+                          className="bdigi-select"
+                        >
+                          <option value="left-chest">Left Chest (4")</option>
+                          <option value="cap">Cap / Hat (2.5")</option>
+                          <option value="sleeve">Sleeve (7")</option>
+                          <option value="jacket-back">Jacket Back (12")</option>
+                          <option value="custom">Custom Size</option>
+                        </select>
+                        <div className="bdigi-select-arrow">
+                          <ChevronDown size={17} />
+                        </div>
+                      </div>
+
+                      {sizeOption === 'custom' && (
+                        <div
+                          ref={customSizeRef}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.45rem',
+                            marginTop: '0.5rem',
+                            padding: isCustomSizeHighlighted ? '0.35rem 0.5rem' : '0',
+                            borderRadius: '8px',
+                            border: isCustomSizeHighlighted ? '1.5px solid #ef4444' : 'none',
+                            background: isCustomSizeHighlighted ? (isDark ? 'rgba(239, 68, 68, 0.15)' : '#fee2e2') : 'transparent',
+                            animation: isCustomSizeHighlighted ? 'bdigiErrorShake 0.4s ease-in-out' : 'none'
+                          }}
+                        >
+                          <input
+                            type="text"
+                            value={customWidth}
+                            onChange={(e) => {
+                              setCustomWidth(e.target.value);
+                              setIsCustomSizeHighlighted(false);
+                            }}
+                            placeholder="Width"
+                            className="bdigi-input"
+                            style={{
+                              maxWidth: '90px',
+                              textAlign: 'center',
+                              borderColor: isCustomSizeHighlighted ? '#ef4444' : undefined
+                            }}
+                          />
+                          <span style={{ color: '#94a3b8', fontWeight: 900 }}>×</span>
+                          <input
+                            type="text"
+                            value={customHeight}
+                            onChange={(e) => {
+                              setCustomHeight(e.target.value);
+                              setIsCustomSizeHighlighted(false);
+                            }}
+                            placeholder="Height"
+                            className="bdigi-input"
+                            style={{
+                              maxWidth: '90px',
+                              textAlign: 'center',
+                              borderColor: isCustomSizeHighlighted ? '#ef4444' : undefined
+                            }}
+                          />
+                          <span style={{ fontSize: '0.82rem', color: '#64748b', fontWeight: 700 }}>Inches</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Turnaround Dropdown */}
+                  <div className="bdigi-form-row">
+                    <label className="bdigi-label">Turnaround</label>
+                    <div className="bdigi-select-wrapper">
+                      <select
+                        value={turnaround}
+                        onChange={(e) => setTurnaround(e.target.value)}
+                        className="bdigi-select"
+                      >
+                        <option value="standard">Standard (4–12h) — Free</option>
+                        <option value="rush">Rush (2–4h) — +$10</option>
+                      </select>
+                      <div className="bdigi-select-arrow">
+                        <ChevronDown size={17} />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Additional Details */}
+                  <div className="bdigi-form-row" style={{ alignItems: 'flex-start' }}>
+                    <label className="bdigi-label" style={{ paddingTop: '0.45rem' }}>Notes</label>
+                    <textarea
+                      rows={2}
+                      value={additionalDetails}
+                      onChange={(e) => setAdditionalDetails(e.target.value)}
+                      placeholder="Fabric, thread colors, or special notes..."
+                      className="bdigi-textarea"
+                    />
+                  </div>
+
+                  {/* NUMBER OF DESIGNS (Placed BEFORE upload) */}
+                  <div className="bdigi-form-row">
+                    <label className="bdigi-label">Number of Designs</label>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+                      <div
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          border: '1.5px solid var(--color-border, #cbd5e1)',
+                          borderRadius: '10px',
+                          background: 'var(--color-surface, #ffffff)',
+                          overflow: 'hidden'
+                        }}
+                      >
+                        <button
+                          type="button"
+                          onClick={() => setDesignQuantity(Math.max(1, designQuantity - 1))}
+                          disabled={designQuantity <= 1}
+                          style={{
+                            width: '38px',
+                            height: '38px',
+                            background: 'none',
+                            border: 'none',
+                            color: designQuantity <= 1 ? '#94a3b8' : 'var(--color-text-primary, #0f172a)',
+                            cursor: designQuantity <= 1 ? 'not-allowed' : 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            opacity: designQuantity <= 1 ? 0.45 : 1
+                          }}
+                          aria-label="Decrease designs"
+                        >
+                          <Minus size={14} />
+                        </button>
+                        <span style={{ width: '38px', textAlign: 'center', fontSize: '1rem', fontWeight: 900, color: 'var(--color-text-primary, #0f172a)' }}>
+                          {designQuantity}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => setDesignQuantity(designQuantity + 1)}
+                          style={{
+                            width: '38px',
+                            height: '38px',
+                            background: 'none',
+                            border: 'none',
+                            color: 'var(--color-text-primary, #0f172a)',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                          }}
+                          aria-label="Increase designs"
+                        >
+                          <Plus size={14} />
+                        </button>
+                      </div>
+                      <span style={{ fontSize: '0.84rem', fontWeight: 700, color: 'var(--color-text-muted, #64748b)' }}>
+                        ${pricing.unitPrice.toFixed(2)} each design
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* 2. CUSTOM PATCHES OPTIONS */}
+              {selectedService === 'patch' && (
+                <div>
+                  {/* Package Tier / Quality Tier (Live from Admin Dynamic Pricing Tiers) */}
+                  <div className="bdigi-form-row">
+                    <label className="bdigi-label">Patch Tier</label>
+                    <div className="bdigi-select-wrapper">
+                      <select
+                        value={currentTier?.id || currentTier?.title || ''}
+                        onChange={(e) => setSelectedTierId(e.target.value)}
+                        className="bdigi-select"
+                      >
+                        {currentServiceTiers.map(tier => {
+                          const val = String(tier.id || tier.title);
+                          const displayPrice = Number(tier.price).toFixed(2);
+                          return (
+                            <option key={val} value={val}>
+                              {tier.title} — ${displayPrice} / piece
+                            </option>
+                          );
+                        })}
+                      </select>
+                      <div className="bdigi-select-arrow">
+                        <ChevronDown size={17} />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Patch Style */}
+                  <div className="bdigi-form-row">
+                    <label className="bdigi-label">Style</label>
+                    <div className="bdigi-select-wrapper">
+                      <select
+                        value={patchStyle}
+                        onChange={(e) => setPatchStyle(e.target.value)}
+                        className="bdigi-select"
+                      >
+                        <option value="Embroidered Twill">Embroidered Twill (Classic Textured)</option>
+                        <option value="Woven High-Def">Woven High-Def (Ultra Fine Lettering)</option>
+                        <option value="PVC Rubber 3D">PVC Rubber 3D (Waterproof Molded)</option>
+                        <option value="Laser Leather">Leather / Laser Engraved</option>
+                      </select>
+                      <div className="bdigi-select-arrow">
+                        <ChevronDown size={17} />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Patch Backing */}
+                  <div className="bdigi-form-row">
+                    <label className="bdigi-label">Backing</label>
+                    <div className="bdigi-select-wrapper">
+                      <select
+                        value={patchBacking}
+                        onChange={(e) => setPatchBacking(e.target.value)}
+                        className="bdigi-select"
+                      >
+                        <option value="Velcro (Hook & Loop)">Velcro (Hook & Loop)</option>
+                        <option value="Heat-Seal Iron-On">Heat-Seal Iron-On</option>
+                        <option value="Plain Sew-On">Plain Sew-On</option>
+                        <option value="Peel & Stick">Peel & Stick Adhesive</option>
+                      </select>
+                      <div className="bdigi-select-arrow">
+                        <ChevronDown size={17} />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Turnaround */}
+                  <div className="bdigi-form-row">
+                    <label className="bdigi-label">Turnaround</label>
+                    <div className="bdigi-select-wrapper">
+                      <select
+                        value={patchTurnaround}
+                        onChange={(e) => setPatchTurnaround(e.target.value)}
+                        className="bdigi-select"
+                      >
+                        <option value="standard">Standard (5–7 Days Production) — Free</option>
+                        <option value="rush">Rush Express (3–4 Days Production) — +$25</option>
+                      </select>
+                      <div className="bdigi-select-arrow">
+                        <ChevronDown size={17} />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Patch Additional Details */}
+                  <div className="bdigi-form-row" style={{ alignItems: 'flex-start' }}>
+                    <label className="bdigi-label" style={{ paddingTop: '0.45rem' }}>Notes</label>
+                    <textarea
+                      rows={2}
+                      value={additionalDetails}
+                      onChange={(e) => setAdditionalDetails(e.target.value)}
+                      placeholder="Custom dimensions (e.g. 3&quot; round), border style (merrowed vs laser cut), thread colors, special instructions..."
+                      className="bdigi-textarea"
+                    />
+                  </div>
+
+                  {/* QUANTITY OF PATCHES (DEFAULT 50, MINIMUM 50 STRICTLY ENFORCED) */}
+                  <div className="bdigi-form-row">
+                    <label className="bdigi-label">Patch Quantity</label>
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+                        <div
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            border: '1.5px solid var(--color-border, #cbd5e1)',
+                            borderRadius: '10px',
+                            background: 'var(--color-surface, #ffffff)',
+                            overflow: 'hidden'
+                          }}
+                        >
+                          <button
+                            type="button"
+                            onClick={() => setPatchQuantity(prev => Math.max(50, (parseInt(prev, 10) || 50) - 10))}
+                            disabled={Number(patchQuantity) <= 50}
+                            style={{
+                              width: '38px',
+                              height: '38px',
+                              background: 'none',
+                              border: 'none',
+                              color: Number(patchQuantity) <= 50 ? '#94a3b8' : 'var(--color-text-primary, #0f172a)',
+                              cursor: Number(patchQuantity) <= 50 ? 'not-allowed' : 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              opacity: Number(patchQuantity) <= 50 ? 0.45 : 1
+                            }}
+                            aria-label="Decrease patch quantity"
+                            title={Number(patchQuantity) <= 50 ? "Minimum 50 patches required" : "Decrease by 10"}
+                          >
+                            <Minus size={14} />
+                          </button>
+                          <input
+                            type="number"
+                            min="50"
+                            step="10"
+                            value={patchQuantity}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              if (val === '') {
+                                setPatchQuantity('');
+                              } else {
+                                const num = parseInt(val, 10);
+                                setPatchQuantity(isNaN(num) ? 50 : Math.max(1, num));
+                              }
+                            }}
+                            onBlur={() => {
+                              const num = parseInt(patchQuantity, 10);
+                              if (isNaN(num) || num < 50) {
+                                setPatchQuantity(50);
+                              } else {
+                                setPatchQuantity(num);
+                              }
+                            }}
+                            className="bdigi-input"
+                            style={{
+                              width: '75px',
+                              height: '38px',
+                              textAlign: 'center',
+                              border: 'none',
+                              borderRadius: 0,
+                              fontWeight: 900,
+                              fontSize: '0.98rem',
+                              padding: '0 0.25rem'
+                            }}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setPatchQuantity(prev => (parseInt(prev, 10) || 50) + 10)}
+                            style={{
+                              width: '38px',
+                              height: '38px',
+                              background: 'none',
+                              border: 'none',
+                              color: 'var(--color-text-primary, #0f172a)',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center'
+                            }}
+                            aria-label="Increase patch quantity"
+                            title="Increase by 10"
+                          >
+                            <Plus size={14} />
+                          </button>
+                        </div>
+
+                        {/* Quick Batch Chips */}
+                        <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap' }}>
+                          {[50, 100, 200, 250, 500, 1000].map(tierQty => {
+                            const isSelected = Number(patchQuantity) === tierQty;
+                            return (
+                              <button
+                                key={tierQty}
+                                type="button"
+                                onClick={() => setPatchQuantity(tierQty)}
+                                style={{
+                                  padding: '0.3rem 0.6rem',
+                                  borderRadius: '8px',
+                                  border: isSelected ? '1.5px solid #0284c7' : '1px solid var(--color-border, #cbd5e1)',
+                                  background: isSelected ? '#0284c7' : 'var(--color-subtle, #f8fafc)',
+                                  color: isSelected ? '#ffffff' : 'var(--color-text-secondary, #475569)',
+                                  fontWeight: 800,
+                                  fontSize: '0.76rem',
+                                  cursor: 'pointer',
+                                  transition: 'all 0.15s ease'
+                                }}
+                              >
+                                {tierQty} pcs
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      <div style={{ marginTop: '0.35rem', fontSize: '0.75rem', color: '#0284c7', fontWeight: 700 }}>
+                        ✦ Minimum batch: 50 pieces • Rate: ${pricing.unitPrice.toFixed(2)} / patch
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* 3. VECTOR ART OPTIONS */}
+              {selectedService === 'vector' && (
+                <div>
+                  {/* Package Tier Dropdown (Live from Admin Dynamic Pricing Tiers) */}
+                  <div className="bdigi-form-row">
+                    <label className="bdigi-label">Package</label>
+                    <div className="bdigi-select-wrapper">
+                      <select
+                        value={currentTier?.id || currentTier?.title || ''}
+                        onChange={(e) => setSelectedTierId(e.target.value)}
+                        className="bdigi-select"
+                      >
+                        {currentServiceTiers.map(tier => {
+                          const val = String(tier.id || tier.title);
+                          const displayPrice = Number(tier.price).toFixed(2);
+                          return (
+                            <option key={val} value={val}>
+                              {tier.title} — ${displayPrice}
+                            </option>
+                          );
+                        })}
+                      </select>
+                      <div className="bdigi-select-arrow">
+                        <ChevronDown size={17} />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Vector Formats */}
+                  <div className="bdigi-form-row">
+                    <label className="bdigi-label">File Format</label>
+                    <div className="bdigi-select-wrapper">
+                      <select
+                        value={vectorFormat}
+                        onChange={(e) => setVectorFormat(e.target.value)}
+                        className="bdigi-select"
+                      >
+                        <option value="all">All Formats (.AI, .EPS, .SVG, .PDF)</option>
+                        <option value="ai">Adobe Illustrator (.AI)</option>
+                        <option value="svg">Scalable Vector (.SVG)</option>
+                        <option value="pdf">Print PDF</option>
+                      </select>
+                      <div className="bdigi-select-arrow">
+                        <ChevronDown size={17} />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Vector Turnaround */}
+                  <div className="bdigi-form-row">
+                    <label className="bdigi-label">Turnaround</label>
+                    <div className="bdigi-select-wrapper">
+                      <select
+                        value={vectorTurnaround}
+                        onChange={(e) => setVectorTurnaround(e.target.value)}
+                        className="bdigi-select"
+                      >
+                        <option value="standard">Standard (6–12h) — Free</option>
+                        <option value="rush">Rush (2–4h) — +$10</option>
+                      </select>
+                      <div className="bdigi-select-arrow">
+                        <ChevronDown size={17} />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Vector Details */}
+                  <div className="bdigi-form-row" style={{ alignItems: 'flex-start' }}>
+                    <label className="bdigi-label" style={{ paddingTop: '0.45rem' }}>Notes</label>
+                    <textarea
+                      rows={2}
+                      value={additionalDetails}
+                      onChange={(e) => setAdditionalDetails(e.target.value)}
+                      placeholder="Colors, fonts, or vector notes..."
+                      className="bdigi-textarea"
+                    />
+                  </div>
+
+                  {/* NUMBER OF DESIGNS (Placed BEFORE upload) */}
+                  <div className="bdigi-form-row">
+                    <label className="bdigi-label">Number of Designs</label>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+                      <div
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          border: '1.5px solid var(--color-border, #cbd5e1)',
+                          borderRadius: '10px',
+                          background: 'var(--color-surface, #ffffff)',
+                          overflow: 'hidden'
+                        }}
+                      >
+                        <button
+                          type="button"
+                          onClick={() => setDesignQuantity(Math.max(1, designQuantity - 1))}
+                          disabled={designQuantity <= 1}
+                          style={{
+                            width: '38px',
+                            height: '38px',
+                            background: 'none',
+                            border: 'none',
+                            color: designQuantity <= 1 ? '#94a3b8' : 'var(--color-text-primary, #0f172a)',
+                            cursor: designQuantity <= 1 ? 'not-allowed' : 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            opacity: designQuantity <= 1 ? 0.45 : 1
+                          }}
+                          aria-label="Decrease designs"
+                        >
+                          <Minus size={14} />
+                        </button>
+                        <span style={{ width: '38px', textAlign: 'center', fontSize: '1rem', fontWeight: 900, color: 'var(--color-text-primary, #0f172a)' }}>
+                          {designQuantity}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => setDesignQuantity(designQuantity + 1)}
+                          style={{
+                            width: '38px',
+                            height: '38px',
+                            background: 'none',
+                            border: 'none',
+                            color: 'var(--color-text-primary, #0f172a)',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                          }}
+                          aria-label="Increase designs"
+                        >
+                          <Plus size={14} />
+                        </button>
+                      </div>
+                      <span style={{ fontSize: '0.84rem', fontWeight: 700, color: 'var(--color-text-muted, #64748b)' }}>
+                        ${pricing.unitPrice.toFixed(2)} each design
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* UPLOAD ARTWORK FILES (Compact Drag & Drop Box) */}
+              <div
+                ref={uploadSectionRef}
+                className="bdigi-form-row"
+                style={{ alignItems: 'flex-start' }}
+              >
+                <label className="bdigi-label" style={{ paddingTop: '0.45rem' }}>
+                  {selectedService === 'patch' ? 'Patch Artwork' : 'Upload Files'}
+                  <span style={{ color: '#ef4444' }}>*</span>
+                </label>
+                <div>
+                  <div
+                    onDragOver={handleDragOver}
+                    onDragLeave={handleDragLeave}
+                    onDrop={handleDrop}
+                    onClick={() => {
+                      setIsUploadHighlighted(false);
+                      setUploadError('');
+                      fileInputRef.current?.click();
+                    }}
+                    style={{
+                      border: isUploadHighlighted
+                        ? '2px solid #ef4444'
+                        : isDragOver
+                          ? '2px dashed #ea580c'
+                          : '1.5px dashed var(--color-border, #cbd5e1)',
+                      borderRadius: '10px',
+                      background: isUploadHighlighted
+                        ? (isDark ? 'rgba(239, 68, 68, 0.15)' : '#fef2f2')
+                        : isDragOver
+                          ? (isDark ? 'rgba(234, 88, 12, 0.12)' : '#fff7ed')
+                          : (isDark ? '#1e293b' : '#f8fafc'),
+                      boxShadow: isUploadHighlighted
+                        ? '0 0 0 4px rgba(239, 68, 68, 0.22), 0 4px 14px rgba(239, 68, 68, 0.16)'
+                        : 'none',
+                      padding: '0.85rem 1rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      cursor: 'pointer',
+                      transition: 'all 0.18s ease',
+                      gap: '0.75rem',
+                      animation: isUploadHighlighted ? 'bdigiErrorShake 0.4s ease-in-out' : 'none'
+                    }}
+                  >
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      multiple={selectedService !== 'patch'}
+                      accept="image/*,.pdf,.ai,.eps,.svg,.dst,.pes,.emb"
+                      onChange={handleFilesChosen}
+                      style={{ display: 'none' }}
+                    />
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                      <div
+                        style={{
+                          width: '36px',
+                          height: '36px',
+                          borderRadius: '8px',
+                          background: isUploadHighlighted ? '#fee2e2' : selectedService === 'patch' ? '#f0f9ff' : '#fff7ed',
+                          color: isUploadHighlighted ? '#dc2626' : selectedService === 'patch' ? '#0284c7' : '#ea580c',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          flexShrink: 0
+                        }}
+                      >
+                        <Upload size={18} />
+                      </div>
+                      <div style={{ textAlign: 'left' }}>
+                        <div style={{
+                          fontSize: '0.88rem',
+                          fontWeight: 800,
+                          color: isUploadHighlighted ? '#dc2626' : 'var(--color-text-primary, #0f172a)'
+                        }}>
+                          {selectedService === 'patch'
+                            ? 'Upload Patch Artwork or Logo'
+                            : `Upload ${designQuantity} ${designQuantity === 1 ? 'Design File' : 'Design Files'}`}
+                        </div>
+                        <div style={{ fontSize: '0.74rem', color: 'var(--color-text-muted, #64748b)' }}>
+                          {selectedService === 'patch'
+                            ? 'Attach your logo or design for proofing (Max 50MB)'
+                            : 'JPG, PNG, PDF, AI, DST (Max 50MB)'}
+                        </div>
+                      </div>
+                    </div>
+
+                    <span
+                      style={{
+                        fontSize: '0.78rem',
+                        fontWeight: 800,
+                        color: isUploadHighlighted ? '#dc2626' : selectedService === 'patch' ? '#0284c7' : '#ea580c',
+                        background: isUploadHighlighted ? '#fee2e2' : selectedService === 'patch' ? '#f0f9ff' : '#fff7ed',
+                        border: isUploadHighlighted ? '1px solid #fca5a5' : selectedService === 'patch' ? '1px solid #bae6fd' : '1px solid #fed7aa',
+                        padding: '0.3rem 0.75rem',
+                        borderRadius: '6px',
+                        whiteSpace: 'nowrap'
+                      }}
+                    >
+                      Browse
+                    </span>
+                  </div>
+
+                  {/* Upload Counter & Guidance */}
+                  <div style={{ marginTop: '0.35rem', fontSize: '0.75rem' }}>
+                    <span style={{ color: uploadedFiles.length > 0 ? '#059669' : 'var(--color-text-muted, #64748b)', fontWeight: 700 }}>
+                      {selectedService === 'patch'
+                        ? (uploadedFiles.length === 0
+                            ? '0 files attached (1 artwork file required for patch proof)'
+                            : `✓ ${uploadedFiles.length} file attached (Ready for production proof)`)
+                        : (uploadedFiles.length === 0
+                            ? `0 of ${designQuantity} files attached`
+                            : uploadedFiles.length >= designQuantity
+                              ? `✓ ${uploadedFiles.length} of ${designQuantity} files attached`
+                              : `${uploadedFiles.length} of ${designQuantity} attached (please upload ${designQuantity - uploadedFiles.length} more)`)}
+                    </span>
+                  </div>
+
+                  {/* HIGHLIGHTED INLINE WARNING (if upload error or missing file) */}
+                  {(isUploadHighlighted || uploadError) && (
                     <div
-                      ref={customSizeRef}
                       style={{
                         display: 'flex',
                         alignItems: 'center',
-                        gap: '0.45rem',
-                        marginTop: '0.5rem',
-                        padding: isCustomSizeHighlighted ? '0.35rem 0.5rem' : '0',
+                        gap: '0.4rem',
+                        color: '#b91c1c',
+                        background: '#fee2e2',
+                        border: '1px solid #fca5a5',
                         borderRadius: '8px',
-                        border: isCustomSizeHighlighted ? '1.5px solid #ef4444' : 'none',
-                        background: isCustomSizeHighlighted ? (isDark ? 'rgba(239, 68, 68, 0.15)' : '#fee2e2') : 'transparent',
-                        animation: isCustomSizeHighlighted ? 'bdigiErrorShake 0.4s ease-in-out' : 'none'
+                        padding: '0.45rem 0.75rem',
+                        fontSize: '0.8rem',
+                        fontWeight: 800,
+                        marginTop: '0.5rem',
+                        boxShadow: '0 2px 6px rgba(220, 38, 38, 0.1)',
+                        animation: 'bdigiErrorShake 0.4s ease-in-out'
                       }}
                     >
-                      <input
-                        type="text"
-                        value={customWidth}
-                        onChange={(e) => {
-                          setCustomWidth(e.target.value);
-                          setIsCustomSizeHighlighted(false);
-                        }}
-                        placeholder="Width"
-                        className="bdigi-input"
-                        style={{
-                          maxWidth: '90px',
-                          textAlign: 'center',
-                          borderColor: isCustomSizeHighlighted ? '#ef4444' : undefined
-                        }}
-                      />
-                      <span style={{ color: '#94a3b8', fontWeight: 900 }}>×</span>
-                      <input
-                        type="text"
-                        value={customHeight}
-                        onChange={(e) => {
-                          setCustomHeight(e.target.value);
-                          setIsCustomSizeHighlighted(false);
-                        }}
-                        placeholder="Height"
-                        className="bdigi-input"
-                        style={{
-                          maxWidth: '90px',
-                          textAlign: 'center',
-                          borderColor: isCustomSizeHighlighted ? '#ef4444' : undefined
-                        }}
-                      />
-                      <span style={{ fontSize: '0.82rem', color: '#64748b', fontWeight: 700 }}>Inches</span>
+                      <AlertCircle size={15} style={{ color: '#dc2626', flexShrink: 0 }} />
+                      <span>{uploadError || (selectedService === 'patch' ? 'Please choose or upload your patch artwork to proceed.' : 'Please choose or upload your design file to proceed.')}</span>
+                    </div>
+                  )}
+
+                  {isUploading && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', marginTop: '0.4rem', color: '#ea580c', fontSize: '0.8rem', fontWeight: 700 }}>
+                      <Loader2 size={14} className="animate-spin" /> Uploading file...
+                    </div>
+                  )}
+
+                  {/* Uploaded File Pills */}
+                  {uploadedFiles.length > 0 && (
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', marginTop: '0.55rem' }}>
+                      {uploadedFiles.map((f, i) => (
+                        <div
+                          key={i}
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '0.35rem',
+                            fontSize: '0.78rem',
+                            fontWeight: 700,
+                            background: '#ecfdf5',
+                            color: '#065f46',
+                            padding: '0.25rem 0.65rem',
+                            borderRadius: '6px',
+                            border: '1px solid #a7f3d0'
+                          }}
+                        >
+                          <Check size={13} style={{ color: '#059669' }} />
+                          <span>{f.name}</span>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleRemoveFile(i);
+                            }}
+                            style={{
+                              background: 'none',
+                              border: 'none',
+                              color: '#ef4444',
+                              cursor: 'pointer',
+                              padding: 0,
+                              display: 'flex',
+                              alignItems: 'center'
+                            }}
+                            aria-label="Remove file"
+                          >
+                            <Trash2 size={12} />
+                          </button>
+                        </div>
+                      ))}
                     </div>
                   )}
                 </div>
               </div>
 
-              {/* Turnaround Dropdown */}
-              <div className="bdigi-form-row">
-                <label className="bdigi-label">Turnaround</label>
-                <div className="bdigi-select-wrapper">
-                  <select
-                    value={turnaround}
-                    onChange={(e) => setTurnaround(e.target.value)}
-                    className="bdigi-select"
-                  >
-                    <option value="standard">Standard (4–12h) — Free</option>
-                    <option value="rush">Rush (2–4h) — +$10</option>
-                  </select>
-                  <div className="bdigi-select-arrow">
-                    <ChevronDown size={17} />
-                  </div>
-                </div>
-              </div>
-
-              {/* Additional Details */}
-              <div className="bdigi-form-row" style={{ alignItems: 'flex-start' }}>
-                <label className="bdigi-label" style={{ paddingTop: '0.45rem' }}>Notes</label>
-                <textarea
-                  rows={2}
-                  value={additionalDetails}
-                  onChange={(e) => setAdditionalDetails(e.target.value)}
-                  placeholder="Fabric, thread colors, or special notes..."
-                  className="bdigi-textarea"
-                />
-              </div>
             </div>
-          )}
 
-          {/* CUSTOM PATCHES OPTIONS */}
-          {selectedService === 'patch' && (
+            {/* RIGHT COLUMN: STICKY ORDER SUMMARY & PRICE COUNT */}
             <div>
-              {/* Package Tier / Quantity Batch (Live from Admin Dynamic Pricing Tiers) */}
-              <div className="bdigi-form-row">
-                <label className="bdigi-label">Quantity</label>
-                <div className="bdigi-select-wrapper">
-                  <select
-                    value={currentTier?.id || currentTier?.title || ''}
-                    onChange={(e) => setSelectedTierId(e.target.value)}
-                    className="bdigi-select"
-                  >
-                    {currentServiceTiers.map(tier => {
-                      const val = String(tier.id || tier.title);
-                      const displayPrice = Number(tier.price).toFixed(2);
-                      let pieces = Number(tier.min_pieces);
-                      if (!pieces) {
-                        const m = String(tier.title || '').match(/\b(\d+)\b/);
-                        pieces = m ? Number(m[1]) : 100;
-                      }
-                      const totalCost = (Number(tier.price) * pieces).toFixed(2);
-                      return (
-                        <option key={val} value={val}>
-                          {tier.title} — ${displayPrice}/pc (${totalCost} Total)
-                        </option>
-                      );
-                    })}
-                  </select>
-                  <div className="bdigi-select-arrow">
-                    <ChevronDown size={17} />
+              <div className="bdigi-summary-card">
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.85rem', paddingBottom: '0.65rem', borderBottom: '1px solid var(--color-border, #e2e8f0)' }}>
+                  <div style={{ fontSize: '0.96rem', fontWeight: 900, color: 'var(--color-text-primary, #0f172a)' }}>
+                    Order Summary
+                  </div>
+                  <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#059669', background: '#ecfdf5', padding: '2px 8px', borderRadius: '9999px', border: '1px solid #a7f3d0' }}>
+                    Live Quote
+                  </span>
+                </div>
+
+                {/* Spec breakdown items */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem', fontSize: '0.82rem', marginBottom: '1rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--color-text-secondary, #475569)' }}>
+                    <span>Service:</span>
+                    <strong style={{ color: 'var(--color-text-primary, #0f172a)' }}>
+                      {selectedService === 'embroidery' ? 'Embroidery Digitizing' : selectedService === 'patch' ? 'Custom Patches' : 'Vector Art'}
+                    </strong>
+                  </div>
+
+                  <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--color-text-secondary, #475569)' }}>
+                    <span>{selectedService === 'patch' ? 'Patch Tier:' : 'Package:'}</span>
+                    <strong style={{ color: 'var(--color-text-primary, #0f172a)', textAlign: 'right', maxWidth: '180px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={pricing.tierTitle}>
+                      {pricing.tierTitle}
+                    </strong>
+                  </div>
+
+                  {selectedService === 'patch' ? (
+                    <>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--color-text-secondary, #475569)' }}>
+                        <span>Style:</span>
+                        <strong style={{ color: 'var(--color-text-primary, #0f172a)' }}>{patchStyle}</strong>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--color-text-secondary, #475569)' }}>
+                        <span>Backing:</span>
+                        <strong style={{ color: 'var(--color-text-primary, #0f172a)' }}>{patchBacking}</strong>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      {selectedService === 'embroidery' && (
+                        <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--color-text-secondary, #475569)' }}>
+                          <span>Size:</span>
+                          <strong style={{ color: 'var(--color-text-primary, #0f172a)' }}>{getSizeLabel()}</strong>
+                        </div>
+                      )}
+                      <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--color-text-secondary, #475569)' }}>
+                        <span>Format:</span>
+                        <strong style={{ color: 'var(--color-text-primary, #0f172a)' }}>{getFormatLabel()}</strong>
+                      </div>
+                    </>
+                  )}
+
+                  <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--color-text-secondary, #475569)' }}>
+                    <span>Turnaround:</span>
+                    <strong style={{ color: (turnaround === 'rush' || patchTurnaround === 'rush' || vectorTurnaround === 'rush') ? '#ea580c' : '#059669' }}>
+                      {selectedService === 'patch'
+                        ? (patchTurnaround === 'rush' ? 'Rush (3–4 Days)' : 'Standard (5–7 Days)')
+                        : ((turnaround === 'rush' || vectorTurnaround === 'rush') ? 'Rush (2–4h)' : 'Standard (Free)')}
+                    </strong>
+                  </div>
+
+                  <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--color-text-secondary, #475569)' }}>
+                    <span>Quantity:</span>
+                    <strong style={{ color: 'var(--color-text-primary, #0f172a)' }}>
+                      {selectedService === 'patch'
+                        ? `${pricing.patchPieces} Patches`
+                        : `${designQuantity} ${designQuantity === 1 ? 'Design' : 'Designs'}`}
+                    </strong>
+                  </div>
+
+                  <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--color-text-secondary, #475569)' }}>
+                    <span>Files:</span>
+                    <strong style={{ color: uploadedFiles.length > 0 ? '#059669' : '#94a3b8' }}>
+                      {selectedService === 'patch'
+                        ? (uploadedFiles.length > 0 ? `${uploadedFiles.length} Artwork Attached` : 'Required')
+                        : (uploadedFiles.length > 0 ? `${uploadedFiles.length} of ${designQuantity} Attached` : 'Required')}
+                    </strong>
                   </div>
                 </div>
-              </div>
 
-              {/* Patch Style */}
-              <div className="bdigi-form-row">
-                <label className="bdigi-label">Style</label>
-                <div className="bdigi-select-wrapper">
-                  <select
-                    value={patchStyle}
-                    onChange={(e) => setPatchStyle(e.target.value)}
-                    className="bdigi-select"
-                  >
-                    <option value="Embroidered Twill">Embroidered Twill</option>
-                    <option value="Woven High-Def">Woven High-Def</option>
-                    <option value="PVC Rubber 3D">PVC Rubber 3D</option>
-                    <option value="Laser Leather">Leather / Engraved</option>
-                  </select>
-                  <div className="bdigi-select-arrow">
-                    <ChevronDown size={17} />
+                {/* LIVE PRICE COUNT BREAKDOWN */}
+                <div style={{ borderTop: '1px solid var(--color-border, #e2e8f0)', paddingTop: '0.75rem', marginBottom: '1.15rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.84rem', color: 'var(--color-text-secondary, #475569)', marginBottom: '0.3rem' }}>
+                    <span>
+                      {selectedService === 'patch'
+                        ? `Subtotal (${pricing.patchPieces} × $${pricing.unitPrice.toFixed(2)}):`
+                        : `Subtotal (${designQuantity} × $${pricing.unitPrice.toFixed(2)}):`}
+                    </span>
+                    <span>${pricing.subtotal.toFixed(2)}</span>
+                  </div>
+
+                  {pricing.rush > 0 && (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.84rem', color: '#ea580c', fontWeight: 700, marginBottom: '0.3rem' }}>
+                      <span>Rush Fee:</span>
+                      <span>+${pricing.rush.toFixed(2)}</span>
+                    </div>
+                  )}
+
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginTop: '0.5rem', paddingTop: '0.5rem', borderTop: '1.5px solid var(--color-border, #e2e8f0)' }}>
+                    <span style={{ fontSize: '0.94rem', fontWeight: 800, color: 'var(--color-text-primary, #0f172a)' }}>
+                      Total Due:
+                    </span>
+                    <span style={{ fontSize: '1.75rem', fontWeight: 900, color: selectedService === 'patch' ? '#0284c7' : '#ea580c', lineHeight: 1 }}>
+                      ${pricing.total.toFixed(2)}
+                    </span>
                   </div>
                 </div>
-              </div>
 
-              {/* Patch Backing */}
-              <div className="bdigi-form-row">
-                <label className="bdigi-label">Backing</label>
-                <div className="bdigi-select-wrapper">
-                  <select
-                    value={patchBacking}
-                    onChange={(e) => setPatchBacking(e.target.value)}
-                    className="bdigi-select"
-                  >
-                    <option value="Velcro (Hook & Loop)">Velcro</option>
-                    <option value="Heat-Seal Iron-On">Iron-On</option>
-                    <option value="Plain Sew-On">Sew-On</option>
-                    <option value="Peel & Stick">Peel & Stick</option>
-                  </select>
-                  <div className="bdigi-select-arrow">
-                    <ChevronDown size={17} />
-                  </div>
-                </div>
-              </div>
-
-              {/* Turnaround */}
-              <div className="bdigi-form-row">
-                <label className="bdigi-label">Turnaround</label>
-                <div className="bdigi-select-wrapper">
-                  <select
-                    value={patchTurnaround}
-                    onChange={(e) => setPatchTurnaround(e.target.value)}
-                    className="bdigi-select"
-                  >
-                    <option value="standard">Standard (5–7 Days) — Free</option>
-                    <option value="rush">Rush (3–4 Days) — +$25</option>
-                  </select>
-                  <div className="bdigi-select-arrow">
-                    <ChevronDown size={17} />
-                  </div>
-                </div>
-              </div>
-
-              {/* Patch Additional Details */}
-              <div className="bdigi-form-row" style={{ alignItems: 'flex-start' }}>
-                <label className="bdigi-label" style={{ paddingTop: '0.45rem' }}>Notes</label>
-                <textarea
-                  rows={2}
-                  value={additionalDetails}
-                  onChange={(e) => setAdditionalDetails(e.target.value)}
-                  placeholder="Custom shape, size, border type, or notes..."
-                  className="bdigi-textarea"
-                />
-              </div>
-            </div>
-          )}
-
-          {/* VECTOR ART OPTIONS */}
-          {selectedService === 'vector' && (
-            <div>
-              {/* Package Tier Dropdown (Live from Admin Dynamic Pricing Tiers) */}
-              <div className="bdigi-form-row">
-                <label className="bdigi-label">Package</label>
-                <div className="bdigi-select-wrapper">
-                  <select
-                    value={currentTier?.id || currentTier?.title || ''}
-                    onChange={(e) => setSelectedTierId(e.target.value)}
-                    className="bdigi-select"
-                  >
-                    {currentServiceTiers.map(tier => {
-                      const val = String(tier.id || tier.title);
-                      const displayPrice = Number(tier.price).toFixed(2);
-                      return (
-                        <option key={val} value={val}>
-                          {tier.title} — ${displayPrice}
-                        </option>
-                      );
-                    })}
-                  </select>
-                  <div className="bdigi-select-arrow">
-                    <ChevronDown size={17} />
-                  </div>
-                </div>
-              </div>
-
-              {/* Vector Formats */}
-              <div className="bdigi-form-row">
-                <label className="bdigi-label">File Format</label>
-                <div className="bdigi-select-wrapper">
-                  <select
-                    value={vectorFormat}
-                    onChange={(e) => setVectorFormat(e.target.value)}
-                    className="bdigi-select"
-                  >
-                    <option value="all">All Formats (.AI, .EPS, .SVG, .PDF)</option>
-                    <option value="ai">Adobe Illustrator (.AI)</option>
-                    <option value="svg">Scalable Vector (.SVG)</option>
-                    <option value="pdf">Print PDF</option>
-                  </select>
-                  <div className="bdigi-select-arrow">
-                    <ChevronDown size={17} />
-                  </div>
-                </div>
-              </div>
-
-              {/* Vector Turnaround */}
-              <div className="bdigi-form-row">
-                <label className="bdigi-label">Turnaround</label>
-                <div className="bdigi-select-wrapper">
-                  <select
-                    value={vectorTurnaround}
-                    onChange={(e) => setVectorTurnaround(e.target.value)}
-                    className="bdigi-select"
-                  >
-                    <option value="standard">Standard (6–12h) — Free</option>
-                    <option value="rush">Rush (2–4h) — +$10</option>
-                  </select>
-                  <div className="bdigi-select-arrow">
-                    <ChevronDown size={17} />
-                  </div>
-                </div>
-              </div>
-
-              {/* Vector Details */}
-              <div className="bdigi-form-row" style={{ alignItems: 'flex-start' }}>
-                <label className="bdigi-label" style={{ paddingTop: '0.45rem' }}>Notes</label>
-                <textarea
-                  rows={2}
-                  value={additionalDetails}
-                  onChange={(e) => setAdditionalDetails(e.target.value)}
-                  placeholder="Colors, fonts, or vector notes..."
-                  className="bdigi-textarea"
-                />
-              </div>
-            </div>
-          )}
-
-          {/* NUMBER OF DESIGNS (Placed BEFORE upload so customer selects count first) */}
-          <div className="bdigi-form-row">
-            <label className="bdigi-label">
-              {selectedService === 'patch' ? 'Patch Designs' : 'Number of Designs'}
-            </label>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
-              <div
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  border: '1.5px solid var(--color-border, #cbd5e1)',
-                  borderRadius: '10px',
-                  background: 'var(--color-surface, #ffffff)',
-                  overflow: 'hidden'
-                }}
-              >
+                {/* CTA BUTTON */}
                 <button
                   type="button"
-                  onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                  disabled={isSubmitting || isUploading}
+                  onClick={handleFinalSubmitOrder}
                   style={{
-                    width: '38px',
-                    height: '38px',
-                    background: 'none',
+                    width: '100%',
+                    height: '46px',
+                    padding: '0 1.25rem',
+                    borderRadius: '12px',
                     border: 'none',
-                    color: 'var(--color-text-primary, #0f172a)',
-                    cursor: 'pointer',
+                    background: selectedService === 'patch'
+                      ? 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)'
+                      : selectedService === 'vector'
+                        ? 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)'
+                        : 'linear-gradient(135deg, #ea580c 0%, #c2410c 100%)',
+                    color: '#ffffff',
+                    fontSize: '0.96rem',
+                    fontWeight: 900,
+                    cursor: isSubmitting || isUploading ? 'not-allowed' : 'pointer',
                     display: 'flex',
                     alignItems: 'center',
-                    justifyContent: 'center'
+                    justifyContent: 'center',
+                    gap: '0.45rem',
+                    boxShadow: '0 4px 16px rgba(234, 88, 12, 0.25)',
+                    transition: 'all 0.18s ease'
                   }}
-                  aria-label="Decrease quantity"
                 >
-                  <Minus size={14} />
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 size={16} className="animate-spin" /> Submitting...
+                    </>
+                  ) : (
+                    <>
+                      <Lock size={15} /> Place Order & Pay (${pricing.total.toFixed(2)})
+                    </>
+                  )}
                 </button>
-                <span style={{ width: '38px', textAlign: 'center', fontSize: '1rem', fontWeight: 900, color: 'var(--color-text-primary, #0f172a)' }}>
-                  {quantity}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => setQuantity(quantity + 1)}
-                  style={{
-                    width: '38px',
-                    height: '38px',
-                    background: 'none',
-                    border: 'none',
-                    color: 'var(--color-text-primary, #0f172a)',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center'
-                  }}
-                  aria-label="Increase quantity"
-                >
-                  <Plus size={14} />
-                </button>
-              </div>
-              <span style={{ fontSize: '0.84rem', fontWeight: 700, color: 'var(--color-text-muted, #64748b)' }}>
-                {selectedService === 'patch' ? `${pricing.patchPieces} patches total` : `$${pricing.unitPrice.toFixed(2)} each`}
-              </span>
-            </div>
-          </div>
 
-          {/* UPLOAD DESIGN FILES (Compact Drag & Drop Box) */}
-          <div
-            ref={uploadSectionRef}
-            className="bdigi-form-row"
-            style={{ alignItems: 'flex-start' }}
-          >
-            <label className="bdigi-label" style={{ paddingTop: '0.45rem' }}>
-              Upload Files<span style={{ color: '#ef4444' }}>*</span>
-            </label>
-            <div>
-              <div
-                onDragOver={handleDragOver}
-                onDragLeave={handleDragLeave}
-                onDrop={handleDrop}
-                onClick={() => {
-                  setIsUploadHighlighted(false);
-                  setUploadError('');
-                  fileInputRef.current?.click();
-                }}
-                style={{
-                  border: isUploadHighlighted
-                    ? '2px solid #ef4444'
-                    : isDragOver
-                      ? '2px dashed #ea580c'
-                      : '1.5px dashed var(--color-border, #cbd5e1)',
-                  borderRadius: '10px',
-                  background: isUploadHighlighted
-                    ? (isDark ? 'rgba(239, 68, 68, 0.15)' : '#fef2f2')
-                    : isDragOver
-                      ? (isDark ? 'rgba(234, 88, 12, 0.12)' : '#fff7ed')
-                      : (isDark ? '#1e293b' : '#f8fafc'),
-                  boxShadow: isUploadHighlighted
-                    ? '0 0 0 4px rgba(239, 68, 68, 0.22), 0 4px 14px rgba(239, 68, 68, 0.16)'
-                    : 'none',
-                  padding: '0.85rem 1rem',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  cursor: 'pointer',
-                  transition: 'all 0.18s ease',
-                  gap: '0.75rem',
-                  animation: isUploadHighlighted ? 'bdigiErrorShake 0.4s ease-in-out' : 'none'
-                }}
-              >
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  multiple
-                  accept="image/*,.pdf,.ai,.eps,.svg,.dst,.pes,.emb"
-                  onChange={handleFilesChosen}
-                  style={{ display: 'none' }}
-                />
-
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-                  <div
-                    style={{
-                      width: '36px',
-                      height: '36px',
-                      borderRadius: '8px',
-                      background: isUploadHighlighted ? '#fee2e2' : '#fff7ed',
-                      color: isUploadHighlighted ? '#dc2626' : '#ea580c',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      flexShrink: 0
-                    }}
-                  >
-                    <Upload size={18} />
-                  </div>
-                  <div style={{ textAlign: 'left' }}>
-                    <div style={{
-                      fontSize: '0.88rem',
-                      fontWeight: 800,
-                      color: isUploadHighlighted ? '#dc2626' : 'var(--color-text-primary, #0f172a)'
-                    }}>
-                      Upload {quantity} {quantity === 1 ? 'Design File' : 'Design Files'}
-                    </div>
-                    <div style={{ fontSize: '0.74rem', color: 'var(--color-text-muted, #64748b)' }}>
-                      JPG, PNG, PDF, AI, DST (Max 50MB)
-                    </div>
+                {/* TRUST BADGES STRIP */}
+                <div style={{ textAlign: 'center', marginTop: '0.75rem', fontSize: '0.72rem', color: 'var(--color-text-muted, #64748b)', fontWeight: 600 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.3rem' }}>
+                    <ShieldCheck size={13} style={{ color: '#059669' }} /> Secure Checkout • Free Revisions
                   </div>
                 </div>
-
-                <span
-                  style={{
-                    fontSize: '0.78rem',
-                    fontWeight: 800,
-                    color: isUploadHighlighted ? '#dc2626' : '#ea580c',
-                    background: isUploadHighlighted ? '#fee2e2' : '#fff7ed',
-                    border: isUploadHighlighted ? '1px solid #fca5a5' : '1px solid #fed7aa',
-                    padding: '0.3rem 0.75rem',
-                    borderRadius: '6px',
-                    whiteSpace: 'nowrap'
-                  }}
-                >
-                  Browse
-                </span>
-              </div>
-
-              {/* Upload Counter & Guidance */}
-              <div style={{ marginTop: '0.35rem', fontSize: '0.75rem' }}>
-                <span style={{ color: uploadedFiles.length >= quantity ? '#059669' : 'var(--color-text-muted, #64748b)', fontWeight: 700 }}>
-                  {uploadedFiles.length === 0
-                    ? `0 of ${quantity} files attached`
-                    : uploadedFiles.length >= quantity
-                      ? `✓ ${uploadedFiles.length} of ${quantity} files attached`
-                      : `${uploadedFiles.length} of ${quantity} attached (please upload ${quantity - uploadedFiles.length} more)`}
-                </span>
-              </div>
-
-              {/* HIGHLIGHTED INLINE WARNING (if upload error or missing file) */}
-              {(isUploadHighlighted || uploadError) && (
-                <div
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.4rem',
-                    color: '#b91c1c',
-                    background: '#fee2e2',
-                    border: '1px solid #fca5a5',
-                    borderRadius: '8px',
-                    padding: '0.45rem 0.75rem',
-                    fontSize: '0.8rem',
-                    fontWeight: 800,
-                    marginTop: '0.5rem',
-                    boxShadow: '0 2px 6px rgba(220, 38, 38, 0.1)',
-                    animation: 'bdigiErrorShake 0.4s ease-in-out'
-                  }}
-                >
-                  <AlertCircle size={15} style={{ color: '#dc2626', flexShrink: 0 }} />
-                  <span>{uploadError || 'Please choose or upload your design file to proceed.'}</span>
-                </div>
-              )}
-
-              {isUploading && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', marginTop: '0.4rem', color: '#ea580c', fontSize: '0.8rem', fontWeight: 700 }}>
-                  <Loader2 size={14} className="animate-spin" /> Uploading file...
-                </div>
-              )}
-
-              {/* Uploaded File Pills */}
-              {uploadedFiles.length > 0 && (
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', marginTop: '0.55rem' }}>
-                  {uploadedFiles.map((f, i) => (
-                    <div
-                      key={i}
-                      style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '0.35rem',
-                        fontSize: '0.78rem',
-                        fontWeight: 700,
-                        background: '#ecfdf5',
-                        color: '#065f46',
-                        padding: '0.25rem 0.65rem',
-                        borderRadius: '6px',
-                        border: '1px solid #a7f3d0'
-                      }}
-                    >
-                      <Check size={13} style={{ color: '#059669' }} />
-                      <span>{f.name}</span>
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleRemoveFile(i);
-                        }}
-                        style={{
-                          background: 'none',
-                          border: 'none',
-                          color: '#ef4444',
-                          cursor: 'pointer',
-                          padding: 0,
-                          display: 'flex',
-                          alignItems: 'center'
-                        }}
-                        aria-label="Remove file"
-                      >
-                        <Trash2 size={12} />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-
-
-        </div>
-
-        {/* RIGHT COLUMN: STICKY ORDER SUMMARY & PRICE COUNT */}
-        <div>
-          <div className="bdigi-summary-card">
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.85rem', paddingBottom: '0.65rem', borderBottom: '1px solid var(--color-border, #e2e8f0)' }}>
-              <div style={{ fontSize: '0.96rem', fontWeight: 900, color: 'var(--color-text-primary, #0f172a)' }}>
-                Order Summary
-              </div>
-              <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#059669', background: '#ecfdf5', padding: '2px 8px', borderRadius: '9999px', border: '1px solid #a7f3d0' }}>
-                Live Quote
-              </span>
-            </div>
-
-            {/* Spec breakdown items */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem', fontSize: '0.82rem', marginBottom: '1rem' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--color-text-secondary, #475569)' }}>
-                <span>Service:</span>
-                <strong style={{ color: 'var(--color-text-primary, #0f172a)' }}>
-                  {selectedService === 'embroidery' ? 'Embroidery' : selectedService === 'patch' ? 'Custom Patches' : 'Vector Art'}
-                </strong>
-              </div>
-
-              <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--color-text-secondary, #475569)' }}>
-                <span>Package:</span>
-                <strong style={{ color: 'var(--color-text-primary, #0f172a)', textAlign: 'right', maxWidth: '180px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={pricing.tierTitle}>
-                  {pricing.tierTitle}
-                </strong>
-              </div>
-
-              <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--color-text-secondary, #475569)' }}>
-                <span>Size:</span>
-                <strong style={{ color: 'var(--color-text-primary, #0f172a)' }}>{getSizeLabel()}</strong>
-              </div>
-
-              <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--color-text-secondary, #475569)' }}>
-                <span>Format:</span>
-                <strong style={{ color: 'var(--color-text-primary, #0f172a)' }}>{getFormatLabel()}</strong>
-              </div>
-
-              <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--color-text-secondary, #475569)' }}>
-                <span>Turnaround:</span>
-                <strong style={{ color: turnaround === 'rush' || patchTurnaround === 'rush' || vectorTurnaround === 'rush' ? '#ea580c' : '#059669' }}>
-                  {turnaround === 'rush' || patchTurnaround === 'rush' || vectorTurnaround === 'rush' ? 'Rush (2–4h)' : 'Standard (Free)'}
-                </strong>
-              </div>
-
-              <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--color-text-secondary, #475569)' }}>
-                <span>Quantity:</span>
-                <strong style={{ color: 'var(--color-text-primary, #0f172a)' }}>
-                  {selectedService === 'patch' ? `${pricing.patchPieces} Pieces` : `${quantity} ${quantity === 1 ? 'Design' : 'Designs'}`}
-                </strong>
-              </div>
-
-              <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--color-text-secondary, #475569)' }}>
-                <span>Files:</span>
-                <strong style={{ color: uploadedFiles.length > 0 ? '#059669' : '#94a3b8' }}>
-                  {uploadedFiles.length > 0 ? `${uploadedFiles.length} of ${quantity} Attached` : 'None'}
-                </strong>
               </div>
             </div>
 
-            {/* LIVE PRICE COUNT BREAKDOWN */}
-            <div style={{ borderTop: '1px solid var(--color-border, #e2e8f0)', paddingTop: '0.75rem', marginBottom: '1.15rem' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.84rem', color: 'var(--color-text-secondary, #475569)', marginBottom: '0.3rem' }}>
-                <span>Subtotal:</span>
-                <span>${pricing.subtotal.toFixed(2)}</span>
-              </div>
-
-              {pricing.rush > 0 && (
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.84rem', color: '#ea580c', fontWeight: 700, marginBottom: '0.3rem' }}>
-                  <span>Rush Fee:</span>
-                  <span>+${pricing.rush.toFixed(2)}</span>
-                </div>
-              )}
-
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginTop: '0.5rem', paddingTop: '0.5rem', borderTop: '1.5px solid var(--color-border, #e2e8f0)' }}>
-                <span style={{ fontSize: '0.94rem', fontWeight: 800, color: 'var(--color-text-primary, #0f172a)' }}>
-                  Total Due:
-                </span>
-                <span style={{ fontSize: '1.75rem', fontWeight: 900, color: selectedService === 'patch' ? '#0284c7' : '#ea580c', lineHeight: 1 }}>
-                  ${pricing.total.toFixed(2)}
-                </span>
-              </div>
-            </div>
-
-            {/* CTA BUTTON */}
-            <button
-              type="button"
-              disabled={isSubmitting || isUploading}
-              onClick={handleFinalSubmitOrder}
-              style={{
-                width: '100%',
-                height: '46px',
-                padding: '0 1.25rem',
-                borderRadius: '12px',
-                border: 'none',
-                background: selectedService === 'patch'
-                  ? 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)'
-                  : selectedService === 'vector'
-                    ? 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)'
-                    : 'linear-gradient(135deg, #ea580c 0%, #c2410c 100%)',
-                color: '#ffffff',
-                fontSize: '0.96rem',
-                fontWeight: 900,
-                cursor: isSubmitting || isUploading ? 'not-allowed' : 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '0.45rem',
-                boxShadow: '0 4px 16px rgba(234, 88, 12, 0.25)',
-                transition: 'all 0.18s ease'
-              }}
-            >
-              {isSubmitting ? (
-                <>
-                  <Loader2 size={16} className="animate-spin" /> Submitting...
-                </>
-              ) : (
-                <>
-                  <Lock size={15} /> Place Order & Pay (${pricing.total.toFixed(2)})
-                </>
-              )}
-            </button>
-
-            {/* TRUST BADGES STRIP */}
-            <div style={{ textAlign: 'center', marginTop: '0.75rem', fontSize: '0.72rem', color: 'var(--color-text-muted, #64748b)', fontWeight: 600 }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.3rem' }}>
-                <ShieldCheck size={13} style={{ color: '#059669' }} /> Secure Checkout • Free Revisions
-              </div>
-            </div>
           </div>
         </div>
-
-      </div>
+      )}
 
       {/* ON-SCREEN VALIDATION ALERT POPUP MODAL */}
       {validationAlert && (

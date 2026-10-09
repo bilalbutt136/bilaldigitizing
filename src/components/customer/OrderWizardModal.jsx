@@ -110,7 +110,11 @@ export const OrderWizardModal = () => {
         </div>
 
         <StreamlinedOrderFlow
-          initialService={orderWizardInitialData?.type || orderWizardInitialData?.category || 'embroidery'}
+          initialService={
+            orderWizardInitialData?.type === 'all'
+              ? null
+              : (orderWizardInitialData?.type || orderWizardInitialData?.category || null)
+          }
           initialPackage={orderWizardInitialData?.selectedPackage || null}
           _isModal={true}
           onCloseModal={handleSafeClose}

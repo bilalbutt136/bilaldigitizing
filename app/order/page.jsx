@@ -14,8 +14,10 @@ import {
 
 function OrderContent() {
   const searchParams = useSearchParams();
-  const rawService = searchParams.get('service') || searchParams.get('type') || 'embroidery';
-  const service = rawService === 'vector-art' ? 'vector' : (rawService === 'patches' ? 'patch' : rawService);
+  const rawService = searchParams.get('service') || searchParams.get('type') || null;
+  const service = rawService
+    ? (rawService === 'vector-art' ? 'vector' : (rawService === 'patches' ? 'patch' : rawService))
+    : null;
 
   return (
     <div style={{
