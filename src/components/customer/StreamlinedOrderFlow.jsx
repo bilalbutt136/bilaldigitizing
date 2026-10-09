@@ -18,105 +18,177 @@ import {
 import { uploadFileToCloudinaryFull } from '../../services/supabaseService';
 import { matchCategory } from '../../utils/categoryUtils';
 
-// Standard fallback packages
-const DEFAULT_PACKAGES = {
+// Standard 3-Tier Packages (Basic, Standard, Premium)
+const PACKAGES_BY_SERVICE = {
   embroidery: [
     {
       id: 'emb-basic',
+      tier_key: 'basic',
       service_type: 'embroidery',
-      title: 'Cap & Left Chest',
-      subtitle: 'Caps, beanies, polos & shirts up to 4" x 4"',
-      badge: 'POPULAR',
+      tier_label: 'Basic',
+      badge: null,
+      title: 'Left Chest & Cap Small Logo',
+      subtitle: 'Caps, beanies, polos & shirts up to 4" × 4"',
       price: 10,
       original_price: 15,
-      turnaround: '4–12 Hours'
+      turnaround: '4–12 Hours',
+      features: [
+        'Up to 4" × 4" Dimensions',
+        '100% Manual Hand Pathing',
+        'Tajima .DST, Brother .PES, Wilcom .EMB, .PDF',
+        'Free Unlimited Revisions'
+      ]
     },
     {
-      id: 'emb-popular',
+      id: 'emb-standard',
+      tier_key: 'standard',
       service_type: 'embroidery',
-      title: 'Mid-Size Artwork',
-      subtitle: 'Medium artwork up to 7" x 7" with pull compensation',
-      badge: 'RECOMMENDED',
+      tier_label: 'Standard',
+      badge: 'POPULAR',
+      title: 'Mid-Size Jacket & Sleeve Design',
+      subtitle: 'Medium artwork up to 7" × 7" with calculated pull compensation',
       price: 20,
       original_price: 30,
-      turnaround: '6–12 Hours'
+      turnaround: '6–12 Hours',
+      features: [
+        'Up to 7" × 7" Medium Area',
+        'Complex Multi-Color Layering & Shading',
+        'Push & Pull Underlay Compensation',
+        'Free Unlimited Revisions'
+      ]
     },
     {
-      id: 'emb-pro',
+      id: 'emb-premium',
+      tier_key: 'premium',
       service_type: 'embroidery',
-      title: 'Jacket Back & 3D Puff',
-      subtitle: 'Full jacket back designs up to 12" x 12" & raised foam',
-      badge: 'PRO 3D',
+      tier_label: 'Premium',
+      badge: 'PRO 3D PUFF',
+      title: 'Jacket Back & 3D Puff Raised Foam',
+      subtitle: 'Full back jacket designs up to 12" × 12" and raised 3D foam caps',
       price: 35,
       original_price: 50,
-      turnaround: '8–12 Hours'
+      turnaround: '8–12 Hours',
+      features: [
+        'Up to 12" × 12" Full Back Area',
+        'High-Density 3D Puff Foam Layering',
+        'Heavy Fabric & Leather Calibration',
+        'Priority Senior Digitizer Assignment'
+      ]
     }
   ],
   patch: [
     {
-      id: 'patch-starter',
+      id: 'patch-basic',
+      tier_key: 'basic',
       service_type: 'patch',
-      title: 'Starter Run (50 Pcs)',
-      subtitle: 'Physical patches with velcro or iron-on backing',
+      tier_label: 'Basic',
       badge: '50 PCS MIN',
+      title: 'Starter Run (50 Pieces)',
+      subtitle: 'Physical manufactured patches with Velcro or Iron-On backing',
       price: 3.50,
       original_price: 5.00,
       quantity: 50,
-      turnaround: '4–6 Days'
+      turnaround: '4–6 Days',
+      features: [
+        '50 Pieces Minimum Run ($3.50/pc)',
+        'Velcro Hook & Loop or Heat-Seal Iron-On',
+        'Free Pre-Production Digital Sew-Out Proof',
+        'Worldwide Doorstep Air Delivery'
+      ]
     },
     {
-      id: 'patch-popular',
+      id: 'patch-standard',
+      tier_key: 'standard',
       service_type: 'patch',
-      title: 'Production (100 Pcs)',
-      subtitle: 'Standard uniforms, clubs & merchandise batch',
+      tier_label: 'Standard',
       badge: 'BEST VALUE',
+      title: 'Production Batch (100 Pieces)',
+      subtitle: 'Standard uniforms, clubs & merchandise batch ($2.50/pc)',
       price: 2.50,
       original_price: 3.80,
       quantity: 100,
-      turnaround: '5–7 Days'
+      turnaround: '5–7 Days',
+      features: [
+        '100 Pieces Production Batch ($2.50/pc)',
+        'Precision Laser-Cut or Merrowed Border',
+        'Free Pre-Production Sew-Out Sample Photo',
+        'Free Doorstep Air Shipping'
+      ]
     },
     {
-      id: 'patch-bulk',
+      id: 'patch-premium',
+      tier_key: 'premium',
       service_type: 'patch',
-      title: 'Wholesale (250+ Pcs)',
-      subtitle: 'Bulk factory rates for suppliers & apparel brands',
+      tier_label: 'Premium',
       badge: 'FACTORY DIRECT',
+      title: 'Wholesale Batch (250+ Pieces)',
+      subtitle: 'Maximum factory savings for uniform suppliers and brands ($1.80/pc)',
       price: 1.80,
       original_price: 2.80,
       quantity: 250,
-      turnaround: '7–10 Days'
+      turnaround: '7–10 Days',
+      features: [
+        '250+ Pieces Wholesale ($1.80/pc)',
+        'Individual Poly-Bag Packaging',
+        'Any Custom Shape & Multi-Color Twill',
+        'Dedicated Production Manager'
+      ]
     }
   ],
   vector: [
     {
       id: 'vec-basic',
+      tier_key: 'basic',
       service_type: 'vector',
-      title: 'Basic Logo Redraw',
-      subtitle: 'Clean typographic logos & basic line art to vector',
-      badge: 'BASIC',
+      tier_label: 'Basic',
+      badge: null,
+      title: 'Simple Logo & Typography Redraw',
+      subtitle: 'Clean typography and line art converted to crisp vector paths',
       price: 15,
       original_price: 25,
-      turnaround: '6–12 Hours'
+      turnaround: '6–12 Hours',
+      features: [
+        'Clean Bézier Curves & Scalable Nodes',
+        '.AI, .EPS, .SVG & High-Res PDF Suite',
+        'Print, Screen Print & Vinyl Cut Ready',
+        'Free Unlimited Revisions'
+      ]
     },
     {
-      id: 'vec-popular',
+      id: 'vec-standard',
+      tier_key: 'standard',
       service_type: 'vector',
-      title: 'Multi-Color Mascot',
-      subtitle: 'Multi-layer mascot logos & Pantone color separations',
+      tier_label: 'Standard',
       badge: 'POPULAR',
+      title: 'Standard Multi-Color Artwork',
+      subtitle: 'Multi-layer mascot logos, badges & Pantone color separations',
       price: 25,
       original_price: 40,
-      turnaround: '6–12 Hours'
+      turnaround: '6–12 Hours',
+      features: [
+        'Pantone (PMS) Spot Color Matching',
+        'Separated Layers for Screen Print & DTF',
+        'High-Res 300+ DPI Scalable Vector Suite',
+        'Free Unlimited Revisions'
+      ]
     },
     {
-      id: 'vec-pro',
+      id: 'vec-premium',
+      tier_key: 'premium',
       service_type: 'vector',
-      title: 'Intricate Artwork',
-      subtitle: 'Complex illustrations, halftones, gradients & photos',
+      tier_label: 'Premium',
       badge: 'DETAILED',
+      title: 'Complex Detailed Illustration',
+      subtitle: 'Intricate artwork, halftones, gradients, photos & line engraving',
       price: 45,
       original_price: 65,
-      turnaround: '12–24 Hours'
+      turnaround: '12–24 Hours',
+      features: [
+        'Intricate Micro-Detail Redraw',
+        'Custom Halftones & Gradients',
+        'Laser Engraving & CNC Ready',
+        'Dedicated Senior Vector Artist'
+      ]
     }
   ]
 };
@@ -191,31 +263,69 @@ export const StreamlinedOrderFlow = ({
   const [appliedPromo, setAppliedPromo] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Load tiers from DB or fallback
+  // Resolve 3 Tiers (Basic, Standard, Premium)
   const currentTiers = useMemo(() => {
+    const fallbackList = PACKAGES_BY_SERVICE[selectedService] || PACKAGES_BY_SERVICE.embroidery;
     const dbTiers = (dynamicPricingTiers || []).filter(t => matchCategory(t.service_type, selectedService));
-    if (dbTiers && dbTiers.length > 0) {
-      return dbTiers.sort((a, b) => (a.display_order || 0) - (b.display_order || 0)).map((t, idx) => ({
-        id: t.id || `tier-${idx}`,
-        service_type: selectedService,
-        title: t.title,
-        subtitle: t.subtitle,
-        badge: t.badge_text || (idx === 0 ? 'BASIC' : idx === 1 ? 'POPULAR' : 'PRO'),
-        price: Number(t.price) || 10,
-        original_price: t.original_price ? Number(t.original_price) : null,
-        turnaround: t.turnaround_time || '4–12 Hours'
-      }));
+
+    if (dbTiers && dbTiers.length >= 3) {
+      const sorted = [...dbTiers].sort((a, b) => (a.display_order || 0) - (b.display_order || 0));
+      return [
+        {
+          id: sorted[0]?.id || fallbackList[0].id,
+          tier_key: 'basic',
+          service_type: selectedService,
+          tier_label: 'Basic',
+          badge: sorted[0]?.badge_text || null,
+          title: sorted[0]?.title || fallbackList[0].title,
+          subtitle: sorted[0]?.subtitle || fallbackList[0].subtitle,
+          price: Number(sorted[0]?.price) || fallbackList[0].price,
+          original_price: sorted[0]?.original_price ? Number(sorted[0].original_price) : fallbackList[0].original_price,
+          turnaround: sorted[0]?.turnaround_time || fallbackList[0].turnaround,
+          features: Array.isArray(sorted[0]?.features) && sorted[0].features.length ? sorted[0].features : fallbackList[0].features
+        },
+        {
+          id: sorted[1]?.id || fallbackList[1].id,
+          tier_key: 'standard',
+          service_type: selectedService,
+          tier_label: 'Standard',
+          badge: sorted[1]?.badge_text || 'POPULAR',
+          title: sorted[1]?.title || fallbackList[1].title,
+          subtitle: sorted[1]?.subtitle || fallbackList[1].subtitle,
+          price: Number(sorted[1]?.price) || fallbackList[1].price,
+          original_price: sorted[1]?.original_price ? Number(sorted[1].original_price) : fallbackList[1].original_price,
+          turnaround: sorted[1]?.turnaround_time || fallbackList[1].turnaround,
+          features: Array.isArray(sorted[1]?.features) && sorted[1].features.length ? sorted[1].features : fallbackList[1].features
+        },
+        {
+          id: sorted[2]?.id || fallbackList[2].id,
+          tier_key: 'premium',
+          service_type: selectedService,
+          tier_label: 'Premium',
+          badge: sorted[2]?.badge_text || 'PRO',
+          title: sorted[2]?.title || fallbackList[2].title,
+          subtitle: sorted[2]?.subtitle || fallbackList[2].subtitle,
+          price: Number(sorted[2]?.price) || fallbackList[2].price,
+          original_price: sorted[2]?.original_price ? Number(sorted[2].original_price) : fallbackList[2].original_price,
+          turnaround: sorted[2]?.turnaround_time || fallbackList[2].turnaround,
+          features: Array.isArray(sorted[2]?.features) && sorted[2].features.length ? sorted[2].features : fallbackList[2].features
+        }
+      ];
     }
-    return DEFAULT_PACKAGES[selectedService] || DEFAULT_PACKAGES.embroidery;
+    return fallbackList;
   }, [dynamicPricingTiers, selectedService]);
 
   // Sync selected package
   useEffect(() => {
-    if (initialPackage && currentTiers.some(p => p.id === initialPackage.id)) {
-      setActivePkg(initialPackage);
-    } else {
-      setActivePkg(currentTiers[1] || currentTiers[0]);
+    if (initialPackage) {
+      const found = currentTiers.find(p => p.id === initialPackage.id || p.tier_key === initialPackage.tier_key);
+      if (found) {
+        setActivePkg(found);
+        return;
+      }
     }
+    // Default to Standard (middle tier) or Basic
+    setActivePkg(currentTiers[1] || currentTiers[0]);
   }, [selectedService, currentTiers, initialPackage]);
 
   // Adjust defaults when service changes
@@ -235,7 +345,7 @@ export const StreamlinedOrderFlow = ({
     }
   }, [selectedService]);
 
-  // Preset Size Click
+  // Handle Preset Size Click
   const handleSelectSizePreset = (preset) => {
     setWidthInches(preset.width);
     setHeightInches(preset.height);
@@ -388,7 +498,7 @@ export const StreamlinedOrderFlow = ({
         type: selectedService,
         serviceCategory: cleanService,
         package_name: activePkg?.title || 'Standard Package',
-        package_tier: activePkg?.badge || 'POPULAR',
+        package_tier: activePkg?.tier_label || activePkg?.badge || 'Standard',
         quantity: quantity,
         price: totalPrice,
         totalPrice: totalPrice,
@@ -470,22 +580,32 @@ export const StreamlinedOrderFlow = ({
         width: '100%',
         margin: '0 auto',
         background: 'var(--color-surface, #ffffff)',
-        borderRadius: '18px',
-        border: '1px solid var(--color-border, #e2e8f0)',
-        boxShadow: '0 8px 30px rgba(0, 0, 0, 0.05)',
-        overflow: 'hidden'
+        boxSizing: 'border-box'
       }}
     >
+      <style>{`
+        .order-desk-grid {
+          display: grid;
+          grid-template-columns: minmax(0, 1.25fr) minmax(0, 0.95fr);
+          gap: 1.25rem;
+          align-items: start;
+        }
+        @media (max-width: 820px) {
+          .order-desk-grid {
+            grid-template-columns: 1fr !important;
+            gap: 1.25rem !important;
+          }
+        }
+      `}</style>
+
       <div
+        className="order-desk-grid"
         style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
-          gap: '1.25rem',
-          padding: 'clamp(1rem, 2.5vw, 1.5rem)'
+          padding: 'clamp(0.85rem, 2vw, 1.25rem)'
         }}
       >
-        {/* LEFT COLUMN: COMPACT SPECIFICATIONS & ARTWORK */}
-        <div>
+        {/* LEFT COLUMN: SPECIFICATIONS & ARTWORK */}
+        <div style={{ minWidth: 0, width: '100%', boxSizing: 'border-box' }}>
           {/* 1. SERVICE SELECTOR (Compact Segmented Pills) */}
           <div style={{ marginBottom: '0.85rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.35rem' }}>
@@ -509,7 +629,7 @@ export const StreamlinedOrderFlow = ({
                 }}
               >
                 <PenTool size={11} />
-                {selectedService === 'vector' ? 'Back to Embroidery' : 'Vector Art ($15) →'}
+                {selectedService === 'vector' ? 'Switch to Embroidery' : 'Vector Art ($15) →'}
               </button>
             </div>
 
@@ -594,47 +714,111 @@ export const StreamlinedOrderFlow = ({
             </div>
           </div>
 
-          {/* 2. PACKAGE SELECTION (Compact 3-Column Radio Grid) */}
+          {/* 2. CHOOSE PACKAGE TIER (Basic, Standard, Premium Tabs) */}
           <div style={{ marginBottom: '0.85rem' }}>
-            <span style={{ display: 'block', fontSize: '0.74rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.04em', color: 'var(--color-text-muted, #64748b)', marginBottom: '0.35rem' }}>
-              Choose Package / Tier
-            </span>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.35rem' }}>
+              <span style={{ fontSize: '0.74rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.04em', color: 'var(--color-text-muted, #64748b)' }}>
+                Choose Package Tier
+              </span>
+              <span style={{ fontSize: '0.72rem', color: '#059669', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.2rem' }}>
+                <Clock size={11} /> {activePkg?.turnaround || '4–12 Hours'}
+              </span>
+            </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.45rem' }}>
-              {currentTiers.map((pkg) => {
-                const isSelected = activePkg?.id === pkg.id;
+            {/* 3 Clear Segmented Buttons */}
+            <div
+              style={{
+                display: 'flex',
+                gap: '0.35rem',
+                background: isDark ? 'rgba(30, 41, 59, 0.45)' : '#f1f5f9',
+                padding: '4px',
+                borderRadius: '10px',
+                border: '1px solid var(--color-border, #e2e8f0)'
+              }}
+            >
+              {currentTiers.map((pkg, idx) => {
+                const isSelected = activePkg?.tier_key === pkg.tier_key || activePkg?.id === pkg.id;
+                const tierTitle = pkg.tier_label || (idx === 0 ? 'Basic' : idx === 1 ? 'Standard' : 'Premium');
                 return (
-                  <div
-                    key={pkg.id}
+                  <button
+                    key={pkg.id || idx}
+                    type="button"
                     onClick={() => setActivePkg(pkg)}
                     style={{
-                      border: isSelected ? '2px solid #ea580c' : '1px solid var(--color-border, #cbd5e1)',
-                      background: isSelected ? (isDark ? 'rgba(234, 88, 12, 0.1)' : '#fffaf5') : 'transparent',
+                      flex: 1,
+                      padding: '0.5rem 0.35rem',
                       borderRadius: '8px',
-                      padding: '0.5rem 0.55rem',
+                      border: isSelected ? '1.5px solid #ea580c' : '1px solid transparent',
+                      background: isSelected ? 'var(--color-surface, #ffffff)' : 'transparent',
+                      boxShadow: isSelected ? '0 2px 8px rgba(0, 0, 0, 0.08)' : 'none',
                       cursor: 'pointer',
                       transition: 'all 0.15s ease',
-                      position: 'relative'
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '0.15rem',
+                      minWidth: 0
                     }}
                   >
-                    <div style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--color-text-primary, #0f172a)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                      {pkg.title}
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.25rem', marginTop: '0.15rem' }}>
-                      <span style={{ fontSize: '0.98rem', fontWeight: 900, color: isSelected ? '#ea580c' : 'var(--color-text-primary, #0f172a)' }}>
-                        ${pkg.price.toFixed(2)}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', maxWidth: '100%' }}>
+                      <span style={{ fontSize: '0.8rem', fontWeight: 800, color: isSelected ? '#ea580c' : 'var(--color-text-primary, #0f172a)' }}>
+                        {tierTitle}
                       </span>
-                      <span style={{ fontSize: '0.65rem', color: '#64748b', fontWeight: 600 }}>
-                        {selectedService === 'patch' ? '/pc' : 'flat'}
+                      {pkg.badge && (
+                        <span style={{ fontSize: '0.58rem', fontWeight: 900, background: isSelected ? '#ea580c' : '#94a3b8', color: '#ffffff', padding: '1px 4px', borderRadius: '3px' }}>
+                          {pkg.badge}
+                        </span>
+                      )}
+                    </div>
+                    <span style={{ fontSize: '0.92rem', fontWeight: 900, color: isSelected ? '#ea580c' : 'var(--color-text-secondary, #334155)' }}>
+                      ${pkg.price.toFixed(2)}
+                      <span style={{ fontSize: '0.62rem', fontWeight: 600, color: '#64748b' }}>
+                        {selectedService === 'patch' ? '/pc' : ''}
                       </span>
-                    </div>
-                    <div style={{ fontSize: '0.65rem', color: '#059669', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.2rem', marginTop: '0.15rem' }}>
-                      <Clock size={10} /> {pkg.turnaround}
-                    </div>
-                  </div>
+                    </span>
+                  </button>
                 );
               })}
             </div>
+
+            {/* DYNAMIC DETAILS OF ONLY THE SELECTED PACKAGE */}
+            {activePkg && (
+              <div
+                style={{
+                  marginTop: '0.45rem',
+                  padding: '0.65rem 0.85rem',
+                  borderRadius: '9px',
+                  border: '1px solid var(--color-border, #e2e8f0)',
+                  background: isDark ? 'rgba(234, 88, 12, 0.08)' : '#fffaf5',
+                  transition: 'all 0.2s ease'
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.2rem' }}>
+                  <span style={{ fontSize: '0.82rem', fontWeight: 900, color: '#ea580c' }}>
+                    ✦ {activePkg.title}
+                  </span>
+                  <span style={{ fontSize: '0.68rem', fontWeight: 800, color: '#059669', display: 'flex', alignItems: 'center', gap: '0.2rem' }}>
+                    <Clock size={11} /> {activePkg.turnaround}
+                  </span>
+                </div>
+
+                <div style={{ fontSize: '0.74rem', color: 'var(--color-text-muted, #64748b)', marginBottom: '0.45rem', lineHeight: 1.35 }}>
+                  {activePkg.subtitle}
+                </div>
+
+                {Array.isArray(activePkg.features) && activePkg.features.length > 0 && (
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '0.25rem 0.65rem' }}>
+                    {activePkg.features.map((feat, fi) => (
+                      <div key={fi} style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.71rem', color: 'var(--color-text-secondary, #334155)', fontWeight: 600 }}>
+                        <Check size={12} style={{ color: '#059669', flexShrink: 0 }} />
+                        <span>{feat}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           {/* PATCH QUANTITY STEPPER (For Patches Only) */}
@@ -656,7 +840,7 @@ export const StreamlinedOrderFlow = ({
                   Patch Quantity (MOQ: 50):
                 </span>
                 <span style={{ fontSize: '0.7rem', color: '#64748b', display: 'block' }}>
-                  Bulk factory pricing applies automatically
+                  Bulk factory savings apply automatically
                 </span>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
@@ -996,6 +1180,9 @@ export const StreamlinedOrderFlow = ({
         {/* RIGHT COLUMN: LIVE ORDER SUMMARY & INSTANT CHECKOUT */}
         <div
           style={{
+            minWidth: 0,
+            width: '100%',
+            boxSizing: 'border-box',
             background: isDark ? 'rgba(30, 41, 59, 0.45)' : '#f8fafc',
             borderRadius: '14px',
             border: '1.5px solid var(--color-border, #e2e8f0)',
@@ -1022,7 +1209,9 @@ export const StreamlinedOrderFlow = ({
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', fontSize: '0.8rem', marginBottom: '0.75rem' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                 <span style={{ color: 'var(--color-text-secondary, #475569)', fontWeight: 600 }}>
-                  {selectedService === 'patch' ? `Custom Patches (${quantity} Pcs)` : (activePkg?.title || 'Embroidery Digitizing')}
+                  {selectedService === 'patch'
+                    ? `Custom Patches (${quantity} Pcs - ${activePkg?.tier_label || 'Standard'})`
+                    : `${activePkg?.tier_label || 'Standard'}: ${activePkg?.title || 'Digitizing'}`}
                 </span>
                 <span style={{ fontWeight: 800 }}>${baseSubtotal.toFixed(2)}</span>
               </div>

@@ -56,44 +56,63 @@ export const OrderWizardModal = () => {
         style={{
           position: 'relative',
           width: '100%',
-          maxWidth: '960px',
-          maxHeight: '92svh',
+          maxWidth: '1000px',
+          maxHeight: '94svh',
           overflowY: 'auto',
-          borderRadius: '24px',
+          borderRadius: '20px',
+          background: 'var(--color-surface, #ffffff)',
           boxShadow: '0 25px 60px rgba(0, 0, 0, 0.3)'
         }}
       >
-        {/* Floating Close Button */}
-        <button
-          type="button"
-          onClick={handleSafeClose}
+        {/* Modal Header Bar with Title and Close Button */}
+        <div
           style={{
-            position: 'absolute',
-            top: '1.25rem',
-            right: '1.25rem',
-            zIndex: 10,
-            width: '36px',
-            height: '36px',
-            borderRadius: '50%',
-            background: 'var(--color-surface, #ffffff)',
-            border: '1px solid var(--color-border, #cbd5e1)',
-            color: 'var(--color-text-primary, #0f172a)',
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'center',
-            cursor: 'pointer',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-            transition: 'all 0.15s ease'
+            justifyContent: 'space-between',
+            padding: '0.85rem 1.25rem',
+            borderBottom: '1px solid var(--color-border, #e2e8f0)',
+            background: 'var(--color-surface, #ffffff)',
+            position: 'sticky',
+            top: 0,
+            zIndex: 30
           }}
-          aria-label="Close Order Wizard"
         >
-          <X size={20} />
-        </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <span style={{ fontSize: '0.94rem', fontWeight: 900, color: 'var(--color-text-primary, #0f172a)' }}>
+              ⚡ Direct Studio Order Desk
+            </span>
+            <span style={{ fontSize: '0.7rem', fontWeight: 800, color: '#059669', background: '#ecfdf5', padding: '2px 8px', borderRadius: '9999px', border: '1px solid #a7f3d0' }}>
+              4–12H Delivery
+            </span>
+          </div>
+
+          <button
+            type="button"
+            onClick={handleSafeClose}
+            style={{
+              width: '32px',
+              height: '32px',
+              borderRadius: '50%',
+              background: 'var(--color-subtle, #f1f5f9)',
+              border: '1px solid var(--color-border, #cbd5e1)',
+              color: 'var(--color-text-primary, #0f172a)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              transition: 'all 0.15s ease'
+            }}
+            aria-label="Close Order Wizard"
+          >
+            <X size={18} />
+          </button>
+        </div>
 
         <StreamlinedOrderFlow
           initialService={orderWizardInitialData?.type || orderWizardInitialData?.category || 'embroidery'}
           initialPackage={orderWizardInitialData?.selectedPackage || null}
-          isModal={true}
+          _isModal={true}
           onCloseModal={handleSafeClose}
           onOrderComplete={() => {
             setIsOrderWizardOpen(false);
