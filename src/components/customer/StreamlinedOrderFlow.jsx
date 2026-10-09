@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useAppState } from '../../context/StateContext';
+import { matchCategory } from '../../utils/categoryUtils';
 import {
   Upload,
   Check,
@@ -12,12 +13,108 @@ import {
   Minus,
   Trash2,
   ChevronDown,
-  ShieldCheck
+  ShieldCheck,
+  CheckCircle2
 } from 'lucide-react';
 import { uploadFileToCloudinaryFull } from '../../services/supabaseService';
 
+// Default Canonical Packages matching DynamicPricingEditor & Website Pricing Page
+const CANONICAL_DEFAULT_PACKAGES = {
+  embroidery: [
+    {
+      id: 'emb-left-chest',
+      service_type: 'embroidery',
+      display_order: 1,
+      title: 'Left Chest & Cap Small Logo',
+      price: 10.00,
+      turnaround_time: '4–12 Hours'
+    },
+    {
+      id: 'emb-mid-size',
+      service_type: 'embroidery',
+      display_order: 2,
+      title: 'Mid-Size Jacket & Sleeve Design',
+      price: 20.00,
+      turnaround_time: '6–12 Hours'
+    },
+    {
+      id: 'emb-full-back',
+      service_type: 'embroidery',
+      display_order: 3,
+      title: 'Full Back & 3D Puff Foam',
+      price: 35.00,
+      turnaround_time: '8–12 Hours'
+    }
+  ],
+  vector: [
+    {
+      id: 'vec-simple',
+      service_type: 'vector_art',
+      display_order: 1,
+      title: 'Simple Logo & Typography Redraw',
+      price: 15.00,
+      turnaround_time: '6–12 Hours'
+    },
+    {
+      id: 'vec-medium',
+      service_type: 'vector_art',
+      display_order: 2,
+      title: 'Medium Detail Artwork with Colors',
+      price: 25.00,
+      turnaround_time: '6–12 Hours'
+    },
+    {
+      id: 'vec-complex',
+      service_type: 'vector_art',
+      display_order: 3,
+      title: 'Complex Illustration & Mascot',
+      price: 45.00,
+      turnaround_time: '12–24 Hours'
+    }
+  ],
+  patch: [
+    {
+      id: 'pat-50',
+      service_type: 'patches',
+      display_order: 1,
+      title: 'Sample Batch (50 Pcs)',
+      min_pieces: 50,
+      price: 3.50,
+      turnaround_time: '3–5 Days'
+    },
+    {
+      id: 'pat-100',
+      service_type: 'patches',
+      display_order: 2,
+      title: 'Production Batch (100 Pcs)',
+      min_pieces: 100,
+      price: 2.50,
+      turnaround_time: '4–7 Days'
+    },
+    {
+      id: 'pat-250',
+      service_type: 'patches',
+      display_order: 3,
+      title: 'Wholesale Batch (250 Pcs)',
+      min_pieces: 250,
+      price: 1.80,
+      turnaround_time: '5–8 Days'
+    },
+    {
+      id: 'pat-500',
+      service_type: 'patches',
+      display_order: 4,
+      title: 'Factory Bulk (500 Pcs)',
+      min_pieces: 500,
+      price: 1.50,
+      turnaround_time: '7–10 Days'
+    }
+  ]
+};
+
 export const StreamlinedOrderFlow = ({
   initialService = 'embroidery',
+  initialPackage = null,
   _initialPackage = null,
   onOrderComplete = null,
   _isModal = false,
@@ -30,10 +127,15 @@ export const StreamlinedOrderFlow = ({
     setCheckoutSession,
     authUser,
     currentUser,
+    isAuthenticated,
+    setIsAuthModalOpen,
+    setAuthModalMode,
+    dynamicPricingTiers = [],
     theme = 'light'
   } = useAppState();
 
   const isDark = theme === 'dark';
+  const incomingPackage = initialPackage || _initialPackage;
 
   // Service switcher: 'embroidery' | 'patch' | 'vector'
   const [selectedService, setSelectedService] = useState(() => {
@@ -43,23 +145,49 @@ export const StreamlinedOrderFlow = ({
     return 'embroidery';
   });
 
-  // 1. EMBROIDERY FIELDS (Dropdown values)
+  // Dynamic Tiers for the selected service (Editable from Admin Dynamic Pricing Editor)
+  const getActiveTiers = (serviceKey) => {
+    const dbTiers = (dynamicPricingTiers || [])
+      .filter(t => matchCategory(t?.service_type, serviceKey))
+      .sort((a, b) => (Number(a.display_order) || 0) - (Number(b.display_order) || 0));
+
+    if (dbTiers && dbTiers.length > 0) {
+      return dbTiers;
+    }
+    return CANONICAL_DEFAULT_PACKAGES[serviceKey] || [];
+  };
+
+  const currentServiceTiers = getActiveTiers(selectedService);
+
+  // Selected Package Tier State (Dynamically linked to DB / Admin Tiers)
+  const [selectedTierId, setSelectedTierId] = useState(() => {
+    if (incomingPackage) {
+      if (typeof incomingPackage === 'string') return incomingPackage;
+      if (incomingPackage.id) return String(incomingPackage.id);
+      if (incomingPackage.title) return String(incomingPackage.title);
+    }
+    return '';
+  });
+
+  const currentTier = currentServiceTiers.find(t =>
+    (t.id && String(t.id) === String(selectedTierId)) ||
+    (t.title && t.title.toLowerCase() === String(selectedTierId).toLowerCase())
+  ) || currentServiceTiers[0] || null;
+
+  // 1. EMBROIDERY FIELDS
   const [fileFormat, setFileFormat] = useState('all');
   const [sizeOption, setSizeOption] = useState('left-chest');
   const [customWidth, setCustomWidth] = useState('3.5');
   const [customHeight, setCustomHeight] = useState('3.5');
   const [turnaround, setTurnaround] = useState('standard'); // standard (free), rush (+$10)
-  const [complexity, setComplexity] = useState('medium'); // simple ($10), medium ($15) [default], complex ($25), hardcore ($35)
 
-  // 2. PATCH FIELDS (Dropdown values)
+  // 2. PATCH FIELDS
   const [patchStyle, setPatchStyle] = useState('Embroidered Twill');
   const [patchBacking, setPatchBacking] = useState('Velcro (Hook & Loop)');
-  const [patchQuantityTier, setPatchQuantityTier] = useState('100'); // 50, 100 [popular], 250, 500
   const [patchTurnaround, setPatchTurnaround] = useState('standard'); // standard (free), rush (+$25)
 
-  // 3. VECTOR FIELDS (Dropdown values)
+  // 3. VECTOR FIELDS
   const [vectorFormat, setVectorFormat] = useState('all');
-  const [vectorComplexity, setVectorComplexity] = useState('standard'); // simple ($15), standard ($25), complex ($45)
   const [vectorTurnaround, setVectorTurnaround] = useState('standard'); // standard (free), rush (+$10)
 
   // Universal fields
@@ -73,91 +201,117 @@ export const StreamlinedOrderFlow = ({
   const [uploadError, setUploadError] = useState('');
   const fileInputRef = useRef(null);
 
-  // Contact Details
-  const [clientName, setClientName] = useState(() => authUser?.user_metadata?.full_name || authUser?.name || currentUser?.name || '');
-  const [clientEmail, setClientEmail] = useState(() => authUser?.email || currentUser?.email || '');
-  const [clientPhone, setClientPhone] = useState(() => authUser?.user_metadata?.phone || authUser?.phone || '');
-  const [contactError, setContactError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Live Price Calculation
+  // Restore pending order draft if returning from auth (e.g. Google Login redirect)
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      const rawDraft = localStorage.getItem('bdigi_pending_order_draft');
+      if (rawDraft) {
+        const draft = JSON.parse(rawDraft);
+        if (draft.selectedService) setSelectedService(draft.selectedService);
+        if (draft.selectedTierId) setSelectedTierId(draft.selectedTierId);
+        if (draft.quantity) setQuantity(Number(draft.quantity) || 1);
+        if (draft.turnaround) setTurnaround(draft.turnaround);
+        if (draft.patchTurnaround) setPatchTurnaround(draft.patchTurnaround);
+        if (draft.vectorTurnaround) setVectorTurnaround(draft.vectorTurnaround);
+        if (draft.fileFormat) setFileFormat(draft.fileFormat);
+        if (draft.vectorFormat) setVectorFormat(draft.vectorFormat);
+        if (draft.sizeOption) setSizeOption(draft.sizeOption);
+        if (draft.customWidth) setCustomWidth(draft.customWidth);
+        if (draft.customHeight) setCustomHeight(draft.customHeight);
+        if (draft.additionalDetails) setAdditionalDetails(draft.additionalDetails);
+        if (Array.isArray(draft.uploadedFiles) && draft.uploadedFiles.length > 0) {
+          setUploadedFiles(draft.uploadedFiles);
+        }
+        if (draft.patchStyle) setPatchStyle(draft.patchStyle);
+        if (draft.patchBacking) setPatchBacking(draft.patchBacking);
+      }
+    } catch (e) {
+      console.warn('Failed to restore draft:', e);
+    }
+  }, []);
+
+  // Save draft helper
+  const saveDraft = () => {
+    if (typeof window === 'undefined') return;
+    try {
+      const draft = {
+        selectedService,
+        selectedTierId: currentTier?.id || currentTier?.title,
+        quantity,
+        turnaround,
+        patchTurnaround,
+        vectorTurnaround,
+        fileFormat,
+        vectorFormat,
+        sizeOption,
+        customWidth,
+        customHeight,
+        additionalDetails,
+        uploadedFiles,
+        patchStyle,
+        patchBacking
+      };
+      localStorage.setItem('bdigi_pending_order_draft', JSON.stringify(draft));
+    } catch (e) {
+      console.warn('Failed to save draft:', e);
+    }
+  };
+
+  // Live Price Calculation derived directly from dynamic active tier
   const calculatePricing = () => {
-    let unitBase = 15;
+    const unitBase = Number(currentTier?.price) || 15;
     let rushFee = 0;
     const orderQty = Math.max(1, quantity);
 
     if (selectedService === 'embroidery') {
-      if (complexity === 'simple') unitBase = 10;
-      else if (complexity === 'medium') unitBase = 15;
-      else if (complexity === 'complex') unitBase = 25;
-      else if (complexity === 'hardcore') unitBase = 35;
-
       if (turnaround === 'rush') rushFee = 10;
       return {
         unitPrice: unitBase,
         subtotal: unitBase * orderQty,
         rush: rushFee,
-        total: (unitBase * orderQty) + rushFee
+        total: (unitBase * orderQty) + rushFee,
+        tierTitle: currentTier?.title || 'Left Chest & Cap Small Logo'
       };
     }
 
     if (selectedService === 'patch') {
-      let perPieceRate = 2.50;
-      let minPieces = 100;
-      if (patchQuantityTier === '50') { perPieceRate = 3.50; minPieces = 50; }
-      else if (patchQuantityTier === '100') { perPieceRate = 2.50; minPieces = 100; }
-      else if (patchQuantityTier === '250') { perPieceRate = 1.80; minPieces = 250; }
-      else if (patchQuantityTier === '500') { perPieceRate = 1.50; minPieces = 500; }
-
+      let pieces = Number(currentTier?.min_pieces);
+      if (!pieces) {
+        const matchDigits = String(currentTier?.title || '').match(/\b(\d+)\b/);
+        pieces = matchDigits ? Number(matchDigits[1]) : 100;
+      }
       if (patchTurnaround === 'rush') rushFee = 25;
-      const patchSubtotal = perPieceRate * minPieces;
+      const patchSubtotal = unitBase * pieces;
       return {
-        unitPrice: perPieceRate,
+        unitPrice: unitBase,
         subtotal: patchSubtotal,
         rush: rushFee,
         total: patchSubtotal + rushFee,
-        patchPieces: minPieces
+        patchPieces: pieces,
+        tierTitle: currentTier?.title || `${pieces} Pieces`
       };
     }
 
     if (selectedService === 'vector') {
-      if (vectorComplexity === 'simple') unitBase = 15;
-      else if (vectorComplexity === 'standard') unitBase = 25;
-      else if (vectorComplexity === 'complex') unitBase = 45;
-
       if (vectorTurnaround === 'rush') rushFee = 10;
       return {
         unitPrice: unitBase,
         subtotal: unitBase * orderQty,
         rush: rushFee,
-        total: (unitBase * orderQty) + rushFee
+        total: (unitBase * orderQty) + rushFee,
+        tierTitle: currentTier?.title || 'Simple Logo & Typography Redraw'
       };
     }
 
-    return { unitPrice: 15, subtotal: 15, rush: 0, total: 15 };
+    return { unitPrice: 15, subtotal: 15, rush: 0, total: 15, tierTitle: 'Standard' };
   };
 
   const pricing = calculatePricing();
 
   // Helper Labels for Summary
-  const getComplexityLabel = () => {
-    if (selectedService === 'embroidery') {
-      if (complexity === 'simple') return 'Simple ($10)';
-      if (complexity === 'medium') return 'Medium ($15)';
-      if (complexity === 'complex') return 'Complex ($25)';
-      return '3D Puff / Back ($35)';
-    }
-    if (selectedService === 'patch') {
-      return `${patchQuantityTier} Pcs (${patchStyle})`;
-    }
-    if (selectedService === 'vector') {
-      if (vectorComplexity === 'simple') return 'Simple ($15)';
-      if (vectorComplexity === 'standard') return 'Standard ($25)';
-      return 'Complex ($45)';
-    }
-    return 'Standard';
-  };
-
   const getSizeLabel = () => {
     if (selectedService === 'embroidery') {
       if (sizeOption === 'custom') return `${customWidth}" × ${customHeight}"`;
@@ -166,7 +320,7 @@ export const StreamlinedOrderFlow = ({
       if (sizeOption === 'jacket-back') return 'Jacket Back (12")';
       return 'Left Chest (4")';
     }
-    if (selectedService === 'patch') return 'Standard';
+    if (selectedService === 'patch') return 'Standard Patch';
     return 'Scalable Vector';
   };
 
@@ -264,6 +418,12 @@ export const StreamlinedOrderFlow = ({
     setUploadedFiles(prev => prev.filter((_, i) => i !== idx));
   };
 
+  const isUserAuthenticated = Boolean(
+    isAuthenticated ||
+    authUser?.email ||
+    currentUser?.email
+  );
+
   // Submit Order and Launch Instant Stripe Checkout
   const handleFinalSubmitOrder = async () => {
     if (uploadedFiles.length === 0) {
@@ -271,19 +431,31 @@ export const StreamlinedOrderFlow = ({
       return;
     }
 
-    const cleanEmail = (clientEmail || '').toLowerCase().trim();
-    const cleanName = (clientName || '').trim();
-
-    if (!cleanEmail || !cleanEmail.includes('@') || !cleanEmail.includes('.')) {
-      setContactError('Please enter a valid email address to receive your files.');
+    // Require Login/Signup before order creation
+    if (!isUserAuthenticated) {
+      saveDraft();
+      if (showToast) {
+        showToast('Please sign in or sign up with Google to complete your order.', 'info');
+      }
+      if (setAuthModalMode) setAuthModalMode('login');
+      if (setIsAuthModalOpen) {
+        setIsAuthModalOpen(true);
+      } else if (typeof window !== 'undefined') {
+        window.location.href = `/login?redirect=${encodeURIComponent(window.location.pathname + window.location.search)}`;
+      }
       return;
     }
-    if (!cleanName) {
-      setContactError('Please enter your full name or company name.');
-      return;
-    }
 
-    setContactError('');
+    const cleanEmail = (authUser?.email || currentUser?.email || '').toLowerCase().trim();
+    const cleanName = (
+      authUser?.user_metadata?.full_name ||
+      authUser?.name ||
+      currentUser?.name ||
+      authUser?.email?.split('@')[0] ||
+      'Customer'
+    ).trim();
+    const cleanPhone = (authUser?.user_metadata?.phone || authUser?.phone || '').trim();
+
     setUploadError('');
     setIsSubmitting(true);
 
@@ -295,23 +467,14 @@ export const StreamlinedOrderFlow = ({
           ? 'Vector Art'
           : 'Embroidery Digitizing';
 
-      let derivedTitle = `${firstFileName} - ${cleanService}`;
-      let orderPackageName = 'Standard';
+      const orderPackageName = currentTier?.title || 'Standard';
+      let derivedTitle = `${firstFileName} - ${orderPackageName}`;
       let isRush = false;
       let targetFormats = ['DST', 'PES', 'EMB', 'PDF'];
       let derivedSize = 'Left Chest (Up to 4")';
 
       if (selectedService === 'embroidery') {
-        const compLabels = {
-          simple: 'Simple (Text Only)',
-          medium: 'Medium (Monogram / Logo)',
-          complex: 'Complex (Detail Work)',
-          hardcore: 'Hardcore (3D Puff / Jacket Back)'
-        };
-        orderPackageName = compLabels[complexity] || 'Standard';
-        derivedTitle = `${firstFileName} - ${orderPackageName}`;
         isRush = turnaround === 'rush';
-
         if (sizeOption === 'custom') {
           derivedSize = `${customWidth}" × ${customHeight}" (Custom)`;
         } else if (sizeOption === 'cap') {
@@ -333,18 +496,10 @@ export const StreamlinedOrderFlow = ({
 
       } else if (selectedService === 'patch') {
         derivedTitle = `${patchStyle} Patches (${pricing.patchPieces} Pcs)`;
-        orderPackageName = `${patchStyle} (${pricing.patchPieces} Pcs - ${patchBacking})`;
         isRush = patchTurnaround === 'rush';
         derivedSize = 'Standard Patch Size';
         targetFormats = ['DST', 'PDF Proof Sheet', 'Physical Courier Delivery'];
       } else if (selectedService === 'vector') {
-        const vecLabels = {
-          simple: 'Simple Vector (Text Only)',
-          standard: 'Standard Vector (Logo / Mascot)',
-          complex: 'Complex Vector (Detailed Art)'
-        };
-        orderPackageName = vecLabels[vectorComplexity] || 'Standard Vector';
-        derivedTitle = `${firstFileName} - ${orderPackageName}`;
         isRush = vectorTurnaround === 'rush';
         derivedSize = 'Scalable Vector';
         targetFormats = vectorFormat === 'ai' ? ['AI'] : vectorFormat === 'svg' ? ['SVG'] : ['AI', 'EPS', 'SVG', 'PDF', 'PNG'];
@@ -379,7 +534,7 @@ export const StreamlinedOrderFlow = ({
         clientName: cleanName,
         client_email: cleanEmail,
         clientEmail: cleanEmail,
-        clientPhone: clientPhone.trim() || null,
+        clientPhone: cleanPhone || null,
         status: 'submitted',
         payment_status: 'pending'
       };
@@ -387,15 +542,15 @@ export const StreamlinedOrderFlow = ({
       const created = await createOrder(orderPayload);
       const resultingId = created?.id || `ORD_${Date.now()}`;
 
-      // Save order ID to localStorage for guest tracking
-      if (typeof window !== 'undefined' && resultingId) {
+      // Clean pending draft and store order id
+      if (typeof window !== 'undefined') {
         try {
+          localStorage.removeItem('bdigi_pending_order_draft');
           const prevIds = JSON.parse(localStorage.getItem('bdigi_my_order_ids') || '[]');
           const cleanId = String(resultingId).trim();
           if (!prevIds.includes(cleanId)) {
             localStorage.setItem('bdigi_my_order_ids', JSON.stringify([cleanId, ...prevIds].slice(0, 50)));
           }
-          localStorage.setItem('bdigi_guest_contact', JSON.stringify({ name: cleanName, email: cleanEmail, phone: clientPhone }));
         } catch {}
       }
 
@@ -636,6 +791,31 @@ export const StreamlinedOrderFlow = ({
           {/* EMBROIDERY OPTIONS */}
           {selectedService === 'embroidery' && (
             <div>
+              {/* Package Tier Dropdown (Live from Admin Dynamic Pricing Tiers) */}
+              <div className="bdigi-form-row">
+                <label className="bdigi-label">Package</label>
+                <div className="bdigi-select-wrapper">
+                  <select
+                    value={currentTier?.id || currentTier?.title || ''}
+                    onChange={(e) => setSelectedTierId(e.target.value)}
+                    className="bdigi-select"
+                  >
+                    {currentServiceTiers.map(tier => {
+                      const val = String(tier.id || tier.title);
+                      const displayPrice = Number(tier.price).toFixed(2);
+                      return (
+                        <option key={val} value={val}>
+                          {tier.title} — ${displayPrice}
+                        </option>
+                      );
+                    })}
+                  </select>
+                  <div className="bdigi-select-arrow">
+                    <ChevronDown size={17} />
+                  </div>
+                </div>
+              </div>
+
               {/* File Format Dropdown */}
               <div className="bdigi-form-row">
                 <label className="bdigi-label">File Format</label>
@@ -723,26 +903,6 @@ export const StreamlinedOrderFlow = ({
                 </div>
               </div>
 
-              {/* Complexity Dropdown */}
-              <div className="bdigi-form-row">
-                <label className="bdigi-label">Complexity</label>
-                <div className="bdigi-select-wrapper">
-                  <select
-                    value={complexity}
-                    onChange={(e) => setComplexity(e.target.value)}
-                    className="bdigi-select"
-                  >
-                    <option value="simple">Simple ($10)</option>
-                    <option value="medium">Medium / Logo ($15)</option>
-                    <option value="complex">Complex ($25)</option>
-                    <option value="hardcore">3D Puff / Back ($35)</option>
-                  </select>
-                  <div className="bdigi-select-arrow">
-                    <ChevronDown size={17} />
-                  </div>
-                </div>
-              </div>
-
               {/* Additional Details */}
               <div className="bdigi-form-row" style={{ alignItems: 'flex-start' }}>
                 <label className="bdigi-label" style={{ paddingTop: '0.45rem' }}>Notes</label>
@@ -760,6 +920,37 @@ export const StreamlinedOrderFlow = ({
           {/* CUSTOM PATCHES OPTIONS */}
           {selectedService === 'patch' && (
             <div>
+              {/* Package Tier / Quantity Batch (Live from Admin Dynamic Pricing Tiers) */}
+              <div className="bdigi-form-row">
+                <label className="bdigi-label">Quantity</label>
+                <div className="bdigi-select-wrapper">
+                  <select
+                    value={currentTier?.id || currentTier?.title || ''}
+                    onChange={(e) => setSelectedTierId(e.target.value)}
+                    className="bdigi-select"
+                  >
+                    {currentServiceTiers.map(tier => {
+                      const val = String(tier.id || tier.title);
+                      const displayPrice = Number(tier.price).toFixed(2);
+                      let pieces = Number(tier.min_pieces);
+                      if (!pieces) {
+                        const m = String(tier.title || '').match(/\b(\d+)\b/);
+                        pieces = m ? Number(m[1]) : 100;
+                      }
+                      const totalCost = (Number(tier.price) * pieces).toFixed(2);
+                      return (
+                        <option key={val} value={val}>
+                          {tier.title} — ${displayPrice}/pc (${totalCost} Total)
+                        </option>
+                      );
+                    })}
+                  </select>
+                  <div className="bdigi-select-arrow">
+                    <ChevronDown size={17} />
+                  </div>
+                </div>
+              </div>
+
               {/* Patch Style */}
               <div className="bdigi-form-row">
                 <label className="bdigi-label">Style</label>
@@ -793,26 +984,6 @@ export const StreamlinedOrderFlow = ({
                     <option value="Heat-Seal Iron-On">Iron-On</option>
                     <option value="Plain Sew-On">Sew-On</option>
                     <option value="Peel & Stick">Peel & Stick</option>
-                  </select>
-                  <div className="bdigi-select-arrow">
-                    <ChevronDown size={17} />
-                  </div>
-                </div>
-              </div>
-
-              {/* Quantity Batch */}
-              <div className="bdigi-form-row">
-                <label className="bdigi-label">Quantity</label>
-                <div className="bdigi-select-wrapper">
-                  <select
-                    value={patchQuantityTier}
-                    onChange={(e) => setPatchQuantityTier(e.target.value)}
-                    className="bdigi-select"
-                  >
-                    <option value="50">50 Pcs ($3.50/pc — $175)</option>
-                    <option value="100">100 Pcs ($2.50/pc — $250)</option>
-                    <option value="250">250 Pcs ($1.80/pc — $450)</option>
-                    <option value="500">500 Pcs ($1.50/pc — $750)</option>
                   </select>
                   <div className="bdigi-select-arrow">
                     <ChevronDown size={17} />
@@ -855,18 +1026,24 @@ export const StreamlinedOrderFlow = ({
           {/* VECTOR ART OPTIONS */}
           {selectedService === 'vector' && (
             <div>
-              {/* Vector Complexity */}
+              {/* Package Tier Dropdown (Live from Admin Dynamic Pricing Tiers) */}
               <div className="bdigi-form-row">
-                <label className="bdigi-label">Complexity</label>
+                <label className="bdigi-label">Package</label>
                 <div className="bdigi-select-wrapper">
                   <select
-                    value={vectorComplexity}
-                    onChange={(e) => setVectorComplexity(e.target.value)}
+                    value={currentTier?.id || currentTier?.title || ''}
+                    onChange={(e) => setSelectedTierId(e.target.value)}
                     className="bdigi-select"
                   >
-                    <option value="simple">Simple ($15)</option>
-                    <option value="standard">Standard Logo ($25)</option>
-                    <option value="complex">Complex Art ($45)</option>
+                    {currentServiceTiers.map(tier => {
+                      const val = String(tier.id || tier.title);
+                      const displayPrice = Number(tier.price).toFixed(2);
+                      return (
+                        <option key={val} value={val}>
+                          {tier.title} — ${displayPrice}
+                        </option>
+                      );
+                    })}
                   </select>
                   <div className="bdigi-select-arrow">
                     <ChevronDown size={17} />
@@ -1133,59 +1310,79 @@ export const StreamlinedOrderFlow = ({
             </div>
           </div>
 
-          {/* CONTACT DETAILS */}
-          <div style={{ marginTop: '1.25rem', paddingTop: '1.1rem', borderTop: '1px dashed var(--color-border, #cbd5e1)' }}>
-            <div style={{ fontSize: '0.84rem', fontWeight: 800, color: 'var(--color-text-secondary, #475569)', marginBottom: '0.65rem' }}>
-              Contact Details
+          {/* AUTHENTICATION / ACCOUNT STATUS (Replaces manual contact form fields) */}
+          {isUserAuthenticated ? (
+            <div
+              style={{
+                marginTop: '1.25rem',
+                padding: '0.75rem 1rem',
+                borderRadius: '12px',
+                background: isDark ? 'rgba(5, 150, 105, 0.12)' : '#ecfdf5',
+                border: '1.5px solid #a7f3d0',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                flexWrap: 'wrap',
+                gap: '0.5rem'
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <CheckCircle2 size={16} style={{ color: '#059669' }} />
+                <span style={{ fontSize: '0.84rem', fontWeight: 800, color: isDark ? '#34d399' : '#065f46' }}>
+                  Logged in as: {authUser?.user_metadata?.full_name || authUser?.name || currentUser?.name || authUser?.email?.split('@')[0]}
+                </span>
+              </div>
+              <span style={{ fontSize: '0.78rem', color: isDark ? '#a7f3d0' : '#047857', fontWeight: 700 }}>
+                {authUser?.email || currentUser?.email}
+              </span>
             </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: '0.65rem', marginBottom: '0.5rem' }}>
-              <div>
-                <label style={{ display: 'block', fontSize: '0.76rem', fontWeight: 800, color: 'var(--color-text-muted, #64748b)', marginBottom: '0.25rem' }}>
-                  Name <span style={{ color: '#ef4444' }}>*</span>
-                </label>
-                <input
-                  type="text"
-                  value={clientName}
-                  onChange={(e) => setClientName(e.target.value)}
-                  placeholder="Your Name"
-                  className="bdigi-input"
-                />
+          ) : (
+            <div
+              style={{
+                marginTop: '1.25rem',
+                padding: '0.8rem 1rem',
+                borderRadius: '12px',
+                background: isDark ? 'rgba(234, 88, 12, 0.08)' : '#fff7ed',
+                border: '1.5px dashed #fed7aa',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                flexWrap: 'wrap',
+                gap: '0.5rem'
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <Lock size={14} style={{ color: '#ea580c' }} />
+                <span style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--color-text-secondary, #475569)' }}>
+                  Google login or account required to place order
+                </span>
               </div>
-
-              <div>
-                <label style={{ display: 'block', fontSize: '0.76rem', fontWeight: 800, color: 'var(--color-text-muted, #64748b)', marginBottom: '0.25rem' }}>
-                  Email <span style={{ color: '#ef4444' }}>*</span>
-                </label>
-                <input
-                  type="email"
-                  value={clientEmail}
-                  onChange={(e) => setClientEmail(e.target.value)}
-                  placeholder="your@email.com"
-                  className="bdigi-input"
-                />
-              </div>
-
-              <div>
-                <label style={{ display: 'block', fontSize: '0.76rem', fontWeight: 800, color: 'var(--color-text-muted, #64748b)', marginBottom: '0.25rem' }}>
-                  WhatsApp (Optional)
-                </label>
-                <input
-                  type="tel"
-                  value={clientPhone}
-                  onChange={(e) => setClientPhone(e.target.value)}
-                  placeholder="+1 (555) 000-0000"
-                  className="bdigi-input"
-                />
-              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  saveDraft();
+                  if (setAuthModalMode) setAuthModalMode('login');
+                  if (setIsAuthModalOpen) setIsAuthModalOpen(true);
+                }}
+                style={{
+                  background: '#ffffff',
+                  border: '1.5px solid #cbd5e1',
+                  borderRadius: '8px',
+                  padding: '0.35rem 0.8rem',
+                  fontSize: '0.78rem',
+                  fontWeight: 800,
+                  color: '#0f172a',
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.35rem',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.06)'
+                }}
+              >
+                Sign In with Google
+              </button>
             </div>
-
-            {contactError && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', color: '#ef4444', fontSize: '0.78rem', fontWeight: 700, marginTop: '0.4rem' }}>
-                <AlertCircle size={13} /> {contactError}
-              </div>
-            )}
-          </div>
+          )}
         </div>
 
         {/* RIGHT COLUMN: STICKY ORDER SUMMARY & PRICE COUNT */}
@@ -1196,7 +1393,7 @@ export const StreamlinedOrderFlow = ({
                 Order Summary
               </div>
               <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#059669', background: '#ecfdf5', padding: '2px 8px', borderRadius: '9999px', border: '1px solid #a7f3d0' }}>
-                Instant Quote
+                Live Quote
               </span>
             </div>
 
@@ -1210,8 +1407,10 @@ export const StreamlinedOrderFlow = ({
               </div>
 
               <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--color-text-secondary, #475569)' }}>
-                <span>Tier:</span>
-                <strong style={{ color: 'var(--color-text-primary, #0f172a)' }}>{getComplexityLabel()}</strong>
+                <span>Package:</span>
+                <strong style={{ color: 'var(--color-text-primary, #0f172a)', textAlign: 'right', maxWidth: '180px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={pricing.tierTitle}>
+                  {pricing.tierTitle}
+                </strong>
               </div>
 
               <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--color-text-secondary, #475569)' }}>
@@ -1302,9 +1501,13 @@ export const StreamlinedOrderFlow = ({
                 <>
                   <Loader2 size={16} className="animate-spin" /> Submitting...
                 </>
-              ) : (
+              ) : isUserAuthenticated ? (
                 <>
                   <Lock size={15} /> Place Order & Pay (${pricing.total.toFixed(2)})
+                </>
+              ) : (
+                <>
+                  <Lock size={15} /> Continue to Order & Pay (${pricing.total.toFixed(2)})
                 </>
               )}
             </button>
