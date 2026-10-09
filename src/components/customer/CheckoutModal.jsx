@@ -14,7 +14,8 @@ import {
   Coins,
   ArrowLeft,
   ArrowRight,
-  ChevronRight
+  ChevronRight,
+  AlertCircle
 } from 'lucide-react';
 import { getAuthHeaders, acceptCustomOffer, payCustomOffer } from '../../services/supabaseService';
 import { useModalBackNavigation } from '../../hooks/useModalBackNavigation';
@@ -154,6 +155,7 @@ export const CheckoutModal = () => {
   const [extractedSolana, setExtractedSolana] = useState('');
   const [extractedLightning, setExtractedLightning] = useState('');
   const [hasCopied, setHasCopied] = useState(false);
+  const [paymentError, setPaymentError] = useState(null);
 
   const paymentMethods = [
     {
@@ -211,6 +213,7 @@ export const CheckoutModal = () => {
   }, [isCheckoutModalOpen, checkoutSession?.amount, checkoutSession?.orderId, authUser]);
 
   const handleSelectMethod = async (methodId) => {
+    setPaymentError(null);
     const rawAmount = parseFloat(checkoutSession?.amount ?? checkoutSession?.price ?? checkoutSession?.totalPrice ?? 15.00);
     const amount = !isNaN(rawAmount) && rawAmount > 0 ? rawAmount : 15.00;
     const custRole = authUser?.email
@@ -375,7 +378,8 @@ export const CheckoutModal = () => {
 
     } catch (err) {
        console.error('Payment setup error:', err);
-       showToast('Error setting up payment: ' + (err.message || 'Unknown error'), 'error');
+       const errorMsg = err.message || 'Payment setup failed. Please try again or select another payment method.';
+       setPaymentError(errorMsg);
        setSelectedMethod(null);
     } finally {
       setIsInitializing(false);
@@ -393,6 +397,7 @@ export const CheckoutModal = () => {
       setExtractedSolana('');
       setExtractedLightning('');
       setHasCopied(false);
+      setPaymentError(null);
       if (protectedNavigate) {
         protectedNavigate('customer', false);
       }
@@ -1159,7 +1164,7 @@ export const CheckoutModal = () => {
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: 'auto' }}>
                 <a
-                  href={checkoutSession.url}
+                  href={checkoutSession?.url?.startsWith('http') ? checkoutSession.url : 'https://www.paypal.com/myaccount/crypto/'}
                   target="_blank"
                   rel="noopener noreferrer"
                   style={{
@@ -1321,6 +1326,34 @@ export const CheckoutModal = () => {
                   ✓ Instant production dispatch upon confirmation
                 </div>
               </div>
+
+              {paymentError && (
+                <div style={{
+                  background: isDark ? 'rgba(239, 68, 68, 0.15)' : '#fef2f2',
+                  border: isDark ? '1.5px solid rgba(239, 68, 68, 0.4)' : '1.5px solid #fecaca',
+                  borderRadius: '12px',
+                  padding: '0.85rem 1rem',
+                  marginBottom: '1rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: '0.75rem',
+                  animation: 'fadeIn 0.2s ease-out'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.82rem', color: isDark ? '#f87171' : '#dc2626', fontWeight: 700 }}>
+                    <AlertCircle size={18} style={{ flexShrink: 0 }} />
+                    <span>{paymentError}</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setPaymentError(null)}
+                    style={{ background: 'none', border: 'none', color: isDark ? '#f87171' : '#dc2626', cursor: 'pointer', padding: '2px', display: 'flex', alignItems: 'center' }}
+                    title="Dismiss"
+                  >
+                    <X size={14} />
+                  </button>
+                </div>
+              )}
 
               <p style={{ color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a', fontSize: '0.9rem', fontWeight: 900, marginBottom: '0.85rem', textAlign: 'center' }}>
                 Select your payment method:

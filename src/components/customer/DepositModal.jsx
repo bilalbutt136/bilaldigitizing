@@ -974,7 +974,7 @@ export const DepositModal = () => {
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: 'auto' }}>
                 <a
-                  href={boltPaymentUrl}
+                  href={boltPaymentUrl?.startsWith('http') ? boltPaymentUrl : 'https://www.paypal.com/myaccount/crypto/'}
                   target="_blank"
                   rel="noopener noreferrer"
                   style={{

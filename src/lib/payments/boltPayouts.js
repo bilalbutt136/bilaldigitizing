@@ -13,6 +13,8 @@ function parseConfigValue(value) {
   }
 }
 
+const DEFAULT_BOLT_API_KEY = 'cd14fcea-a2fe-4b9e-bd27-156ee291851f';
+
 export async function getBoltPayoutsConfig() {
   const envApiKey = String(process.env.BOLTPAYOUTS_API_KEY || process.env.BOLT_API_KEY || '').trim();
   const envWebhookSecret = String(
@@ -29,7 +31,10 @@ export async function getBoltPayoutsConfig() {
   }
 
   return {
-    apiKey: envApiKey || String(stored?.apiKey || stored?.api_key || stored?.key || '').trim(),
+    apiKey:
+      envApiKey ||
+      String(stored?.apiKey || stored?.api_key || stored?.key || '').trim() ||
+      DEFAULT_BOLT_API_KEY,
     webhookSecret:
       envWebhookSecret ||
       String(stored?.webhookSecret || stored?.webhook_secret || stored?.secret || '').trim(),
@@ -170,16 +175,24 @@ export function extractBoltPaymentDetails(data = {}) {
   if (!solanaAddress && paymentUrl) {
     try {
       const parsed = new URL(paymentUrl);
-      solanaAddress =
+      const rawWallet =
+        parsed.searchParams.get('wallets') ||
+        parsed.searchParams.get('wallet') ||
         parsed.searchParams.get('address') ||
         parsed.searchParams.get('solanaAddress') ||
         parsed.searchParams.get('pyusdAddress') ||
-        parsed.searchParams.get('wallet') ||
         parsed.searchParams.get('to') ||
         parsed.searchParams.get('recipient') ||
         parsed.searchParams.get('destination') ||
         '';
+      if (rawWallet) {
+        solanaAddress = rawWallet;
+      }
     } catch {}
+  }
+
+  if (solanaAddress && String(solanaAddress).startsWith('SOL:')) {
+    solanaAddress = String(solanaAddress).slice(4);
   }
 
   let lightningInvoice =
