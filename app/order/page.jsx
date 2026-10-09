@@ -4,10 +4,8 @@ import React, { Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { StreamlinedOrderFlow } from '../../src/components/customer/StreamlinedOrderFlow';
 import {
-  Sparkles,
   ShieldCheck,
   Zap,
-  Clock,
   CheckCircle2,
   HelpCircle,
   MessageCircle,
