@@ -56,7 +56,7 @@ export const OrderWizardModal = () => {
         style={{
           position: 'relative',
           width: '100%',
-          maxWidth: '860px',
+          maxWidth: '960px',
           maxHeight: '92svh',
           overflowY: 'auto',
           borderRadius: '24px',

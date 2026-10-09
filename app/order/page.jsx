@@ -23,76 +23,55 @@ function OrderContent() {
     <div style={{
       minHeight: '100vh',
       background: 'var(--bg-main, #f8fafc)',
-      padding: 'clamp(1.5rem, 3.5vw, 3.5rem) clamp(1rem, 2.5vw, 2rem) 5rem',
+      padding: 'clamp(1rem, 2vw, 2rem) clamp(0.75rem, 2vw, 1.5rem) 4rem',
       color: 'var(--color-text-primary, #0f172a)'
     }}>
-      <div style={{ maxWidth: '920px', margin: '0 auto' }}>
+      <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
 
-        {/* HERO TITLE & TRUST VALUE PROPS */}
-        <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
-          <div style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '0.45rem',
-            background: 'rgba(234, 88, 12, 0.12)',
-            color: '#ea580c',
-            border: '1px solid rgba(234, 88, 12, 0.25)',
-            padding: '0.35rem 1rem',
-            borderRadius: '9999px',
-            fontSize: '0.82rem',
-            fontWeight: 800,
-            textTransform: 'uppercase',
-            letterSpacing: '0.06em',
-            marginBottom: '1rem'
-          }}>
-            <Sparkles size={15} />
-            Direct Studio Order & Instant Quote Desk
-          </div>
-
+        {/* COMPACT CLEAN HEADER */}
+        <div style={{ textAlign: 'center', marginBottom: '1.25rem' }}>
           <h1 style={{
-            fontSize: 'clamp(2rem, 4vw, 3rem)',
+            fontSize: 'clamp(1.4rem, 2.5vw, 1.9rem)',
             fontFamily: 'var(--font-heading)',
             fontWeight: 900,
-            lineHeight: 1.15,
-            margin: '0 0 1rem',
-            color: 'var(--color-text-primary, #0f172a)',
-            letterSpacing: '-0.025em'
+            lineHeight: 1.2,
+            margin: '0 0 0.35rem',
+            color: 'var(--color-text-primary, #0f172a)'
           }}>
-            Embroidery Digitizing & <span style={{ color: '#ea580c' }}>Custom Patches</span>
+            Commercial Embroidery Digitizing & <span style={{ color: '#ea580c' }}>Custom Patches</span>
           </h1>
 
           <p style={{
-            fontSize: '1.05rem',
+            fontSize: '0.88rem',
             color: 'var(--color-text-muted, #64748b)',
-            maxWidth: '640px',
-            margin: '0 auto 1.5rem',
-            lineHeight: 1.6
+            maxWidth: '560px',
+            margin: '0 auto 0.75rem',
+            lineHeight: 1.45
           }}>
-            Upload your design, select your specifications, and receive production-tested files in 4–12 hours with free unlimited revisions.
+            Upload design, select options, and get production stitch files in 4–12 hours.
           </p>
 
-          {/* 4 FAST TRUST HIGHLIGHTS */}
           <div style={{
             display: 'flex',
             justifyContent: 'center',
             alignItems: 'center',
             flexWrap: 'wrap',
-            gap: '1.25rem',
-            fontSize: '0.82rem',
+            gap: '0.85rem',
+            fontSize: '0.74rem',
             fontWeight: 700,
-            color: 'var(--color-text-secondary, #334155)'
+            color: 'var(--color-text-secondary, #475569)'
           }}>
-            <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-              <Zap size={15} style={{ color: '#ea580c' }} /> 4–12h Delivery Turnaround
+            <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+              <Zap size={13} style={{ color: '#ea580c' }} /> 4–12h Delivery
             </span>
-            <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-              <CheckCircle2 size={15} style={{ color: '#059669' }} /> 100% Hand-Mapped Pathing
+            <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+              <CheckCircle2 size={13} style={{ color: '#059669' }} /> 100% Hand Pathing
             </span>
-            <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-              <ShieldCheck size={15} style={{ color: '#0284c7' }} /> Free Unlimited Revisions
+            <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+              <ShieldCheck size={13} style={{ color: '#0284c7' }} /> Free Revisions
             </span>
-            <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-              <FileCheck size={15} style={{ color: '#7c3aed' }} /> Tajima .DST, Wilcom .EMB & Brother .PES
+            <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+              <FileCheck size={13} style={{ color: '#7c3aed' }} /> Tajima .DST, Wilcom .EMB, Brother .PES
             </span>
           </div>
         </div>
