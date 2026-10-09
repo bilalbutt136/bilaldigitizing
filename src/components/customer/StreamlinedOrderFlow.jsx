@@ -13,8 +13,7 @@ import {
   Minus,
   Trash2,
   ChevronDown,
-  ShieldCheck,
-  CheckCircle2
+  ShieldCheck
 } from 'lucide-react';
 import { uploadFileToCloudinaryFull } from '../../services/supabaseService';
 
@@ -424,25 +423,23 @@ export const StreamlinedOrderFlow = ({
     currentUser?.email
   );
 
-  // Submit Order and Launch Instant Stripe Checkout
+  // Submit Order and Launch Instant Stripe Checkout / Payment Page
   const handleFinalSubmitOrder = async () => {
-    if (uploadedFiles.length === 0) {
-      setUploadError('Please choose or upload your design file.');
-      return;
-    }
-
-    // Require Login/Signup before order creation
+    // 1. If not logged in -> SHOW POPUP TO LOGIN PAGE!
     if (!isUserAuthenticated) {
       saveDraft();
-      if (showToast) {
-        showToast('Please sign in or sign up with Google to complete your order.', 'info');
-      }
       if (setAuthModalMode) setAuthModalMode('login');
       if (setIsAuthModalOpen) {
         setIsAuthModalOpen(true);
       } else if (typeof window !== 'undefined') {
         window.location.href = `/login?redirect=${encodeURIComponent(window.location.pathname + window.location.search)}`;
       }
+      return;
+    }
+
+    // 2. If already logged in -> Validate design files
+    if (uploadedFiles.length === 0) {
+      setUploadError('Please choose or upload your design file.');
       return;
     }
 
@@ -558,11 +555,8 @@ export const StreamlinedOrderFlow = ({
         showToast(`🎉 Order #${resultingId.replace(/^#/, '')} created successfully!`, 'success');
       }
 
-      if (onCloseModal) onCloseModal();
-
-      // Launch Instant Stripe Checkout Modal
+      // Launch Instant Stripe Checkout Modal / Payment Page
       if (setIsCheckoutModalOpen && setCheckoutSession) {
-        setIsCheckoutModalOpen(true);
         setCheckoutSession({
           amount: pricing.total,
           price: pricing.total,
@@ -573,8 +567,10 @@ export const StreamlinedOrderFlow = ({
           clientEmail: cleanEmail,
           clientName: cleanName
         });
+        setIsCheckoutModalOpen(true);
       }
 
+      if (onCloseModal) onCloseModal();
       if (onOrderComplete) onOrderComplete(resultingId);
     } catch (err) {
       console.error('[Order submit exception]:', err);
@@ -1310,79 +1306,7 @@ export const StreamlinedOrderFlow = ({
             </div>
           </div>
 
-          {/* AUTHENTICATION / ACCOUNT STATUS (Replaces manual contact form fields) */}
-          {isUserAuthenticated ? (
-            <div
-              style={{
-                marginTop: '1.25rem',
-                padding: '0.75rem 1rem',
-                borderRadius: '12px',
-                background: isDark ? 'rgba(5, 150, 105, 0.12)' : '#ecfdf5',
-                border: '1.5px solid #a7f3d0',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                flexWrap: 'wrap',
-                gap: '0.5rem'
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <CheckCircle2 size={16} style={{ color: '#059669' }} />
-                <span style={{ fontSize: '0.84rem', fontWeight: 800, color: isDark ? '#34d399' : '#065f46' }}>
-                  Logged in as: {authUser?.user_metadata?.full_name || authUser?.name || currentUser?.name || authUser?.email?.split('@')[0]}
-                </span>
-              </div>
-              <span style={{ fontSize: '0.78rem', color: isDark ? '#a7f3d0' : '#047857', fontWeight: 700 }}>
-                {authUser?.email || currentUser?.email}
-              </span>
-            </div>
-          ) : (
-            <div
-              style={{
-                marginTop: '1.25rem',
-                padding: '0.8rem 1rem',
-                borderRadius: '12px',
-                background: isDark ? 'rgba(234, 88, 12, 0.08)' : '#fff7ed',
-                border: '1.5px dashed #fed7aa',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                flexWrap: 'wrap',
-                gap: '0.5rem'
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <Lock size={14} style={{ color: '#ea580c' }} />
-                <span style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--color-text-secondary, #475569)' }}>
-                  Google login or account required to place order
-                </span>
-              </div>
-              <button
-                type="button"
-                onClick={() => {
-                  saveDraft();
-                  if (setAuthModalMode) setAuthModalMode('login');
-                  if (setIsAuthModalOpen) setIsAuthModalOpen(true);
-                }}
-                style={{
-                  background: '#ffffff',
-                  border: '1.5px solid #cbd5e1',
-                  borderRadius: '8px',
-                  padding: '0.35rem 0.8rem',
-                  fontSize: '0.78rem',
-                  fontWeight: 800,
-                  color: '#0f172a',
-                  cursor: 'pointer',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '0.35rem',
-                  boxShadow: '0 1px 3px rgba(0,0,0,0.06)'
-                }}
-              >
-                Sign In with Google
-              </button>
-            </div>
-          )}
+
         </div>
 
         {/* RIGHT COLUMN: STICKY ORDER SUMMARY & PRICE COUNT */}
@@ -1501,13 +1425,9 @@ export const StreamlinedOrderFlow = ({
                 <>
                   <Loader2 size={16} className="animate-spin" /> Submitting...
                 </>
-              ) : isUserAuthenticated ? (
-                <>
-                  <Lock size={15} /> Place Order & Pay (${pricing.total.toFixed(2)})
-                </>
               ) : (
                 <>
-                  <Lock size={15} /> Continue to Order & Pay (${pricing.total.toFixed(2)})
+                  <Lock size={15} /> Place Order & Pay (${pricing.total.toFixed(2)})
                 </>
               )}
             </button>

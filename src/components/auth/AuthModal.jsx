@@ -64,13 +64,7 @@ export const AuthModal = ({ isStandalonePage = false, initialMode = null }) => {
 
   const isUserLoggedIn = Boolean(
     isAuthenticated ||
-    authUser?.email ||
-    (typeof window !== 'undefined' && (() => {
-      try {
-        const saved = localStorage.getItem('bdigi_auth_user');
-        return Boolean(saved && JSON.parse(saved)?.email);
-      } catch { return false; }
-    })())
+    authUser?.email
   );
 
   // Redirect only after the real Supabase session has been verified. Cached local state alone is not authoritative.
@@ -174,6 +168,40 @@ export const AuthModal = ({ isStandalonePage = false, initialMode = null }) => {
     };
   }, [isAuthModalOpen, isStandalonePage, legalModalType, errorModalText, handleSafeClose]);
 
+  const handlePostCustomerAuth = React.useCallback(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('bdigi_customer_tab', 'dashboard');
+    }
+    if (setActiveCustomerTab) {
+      setActiveCustomerTab('dashboard');
+    }
+
+    let pendingOrder = orderWizardInitialData;
+    if (!pendingOrder && typeof window !== 'undefined') {
+      try {
+        const saved = localStorage.getItem('bdigi_pending_order_wizard') || localStorage.getItem('bdigi_pending_order_draft');
+        if (saved) pendingOrder = JSON.parse(saved);
+      } catch {}
+    }
+
+    if (isStandalonePage) {
+      redirectStandaloneAfterAuth('customer');
+    } else {
+      setIsAuthModalOpen(false);
+      if (typeof window !== 'undefined' && window.location.pathname === '/order') {
+        // Customer is already on the dedicated /order placement page; keep them right here!
+        return;
+      }
+      if (pendingOrder) {
+        setTimeout(() => {
+          if (openOrderWizard) openOrderWizard(pendingOrder);
+        }, 150);
+      } else {
+        navigate('/client-portal');
+      }
+    }
+  }, [isStandalonePage, orderWizardInitialData, redirectStandaloneAfterAuth, openOrderWizard, setIsAuthModalOpen, navigate, setActiveCustomerTab]);
+
   if (!isStandalonePage && (!isAuthModalOpen || (isAuthInitialized && isUserLoggedIn && authModalMode !== 'update_password'))) return null;
 
   if (isStandalonePage && !isAuthInitialized && isUserLoggedIn) {
@@ -238,35 +266,6 @@ export const AuthModal = ({ isStandalonePage = false, initialMode = null }) => {
     );
   }
 
-  const handlePostCustomerAuth = React.useCallback(() => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('bdigi_customer_tab', 'dashboard');
-    }
-    if (setActiveCustomerTab) {
-      setActiveCustomerTab('dashboard');
-    }
-
-    let pendingOrder = orderWizardInitialData;
-    if (!pendingOrder && typeof window !== 'undefined') {
-      try {
-        const saved = localStorage.getItem('bdigi_pending_order_wizard') || localStorage.getItem('bdigi_pending_order_draft');
-        if (saved) pendingOrder = JSON.parse(saved);
-      } catch {}
-    }
-
-    if (isStandalonePage) {
-      redirectStandaloneAfterAuth('customer');
-    } else {
-      setIsAuthModalOpen(false);
-      if (pendingOrder) {
-        setTimeout(() => {
-          if (openOrderWizard) openOrderWizard(pendingOrder);
-        }, 150);
-      } else {
-        navigate('/client-portal');
-      }
-    }
-  }, [isStandalonePage, orderWizardInitialData, redirectStandaloneAfterAuth, openOrderWizard, setIsAuthModalOpen, navigate, setActiveCustomerTab]);
 
   const handleLoginSubmit = async (e) => {
     e.preventDefault();
