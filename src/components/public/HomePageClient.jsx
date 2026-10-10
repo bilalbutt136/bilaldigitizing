@@ -6,7 +6,6 @@ import { HeroSection } from './HeroSection';
 import { ServicesSection } from './ServicesSection';
 import { TrustStatsBar } from './TrustStatsBar';
 import { WhyChooseUs } from './WhyChooseUs';
-import { PortfolioPreview } from './PortfolioPreview';
 import { TestimonialsFAQ } from './TestimonialsFAQ';
 import { FinalCTA } from './FinalCTA';
 import { BDigitizingMobileApp } from '../mobile/BDigitizingMobileApp';
@@ -61,7 +60,6 @@ export default function HomePageClient({ initialAppMode = false, initialAppTab =
         <>
           <TrustStatsBar />
           <WhyChooseUs />
-          <PortfolioPreview />
           <TestimonialsFAQ />
           <FinalCTA />
         </>

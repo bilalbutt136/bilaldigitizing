@@ -13,7 +13,7 @@ export const FinalCTA = () => {
 
   const handleCtaClick = () => {
     if (openOrderWizard) {
-      const currentKey = activeHomeServiceTab === 'patches' ? 'patch' : (activeHomeServiceTab || 'embroidery');
+      const currentKey = activeHomeServiceTab === 'patches' ? 'patch' : (activeHomeServiceTab === 'vector' ? 'vector' : (activeHomeServiceTab === 'embroidery' ? 'embroidery' : 'all'));
       openOrderWizard({ type: currentKey });
     } else {
       protectedNavigate('customer', true);
@@ -32,6 +32,12 @@ export const FinalCTA = () => {
         title: dbSettings.cta_patch_title || 'Transform Your Designs Into Premium Custom Patches',
         desc: dbSettings.cta_patch_desc || 'High-density embroidered, woven, and PVC patches delivered to your door. Get a free digital proof and fast worldwide shipping.',
         btnText: dbSettings.cta_patch_btn || 'Order Custom Patches'
+      };
+    } else if (activeHomeServiceTab === 'all' || !activeHomeServiceTab) {
+      return {
+        title: dbSettings.cta_all_title || 'Ready to Elevate Your Embroidery & Custom Patches?',
+        desc: dbSettings.cta_all_desc || 'Upload your artwork for fast digitizing, vector art conversions, or custom physical patches with zero thread breaks and free revisions.',
+        btnText: dbSettings.cta_all_btn || 'Upload Artwork & Start Order'
       };
     }
     return {
