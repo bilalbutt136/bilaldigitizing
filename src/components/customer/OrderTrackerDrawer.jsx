@@ -1200,6 +1200,24 @@ export const OrderTrackerDrawer = () => {
                   {formatOrderId(ord.id)}
                 </span>
                 {getStatusBadge()}
+                {monthlyProgress && (
+                  <span style={{
+                    background: monthlyProgress.complete ? 'rgba(16, 185, 129, 0.2)' : 'rgba(37, 99, 235, 0.2)',
+                    color: monthlyProgress.complete ? '#34d399' : '#60a5fa',
+                    border: `1px solid ${monthlyProgress.complete ? 'rgba(16, 185, 129, 0.4)' : 'rgba(37, 99, 235, 0.4)'}`,
+                    fontWeight: 850,
+                    padding: '0.12rem 0.5rem',
+                    borderRadius: '9999px',
+                    fontSize: '0.7rem',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.25rem'
+                  }}>
+                    {monthlyProgress.complete ? '✓ Monthly Plan Completed' :
+                      monthlyProgress.expired ? 'Monthly period ended' :
+                      `${monthlyProgress.uploaded}/${monthlyProgress.quota} uploaded • ${monthlyProgress.delivered} delivered`}
+                  </span>
+                )}
                 {!isMobileLayout && (isPaid ? (
                   <span style={{ background: 'rgba(16, 185, 129, 0.18)', color: '#10b981', border: '1px solid rgba(16, 185, 129, 0.4)', fontWeight: 800, padding: '0.12rem 0.45rem', borderRadius: '9999px', fontSize: '0.7rem', display: 'inline-flex', alignItems: 'center', gap: '0.2rem' }}>
                     <Check size={11} /> PAID

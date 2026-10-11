@@ -29,6 +29,20 @@ import {
 } from 'lucide-react';
 import AdminCreateOfferModal from './AdminCreateOfferModal';
 import { ArtworkLightboxModal } from '../common/ArtworkLightboxModal';
+import { getMonthlyProgress } from '../../utils/monthlyProgress';
+
+const resolveMonthlyProgress = (order) => {
+  if (!order) return null;
+  if (order.monthlyProgress) return order.monthlyProgress;
+  const parsedNotes = typeof order.notes === 'object' && order.notes !== null
+    ? order.notes
+    : (() => {
+        try { return JSON.parse(order.notes); } catch { return null; }
+      })();
+  const candidate = parsedNotes || (order.monthlyBundle ? order : null);
+  if (!candidate) return null;
+  return getMonthlyProgress(candidate, candidate.deliveries || order.deliveries, order.paid_at || order.created_at || order.createdAt);
+};
 
 export const AdminExecutiveDashboard = ({
   orders = [],
@@ -911,6 +925,7 @@ export const AdminExecutiveDashboard = ({
                 const artworkImg = ord.artworkUrl || ord.artwork_url || ord.image_url || ord.logo || null;
                 const isPaid = ord.payment_status === 'paid';
                 const cleanId = String(ord.id || '').replace(/^#+/, '');
+                const monthlyProg = resolveMonthlyProgress(ord);
 
                 return (
                   <div
@@ -975,18 +990,33 @@ export const AdminExecutiveDashboard = ({
                         </div>
 
                         {/* Production Status */}
-                        <span style={{
-                          fontSize: '0.7rem',
-                          fontWeight: 800,
-                          background: statusBadge.bg,
-                          color: statusBadge.color,
-                          border: `1px solid ${statusBadge.border}`,
-                          padding: '0.15rem 0.55rem',
-                          borderRadius: '6px',
-                          whiteSpace: 'nowrap'
-                        }}>
-                          {statusBadge.label}
-                        </span>
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.2rem' }}>
+                          <span style={{
+                            fontSize: '0.7rem',
+                            fontWeight: 800,
+                            background: statusBadge.bg,
+                            color: statusBadge.color,
+                            border: `1px solid ${statusBadge.border}`,
+                            padding: '0.15rem 0.55rem',
+                            borderRadius: '6px',
+                            whiteSpace: 'nowrap'
+                          }}>
+                            {statusBadge.label}
+                          </span>
+                          {monthlyProg && (
+                            <span style={{
+                              fontSize: '0.72rem',
+                              fontWeight: 800,
+                              color: monthlyProg.complete ? 'var(--color-success, #059669)' : 'var(--color-primary, #2563eb)',
+                              lineHeight: 1.2,
+                              textAlign: 'right'
+                            }}>
+                              {monthlyProg.complete ? '✓ Monthly Plan Completed' :
+                                monthlyProg.expired ? 'Monthly period ended' :
+                                `${monthlyProg.uploaded}/${monthlyProg.quota} uploaded • ${monthlyProg.delivered} delivered`}
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </div>
 

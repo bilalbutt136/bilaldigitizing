@@ -85,3 +85,17 @@ test('monthly upload folder is signed and visible order status uses uploaded, no
  assert.match(signature,/monthly-designs/);
  assert.match(customer,/monthlyProgress\.uploaded/);
 });
+
+test('monthly plan upload and delivery progress is displayed across admin portal views', () => {
+  const adminTable = fs.readFileSync('src/components/admin/OrderManagementTable.jsx', 'utf8');
+  const adminExecutive = fs.readFileSync('src/components/admin/AdminExecutiveDashboard.jsx', 'utf8');
+  const mobileAdmin = fs.readFileSync('src/components/admin/MobileAdminConsole.jsx', 'utf8');
+  const orderDrawer = fs.readFileSync('src/components/customer/OrderTrackerDrawer.jsx', 'utf8');
+
+  assert.match(adminTable, /monthlyProg\.uploaded.*monthlyProg\.quota.*monthlyProg\.delivered/);
+  assert.match(adminTable, /✓ Monthly Plan Completed/);
+  assert.match(adminExecutive, /monthlyProg\.uploaded.*monthlyProg\.quota.*monthlyProg\.delivered/);
+  assert.match(mobileAdmin, /monthlyProg\.uploaded.*monthlyProg\.quota.*monthlyProg\.delivered/);
+  assert.match(orderDrawer, /monthlyProgress\.uploaded.*monthlyProgress\.quota.*monthlyProgress\.delivered/);
+});
+

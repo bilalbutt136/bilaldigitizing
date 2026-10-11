@@ -28,6 +28,20 @@ import {
 } from 'lucide-react';
 import { CustomerInvoiceModal } from '../common/CustomerInvoiceModal';
 import { fetchOrderById } from '../../services/supabaseService';
+import { getMonthlyProgress } from '../../utils/monthlyProgress';
+
+const resolveMonthlyProgress = (order) => {
+  if (!order) return null;
+  if (order.monthlyProgress) return order.monthlyProgress;
+  const parsedNotes = typeof order.notes === 'object' && order.notes !== null
+    ? order.notes
+    : (() => {
+        try { return JSON.parse(order.notes); } catch { return null; }
+      })();
+  const candidate = parsedNotes || (order.monthlyBundle ? order : null);
+  if (!candidate) return null;
+  return getMonthlyProgress(candidate, candidate.deliveries || order.deliveries, order.paid_at || order.created_at || order.createdAt);
+};
 
 const _getNextStatuses = (currentStatus) => {
   const transitions = {
@@ -744,6 +758,7 @@ export const OrderManagementTable = () => {
                   : artworkImg;
 
                 const isReviewPending = ord.worker_status === 'Review Pending' || ord.workerStatus === 'Review Pending';
+                const monthlyProg = resolveMonthlyProgress(ord);
 
                 return (
                   <tr
@@ -810,6 +825,19 @@ export const OrderManagementTable = () => {
                         <div>
                           {getStatusBadge(ord.status)}
                         </div>
+                        {monthlyProg && (
+                          <div style={{
+                            marginTop: '0.2rem',
+                            fontSize: '0.73rem',
+                            fontWeight: 800,
+                            color: monthlyProg.complete ? 'var(--color-success, #059669)' : 'var(--color-primary, #2563eb)',
+                            lineHeight: 1.25
+                          }}>
+                            {monthlyProg.complete ? '✓ Monthly Plan Completed' :
+                              monthlyProg.expired ? 'Monthly period ended' :
+                              `${monthlyProg.uploaded}/${monthlyProg.quota} uploaded • ${monthlyProg.delivered} delivered`}
+                          </div>
+                        )}
                         {isReviewPending && (
                           <div style={{
                             display: 'inline-flex',

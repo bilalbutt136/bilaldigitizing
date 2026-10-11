@@ -25,6 +25,20 @@ import { fetchChatUnreadCounts } from '../../services/chatUnreadService';
 import { subscribeToChatMessages, subscribeToConversations } from '../../services/supabaseService';
 import { playMessageChimeForMessage } from '../../utils/audioNotification';
 import { useAdminIdleSession } from '../../hooks/useAdminIdleSession';
+import { getMonthlyProgress } from '../../utils/monthlyProgress';
+
+const resolveMonthlyProgress = (order) => {
+  if (!order) return null;
+  if (order.monthlyProgress) return order.monthlyProgress;
+  const parsedNotes = typeof order.notes === 'object' && order.notes !== null
+    ? order.notes
+    : (() => {
+        try { return JSON.parse(order.notes); } catch { return null; }
+      })();
+  const candidate = parsedNotes || (order.monthlyBundle ? order : null);
+  if (!candidate) return null;
+  return getMonthlyProgress(candidate, candidate.deliveries || order.deliveries, order.paid_at || order.created_at || order.createdAt);
+};
 
 const ACTIVE_STATUSES = new Set(['in_progress', 'digitizing', 'assigned', 'qc']);
 const FINISHED_STATUSES = new Set(['delivered', 'completed']);
@@ -141,6 +155,7 @@ function MobileOrderCard({ order, onOpen, onStart, isStarting }) {
   const title = order?.title || order?.service_type || order?.serviceCategory || order?.service_category || 'Production Order';
   const priceRaw = Number(order?.price ?? order?.totalPrice ?? order?.total_price ?? 0);
   const price = Number.isFinite(priceRaw) && priceRaw > 0 ? `$${priceRaw.toFixed(2)}` : null;
+  const monthlyProg = resolveMonthlyProgress(order);
 
   return (
     <article style={{
@@ -209,15 +224,29 @@ function MobileOrderCard({ order, onOpen, onStart, isStarting }) {
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.6rem', marginTop: '0.8rem' }}>
-        <span style={{
-          minWidth: 0,
-          fontSize: '0.7rem',
-          fontWeight: 800,
-          color: status === 'revision' ? '#b45309' : '#475569',
-          textTransform: 'capitalize'
-        }}>
-          {getStatusLabel(order)}
-        </span>
+        <div style={{ minWidth: 0, display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
+          <span style={{
+            minWidth: 0,
+            fontSize: '0.7rem',
+            fontWeight: 800,
+            color: status === 'revision' ? '#b45309' : '#475569',
+            textTransform: 'capitalize'
+          }}>
+            {getStatusLabel(order)}
+          </span>
+          {monthlyProg && (
+            <span style={{
+              fontSize: '0.72rem',
+              fontWeight: 800,
+              color: monthlyProg.complete ? 'var(--color-success, #059669)' : 'var(--color-primary, #2563eb)',
+              lineHeight: 1.2
+            }}>
+              {monthlyProg.complete ? '✓ Monthly Plan Completed' :
+                monthlyProg.expired ? 'Monthly period ended' :
+                `${monthlyProg.uploaded}/${monthlyProg.quota} uploaded • ${monthlyProg.delivered} delivered`}
+            </span>
+          )}
+        </div>
         <div style={{ display: 'flex', gap: '0.45rem', flexShrink: 0 }}>
           {canStart && (
             <button
