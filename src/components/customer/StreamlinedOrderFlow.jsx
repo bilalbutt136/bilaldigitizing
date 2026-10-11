@@ -1737,7 +1737,7 @@ export const StreamlinedOrderFlow = ({
                     <span>Turnaround:</span>
                     <strong style={{ color: selectedService !== 'patch' && (turnaround === 'rush' || vectorTurnaround === 'rush') ? '#ea580c' : '#059669' }}>
                       {selectedService === 'patch'
-                        ? '10–14 business days'
+                        ? '10–14 days'
                         : ((turnaround === 'rush' || vectorTurnaround === 'rush') ? 'Rush (2–4h)' : 'Standard (Free)')}
                     </strong>
                   </div>
