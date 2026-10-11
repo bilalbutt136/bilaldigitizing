@@ -196,7 +196,7 @@ export const AdminExecutiveDashboard = ({
     if (combined.includes('patch')) {
       return { label: 'Custom Patches', icon: '', bg: '#faf5ff', color: '#9333ea', border: '#e9d5ff' };
     }
-    return { label: 'Embroidery Digitizing', icon: '', bg: '#fff7ed', color: '#ea580c', border: '#fed7aa' };
+    return { label: 'Embroidery Digitizing', icon: '', bg: '#fff7ed', color: 'var(--color-primary)', border: '#fed7aa' };
   };
 
   return (
@@ -260,7 +260,7 @@ export const AdminExecutiveDashboard = ({
             className="btn btn-sm"
             onClick={() => setIsOfferModalOpen(true)}
             style={{
-              background: 'linear-gradient(135deg, #ea580c 0%, #c2410c 100%)',
+              background: 'linear-gradient(135deg, #2563eb 0%, #1e40af 100%)',
               color: '#ffffff',
               border: 'none',
               fontWeight: 800,
@@ -270,7 +270,7 @@ export const AdminExecutiveDashboard = ({
               display: 'flex',
               alignItems: 'center',
               gap: '0.4rem',
-              boxShadow: '0 3px 10px rgba(234, 88, 12, 0.3)',
+              boxShadow: '0 3px 10px rgba(37, 99, 235, 0.3)',
               cursor: 'pointer'
             }}
           >
@@ -347,8 +347,8 @@ export const AdminExecutiveDashboard = ({
               width: '34px',
               height: '34px',
               borderRadius: '10px',
-              background: 'rgba(234, 88, 12, 0.1)',
-              color: '#ea580c',
+              background: 'rgba(37, 99, 235, 0.1)',
+              color: 'var(--color-primary)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center'
@@ -366,7 +366,7 @@ export const AdminExecutiveDashboard = ({
             <span>•</span>
             <span>Avg ${avgOrderValue.toFixed(2)}/job</span>
           </div>
-          <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '3px', background: 'linear-gradient(90deg, #ea580c, #fb923c)' }} />
+          <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '3px', background: 'linear-gradient(90deg, #2563eb, #8b5cf6)' }} />
         </div>
 
         {/* Metric 2: Active Pipeline */}
@@ -513,7 +513,7 @@ export const AdminExecutiveDashboard = ({
       }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.85rem' }}>
           <div>
-            <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#ea580c', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+            <span style={{ fontSize: '0.72rem', fontWeight: 800, color: 'var(--color-primary)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
               PRODUCTION FLOW
             </span>
             <h3 style={{ fontSize: '1rem', fontWeight: 800, color: 'var(--text-main, #0f172a)', margin: 0 }}>
@@ -545,8 +545,8 @@ export const AdminExecutiveDashboard = ({
             }}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.2rem' }}>
-              <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#c2410c' }}>1. Pending Review</span>
-              <span style={{ fontSize: '0.85rem', fontWeight: 900, color: '#ea580c' }}>{pendingJobs.length}</span>
+              <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--color-primary)' }}>1. Pending Review</span>
+              <span style={{ fontSize: '0.85rem', fontWeight: 900, color: 'var(--color-primary)' }}>{pendingJobs.length}</span>
             </div>
             <div style={{ fontSize: '0.68rem', color: 'var(--text-muted, #64748b)' }}>
               New orders awaiting specs verification
@@ -698,9 +698,9 @@ export const AdminExecutiveDashboard = ({
 
               {selectedStatus === 'pending' && (
                 <span style={{
-                  background: '#ffedd5',
+                  background: 'var(--color-primary-light)',
                   border: '1.5px solid #fed7aa',
-                  color: '#c2410c',
+                  color: 'var(--color-primary)',
                   fontSize: '0.72rem',
                   fontWeight: 800,
                   padding: '0.15rem 0.55rem',
@@ -714,7 +714,7 @@ export const AdminExecutiveDashboard = ({
                     type="button"
                     onClick={() => setSelectedStatus('all')}
                     style={{
-                      background: '#ea580c',
+                      background: 'var(--color-action-start, #2563eb)',
                       color: '#ffffff',
                       border: 'none',
                       borderRadius: '50%',
@@ -743,7 +743,7 @@ export const AdminExecutiveDashboard = ({
               style={{
                 background: 'none',
                 border: 'none',
-                color: '#ea580c',
+                color: 'var(--color-primary)',
                 fontSize: '0.78rem',
                 fontWeight: 800,
                 cursor: 'pointer',
@@ -896,7 +896,7 @@ export const AdminExecutiveDashboard = ({
                   padding: '0.3rem 0.75rem',
                   fontSize: '0.72rem',
                   fontWeight: 700,
-                  color: '#ea580c',
+                  color: 'var(--color-primary)',
                   cursor: 'pointer'
                 }}
               >
@@ -1131,7 +1131,7 @@ export const AdminExecutiveDashboard = ({
             boxShadow: '0 2px 8px rgba(0,0,0,0.02)'
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.75rem' }}>
-              <Zap size={16} style={{ color: '#ea580c' }} />
+              <Zap size={16} style={{ color: 'var(--color-primary)' }} />
               <h4 style={{ fontSize: '0.9rem', fontWeight: 900, color: 'var(--text-main, #0f172a)', margin: 0 }}>
                 Priority Action Items
               </h4>
@@ -1152,7 +1152,7 @@ export const AdminExecutiveDashboard = ({
                   background: selectedStatus === 'pending' ? '#ffedd5' : (pendingJobs.length > 0 ? '#fff7ed' : 'var(--bg-subtle, #f8fafc)'),
                   border: selectedStatus === 'pending' ? '2px solid #ea580c' : (pendingJobs.length > 0 ? '1.5px solid #fed7aa' : '1px solid #e2e8f0'),
                   cursor: 'pointer',
-                  boxShadow: selectedStatus === 'pending' ? '0 0 0 2px rgba(234, 88, 12, 0.2)' : 'none',
+                  boxShadow: selectedStatus === 'pending' ? '0 0 0 2px rgba(37, 99, 235, 0.2)' : 'none',
                   transition: 'all 0.15s ease'
                 }}
               >
@@ -1167,7 +1167,7 @@ export const AdminExecutiveDashboard = ({
                     </div>
                   </div>
                 </div>
-                <span style={{ background: '#ea580c', color: '#ffffff', fontSize: '0.68rem', fontWeight: 900, borderRadius: '9999px', padding: '0.1rem 0.5rem' }}>
+                <span style={{ background: 'var(--color-action-start, #2563eb)', color: '#ffffff', fontSize: '0.68rem', fontWeight: 900, borderRadius: '9999px', padding: '0.1rem 0.5rem' }}>
                   {pendingJobs.length}
                 </span>
               </div>
@@ -1232,10 +1232,10 @@ export const AdminExecutiveDashboard = ({
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', fontWeight: 800, marginBottom: '0.25rem' }}>
                   <span style={{ color: 'var(--text-main, #0f172a)' }}>🧵 Embroidery Digitizing</span>
-                  <span style={{ color: '#ea580c' }}>{categoryStats.embroidery.count} Jobs ({categoryStats.embroidery.pct}%)</span>
+                  <span style={{ color: 'var(--color-primary)' }}>{categoryStats.embroidery.count} Jobs ({categoryStats.embroidery.pct}%)</span>
                 </div>
-                <div style={{ height: '7px', background: '#f1f5f9', borderRadius: '9999px', overflow: 'hidden' }}>
-                  <div style={{ width: `${categoryStats.embroidery.pct}%`, height: '100%', background: 'linear-gradient(90deg, #ea580c, #fb923c)', borderRadius: '9999px' }} />
+                <div style={{ height: '7px', background: 'var(--color-surface-elevated)', borderRadius: '9999px', overflow: 'hidden' }}>
+                  <div style={{ width: `${categoryStats.embroidery.pct}%`, height: '100%', background: 'linear-gradient(90deg, #2563eb, #8b5cf6)', borderRadius: '9999px' }} />
                 </div>
                 <div style={{ fontSize: '0.68rem', color: 'var(--text-muted, #64748b)', marginTop: '2px', textAlign: 'right' }}>
                   ${categoryStats.embroidery.revenue.toFixed(2)} generated
@@ -1248,7 +1248,7 @@ export const AdminExecutiveDashboard = ({
                   <span style={{ color: 'var(--text-main, #0f172a)' }}>✒️ Vector Art Redraw</span>
                   <span style={{ color: '#2563eb' }}>{categoryStats.vector.count} Jobs ({categoryStats.vector.pct}%)</span>
                 </div>
-                <div style={{ height: '7px', background: '#f1f5f9', borderRadius: '9999px', overflow: 'hidden' }}>
+                <div style={{ height: '7px', background: 'var(--color-surface-elevated)', borderRadius: '9999px', overflow: 'hidden' }}>
                   <div style={{ width: `${categoryStats.vector.pct}%`, height: '100%', background: 'linear-gradient(90deg, #2563eb, #60a5fa)', borderRadius: '9999px' }} />
                 </div>
                 <div style={{ fontSize: '0.68rem', color: 'var(--text-muted, #64748b)', marginTop: '2px', textAlign: 'right' }}>
@@ -1262,7 +1262,7 @@ export const AdminExecutiveDashboard = ({
                   <span style={{ color: 'var(--text-main, #0f172a)' }}>🏷️ Custom Physical Patches</span>
                   <span style={{ color: '#9333ea' }}>{categoryStats.patches.count} Jobs ({categoryStats.patches.pct}%)</span>
                 </div>
-                <div style={{ height: '7px', background: '#f1f5f9', borderRadius: '9999px', overflow: 'hidden' }}>
+                <div style={{ height: '7px', background: 'var(--color-surface-elevated)', borderRadius: '9999px', overflow: 'hidden' }}>
                   <div style={{ width: `${categoryStats.patches.pct}%`, height: '100%', background: 'linear-gradient(90deg, #9333ea, #c084fc)', borderRadius: '9999px' }} />
                 </div>
                 <div style={{ fontSize: '0.68rem', color: 'var(--text-muted, #64748b)', marginTop: '2px', textAlign: 'right' }}>
@@ -1303,7 +1303,7 @@ export const AdminExecutiveDashboard = ({
                   gap: '0.35rem'
                 }}
               >
-                <Sliders size={13} style={{ color: '#ea580c' }} />
+                <Sliders size={13} style={{ color: 'var(--color-primary)' }} />
                 <span>Pricing Matrix</span>
               </button>
 

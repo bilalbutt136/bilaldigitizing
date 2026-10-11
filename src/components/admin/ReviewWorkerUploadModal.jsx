@@ -203,7 +203,7 @@ export const ReviewWorkerUploadModal = ({ order, isOpen, onClose, onReviewed, sh
 
                 return (
                   <div key={idx} style={{
-                    background: '#f8fafc',
+                    background: 'var(--color-background)',
                     border: '1.5px solid #cbd5e1',
                     borderRadius: '12px',
                     padding: '1rem 1.25rem',
@@ -248,7 +248,7 @@ export const ReviewWorkerUploadModal = ({ order, isOpen, onClose, onReviewed, sh
                           type="button"
                           onClick={() => openFileInNewTab(fUrl, fName)}
                           style={{
-                            background: '#ffffff',
+                            background: 'var(--color-surface)',
                             color: '#2563eb',
                             border: '1.5px solid #bfdbfe',
                             padding: '0.45rem 0.85rem',

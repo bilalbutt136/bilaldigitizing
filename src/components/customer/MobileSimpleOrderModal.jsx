@@ -49,7 +49,7 @@ export const MobileSimpleOrderModal = ({
             width: '34px',
             height: '34px',
             borderRadius: '50%',
-            background: '#ffffff',
+            background: 'var(--color-surface)',
             border: '1px solid #cbd5e1',
             display: 'flex',
             alignItems: 'center',

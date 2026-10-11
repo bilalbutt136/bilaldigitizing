@@ -219,7 +219,7 @@ export const WorkerDashboard = ({ worker, logoutRoute = '/portal/login' }) => {
       case 'in_progress':
       default:
         return (
-          <span style={{ background: '#fff7ed', color: '#ea580c', border: '1px solid #fed7aa', padding: '0.2rem 0.55rem', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 800, display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
+          <span style={{ background: 'var(--color-primary-light)', color: 'var(--color-primary)', border: '1px solid #fed7aa', padding: '0.2rem 0.55rem', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 800, display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
             <Scissors size={12} /> In Progress
           </span>
         );
@@ -245,7 +245,7 @@ export const WorkerDashboard = ({ worker, logoutRoute = '/portal/login' }) => {
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
             <div style={{
-              background: 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)',
+              background: 'linear-gradient(135deg, #4f46e5 0%, #2563eb 100%)',
               color: '#ffffff',
               width: '48px',
               height: '48px',
@@ -263,7 +263,7 @@ export const WorkerDashboard = ({ worker, logoutRoute = '/portal/login' }) => {
                 Digitizer Workstation
               </h1>
               <p style={{ fontSize: '0.825rem', color: '#94a3b8', margin: '0.15rem 0 0 0' }}>
-                Signed in as: <strong style={{ color: '#f97316' }}>{worker?.name || worker?.email || 'Studio Digitizer'}</strong> • Production Desk
+                Signed in as: <strong style={{ color: 'var(--color-primary)' }}>{worker?.name || worker?.email || 'Studio Digitizer'}</strong> • Production Desk
               </p>
             </div>
           </div>
@@ -356,7 +356,7 @@ export const WorkerDashboard = ({ worker, logoutRoute = '/portal/login' }) => {
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
               <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#94a3b8' }}>IN PROGRESS</span>
-              <span style={{ background: '#fff7ed', color: '#ea580c', borderRadius: '50%', width: '28px', height: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <span style={{ background: 'var(--color-primary-light)', color: 'var(--color-primary)', borderRadius: '50%', width: '28px', height: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <Scissors size={14} />
               </span>
             </div>
@@ -570,7 +570,7 @@ export const WorkerDashboard = ({ worker, logoutRoute = '/portal/login' }) => {
               gap: '1rem'
             }}>
               <div>
-                <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#f97316', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--color-primary)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                   Internal Workforce Ledger
                 </span>
                 <h3 style={{ margin: '0.15rem 0 0 0', fontSize: '1.2rem', fontWeight: 800, color: '#ffffff' }}>
@@ -666,7 +666,7 @@ export const WorkerDashboard = ({ worker, logoutRoute = '/portal/login' }) => {
                     <tbody>
                       {billingStatement.unpaidOrders.map((item) => (
                         <tr key={item.id} style={{ borderBottom: '1px solid #334155' }}>
-                          <td style={{ padding: '0.85rem 1.25rem', fontWeight: 800, color: '#f97316' }}>
+                          <td style={{ padding: '0.85rem 1.25rem', fontWeight: 800, color: 'var(--color-primary)' }}>
                             {formatOrderId(item.id)}
                           </td>
                           <td style={{ padding: '0.85rem 1rem', color: '#cbd5e1' }}>
@@ -804,7 +804,7 @@ export const WorkerDashboard = ({ worker, logoutRoute = '/portal/login' }) => {
         /* Orders List / Cards */
         isLoading ? (
           <div style={{ padding: '4rem', textAlign: 'center', background: '#1e293b', borderRadius: '14px', border: '1px solid #334155' }}>
-            <div style={{ margin: '0 auto 1rem', width: '32px', height: '32px', border: '3px solid rgba(255,255,255,0.1)', borderTopColor: '#f97316', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+            <div style={{ margin: '0 auto 1rem', width: '32px', height: '32px', border: '3px solid rgba(255,255,255,0.1)', borderTopColor: 'var(--color-primary)', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
             <p style={{ fontSize: '0.9rem', color: '#94a3b8' }}>Loading assigned tasks...</p>
           </div>
         ) : filteredOrders.length === 0 ? (
@@ -870,7 +870,7 @@ export const WorkerDashboard = ({ worker, logoutRoute = '/portal/login' }) => {
                     {/* Order Details Info */}
                     <div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.2rem' }}>
-                        <span style={{ fontWeight: 800, color: '#f97316', fontSize: '0.8rem', background: 'rgba(249, 115, 22, 0.12)', padding: '0.1rem 0.4rem', borderRadius: '4px' }}>
+                        <span style={{ fontWeight: 800, color: 'var(--color-primary)', fontSize: '0.8rem', background: 'rgba(249, 115, 22, 0.12)', padding: '0.1rem 0.4rem', borderRadius: '4px' }}>
                           {formatOrderId(ord.id)}
                         </span>
                         <h4 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 800, color: '#ffffff' }}>
@@ -906,7 +906,7 @@ export const WorkerDashboard = ({ worker, logoutRoute = '/portal/login' }) => {
                         <span>•</span>
                         <span>🧵 {ord.fabricType || 'Pique Cotton'}</span>
                         <span>•</span>
-                        <span style={{ color: '#f97316', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
+                        <span style={{ color: 'var(--color-primary)', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
                           <Clock size={12} /> Placed: <span style={{ color: '#ffffff' }}>{formatPlacementTiming(ord.created_at || ord.date)}</span> {getRelativeTimeString(ord.created_at || ord.date) && <span style={{ color: '#94a3b8' }}>({getRelativeTimeString(ord.created_at || ord.date)})</span>}
                         </span>
                       </div>
@@ -925,7 +925,7 @@ export const WorkerDashboard = ({ worker, logoutRoute = '/portal/login' }) => {
                             )}
                             {parsed.customerNotes && (
                               <div style={{ fontSize: '0.775rem', color: '#cbd5e1', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                                <FileText size={13} style={{ color: '#f97316', flexShrink: 0 }} />
+                                <FileText size={13} style={{ color: 'var(--color-primary)', flexShrink: 0 }} />
                                 <span>Client: "{parsed.customerNotes.slice(0, 90)}{parsed.customerNotes.length > 90 ? '...' : ''}"</span>
                               </div>
                             )}
@@ -951,7 +951,7 @@ export const WorkerDashboard = ({ worker, logoutRoute = '/portal/login' }) => {
                       style={{
                         background: isPendingAcceptance 
                           ? 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)' 
-                          : 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)',
+                          : 'linear-gradient(135deg, #4f46e5 0%, #2563eb 100%)',
                         color: '#ffffff',
                         border: 'none',
                         borderRadius: '8px',

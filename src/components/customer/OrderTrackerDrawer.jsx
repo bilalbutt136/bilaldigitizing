@@ -1001,14 +1001,14 @@ export const OrderTrackerDrawer = () => {
     if (isUnpaid && !isPaid) {
       return (
         <span style={{
-          background: 'linear-gradient(135deg, #ea580c 0%, #c2410c 100%)',
+          background: 'linear-gradient(135deg, #2563eb 0%, #1e40af 100%)',
           color: '#ffffff',
           border: '1px solid #fdba74',
           padding: '0.25rem 0.75rem',
           borderRadius: '9999px',
           fontSize: '0.75rem',
           fontWeight: 900,
-          boxShadow: '0 2px 8px rgba(234, 88, 12, 0.35)',
+          boxShadow: '0 2px 8px rgba(37, 99, 235, 0.35)',
           display: 'inline-flex',
           alignItems: 'center',
           gap: '0.35rem'
@@ -1106,7 +1106,7 @@ export const OrderTrackerDrawer = () => {
               width: isMobileLayout ? '36px' : '44px',
               height: isMobileLayout ? '36px' : '44px',
               borderRadius: '10px',
-              background: 'linear-gradient(135deg, var(--color-secondary) 0%, var(--color-primary) 100%)',
+              background: 'linear-gradient(120deg, var(--color-action-start, #2563eb) 0%, var(--color-action-end, #4338ca) 100%)',
               color: 'var(--color-text-on-primary, #ffffff)',
               display: 'flex',
               alignItems: 'center',
@@ -1264,13 +1264,13 @@ export const OrderTrackerDrawer = () => {
                   width: '48px',
                   height: '48px',
                   borderRadius: '14px',
-                  background: 'linear-gradient(135deg, #ea580c 0%, #c2410c 100%)',
+                  background: 'linear-gradient(135deg, #2563eb 0%, #1e40af 100%)',
                   color: '#ffffff',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   flexShrink: 0,
-                  boxShadow: '0 4px 12px rgba(234, 88, 12, 0.35)'
+                  boxShadow: '0 4px 12px rgba(37, 99, 235, 0.35)'
                 }}>
                   <CreditCard size={24} />
                 </div>
@@ -1288,7 +1288,7 @@ export const OrderTrackerDrawer = () => {
                 type="button"
                 onClick={handleLaunchPayment}
                 style={{
-                  background: 'linear-gradient(135deg, #ea580c 0%, #c2410c 100%)',
+                  background: 'linear-gradient(135deg, #2563eb 0%, #1e40af 100%)',
                   color: '#ffffff',
                   border: 'none',
                   borderRadius: '12px',
@@ -1296,7 +1296,7 @@ export const OrderTrackerDrawer = () => {
                   fontSize: '0.92rem',
                   fontWeight: 900,
                   cursor: 'pointer',
-                  boxShadow: '0 4px 14px rgba(234, 88, 12, 0.4)',
+                  boxShadow: '0 4px 14px rgba(37, 99, 235, 0.4)',
                   display: 'flex',
                   alignItems: 'center',
                   gap: '0.5rem',
@@ -1374,7 +1374,7 @@ export const OrderTrackerDrawer = () => {
                     onClick={handleAdminRejectCancel}
                     disabled={isProcessingAdminCancel}
                     style={{
-                      background: '#ffffff',
+                      background: 'var(--color-surface)',
                       border: '1.5px solid #d97706',
                       color: '#b45309',
                       padding: '0.45rem 1rem',
@@ -1618,7 +1618,7 @@ export const OrderTrackerDrawer = () => {
                     type="button"
                     onClick={() => openFileInNewTab(ord.worker_file_url || ord.workerFileUrl, ord.worker_file_name || ord.workerFileName || 'digitized_stitch_file.dst')}
                     className="btn btn-sm"
-                    style={{ background: '#ffffff', color: '#2563eb', border: '1px solid #bfdbfe', fontWeight: 700, fontSize: '0.78rem', display: 'inline-flex', alignItems: 'center', gap: '0.35rem', borderRadius: '6px' }}
+                    style={{ background: 'var(--color-surface)', color: '#2563eb', border: '1px solid #bfdbfe', fontWeight: 700, fontSize: '0.78rem', display: 'inline-flex', alignItems: 'center', gap: '0.35rem', borderRadius: '6px' }}
                   >
                     <ExternalLink size={13} /> Open
                   </button>
@@ -2443,7 +2443,7 @@ export const OrderTrackerDrawer = () => {
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.75rem', flexWrap: 'wrap', gap: '0.75rem' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-                  <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: isVectorOrder ? 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)' : 'linear-gradient(135deg, #ea580c 0%, #c2410c 100%)', color: '#ffffff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: isVectorOrder ? 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)' : 'linear-gradient(135deg, #2563eb 0%, #1e40af 100%)', color: '#ffffff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     {isVectorOrder ? <Palette size={22} /> : <Scissors size={22} />}
                   </div>
                   <div>
@@ -2731,7 +2731,7 @@ export const OrderTrackerDrawer = () => {
                 PAID
               </span>
             ) : (
-              <span style={{ background: '#fff7ed', color: '#ea580c', border: '1px solid #ffedd5', fontWeight: 800, padding: '0.15rem 0.5rem', borderRadius: '9999px', fontSize: '0.72rem' }}>
+              <span style={{ background: 'var(--color-primary-light)', color: 'var(--color-primary)', border: '1px solid #ffedd5', fontWeight: 800, padding: '0.15rem 0.5rem', borderRadius: '9999px', fontSize: '0.72rem' }}>
                 PENDING
               </span>
             )}

@@ -340,7 +340,7 @@ export default function PortalLoginPage() {
         {/* Header */}
         <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
           <div style={{
-            background: 'linear-gradient(135deg, #f97316, #ea580c)',
+            background: 'linear-gradient(135deg, #4f46e5, #2563eb)',
             color: '#ffffff',
             width: '58px',
             height: '58px',
@@ -420,7 +420,7 @@ export default function PortalLoginPage() {
               </label>
               <Link
                 href="/portal/forgot-password"
-                style={{ fontSize: '0.78rem', color: '#f97316', textDecoration: 'none', fontWeight: 600 }}
+                style={{ fontSize: '0.78rem', color: 'var(--color-primary)', textDecoration: 'none', fontWeight: 600 }}
               >
                 Forgot Password?
               </Link>
@@ -455,7 +455,7 @@ export default function PortalLoginPage() {
               width: '100%',
               padding: '0.85rem',
               borderRadius: '8px',
-              background: 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)',
+              background: 'linear-gradient(135deg, #4f46e5 0%, #2563eb 100%)',
               color: '#ffffff',
               fontWeight: 800,
               fontSize: '0.95rem',
@@ -491,7 +491,7 @@ export default function PortalLoginPage() {
               display: 'inline-flex',
               alignItems: 'center',
               gap: '0.35rem',
-              color: '#f97316',
+              color: 'var(--color-primary)',
               fontWeight: 800,
               fontSize: '0.875rem',
               textDecoration: 'none'

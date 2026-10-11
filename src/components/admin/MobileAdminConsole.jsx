@@ -172,8 +172,8 @@ function MobileOrderCard({ order, onOpen, onStart, isStarting }) {
                 borderRadius: '999px',
                 fontSize: '0.64rem',
                 fontWeight: 900,
-                background: '#ffedd5',
-                color: '#c2410c'
+                background: 'var(--color-primary-light)',
+                color: 'var(--color-primary)'
               }}>
                 RUSH
               </span>
@@ -226,8 +226,8 @@ function MobileOrderCard({ order, onOpen, onStart, isStarting }) {
               disabled={isStarting}
               style={{
                 border: '1px solid #fed7aa',
-                background: '#fff7ed',
-                color: '#c2410c',
+                background: 'var(--color-primary-light)',
+                color: 'var(--color-primary)',
                 borderRadius: '9px',
                 padding: '0.48rem 0.7rem',
                 fontSize: '0.72rem',
@@ -481,7 +481,7 @@ export default function MobileAdminConsole() {
               borderRadius: '12px',
               display: 'grid',
               placeItems: 'center',
-              background: 'linear-gradient(135deg, #f97316, #ea580c)',
+              background: 'linear-gradient(135deg, #4f46e5, #2563eb)',
               flexShrink: 0
             }}>
               <ShieldCheck size={21} />
@@ -573,7 +573,7 @@ export default function MobileAdminConsole() {
                   onClick={() => navigate('/admin-portal')}
                   style={{
                     marginTop: '0.65rem',
-                    background: 'linear-gradient(135deg, #ea580c 0%, #c2410c 100%)',
+                    background: 'linear-gradient(135deg, #2563eb 0%, #1e40af 100%)',
                     color: '#ffffff',
                     border: 'none',
                     borderRadius: '8px',
@@ -595,7 +595,7 @@ export default function MobileAdminConsole() {
             <section>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.65rem' }}>
                 <div style={{ fontSize: '0.78rem', fontWeight: 900 }}>Priority work</div>
-                <button type="button" onClick={() => { setOrderFilter('active'); setActiveTab('orders'); }} style={{ border: 0, background: 'none', color: '#ea580c', fontSize: '0.72rem', fontWeight: 900 }}>
+                <button type="button" onClick={() => { setOrderFilter('active'); setActiveTab('orders'); }} style={{ border: 0, background: 'none', color: 'var(--color-primary)', fontSize: '0.72rem', fontWeight: 900 }}>
                   View orders
                 </button>
               </div>
@@ -731,7 +731,7 @@ export default function MobileAdminConsole() {
                   <button
                     type="button"
                     onClick={() => markAllNotificationsAsRead?.()}
-                    style={{ border: 0, background: 'none', color: '#ea580c', fontSize: '0.7rem', fontWeight: 900 }}
+                    style={{ border: 0, background: 'none', color: 'var(--color-primary)', fontSize: '0.7rem', fontWeight: 900 }}
                   >
                     Mark all read
                   </button>

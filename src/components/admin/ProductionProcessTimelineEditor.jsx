@@ -729,7 +729,7 @@ export const ProductionProcessTimelineEditor = () => {
                       fontSize: '0.85rem',
                       fontWeight: 700,
                       color: 'var(--navy-950)',
-                      background: '#ffffff',
+                      background: 'var(--color-surface)',
                       marginBottom: '0.45rem'
                     }}
                   />
@@ -745,7 +745,7 @@ export const ProductionProcessTimelineEditor = () => {
                       borderRadius: '6px',
                       fontSize: '0.8rem',
                       color: 'var(--text-main)',
-                      background: '#ffffff',
+                      background: 'var(--color-surface)',
                       resize: 'vertical',
                       lineHeight: 1.45
                     }}
@@ -891,7 +891,7 @@ export const ProductionProcessTimelineEditor = () => {
                         fontSize: '0.82rem',
                         fontWeight: 700,
                         color: 'var(--navy-950)',
-                        background: '#ffffff'
+                        background: 'var(--color-surface)'
                       }}
                     />
                   </div>
@@ -913,7 +913,7 @@ export const ProductionProcessTimelineEditor = () => {
                         fontSize: '0.82rem',
                         fontWeight: 800,
                         color: 'var(--orange-600)',
-                        background: '#ffffff'
+                        background: 'var(--color-surface)'
                       }}
                     />
                   </div>
@@ -935,7 +935,7 @@ export const ProductionProcessTimelineEditor = () => {
                       borderRadius: '6px',
                       fontSize: '0.78rem',
                       color: 'var(--text-main)',
-                      background: '#ffffff'
+                      background: 'var(--color-surface)'
                     }}
                   />
                 </div>

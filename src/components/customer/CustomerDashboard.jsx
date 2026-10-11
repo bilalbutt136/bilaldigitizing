@@ -653,7 +653,7 @@ export const CustomerDashboard = () => {
       <span
         className="badge"
         style={{
-          background: isDark ? 'rgba(234, 88, 12, 0.18)' : 'linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%)',
+          background: isDark ? 'rgba(37, 99, 235, 0.18)' : 'linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%)',
           color: isDark ? '#fb923c' : '#c2410c',
           border: isDark ? '1.5px solid rgba(251, 146, 60, 0.35)' : '1.5px solid #fdba74',
           fontWeight: 900,
@@ -664,7 +664,7 @@ export const CustomerDashboard = () => {
           alignItems: 'center',
           gap: '0.25rem',
           whiteSpace: 'nowrap',
-          boxShadow: isDark ? 'none' : '0 2px 6px rgba(234, 88, 12, 0.12)'
+          boxShadow: isDark ? 'none' : '0 2px 6px rgba(37, 99, 235, 0.12)'
         }}
       >
         <Clock size={11} style={{ color: isDark ? '#fb923c' : '#ea580c' }} /> WAITING FOR PAYMENT
@@ -682,7 +682,7 @@ export const CustomerDashboard = () => {
     if (isUnpaid && !isPaid) {
       return (
         <span style={{
-          background: isDark ? 'rgba(234, 88, 12, 0.18)' : 'linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%)',
+          background: isDark ? 'rgba(37, 99, 235, 0.18)' : 'linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%)',
           color: isDark ? '#fb923c' : '#c2410c',
           border: isDark ? '1px solid rgba(251, 146, 60, 0.35)' : '1.5px solid #fdba74',
           padding: '0.25rem 0.7rem',
@@ -692,7 +692,7 @@ export const CustomerDashboard = () => {
           display: 'inline-flex',
           alignItems: 'center',
           gap: '0.3rem',
-          boxShadow: isDark ? 'none' : '0 2px 6px rgba(234, 88, 12, 0.15)',
+          boxShadow: isDark ? 'none' : '0 2px 6px rgba(37, 99, 235, 0.15)',
           whiteSpace: 'nowrap'
         }}>
           Waiting for Payment
@@ -1328,9 +1328,9 @@ export const CustomerDashboard = () => {
                         type="button"
                         onClick={() => setIsDepositModalOpen(true)}
                         style={{
-                          background: 'var(--color-primary-light, rgba(249, 115, 22, 0.12))',
+                          background: 'var(--color-primary-light)',
                           border: '1px solid rgba(249, 115, 22, 0.25)',
-                          color: 'var(--color-primary, #ea580c)',
+                          color: 'var(--color-primary)',
                           fontSize: '0.74rem',
                           fontWeight: 800,
                           cursor: 'pointer',
@@ -1639,7 +1639,7 @@ export const CustomerDashboard = () => {
                           type="button"
                           onClick={() => setFilterStatus('unpaid')}
                           style={{
-                            background: filterStatus === 'unpaid' ? 'linear-gradient(135deg, #ea580c 0%, #c2410c 100%)' : '#fff7ed',
+                            background: filterStatus === 'unpaid' ? 'linear-gradient(135deg, #2563eb 0%, #1e40af 100%)' : '#fff7ed',
                             color: filterStatus === 'unpaid' ? '#ffffff' : '#c2410c',
                             border: filterStatus === 'unpaid' ? '1.5px solid #ea580c' : '1.5px solid #fdba74',
                             fontWeight: 900,
@@ -1647,7 +1647,7 @@ export const CustomerDashboard = () => {
                             padding: '0.32rem 0.65rem',
                             borderRadius: '6px',
                             cursor: 'pointer',
-                            boxShadow: filterStatus === 'unpaid' ? '0 2px 8px rgba(234, 88, 12, 0.35)' : 'none',
+                            boxShadow: filterStatus === 'unpaid' ? '0 2px 8px rgba(37, 99, 235, 0.35)' : 'none',
                             transition: 'all 0.18s ease',
                             display: 'inline-flex',
                             alignItems: 'center',
@@ -2000,7 +2000,7 @@ export const CustomerDashboard = () => {
                                   ? (isDelivered ? '1.5px solid rgba(134, 239, 172, 0.4)' : (isPaid ? '1px solid var(--border-color)' : '1.5px solid rgba(254, 215, 170, 0.35)'))
                                   : (isDelivered ? '1.5px solid #86efac' : (isPaid ? '1px solid var(--border-color)' : '1.5px solid #fed7aa')),
                                 background: isDark
-                                  ? (isDelivered ? 'rgba(16, 185, 129, 0.08)' : (isPaid ? 'var(--color-surface, #111827)' : 'rgba(234, 88, 12, 0.08)'))
+                                  ? (isDelivered ? 'rgba(16, 185, 129, 0.08)' : (isPaid ? 'var(--color-surface, #111827)' : 'rgba(37, 99, 235, 0.08)'))
                                   : (isDelivered ? '#f0fdf4' : (isPaid ? '#ffffff' : '#fffcf6')),
                                 borderRadius: '12px',
                                 padding: '0.85rem',
@@ -2056,7 +2056,7 @@ export const CustomerDashboard = () => {
                                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.35rem' }}>
                                     <div>
                                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', flexWrap: 'wrap' }}>
-                                        <span style={{ fontSize: '0.68rem', fontWeight: 800, color: isDark ? '#fb923c' : 'var(--orange-600)', background: isDark ? 'rgba(234, 88, 12, 0.18)' : '#fff7ed', padding: '0.1rem 0.4rem', borderRadius: '4px' }}>
+                                        <span style={{ fontSize: '0.68rem', fontWeight: 800, color: isDark ? '#fb923c' : 'var(--orange-600)', background: isDark ? 'rgba(37, 99, 235, 0.18)' : '#fff7ed', padding: '0.1rem 0.4rem', borderRadius: '4px' }}>
                                           {formatOrderId(ord?.id)}
                                         </span>
                                         {ord?.isRush && (
@@ -2154,7 +2154,7 @@ export const CustomerDashboard = () => {
                                       type="button"
                                       onClick={() => handlePayOrder(ord)}
                                       style={{
-                                        background: 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)',
+                                        background: 'linear-gradient(135deg, #4f46e5 0%, #2563eb 100%)',
                                         color: '#ffffff',
                                         border: 'none',
                                         padding: '0.35rem 0.75rem',
@@ -2335,7 +2335,7 @@ export const CustomerDashboard = () => {
                       minHeight: '48px',
                       border: 'none',
                       borderRadius: '12px',
-                      background: 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)',
+                      background: 'linear-gradient(135deg, #4f46e5 0%, #2563eb 100%)',
                       color: '#ffffff',
                       fontWeight: 900,
                       fontSize: '0.88rem',
@@ -2714,7 +2714,7 @@ export const CustomerDashboard = () => {
                               />
                               <div style={{ flex: 1, minWidth: 0 }}>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                                  <span style={{ fontSize: '0.68rem', fontWeight: 900, color: '#ea580c', background: '#fff7ed', padding: '0.1rem 0.4rem', borderRadius: '4px' }}>
+                                  <span style={{ fontSize: '0.68rem', fontWeight: 900, color: 'var(--color-primary)', background: 'var(--color-primary-light)', padding: '0.1rem 0.4rem', borderRadius: '4px' }}>
                                     {formatOrderId(ord.id)}
                                   </span>
                                   <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
@@ -2907,7 +2907,7 @@ export const CustomerDashboard = () => {
                     gap: '0.75rem'
                   }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                      <div style={{ width: '14px', height: '14px', borderRadius: '50%', background: 'var(--color-primary, #ea580c)', boxShadow: '0 0 8px var(--color-primary-glow, rgba(234, 88, 12, 0.4))' }} />
+                      <div style={{ width: '14px', height: '14px', borderRadius: '50%', background: 'var(--color-primary)', boxShadow: '0 0 8px var(--color-primary-glow, rgba(37, 99, 235, 0.4))' }} />
                       <div>
                         <div style={{ fontSize: '0.9rem', fontWeight: 800, color: 'var(--navy-950)' }}>
                           Executive Studio Pro (Official Brand Theme)
@@ -2917,7 +2917,7 @@ export const CustomerDashboard = () => {
                         </div>
                       </div>
                     </div>
-                    <span style={{ fontSize: '0.72rem', fontWeight: 800, background: 'var(--color-primary-light, rgba(249, 115, 22, 0.12))', color: 'var(--color-primary, #ea580c)', padding: '0.25rem 0.65rem', borderRadius: '9999px' }}>
+                    <span style={{ fontSize: '0.72rem', fontWeight: 800, background: 'var(--color-primary-light)', color: 'var(--color-primary)', padding: '0.25rem 0.65rem', borderRadius: '9999px' }}>
                       Active Theme
                     </span>
                   </div>
@@ -3135,7 +3135,7 @@ export const CustomerDashboard = () => {
                 position: 'absolute',
                 top: '-2px',
                 right: '4px',
-                background: '#f97316',
+                background: 'var(--color-action-start, #2563eb)',
                 color: '#ffffff',
                 fontSize: '0.58rem',
                 fontWeight: 900,
@@ -3321,7 +3321,7 @@ export const CustomerDashboard = () => {
                 }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.borderColor = '#ea580c';
-                  e.currentTarget.style.background = 'rgba(234, 88, 12, 0.04)';
+                  e.currentTarget.style.background = 'rgba(37, 99, 235, 0.04)';
                   e.currentTarget.style.transform = 'translateY(-2px)';
                 }}
                 onMouseLeave={(e) => {
@@ -3334,12 +3334,12 @@ export const CustomerDashboard = () => {
                   width: '48px',
                   height: '48px',
                   borderRadius: '14px',
-                  background: 'linear-gradient(135deg, #c2410c 0%, #ea580c 100%)',
+                  background: 'linear-gradient(135deg, #1e40af 0%, #2563eb 100%)',
                   color: '#ffffff',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  boxShadow: '0 4px 12px rgba(234, 88, 12, 0.25)',
+                  boxShadow: '0 4px 12px rgba(37, 99, 235, 0.25)',
                   flexShrink: 0
                 }}>
                   <Layers size={24} />
@@ -3356,7 +3356,7 @@ export const CustomerDashboard = () => {
                     DST, PES, EMB stitch pathing for commercial embroidery machines
                   </div>
                   <div style={{ display: 'flex', gap: '0.45rem', marginTop: '0.45rem' }}>
-                    <span style={{ fontSize: '0.72rem', fontWeight: 800, background: '#fff7ed', color: '#9a3412', padding: '0.15rem 0.55rem', borderRadius: '5px', border: '1px solid rgba(234, 88, 12, 0.2)' }}>
+                    <span style={{ fontSize: '0.72rem', fontWeight: 800, background: 'var(--color-primary-light)', color: '#9a3412', padding: '0.15rem 0.55rem', borderRadius: '5px', border: '1px solid rgba(37, 99, 235, 0.2)' }}>
                       4-12 Hr Delivery
                     </span>
                     <span style={{ fontSize: '0.72rem', fontWeight: 800, background: 'var(--bg-subtle, #f1f5f9)', color: 'var(--color-text-primary, #0f172a)', padding: '0.15rem 0.55rem', borderRadius: '5px' }}>

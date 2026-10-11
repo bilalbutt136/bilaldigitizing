@@ -16,7 +16,7 @@ import { formatOrderId } from '../../utils/formatters';
 import { getMobileOrderTrackingState } from '../../utils/orderTracking';
 
 const TONES = {
-  payment: { bg: '#fff7ed', border: '#fdba74', text: '#c2410c', fill: '#ea580c' },
+  payment: { bg: '#fff7ed', border: '#fdba74', text: '#c2410c', fill: 'var(--color-primary)' },
   warning: { bg: '#fffbeb', border: '#fde68a', text: '#b45309', fill: '#f59e0b' },
   success: { bg: '#ecfdf5', border: '#86efac', text: '#047857', fill: '#10b981' },
   info: { bg: '#eff6ff', border: '#bfdbfe', text: '#1d4ed8', fill: '#2563eb' },
@@ -84,8 +84,8 @@ export default function MobileOrderTrackingCard({
             <span style={{
               fontSize: '0.66rem',
               fontWeight: 900,
-              color: '#ea580c',
-              background: isDark ? 'rgba(234,88,12,0.14)' : '#fff7ed',
+              color: 'var(--color-primary)',
+              background: isDark ? 'rgba(37, 99, 235, 0.14)' : '#fff7ed',
               padding: '0.12rem 0.42rem',
               borderRadius: '6px'
             }}>
@@ -225,7 +225,7 @@ export default function MobileOrderTrackingCard({
               minHeight: '42px',
               border: 'none',
               borderRadius: '10px',
-              background: '#ea580c',
+              background: 'var(--color-action-start, #2563eb)',
               color: '#ffffff',
               fontSize: '0.75rem',
               fontWeight: 900,

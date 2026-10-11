@@ -34,7 +34,7 @@ const ASSETS = [
     accept: '.png,image/png',
     allowed: ['image/png'],
     folder: 'branding/app-icon',
-    preview: { width: 112, height: 112, background: '#ffffff', borderRadius: 24 },
+    preview: { width: 112, height: 112, background: 'var(--color-surface)', borderRadius: 24 },
     normalizePwaIcon: true
   },
   {
@@ -45,7 +45,7 @@ const ASSETS = [
     accept: '.png,.ico,image/png,image/x-icon,image/vnd.microsoft.icon',
     allowed: ['image/png', 'image/x-icon', 'image/vnd.microsoft.icon'],
     folder: 'branding/favicon',
-    preview: { width: 64, height: 64, background: '#ffffff', borderRadius: 14 },
+    preview: { width: 64, height: 64, background: 'var(--color-surface)', borderRadius: 14 },
     strictSquare: false
   },
   {
@@ -56,7 +56,7 @@ const ASSETS = [
     accept: '.png,.svg,image/png,image/svg+xml',
     allowed: ['image/png', 'image/svg+xml'],
     folder: 'branding/header-logo',
-    preview: { width: 220, height: 72, background: '#ffffff', borderRadius: 12 }
+    preview: { width: 220, height: 72, background: 'var(--color-surface)', borderRadius: 12 }
   },
   {
     field: 'footer_logo_url',
@@ -76,7 +76,7 @@ const ASSETS = [
     accept: '.png,.jpg,.jpeg,image/png,image/jpeg',
     allowed: ['image/png', 'image/jpeg'],
     folder: 'branding/social-share',
-    preview: { width: 250, height: 131, background: '#ffffff', borderRadius: 12 }
+    preview: { width: 250, height: 131, background: 'var(--color-surface)', borderRadius: 12 }
   }
 ];
 

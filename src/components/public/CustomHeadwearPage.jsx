@@ -147,7 +147,7 @@ export const CustomHeadwearPage = () => {
                 key={product.id}
                 className="card"
                 style={{
-                  background: '#ffffff',
+                  background: 'var(--color-surface)',
                   border: '1.5px solid var(--border-color)',
                   borderRadius: 'var(--radius-lg)',
                   overflow: 'hidden',
@@ -170,7 +170,7 @@ export const CustomHeadwearPage = () => {
                         position: 'absolute',
                         top: '14px',
                         left: '14px',
-                        background: 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)',
+                        background: 'linear-gradient(135deg, #4f46e5 0%, #2563eb 100%)',
                         color: '#ffffff',
                         fontSize: '0.725rem',
                         fontWeight: 800,
@@ -292,7 +292,7 @@ export const CustomHeadwearPage = () => {
           <button
             type="button"
             className="btn btn-primary-orange btn-lg"
-            style={{ fontWeight: 800, padding: '1rem 2.5rem', background: '#ffffff', color: '#090d16' }}
+            style={{ fontWeight: 800, padding: '1rem 2.5rem', background: 'var(--color-surface)', color: '#090d16' }}
             onClick={() => protectedNavigate('customer', true)}
           >
             Order Custom 3D Caps <ArrowRight size={18} />

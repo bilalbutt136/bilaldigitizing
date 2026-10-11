@@ -37,7 +37,7 @@ Because 3D foam exerts massive outward lateral pressure, standard pull compensat
     author: 'Master Bilal (Studio Art Director)',
     date: 'August 2026',
     readTime: '6 min read',
-    imageGradient: 'linear-gradient(135deg, #ea580c 0%, #9a3412 100%)',
+    imageGradient: 'linear-gradient(135deg, #2563eb 0%, #312e81 100%)',
     content: `Screen printers and apparel decorators lose thousands of dollars each month due to messy auto-traced vectors that contain jagged bezier curves, overlapping transparent pixels, and incorrect color channels. True production-ready vector conversion requires master hand-drawn node engineering and clean spot color separations.
 
 ### 1. The Myth of "Auto-Trace"
@@ -150,7 +150,7 @@ export default function BlogsPage() {
       {/* Blog Header Hero */}
       <div style={{ background: 'var(--hero-bg, var(--bg-surface, #0f172a))', padding: 'clamp(2.5rem, 5vh, 4rem) 1.25rem', textAlign: 'center', color: 'var(--hero-text-primary, var(--color-text-primary))', borderBottom: '1px solid var(--border-color)' }}>
         <h1 style={{ fontSize: 'clamp(2rem, 5vw, 3rem)', fontWeight: 900, marginBottom: '1.25rem', letterSpacing: '-0.02em', color: 'var(--hero-text-primary, var(--color-text-primary))' }}>
-          Industry <span style={{ color: 'var(--color-primary, #ea580c)' }}>Insights</span>
+          Industry <span style={{ color: 'var(--color-primary)' }}>Insights</span>
         </h1>
         <p style={{ fontSize: '1.05rem', color: 'var(--hero-text-secondary, var(--color-text-secondary))', maxWidth: '650px', margin: '0 auto', lineHeight: 1.6 }}>
           Expert guides, technical deep-dives, and creative inspiration covering everything from commercial embroidery digitizing to scalable vector art and custom patch manufacturing.
@@ -204,7 +204,7 @@ export default function BlogsPage() {
                   <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                     <Clock size={15} /> {post.date}
                   </span>
-                  <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--color-primary, #ea580c)' }}>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--color-primary)' }}>
                     <Tag size={15} /> {post.readTime}
                   </span>
                 </div>
@@ -235,7 +235,7 @@ export default function BlogsPage() {
                             marginTop: index === 0 ? '0.5rem' : '1.75rem',
                             marginBottom: '0.4rem',
                             paddingLeft: '0.75rem',
-                            borderLeft: '3.5px solid var(--color-primary, #ea580c)',
+                            borderLeft: '3.5px solid var(--color-primary)',
                             lineHeight: 1.3,
                             letterSpacing: '-0.01em'
                           }}
@@ -283,7 +283,7 @@ export default function BlogsPage() {
                                       width: '6px',
                                       height: '6px',
                                       borderRadius: '50%',
-                                      background: 'var(--color-primary, #ea580c)',
+                                      background: 'var(--color-primary)',
                                       marginTop: '0.55rem',
                                       flexShrink: 0
                                     }}
@@ -314,7 +314,7 @@ export default function BlogsPage() {
                                     width: '6px',
                                     height: '6px',
                                     borderRadius: '50%',
-                                    background: 'var(--color-primary, #ea580c)',
+                                    background: 'var(--color-primary)',
                                     marginTop: '0.55rem',
                                     flexShrink: 0
                                   }}

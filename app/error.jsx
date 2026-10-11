@@ -54,8 +54,8 @@ export default function Error({ error, reset }) {
       fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif"
     }}>
       <div style={{
-        background: '#fff7ed',
-        color: '#f97316',
+        background: 'var(--color-primary-light)',
+        color: 'var(--color-primary)',
         width: '64px',
         height: '64px',
         borderRadius: '50%',
@@ -79,7 +79,7 @@ export default function Error({ error, reset }) {
 
       {error?.message && !isChunkError && (
         <div style={{
-          background: '#f8fafc',
+          background: 'var(--color-background)',
           border: '1px solid #e2e8f0',
           padding: '0.6rem 1rem',
           borderRadius: '8px',

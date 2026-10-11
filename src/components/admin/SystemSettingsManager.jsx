@@ -57,8 +57,8 @@ export const SystemSettingsManager = ({ activeSubTab = 'theme' }) => {
                 padding: '0.75rem 1.15rem',
                 borderRadius: '12px',
                 border: isActive ? '1.5px solid var(--orange-500)' : '1px solid transparent',
-                background: isActive ? 'var(--color-primary-light, rgba(249, 115, 22, 0.12))' : 'transparent',
-                color: isActive ? 'var(--color-primary, #ea580c)' : 'var(--color-text-primary)',
+                background: isActive ? 'var(--color-primary-light)' : 'transparent',
+                color: isActive ? 'var(--color-primary)' : 'var(--color-text-primary)',
                 fontWeight: isActive ? 800 : 600,
                 fontSize: '0.875rem',
                 cursor: 'pointer',
@@ -66,7 +66,7 @@ export const SystemSettingsManager = ({ activeSubTab = 'theme' }) => {
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-                <IconComp size={18} style={{ color: isActive ? 'var(--color-primary, #ea580c)' : 'var(--color-text-muted)' }} />
+                <IconComp size={18} style={{ color: isActive ? 'var(--color-primary)' : 'var(--color-text-muted)' }} />
                 <span>{tab.label}</span>
               </div>
               <span style={{

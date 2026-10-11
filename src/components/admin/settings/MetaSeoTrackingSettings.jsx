@@ -622,7 +622,7 @@ export const MetaSeoTrackingSettings = () => {
                 style={{
                   background: 'none',
                   border: 'none',
-                  color: 'var(--color-primary, #ea580c)',
+                  color: 'var(--color-primary)',
                   fontWeight: 700,
                   fontSize: '0.825rem',
                   cursor: 'pointer',

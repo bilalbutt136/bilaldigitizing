@@ -350,7 +350,7 @@ export const ServiceManagementEditor = () => {
       </div>
 
       {/* 2. CATEGORY SELECTOR TABS & ACTION BUTTON */}
-      <div className="card" style={{ padding: '1.5rem', background: '#ffffff' }}>
+      <div className="card" style={{ padding: '1.5rem', background: 'var(--color-surface)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
 
           <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap' }}>
@@ -427,7 +427,7 @@ export const ServiceManagementEditor = () => {
                     <button
                       type="button"
                       onClick={() => handleOpenEdit(item, activeCategory)}
-                      style={{ background: '#f1f5f9', border: 'none', color: 'var(--navy-700)', padding: '0.35rem', borderRadius: '6px', cursor: 'pointer' }}
+                      style={{ background: 'var(--color-surface-elevated)', border: 'none', color: 'var(--navy-700)', padding: '0.35rem', borderRadius: '6px', cursor: 'pointer' }}
                       title="Edit Service"
                     >
                       <Edit3 size={15} />

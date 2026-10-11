@@ -121,7 +121,7 @@ export const StoreManagementEditor = () => {
     : draftProducts.filter(p => p.category === filterCategory);
 
   return (
-    <div className="card" style={{ padding: '2rem', border: '1px solid var(--border-color)', background: '#ffffff' }}>
+    <div className="card" style={{ padding: '2rem', border: '1px solid var(--border-color)', background: 'var(--color-surface)' }}>
       
       {/* Header & Sub-tab Switcher */}
       <div style={{
@@ -472,7 +472,7 @@ export const StoreManagementEditor = () => {
           </div>
 
           {storeOrders.length === 0 ? (
-            <div style={{ padding: '3rem', textAlign: 'center', background: '#f8fafc', borderRadius: 'var(--radius-lg)' }}>
+            <div style={{ padding: '3rem', textAlign: 'center', background: 'var(--color-background)', borderRadius: 'var(--radius-lg)' }}>
               <Package size={40} style={{ color: 'var(--text-muted)', marginBottom: '0.75rem' }} />
               <h4 style={{ color: 'var(--navy-900)' }}>No Store Orders Placed Yet</h4>
               <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>
@@ -488,7 +488,7 @@ export const StoreManagementEditor = () => {
                     padding: '1.5rem',
                     border: '1.5px solid var(--border-color)',
                     borderRadius: 'var(--radius-lg)',
-                    background: '#ffffff',
+                    background: 'var(--color-surface)',
                     boxShadow: 'var(--shadow-sm)'
                   }}
                 >
@@ -510,7 +510,7 @@ export const StoreManagementEditor = () => {
                         <span>•</span>
                         <span>Customer: <strong style={{ color: 'var(--navy-900)' }}>{order.clientName || 'Valued Client'}</strong></span>
                         <span>•</span>
-                        <span style={{ color: 'var(--orange-600)', fontWeight: 700, background: '#fff7ed', padding: '0.1rem 0.5rem', borderRadius: '4px', border: '1px solid var(--orange-200)' }}>
+                        <span style={{ color: 'var(--orange-600)', fontWeight: 700, background: 'var(--color-primary-light)', padding: '0.1rem 0.5rem', borderRadius: '4px', border: '1px solid var(--orange-200)' }}>
                           ✉️ {order.clientEmail || order.clientId || 'No email on file'}
                         </span>
                       </div>
@@ -531,7 +531,7 @@ export const StoreManagementEditor = () => {
                     display: 'flex',
                     alignItems: 'center',
                     gap: '1.25rem',
-                    background: '#f8fafc',
+                    background: 'var(--color-background)',
                     padding: '1.15rem',
                     borderRadius: 'var(--radius-md)',
                     marginBottom: '1rem',
@@ -549,7 +549,7 @@ export const StoreManagementEditor = () => {
                           borderRadius: '12px',
                           objectFit: 'cover',
                           border: '2px solid var(--orange-500)',
-                          background: '#ffffff',
+                          background: 'var(--color-surface)',
                           boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)'
                         }}
                         onError={(e) => {

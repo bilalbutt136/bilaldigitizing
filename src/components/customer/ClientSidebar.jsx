@@ -166,7 +166,7 @@ export const ClientSidebar = ({
               width: '38px',
               height: '38px',
               borderRadius: '10px',
-              background: 'linear-gradient(135deg, var(--color-secondary) 0%, var(--color-primary) 100%)',
+              background: 'linear-gradient(120deg, var(--color-action-start, #2563eb) 0%, var(--color-action-end, #4338ca) 100%)',
               color: 'var(--color-text-on-primary, #ffffff)',
               display: 'flex',
               alignItems: 'center',
@@ -222,7 +222,7 @@ export const ClientSidebar = ({
                 type="button"
                 onClick={onOpenDepositModal}
                 style={{
-                  background: 'linear-gradient(135deg, var(--color-secondary) 0%, var(--color-primary) 100%)',
+                  background: 'linear-gradient(120deg, var(--color-action-start, #2563eb) 0%, var(--color-action-end, #4338ca) 100%)',
                   color: 'var(--color-text-on-primary, #ffffff)',
                   border: 'none',
                   borderRadius: '5px',

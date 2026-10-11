@@ -211,9 +211,9 @@ export default function FAQsPage() {
             display: 'inline-flex',
             alignItems: 'center',
             gap: '0.5rem',
-            background: 'var(--color-primary-light, rgba(249, 115, 22, 0.12))',
+            background: 'var(--color-primary-light)',
             border: '1px solid var(--border-color)',
-            color: 'var(--color-primary, #ea580c)',
+            color: 'var(--color-primary)',
             padding: '0.4rem 1rem',
             borderRadius: '9999px',
             fontSize: '0.85rem',
@@ -389,11 +389,11 @@ export default function FAQsPage() {
                     width: '32px',
                     height: '32px',
                     borderRadius: '8px',
-                    background: 'var(--color-primary-light, rgba(249, 115, 22, 0.12))',
+                    background: 'var(--color-primary-light)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    color: 'var(--color-primary, #ea580c)'
+                    color: 'var(--color-primary)'
                   }}>
                     <Layers size={18} />
                   </div>
@@ -553,7 +553,7 @@ export default function FAQsPage() {
             <Link
               href="/contact"
               style={{
-                background: 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)',
+                background: 'linear-gradient(135deg, #4f46e5 0%, #2563eb 100%)',
                 color: '#ffffff',
                 border: 'none',
                 padding: '0.95rem 2.25rem',

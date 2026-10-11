@@ -435,7 +435,7 @@ export const HeroServicesEditor = () => {
       </div>
 
       {/* 2. Service Tabs */}
-      <div style={{ display: 'flex', gap: '0.5rem', background: '#f1f5f9', padding: '0.35rem', borderRadius: '12px', flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', gap: '0.5rem', background: 'var(--color-surface-elevated)', padding: '0.35rem', borderRadius: '12px', flexWrap: 'wrap' }}>
         {tabs.map((tab) => {
           const Icon = tab.icon;
           const isSelected = selectedService === tab.id;
@@ -471,7 +471,7 @@ export const HeroServicesEditor = () => {
       <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
 
         {/* Section A: Headlines & Badges */}
-        <div className="card" style={{ padding: '1.75rem', background: '#ffffff', border: '1px solid var(--border-color)', borderRadius: '16px' }}>
+        <div className="card" style={{ padding: '1.75rem', background: 'var(--color-surface)', border: '1px solid var(--border-color)', borderRadius: '16px' }}>
           <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--navy-950)', marginBottom: '1.25rem' }}>
             1. Hero Headlines, Description & Copy
           </h3>
@@ -536,7 +536,7 @@ export const HeroServicesEditor = () => {
         </div>
 
         {/* Section B: Multiple Showcase Images Slideshow Manager */}
-        <div className="card" style={{ padding: '1.75rem', background: '#ffffff', border: '1.5px solid var(--orange-200)', borderRadius: '16px', boxShadow: '0 4px 20px rgba(234, 88, 12, 0.05)' }}>
+        <div className="card" style={{ padding: '1.75rem', background: 'var(--color-surface)', border: '1.5px solid var(--orange-200)', borderRadius: '16px', boxShadow: '0 4px 20px rgba(37, 99, 235, 0.05)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '1rem' }}>
             <div>
               <h3 style={{ fontSize: '1.2rem', fontWeight: 900, color: 'var(--navy-950)', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -553,7 +553,7 @@ export const HeroServicesEditor = () => {
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
               {/* Slideshow Interval Setting */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', background: '#f8fafc', padding: '0.4rem 0.8rem', borderRadius: '10px', border: '1px solid var(--border-color)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', background: 'var(--color-background)', padding: '0.4rem 0.8rem', borderRadius: '10px', border: '1px solid var(--border-color)' }}>
                 <Clock size={15} style={{ color: 'var(--orange-500)' }} />
                 <label style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--navy-900)', margin: 0 }}>Rotation Speed:</label>
                 <select
@@ -648,7 +648,7 @@ export const HeroServicesEditor = () => {
                           type="button"
                           disabled={idx === 0}
                           onClick={() => handleMoveShowcaseImage(idx, 'up')}
-                          style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '6px', padding: '0.3rem', cursor: idx === 0 ? 'not-allowed' : 'pointer', opacity: idx === 0 ? 0.3 : 1 }}
+                          style={{ background: 'var(--color-background)', border: '1px solid #e2e8f0', borderRadius: '6px', padding: '0.3rem', cursor: idx === 0 ? 'not-allowed' : 'pointer', opacity: idx === 0 ? 0.3 : 1 }}
                           title="Move Up"
                         >
                           <ChevronUp size={13} />
@@ -657,7 +657,7 @@ export const HeroServicesEditor = () => {
                           type="button"
                           disabled={idx === (formState.showcase_images || []).length - 1}
                           onClick={() => handleMoveShowcaseImage(idx, 'down')}
-                          style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '6px', padding: '0.3rem', cursor: idx === (formState.showcase_images || []).length - 1 ? 'not-allowed' : 'pointer', opacity: idx === (formState.showcase_images || []).length - 1 ? 0.3 : 1 }}
+                          style={{ background: 'var(--color-background)', border: '1px solid #e2e8f0', borderRadius: '6px', padding: '0.3rem', cursor: idx === (formState.showcase_images || []).length - 1 ? 'not-allowed' : 'pointer', opacity: idx === (formState.showcase_images || []).length - 1 ? 0.3 : 1 }}
                           title="Move Down"
                         >
                           <ChevronDown size={13} />
@@ -677,11 +677,11 @@ export const HeroServicesEditor = () => {
 
                     {/* Image Preview Thumbnail */}
                     {item.image_url ? (
-                      <div style={{ width: '100%', aspectRatio: '4/3', maxHeight: '200px', borderRadius: '10px', overflow: 'hidden', marginBottom: '0.85rem', background: '#f8fafc', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0.35rem' }}>
+                      <div style={{ width: '100%', aspectRatio: '4/3', maxHeight: '200px', borderRadius: '10px', overflow: 'hidden', marginBottom: '0.85rem', background: 'var(--color-background)', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0.35rem' }}>
                         <img src={item.image_url} alt="Showcase preview" style={{ maxWidth: '100%', maxHeight: '100%', width: 'auto', height: 'auto', objectFit: 'contain' }} />
                       </div>
                     ) : (
-                      <div style={{ width: '100%', height: '140px', borderRadius: '10px', background: '#f1f5f9', border: '1.5px dashed #cbd5e1', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '0.85rem', color: '#94a3b8', fontSize: '0.85rem' }}>
+                      <div style={{ width: '100%', height: '140px', borderRadius: '10px', background: 'var(--color-surface-elevated)', border: '1.5px dashed #cbd5e1', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '0.85rem', color: '#94a3b8', fontSize: '0.85rem' }}>
                         No Image Uploaded
                       </div>
                     )}
@@ -715,7 +715,7 @@ export const HeroServicesEditor = () => {
                           }
                         }}
                       />
-                      <span className="btn btn-outline btn-sm" style={{ width: '100%', fontSize: '0.8rem', fontWeight: 700, borderColor: 'var(--orange-500)', color: 'var(--orange-600)', background: '#ffffff', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem', cursor: 'pointer' }}>
+                      <span className="btn btn-outline btn-sm" style={{ width: '100%', fontSize: '0.8rem', fontWeight: 700, borderColor: 'var(--orange-500)', color: 'var(--orange-600)', background: 'var(--color-surface)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem', cursor: 'pointer' }}>
                         {isUploading ? <RefreshCw size={13} className="spin-icon" /> : <Upload size={13} />}
                         <span>{isUploading ? 'Uploading to Storage...' : 'Upload Image File'}</span>
                       </span>
@@ -738,7 +738,7 @@ export const HeroServicesEditor = () => {
         </div>
 
         {/* Section C: Service Benefits Checklist */}
-        <div className="card" style={{ padding: '1.75rem', background: '#ffffff', border: '1px solid var(--border-color)', borderRadius: '16px' }}>
+        <div className="card" style={{ padding: '1.75rem', background: 'var(--color-surface)', border: '1px solid var(--border-color)', borderRadius: '16px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
             <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--navy-950)', margin: 0 }}>
               3. Service Quality Features & Bullet Points ({(formState.features || []).length})
@@ -779,14 +779,14 @@ export const HeroServicesEditor = () => {
         </div>
 
         {/* Section D: Stats & CTAs */}
-        <div className="card" style={{ padding: '1.75rem', background: '#ffffff', border: '1px solid var(--border-color)', borderRadius: '16px' }}>
+        <div className="card" style={{ padding: '1.75rem', background: 'var(--color-surface)', border: '1px solid var(--border-color)', borderRadius: '16px' }}>
           <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--navy-950)', marginBottom: '1.25rem' }}>
             4. Statistics Counters & Call To Action Buttons
           </h3>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '1.5rem' }}>
             {(formState.stats || []).map((stat, idx) => (
-              <div key={idx} style={{ background: '#f8fafc', padding: '1rem', borderRadius: '10px', border: '1px solid var(--border-color)' }}>
+              <div key={idx} style={{ background: 'var(--color-background)', padding: '1rem', borderRadius: '10px', border: '1px solid var(--border-color)' }}>
                 <label style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--navy-800)', display: 'block', marginBottom: '0.35rem' }}>
                   Stat #{idx + 1} Value & Label
                 </label>
@@ -812,8 +812,8 @@ export const HeroServicesEditor = () => {
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem' }}>
-            <div style={{ background: '#fff7ed', padding: '1.25rem', borderRadius: '12px', border: '1px solid #fed7aa' }}>
-              <div style={{ fontWeight: 800, fontSize: '0.9rem', color: '#c2410c', marginBottom: '0.75rem' }}>Primary Action Button</div>
+            <div style={{ background: 'var(--color-primary-light)', padding: '1.25rem', borderRadius: '12px', border: '1px solid #fed7aa' }}>
+              <div style={{ fontWeight: 800, fontSize: '0.9rem', color: 'var(--color-primary)', marginBottom: '0.75rem' }}>Primary Action Button</div>
               <div className="form-group" style={{ marginBottom: '0.75rem' }}>
                 <label style={{ fontSize: '0.78rem', fontWeight: 700 }}>Button Text</label>
                 <input
@@ -837,7 +837,7 @@ export const HeroServicesEditor = () => {
               </div>
             </div>
 
-            <div style={{ background: '#f8fafc', padding: '1.25rem', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
+            <div style={{ background: 'var(--color-background)', padding: '1.25rem', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
               <div style={{ fontWeight: 800, fontSize: '0.9rem', color: 'var(--navy-900)', marginBottom: '0.75rem' }}>Secondary Action Button</div>
               <div className="form-group" style={{ marginBottom: '0.75rem' }}>
                 <label style={{ fontSize: '0.78rem', fontWeight: 700 }}>Button Text</label>

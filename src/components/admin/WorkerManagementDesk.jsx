@@ -446,7 +446,7 @@ export const WorkerManagementDesk = ({ showToast }) => {
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
             <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Pending Applications</span>
-            <span style={{ background: '#fff7ed', color: '#ea580c', borderRadius: '50%', width: '28px', height: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <span style={{ background: 'var(--color-primary-light)', color: 'var(--color-primary)', borderRadius: '50%', width: '28px', height: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <Clock size={15} />
             </span>
           </div>
@@ -610,7 +610,7 @@ export const WorkerManagementDesk = ({ showToast }) => {
         <div>
           {isLoading ? (
             <div style={{ padding: '3.5rem', textAlign: 'center', background: 'var(--bg-card)', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
-              <RefreshCw size={24} className="spin-icon" style={{ color: '#ea580c', margin: '0 auto 0.75rem' }} />
+              <RefreshCw size={24} className="spin-icon" style={{ color: 'var(--color-primary)', margin: '0 auto 0.75rem' }} />
               <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Loading worker applications...</p>
             </div>
           ) : applications.length === 0 ? (
@@ -749,8 +749,8 @@ export const WorkerManagementDesk = ({ showToast }) => {
                         rel="noreferrer"
                         style={{
                           marginLeft: 'auto',
-                          background: '#fff7ed',
-                          color: '#ea580c',
+                          background: 'var(--color-primary-light)',
+                          color: 'var(--color-primary)',
                           border: '1px solid #fed7aa',
                           padding: '0.25rem 0.75rem',
                           borderRadius: '6px',
@@ -844,7 +844,7 @@ export const WorkerManagementDesk = ({ showToast }) => {
                       </span>
                     </td>
                     <td style={{ padding: '0.85rem 1rem', fontWeight: 700, color: 'var(--text-main)' }}>
-                      <span style={{ color: '#ea580c' }}>{w.assigned_orders_count || 0} active</span> / <span style={{ color: '#059669' }}>{w.completed_orders_count || 0} completed</span>
+                      <span style={{ color: 'var(--color-primary)' }}>{w.assigned_orders_count || 0} active</span> / <span style={{ color: '#059669' }}>{w.completed_orders_count || 0} completed</span>
                     </td>
                     <td style={{ padding: '0.85rem 1rem', fontWeight: 800, color: '#059669' }}>
                       Rs. {(() => {
@@ -920,7 +920,7 @@ export const WorkerManagementDesk = ({ showToast }) => {
                             fontWeight: 700
                           }}
                         >
-                          <KeyRound size={13} style={{ color: '#ea580c' }} />
+                          <KeyRound size={13} style={{ color: 'var(--color-primary)' }} />
                           {actionLoadingId === `reset-${w.id}` ? 'Sending...' : 'Reset Pass'}
                         </button>
 
@@ -1007,16 +1007,16 @@ export const WorkerManagementDesk = ({ showToast }) => {
                 <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
                   {/* Total Unpaid Balance Badge */}
                   <div style={{
-                    background: '#fff7ed',
+                    background: 'var(--color-primary-light)',
                     border: '1.5px solid #fed7aa',
                     borderRadius: '10px',
                     padding: '0.5rem 1rem',
                     textAlign: 'right'
                   }}>
-                    <span style={{ fontSize: '0.7rem', fontWeight: 800, color: '#ea580c', textTransform: 'uppercase', display: 'block' }}>
+                    <span style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--color-primary)', textTransform: 'uppercase', display: 'block' }}>
                       Total Unpaid Balance
                     </span>
-                    <strong style={{ fontSize: '1.25rem', fontWeight: 900, color: '#c2410c' }}>
+                    <strong style={{ fontSize: '1.25rem', fontWeight: 900, color: 'var(--color-primary)' }}>
                       Rs. {(workerStatementData?.totalUnpaidPkr || 0).toLocaleString()} PKR
                     </strong>
                   </div>
@@ -1041,7 +1041,7 @@ export const WorkerManagementDesk = ({ showToast }) => {
 
               {isStatementLoading ? (
                 <div style={{ padding: '3.5rem', textAlign: 'center', background: 'var(--bg-card)', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
-                  <RefreshCw size={24} className="spin-icon" style={{ color: '#ea580c', margin: '0 auto 0.75rem' }} />
+                  <RefreshCw size={24} className="spin-icon" style={{ color: 'var(--color-primary)', margin: '0 auto 0.75rem' }} />
                   <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Loading worker financial statement...</p>
                 </div>
               ) : (
@@ -1066,7 +1066,7 @@ export const WorkerManagementDesk = ({ showToast }) => {
                     }}>
                       <div>
                         <h4 style={{ margin: 0, fontSize: '1rem', fontWeight: 800, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                          <Clock size={16} style={{ color: '#ea580c' }} /> Completed Orders Awaiting Settlement
+                          <Clock size={16} style={{ color: 'var(--color-primary)' }} /> Completed Orders Awaiting Settlement
                         </h4>
                         <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
                           Select verified completed orders below to mark as Paid and automatically generate an official PDF Payout Invoice.
@@ -1130,7 +1130,7 @@ export const WorkerManagementDesk = ({ showToast }) => {
                                     key={ord.id} 
                                     style={{ 
                                       borderBottom: '1px solid var(--border-color)',
-                                      background: isChecked ? 'rgba(234, 88, 12, 0.04)' : 'transparent'
+                                      background: isChecked ? 'rgba(37, 99, 235, 0.04)' : 'transparent'
                                     }}
                                   >
                                     <td style={{ padding: '0.85rem 1rem', textAlign: 'center' }}>
@@ -1151,13 +1151,13 @@ export const WorkerManagementDesk = ({ showToast }) => {
                                     <td style={{ padding: '0.85rem 1rem', color: 'var(--text-muted)', fontSize: '0.8rem' }}>
                                       {new Date(ord.updated_at || ord.created_at).toLocaleDateString()}
                                     </td>
-                                    <td style={{ padding: '0.85rem 1rem', fontWeight: 900, color: '#ea580c', fontSize: '0.95rem' }}>
+                                    <td style={{ padding: '0.85rem 1rem', fontWeight: 900, color: 'var(--color-primary)', fontSize: '0.95rem' }}>
                                       Rs. {(ord.costPkr || 0).toLocaleString()} PKR
                                     </td>
                                     <td style={{ padding: '0.85rem 1rem', textAlign: 'right' }}>
                                       <span style={{
-                                        background: '#fff7ed',
-                                        color: '#ea580c',
+                                        background: 'var(--color-primary-light)',
+                                        color: 'var(--color-primary)',
                                         border: '1px solid #fed7aa',
                                         padding: '0.15rem 0.55rem',
                                         borderRadius: '4px',
@@ -1196,7 +1196,7 @@ export const WorkerManagementDesk = ({ showToast }) => {
 
                             <div style={{ borderLeft: '1px solid var(--border-color)', paddingLeft: '1.25rem' }}>
                               <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block' }}>Total Payout Amount:</span>
-                              <strong style={{ fontSize: '1.35rem', color: '#ea580c', fontWeight: 900 }}>
+                              <strong style={{ fontSize: '1.35rem', color: 'var(--color-primary)', fontWeight: 900 }}>
                                 Rs. {(() => {
                                   const unpaidList = workerStatementData?.unpaidOrders || [];
                                   const sum = unpaidList
@@ -1389,7 +1389,7 @@ export const WorkerManagementDesk = ({ showToast }) => {
                 gap: '1rem'
               }}>
                 <div>
-                  <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#f97316', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                  <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--color-primary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                     Pakistan Digitizer & Artist Production Ledger
                   </span>
                   <h3 style={{ margin: '0.2rem 0 0 0', fontSize: '1.25rem', fontWeight: 900 }}>
@@ -1427,7 +1427,7 @@ export const WorkerManagementDesk = ({ showToast }) => {
               }}>
                 <div style={{ padding: '0.85rem 1.25rem', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <h4 style={{ fontSize: '1rem', fontWeight: 800, margin: 0, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                    <Wallet size={16} style={{ color: '#ea580c' }} /> Active Workers Balance & Payout Status
+                    <Wallet size={16} style={{ color: 'var(--color-primary)' }} /> Active Workers Balance & Payout Status
                   </h4>
                   <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
                     {workers.length} active digitizer{workers.length !== 1 ? 's' : ''} / artists
@@ -1511,7 +1511,7 @@ export const WorkerManagementDesk = ({ showToast }) => {
                                   type="button"
                                   onClick={() => handleOpenWorkerLedger(w)}
                                   style={{
-                                    background: unpaidBalance > 0 ? 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)' : '#eff6ff',
+                                    background: unpaidBalance > 0 ? 'linear-gradient(135deg, #4f46e5 0%, #2563eb 100%)' : '#eff6ff',
                                     color: unpaidBalance > 0 ? '#ffffff' : '#2563eb',
                                     border: unpaidBalance > 0 ? 'none' : '1px solid #bfdbfe',
                                     borderRadius: '6px',
@@ -1522,7 +1522,7 @@ export const WorkerManagementDesk = ({ showToast }) => {
                                     display: 'inline-flex',
                                     alignItems: 'center',
                                     gap: '0.35rem',
-                                    boxShadow: unpaidBalance > 0 ? '0 2px 8px rgba(234, 88, 12, 0.25)' : 'none'
+                                    boxShadow: unpaidBalance > 0 ? '0 2px 8px rgba(37, 99, 235, 0.25)' : 'none'
                                   }}
                                 >
                                   <Receipt size={13} /> {unpaidBalance > 0 ? 'Settle & Ledger' : 'View Ledger'}

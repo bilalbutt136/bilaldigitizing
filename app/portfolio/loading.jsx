@@ -31,7 +31,7 @@ export default function PortfolioLoading() {
           <div className="skeleton-dark" style={{ height: '30px', width: '250px', marginBottom: '20px', borderRadius: '9999px' }} />
           <div className="skeleton-dark" style={{ height: '60px', width: '50%', marginBottom: '20px' }} />
           <div className="skeleton-dark" style={{ height: '40px', width: '70%', marginBottom: '40px' }} />
-          
+
           <div style={{ display: 'flex', gap: '20px' }}>
             <div className="skeleton-dark" style={{ height: '30px', width: '150px' }} />
             <div className="skeleton-dark" style={{ height: '30px', width: '150px' }} />
@@ -52,9 +52,9 @@ export default function PortfolioLoading() {
         {/* Gallery Grid Skeleton */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '30px' }}>
           {[1, 2, 3, 4, 5, 6].map(i => (
-            <div key={i} style={{ 
-              background: '#ffffff', 
-              borderRadius: '16px', 
+            <div key={i} style={{
+              background: 'var(--color-surface)',
+              borderRadius: '16px',
               overflow: 'hidden',
               boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
               border: '1px solid #f1f5f9'

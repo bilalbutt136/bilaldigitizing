@@ -139,7 +139,7 @@ export const AdminMetaPixel = () => {
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
-        background: '#f8fafc',
+        background: 'var(--color-background)',
         border: '1px solid var(--border-color)',
         borderRadius: '12px',
         padding: '1.25rem 1.5rem',
@@ -155,7 +155,7 @@ export const AdminMetaPixel = () => {
 
       {/* Info Block */}
       <div style={{
-        background: '#f1f5f9',
+        background: 'var(--color-surface-elevated)',
         border: '1px solid #e2e8f0',
         borderRadius: '12px',
         padding: '1.5rem',
@@ -326,7 +326,7 @@ export const AdminMetaPixel = () => {
 
           {/* Setup Form */}
           <div style={{
-            background: '#f8fafc',
+            background: 'var(--color-background)',
             border: '1px solid var(--border-color)',
             borderRadius: '16px',
             padding: '2rem',
@@ -470,7 +470,7 @@ export const AdminMetaPixel = () => {
             </div>
 
             <div style={{ display: 'flex', gap: '1.5rem' }}>
-              <div style={{ flex: 1, background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '1.25rem' }}>
+              <div style={{ flex: 1, background: 'var(--color-surface)', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '1.25rem' }}>
                 <div style={{ fontSize: '0.7rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.5rem' }}>
                   WHAT THIS DOES
                 </div>
@@ -478,7 +478,7 @@ export const AdminMetaPixel = () => {
                   Links your website to Facebook so ad clicks and on-site orders can be measured.
                 </div>
               </div>
-              <div style={{ flex: 1, background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '1.25rem' }}>
+              <div style={{ flex: 1, background: 'var(--color-surface)', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '1.25rem' }}>
                 <div style={{ fontSize: '0.7rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.5rem' }}>
                   WHEN TO USE IT
                 </div>
@@ -492,9 +492,9 @@ export const AdminMetaPixel = () => {
       )}
 
       {activeTab === 'log' && (
-        <div style={{ background: '#f8fafc', border: '1px solid var(--border-color)', borderRadius: '12px', overflow: 'hidden' }}>
-          <div style={{ padding: '1.5rem', borderBottom: '1px solid var(--border-color)', background: '#ffffff', display: 'flex', gap: '1rem' }}>
-            <div style={{ flex: 1, background: '#f8fafc', padding: '1.25rem', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+        <div style={{ background: 'var(--color-background)', border: '1px solid var(--border-color)', borderRadius: '12px', overflow: 'hidden' }}>
+          <div style={{ padding: '1.5rem', borderBottom: '1px solid var(--border-color)', background: 'var(--color-surface)', display: 'flex', gap: '1rem' }}>
+            <div style={{ flex: 1, background: 'var(--color-background)', padding: '1.25rem', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
               <div style={{ fontSize: '0.7rem', fontWeight: 800, color: '#6366f1', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.5rem' }}>
                 WHAT THIS DOES
               </div>
@@ -502,7 +502,7 @@ export const AdminMetaPixel = () => {
                 Use this to debug setup issues — e.g. confirm a test event arrived after clicking "Simulate page visit".
               </div>
             </div>
-            <div style={{ flex: 1, background: '#f8fafc', padding: '1.25rem', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+            <div style={{ flex: 1, background: 'var(--color-background)', padding: '1.25rem', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
               <div style={{ fontSize: '0.7rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.5rem' }}>
                 WHEN TO USE IT
               </div>
@@ -512,7 +512,7 @@ export const AdminMetaPixel = () => {
             </div>
           </div>
 
-          <div style={{ overflowX: 'auto', background: '#f8fafc', padding: '1rem' }}>
+          <div style={{ overflowX: 'auto', background: 'var(--color-background)', padding: '1rem' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '950px' }}>
               <thead>
                 <tr>
@@ -543,7 +543,7 @@ export const AdminMetaPixel = () => {
                     const isReturning = Boolean(tel.isReturningVisitor || (tel.visitCount && tel.visitCount > 1));
 
                     return (
-                      <tr key={ev.id} style={{ borderBottom: '1px solid #e2e8f0', background: '#ffffff' }}>
+                      <tr key={ev.id} style={{ borderBottom: '1px solid #e2e8f0', background: 'var(--color-surface)' }}>
                         <td style={{ padding: '1rem', fontSize: '0.85rem', color: '#64748b', whiteSpace: 'nowrap' }}>
                           {new Date(ev.event_time).toLocaleString()}
                         </td>
@@ -588,7 +588,7 @@ export const AdminMetaPixel = () => {
                               padding: '0.45rem 0.75rem',
                               borderRadius: '8px',
                               border: '1px solid #cbd5e1',
-                              background: '#ffffff',
+                              background: 'var(--color-surface)',
                               color: '#0f172a',
                               fontSize: '0.78rem',
                               fontWeight: 700,
@@ -617,7 +617,7 @@ export const AdminMetaPixel = () => {
       )}
 
       {(activeTab !== 'setup' && activeTab !== 'log') && (
-        <div style={{ padding: '4rem 2rem', textAlign: 'center', background: '#f8fafc', borderRadius: '16px', border: '1px dashed var(--border-color)' }}>
+        <div style={{ padding: '4rem 2rem', textAlign: 'center', background: 'var(--color-background)', borderRadius: '16px', border: '1px dashed var(--border-color)' }}>
           <Activity size={48} style={{ color: '#94a3b8', margin: '0 auto 1rem' }} />
           <h3 style={{ fontSize: '1.25rem', color: 'var(--navy-900)', marginBottom: '0.5rem' }}>Data Gathering</h3>
           <p style={{ color: '#64748b', maxWidth: '400px', margin: '0 auto' }}>

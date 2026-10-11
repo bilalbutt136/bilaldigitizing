@@ -26,7 +26,7 @@ import { savePortfolioItemViaApi, deletePortfolioItemViaApi, getAuthHeaders, fet
 import { compressImageClient } from '../../utils/imageOptimizer';
 
 const CATEGORY_OPTIONS = [
-  { value: 'Embroidery', label: 'Embroidery Digitizing', icon: Layers, color: '#f97316' },
+  { value: 'Embroidery', label: 'Embroidery Digitizing', icon: Layers, color: 'var(--color-primary)' },
   { value: 'Vector Art', label: 'Vector Art Conversion', icon: PenTool, color: '#06b6d4' },
   { value: 'Custom Patches', label: 'Custom Patches', icon: Tag, color: '#a855f7' }
 ];
@@ -338,7 +338,7 @@ export const PortfolioManager = () => {
 
       {/* 2. Category Tabs & Search Bar */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
-        <div style={{ display: 'flex', gap: '0.4rem', background: '#f1f5f9', padding: '0.35rem', borderRadius: '12px', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: '0.4rem', background: 'var(--color-surface-elevated)', padding: '0.35rem', borderRadius: '12px', flexWrap: 'wrap' }}>
           {[
             { id: 'all', label: 'All Works', count: (portfolioSamples || []).length },
             { id: 'embroidery', label: 'Embroidery Digitizing', count: (portfolioSamples || []).filter(p => (p.category || '').toLowerCase().includes('embroid') || p.category === 'general').length },
@@ -396,7 +396,7 @@ export const PortfolioManager = () => {
 
       {/* 3. Portfolio Projects Grid */}
       {filteredList.length === 0 ? (
-        <div className="card" style={{ padding: '3.5rem 2rem', textAlign: 'center', background: '#ffffff', border: '1.5px dashed var(--border-color)', borderRadius: '16px' }}>
+        <div className="card" style={{ padding: '3.5rem 2rem', textAlign: 'center', background: 'var(--color-surface)', border: '1.5px dashed var(--border-color)', borderRadius: '16px' }}>
           <FolderPlus size={44} style={{ color: 'var(--orange-500)', margin: '0 auto 1rem' }} />
           <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--navy-900)', marginBottom: '0.5rem' }}>
             No Portfolio Projects Found
@@ -542,12 +542,12 @@ export const PortfolioManager = () => {
                     {/* Tech specs tags */}
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', marginTop: '0.5rem' }}>
                       {item.stitch_count && (
-                        <span style={{ fontSize: '0.72rem', fontWeight: 700, background: '#f1f5f9', color: '#475569', padding: '0.2rem 0.5rem', borderRadius: '6px' }}>
+                        <span style={{ fontSize: '0.72rem', fontWeight: 700, background: 'var(--color-surface-elevated)', color: '#475569', padding: '0.2rem 0.5rem', borderRadius: '6px' }}>
                           ⚡ {item.stitch_count}
                         </span>
                       )}
                       {item.formats && (
-                        <span style={{ fontSize: '0.72rem', fontWeight: 700, background: '#f1f5f9', color: '#475569', padding: '0.2rem 0.5rem', borderRadius: '6px' }}>
+                        <span style={{ fontSize: '0.72rem', fontWeight: 700, background: 'var(--color-surface-elevated)', color: '#475569', padding: '0.2rem 0.5rem', borderRadius: '6px' }}>
                           📁 {typeof item.formats === 'string' ? item.formats : Array.isArray(item.formats) ? item.formats.join(', ') : ''}
                         </span>
                       )}
@@ -561,13 +561,13 @@ export const PortfolioManager = () => {
                 </div>
 
                 {/* Card Actions Footer */}
-                <div style={{ padding: '0.85rem 1.25rem', borderTop: '1px solid var(--border-color)', background: '#f8fafc', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div style={{ padding: '0.85rem 1.25rem', borderTop: '1px solid var(--border-color)', background: 'var(--color-background)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div style={{ display: 'flex', gap: '0.25rem' }}>
                     <button
                       type="button"
                       disabled={idx === 0}
                       onClick={() => handleMoveOrder(item, 'up')}
-                      style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '6px', padding: '0.35rem', cursor: idx === 0 ? 'not-allowed' : 'pointer', opacity: idx === 0 ? 0.3 : 1 }}
+                      style={{ background: 'var(--color-surface)', border: '1px solid #e2e8f0', borderRadius: '6px', padding: '0.35rem', cursor: idx === 0 ? 'not-allowed' : 'pointer', opacity: idx === 0 ? 0.3 : 1 }}
                       title="Move Up"
                     >
                       <ChevronUp size={14} />
@@ -576,7 +576,7 @@ export const PortfolioManager = () => {
                       type="button"
                       disabled={idx === filteredList.length - 1}
                       onClick={() => handleMoveOrder(item, 'down')}
-                      style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '6px', padding: '0.35rem', cursor: idx === filteredList.length - 1 ? 'not-allowed' : 'pointer', opacity: idx === filteredList.length - 1 ? 0.3 : 1 }}
+                      style={{ background: 'var(--color-surface)', border: '1px solid #e2e8f0', borderRadius: '6px', padding: '0.35rem', cursor: idx === filteredList.length - 1 ? 'not-allowed' : 'pointer', opacity: idx === filteredList.length - 1 ? 0.3 : 1 }}
                       title="Move Down"
                     >
                       <ChevronDown size={14} />
@@ -625,7 +625,7 @@ export const PortfolioManager = () => {
           overflowY: 'auto'
         }}>
           <div style={{
-            background: '#ffffff',
+            background: 'var(--color-surface)',
             borderRadius: '20px',
             maxWidth: '680px',
             width: '100%',
@@ -636,7 +636,7 @@ export const PortfolioManager = () => {
           }}>
 
             {/* Modal Header */}
-            <div style={{ padding: '1.5rem 1.75rem', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f8fafc', borderTopLeftRadius: '20px', borderTopRightRadius: '20px' }}>
+            <div style={{ padding: '1.5rem 1.75rem', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--color-background)', borderTopLeftRadius: '20px', borderTopRightRadius: '20px' }}>
               <div>
                 <h3 style={{ fontSize: '1.25rem', fontWeight: 900, color: 'var(--navy-950)', margin: 0 }}>
                   {editingItem ? 'Edit Portfolio Project' : 'Add New Portfolio Project'}
@@ -710,7 +710,7 @@ export const PortfolioManager = () => {
               </div>
 
               {/* Finished Production Image (Required) */}
-              <div style={{ background: '#f8fafc', padding: '1.25rem', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
+              <div style={{ background: 'var(--color-background)', padding: '1.25rem', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.4rem', marginBottom: '0.35rem' }}>
                   <label style={{ fontWeight: 800, fontSize: '0.85rem', color: 'var(--navy-900)', margin: 0 }}>
                     Finished Design / Sew-Out Image *
@@ -724,7 +724,7 @@ export const PortfolioManager = () => {
                 </p>
 
                 {formState.digitized_image && (
-                  <div style={{ width: '100%', aspectRatio: '4/3', maxHeight: '220px', borderRadius: '10px', overflow: 'hidden', background: '#f8fafc', marginBottom: '0.75rem', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0.35rem' }}>
+                  <div style={{ width: '100%', aspectRatio: '4/3', maxHeight: '220px', borderRadius: '10px', overflow: 'hidden', background: 'var(--color-background)', marginBottom: '0.75rem', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0.35rem' }}>
                     <img src={formState.digitized_image} alt="Preview" style={{ maxWidth: '100%', maxHeight: '100%', width: 'auto', height: 'auto', objectFit: 'contain', objectPosition: 'center' }} />
                   </div>
                 )}
@@ -741,7 +741,7 @@ export const PortfolioManager = () => {
                         }
                       }}
                     />
-                    <span className="btn btn-outline btn-sm" style={{ width: '100%', background: '#ffffff', color: 'var(--orange-600)', borderColor: 'var(--orange-500)', fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem', cursor: 'pointer' }}>
+                    <span className="btn btn-outline btn-sm" style={{ width: '100%', background: 'var(--color-surface)', color: 'var(--orange-600)', borderColor: 'var(--orange-500)', fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem', cursor: 'pointer' }}>
                       {isUploadingMain ? <RefreshCw size={14} className="spin-icon" /> : <Upload size={14} />}
                       <span>{isUploadingMain ? 'Uploading...' : 'Upload Image File'}</span>
                     </span>
@@ -760,12 +760,12 @@ export const PortfolioManager = () => {
               </div>
 
               {/* Optional Raw Artwork / Before Image */}
-              <div style={{ background: '#f8fafc', padding: '1.25rem', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
+              <div style={{ background: 'var(--color-background)', padding: '1.25rem', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.4rem', marginBottom: '0.35rem' }}>
                   <label style={{ fontWeight: 800, fontSize: '0.85rem', color: 'var(--navy-900)', margin: 0 }}>
                     Original Artwork / Before Image (Optional)
                   </label>
-                  <span style={{ fontSize: '0.74rem', fontWeight: 800, color: 'var(--navy-700)', background: '#f1f5f9', padding: '0.2rem 0.55rem', borderRadius: '6px', border: '1px solid #e2e8f0' }}>
+                  <span style={{ fontSize: '0.74rem', fontWeight: 800, color: 'var(--navy-700)', background: 'var(--color-surface-elevated)', padding: '0.2rem 0.55rem', borderRadius: '6px', border: '1px solid #e2e8f0' }}>
                     📐 Exact Size: 1200 × 900 px (4:3 Aspect Ratio)
                   </span>
                 </div>
@@ -774,7 +774,7 @@ export const PortfolioManager = () => {
                 </p>
 
                 {formState.original_image && (
-                  <div style={{ width: '100%', aspectRatio: '4/3', maxHeight: '200px', borderRadius: '10px', overflow: 'hidden', background: '#f8fafc', marginBottom: '0.75rem', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0.35rem' }}>
+                  <div style={{ width: '100%', aspectRatio: '4/3', maxHeight: '200px', borderRadius: '10px', overflow: 'hidden', background: 'var(--color-background)', marginBottom: '0.75rem', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0.35rem' }}>
                     <img src={formState.original_image} alt="Before Preview" style={{ maxWidth: '100%', maxHeight: '100%', width: 'auto', height: 'auto', objectFit: 'contain', objectPosition: 'center' }} />
                   </div>
                 )}
@@ -791,7 +791,7 @@ export const PortfolioManager = () => {
                         }
                       }}
                     />
-                    <span className="btn btn-outline btn-sm" style={{ width: '100%', background: '#ffffff', color: 'var(--navy-700)', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem', cursor: 'pointer' }}>
+                    <span className="btn btn-outline btn-sm" style={{ width: '100%', background: 'var(--color-surface)', color: 'var(--navy-700)', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem', cursor: 'pointer' }}>
                       {isUploadingBefore ? <RefreshCw size={14} className="spin-icon" /> : <Upload size={14} />}
                       <span>{isUploadingBefore ? 'Uploading...' : 'Upload Original Art'}</span>
                     </span>

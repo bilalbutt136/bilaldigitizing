@@ -374,7 +374,7 @@ export const VectorArtPage = ({ hideHero = false }) => {
               gap: '0.4rem',
               background: 'var(--color-primary-light, rgba(255, 122, 0, 0.15))',
               border: '1px solid var(--border-color)',
-              color: 'var(--color-primary, #ea580c)',
+              color: 'var(--color-primary)',
               fontWeight: 800,
               fontSize: '0.825rem',
               textTransform: 'uppercase',

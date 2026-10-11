@@ -197,11 +197,11 @@ const DEFAULT_ALL_PACKAGES = {
 
 const PALETTES = [
   {
-    color: '#ea580c',
-    bgLight: 'rgba(234, 88, 12, 0.12)',
+    color: 'var(--color-primary)',
+    bgLight: 'rgba(37, 99, 235, 0.12)',
     border: '#fed7aa',
-    btnBg: 'linear-gradient(135deg, #ea580c 0%, #c2410c 100%)',
-    glowColor: 'rgba(234, 88, 12, 0.28)'
+    btnBg: 'linear-gradient(135deg, #2563eb 0%, #1e40af 100%)',
+    glowColor: 'rgba(37, 99, 235, 0.28)'
   },
   {
     color: '#2563eb',
@@ -373,9 +373,9 @@ export default function PricingPage() {
             display: 'inline-flex',
             alignItems: 'center',
             gap: '0.45rem',
-            background: 'var(--color-primary-light, rgba(249, 115, 22, 0.12))',
+            background: 'var(--color-primary-light)',
             border: '1px solid var(--border-color)',
-            color: 'var(--color-primary, #ea580c)',
+            color: 'var(--color-primary)',
             padding: '0.4rem 1.1rem',
             borderRadius: '9999px',
             fontSize: '0.85rem',
@@ -423,13 +423,13 @@ export default function PricingPage() {
                     padding: '0.55rem 1.25rem',
                     borderRadius: '9999px',
                     border: 'none',
-                    background: isActive ? 'linear-gradient(135deg, #ea580c 0%, #f97316 100%)' : 'transparent',
+                    background: isActive ? 'linear-gradient(135deg, #2563eb 0%, #4f46e5 100%)' : 'transparent',
                     color: isActive ? '#ffffff' : 'var(--color-text-primary)',
                     fontWeight: isActive ? 800 : 700,
                     fontSize: '0.85rem',
                     cursor: 'pointer',
                     transition: 'all 0.2s ease',
-                    boxShadow: isActive ? '0 4px 14px rgba(234, 88, 12, 0.35)' : 'none'
+                    boxShadow: isActive ? '0 4px 14px rgba(37, 99, 235, 0.35)' : 'none'
                   }}
                 >
                   <span>{t.label}</span>

@@ -366,7 +366,7 @@ export const SecureAdminLogin = () => {
                     alt="Authenticator setup QR code"
                     width="200"
                     height="200"
-                    style={{ width: '200px', maxWidth: '70vw', height: 'auto', background: '#ffffff', borderRadius: '12px', padding: '8px', border: '1px solid #e2e8f0' }}
+                    style={{ width: '200px', maxWidth: '70vw', height: 'auto', background: 'var(--color-surface)', borderRadius: '12px', padding: '8px', border: '1px solid #e2e8f0' }}
                   />
                 </div>
               )}

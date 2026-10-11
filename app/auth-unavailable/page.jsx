@@ -32,7 +32,7 @@ export default async function AuthUnavailablePage({ searchParams }) {
         aria-labelledby="auth-unavailable-title"
         style={{
           width: 'min(100%, 520px)',
-          background: '#ffffff',
+          background: 'var(--color-surface)',
           border: '1px solid #e2e8f0',
           borderRadius: '20px',
           padding: 'clamp(1.25rem, 4vw, 2rem)',
@@ -55,8 +55,8 @@ export default async function AuthUnavailablePage({ searchParams }) {
             justifyContent: 'center',
             padding: '0.3rem 0.7rem',
             borderRadius: '999px',
-            background: '#fff7ed',
-            color: '#c2410c',
+            background: 'var(--color-primary-light)',
+            color: 'var(--color-primary)',
             border: '1px solid #fed7aa',
             fontSize: '0.75rem',
             fontWeight: 800,
@@ -111,11 +111,11 @@ export default async function AuthUnavailablePage({ searchParams }) {
               justifyContent: 'center',
               padding: '0.7rem 1rem',
               borderRadius: '10px',
-              background: '#ea580c',
+              background: 'var(--color-action-start, #2563eb)',
               color: '#ffffff',
               fontWeight: 800,
               textDecoration: 'none',
-              boxShadow: '0 8px 20px rgba(234, 88, 12, 0.22)'
+              boxShadow: '0 8px 20px rgba(37, 99, 235, 0.22)'
             }}
           >
             Try again
@@ -130,7 +130,7 @@ export default async function AuthUnavailablePage({ searchParams }) {
               justifyContent: 'center',
               padding: '0.7rem 1rem',
               borderRadius: '10px',
-              background: '#ffffff',
+              background: 'var(--color-surface)',
               color: '#334155',
               fontWeight: 800,
               textDecoration: 'none',

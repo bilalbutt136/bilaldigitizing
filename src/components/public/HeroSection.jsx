@@ -689,7 +689,7 @@ export const HeroSection = () => {
               style={{
                 background: 'none',
                 border: 'none',
-                color: 'var(--color-primary, #ea580c)',
+                color: 'var(--color-primary)',
                 fontWeight: 800,
                 cursor: 'pointer',
                 textDecoration: 'underline',
@@ -821,7 +821,7 @@ export const HeroSection = () => {
                 className="btn btn-primary-orange btn-lg"
                 onClick={handlePrimaryAction}
                 style={{
-                  background: 'linear-gradient(135deg, var(--color-secondary) 0%, var(--color-primary) 100%)',
+                  background: 'linear-gradient(120deg, var(--color-action-start, #2563eb) 0%, var(--color-action-end, #4338ca) 100%)',
                   color: 'var(--color-text-on-primary, #ffffff)',
                   border: 'none',
                   padding: '0.72rem 1.45rem',
@@ -905,8 +905,8 @@ export const HeroSection = () => {
                 marginBottom: '0.65rem',
                 fontSize: '0.74rem',
                 fontWeight: 800,
-                color: 'var(--color-primary, #ea580c)',
-                background: 'var(--color-primary-light, rgba(234, 88, 12, 0.08))',
+                color: 'var(--color-primary)',
+                background: 'var(--color-primary-light, rgba(37, 99, 235, 0.08))',
                 border: '1px solid var(--color-border)',
                 padding: '0.35rem 0.85rem',
                 borderRadius: '9999px',
@@ -959,7 +959,7 @@ export const HeroSection = () => {
                       alignItems: 'center',
                       gap: '0.3rem'
                     }}>
-                      <span style={{ color: '#ea580c' }}>★</span>
+                      <span style={{ color: 'var(--color-primary)' }}>★</span>
                       {currentImage.stitchCount && <span>{currentImage.stitchCount}</span>}
                       {currentImage.formats && (
                         <span style={{ opacity: 0.9 }}>{currentImage.stitchCount ? '· ' : ''}{currentImage.formats}</span>
@@ -1100,7 +1100,7 @@ export const HeroSection = () => {
                     gap: '0.75rem',
                     color: '#94a3b8'
                   }}>
-                    <Sparkles size={32} style={{ color: 'var(--color-primary, #ea580c)' }} />
+                    <Sparkles size={32} style={{ color: 'var(--color-primary)' }} />
                     <div style={{ fontWeight: 800, fontSize: '1rem', color: 'var(--color-text-primary)' }}>
                       Studio Production Showcase
                     </div>
@@ -1209,7 +1209,7 @@ export const HeroSection = () => {
                           cursor: 'pointer',
                           transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
                           padding: 0,
-                          boxShadow: isActive ? '0 0 8px rgba(234, 88, 12, 0.6)' : 'none'
+                          boxShadow: isActive ? '0 0 8px rgba(37, 99, 235, 0.6)' : 'none'
                         }}
                         title={`Slide ${idx + 1}: ${imgItem.title}`}
                       />
@@ -1386,7 +1386,7 @@ export const HeroSection = () => {
                   handlePrimaryAction();
                 }}
                 style={{
-                  background: 'linear-gradient(135deg, var(--color-secondary) 0%, var(--color-primary) 100%)',
+                  background: 'linear-gradient(120deg, var(--color-action-start, #2563eb) 0%, var(--color-action-end, #4338ca) 100%)',
                   color: '#ffffff',
                   padding: '0.65rem 1.3rem',
                   borderRadius: '10px',

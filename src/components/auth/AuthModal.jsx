@@ -213,7 +213,7 @@ export const AuthModal = ({ isStandalonePage = false, initialMode = null }) => {
         justifyContent: 'center',
         background: 'var(--bg-main, #f8fafc)'
       }}>
-        <Loader2 className="animate-spin" size={34} style={{ color: 'var(--color-primary, #ea580c)' }} />
+        <Loader2 className="animate-spin" size={34} style={{ color: 'var(--color-primary)' }} />
       </div>
     );
   }
@@ -237,7 +237,7 @@ export const AuthModal = ({ isStandalonePage = false, initialMode = null }) => {
         color: 'var(--text-main, #0f172a)',
         textAlign: 'center'
       }}>
-        <Loader2 className="animate-spin" size={38} style={{ color: 'var(--color-primary, #ea580c)', marginBottom: '1rem' }} />
+        <Loader2 className="animate-spin" size={38} style={{ color: 'var(--color-primary)', marginBottom: '1rem' }} />
         <h2 style={{ fontSize: '1.25rem', fontWeight: 800, margin: '0 0 0.5rem 0' }}>Opening Dashboard...</h2>
         <p style={{ color: 'var(--text-muted, #64748b)', fontSize: '0.875rem', margin: '0 0 1.25rem 0' }}>
           Redirecting to your account dashboard...
@@ -249,7 +249,7 @@ export const AuthModal = ({ isStandalonePage = false, initialMode = null }) => {
             navigate(target, { replace: true });
           }}
           style={{
-            background: 'var(--color-primary, #ea580c)',
+            background: 'var(--color-primary)',
             color: '#ffffff',
             border: 'none',
             borderRadius: '8px',
@@ -257,7 +257,7 @@ export const AuthModal = ({ isStandalonePage = false, initialMode = null }) => {
             fontSize: '0.85rem',
             fontWeight: 700,
             cursor: 'pointer',
-            boxShadow: '0 2px 8px rgba(234, 88, 12, 0.25)'
+            boxShadow: '0 2px 8px rgba(37, 99, 235, 0.25)'
           }}
         >
           Click here to enter dashboard
@@ -1120,7 +1120,7 @@ export const AuthModal = ({ isStandalonePage = false, initialMode = null }) => {
             style={{
               maxWidth: '440px',
               width: '100%',
-              background: '#ffffff',
+              background: 'var(--color-surface)',
               borderRadius: '24px',
               padding: '2rem 1.75rem',
               boxShadow: '0 25px 70px rgba(15, 23, 42, 0.45), 0 0 0 1.5px rgba(239, 68, 68, 0.3)',
@@ -1138,7 +1138,7 @@ export const AuthModal = ({ isStandalonePage = false, initialMode = null }) => {
                 position: 'absolute',
                 top: '16px',
                 right: '16px',
-                background: '#f8fafc',
+                background: 'var(--color-background)',
                 border: '1px solid var(--border-color)',
                 borderRadius: '50%',
                 width: '32px',

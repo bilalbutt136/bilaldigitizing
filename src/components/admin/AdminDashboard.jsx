@@ -696,7 +696,7 @@ export const AdminDashboard = () => {
               boxShadow: '0 4px 16px rgba(0, 0, 0, 0.25)'
             }}>
               <div style={{
-                background: 'linear-gradient(135deg, var(--color-secondary) 0%, var(--color-primary) 100%)',
+                background: 'linear-gradient(120deg, var(--color-action-start, #2563eb) 0%, var(--color-action-end, #4338ca) 100%)',
                 color: 'var(--color-text-on-primary, #ffffff)',
                 padding: '0.5rem',
                 borderRadius: '9px',

@@ -38,7 +38,7 @@ function OrderContent() {
             margin: '0 0 0.35rem',
             color: 'var(--color-text-primary, #0f172a)'
           }}>
-            Commercial Embroidery Digitizing & <span style={{ color: '#ea580c' }}>Custom Patches</span>
+            Commercial Embroidery Digitizing & <span style={{ color: 'var(--color-primary)' }}>Custom Patches</span>
           </h1>
 
           <p style={{
@@ -62,7 +62,7 @@ function OrderContent() {
             color: 'var(--color-text-secondary, #475569)'
           }}>
             <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-              <Zap size={13} style={{ color: '#ea580c' }} /> 4–12h Delivery
+              <Zap size={13} style={{ color: 'var(--color-primary)' }} /> 4–12h Delivery
             </span>
             <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
               <CheckCircle2 size={13} style={{ color: '#059669' }} /> 100% Hand Pathing
@@ -89,7 +89,7 @@ function OrderContent() {
           boxShadow: '0 4px 20px rgba(0,0,0,0.03)'
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', marginBottom: '1.5rem' }}>
-            <HelpCircle size={22} style={{ color: '#ea580c' }} />
+            <HelpCircle size={22} style={{ color: 'var(--color-primary)' }} />
             <h3 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 900, color: 'var(--color-text-primary, #0f172a)' }}>
               Frequently Asked Questions
             </h3>
@@ -175,7 +175,7 @@ export default function OrderPage() {
   return (
     <Suspense fallback={
       <div style={{ minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div style={{ width: '36px', height: '36px', border: '3px solid rgba(234, 88, 12, 0.2)', borderTopColor: '#ea580c', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+        <div style={{ width: '36px', height: '36px', border: '3px solid rgba(37, 99, 235, 0.2)', borderTopColor: 'var(--color-primary)', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
       </div>
     }>
       <OrderContent />

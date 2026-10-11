@@ -53,7 +53,7 @@ export const ClientLayoutShell = ({ children }) => {
 
       <div className="website-header-zone">
         {!isCompactShell && <AnnouncementBar />}
-        <Suspense fallback={<header style={{ minHeight: '63px', background: '#ffffff' }} />}>
+        <Suspense fallback={<header style={{ minHeight: '63px', background: 'var(--color-surface)' }} />}>
           <HeaderNav />
         </Suspense>
       </div>

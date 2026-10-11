@@ -343,7 +343,7 @@ export const PWAInstallBanner = () => {
               width: '46px',
               height: '46px',
               borderRadius: '13px',
-              background: '#ffffff',
+              background: 'var(--color-surface)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -365,7 +365,7 @@ export const PWAInstallBanner = () => {
                 <h4 className="bdigi-install-title" style={{ margin: 0, fontSize: '0.88rem', fontWeight: 800, color: '#ffffff', whiteSpace: 'nowrap' }}>
                   {isAppInstalled ? 'BDigitizing App' : 'Install BDigitizing App'}
                 </h4>
-                <span style={{ fontSize: '0.62rem', background: '#ea580c', color: '#ffffff', fontWeight: 900, padding: '0.1rem 0.4rem', borderRadius: '9999px', letterSpacing: '0.04em' }}>
+                <span style={{ fontSize: '0.62rem', background: 'var(--color-action-start, #2563eb)', color: '#ffffff', fontWeight: 900, padding: '0.1rem 0.4rem', borderRadius: '9999px', letterSpacing: '0.04em' }}>
                   {isAppInstalled ? 'INSTALLED' : 'FREE'}
                 </span>
               </div>
@@ -382,7 +382,7 @@ export const PWAInstallBanner = () => {
                 type="button"
                 onClick={handleOpenApp}
                 style={{
-                  background: 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)',
+                  background: 'linear-gradient(135deg, #4f46e5 0%, #2563eb 100%)',
                   color: '#ffffff',
                   border: 'none',
                   borderRadius: '10px',
@@ -407,7 +407,7 @@ export const PWAInstallBanner = () => {
                 disabled={isInstalling}
                 aria-label={isIOS ? 'Show iPhone installation steps' : 'Install BDigitizing app'}
                 style={{
-                  background: 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)',
+                  background: 'linear-gradient(135deg, #4f46e5 0%, #2563eb 100%)',
                   color: '#ffffff',
                   border: 'none',
                   borderRadius: '10px',
@@ -478,7 +478,7 @@ export const PWAInstallBanner = () => {
             className={`bdigi-install-popup-progress ${isPaused ? 'paused' : ''}`}
             style={{
               height: '100%',
-              background: 'linear-gradient(90deg, #f97316, #ea580c)'
+              background: 'linear-gradient(90deg, #4f46e5, #2563eb)'
             }}
           />
         </div>
@@ -502,7 +502,7 @@ export const PWAInstallBanner = () => {
         >
           <div
             style={{
-              background: '#ffffff',
+              background: 'var(--color-surface)',
               borderRadius: '20px',
               padding: '1.5rem',
               maxWidth: '440px',
@@ -520,7 +520,7 @@ export const PWAInstallBanner = () => {
                 position: 'absolute',
                 top: '1rem',
                 right: '1rem',
-                background: '#f1f5f9',
+                background: 'var(--color-surface-elevated)',
                 border: 'none',
                 borderRadius: '50%',
                 width: '32px',
@@ -540,7 +540,7 @@ export const PWAInstallBanner = () => {
               width: '64px',
               height: '64px',
               borderRadius: '18px',
-              background: '#ffffff',
+              background: 'var(--color-surface)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -564,17 +564,17 @@ export const PWAInstallBanner = () => {
               Install for 1-tap ordering, instant digitizer chat, and fast file downloads.
             </p>
 
-            <div style={{ background: '#f8fafc', borderRadius: '12px', padding: '1rem', textAlign: 'left', display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '1.25rem' }}>
+            <div style={{ background: 'var(--color-background)', borderRadius: '12px', padding: '1rem', textAlign: 'left', display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '1.25rem' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-                <span style={{ width: '24px', height: '24px', borderRadius: '50%', background: '#fff7ed', color: '#ea580c', fontWeight: 800, fontSize: '0.75rem', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>1</span>
+                <span style={{ width: '24px', height: '24px', borderRadius: '50%', background: 'var(--color-primary-light)', color: 'var(--color-primary)', fontWeight: 800, fontSize: '0.75rem', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>1</span>
                 <span style={{ fontSize: '0.82rem', color: '#1e293b' }}>Tap the <strong>Share</strong> button <Share size={14} style={{ display: 'inline', verticalAlign: 'middle', margin: '0 2px' }} /> in Safari</span>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-                <span style={{ width: '24px', height: '24px', borderRadius: '50%', background: '#fff7ed', color: '#ea580c', fontWeight: 800, fontSize: '0.75rem', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>2</span>
+                <span style={{ width: '24px', height: '24px', borderRadius: '50%', background: 'var(--color-primary-light)', color: 'var(--color-primary)', fontWeight: 800, fontSize: '0.75rem', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>2</span>
                 <span style={{ fontSize: '0.82rem', color: '#1e293b' }}>Scroll down and tap <strong>Add to Home Screen</strong> <PlusSquare size={14} style={{ display: 'inline', verticalAlign: 'middle', margin: '0 2px' }} /></span>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-                <span style={{ width: '24px', height: '24px', borderRadius: '50%', background: '#fff7ed', color: '#ea580c', fontWeight: 800, fontSize: '0.75rem', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>3</span>
+                <span style={{ width: '24px', height: '24px', borderRadius: '50%', background: 'var(--color-primary-light)', color: 'var(--color-primary)', fontWeight: 800, fontSize: '0.75rem', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>3</span>
                 <span style={{ fontSize: '0.82rem', color: '#1e293b' }}>Tap <strong>Add</strong> at the top right to install</span>
               </div>
             </div>
@@ -608,7 +608,7 @@ export const PWAInstallBanner = () => {
         >
           <div
             style={{
-              background: '#ffffff',
+              background: 'var(--color-surface)',
               borderRadius: '20px',
               padding: '1.5rem',
               maxWidth: '440px',
@@ -626,7 +626,7 @@ export const PWAInstallBanner = () => {
                 position: 'absolute',
                 top: '1rem',
                 right: '1rem',
-                background: '#f1f5f9',
+                background: 'var(--color-surface-elevated)',
                 border: 'none',
                 borderRadius: '50%',
                 width: '32px',
@@ -646,7 +646,7 @@ export const PWAInstallBanner = () => {
               width: '64px',
               height: '64px',
               borderRadius: '18px',
-              background: '#ffffff',
+              background: 'var(--color-surface)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -670,17 +670,17 @@ export const PWAInstallBanner = () => {
               Fast 1-tap ordering, push notifications & instant file tracking.
             </p>
 
-            <div style={{ background: '#f8fafc', borderRadius: '12px', padding: '1rem', textAlign: 'left', display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '1.25rem' }}>
+            <div style={{ background: 'var(--color-background)', borderRadius: '12px', padding: '1rem', textAlign: 'left', display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '1.25rem' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-                <span style={{ width: '24px', height: '24px', borderRadius: '50%', background: '#fff7ed', color: '#ea580c', fontWeight: 800, fontSize: '0.75rem', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>1</span>
+                <span style={{ width: '24px', height: '24px', borderRadius: '50%', background: 'var(--color-primary-light)', color: 'var(--color-primary)', fontWeight: 800, fontSize: '0.75rem', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>1</span>
                 <span style={{ fontSize: '0.82rem', color: '#1e293b' }}>Tap the Chrome menu <MoreVertical size={14} style={{ display: 'inline', verticalAlign: 'middle', margin: '0 2px' }} /> (three dots at top right)</span>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-                <span style={{ width: '24px', height: '24px', borderRadius: '50%', background: '#fff7ed', color: '#ea580c', fontWeight: 800, fontSize: '0.75rem', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>2</span>
+                <span style={{ width: '24px', height: '24px', borderRadius: '50%', background: 'var(--color-primary-light)', color: 'var(--color-primary)', fontWeight: 800, fontSize: '0.75rem', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>2</span>
                 <span style={{ fontSize: '0.82rem', color: '#1e293b' }}>Select <strong>Install app</strong> or <strong>Add to Home screen</strong></span>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-                <span style={{ width: '24px', height: '24px', borderRadius: '50%', background: '#fff7ed', color: '#ea580c', fontWeight: 800, fontSize: '0.75rem', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>3</span>
+                <span style={{ width: '24px', height: '24px', borderRadius: '50%', background: 'var(--color-primary-light)', color: 'var(--color-primary)', fontWeight: 800, fontSize: '0.75rem', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>3</span>
                 <span style={{ fontSize: '0.82rem', color: '#1e293b' }}>Tap <strong>Install</strong> to add BDigitizing to your phone</span>
               </div>
             </div>

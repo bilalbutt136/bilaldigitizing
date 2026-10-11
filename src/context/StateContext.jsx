@@ -165,8 +165,25 @@ export const StateProvider = ({ children, initialCatalog = null }) => {
   };
 
   useEffect(() => {
-    const savedMode = (typeof window !== 'undefined' && localStorage.getItem('bdigi_theme')) || 'light';
-    const savedBrand = (typeof window !== 'undefined' && JSON.parse(localStorage.getItem('bdigi_custom_brand') || 'null')) || null;
+    let savedMode = 'light';
+    let savedBrand = null;
+    try {
+      savedMode = localStorage.getItem('bdigi_theme') === 'dark' ? 'dark' : 'light';
+      savedBrand = JSON.parse(localStorage.getItem('bdigi_custom_brand') || 'null');
+      if (savedBrand && typeof savedBrand === 'object') {
+        const oldPrimary = String(savedBrand.primary || '').toLowerCase();
+        const oldSecondary = String(savedBrand.secondary || '').toLowerCase();
+        if (oldPrimary === '#ea580c' && oldSecondary === '#f97316') {
+          // Retire only the original factory-orange override.
+          localStorage.removeItem('bdigi_custom_brand');
+          savedBrand = null;
+        }
+      } else {
+        savedBrand = null;
+      }
+    } catch {
+      savedBrand = null;
+    }
 
     setThemeState(savedMode);
     setColorThemeState('studio-orange');

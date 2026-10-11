@@ -164,7 +164,7 @@ export const CustomApparelPage = () => {
                 key={product.id}
                 className="card"
                 style={{
-                  background: '#ffffff',
+                  background: 'var(--color-surface)',
                   border: '1.5px solid var(--border-color)',
                   borderRadius: 'var(--radius-lg)',
                   overflow: 'hidden',
@@ -187,7 +187,7 @@ export const CustomApparelPage = () => {
                         position: 'absolute',
                         top: '14px',
                         left: '14px',
-                        background: 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)',
+                        background: 'linear-gradient(135deg, #4f46e5 0%, #2563eb 100%)',
                         color: '#ffffff',
                         fontSize: '0.725rem',
                         fontWeight: 800,
@@ -250,7 +250,7 @@ export const CustomApparelPage = () => {
 
           {/* 3. Sizing & Specifications Guide */}
           <div style={{
-            background: '#ffffff',
+            background: 'var(--color-surface)',
             border: '1.5px solid var(--border-color)',
             borderRadius: 'var(--radius-lg)',
             padding: '2.5rem',
@@ -263,7 +263,7 @@ export const CustomApparelPage = () => {
             <div style={{ overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem', textAlign: 'left' }}>
                 <thead>
-                  <tr style={{ background: '#f8fafc', borderBottom: '2px solid var(--border-color)' }}>
+                  <tr style={{ background: 'var(--color-background)', borderBottom: '2px solid var(--border-color)' }}>
                     <th style={{ padding: '0.85rem 1rem', fontWeight: 800 }}>Size</th>
                     <th style={{ padding: '0.85rem 1rem', fontWeight: 800 }}>Chest Width (Inches)</th>
                     <th style={{ padding: '0.85rem 1rem', fontWeight: 800 }}>Body Length (Inches)</th>
@@ -304,7 +304,7 @@ export const CustomApparelPage = () => {
           <button
             type="button"
             className="btn btn-primary-orange btn-lg"
-            style={{ fontWeight: 800, padding: '1rem 2.5rem', background: '#ffffff', color: '#090d16' }}
+            style={{ fontWeight: 800, padding: '1rem 2.5rem', background: 'var(--color-surface)', color: '#090d16' }}
             onClick={() => protectedNavigate('customer', true)}
           >
             Start Apparel Order <ArrowRight size={18} />

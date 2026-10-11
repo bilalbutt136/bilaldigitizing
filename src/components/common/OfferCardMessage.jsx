@@ -190,7 +190,7 @@ export default function OfferCardMessage({
       <div style={{ display: 'flex', alignItems: compact ? 'flex-start' : 'center', justifyContent: 'space-between', flexDirection: compact ? 'column' : 'row', gap: compact ? '0.55rem' : 0, marginBottom: '0.75rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
           <span style={{
-            background: 'linear-gradient(135deg, #ea580c, #f97316)',
+            background: 'linear-gradient(135deg, #2563eb, #4f46e5)',
             color: '#ffffff',
             fontSize: '0.68rem',
             fontWeight: 800,
@@ -212,7 +212,7 @@ export default function OfferCardMessage({
         {/* STATUS PILL */}
         <div>
           {isPending && (
-            <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#ea580c', background: '#fff7ed', padding: '0.2rem 0.55rem', borderRadius: '12px', border: '1px solid #ffedd5' }}>
+            <span style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--color-primary)', background: 'var(--color-primary-light)', padding: '0.2rem 0.55rem', borderRadius: '12px', border: '1px solid #ffedd5' }}>
               Pending Review
             </span>
           )}
@@ -355,7 +355,7 @@ export default function OfferCardMessage({
                   onClick={() => openCheckoutForOffer(offer, orderId)}
                   style={{
                     flex: 1,
-                    background: 'linear-gradient(135deg, #ea580c, #f97316)',
+                    background: 'linear-gradient(135deg, #2563eb, #4f46e5)',
                     color: '#ffffff',
                     border: 'none',
                     padding: '0.65rem 1rem',
@@ -367,7 +367,7 @@ export default function OfferCardMessage({
                     alignItems: 'center',
                     justifyContent: 'center',
                     gap: '0.4rem',
-                    boxShadow: '0 2px 8px rgba(234, 88, 12, 0.25)'
+                    boxShadow: '0 2px 8px rgba(37, 99, 235, 0.25)'
                   }}
                 >
                   <CreditCard size={16} />

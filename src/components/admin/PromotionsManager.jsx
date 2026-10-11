@@ -842,7 +842,7 @@ export const PromotionsManager = () => {
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: '#fff7ed', color: '#ea580c', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: 'var(--color-primary-light)', color: 'var(--color-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   <Tag size={20} />
                 </div>
                 <div>
@@ -857,8 +857,8 @@ export const PromotionsManager = () => {
               <span style={{
                 fontSize: '1.15rem',
                 fontWeight: 900,
-                color: '#ea580c',
-                background: '#fff7ed',
+                color: 'var(--color-primary)',
+                background: 'var(--color-primary-light)',
                 border: '1px solid #fed7aa',
                 padding: '0.2rem 0.6rem',
                 borderRadius: '8px'
@@ -913,7 +913,7 @@ export const PromotionsManager = () => {
                   color: 'var(--color-text-primary, #0f172a)'
                 }}
               />
-              <span style={{ fontSize: '0.75rem', color: '#ea580c', fontWeight: 700 }}>
+              <span style={{ fontSize: '0.75rem', color: 'var(--color-primary)', fontWeight: 700 }}>
                 • Applied at checkout for custom patches
               </span>
             </div>
@@ -1193,8 +1193,8 @@ export const PromotionsManager = () => {
                               <span style={{
                                 fontSize: '0.74rem',
                                 fontWeight: 800,
-                                color: '#ea580c',
-                                background: '#fff7ed',
+                                color: 'var(--color-primary)',
+                                background: 'var(--color-primary-light)',
                                 border: '1px solid #fed7aa',
                                 padding: '0.18rem 0.45rem',
                                 borderRadius: '6px'
@@ -1251,7 +1251,7 @@ export const PromotionsManager = () => {
                       {/* Status Badge */}
                       <td style={{ padding: '1rem' }}>
                         {isExpired ? (
-                          <span style={{ fontSize: '0.75rem', background: '#f1f5f9', color: '#64748b', border: '1px solid #cbd5e1', padding: '0.2rem 0.6rem', borderRadius: '9999px', fontWeight: 800 }}>
+                          <span style={{ fontSize: '0.75rem', background: 'var(--color-surface-elevated)', color: '#64748b', border: '1px solid #cbd5e1', padding: '0.2rem 0.6rem', borderRadius: '9999px', fontWeight: 800 }}>
                             EXPIRED
                           </span>
                         ) : isActive ? (
@@ -1546,7 +1546,7 @@ export const PromotionsManager = () => {
                             <span style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--color-text-primary, #0f172a)', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
                               🛡️ Custom Patches
                             </span>
-                            <span style={{ fontSize: '0.85rem', fontWeight: 900, color: '#ea580c' }}>
+                            <span style={{ fontSize: '0.85rem', fontWeight: 900, color: 'var(--color-primary)' }}>
                               {promoForm.serviceDiscounts.patch}% OFF
                             </span>
                           </div>

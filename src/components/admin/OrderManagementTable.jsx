@@ -292,8 +292,8 @@ export const OrderManagementTable = () => {
           }
         }}
         style={{
-          background: '#fff7ed',
-          color: '#c2410c',
+          background: 'var(--color-primary-light)',
+          color: 'var(--color-primary)',
           border: '1px solid #ffedd5',
           fontWeight: 800,
           fontSize: '0.725rem',
@@ -763,7 +763,7 @@ export const OrderManagementTable = () => {
                         {ord.isRush && <span className="badge badge-rush" style={{ fontSize: '0.6rem', padding: '0.05rem 0.3rem' }}>RUSH</span>}
                       </div>
                       <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '1px', display: 'flex', alignItems: 'center', gap: '0.35rem', flexWrap: 'wrap' }}>
-                        <span style={{ fontWeight: 800, color: 'var(--orange-600)', background: '#fff7ed', padding: '0.05rem 0.35rem', borderRadius: '4px', border: '1px solid #ffedd5' }}>
+                        <span style={{ fontWeight: 800, color: 'var(--orange-600)', background: 'var(--color-primary-light)', padding: '0.05rem 0.35rem', borderRadius: '4px', border: '1px solid #ffedd5' }}>
                           {formatOrderId(ord.id)}
                         </span>
                         <span>•</span>
@@ -851,7 +851,7 @@ export const OrderManagementTable = () => {
                             borderRadius: '6px',
                             objectFit: 'cover',
                             border: '1.5px solid var(--orange-500)',
-                            background: '#f1f5f9',
+                            background: 'var(--color-surface-elevated)',
                             boxShadow: '0 1px 4px rgba(0,0,0,0.06)'
                           }}
                         />
@@ -1002,7 +1002,7 @@ export const OrderManagementTable = () => {
           justifyContent: 'space-between',
           alignItems: 'center',
           padding: '0.9rem 1.25rem',
-          background: '#ffffff',
+          background: 'var(--color-surface)',
           border: '1px solid var(--border-color)',
           borderTop: 'none',
           borderRadius: '0 0 12px 12px',
@@ -1368,7 +1368,7 @@ export const OrderManagementTable = () => {
                         }}
                         disabled={isProcessingCancellation}
                         style={{
-                          background: '#ffffff',
+                          background: 'var(--color-surface)',
                           border: '1.5px solid #d97706',
                           color: '#b45309',
                           padding: '0.45rem 0.9rem',

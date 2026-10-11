@@ -69,7 +69,7 @@ export default function WorkerForgotPasswordPage() {
         {/* Header */}
         <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
           <div style={{
-            background: 'linear-gradient(135deg, #f97316, #ea580c)',
+            background: 'linear-gradient(135deg, #4f46e5, #2563eb)',
             color: '#ffffff',
             width: '64px',
             height: '64px',
@@ -116,7 +116,7 @@ export default function WorkerForgotPasswordPage() {
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '0.4rem',
-                color: '#f97316',
+                color: 'var(--color-primary)',
                 fontWeight: 700,
                 fontSize: '0.9rem',
                 textDecoration: 'none'
@@ -181,7 +181,7 @@ export default function WorkerForgotPasswordPage() {
                   width: '100%',
                   padding: '0.85rem',
                   borderRadius: '8px',
-                  background: 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)',
+                  background: 'linear-gradient(135deg, #4f46e5 0%, #2563eb 100%)',
                   color: '#ffffff',
                   fontWeight: 800,
                   fontSize: '0.95rem',

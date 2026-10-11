@@ -23,11 +23,11 @@ import {
 
 const PALETTES = [
   {
-    color: '#ea580c',
-    bgLight: 'rgba(234, 88, 12, 0.12)',
+    color: 'var(--color-primary)',
+    bgLight: 'rgba(37, 99, 235, 0.12)',
     border: '#fed7aa',
-    btnGradient: 'linear-gradient(135deg, #ea580c 0%, #c2410c 100%)',
-    glowColor: 'rgba(234, 88, 12, 0.28)'
+    btnGradient: 'linear-gradient(135deg, #2563eb 0%, #1e40af 100%)',
+    glowColor: 'rgba(37, 99, 235, 0.28)'
   },
   {
     color: '#2563eb',
@@ -533,7 +533,7 @@ export const DynamicPricingEditor = () => {
       
       {/* Category Tabs Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
-        <div style={{ display: 'inline-flex', gap: '0.4rem', background: '#f1f5f9', padding: '0.35rem', borderRadius: '14px', flexWrap: 'wrap' }}>
+        <div style={{ display: 'inline-flex', gap: '0.4rem', background: 'var(--color-surface-elevated)', padding: '0.35rem', borderRadius: '14px', flexWrap: 'wrap' }}>
           
           {/* EMBROIDERY TAB */}
           <button
@@ -629,7 +629,7 @@ export const DynamicPricingEditor = () => {
               <div
                 key={pkg.id || idx}
                 style={{
-                  background: '#ffffff',
+                  background: 'var(--color-surface)',
                   border: pkg.is_popular ? `2.5px solid ${theme.color}` : '1.5px solid var(--border-color)',
                   borderRadius: '20px',
                   padding: '2rem 1.5rem 1.5rem',
@@ -678,7 +678,7 @@ export const DynamicPricingEditor = () => {
                         type="button"
                         disabled={idx === 0 || isSaving}
                         onClick={() => handleReorder(pkg, 'up')}
-                        style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '6px', padding: '0.25rem', cursor: idx === 0 ? 'not-allowed' : 'pointer', opacity: idx === 0 ? 0.3 : 1 }}
+                        style={{ background: 'var(--color-background)', border: '1px solid #e2e8f0', borderRadius: '6px', padding: '0.25rem', cursor: idx === 0 ? 'not-allowed' : 'pointer', opacity: idx === 0 ? 0.3 : 1 }}
                         title="Move Up"
                       >
                         <ChevronUp size={14} />
@@ -687,7 +687,7 @@ export const DynamicPricingEditor = () => {
                         type="button"
                         disabled={idx === currentPackages.length - 1 || isSaving}
                         onClick={() => handleReorder(pkg, 'down')}
-                        style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '6px', padding: '0.25rem', cursor: idx === currentPackages.length - 1 ? 'not-allowed' : 'pointer', opacity: idx === currentPackages.length - 1 ? 0.3 : 1 }}
+                        style={{ background: 'var(--color-background)', border: '1px solid #e2e8f0', borderRadius: '6px', padding: '0.25rem', cursor: idx === currentPackages.length - 1 ? 'not-allowed' : 'pointer', opacity: idx === currentPackages.length - 1 ? 0.3 : 1 }}
                         title="Move Down"
                       >
                         <ChevronDown size={14} />
@@ -702,7 +702,7 @@ export const DynamicPricingEditor = () => {
                     {pkg.subtitle}
                   </p>
 
-                  <div style={{ background: '#f8fafc', padding: '1rem', borderRadius: '12px', border: '1px solid #e2e8f0', marginBottom: '1.25rem' }}>
+                  <div style={{ background: 'var(--color-background)', padding: '1rem', borderRadius: '12px', border: '1px solid #e2e8f0', marginBottom: '1.25rem' }}>
                     <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.4rem' }}>
                       <span style={{ fontSize: '2.25rem', fontWeight: 900, color: theme.color, lineHeight: 1 }}>
                         ${typeof pkg.price === 'number' ? pkg.price.toFixed(2) : pkg.price}
@@ -765,7 +765,7 @@ export const DynamicPricingEditor = () => {
                     onClick={() => handleDuplicate(pkg)}
                     disabled={isSaving}
                     style={{
-                      background: '#f1f5f9',
+                      background: 'var(--color-surface-elevated)',
                       color: '#334155',
                       border: '1px solid #e2e8f0',
                       padding: '0.65rem 0.5rem',
@@ -823,7 +823,7 @@ export const DynamicPricingEditor = () => {
           padding: '1.5rem'
         }}>
           <div style={{
-            background: '#ffffff',
+            background: 'var(--color-surface)',
             borderRadius: '24px',
             maxWidth: '800px',
             width: '100%',
@@ -849,7 +849,7 @@ export const DynamicPricingEditor = () => {
               <button 
                 type="button" 
                 onClick={() => setEditingTier(null)}
-                style={{ background: '#f1f5f9', border: 'none', color: 'var(--text-muted)', padding: '0.55rem', borderRadius: '50%', cursor: 'pointer' }}
+                style={{ background: 'var(--color-surface-elevated)', border: 'none', color: 'var(--text-muted)', padding: '0.55rem', borderRadius: '50%', cursor: 'pointer' }}
                 title="Close editor"
               >
                 <X size={18} />
@@ -901,7 +901,7 @@ export const DynamicPricingEditor = () => {
                 </div>
 
                 <div className="form-group" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', padding: '0.7rem 1rem', background: '#f8fafc', borderRadius: '10px', border: '1px solid var(--border-color)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', padding: '0.7rem 1rem', background: 'var(--color-background)', borderRadius: '10px', border: '1px solid var(--border-color)' }}>
                     <input 
                       type="checkbox" 
                       id="isPopularToggle" 
@@ -943,7 +943,7 @@ export const DynamicPricingEditor = () => {
               </div>
 
               {/* Pricing Grid */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr 1fr', gap: '1rem', padding: '1rem', background: '#f8fafc', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr 1fr', gap: '1rem', padding: '1rem', background: 'var(--color-background)', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
                 <div className="form-group">
                   <label style={{ display: 'block', fontWeight: 700, fontSize: '0.82rem', marginBottom: '0.35rem' }}>Price ($) *</label>
                   <input 
@@ -1010,7 +1010,7 @@ export const DynamicPricingEditor = () => {
               </div>
 
               {/* Dynamic Feature Bullets Editor */}
-              <div style={{ padding: '1.25rem', background: '#f8fafc', borderRadius: '14px', border: '1px solid var(--border-color)' }}>
+              <div style={{ padding: '1.25rem', background: 'var(--color-background)', borderRadius: '14px', border: '1px solid var(--border-color)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
                   <label style={{ fontWeight: 800, fontSize: '0.88rem', color: 'var(--navy-900)', margin: 0 }}>
                     Package Features & Included Deliverables ({(formData.features || []).length})
@@ -1038,7 +1038,7 @@ export const DynamicPricingEditor = () => {
                         type="button"
                         disabled={fIdx === 0}
                         onClick={() => handleMoveFeature(fIdx, 'up')}
-                        style={{ background: '#ffffff', border: '1px solid var(--border-color)', borderRadius: '6px', padding: '0.35rem', cursor: fIdx === 0 ? 'not-allowed' : 'pointer', opacity: fIdx === 0 ? 0.3 : 1 }}
+                        style={{ background: 'var(--color-surface)', border: '1px solid var(--border-color)', borderRadius: '6px', padding: '0.35rem', cursor: fIdx === 0 ? 'not-allowed' : 'pointer', opacity: fIdx === 0 ? 0.3 : 1 }}
                         title="Move feature up"
                       >
                         <ChevronUp size={14} />
@@ -1047,7 +1047,7 @@ export const DynamicPricingEditor = () => {
                         type="button"
                         disabled={fIdx === (formData.features || []).length - 1}
                         onClick={() => handleMoveFeature(fIdx, 'down')}
-                        style={{ background: '#ffffff', border: '1px solid var(--border-color)', borderRadius: '6px', padding: '0.35rem', cursor: fIdx === (formData.features || []).length - 1 ? 'not-allowed' : 'pointer', opacity: fIdx === (formData.features || []).length - 1 ? 0.3 : 1 }}
+                        style={{ background: 'var(--color-surface)', border: '1px solid var(--border-color)', borderRadius: '6px', padding: '0.35rem', cursor: fIdx === (formData.features || []).length - 1 ? 'not-allowed' : 'pointer', opacity: fIdx === (formData.features || []).length - 1 ? 0.3 : 1 }}
                         title="Move feature down"
                       >
                         <ChevronDown size={14} />
@@ -1129,7 +1129,7 @@ export const DynamicPricingEditor = () => {
           padding: '1.5rem'
         }}>
           <div style={{
-            background: '#ffffff',
+            background: 'var(--color-surface)',
             borderRadius: '20px',
             maxWidth: '480px',
             width: '100%',

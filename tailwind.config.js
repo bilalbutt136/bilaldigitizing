@@ -29,9 +29,9 @@ module.exports = {
           950: '#020617',
         },
         studio: {
-          orange: '#ea580c',
-          'orange-hover': '#c2410c',
-          'orange-light': '#ffedd5',
+          orange: 'var(--color-primary)',
+          'orange-hover': 'var(--color-primary-hover)',
+          'orange-light': 'var(--color-primary-light)',
           royal: '#2563eb',
           'royal-hover': '#1d4ed8',
           'royal-dark': '#1e3a8a',
@@ -58,7 +58,7 @@ module.exports = {
         'md': '0 4px 6px -1px rgba(0, 0, 0, 0.07), 0 2px 4px -2px rgba(0, 0, 0, 0.05)',
         'lg': '0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.04)',
         'xl': '0 20px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.04)',
-        'glow-orange': '0 0 20px rgba(234, 88, 12, 0.35)',
+        'glow-orange': '0 0 20px var(--color-primary-glow)',
         'glow-royal': '0 0 20px rgba(37, 99, 235, 0.35)',
       }
     },

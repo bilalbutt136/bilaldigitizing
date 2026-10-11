@@ -30,7 +30,7 @@ function getFileBadgeIcon(filename = '') {
     return <Archive size={14} style={{ color: '#d97706' }} />;
   }
   if (['dst', 'pes', 'emb', 'exp', 'jef', 'vp3', 'xxx'].includes(ext)) {
-    return <span style={{ fontSize: '10px', fontWeight: 800, color: '#ea580c', background: '#ffedd5', padding: '1px 4px', borderRadius: '4px' }}>EMB</span>;
+    return <span style={{ fontSize: '10px', fontWeight: 800, color: 'var(--color-primary)', background: 'var(--color-primary-light)', padding: '1px 4px', borderRadius: '4px' }}>EMB</span>;
   }
   return <FileIcon size={14} style={{ color: '#64748b' }} />;
 }
@@ -501,14 +501,14 @@ export function AdminEmailCampaigns() {
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
               <div style={{
-                background: 'linear-gradient(135deg, #ea580c, #c2410c)',
+                background: 'linear-gradient(135deg, #2563eb, #1e40af)',
                 color: '#fff',
                 padding: '0.55rem',
                 borderRadius: '10px',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                boxShadow: '0 4px 12px rgba(234, 88, 12, 0.25)'
+                boxShadow: '0 4px 12px rgba(37, 99, 235, 0.25)'
               }}>
                 <Mail size={22} />
               </div>
@@ -518,7 +518,7 @@ export function AdminEmailCampaigns() {
                 </h1>
                 <p style={{ color: 'var(--text-muted)', fontSize: '0.82rem', margin: '0.15rem 0 0', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
                   <span>Official dispatch from:</span>
-                  <strong style={{ color: '#ea580c' }}>support@bdigitizing.com</strong>
+                  <strong style={{ color: 'var(--color-primary)' }}>support@bdigitizing.com</strong>
                   <span style={{ color: 'var(--border-color)' }}>•</span>
                   <span>Direct Customer Support &amp; Broadcast Marketing</span>
                 </p>
@@ -532,7 +532,7 @@ export function AdminEmailCampaigns() {
               onClick={() => setShowHelp(!showConfigHelp)}
               style={{
                 padding: '0.55rem 0.9rem', borderRadius: '10px', border: '1px solid var(--border-color)',
-                background: showConfigHelp ? 'rgba(234,88,12,0.1)' : 'var(--bg-surface)',
+                background: showConfigHelp ? 'rgba(37, 99, 235, 0.1)' : 'var(--bg-surface)',
                 color: showConfigHelp ? '#ea580c' : 'var(--text-muted)', fontSize: '0.8rem', fontWeight: 700,
                 cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.4rem', transition: 'all 0.15s ease'
               }}
@@ -549,7 +549,7 @@ export function AdminEmailCampaigns() {
                 color: activeTab === 'compose' ? '#fff' : 'var(--text-main)',
                 borderColor: activeTab === 'compose' ? 'var(--orange-500)' : 'var(--border-color)',
                 display: 'flex', alignItems: 'center', gap: '0.45rem', transition: 'all 0.15s ease',
-                boxShadow: activeTab === 'compose' ? '0 4px 12px rgba(234, 88, 12, 0.25)' : 'none'
+                boxShadow: activeTab === 'compose' ? '0 4px 12px rgba(37, 99, 235, 0.25)' : 'none'
               }}
             >
               <Send size={15} /> Compose Email
@@ -564,7 +564,7 @@ export function AdminEmailCampaigns() {
                 color: activeTab === 'history' ? '#fff' : 'var(--text-main)',
                 borderColor: activeTab === 'history' ? 'var(--orange-500)' : 'var(--border-color)',
                 display: 'flex', alignItems: 'center', gap: '0.45rem', transition: 'all 0.15s ease',
-                boxShadow: activeTab === 'history' ? '0 4px 12px rgba(234, 88, 12, 0.25)' : 'none'
+                boxShadow: activeTab === 'history' ? '0 4px 12px rgba(37, 99, 235, 0.25)' : 'none'
               }}
             >
               <Clock size={15} /> Sent History ({campaigns.length})
@@ -620,7 +620,7 @@ export function AdminEmailCampaigns() {
                   1-on-1 Customer Support &amp; Order Files
                 </span>
               ) : (
-                <span style={{ color: '#c2410c', fontWeight: 800, background: '#ffedd5', padding: '2px 8px', borderRadius: '6px' }}>
+                <span style={{ color: 'var(--color-primary)', fontWeight: 800, background: 'var(--color-primary-light)', padding: '2px 8px', borderRadius: '6px' }}>
                   Audience Broadcast &amp; Special Discounts
                 </span>
               )}
@@ -654,11 +654,11 @@ export function AdminEmailCampaigns() {
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1rem', marginTop: '0.25rem' }}>
             <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-color)', borderRadius: '10px', padding: '1rem' }}>
-              <div style={{ fontWeight: 800, color: '#ea580c', fontSize: '0.88rem', marginBottom: '0.4rem' }}>
+              <div style={{ fontWeight: 800, color: 'var(--color-primary)', fontSize: '0.88rem', marginBottom: '0.4rem' }}>
                 Option 1: Resend Domain Verification (Active)
               </div>
               <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-muted)', lineHeight: 1.6 }}>
-                <strong><a href="https://resend.com/domains" target="_blank" rel="noreferrer" style={{ color: '#ea580c' }}>resend.com/domains</a></strong> par <code>bdigitizing.com</code> verified hai to all emails instant customer inboxes mein deliver hoti hain bina spam box jaye.
+                <strong><a href="https://resend.com/domains" target="_blank" rel="noreferrer" style={{ color: 'var(--color-primary)' }}>resend.com/domains</a></strong> par <code>bdigitizing.com</code> verified hai to all emails instant customer inboxes mein deliver hoti hain bina spam box jaye.
               </p>
             </div>
 
@@ -757,7 +757,7 @@ export function AdminEmailCampaigns() {
                       onClick={() => applyPromoPreset('discount')}
                       style={{
                         padding: '0.35rem 0.65rem', borderRadius: '6px', border: '1px solid #fed7aa',
-                        background: '#fff7ed', color: '#c2410c', fontSize: '0.74rem', fontWeight: 700, cursor: 'pointer'
+                        background: 'var(--color-primary-light)', color: 'var(--color-primary)', fontSize: '0.74rem', fontWeight: 700, cursor: 'pointer'
                       }}
                     >
                       🎉 20% Off Flash Sale
@@ -959,7 +959,7 @@ export function AdminEmailCampaigns() {
                 /* ── Promotional Audience Target ── */
                 <div>
                   <div style={{ fontSize: '0.9rem', fontWeight: 800, color: 'var(--text-main)', marginBottom: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                    <Users size={16} style={{ color: '#ea580c' }} /> Select Target Audience
+                    <Users size={16} style={{ color: 'var(--color-primary)' }} /> Select Target Audience
                   </div>
 
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '0.5rem', marginBottom: '0.85rem' }}>
@@ -975,7 +975,7 @@ export function AdminEmailCampaigns() {
                         style={{
                           padding: '0.75rem 0.85rem', borderRadius: '10px', border: '1.5px solid',
                           borderColor: recipientMode === opt.id ? '#ea580c' : 'var(--border-color)',
-                          background: recipientMode === opt.id ? 'rgba(234,88,12,0.08)' : 'var(--bg-surface)',
+                          background: recipientMode === opt.id ? 'rgba(37, 99, 235, 0.08)' : 'var(--bg-surface)',
                           cursor: 'pointer', textAlign: 'left', transition: 'all 0.15s ease'
                         }}
                       >
@@ -1009,7 +1009,7 @@ export function AdminEmailCampaigns() {
 
                   {recipientMode === 'all_clients' && (
                     <div style={{
-                      background: '#fff7ed', border: '1px solid #fed7aa', borderRadius: '8px',
+                      background: 'var(--color-primary-light)', border: '1px solid #fed7aa', borderRadius: '8px',
                       padding: '0.75rem 1rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                       flexWrap: 'wrap', gap: '0.5rem'
                     }}>
@@ -1022,7 +1022,7 @@ export function AdminEmailCampaigns() {
                         disabled={checkingAudience}
                         style={{
                           padding: '0.35rem 0.75rem', borderRadius: '6px', border: '1px solid #ea580c',
-                          background: '#ea580c', color: '#ffffff', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer'
+                          background: 'var(--color-action-start, #2563eb)', color: '#ffffff', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer'
                         }}
                       >
                         {checkingAudience ? 'Calculating...' : previewCount !== null ? `Audience: ${previewCount} Clients` : 'Check Client Count'}
@@ -1084,7 +1084,7 @@ export function AdminEmailCampaigns() {
                         disabled={isPolishingSubject || !subject.trim()}
                         style={{
                           background: isPolishingSubject ? '#fed7aa' : '#fff7ed',
-                          color: '#ea580c',
+                          color: 'var(--color-primary)',
                           border: '1px solid #ffedd5',
                           borderRadius: '6px',
                           padding: '0.2rem 0.55rem',
@@ -1155,7 +1155,7 @@ export function AdminEmailCampaigns() {
                         disabled={isPolishingMessage || !message.trim()}
                         style={{
                           background: isPolishingMessage ? '#fed7aa' : '#fff7ed',
-                          color: '#ea580c',
+                          color: 'var(--color-primary)',
                           border: '1px solid #ffedd5',
                           borderRadius: '6px',
                           padding: '0.2rem 0.55rem',
@@ -1204,7 +1204,7 @@ export function AdminEmailCampaigns() {
                         placeholder="e.g. SAVE20 or 25% OFF"
                         style={{
                           width: '100%', padding: '0.65rem 0.9rem', borderRadius: '8px', border: '1px solid var(--border-color)',
-                          background: 'var(--bg-surface)', color: '#ea580c', fontWeight: 800, fontSize: '0.85rem', boxSizing: 'border-box'
+                          background: 'var(--bg-surface)', color: 'var(--color-primary)', fontWeight: 800, fontSize: '0.85rem', boxSizing: 'border-box'
                         }}
                       />
                     </div>
@@ -1365,13 +1365,13 @@ export function AdminEmailCampaigns() {
                     ? '#94a3b8'
                     : emailMode === 'support'
                       ? 'linear-gradient(135deg, #0284c7, #0369a1)'
-                      : 'linear-gradient(135deg, #ea580c, #c2410c)',
+                      : 'linear-gradient(135deg, #2563eb, #1e40af)',
                   color: '#ffffff',
                   fontWeight: 900, fontSize: '1rem', cursor: sending ? 'not-allowed' : 'pointer',
                   display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.55rem',
                   boxShadow: emailMode === 'support'
                     ? '0 6px 18px rgba(2, 132, 199, 0.35)'
-                    : '0 6px 18px rgba(234, 88, 12, 0.35)',
+                    : '0 6px 18px rgba(37, 99, 235, 0.35)',
                   transition: 'all 0.15s ease'
                 }}
               >
@@ -1461,7 +1461,7 @@ export function AdminEmailCampaigns() {
 
               {/* Rendered Email Body Canvas */}
               <div style={{
-                background: '#f1f5f9',
+                background: 'var(--color-surface-elevated)',
                 padding: previewDevice === 'mobile' ? '1rem 0.5rem' : '1.25rem',
                 maxHeight: '620px',
                 overflowY: 'auto'
@@ -1489,9 +1489,9 @@ export function AdminEmailCampaigns() {
                       </div>
                     </div>
                   ) : (
-                    <div style={{ background: '#090d16', padding: '20px 24px', textAlign: 'center', borderBottom: '3px solid #ea580c' }}>
+                    <div style={{ background: '#0b1730', padding: '20px 24px', textAlign: 'center', borderBottom: '3px solid #2563eb' }}>
                       <div style={{ color: '#ffffff', fontSize: '18px', fontWeight: 800, letterSpacing: '-0.5px' }}>
-                        BDigitizing <span style={{ color: '#ea580c' }}>STUDIO</span>
+                        BDigitizing <span style={{ color: 'var(--color-primary)' }}>STUDIO</span>
                       </div>
                       <div style={{ color: '#94a3b8', fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1px', marginTop: '4px' }}>
                         Commercial Embroidery Digitizing &amp; Vector Art
@@ -1516,16 +1516,16 @@ export function AdminEmailCampaigns() {
                     {/* Promo Offer Box (In Campaign Mode) */}
                     {emailMode === 'campaign' && offerCode.trim() && (
                       <div style={{
-                        background: '#fff7ed', border: '2px dashed #ea580c', borderRadius: '8px',
+                        background: '#eff6ff', border: '2px dashed #2563eb', borderRadius: '8px',
                         padding: '14px 18px', textAlign: 'center', margin: '18px 0'
                       }}>
-                        <div style={{ fontSize: '10px', fontWeight: 800, color: '#c2410c', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '4px' }}>
+                        <div style={{ fontSize: '10px', fontWeight: 800, color: 'var(--color-primary)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '4px' }}>
                           PROMO CODE
                         </div>
-                        <div style={{ fontSize: '20px', fontWeight: 800, color: '#ea580c', letterSpacing: '1.5px', fontFamily: 'monospace' }}>
+                        <div style={{ fontSize: '20px', fontWeight: 800, color: 'var(--color-primary)', letterSpacing: '1.5px', fontFamily: 'monospace' }}>
                           {offerCode.trim()}
                         </div>
-                        <div style={{ fontSize: '11px', color: '#7c2d12', marginTop: '4px' }}>
+                        <div style={{ fontSize: '11px', color: '#3730a3', marginTop: '4px' }}>
                           Mention this code when submitting your next order.
                         </div>
                       </div>
@@ -1566,7 +1566,7 @@ export function AdminEmailCampaigns() {
                     {emailMode === 'campaign' && buttonText.trim() && (
                       <div style={{ textAlign: 'center', margin: '20px 0 10px 0' }}>
                         <div style={{
-                          display: 'inline-block', background: '#ea580c', color: '#ffffff',
+                          display: 'inline-block', background: '#2563eb', color: '#ffffff',
                           padding: '10px 24px', borderRadius: '8px', fontWeight: 800, fontSize: '13px'
                         }}>
                           {buttonText.trim()}
@@ -1577,7 +1577,7 @@ export function AdminEmailCampaigns() {
 
                   {/* Footer */}
                   <div style={{
-                    background: '#f8fafc', padding: '16px 20px', textAlign: 'center',
+                    background: 'var(--color-background)', padding: '16px 20px', textAlign: 'center',
                     borderTop: '1px solid #e2e8f0', fontSize: '11px', color: '#64748b', lineHeight: 1.6
                   }}>
                     <div style={{ fontWeight: 700, color: '#334155' }}>
@@ -1606,7 +1606,7 @@ export function AdminEmailCampaigns() {
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
               <span style={{ fontSize: '1rem', fontWeight: 800, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                <BarChart3 size={18} style={{ color: '#ea580c' }} /> Dispatch Logs &amp; Delivery Records
+                <BarChart3 size={18} style={{ color: 'var(--color-primary)' }} /> Dispatch Logs &amp; Delivery Records
               </span>
 
               {/* Filter Pills */}
@@ -1636,7 +1636,7 @@ export function AdminEmailCampaigns() {
             <button
               type="button"
               onClick={loadData}
-              style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ea580c', fontWeight: 700, fontSize: '0.82rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-primary)', fontWeight: 700, fontSize: '0.82rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}
             >
               <RefreshCw size={13} /> Refresh List
             </button>
@@ -1644,7 +1644,7 @@ export function AdminEmailCampaigns() {
 
           {loading ? (
             <div style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.9rem' }}>
-              <RefreshCw size={22} className="spin-icon" style={{ color: '#ea580c', marginBottom: '0.5rem' }} />
+              <RefreshCw size={22} className="spin-icon" style={{ color: 'var(--color-primary)', marginBottom: '0.5rem' }} />
               <div>Loading dispatch logs...</div>
             </div>
           ) : displayedCampaigns.length === 0 ? (
@@ -1683,7 +1683,7 @@ export function AdminEmailCampaigns() {
                               <Mail size={11} /> Support
                             </span>
                           ) : (
-                            <span style={{ background: '#ffedd5', color: '#c2410c', padding: '2px 7px', borderRadius: '6px', fontSize: '0.72rem', fontWeight: 800, display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                            <span style={{ background: 'var(--color-primary-light)', color: 'var(--color-primary)', padding: '2px 7px', borderRadius: '6px', fontSize: '0.72rem', fontWeight: 800, display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
                               <Tag size={11} /> Promo
                             </span>
                           )}

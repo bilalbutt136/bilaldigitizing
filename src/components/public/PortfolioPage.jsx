@@ -127,7 +127,7 @@ export const PortfolioPage = () => {
               Home
             </Link>
             <ChevronRight size={14} />
-            <span style={{ color: 'var(--color-primary, #ea580c)', fontWeight: 700 }}>Portfolio Showcase</span>
+            <span style={{ color: 'var(--color-primary)', fontWeight: 700 }}>Portfolio Showcase</span>
           </div>
 
           <div style={{ maxWidth: '820px' }}>
@@ -137,7 +137,7 @@ export const PortfolioPage = () => {
               gap: '0.4rem',
               background: 'var(--color-primary-light, rgba(249, 115, 22, 0.15))',
               border: '1px solid var(--border-color)',
-              color: 'var(--color-primary, #ea580c)',
+              color: 'var(--color-primary)',
               fontWeight: 800,
               fontSize: '0.825rem',
               textTransform: 'uppercase',
@@ -307,7 +307,7 @@ export const PortfolioPage = () => {
                         position: 'relative',
                         width: '100%',
                         aspectRatio: '4/3',
-                        background: '#f8fafc',
+                        background: 'var(--color-background)',
                         overflow: 'hidden',
                         display: 'flex',
                         alignItems: 'center',
@@ -335,7 +335,7 @@ export const PortfolioPage = () => {
                         <div style={{ position: 'absolute', top: '12px', left: '12px' }}>
                           <span style={{
                             background: 'rgba(249, 115, 22, 0.12)',
-                            color: '#ea580c',
+                            color: 'var(--color-primary)',
                             border: '1px solid #ea580c40',
                             fontSize: '0.725rem',
                             fontWeight: 800,

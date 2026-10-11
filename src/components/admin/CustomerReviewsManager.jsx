@@ -27,7 +27,7 @@ const STATUS_META = {
   hidden: {
     label: 'Private',
     color: '#475569',
-    background: '#f8fafc',
+    background: 'var(--color-background)',
     border: '#cbd5e1'
   }
 };
@@ -146,8 +146,8 @@ export function CustomerReviewsManager({ showToast }) {
             gap: '0.4rem',
             padding: '0.3rem 0.65rem',
             borderRadius: '999px',
-            background: '#fff7ed',
-            color: '#c2410c',
+            background: 'var(--color-primary-light)',
+            color: 'var(--color-primary)',
             fontSize: '0.72rem',
             fontWeight: 900,
             marginBottom: '0.55rem'
@@ -299,7 +299,7 @@ export function CustomerReviewsManager({ showToast }) {
             height: '46px',
             margin: '0 auto 0.7rem',
             borderRadius: '14px',
-            background: '#f8fafc',
+            background: 'var(--color-background)',
             color: '#64748b',
             display: 'flex',
             alignItems: 'center',

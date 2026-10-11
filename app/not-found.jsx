@@ -12,21 +12,21 @@ export default function NotFound() {
       alignItems: 'center',
       justifyContent: 'center',
       minHeight: 'calc(100vh - 200px)',
-      background: '#f8fafc'
+      background: 'var(--color-background)'
     }}>
       <div style={{
         maxWidth: '520px',
         width: '100%',
         padding: '2.5rem',
         textAlign: 'center',
-        background: '#ffffff',
+        background: 'var(--color-surface)',
         borderRadius: '24px',
         border: '1px solid #e2e8f0',
         boxShadow: '0 20px 40px rgba(15, 23, 42, 0.08)'
       }}>
         <div style={{
-          background: '#fff7ed',
-          color: '#ea580c',
+          background: 'var(--color-primary-light)',
+          color: 'var(--color-primary)',
           width: '72px',
           height: '72px',
           borderRadius: '50%',
@@ -34,7 +34,7 @@ export default function NotFound() {
           alignItems: 'center',
           justifyContent: 'center',
           marginBottom: '1.25rem',
-          boxShadow: '0 4px 12px rgba(234, 88, 12, 0.15)'
+          boxShadow: '0 4px 12px rgba(37, 99, 235, 0.15)'
         }}>
           <AlertTriangle size={36} />
         </div>

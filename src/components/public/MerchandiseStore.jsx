@@ -2,13 +2,13 @@
 
 import React, { useState } from 'react';
 import { useAppState } from '../../context/StateContext';
-import { 
-  ShoppingBag, 
-  CheckCircle, 
-  ArrowRight, 
-  Shirt, 
-  Layers, 
-  HardHat, 
+import {
+  ShoppingBag,
+  CheckCircle,
+  ArrowRight,
+  Shirt,
+  Layers,
+  HardHat,
   PenTool,
   ShoppingCart,
   ShieldCheck,
@@ -36,14 +36,14 @@ export const MerchandiseStore = () => {
 
   const allProducts = (storeProducts && storeProducts.length > 0) ? storeProducts : [];
 
-  const filteredItems = selectedCategory === 'all' 
-    ? allProducts 
+  const filteredItems = selectedCategory === 'all'
+    ? allProducts
     : allProducts.filter(item => item.category === selectedCategory);
 
   return (
     <section id="store" style={{ padding: '3.5rem 0 5.5rem', background: 'var(--bg-main)' }}>
       <div className="container">
-        
+
         {/* Sticky Filter Pills Container */}
         <div style={{
           position: 'sticky',
@@ -123,14 +123,14 @@ export const MerchandiseStore = () => {
             const isOutOfStock = item.status === 'out_of_stock';
 
             return (
-              <div 
+              <div
                 key={item.id}
                 className="card"
                 style={{
                   borderRadius: 'var(--radius-lg)',
                   overflow: 'hidden',
                   border: '1.5px solid var(--border-color)',
-                  background: '#ffffff',
+                  background: 'var(--color-surface)',
                   boxShadow: 'var(--shadow-md)',
                   display: 'flex',
                   flexDirection: 'column',
@@ -142,13 +142,13 @@ export const MerchandiseStore = () => {
               >
                 <div>
                   {/* Image Container with Zoom Hover Effect & Badge */}
-                  <div style={{ position: 'relative', height: '220px', overflow: 'hidden', background: '#f1f5f9' }}>
-                    <img 
-                      src={item.image} 
+                  <div style={{ position: 'relative', height: '220px', overflow: 'hidden', background: 'var(--color-surface-elevated)' }}>
+                    <img
+                      src={item.image}
                       alt={item.title}
-                      style={{ 
-                        width: '100%', 
-                        height: '100%', 
+                      style={{
+                        width: '100%',
+                        height: '100%',
                         objectFit: 'cover',
                         filter: isOutOfStock ? 'grayscale(75%) opacity(0.85)' : 'none',
                         transition: 'transform 0.5s ease'
@@ -183,7 +183,7 @@ export const MerchandiseStore = () => {
                         position: 'absolute',
                         top: '12px',
                         left: '12px',
-                        background: 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)',
+                        background: 'linear-gradient(135deg, #4f46e5 0%, #2563eb 100%)',
                         border: '1.5px solid #ffffff',
                         color: '#ffffff',
                         fontSize: '0.725rem',
@@ -246,16 +246,16 @@ export const MerchandiseStore = () => {
                         </div>
                         <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap' }}>
                           {item.sizes.map((sz, sIdx) => (
-                            <span 
-                              key={sIdx} 
-                              style={{ 
-                                fontSize: '0.725rem', 
-                                padding: '0.25rem 0.55rem', 
-                                background: '#fff7ed', 
-                                border: '1px solid var(--orange-300)', 
-                                borderRadius: 'var(--radius-sm)', 
-                                color: 'var(--orange-700)', 
-                                fontWeight: 800 
+                            <span
+                              key={sIdx}
+                              style={{
+                                fontSize: '0.725rem',
+                                padding: '0.25rem 0.55rem',
+                                background: 'var(--color-primary-light)',
+                                border: '1px solid var(--orange-300)',
+                                borderRadius: 'var(--radius-sm)',
+                                color: 'var(--orange-700)',
+                                fontWeight: 800
                               }}
                             >
                               {sz}
@@ -282,14 +282,14 @@ export const MerchandiseStore = () => {
                 {/* Order Button */}
                 <div style={{ padding: '0 1.5rem 1.65rem' }}>
                   {isOutOfStock ? (
-                    <button 
+                    <button
                       type="button"
                       className="btn btn-lg"
                       disabled
-                      style={{ 
-                        width: '100%', 
-                        justifyContent: 'center', 
-                        fontWeight: 800, 
+                      style={{
+                        width: '100%',
+                        justifyContent: 'center',
+                        fontWeight: 800,
                         fontSize: '0.95rem',
                         background: '#cbd5e1',
                         color: '#475569',
@@ -301,7 +301,7 @@ export const MerchandiseStore = () => {
                       🚫 Out of Stock (Unavailable)
                     </button>
                   ) : (
-                    <button 
+                    <button
                       type="button"
                       className="btn btn-primary-orange btn-lg"
                       style={{ width: '100%', justifyContent: 'center', fontWeight: 800, fontSize: '0.95rem' }}
@@ -318,7 +318,7 @@ export const MerchandiseStore = () => {
 
         {/* Trust & FAQ Guarantees Footer Row */}
         <div style={{
-          background: '#ffffff',
+          background: 'var(--color-surface)',
           borderRadius: 'var(--radius-lg)',
           border: '1.5px solid var(--border-color)',
           padding: '2.5rem 2rem',

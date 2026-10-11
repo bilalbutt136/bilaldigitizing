@@ -8,11 +8,11 @@ import { getPackageSizeInfo } from '../../utils/packageSizeUtils';
 
 const PALETTES = [
   {
-    color: '#ea580c',
-    bgLight: 'rgba(234, 88, 12, 0.1)',
+    color: 'var(--color-primary)',
+    bgLight: 'rgba(37, 99, 235, 0.1)',
     border: '#fed7aa',
-    btnGradient: 'linear-gradient(135deg, #ea580c 0%, #c2410c 100%)',
-    glow: 'rgba(234, 88, 12, 0.22)'
+    btnGradient: 'linear-gradient(135deg, #2563eb 0%, #1e40af 100%)',
+    glow: 'rgba(37, 99, 235, 0.22)'
   },
   {
     color: '#2563eb',

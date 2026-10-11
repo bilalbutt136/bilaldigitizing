@@ -806,7 +806,7 @@ export default function CustomerSupportChat({
           border-radius: 4px;
         }
         .customer-chat-stream::-webkit-scrollbar-thumb:hover {
-          background: rgba(234, 88, 12, 0.4);
+          background: rgba(37, 99, 235, 0.4);
         }
         .customer-chat-input {
           scrollbar-width: thin;
@@ -825,7 +825,7 @@ export default function CustomerSupportChat({
         .customer-chat-input:focus {
           border-color: #ea580c !important;
           background-color: #ffffff !important;
-          box-shadow: 0 0 0 3px rgba(234, 88, 12, 0.12) !important;
+          box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12) !important;
         }
         .customer-chat-composer button:active {
           transform: scale(0.95);
@@ -886,14 +886,14 @@ export default function CustomerSupportChat({
               width: '40px',
               height: '40px',
               borderRadius: '12px',
-              background: 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)',
+              background: 'linear-gradient(135deg, #4f46e5 0%, #2563eb 100%)',
               color: '#ffffff',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               fontWeight: 900,
               fontSize: '1.05rem',
-              boxShadow: '0 2px 8px rgba(234, 88, 12, 0.3)'
+              boxShadow: '0 2px 8px rgba(37, 99, 235, 0.3)'
             }}>
               BD
             </div>
@@ -1046,7 +1046,7 @@ export default function CustomerSupportChat({
       >
         {isLoading ? (
           <div style={{ textAlign: 'center', padding: '3rem 1rem', color: '#94a3b8', margin: 'auto' }}>
-            <Loader2 size={24} className="spin-icon" style={{ margin: '0 auto 0.5rem', color: '#ea580c' }} />
+            <Loader2 size={24} className="spin-icon" style={{ margin: '0 auto 0.5rem', color: 'var(--color-primary)' }} />
             Connecting to Studio Digitizing Desk...
           </div>
         ) : uniqueMessages.length === 0 ? (
@@ -1056,12 +1056,12 @@ export default function CustomerSupportChat({
               height: '52px',
               borderRadius: '16px',
               background: 'linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%)',
-              color: '#ea580c',
+              color: 'var(--color-primary)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               margin: '0 auto 0.85rem',
-              boxShadow: '0 4px 14px rgba(234, 88, 12, 0.15)',
+              boxShadow: '0 4px 14px rgba(37, 99, 235, 0.15)',
               border: '1px solid #fed7aa'
             }}>
               {chatType === 'support' ? <Headphones size={26} /> : <MessageSquare size={26} />}
@@ -1184,13 +1184,13 @@ export default function CustomerSupportChat({
                     /* REGULAR MESSAGE BUBBLE */
                     <div style={{
                       maxWidth: '85%',
-                      background: isClient ? 'linear-gradient(135deg, #ff7a00 0%, #ea580c 100%)' : 'var(--color-surface, #ffffff)',
+                      background: isClient ? 'linear-gradient(135deg, #ff7a00 0%, #2563eb 100%)' : 'var(--color-surface, #ffffff)',
                       color: isClient ? '#ffffff' : 'var(--color-text-primary, #0f172a)',
                       padding: '0.65rem 0.95rem',
                       borderRadius: isClient
                         ? (isGrouped ? '16px 6px 6px 16px' : '16px 16px 4px 16px')
                         : (isGrouped ? '6px 16px 16px 6px' : '16px 16px 16px 4px'),
-                      boxShadow: isClient ? '0 2px 8px rgba(234, 88, 12, 0.22)' : '0 1px 4px rgba(15, 23, 42, 0.05)',
+                      boxShadow: isClient ? '0 2px 8px rgba(37, 99, 235, 0.22)' : '0 1px 4px rgba(15, 23, 42, 0.05)',
                       border: isClient ? 'none' : '1px solid var(--color-border, #e2e8f0)',
                       wordBreak: 'break-word',
                       fontSize: '0.88rem',
@@ -1336,8 +1336,8 @@ export default function CustomerSupportChat({
                                           borderRadius: '5px',
                                           border: 'none',
                                           cursor: isDownloading ? 'wait' : 'pointer',
-                                          background: isClient ? '#ffffff' : 'linear-gradient(135deg, #ff7a00 0%, #ea580c 100%)',
-                                          boxShadow: isClient ? '0 1px 4px rgba(0,0,0,0.12)' : '0 2px 6px rgba(234, 88, 12, 0.25)',
+                                          background: isClient ? '#ffffff' : 'linear-gradient(135deg, #ff7a00 0%, #2563eb 100%)',
+                                          boxShadow: isClient ? '0 1px 4px rgba(0,0,0,0.12)' : '0 2px 6px rgba(37, 99, 235, 0.25)',
                                           transition: 'all 0.15s ease'
                                         }}
                                         title="Download image directly to device"
@@ -1439,8 +1439,8 @@ export default function CustomerSupportChat({
                                       borderRadius: '5px',
                                       border: 'none',
                                       cursor: isDownloading ? 'wait' : 'pointer',
-                                      background: isClient ? '#ffffff' : 'linear-gradient(135deg, #ff7a00 0%, #ea580c 100%)',
-                                      boxShadow: isClient ? '0 1px 4px rgba(0,0,0,0.12)' : '0 2px 6px rgba(234, 88, 12, 0.25)',
+                                      background: isClient ? '#ffffff' : 'linear-gradient(135deg, #ff7a00 0%, #2563eb 100%)',
+                                      boxShadow: isClient ? '0 1px 4px rgba(0,0,0,0.12)' : '0 2px 6px rgba(37, 99, 235, 0.25)',
                                       transition: 'all 0.15s ease'
                                     }}
                                     title="Download file directly to device"
@@ -1533,9 +1533,9 @@ export default function CustomerSupportChat({
           gap: '0.6rem',
           flexShrink: 0
         }}>
-          <div style={{ width: 3, alignSelf: 'stretch', borderRadius: 3, background: '#ea580c' }} />
+          <div style={{ width: 3, alignSelf: 'stretch', borderRadius: 3, background: 'var(--color-action-start, #2563eb)' }} />
           <div style={{ minWidth: 0, flex: 1 }}>
-            <div style={{ fontSize: '0.7rem', fontWeight: 800, color: '#ea580c' }}>
+            <div style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--color-primary)' }}>
               {replyingTo.sender === 'client' ? 'You' : 'BDigitizing'}
             </div>
             <div style={{ fontSize: '0.75rem', color: '#64748b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
@@ -1691,7 +1691,7 @@ export default function CustomerSupportChat({
             disabled={isPolishing}
             style={{
               background: isPolishing ? '#fed7aa' : '#fff7ed',
-              color: '#ea580c',
+              color: 'var(--color-primary)',
               border: '1px solid #ffedd5',
               borderRadius: '50%',
               width: '40px',
@@ -1717,7 +1717,7 @@ export default function CustomerSupportChat({
           style={{
             background: (!inputText.trim() && pendingAttachments.length === 0)
               ? '#f1f5f9'
-              : 'linear-gradient(135deg, #ff7a00 0%, #ea580c 100%)',
+              : 'linear-gradient(135deg, #ff7a00 0%, #2563eb 100%)',
             color: (!inputText.trim() && pendingAttachments.length === 0) ? '#94a3b8' : '#ffffff',
             border: (!inputText.trim() && pendingAttachments.length === 0) ? '1.5px solid #e2e8f0' : 'none',
             borderRadius: '50%',
@@ -1729,7 +1729,7 @@ export default function CustomerSupportChat({
             cursor: (!inputText.trim() && pendingAttachments.length === 0) ? 'not-allowed' : 'pointer',
             flexShrink: 0,
             marginBottom: '1px',
-            boxShadow: (!inputText.trim() && pendingAttachments.length === 0) ? 'none' : '0 3px 12px rgba(234, 88, 12, 0.35)',
+            boxShadow: (!inputText.trim() && pendingAttachments.length === 0) ? 'none' : '0 3px 12px rgba(37, 99, 235, 0.35)',
             transform: (!inputText.trim() && pendingAttachments.length === 0) ? 'none' : 'translateY(-1px)',
             transition: 'all 0.18s cubic-bezier(0.4, 0, 0.2, 1)'
           }}

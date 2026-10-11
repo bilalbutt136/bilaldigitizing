@@ -419,7 +419,7 @@ export const WorkerOrderWorkspaceModal = ({ order, isOpen, onClose, onOrderUpdat
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
                 <span style={{
-                  background: '#f97316',
+                  background: 'var(--color-action-start, #2563eb)',
                   color: '#ffffff',
                   fontWeight: 800,
                   fontSize: '0.8rem',
@@ -440,7 +440,7 @@ export const WorkerOrderWorkspaceModal = ({ order, isOpen, onClose, onOrderUpdat
                 <span>Status: <strong style={{ color: isPendingAcceptance ? '#f59e0b' : '#38bdf8' }}>{workerStatus}</strong></span>
                 {agreedPricePkr > 0 && <span>• Agreed Quote: <strong style={{ color: '#10b981' }}>Rs. {agreedPricePkr.toLocaleString()} PKR</strong></span>}
                 <span>•</span>
-                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem', color: '#f97316', fontWeight: 700 }}>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem', color: 'var(--color-primary)', fontWeight: 700 }}>
                   <Clock size={12} /> Placed: <span style={{ color: '#ffffff' }}>{placementTimeStr}</span> {placementRelative && <span style={{ color: '#94a3b8' }}>({placementRelative})</span>}
                 </span>
                 {order.worker_assigned_at && (
@@ -475,7 +475,7 @@ export const WorkerOrderWorkspaceModal = ({ order, isOpen, onClose, onOrderUpdat
             <span
               style={{
                 background: 'rgba(249, 115, 22, 0.12)',
-                color: '#f97316',
+                color: 'var(--color-primary)',
                 border: '1px solid rgba(249, 115, 22, 0.3)',
                 borderRadius: '6px',
                 padding: '0.35rem 0.75rem',
@@ -645,7 +645,7 @@ export const WorkerOrderWorkspaceModal = ({ order, isOpen, onClose, onOrderUpdat
               }}>
                 <div>
                   <h4 style={{ margin: '0 0 1rem 0', fontSize: '0.95rem', fontWeight: 800, color: '#e2e8f0', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <Layers size={16} style={{ color: '#f97316' }} /> Production Specifications
+                    <Layers size={16} style={{ color: 'var(--color-primary)' }} /> Production Specifications
                   </h4>
 
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.85rem' }}>
@@ -672,7 +672,7 @@ export const WorkerOrderWorkspaceModal = ({ order, isOpen, onClose, onOrderUpdat
 
                     <div style={{ background: '#1e293b', padding: '0.65rem 0.85rem', borderRadius: '8px', border: '1px solid #334155' }}>
                       <span style={{ fontSize: '0.725rem', color: '#94a3b8', display: 'block', fontWeight: 600 }}>FORMATS REQUESTED</span>
-                      <span style={{ fontSize: '0.85rem', fontWeight: 800, color: '#f97316' }}>
+                      <span style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--color-primary)' }}>
                         {requestedFormats.join(', ').toUpperCase()}
                       </span>
                     </div>
@@ -681,7 +681,7 @@ export const WorkerOrderWorkspaceModal = ({ order, isOpen, onClose, onOrderUpdat
                     <div style={{ gridColumn: 'span 2', background: '#1e293b', padding: '0.65rem 0.85rem', borderRadius: '8px', border: '1px solid #334155' }}>
                       <span style={{ fontSize: '0.725rem', color: '#94a3b8', display: 'block', fontWeight: 600 }}>ORDER PLACED TIMING</span>
                       <span style={{ fontSize: '0.85rem', fontWeight: 800, color: '#ffffff', display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
-                        <Clock size={13} style={{ color: '#f97316' }} /> {placementTimeStr} {placementRelative && <span style={{ color: '#94a3b8', fontWeight: 600 }}>({placementRelative})</span>}
+                        <Clock size={13} style={{ color: 'var(--color-primary)' }} /> {placementTimeStr} {placementRelative && <span style={{ color: '#94a3b8', fontWeight: 600 }}>({placementRelative})</span>}
                       </span>
                     </div>
                   </div>
@@ -700,7 +700,7 @@ export const WorkerOrderWorkspaceModal = ({ order, isOpen, onClose, onOrderUpdat
               gap: '0.75rem'
             }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <h4 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 800, color: '#f97316', display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                <h4 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 800, color: 'var(--color-primary)', display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
                   <FileText size={16} /> Customer Requirements & Instructions
                 </h4>
                 {order.isRush && (
@@ -770,7 +770,7 @@ export const WorkerOrderWorkspaceModal = ({ order, isOpen, onClose, onOrderUpdat
                       Your Quote for this Order (PKR) *
                     </label>
                     <div style={{ position: 'relative', maxWidth: '320px' }}>
-                      <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', fontWeight: 800, color: '#f97316' }}>
+                      <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', fontWeight: 800, color: 'var(--color-primary)' }}>
                         Rs.
                       </span>
                       <input
@@ -939,7 +939,7 @@ export const WorkerOrderWorkspaceModal = ({ order, isOpen, onClose, onOrderUpdat
 
                   <div>
                     <p style={{ margin: '0 0 0.25rem 0', fontWeight: 700, color: '#e2e8f0', fontSize: '0.9rem' }}>
-                      Drag & Drop files here, or <span style={{ color: '#f97316' }}>Browse Files</span>
+                      Drag & Drop files here, or <span style={{ color: 'var(--color-primary)' }}>Browse Files</span>
                     </p>
                     <span style={{ fontSize: '0.75rem', color: '#64748b' }}>
                       DST, PES, EMB, AI, EPS, CDR, SVG, ZIP — Max 50MB each • Multiple files supported
@@ -1073,7 +1073,7 @@ export const WorkerOrderWorkspaceModal = ({ order, isOpen, onClose, onOrderUpdat
                       <span>{uploadProgress}%</span>
                     </div>
                     <div style={{ height: '6px', background: '#334155', borderRadius: '3px', overflow: 'hidden' }}>
-                      <div style={{ width: `${uploadProgress}%`, height: '100%', background: '#f97316', transition: 'width 0.2s ease' }} />
+                      <div style={{ width: `${uploadProgress}%`, height: '100%', background: 'var(--color-action-start, #2563eb)', transition: 'width 0.2s ease' }} />
                     </div>
                   </div>
                 )}

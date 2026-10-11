@@ -1079,7 +1079,7 @@ export default function AdminChatInbox({ initialChannel = 'inbox', compactMobile
       maxHeight: '100%',
       minHeight: 0,
       flex: 1,
-      background: '#ffffff',
+      background: 'var(--color-surface)',
       borderRadius: compactMobile ? '0' : '12px',
       border: compactMobile ? 'none' : '1px solid #e2e8f0',
       overflow: 'hidden',
@@ -1120,7 +1120,7 @@ export default function AdminChatInbox({ initialChannel = 'inbox', compactMobile
         borderRight: compactMobile ? 'none' : '1px solid #e2e8f0',
         display: compactMobile && activeConversationId ? 'none' : 'flex',
         flexDirection: 'column',
-        background: '#ffffff',
+        background: 'var(--color-surface)',
         flexShrink: 0,
         height: '100%',
         maxHeight: '100%',
@@ -1148,7 +1148,7 @@ export default function AdminChatInbox({ initialChannel = 'inbox', compactMobile
                 height: '32px',
                 borderRadius: '9px',
                 border: '1px solid #e2e8f0',
-                background: '#f8fafc',
+                background: 'var(--color-background)',
                 color: '#475569',
                 display: 'grid',
                 placeItems: 'center',
@@ -1192,7 +1192,7 @@ export default function AdminChatInbox({ initialChannel = 'inbox', compactMobile
                 top: '120%',
                 left: 0,
                 zIndex: 100,
-                background: '#ffffff',
+                background: 'var(--color-surface)',
                 border: '1px solid #e2e8f0',
                 borderRadius: '8px',
                 boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
@@ -1250,7 +1250,7 @@ export default function AdminChatInbox({ initialChannel = 'inbox', compactMobile
           gap: '0.45rem',
           padding: '0.45rem 1rem',
           borderBottom: '1px solid #f1f5f9',
-          background: '#f8fafc',
+          background: 'var(--color-background)',
           flexShrink: 0
         }}>
           <button
@@ -1284,7 +1284,7 @@ export default function AdminChatInbox({ initialChannel = 'inbox', compactMobile
             <span>Inbox & Offers</span>
             {channelUnreadCounts.inbox > 0 && (
               <span style={{
-                background: '#ea580c',
+                background: 'var(--color-action-start, #2563eb)',
                 color: '#ffffff',
                 fontSize: '0.62rem',
                 fontWeight: 900,
@@ -1346,7 +1346,7 @@ export default function AdminChatInbox({ initialChannel = 'inbox', compactMobile
           <div style={{
             display: 'flex',
             alignItems: 'center',
-            background: '#f8fafc',
+            background: 'var(--color-background)',
             border: '1px solid #e2e8f0',
             borderRadius: '6px',
             padding: '0.35rem 0.65rem',
@@ -1389,7 +1389,7 @@ export default function AdminChatInbox({ initialChannel = 'inbox', compactMobile
         <div style={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>
           {isLoadingThreads && conversations.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '2rem 1rem', color: '#94a3b8', fontSize: '0.85rem' }}>
-              <Loader2 size={24} className="spin-icon" style={{ margin: '0 auto 0.5rem', color: '#ea580c' }} />
+              <Loader2 size={24} className="spin-icon" style={{ margin: '0 auto 0.5rem', color: 'var(--color-primary)' }} />
               Loading conversations...
             </div>
           ) : conversations.length === 0 ? (
@@ -1499,7 +1499,7 @@ export default function AdminChatInbox({ initialChannel = 'inbox', compactMobile
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
                         {hasUnread && (
                           <span style={{
-                            background: '#ea580c',
+                            background: 'var(--color-action-start, #2563eb)',
                             color: '#ffffff',
                             fontSize: '0.65rem',
                             fontWeight: 800,
@@ -1541,7 +1541,7 @@ export default function AdminChatInbox({ initialChannel = 'inbox', compactMobile
         width: '100%',
         display: compactMobile && !activeConversationId ? 'none' : 'flex',
         flexDirection: 'column',
-        background: '#ffffff',
+        background: 'var(--color-surface)',
         minWidth: 0,
         height: '100%',
         maxHeight: '100%',
@@ -1559,7 +1559,7 @@ export default function AdminChatInbox({ initialChannel = 'inbox', compactMobile
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
-              background: '#ffffff',
+              background: 'var(--color-surface)',
               flexShrink: 0
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: compactMobile ? '0.5rem' : '0.85rem', minWidth: 0 }}>
@@ -1576,7 +1576,7 @@ export default function AdminChatInbox({ initialChannel = 'inbox', compactMobile
                       height: '34px',
                       borderRadius: '9px',
                       border: '1px solid #e2e8f0',
-                      background: '#f8fafc',
+                      background: 'var(--color-background)',
                       color: '#334155',
                       display: 'grid',
                       placeItems: 'center',
@@ -1593,7 +1593,7 @@ export default function AdminChatInbox({ initialChannel = 'inbox', compactMobile
                     height: compactMobile ? '40px' : '46px',
                     borderRadius: '50%',
                     background: '#fed7aa',
-                    color: '#c2410c',
+                    color: 'var(--color-primary)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -1685,7 +1685,7 @@ export default function AdminChatInbox({ initialChannel = 'inbox', compactMobile
                     height: '34px',
                     borderRadius: '8px',
                     border: '1px solid #e2e8f0',
-                    background: '#ffffff',
+                    background: 'var(--color-surface)',
                     color: activeConversation.is_starred ? '#f59e0b' : '#64748b',
                     display: 'inline-flex',
                     alignItems: 'center',
@@ -1705,7 +1705,7 @@ export default function AdminChatInbox({ initialChannel = 'inbox', compactMobile
                     height: '34px',
                     borderRadius: '8px',
                     border: '1px solid #e2e8f0',
-                    background: '#ffffff',
+                    background: 'var(--color-surface)',
                     color: '#64748b',
                     display: 'inline-flex',
                     alignItems: 'center',
@@ -1750,7 +1750,7 @@ export default function AdminChatInbox({ initialChannel = 'inbox', compactMobile
                         top: 'calc(100% + 6px)',
                         right: 0,
                         zIndex: 1000,
-                        background: '#ffffff',
+                        background: 'var(--color-surface)',
                         border: '1px solid #e2e8f0',
                         borderRadius: '12px',
                         boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05)',
@@ -1856,7 +1856,7 @@ export default function AdminChatInbox({ initialChannel = 'inbox', compactMobile
               display: 'flex',
               padding: compactMobile ? '0 0.85rem' : '0 1.5rem',
               borderBottom: '1px solid #e2e8f0',
-              background: '#ffffff',
+              background: 'var(--color-surface)',
               flexShrink: 0
             }}>
               <button
@@ -1918,7 +1918,7 @@ export default function AdminChatInbox({ initialChannel = 'inbox', compactMobile
                 </div>
 
                 {isAddingReply && (
-                  <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '1rem', marginBottom: '1.25rem' }}>
+                  <div style={{ background: 'var(--color-background)', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '1rem', marginBottom: '1.25rem' }}>
                     <input
                       type="text"
                       placeholder="Template Title (e.g. Turnaround Time Info)"
@@ -1948,7 +1948,7 @@ export default function AdminChatInbox({ initialChannel = 'inbox', compactMobile
                         border: '1px solid #e2e8f0',
                         borderRadius: '8px',
                         padding: '1rem',
-                        background: '#ffffff',
+                        background: 'var(--color-surface)',
                         display: 'flex',
                         flexDirection: 'column',
                         justifyContent: 'space-between'
@@ -1958,7 +1958,7 @@ export default function AdminChatInbox({ initialChannel = 'inbox', compactMobile
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.35rem' }}>
                           <h5 style={{ margin: 0, fontSize: '0.9rem', fontWeight: 800, color: '#0f172a' }}>{reply.title}</h5>
                           {reply.shortcut && (
-                            <span style={{ fontSize: '0.7rem', color: '#ea580c', background: '#fff7ed', padding: '0.1rem 0.4rem', borderRadius: '4px', fontWeight: 700 }}>
+                            <span style={{ fontSize: '0.7rem', color: 'var(--color-primary)', background: 'var(--color-primary-light)', padding: '0.1rem 0.4rem', borderRadius: '4px', fontWeight: 700 }}>
                               {reply.shortcut}
                             </span>
                           )}
@@ -1998,7 +1998,7 @@ export default function AdminChatInbox({ initialChannel = 'inbox', compactMobile
               </div>
             ) : (
               /* MESSAGES TAB */
-              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, height: '100%', overflow: 'hidden', background: '#f8fafc' }}>
+              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, height: '100%', overflow: 'hidden', background: 'var(--color-background)' }}>
                 {/* MESSAGES STREAM (ONLY THIS INNER STREAM SCROLLS) */}
                 <div
                   ref={messagesContainerRef}
@@ -2014,7 +2014,7 @@ export default function AdminChatInbox({ initialChannel = 'inbox', compactMobile
                 >
                   {isLoadingMessages ? (
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '4rem 1rem', color: '#94a3b8' }}>
-                      <Loader2 size={24} className="spin-icon" style={{ color: '#ea580c', marginBottom: '0.5rem' }} />
+                      <Loader2 size={24} className="spin-icon" style={{ color: 'var(--color-primary)', marginBottom: '0.5rem' }} />
                       <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>Loading message history...</span>
                     </div>
                   ) : uniqueMessages.length === 0 ? (
@@ -2057,7 +2057,7 @@ export default function AdminChatInbox({ initialChannel = 'inbox', compactMobile
                                 fontSize: '0.7rem',
                                 fontWeight: 700,
                                 color: '#64748b',
-                                background: '#ffffff',
+                                background: 'var(--color-surface)',
                                 borderRadius: '16px',
                                 border: '1px solid #e2e8f0',
                                 margin: '0 0.75rem',
@@ -2269,9 +2269,9 @@ export default function AdminChatInbox({ initialChannel = 'inbox', compactMobile
                                                     borderRadius: '5px',
                                                     border: 'none',
                                                     color: '#ffffff',
-                                                    background: 'linear-gradient(135deg, #ff7a00 0%, #ea580c 100%)',
+                                                    background: 'linear-gradient(135deg, #ff7a00 0%, #2563eb 100%)',
                                                     cursor: isDownloading ? 'wait' : 'pointer',
-                                                    boxShadow: '0 1px 2px rgba(234, 88, 12, 0.25)'
+                                                    boxShadow: '0 1px 2px rgba(37, 99, 235, 0.25)'
                                                   }}
                                                   title="Download image directly to device"
                                                 >
@@ -2371,9 +2371,9 @@ export default function AdminChatInbox({ initialChannel = 'inbox', compactMobile
                                                 borderRadius: '5px',
                                                 border: 'none',
                                                 color: '#ffffff',
-                                                background: 'linear-gradient(135deg, #ff7a00 0%, #ea580c 100%)',
+                                                background: 'linear-gradient(135deg, #ff7a00 0%, #2563eb 100%)',
                                                 cursor: isDownloading ? 'wait' : 'pointer',
-                                                boxShadow: '0 1px 2px rgba(234, 88, 12, 0.25)'
+                                                boxShadow: '0 1px 2px rgba(37, 99, 235, 0.25)'
                                               }}
                                               title="Download file directly to device"
                                             >
@@ -2461,7 +2461,7 @@ export default function AdminChatInbox({ initialChannel = 'inbox', compactMobile
                     ? '0.55rem 0.9rem calc(0.6rem + env(safe-area-inset-bottom, 0px))'
                     : '0.85rem 1.5rem',
                   borderTop: '1px solid #e5e7eb',
-                  background: '#ffffff',
+                  background: 'var(--color-surface)',
                   boxShadow: compactMobile ? '0 -2px 10px rgba(15, 23, 42, 0.04)' : 'none',
                   flexShrink: 0
                 }}>
@@ -2470,15 +2470,15 @@ export default function AdminChatInbox({ initialChannel = 'inbox', compactMobile
                       display: 'flex',
                       alignItems: 'center',
                       gap: '0.6rem',
-                      background: '#f8fafc',
+                      background: 'var(--color-background)',
                       border: '1px solid #e2e8f0',
                       borderRadius: '8px',
                       padding: '0.45rem 0.65rem',
                       marginBottom: '0.6rem'
                     }}>
-                      <div style={{ width: 3, alignSelf: 'stretch', borderRadius: 3, background: '#ea580c' }} />
+                      <div style={{ width: 3, alignSelf: 'stretch', borderRadius: 3, background: 'var(--color-action-start, #2563eb)' }} />
                       <div style={{ minWidth: 0, flex: 1 }}>
-                        <div style={{ fontSize: '0.7rem', fontWeight: 800, color: '#ea580c' }}>
+                        <div style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--color-primary)' }}>
                           {replyingTo.sender === 'admin' ? 'BDigitizing Support' : (replyingTo.sender_name || activeConversation?.client_name || 'Client')}
                         </div>
                         <div style={{ fontSize: '0.75rem', color: '#64748b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
@@ -2503,7 +2503,7 @@ export default function AdminChatInbox({ initialChannel = 'inbox', compactMobile
                         <div
                           key={idx}
                           style={{
-                            background: '#f8fafc',
+                            background: 'var(--color-background)',
                             border: '1px solid #e2e8f0',
                             borderRadius: '6px',
                             padding: '0.25rem 0.65rem',
@@ -2539,7 +2539,7 @@ export default function AdminChatInbox({ initialChannel = 'inbox', compactMobile
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'space-between',
-                      background: '#fff7ed',
+                      background: 'var(--color-primary-light)',
                       border: '1px solid #ffedd5',
                       padding: '0.35rem 0.75rem',
                       borderRadius: '6px',
@@ -2551,7 +2551,7 @@ export default function AdminChatInbox({ initialChannel = 'inbox', compactMobile
                       <button
                         type="button"
                         onClick={handleUndoPolish}
-                        style={{ background: 'none', border: 'none', color: '#ea580c', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.25rem' }}
+                        style={{ background: 'none', border: 'none', color: 'var(--color-primary)', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.25rem' }}
                       >
                         <Undo2 size={13} /> Undo
                       </button>
@@ -2581,7 +2581,7 @@ export default function AdminChatInbox({ initialChannel = 'inbox', compactMobile
                         padding: compactMobile ? '0.3rem 0 0.5rem' : '0.75rem 1rem',
                         fontSize: compactMobile ? '0.92rem' : '0.9rem',
                         color: '#111827',
-                        background: '#ffffff',
+                        background: 'var(--color-surface)',
                         outline: 'none',
                         resize: 'none',
                         fontFamily: 'inherit',
@@ -2661,7 +2661,7 @@ export default function AdminChatInbox({ initialChannel = 'inbox', compactMobile
                             bottom: '120%',
                             left: 0,
                             zIndex: 100,
-                            background: '#ffffff',
+                            background: 'var(--color-surface)',
                             border: '1px solid #e2e8f0',
                             borderRadius: '8px',
                             boxShadow: '0 6px 20px rgba(0,0,0,0.12)',
@@ -2714,7 +2714,7 @@ export default function AdminChatInbox({ initialChannel = 'inbox', compactMobile
                             bottom: '120%',
                             left: 0,
                             zIndex: 100,
-                            background: '#ffffff',
+                            background: 'var(--color-surface)',
                             border: '1px solid #e2e8f0',
                             borderRadius: '8px',
                             boxShadow: '0 8px 24px rgba(0,0,0,0.14)',
@@ -2773,7 +2773,7 @@ export default function AdminChatInbox({ initialChannel = 'inbox', compactMobile
                         disabled={isPolishing || !inputText.trim()}
                         style={{
                           background: isPolishing ? '#fed7aa' : '#fff7ed',
-                          color: '#ea580c',
+                          color: 'var(--color-primary)',
                           border: '1px solid #ffedd5',
                           borderRadius: '6px',
                           padding: '0.35rem 0.65rem',

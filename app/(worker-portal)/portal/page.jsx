@@ -91,7 +91,7 @@ export default function WorkerPortalDashboardPage() {
             width: '60px',
             height: '60px',
             borderRadius: '16px',
-            background: 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)',
+            background: 'linear-gradient(135deg, #4f46e5 0%, #2563eb 100%)',
             display: 'inline-flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -106,7 +106,7 @@ export default function WorkerPortalDashboardPage() {
             width: '32px',
             height: '32px',
             border: '3px solid rgba(249, 115, 22, 0.2)',
-            borderTopColor: '#f97316',
+            borderTopColor: 'var(--color-primary)',
             borderRadius: '50%',
             animation: 'spin 0.8s linear infinite'
           }} />

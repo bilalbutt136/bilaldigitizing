@@ -168,7 +168,7 @@ export const CustomerMobileCommandCenter = ({
               style={{
                 border: 'none',
                 borderRadius: '12px',
-                background: 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)',
+                background: 'linear-gradient(135deg, #4f46e5 0%, #2563eb 100%)',
                 color: '#ffffff',
                 minHeight: '48px',
                 padding: '0.7rem 0.85rem',
@@ -179,7 +179,7 @@ export const CustomerMobileCommandCenter = ({
                 fontSize: '0.86rem',
                 fontWeight: 900,
                 cursor: 'pointer',
-                boxShadow: '0 6px 16px rgba(234,88,12,0.3)'
+                boxShadow: '0 6px 16px rgba(37, 99, 235, 0.3)'
               }}
             >
               <PlusCircle size={18} /> Start new order
@@ -309,9 +309,9 @@ export const CustomerMobileCommandCenter = ({
                 }}
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <Icon size={18} style={{ color: '#f97316' }} />
+                  <Icon size={18} style={{ color: 'var(--color-primary)' }} />
                   {action.badge ? (
-                    <span style={{ minWidth: '20px', height: '20px', padding: '0 5px', borderRadius: '999px', background: '#fff7ed', color: '#ea580c', fontSize: '0.62rem', fontWeight: 900, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <span style={{ minWidth: '20px', height: '20px', padding: '0 5px', borderRadius: '999px', background: 'var(--color-primary-light)', color: 'var(--color-primary)', fontSize: '0.62rem', fontWeight: 900, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                       {action.badge}
                     </span>
                   ) : null}
@@ -335,7 +335,7 @@ export const CustomerMobileCommandCenter = ({
           const Icon = item.icon;
           return (
             <div key={item.label} style={{ border: `1px solid ${border}`, borderRadius: '13px', background: surface, padding: '0.6rem 0.45rem', textAlign: 'center' }}>
-              <Icon size={15} style={{ color: '#f97316', marginBottom: '0.2rem' }} />
+              <Icon size={15} style={{ color: 'var(--color-primary)', marginBottom: '0.2rem' }} />
               <div style={{ fontSize: '0.86rem', fontWeight: 900, color: pageText }}>{item.value}</div>
               <div style={{ fontSize: '0.58rem', color: muted, fontWeight: 700, marginTop: '0.06rem' }}>{item.label}</div>
             </div>
@@ -353,7 +353,7 @@ export const CustomerMobileCommandCenter = ({
               ['3', 'Download files', 'Receive your production-ready files when completed.']
             ].map(([step, title, copy]) => (
               <div key={step} style={{ display: 'flex', gap: '0.6rem', alignItems: 'flex-start' }}>
-                <div style={{ width: '24px', height: '24px', borderRadius: '8px', background: '#fff7ed', color: '#ea580c', fontSize: '0.7rem', fontWeight: 900, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{step}</div>
+                <div style={{ width: '24px', height: '24px', borderRadius: '8px', background: 'var(--color-primary-light)', color: 'var(--color-primary)', fontSize: '0.7rem', fontWeight: 900, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{step}</div>
                 <div>
                   <div style={{ fontSize: '0.72rem', fontWeight: 900, color: pageText }}>{title}</div>
                   <div style={{ fontSize: '0.65rem', color: muted, lineHeight: 1.4, marginTop: '0.05rem' }}>{copy}</div>

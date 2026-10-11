@@ -241,12 +241,12 @@ export const AssignWorkerModal = ({ order, isOpen, onClose, onAssigned, showToas
             <div style={{
               margin: '0.75rem 1.5rem 0 1.5rem',
               padding: '0.65rem 0.85rem',
-              background: '#f8fafc',
+              background: 'var(--color-background)',
               border: '1px solid #e2e8f0',
               borderRadius: '8px',
               fontSize: '0.78rem'
             }}>
-              <span style={{ color: '#ea580c', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '0.3rem', marginBottom: '0.2rem' }}>
+              <span style={{ color: 'var(--color-primary)', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '0.3rem', marginBottom: '0.2rem' }}>
                 <FileText size={12} /> Client Requirements:
               </span>
               <p style={{ margin: 0, color: '#334155', lineHeight: 1.4, fontWeight: 600 }}>
@@ -339,7 +339,7 @@ export const AssignWorkerModal = ({ order, isOpen, onClose, onAssigned, showToas
           {/* Worker Selection Dropdown / List */}
           {isFetchingWorkers ? (
             <div style={{ textAlign: 'center', padding: '1.5rem 0', color: 'var(--text-muted, #64748b)' }}>
-              <div style={{ margin: '0 auto 0.5rem', width: '24px', height: '24px', border: '2px solid #cbd5e1', borderTopColor: '#ea580c', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+              <div style={{ margin: '0 auto 0.5rem', width: '24px', height: '24px', border: '2px solid #cbd5e1', borderTopColor: 'var(--color-primary)', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
               <span style={{ fontSize: '0.85rem' }}>Loading active workers directory...</span>
             </div>
           ) : filteredWorkers.length === 0 ? (
@@ -484,7 +484,7 @@ export const AssignWorkerModal = ({ order, isOpen, onClose, onAssigned, showToas
                 padding: '0.55rem 1.25rem',
                 borderRadius: '8px',
                 border: 'none',
-                background: 'linear-gradient(135deg, #ea580c 0%, #c2410c 100%)',
+                background: 'linear-gradient(135deg, #2563eb 0%, #1e40af 100%)',
                 color: '#ffffff',
                 fontWeight: 800,
                 fontSize: '0.825rem',
@@ -492,7 +492,7 @@ export const AssignWorkerModal = ({ order, isOpen, onClose, onAssigned, showToas
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '0.4rem',
-                boxShadow: '0 2px 8px rgba(234, 88, 12, 0.25)'
+                boxShadow: '0 2px 8px rgba(37, 99, 235, 0.25)'
               }}
             >
               {isLoading ? (

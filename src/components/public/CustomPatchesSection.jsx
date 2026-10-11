@@ -271,7 +271,7 @@ export const CustomPatchesSection = ({ hideTabs: _hideTabs = false, hideHero = f
             gap: '0.4rem',
             background: 'var(--color-primary-light, rgba(255, 122, 0, 0.15))',
             border: '1px solid var(--border-color)',
-            color: 'var(--color-primary, #ea580c)',
+            color: 'var(--color-primary)',
             fontWeight: 800,
             fontSize: '0.85rem',
             textTransform: 'uppercase',

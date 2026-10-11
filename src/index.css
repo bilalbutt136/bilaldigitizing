@@ -9,8 +9,8 @@
      ========================================================================== */
   --color-primary: #1d4ed8;
   --color-primary-hover: #1e40af;
-  --color-primary-light: #ffedd5;
-  --color-primary-glow: rgba(249, 115, 22, 0.30);
+  --color-primary-light: #e8efff;
+  --color-primary-glow: rgba(37,99,235,0.20);
   --color-primary-text: #ffffff;
 
   --color-secondary: #5b21b6;
@@ -22,19 +22,19 @@
   /* 4-Layer Surface System — clear visual separation */
   --color-background: #f6f8fd;        /* Slate-50 Page canvas */
   --color-surface: #ffffff;           /* Cards, panels — clean white */
-  --color-surface-elevated: #f1f5f9;  /* Slate-100 Inner sections */
-  --color-subtle: #e2e8f0;            /* Slate-200 Sidebars, hover states */
-  --color-input: #f8fafc;             /* Input field backgrounds */
+  --color-surface-elevated: #f1f5ff;  /* Slate-100 Inner sections */
+  --color-subtle: #eaf0fb;            /* Slate-200 Sidebars, hover states */
+  --color-input: #f8faff;             /* Input field backgrounds */
 
   /* Borders — strong enough to see clearly */
-  --color-border: #e2e8f0;            /* Slate-200 */
-  --color-border-hover: #cbd5e1;      /* Slate-300 */
+  --color-border: #dbe4f4;            /* Slate-200 */
+  --color-border-hover: #bfd0ec;      /* Slate-300 */
   --color-border-focus: var(--color-primary);
 
   /* Text Colors — VIP Rich Slate Hierarchy */
-  --color-text-primary: #0f172a;      /* Slate-900 — maximum readability */
-  --color-text-secondary: #334155;    /* Slate-700 — clear secondary text */
-  --color-text-muted: #64748b;        /* Slate-500 — balanced muted text */
+  --color-text-primary: #0b1730;      /* Slate-900 — maximum readability */
+  --color-text-secondary: #344461;    /* Slate-700 — clear secondary text */
+  --color-text-muted: #586984;        /* Slate-500 — balanced muted text */
   --color-text-on-primary: #ffffff;
 
   /* Semantic Status Colors — WCAG AA compliant */
@@ -65,22 +65,22 @@
   --bg-subtle: var(--color-subtle);
   --bg-input: var(--color-input);
   
-  --navy-950: #0f172a; /* Slate 900 */
-  --navy-900: #1e293b; /* Slate 800 */
-  --navy-800: #334155; /* Slate 700 */
-  --navy-700: #475569; /* Slate 600 */
-  --navy-600: #64748b; /* Slate 500 */
-  --navy-100: #f1f5f9; /* Slate 100 */
+  --navy-950: #0b1730; /* Slate 900 */
+  --navy-900: #142443; /* Slate 800 */
+  --navy-800: #243859; /* Slate 700 */
+  --navy-700: #344461; /* Slate 600 */
+  --navy-600: #586984; /* Slate 500 */
+  --navy-100: #eef3fd; /* Slate 100 */
 
   /* Primary Palette Aliases */
-  --orange-500: var(--color-secondary);
-  --orange-600: var(--color-primary);
+  --orange-500: var(--color-primary);
+  --orange-600: var(--color-primary-hover);
   --orange-700: var(--color-primary-hover);
-  --orange-800: #9a3412;
-  --orange-900: #7c2d12;
+  --orange-800: #1e40af;
+  --orange-900: #172554;
   --orange-400: var(--color-accent);
-  --orange-300: #fdba74;
-  --orange-200: #fed7aa;
+  --orange-300: #a5b4fc;
+  --orange-200: #c7d2fe;
   --orange-100: var(--color-primary-light);
   --orange-50: var(--color-accent-light);
   --orange-glow: var(--color-primary-glow);
@@ -112,41 +112,41 @@
   --border-focus: var(--color-border-focus);
 
   /* Hero & Section Theme Variables — Seamless One-Page Flow */
-  --hero-bg: radial-gradient(ellipse 90% 60% at 50% -10%, rgba(234, 88, 12, 0.05) 0%, rgba(248, 250, 252, 0.7) 60%, var(--bg-main) 100%);
+  --hero-bg: radial-gradient(ellipse 75% 65% at 86% 0%, rgba(124,58,237,0.10), transparent 66%), radial-gradient(ellipse 78% 70% at 15% -10%, rgba(37,99,235,0.10), transparent 67%), var(--bg-main);
   --hero-tabs-bg: #ffffff;
-  --hero-tabs-border: #d1d9e0;
-  --hero-text-primary: #0d1117;
-  --hero-text-secondary: #2d3748;
+  --hero-tabs-border: #dbe4f4;
+  --hero-text-primary: #0b1730;
+  --hero-text-secondary: #344461;
   --hero-card-bg: #ffffff;
-  --hero-card-border: #d1d9e0;
+  --hero-card-border: #dbe4f4;
   --hero-card-shadow: 0 8px 24px -6px rgba(13, 17, 23, 0.10), 0 2px 8px -2px rgba(13, 17, 23, 0.05);
 
-  --banner-bg: linear-gradient(135deg, #ffffff 0%, #fffcf9 50%, var(--bg-main) 100%);
-  --banner-border: rgba(234, 88, 12, 0.18);
-  --banner-title: #0d1117;
-  --banner-desc: #2d3748;
+  --banner-bg: linear-gradient(135deg, #ffffff 0%, #f5f3ff 50%, var(--bg-main) 100%);
+  --banner-border: rgba(67,56,202,0.18);
+  --banner-title: #0b1730;
+  --banner-desc: #344461;
 
   --stats-bar-bg: transparent;
   --stats-card-bg: #ffffff;
-  --stats-card-border: #d1d9e0;
-  --stats-number-color: #0d1117;
-  --stats-label-color: #5a6478;
+  --stats-card-border: #dbe4f4;
+  --stats-number-color: #0b1730;
+  --stats-label-color: #586984;
 
-  --cta-bg: radial-gradient(ellipse 90% 70% at 50% 0%, rgba(234, 88, 12, 0.06) 0%, rgba(248, 250, 252, 0.7) 60%, var(--bg-main) 100%);
-  --cta-title: #0d1117;
-  --cta-desc: #2d3748;
-  --cta-badge-bg: #fff7ed;
-  --cta-badge-border: #fed7aa;
-  --cta-badge-text: #b45309;
-  --cta-btn-outline-color: #0d1117;
-  --cta-btn-outline-border: #d1d9e0;
+  --cta-bg: radial-gradient(ellipse 75% 72% at 50% 0%, rgba(99,102,241,0.10), transparent 65%), var(--bg-main);
+  --cta-title: #0b1730;
+  --cta-desc: #344461;
+  --cta-badge-bg: #edf2ff;
+  --cta-badge-border: #c7d5fb;
+  --cta-badge-text: #3730a3;
+  --cta-btn-outline-color: #0b1730;
+  --cta-btn-outline-border: #c4d2e8;
 
   /* Premium Multi-Layer Shadows */
   --shadow-sm: 0 1px 4px rgba(13, 17, 23, 0.07), 0 1px 2px rgba(13, 17, 23, 0.04);
   --shadow-md: 0 4px 14px -2px rgba(13, 17, 23, 0.09), 0 2px 6px -1px rgba(13, 17, 23, 0.05);
   --shadow-lg: 0 10px 28px -4px rgba(13, 17, 23, 0.10), 0 4px 10px -2px rgba(13, 17, 23, 0.05);
   --shadow-xl: 0 20px 40px -6px rgba(13, 17, 23, 0.12), 0 8px 18px -4px rgba(13, 17, 23, 0.06);
-  --shadow-glow: 0 0 20px rgba(249, 115, 22, 0.28), 0 10px 20px -3px rgba(234, 88, 12, 0.32);
+  --shadow-glow: 0 0 22px rgba(59,130,246,0.25), 0 10px 25px -3px rgba(67,56,202,0.26);
 
   --radius-sm: 8px;
   --radius-md: 12px;
@@ -633,20 +633,29 @@ h1, h2, h3, h4, h5, h6 {
   --color-background: #080f20;
   --color-surface: #101b32;
   --color-surface-elevated: #172640;
-  --color-surface-hover: #1f293d;
-  --color-subtle: #1e293b;
-  --color-input: #162032;
+  --color-surface-hover: #203250;
+  --color-subtle: #1a2b47;
+  --color-input: #121f37;
 
-  --color-border: rgba(255, 255, 255, 0.16);
-  --color-border-subtle: rgba(255, 255, 255, 0.10);
-  --color-border-hover: rgba(255, 255, 255, 0.32);
+  --color-border: rgba(158,184,230,0.22);
+  --color-border-subtle: rgba(158,184,230,0.14);
+  --color-border-hover: rgba(158,184,230,0.40);
   --color-border-focus: #78afff;
 
   /* Typography: WCAG 2.1 AA Compliant Contrast Ratios */
   --color-text-primary: #f8faff;     /* Contrast > 16:1 against #090d16 */
   --color-text-secondary: #cad6ec;   /* Contrast > 11:1 against #090d16 */
   --color-text-muted: #a5b6d1;       /* Contrast 5.5:1 against #111827 (WCAG AA Pass > 4.5:1) */
-  --color-text-on-primary: #ffffff;
+  --color-text-on-primary: #081329;
+
+  --color-primary: #78afff;
+  --color-primary-hover: #a7cbff;
+  --color-primary-light: rgba(96,165,250,0.14);
+  --color-primary-glow: rgba(96,165,250,0.27);
+  --color-secondary: #b5a0ff;
+  --color-accent: #c4b5fd;
+  --color-action-start: #2563eb;
+  --color-action-end: #4338ca;
 
   /* Status colors adjusted for dark mode contrast */
   --color-success: #34d399;

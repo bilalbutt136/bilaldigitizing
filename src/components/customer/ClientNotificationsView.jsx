@@ -115,7 +115,7 @@ export const ClientNotificationsView = ({ onNavigateToOrder, userEmail, isAdmin 
       return <Zap size={18} style={{ color: '#2563eb' }} />;
     }
     if (type === 'message' || type.includes('message') || title.includes('message') || title.includes('💬')) {
-      return <Bell size={18} style={{ color: '#f97316' }} />;
+      return <Bell size={18} style={{ color: 'var(--color-primary)' }} />;
     }
     if (type.includes('offer') || title.includes('offer') || title.includes('tag')) {
       return <Tag size={18} style={{ color: '#4f46e5' }} />;
@@ -172,7 +172,7 @@ export const ClientNotificationsView = ({ onNavigateToOrder, userEmail, isAdmin 
             width: '38px',
             height: '38px',
             borderRadius: '10px',
-            background: 'linear-gradient(135deg, var(--color-secondary) 0%, var(--color-primary) 100%)',
+            background: 'linear-gradient(120deg, var(--color-action-start, #2563eb) 0%, var(--color-action-end, #4338ca) 100%)',
             color: 'var(--color-text-on-primary, #ffffff)',
             display: 'flex',
             alignItems: 'center',

@@ -888,7 +888,7 @@ export const BDigitizingMobileApp = ({ initialTab = 'home' }) => {
       startingPrice: 'From $15.00',
       eta: '6–12 Hours',
       icon: PenTool,
-      color: '#ea580c',
+      color: 'var(--color-primary)',
       tags: ['ai', 'eps', 'svg', 'pdf', 'cdr', 'screen print', 'vector', 'logo', 'redraw']
     },
     {
@@ -956,7 +956,7 @@ export const BDigitizingMobileApp = ({ initialTab = 'home' }) => {
           width: '76px',
           height: '76px',
           borderRadius: '22px',
-          background: '#ffffff',
+          background: 'var(--color-surface)',
           border: '1.5px solid #e2e8f0',
           display: 'flex',
           alignItems: 'center',
@@ -1642,7 +1642,7 @@ export const BDigitizingMobileApp = ({ initialTab = 'home' }) => {
                   height: '30px',
                   objectFit: 'contain',
                   borderRadius: '8px',
-                  background: '#ffffff',
+                  background: 'var(--color-surface)',
                   flexShrink: 0
                 }}
               />
@@ -1757,8 +1757,8 @@ export const BDigitizingMobileApp = ({ initialTab = 'home' }) => {
           {/* Priority Order Action or Studio Tracker (Single clean card) */}
           {unpaidOrders.length > 0 ? (
             <div style={{
-              background: isDark ? 'rgba(234, 88, 12, 0.15)' : 'linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)',
-              border: isDark ? '1.5px solid rgba(234, 88, 12, 0.4)' : '1.5px solid #fde68a',
+              background: isDark ? 'rgba(37, 99, 235, 0.15)' : 'linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)',
+              border: isDark ? '1.5px solid rgba(37, 99, 235, 0.4)' : '1.5px solid #fde68a',
               borderRadius: '16px',
               padding: '0.85rem 1rem',
               display: 'flex',
@@ -1771,7 +1771,7 @@ export const BDigitizingMobileApp = ({ initialTab = 'home' }) => {
                   width: '36px',
                   height: '36px',
                   borderRadius: '10px',
-                  background: 'linear-gradient(135deg, #ea580c 0%, #c2410c 100%)',
+                  background: 'linear-gradient(135deg, #2563eb 0%, #1e40af 100%)',
                   color: '#ffffff',
                   display: 'flex',
                   alignItems: 'center',
@@ -1797,7 +1797,7 @@ export const BDigitizingMobileApp = ({ initialTab = 'home' }) => {
                   setMobileTab('orders');
                 }}
                 style={{
-                  background: 'linear-gradient(135deg, #ea580c 0%, #c2410c 100%)',
+                  background: 'linear-gradient(135deg, #2563eb 0%, #1e40af 100%)',
                   color: '#ffffff',
                   border: 'none',
                   borderRadius: '8px',
@@ -1805,7 +1805,7 @@ export const BDigitizingMobileApp = ({ initialTab = 'home' }) => {
                   fontSize: '0.75rem',
                   fontWeight: 900,
                   cursor: 'pointer',
-                  boxShadow: '0 2px 8px rgba(234, 88, 12, 0.35)'
+                  boxShadow: '0 2px 8px rgba(37, 99, 235, 0.35)'
                 }}
               >
                 Pay Now →
@@ -1974,7 +1974,7 @@ export const BDigitizingMobileApp = ({ initialTab = 'home' }) => {
               >
                 <div style={{
                   height: '110px',
-                  background: 'linear-gradient(135deg, #ea580c 0%, #c2410c 100%)',
+                  background: 'linear-gradient(135deg, #2563eb 0%, #1e40af 100%)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -2344,8 +2344,8 @@ export const BDigitizingMobileApp = ({ initialTab = 'home' }) => {
               style={{
                 margin: '0.4rem 0.75rem 0',
                 padding: '0.5rem 0.75rem',
-                background: isDark ? 'rgba(234, 88, 12, 0.15)' : '#fff7ed',
-                border: isDark ? '1px solid rgba(234, 88, 12, 0.4)' : '1px solid #fed7aa',
+                background: isDark ? 'rgba(37, 99, 235, 0.15)' : '#fff7ed',
+                border: isDark ? '1px solid rgba(37, 99, 235, 0.4)' : '1px solid #fed7aa',
                 borderRadius: '10px',
                 display: 'flex',
                 alignItems: 'center',
@@ -2354,12 +2354,12 @@ export const BDigitizingMobileApp = ({ initialTab = 'home' }) => {
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
-                <CreditCard size={15} style={{ color: '#ea580c' }} />
+                <CreditCard size={15} style={{ color: 'var(--color-primary)' }} />
                 <span style={{ fontSize: '0.78rem', fontWeight: 800, color: isDark ? '#fb923c' : '#c2410c' }}>
                   {unpaidOrdersCount} order{unpaidOrdersCount > 1 ? 's' : ''} awaiting payment
                 </span>
               </div>
-              <span style={{ fontSize: '0.75rem', fontWeight: 900, color: '#ea580c' }}>
+              <span style={{ fontSize: '0.75rem', fontWeight: 900, color: 'var(--color-primary)' }}>
                 Pay Now →
               </span>
             </div>
@@ -2380,11 +2380,11 @@ export const BDigitizingMobileApp = ({ initialTab = 'home' }) => {
               let border = isDark ? '1px solid var(--color-border, #334155)' : '1px solid #cbd5e1';
 
               if (isSelected) {
-                bg = f.unpaid ? 'linear-gradient(135deg, #ea580c 0%, #c2410c 100%)' : (isDark ? 'linear-gradient(135deg, #1e293b 0%, #334155 100%)' : '#0f172a');
+                bg = f.unpaid ? 'linear-gradient(135deg, #2563eb 0%, #1e40af 100%)' : (isDark ? 'linear-gradient(135deg, #1e293b 0%, #334155 100%)' : '#0f172a');
                 color = '#ffffff';
                 border = f.unpaid ? '1.5px solid #ea580c' : (isDark ? '1.5px solid #475569' : '1.5px solid #0f172a');
               } else if (f.unpaid && f.highlight) {
-                bg = isDark ? 'rgba(234, 88, 12, 0.18)' : '#fff7ed';
+                bg = isDark ? 'rgba(37, 99, 235, 0.18)' : '#fff7ed';
                 color = isDark ? '#fb923c' : '#c2410c';
                 border = isDark ? '1.5px solid #ea580c' : '1.5px solid #fdba74';
               } else if (f.highlight) {
@@ -2408,7 +2408,7 @@ export const BDigitizingMobileApp = ({ initialTab = 'home' }) => {
                     fontWeight: 800,
                     cursor: 'pointer',
                     whiteSpace: 'nowrap',
-                    boxShadow: isSelected && f.unpaid ? '0 2px 6px rgba(234, 88, 12, 0.25)' : 'none',
+                    boxShadow: isSelected && f.unpaid ? '0 2px 6px rgba(37, 99, 235, 0.25)' : 'none',
                     flexShrink: 0
                   }}
                 >
@@ -2589,8 +2589,8 @@ export const BDigitizingMobileApp = ({ initialTab = 'home' }) => {
                 if (isUnpaid) {
                   badgeInfo = {
                     label: 'WAITING FOR PAYMENT',
-                    bg: isDark ? 'rgba(234, 88, 12, 0.15)' : '#fff7ed',
-                    border: isDark ? 'rgba(234, 88, 12, 0.4)' : '#fdba74',
+                    bg: isDark ? 'rgba(37, 99, 235, 0.15)' : '#fff7ed',
+                    border: isDark ? 'rgba(37, 99, 235, 0.4)' : '#fdba74',
                     color: isDark ? '#fb923c' : '#c2410c'
                   };
                 } else if (isDelivered) {
@@ -2610,8 +2610,8 @@ export const BDigitizingMobileApp = ({ initialTab = 'home' }) => {
                 } else if (isRevision) {
                   badgeInfo = {
                     label: 'REVISION REQUESTED',
-                    bg: isDark ? 'rgba(234, 88, 12, 0.15)' : '#fff7ed',
-                    border: isDark ? 'rgba(234, 88, 12, 0.4)' : '#fdba74',
+                    bg: isDark ? 'rgba(37, 99, 235, 0.15)' : '#fff7ed',
+                    border: isDark ? 'rgba(37, 99, 235, 0.4)' : '#fdba74',
                     color: isDark ? '#fb923c' : '#ea580c'
                   };
                 } else if (s === 'cancellation_requested') {
@@ -2646,7 +2646,7 @@ export const BDigitizingMobileApp = ({ initialTab = 'home' }) => {
                       display: 'flex',
                       flexDirection: 'column',
                       gap: '0.55rem',
-                      boxShadow: isUnpaid ? '0 2px 8px rgba(234, 88, 12, 0.12)' : (isDelivered ? '0 2px 8px rgba(16, 185, 129, 0.12)' : (isDark ? '0 1px 4px rgba(0,0,0,0.2)' : '0 1px 4px rgba(0,0,0,0.03)')),
+                      boxShadow: isUnpaid ? '0 2px 8px rgba(37, 99, 235, 0.12)' : (isDelivered ? '0 2px 8px rgba(16, 185, 129, 0.12)' : (isDark ? '0 1px 4px rgba(0,0,0,0.2)' : '0 1px 4px rgba(0,0,0,0.03)')),
                       cursor: 'pointer'
                     }}
                   >
@@ -2700,7 +2700,7 @@ export const BDigitizingMobileApp = ({ initialTab = 'home' }) => {
                           width: '20px',
                           height: '20px',
                           borderRadius: '50%',
-                          background: isUnpaid ? (isDark ? 'rgba(234, 88, 12, 0.2)' : '#fff7ed') : (isDark ? 'rgba(16, 185, 129, 0.2)' : '#ecfdf5'),
+                          background: isUnpaid ? (isDark ? 'rgba(37, 99, 235, 0.2)' : '#fff7ed') : (isDark ? 'rgba(16, 185, 129, 0.2)' : '#ecfdf5'),
                           color: isUnpaid ? (isDark ? '#fb923c' : '#c2410c') : (isDark ? '#34d399' : '#047857'),
                           display: 'flex',
                           alignItems: 'center',
@@ -2762,8 +2762,8 @@ export const BDigitizingMobileApp = ({ initialTab = 'home' }) => {
                     {/* Prominent Unpaid / Waiting for Payment Action Bar */}
                     {isUnpaid && (
                       <div style={{
-                        background: isDark ? 'rgba(234, 88, 12, 0.15)' : 'linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)',
-                        border: isDark ? '1px solid rgba(234, 88, 12, 0.4)' : '1px solid #fde68a',
+                        background: isDark ? 'rgba(37, 99, 235, 0.15)' : 'linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)',
+                        border: isDark ? '1px solid rgba(37, 99, 235, 0.4)' : '1px solid #fde68a',
                         borderRadius: '8px',
                         padding: '0.5rem 0.75rem',
                         display: 'flex',
@@ -2790,7 +2790,7 @@ export const BDigitizingMobileApp = ({ initialTab = 'home' }) => {
                             handleOpenPaymentForOrder(ord);
                           }}
                           style={{
-                            background: 'linear-gradient(135deg, #ea580c 0%, #c2410c 100%)',
+                            background: 'linear-gradient(135deg, #2563eb 0%, #1e40af 100%)',
                             color: '#ffffff',
                             border: 'none',
                             borderRadius: '6px',
@@ -2798,7 +2798,7 @@ export const BDigitizingMobileApp = ({ initialTab = 'home' }) => {
                             fontSize: '0.74rem',
                             fontWeight: 900,
                             cursor: 'pointer',
-                            boxShadow: '0 2px 6px rgba(234, 88, 12, 0.25)',
+                            boxShadow: '0 2px 6px rgba(37, 99, 235, 0.25)',
                             whiteSpace: 'nowrap',
                             display: 'flex',
                             alignItems: 'center',
@@ -2889,7 +2889,7 @@ export const BDigitizingMobileApp = ({ initialTab = 'home' }) => {
           }}>
             {/* Top Bar with Notifications */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.85rem' }}>
-              <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#ea580c', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+              <span style={{ fontSize: '0.72rem', fontWeight: 800, color: 'var(--color-primary)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
                 Client Operations Portal
               </span>
               <button
@@ -2913,7 +2913,7 @@ export const BDigitizingMobileApp = ({ initialTab = 'home' }) => {
                     width: '56px',
                     height: '56px',
                     borderRadius: '50%',
-                    background: 'linear-gradient(135deg, #ea580c 0%, #c2410c 100%)',
+                    background: 'linear-gradient(135deg, #2563eb 0%, #1e40af 100%)',
                     color: '#ffffff',
                     display: 'flex',
                     alignItems: 'center',
@@ -2949,7 +2949,7 @@ export const BDigitizingMobileApp = ({ initialTab = 'home' }) => {
                       type="button"
                       onClick={() => setIsDepositModalOpen(true)}
                       style={{
-                        background: 'rgba(234, 88, 12, 0.25)',
+                        background: 'rgba(37, 99, 235, 0.25)',
                         border: '1px solid #ea580c',
                         borderRadius: '8px',
                         padding: '0.15rem 0.5rem',
@@ -2997,7 +2997,7 @@ export const BDigitizingMobileApp = ({ initialTab = 'home' }) => {
                     setMobileTab('login');
                   }}
                   style={{
-                    background: '#ea580c',
+                    background: 'var(--color-action-start, #2563eb)',
                     color: '#ffffff',
                     border: 'none',
                     borderRadius: '10px',
@@ -3005,7 +3005,7 @@ export const BDigitizingMobileApp = ({ initialTab = 'home' }) => {
                     fontWeight: 900,
                     fontSize: '0.825rem',
                     cursor: 'pointer',
-                    boxShadow: '0 4px 12px rgba(234, 88, 12, 0.4)'
+                    boxShadow: '0 4px 12px rgba(37, 99, 235, 0.4)'
                   }}
                 >
                   Sign In
@@ -3091,7 +3091,7 @@ export const BDigitizingMobileApp = ({ initialTab = 'home' }) => {
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
-                  <div style={{ background: 'rgba(234, 88, 12, 0.12)', color: '#ea580c', padding: '0.45rem', borderRadius: '10px' }}>
+                  <div style={{ background: 'rgba(37, 99, 235, 0.12)', color: 'var(--color-primary)', padding: '0.45rem', borderRadius: '10px' }}>
                     <ClipboardList size={18} />
                   </div>
                   <div>
@@ -3305,7 +3305,7 @@ export const BDigitizingMobileApp = ({ initialTab = 'home' }) => {
                 fontWeight: 700
               }}
             >
-              <Share2 size={16} style={{ color: '#ea580c' }} />
+              <Share2 size={16} style={{ color: 'var(--color-primary)' }} />
               <span>Invite Friends & Colleagues</span>
             </div>
           </div>
@@ -3347,7 +3347,7 @@ export const BDigitizingMobileApp = ({ initialTab = 'home' }) => {
                   setMobileTab('login');
                 }}
                 style={{
-                  background: isDark ? 'linear-gradient(135deg, #ea580c 0%, #c2410c 100%)' : '#0f172a',
+                  background: isDark ? 'linear-gradient(135deg, #2563eb 0%, #1e40af 100%)' : '#0f172a',
                   color: '#ffffff',
                   border: 'none',
                   borderRadius: '12px',
@@ -3463,7 +3463,7 @@ export const BDigitizingMobileApp = ({ initialTab = 'home' }) => {
                   style={{
                     flex: 1,
                     minWidth: '140px',
-                    background: 'linear-gradient(135deg, var(--color-secondary, #f97316) 0%, var(--color-primary, #ea580c) 100%)',
+                    background: 'linear-gradient(135deg, var(--color-secondary, #4f46e5) 0%, var(--color-primary, #2563eb) 100%)',
                     color: '#ffffff',
                     border: 'none',
                     borderRadius: '12px',
@@ -3475,7 +3475,7 @@ export const BDigitizingMobileApp = ({ initialTab = 'home' }) => {
                     alignItems: 'center',
                     justifyContent: 'center',
                     gap: '0.4rem',
-                    boxShadow: '0 4px 14px rgba(234, 88, 12, 0.4)'
+                    boxShadow: '0 4px 14px rgba(37, 99, 235, 0.4)'
                   }}
                 >
                   <Plus size={16} /> Top-Up Balance
@@ -3498,7 +3498,7 @@ export const BDigitizingMobileApp = ({ initialTab = 'home' }) => {
               </span>
 
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem' }}>
-                <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'rgba(234, 88, 12, 0.12)', color: 'var(--orange-500)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'rgba(37, 99, 235, 0.12)', color: 'var(--orange-500)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                   <Zap size={16} />
                 </div>
                 <div>
@@ -3832,7 +3832,7 @@ export const BDigitizingMobileApp = ({ initialTab = 'home' }) => {
                 position: 'absolute',
                 top: '-1px',
                 right: '-1px',
-                background: '#ea580c',
+                background: 'var(--color-action-start, #2563eb)',
                 color: '#ffffff',
                 fontSize: '0.55rem',
                 fontWeight: 900,
@@ -4035,7 +4035,7 @@ export const BDigitizingMobileApp = ({ initialTab = 'home' }) => {
               border: isDark ? '1px solid var(--color-border, #334155)' : '1px solid #e2e8f0'
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <span style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#ea580c' }} />
+                <span style={{ width: '12px', height: '12px', borderRadius: '50%', background: 'var(--color-action-start, #2563eb)' }} />
                 <div>
                   <div style={{ fontSize: '0.82rem', fontWeight: 800, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a' }}>
                     Executive Studio Pro
@@ -4045,7 +4045,7 @@ export const BDigitizingMobileApp = ({ initialTab = 'home' }) => {
                   </div>
                 </div>
               </div>
-              <span style={{ fontSize: '0.68rem', fontWeight: 800, color: '#ea580c', background: isDark ? 'rgba(234, 88, 12, 0.15)' : '#fff7ed', padding: '0.2rem 0.5rem', borderRadius: '9999px' }}>
+              <span style={{ fontSize: '0.68rem', fontWeight: 800, color: 'var(--color-primary)', background: isDark ? 'rgba(37, 99, 235, 0.15)' : '#fff7ed', padding: '0.2rem 0.5rem', borderRadius: '9999px' }}>
                 Active
               </span>
             </div>
@@ -4942,10 +4942,10 @@ export const BDigitizingMobileApp = ({ initialTab = 'home' }) => {
                     style={{
                       padding: '0.85rem',
                       borderRadius: '12px',
-                      background: (n.is_read || n.read) ? (isDark ? 'var(--color-subtle, #1e293b)' : '#f8fafc') : (isDark ? 'rgba(234, 88, 12, 0.15)' : '#fff7ed'),
+                      background: (n.is_read || n.read) ? (isDark ? 'var(--color-subtle, #1e293b)' : '#f8fafc') : (isDark ? 'rgba(37, 99, 235, 0.15)' : '#fff7ed'),
                       border: (n.is_read || n.read) ? (isDark ? '1px solid var(--color-border, #334155)' : '1px solid #e2e8f0') : (isDark ? '1.5px solid rgba(251, 146, 60, 0.5)' : '1.5px solid #fdba74'),
                       cursor: 'pointer',
-                      boxShadow: (n.is_read || n.read) ? 'none' : '0 2px 8px rgba(234, 88, 12, 0.12)'
+                      boxShadow: (n.is_read || n.read) ? 'none' : '0 2px 8px rgba(37, 99, 235, 0.12)'
                     }}
                   >
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.4rem', marginBottom: '0.2rem' }}>

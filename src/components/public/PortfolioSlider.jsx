@@ -86,7 +86,7 @@ export const PortfolioSlider = ({ isHero = false }) => {
             display: 'inline-flex',
             alignItems: 'center',
             gap: '0.4rem',
-            color: '#f97316',
+            color: 'var(--color-primary)',
             fontWeight: 800,
             fontSize: '0.85rem',
             textTransform: 'uppercase',
@@ -305,7 +305,7 @@ export const PortfolioSlider = ({ isHero = false }) => {
             gap: '0.35rem',
             boxShadow: '0 4px 14px rgba(0,0,0,0.35)'
           }}>
-            <Scissors size={14} style={{ color: '#f97316' }} /> BEFORE: Original Art
+            <Scissors size={14} style={{ color: 'var(--color-primary)' }} /> BEFORE: Original Art
           </div>
         </div>
 
@@ -317,7 +317,7 @@ export const PortfolioSlider = ({ isHero = false }) => {
           left: `${sliderPos}%`,
           transform: 'translateX(-50%)',
           width: '4px',
-          background: '#f97316',
+          background: 'var(--color-action-start, #2563eb)',
           boxShadow: '0 0 14px rgba(249, 115, 22, 0.9)',
           zIndex: 10,
           display: 'flex',
@@ -325,7 +325,7 @@ export const PortfolioSlider = ({ isHero = false }) => {
           justifyContent: 'center'
         }}>
           <div style={{
-            background: '#f97316',
+            background: 'var(--color-action-start, #2563eb)',
             color: '#ffffff',
             width: '34px',
             height: '34px',
@@ -360,7 +360,7 @@ export const PortfolioSlider = ({ isHero = false }) => {
           <div style={{ display: 'flex', gap: '1rem' }}>
             <div style={{ textAlign: 'right' }}>
               <div style={{ fontSize: '0.7rem', color: '#94a3b8' }}>Stitch Count</div>
-              <div style={{ fontSize: '0.85rem', fontWeight: 800, color: '#f97316' }}>{currentItem.stitchCount}</div>
+              <div style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--color-primary)' }}>{currentItem.stitchCount}</div>
             </div>
             <div style={{ textAlign: 'right' }}>
               <div style={{ fontSize: '0.7rem', color: '#94a3b8' }}>Color Setup</div>

@@ -139,6 +139,10 @@ export function applyThemePresetToDOM(presetId = 'studio-orange', mode = 'light'
   root.setAttribute('data-theme-preset', theme.id);
   root.setAttribute('data-theme', mode);
   document.body.setAttribute('data-theme', mode);
+  // Native inputs, browser UI and mobile status bars must track the same mood.
+  root.style.setProperty('color-scheme', mode === 'dark' ? 'dark' : 'light');
+  const themeMeta = document.querySelector?.('meta[name="theme-color"]');
+  themeMeta?.setAttribute('content', mode === 'dark' ? '#080f20' : '#f6f8fd');
 
   if (mode === 'dark') {
     root.classList.add('dark');

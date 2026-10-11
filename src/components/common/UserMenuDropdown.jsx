@@ -108,7 +108,7 @@ export const UserMenuDropdown = () => {
           alignItems: 'center',
           justifyContent: 'center',
           background: isOpen ? 'var(--color-subtle, #fff7ed)' : 'var(--color-surface, #ffffff)',
-          border: isOpen ? '2px solid var(--color-primary, #ea580c)' : '1.5px solid var(--color-border)',
+          border: isOpen ? '2px solid var(--color-primary)' : '1.5px solid var(--color-border)',
           padding: '2px',
           borderRadius: '50%',
           cursor: 'pointer',

@@ -22,7 +22,7 @@ export default function GlobalError({ error, reset }) {
     <html lang="en">
       <body style={{
         fontFamily: "'Inter', sans-serif",
-        background: '#f8fafc',
+        background: 'var(--color-background)',
         color: '#0f172a',
         minHeight: '100vh',
         display: 'flex',
@@ -32,7 +32,7 @@ export default function GlobalError({ error, reset }) {
         textAlign: 'center'
       }}>
         <div style={{
-          background: '#ffffff',
+          background: 'var(--color-surface)',
           borderRadius: '16px',
           padding: '2.5rem',
           maxWidth: '520px',
@@ -49,7 +49,7 @@ export default function GlobalError({ error, reset }) {
             <button
               onClick={handleReload}
               style={{
-                background: '#f97316',
+                background: 'var(--color-action-start, #2563eb)',
                 color: '#ffffff',
                 border: 'none',
                 borderRadius: '8px',
@@ -67,7 +67,7 @@ export default function GlobalError({ error, reset }) {
                 else if (typeof window !== 'undefined') window.location.reload();
               }}
               style={{
-                background: '#f1f5f9',
+                background: 'var(--color-surface-elevated)',
                 color: '#0f172a',
                 border: '1px solid #cbd5e1',
                 borderRadius: '8px',

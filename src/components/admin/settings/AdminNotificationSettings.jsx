@@ -569,12 +569,12 @@ export const AdminNotificationSettings = () => {
               width: '48px',
               height: '48px',
               borderRadius: '12px',
-              background: 'linear-gradient(135deg, var(--orange-500) 0%, #c2410c 100%)',
+              background: 'linear-gradient(135deg, var(--orange-500) 0%, #1e40af 100%)',
               color: '#ffffff',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              boxShadow: '0 4px 12px rgba(234, 88, 12, 0.25)'
+              boxShadow: '0 4px 12px rgba(37, 99, 235, 0.25)'
             }}>
               <Mail size={24} />
             </div>
@@ -663,12 +663,12 @@ export const AdminNotificationSettings = () => {
                 padding: '0.55rem 1.15rem',
                 borderRadius: '10px',
                 border: 'none',
-                background: 'linear-gradient(135deg, var(--orange-500) 0%, #c2410c 100%)',
+                background: 'linear-gradient(135deg, var(--orange-500) 0%, #1e40af 100%)',
                 color: '#ffffff',
                 fontSize: '0.825rem',
                 fontWeight: 800,
                 cursor: isSaving ? 'wait' : 'pointer',
-                boxShadow: '0 4px 12px rgba(234, 88, 12, 0.25)',
+                boxShadow: '0 4px 12px rgba(37, 99, 235, 0.25)',
                 transition: 'all 0.2s'
               }}
             >
@@ -739,9 +739,9 @@ export const AdminNotificationSettings = () => {
               borderRadius: '9999px',
               fontSize: '0.75rem',
               fontWeight: 700,
-              background: 'rgba(234, 88, 12, 0.1)',
+              background: 'rgba(37, 99, 235, 0.1)',
               color: 'var(--orange-500)',
-              border: '1px solid rgba(234, 88, 12, 0.2)'
+              border: '1px solid rgba(37, 99, 235, 0.2)'
             }}>
               <Users size={12} />
               {adminEmails.length} Email{adminEmails.length > 1 ? 's' : ''} Configured
@@ -767,8 +767,8 @@ export const AdminNotificationSettings = () => {
                     justifyContent: 'space-between',
                     padding: '0.75rem 1rem',
                     borderRadius: '10px',
-                    background: isPrimary ? 'rgba(234, 88, 12, 0.05)' : 'var(--bg-main)',
-                    border: `1.5px solid ${isPrimary ? 'rgba(234, 88, 12, 0.35)' : 'var(--border-color)'}`,
+                    background: isPrimary ? 'rgba(37, 99, 235, 0.05)' : 'var(--bg-main)',
+                    border: `1.5px solid ${isPrimary ? 'rgba(37, 99, 235, 0.35)' : 'var(--border-color)'}`,
                     transition: 'all 0.2s',
                     gap: '0.75rem',
                     flexWrap: 'wrap'
@@ -779,7 +779,7 @@ export const AdminNotificationSettings = () => {
                       width: '28px',
                       height: '28px',
                       borderRadius: '6px',
-                      background: isPrimary ? 'rgba(234, 88, 12, 0.15)' : 'rgba(100, 116, 139, 0.1)',
+                      background: isPrimary ? 'rgba(37, 99, 235, 0.15)' : 'rgba(100, 116, 139, 0.1)',
                       color: isPrimary ? 'var(--orange-500)' : 'var(--text-muted)',
                       display: 'flex',
                       alignItems: 'center',
@@ -930,7 +930,7 @@ export const AdminNotificationSettings = () => {
                   fontSize: '0.825rem',
                   fontWeight: 700,
                   cursor: 'pointer',
-                  boxShadow: '0 2px 8px rgba(234, 88, 12, 0.25)',
+                  boxShadow: '0 2px 8px rgba(37, 99, 235, 0.25)',
                   transition: 'all 0.2s',
                   flexShrink: 0
                 }}
@@ -1016,7 +1016,7 @@ export const AdminNotificationSettings = () => {
                   width: '36px',
                   height: '36px',
                   borderRadius: '8px',
-                  background: 'rgba(234, 88, 12, 0.12)',
+                  background: 'rgba(37, 99, 235, 0.12)',
                   color: 'var(--orange-500)',
                   display: 'flex',
                   alignItems: 'center',
@@ -1196,12 +1196,12 @@ export const AdminNotificationSettings = () => {
               width: '44px',
               height: '44px',
               borderRadius: '12px',
-              background: audioEnabled ? 'linear-gradient(135deg, var(--orange-500) 0%, #ea580c 100%)' : 'var(--bg-main)',
+              background: audioEnabled ? 'linear-gradient(135deg, var(--orange-500) 0%, #2563eb 100%)' : 'var(--bg-main)',
               color: audioEnabled ? '#ffffff' : 'var(--text-muted)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              boxShadow: audioEnabled ? '0 4px 12px rgba(234, 88, 12, 0.25)' : 'none',
+              boxShadow: audioEnabled ? '0 4px 12px rgba(37, 99, 235, 0.25)' : 'none',
               border: `1px solid ${audioEnabled ? 'transparent' : 'var(--border-color)'}`
             }}>
               {audioEnabled ? <Volume2 size={22} /> : <VolumeX size={22} />}
@@ -1247,7 +1247,7 @@ export const AdminNotificationSettings = () => {
                 backgroundColor: audioEnabled ? 'var(--orange-500)' : 'var(--border-color)',
                 borderRadius: '34px',
                 transition: '0.2s ease',
-                boxShadow: audioEnabled ? '0 2px 8px rgba(234, 88, 12, 0.35)' : 'none'
+                boxShadow: audioEnabled ? '0 2px 8px rgba(37, 99, 235, 0.35)' : 'none'
               }}>
                 <span style={{
                   position: 'absolute',
@@ -1369,7 +1369,7 @@ export const AdminNotificationSettings = () => {
                         width: '38px',
                         height: '38px',
                         borderRadius: '8px',
-                        background: 'rgba(234, 88, 12, 0.12)',
+                        background: 'rgba(37, 99, 235, 0.12)',
                         color: 'var(--orange-500)',
                         display: 'flex',
                         alignItems: 'center',
@@ -1476,7 +1476,7 @@ export const AdminNotificationSettings = () => {
                     width: '42px',
                     height: '42px',
                     borderRadius: '50%',
-                    background: 'rgba(234, 88, 12, 0.1)',
+                    background: 'rgba(37, 99, 235, 0.1)',
                     color: 'var(--orange-500)',
                     display: 'flex',
                     alignItems: 'center',
@@ -1604,7 +1604,7 @@ export const AdminNotificationSettings = () => {
                     width: '36px',
                     height: '36px',
                     borderRadius: '8px',
-                    background: 'rgba(234, 88, 12, 0.12)',
+                    background: 'rgba(37, 99, 235, 0.12)',
                     color: 'var(--orange-500)',
                     display: 'flex',
                     alignItems: 'center',
@@ -1824,12 +1824,12 @@ export const AdminNotificationSettings = () => {
             padding: '0.9rem 1.25rem',
             borderRadius: '12px',
             border: 'none',
-            background: 'linear-gradient(135deg, var(--orange-500) 0%, #c2410c 100%)',
+            background: 'linear-gradient(135deg, var(--orange-500) 0%, #1e40af 100%)',
             color: '#ffffff',
             fontSize: '0.925rem',
             fontWeight: 800,
             cursor: isSavingAudio ? 'wait' : 'pointer',
-            boxShadow: '0 4px 14px rgba(234, 88, 12, 0.3)',
+            boxShadow: '0 4px 14px rgba(37, 99, 235, 0.3)',
             transition: 'all 0.2s ease'
           }}
         >

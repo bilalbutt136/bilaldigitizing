@@ -965,7 +965,7 @@ export const HeaderNav = () => {
                       display: 'flex',
                       alignItems: 'center',
                       gap: '0.45rem',
-                      background: 'linear-gradient(135deg, var(--color-primary, #ff7a00) 0%, var(--orange-600, #ea580c) 100%)',
+                      background: 'linear-gradient(135deg, var(--color-primary, #ff7a00) 0%, var(--orange-600, #2563eb) 100%)',
                       color: '#ffffff',
                       border: 'none',
                       padding: '0.45rem 1rem',
@@ -1617,7 +1617,7 @@ export const HeaderNav = () => {
                       setIsMobileMenuOpen(false);
                     }}
                     style={{
-                      background: 'linear-gradient(135deg, var(--color-secondary) 0%, var(--color-primary) 100%)',
+                      background: 'linear-gradient(120deg, var(--color-action-start, #2563eb) 0%, var(--color-action-end, #4338ca) 100%)',
                       color: '#ffffff',
                       border: 'none',
                       borderRadius: '10px',
@@ -1738,7 +1738,7 @@ export const HeaderNav = () => {
                           boxSizing: 'border-box'
                         }}
                       >
-                        <PenTool size={15} style={{ color: '#f97316' }} />
+                        <PenTool size={15} style={{ color: 'var(--color-primary)' }} />
                         <span>Embroidery Digitizing</span>
                       </Link>
 
@@ -1964,7 +1964,7 @@ export const HeaderNav = () => {
                   else protectedNavigate('customer', true, { type: 'all' });
                 }}
                 style={{
-                  background: 'linear-gradient(135deg, var(--color-secondary) 0%, var(--color-primary) 100%)',
+                  background: 'linear-gradient(120deg, var(--color-action-start, #2563eb) 0%, var(--color-action-end, #4338ca) 100%)',
                   color: '#ffffff',
                   border: 'none',
                   borderRadius: '10px',

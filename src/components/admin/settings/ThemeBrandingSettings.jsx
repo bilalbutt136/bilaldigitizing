@@ -19,8 +19,8 @@ export const ThemeBrandingSettings = () => {
 
   // Custom Brand Colors Local State
   const [customPrimary, setCustomPrimary] = useState(customBrandColors?.primary || '#1d4ed8');
-  const [customSecondary, setCustomSecondary] = useState(customBrandColors?.secondary || '#f97316');
-  const [customAccent, setCustomAccent] = useState(customBrandColors?.accent || '#fb923c');
+  const [customSecondary, setCustomSecondary] = useState(customBrandColors?.secondary || '#5b21b6');
+  const [customAccent, setCustomAccent] = useState(customBrandColors?.accent || '#7c3aed');
   const [isCustomBrandActive, setIsCustomBrandActive] = useState(Boolean(customBrandColors));
   const [isSaving, setIsSaving] = useState(false);
 
@@ -71,7 +71,7 @@ export const ThemeBrandingSettings = () => {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1.25rem' }}>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', marginBottom: '0.35rem' }}>
-              <div style={{ background: 'var(--color-primary-light, rgba(249, 115, 22, 0.12))', color: 'var(--color-primary, #ea580c)', padding: '0.5rem', borderRadius: '10px' }}>
+              <div style={{ background: 'var(--color-primary-light)', color: 'var(--color-primary)', padding: '0.5rem', borderRadius: '10px' }}>
                 <Palette size={22} />
               </div>
               <h3 style={{ fontSize: '1.35rem', fontWeight: 800, color: 'var(--color-text-primary)', margin: 0 }}>
@@ -147,7 +147,7 @@ export const ThemeBrandingSettings = () => {
               High-end commercial digitizing and vector studio design system applied platform-wide.
             </p>
           </div>
-          <span style={{ fontSize: '0.75rem', fontWeight: 800, background: 'var(--color-primary-light, rgba(249, 115, 22, 0.12))', color: 'var(--color-primary, #ea580c)', padding: '0.3rem 0.75rem', borderRadius: '9999px' }}>
+          <span style={{ fontSize: '0.75rem', fontWeight: 800, background: 'var(--color-primary-light)', color: 'var(--color-primary)', padding: '0.3rem 0.75rem', borderRadius: '9999px' }}>
             Active: {THEME_PRESETS[0]?.name || 'Executive Studio Pro'}
           </span>
         </div>
@@ -166,13 +166,13 @@ export const ThemeBrandingSettings = () => {
       <div className="card" style={{ padding: '2rem', background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '20px', boxShadow: 'var(--shadow-sm)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '0.75rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <Sliders size={20} style={{ color: 'var(--color-primary, #ea580c)' }} />
+            <Sliders size={20} style={{ color: 'var(--color-primary)' }} />
             <h4 style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--color-text-primary)', margin: 0 }}>
               Custom Brand Color Overrides
             </h4>
           </div>
           {isCustomBrandActive && (
-            <span style={{ fontSize: '0.75rem', fontWeight: 800, background: 'var(--color-primary-light, rgba(249, 115, 22, 0.12))', color: 'var(--color-primary, #ea580c)', padding: '0.25rem 0.75rem', borderRadius: '9999px' }}>
+            <span style={{ fontSize: '0.75rem', fontWeight: 800, background: 'var(--color-primary-light)', color: 'var(--color-primary)', padding: '0.25rem 0.75rem', borderRadius: '9999px' }}>
               ✓ Custom Brand Active
             </span>
           )}
@@ -258,7 +258,7 @@ export const ThemeBrandingSettings = () => {
       {/* 4. Live Component Sandbox / Design Token Preview */}
       <div className="card" style={{ padding: '2rem', background: 'var(--color-subtle, var(--bg-subtle))', border: '1px solid var(--border-color)', borderRadius: '20px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.25rem' }}>
-          <Eye size={18} style={{ color: 'var(--color-primary, #ea580c)' }} />
+          <Eye size={18} style={{ color: 'var(--color-primary)' }} />
           <h4 style={{ fontSize: '1rem', fontWeight: 800, color: 'var(--color-text-primary)', margin: 0 }}>
             Live Design System Sandbox Preview
           </h4>
@@ -285,7 +285,7 @@ export const ThemeBrandingSettings = () => {
               <span style={{ fontSize: '0.75rem', fontWeight: 800, background: 'rgba(16, 185, 129, 0.15)', color: '#10b981', padding: '0.35rem 0.75rem', borderRadius: '9999px', border: '1px solid rgba(16, 185, 129, 0.3)' }}>
                 ✓ Production Ready
               </span>
-              <span style={{ fontSize: '0.75rem', fontWeight: 800, background: 'var(--color-primary-light, rgba(249, 115, 22, 0.15))', color: 'var(--color-primary, #ea580c)', padding: '0.35rem 0.75rem', borderRadius: '9999px', border: '1px solid var(--border-color)' }}>
+              <span style={{ fontSize: '0.75rem', fontWeight: 800, background: 'var(--color-primary-light, rgba(249, 115, 22, 0.15))', color: 'var(--color-primary)', padding: '0.35rem 0.75rem', borderRadius: '9999px', border: '1px solid var(--border-color)' }}>
                 Studio Verified
               </span>
             </div>

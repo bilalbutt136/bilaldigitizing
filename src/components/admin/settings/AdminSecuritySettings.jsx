@@ -618,7 +618,7 @@ export const AdminSecuritySettings = () => {
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.85rem', flexWrap: 'wrap', gap: '0.75rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-              <div style={{ background: 'rgba(234, 88, 12, 0.12)', borderRadius: '10px', padding: '0.5rem', color: '#ea580c' }}>
+              <div style={{ background: 'rgba(37, 99, 235, 0.12)', borderRadius: '10px', padding: '0.5rem', color: 'var(--color-primary)' }}>
                 <Sparkles size={20} />
               </div>
               <div>
@@ -707,7 +707,7 @@ export const AdminSecuritySettings = () => {
                   style={{
                     display: 'flex', alignItems: 'center', gap: '0.35rem',
                     padding: '0.45rem 0.85rem', borderRadius: '8px', border: '1px solid #ea580c',
-                    background: '#fff7ed', color: '#ea580c', fontSize: '0.78rem', fontWeight: 700,
+                    background: 'var(--color-primary-light)', color: 'var(--color-primary)', fontSize: '0.78rem', fontWeight: 700,
                     cursor: isTestingGeminiKey ? 'wait' : 'pointer'
                   }}
                 >
@@ -739,7 +739,7 @@ export const AdminSecuritySettings = () => {
                   href="https://aistudio.google.com/app/apikey"
                   target="_blank"
                   rel="noreferrer"
-                  style={{ fontSize: '0.72rem', color: '#ea580c', fontWeight: 700, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '0.2rem' }}
+                  style={{ fontSize: '0.72rem', color: 'var(--color-primary)', fontWeight: 700, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '0.2rem' }}
                 >
                   Get free key at Google AI Studio <ExternalLink size={11} />
                 </a>
@@ -774,7 +774,7 @@ export const AdminSecuritySettings = () => {
                   style={{
                     display: 'flex', alignItems: 'center', gap: '0.35rem',
                     padding: '0.55rem 1.15rem', borderRadius: '8px', border: 'none',
-                    background: '#ea580c', color: '#ffffff', fontSize: '0.82rem', fontWeight: 800,
+                    background: 'var(--color-action-start, #2563eb)', color: '#ffffff', fontSize: '0.82rem', fontWeight: 800,
                     cursor: isSavingGeminiKey || !customGeminiKey.trim() ? 'not-allowed' : 'pointer'
                   }}
                 >

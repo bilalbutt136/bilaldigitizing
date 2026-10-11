@@ -187,7 +187,7 @@ export default function WorkerRegisterPage() {
             textAlign: 'left'
           }}>
             <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem', marginBottom: '0.85rem' }}>
-              <Clock size={20} style={{ color: '#f97316', marginTop: '2px', flexShrink: 0 }} />
+              <Clock size={20} style={{ color: 'var(--color-primary)', marginTop: '2px', flexShrink: 0 }} />
               <div>
                 <strong style={{ color: '#f8fafc', fontSize: '0.9rem', display: 'block' }}>Quality Review Window (24-48 hrs)</strong>
                 <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>Our master digitizers evaluate your sample stitchouts for density, underlay structure, and pull compensation.</span>
@@ -211,7 +211,7 @@ export default function WorkerRegisterPage() {
                 alignItems: 'center',
                 justifyContent: 'center',
                 gap: '0.5rem',
-                background: 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)',
+                background: 'linear-gradient(135deg, #4f46e5 0%, #2563eb 100%)',
                 color: '#ffffff',
                 padding: '0.85rem 1.5rem',
                 borderRadius: '10px',
@@ -263,7 +263,7 @@ export default function WorkerRegisterPage() {
         {/* Top Header */}
         <div style={{ textAlign: 'center', marginBottom: '2.25rem' }}>
           <div style={{
-            background: 'linear-gradient(135deg, #f97316, #ea580c)',
+            background: 'linear-gradient(135deg, #4f46e5, #2563eb)',
             color: '#ffffff',
             width: '68px',
             height: '68px',
@@ -277,7 +277,7 @@ export default function WorkerRegisterPage() {
             <img src="/favicon.png" alt="BDigitizing" style={{ width: '32px', height: '36px', objectFit: 'contain' }} />
           </div>
 
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', background: 'rgba(249, 115, 22, 0.15)', color: '#fb923c', border: '1px solid rgba(249, 115, 22, 0.3)', padding: '0.2rem 0.65rem', borderRadius: '9999px', fontSize: '0.75rem', fontWeight: 800, marginBottom: '0.65rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', background: 'rgba(249, 115, 22, 0.15)', color: 'var(--color-primary)', border: '1px solid rgba(249, 115, 22, 0.3)', padding: '0.2rem 0.65rem', borderRadius: '9999px', fontSize: '0.75rem', fontWeight: 800, marginBottom: '0.65rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
             <Sparkles size={13} /> Onboarding Portal
           </div>
 
@@ -313,7 +313,7 @@ export default function WorkerRegisterPage() {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1rem' }}>
             <div>
               <label style={{ display: 'block', fontSize: '0.825rem', fontWeight: 700, color: '#cbd5e1', marginBottom: '0.4rem' }}>
-                Full Name <span style={{ color: '#f97316' }}>*</span>
+                Full Name <span style={{ color: 'var(--color-primary)' }}>*</span>
               </label>
               <div style={{ position: 'relative' }}>
                 <User size={16} style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: '#64748b' }} />
@@ -340,7 +340,7 @@ export default function WorkerRegisterPage() {
 
             <div>
               <label style={{ display: 'block', fontSize: '0.825rem', fontWeight: 700, color: '#cbd5e1', marginBottom: '0.4rem' }}>
-                Email Address <span style={{ color: '#f97316' }}>*</span>
+                Email Address <span style={{ color: 'var(--color-primary)' }}>*</span>
               </label>
               <div style={{ position: 'relative' }}>
                 <Mail size={16} style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: '#64748b' }} />
@@ -370,7 +370,7 @@ export default function WorkerRegisterPage() {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1rem' }}>
             <div>
               <label style={{ display: 'block', fontSize: '0.825rem', fontWeight: 700, color: '#cbd5e1', marginBottom: '0.4rem' }}>
-                Account Password <span style={{ color: '#f97316' }}>*</span>
+                Account Password <span style={{ color: 'var(--color-primary)' }}>*</span>
               </label>
               <div style={{ position: 'relative' }}>
                 <Lock size={16} style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: '#64748b' }} />
@@ -427,7 +427,7 @@ export default function WorkerRegisterPage() {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1rem' }}>
             <div>
               <label style={{ display: 'block', fontSize: '0.825rem', fontWeight: 700, color: '#cbd5e1', marginBottom: '0.4rem' }}>
-                Years of Digitizing Experience <span style={{ color: '#f97316' }}>*</span>
+                Years of Digitizing Experience <span style={{ color: 'var(--color-primary)' }}>*</span>
               </label>
               <div style={{ position: 'relative' }}>
                 <Briefcase size={16} style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: '#64748b' }} />
@@ -458,7 +458,7 @@ export default function WorkerRegisterPage() {
 
             <div>
               <label style={{ display: 'block', fontSize: '0.825rem', fontWeight: 700, color: '#cbd5e1', marginBottom: '0.4rem' }}>
-                Primary Software Used <span style={{ color: '#f97316' }}>*</span>
+                Primary Software Used <span style={{ color: 'var(--color-primary)' }}>*</span>
               </label>
               <div style={{ position: 'relative' }}>
                 <Cpu size={16} style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: '#64748b' }} />
@@ -521,8 +521,8 @@ export default function WorkerRegisterPage() {
 
               {isUploadingFile ? (
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.65rem' }}>
-                  <div style={{ width: '20px', height: '20px', border: '2px solid rgba(249, 115, 22, 0.3)', borderTopColor: '#f97316', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
-                  <span style={{ fontSize: '0.875rem', color: '#f97316', fontWeight: 600 }}>Uploading sample file to secure storage...</span>
+                  <div style={{ width: '20px', height: '20px', border: '2px solid rgba(249, 115, 22, 0.3)', borderTopColor: 'var(--color-primary)', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+                  <span style={{ fontSize: '0.875rem', color: 'var(--color-primary)', fontWeight: 600 }}>Uploading sample file to secure storage...</span>
                 </div>
               ) : uploadedFileUrl ? (
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.65rem' }}>
@@ -534,7 +534,7 @@ export default function WorkerRegisterPage() {
                 </div>
               ) : (
                 <div>
-                  <UploadCloud size={28} style={{ color: '#f97316', margin: '0 auto 0.4rem' }} />
+                  <UploadCloud size={28} style={{ color: 'var(--color-primary)', margin: '0 auto 0.4rem' }} />
                   <p style={{ margin: 0, fontSize: '0.875rem', color: '#cbd5e1', fontWeight: 600 }}>
                     Click or drag & drop to upload your portfolio samples or resume
                   </p>
@@ -581,7 +581,7 @@ export default function WorkerRegisterPage() {
             disabled={isSubmitting || isUploadingFile}
             style={{
               marginTop: '0.5rem',
-              background: 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)',
+              background: 'linear-gradient(135deg, #4f46e5 0%, #2563eb 100%)',
               color: '#ffffff',
               border: 'none',
               borderRadius: '12px',
@@ -625,7 +625,7 @@ export default function WorkerRegisterPage() {
           <Link
             href="/worker-login"
             style={{
-              color: '#f97316',
+              color: 'var(--color-primary)',
               fontWeight: 700,
               textDecoration: 'none'
             }}

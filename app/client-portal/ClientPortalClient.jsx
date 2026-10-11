@@ -98,7 +98,7 @@ export function ClientPortalClient() {
           width: '36px',
           height: '36px',
           border: '3px solid #e2e8f0',
-          borderTopColor: 'var(--color-primary, #ea580c)',
+          borderTopColor: 'var(--color-primary)',
           borderRadius: '50%',
           animation: 'spin 0.8s linear infinite'
         }} />

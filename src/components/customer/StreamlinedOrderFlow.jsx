@@ -759,7 +759,7 @@ export const StreamlinedOrderFlow = ({
         }
         .bdigi-select:focus {
           border-color: #ea580c;
-          box-shadow: 0 0 0 3px rgba(234, 88, 12, 0.12);
+          box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
         }
         .bdigi-select-arrow {
           position: absolute;
@@ -787,7 +787,7 @@ export const StreamlinedOrderFlow = ({
         }
         .bdigi-textarea:focus {
           border-color: #ea580c;
-          box-shadow: 0 0 0 3px rgba(234, 88, 12, 0.12);
+          box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
         }
         .bdigi-input {
           width: 100%;
@@ -804,7 +804,7 @@ export const StreamlinedOrderFlow = ({
         }
         .bdigi-input:focus {
           border-color: #ea580c;
-          box-shadow: 0 0 0 3px rgba(234, 88, 12, 0.12);
+          box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
         }
         .bdigi-summary-card {
           position: sticky;
@@ -873,7 +873,7 @@ export const StreamlinedOrderFlow = ({
               onMouseEnter={(e) => {
                 e.currentTarget.style.borderColor = '#ea580c';
                 e.currentTarget.style.transform = 'translateY(-3px)';
-                e.currentTarget.style.boxShadow = '0 10px 24px rgba(234, 88, 12, 0.12)';
+                e.currentTarget.style.boxShadow = '0 10px 24px rgba(37, 99, 235, 0.12)';
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.borderColor = 'var(--color-border, #e2e8f0)';
@@ -887,12 +887,12 @@ export const StreamlinedOrderFlow = ({
                     width: '52px',
                     height: '52px',
                     borderRadius: '14px',
-                    background: '#fff7ed',
+                    background: 'var(--color-primary-light)',
                     border: '1.5px solid #fed7aa',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    color: '#ea580c',
+                    color: 'var(--color-primary)',
                     margin: '0 auto 0.85rem'
                   }}
                 >
@@ -911,7 +911,7 @@ export const StreamlinedOrderFlow = ({
               <div>
                 <div style={{ marginBottom: '0.75rem' }}>
                   <span style={{ fontSize: '0.76rem', color: 'var(--color-text-muted, #64748b)', fontWeight: 700 }}>From </span>
-                  <span style={{ fontSize: '1.15rem', fontWeight: 900, color: '#ea580c' }}>$10.00</span>
+                  <span style={{ fontSize: '1.15rem', fontWeight: 900, color: 'var(--color-primary)' }}>$10.00</span>
                 </div>
 
                 <button
@@ -921,7 +921,7 @@ export const StreamlinedOrderFlow = ({
                     padding: '0.62rem 1rem',
                     borderRadius: '10px',
                     border: 'none',
-                    background: '#ea580c',
+                    background: 'var(--color-action-start, #2563eb)',
                     color: '#ffffff',
                     fontWeight: 800,
                     fontSize: '0.85rem',
@@ -1159,7 +1159,7 @@ export const StreamlinedOrderFlow = ({
                   padding: '0.48rem 0.95rem',
                   borderRadius: '9999px',
                   border: selectedService === 'embroidery' ? '2px solid #ea580c' : '1.5px solid var(--color-border, #cbd5e1)',
-                  background: selectedService === 'embroidery' ? (isDark ? 'rgba(234, 88, 12, 0.15)' : '#fff7ed') : 'transparent',
+                  background: selectedService === 'embroidery' ? (isDark ? 'rgba(37, 99, 235, 0.15)' : '#fff7ed') : 'transparent',
                   color: selectedService === 'embroidery' ? '#ea580c' : 'var(--color-text-secondary, #475569)',
                   fontWeight: 800,
                   fontSize: '0.82rem',
@@ -1835,7 +1835,7 @@ export const StreamlinedOrderFlow = ({
                       background: isUploadHighlighted
                         ? (isDark ? 'rgba(239, 68, 68, 0.15)' : '#fef2f2')
                         : isDragOver
-                          ? (isDark ? 'rgba(234, 88, 12, 0.12)' : '#fff7ed')
+                          ? (isDark ? 'rgba(37, 99, 235, 0.12)' : '#fff7ed')
                           : (isDark ? '#1e293b' : '#f8fafc'),
                       boxShadow: isUploadHighlighted
                         ? '0 0 0 4px rgba(239, 68, 68, 0.22), 0 4px 14px rgba(239, 68, 68, 0.16)'
@@ -1949,7 +1949,7 @@ export const StreamlinedOrderFlow = ({
                   )}
 
                   {isUploading && (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', marginTop: '0.4rem', color: '#ea580c', fontSize: '0.8rem', fontWeight: 700 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', marginTop: '0.4rem', color: 'var(--color-primary)', fontSize: '0.8rem', fontWeight: 700 }}>
                       <Loader2 size={14} className="animate-spin" /> Uploading file...
                     </div>
                   )}
@@ -2097,7 +2097,7 @@ export const StreamlinedOrderFlow = ({
                   </div>
 
                   {pricing.rush > 0 && (
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.84rem', color: '#ea580c', fontWeight: 700, marginBottom: '0.3rem' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.84rem', color: 'var(--color-primary)', fontWeight: 700, marginBottom: '0.3rem' }}>
                       <span>Rush Fee:</span>
                       <span>+${pricing.rush.toFixed(2)}</span>
                     </div>
@@ -2128,7 +2128,7 @@ export const StreamlinedOrderFlow = ({
                       ? 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)'
                       : selectedService === 'vector'
                         ? 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)'
-                        : 'linear-gradient(135deg, #ea580c 0%, #c2410c 100%)',
+                        : 'linear-gradient(135deg, #2563eb 0%, #1e40af 100%)',
                     color: '#ffffff',
                     fontSize: '0.96rem',
                     fontWeight: 900,
@@ -2137,7 +2137,7 @@ export const StreamlinedOrderFlow = ({
                     alignItems: 'center',
                     justifyContent: 'center',
                     gap: '0.45rem',
-                    boxShadow: '0 4px 16px rgba(234, 88, 12, 0.25)',
+                    boxShadow: '0 4px 16px rgba(37, 99, 235, 0.25)',
                     transition: 'all 0.18s ease'
                   }}
                 >
@@ -2270,7 +2270,7 @@ export const StreamlinedOrderFlow = ({
                   if (action) action();
                 }}
                 style={{
-                  background: '#ea580c',
+                  background: 'var(--color-action-start, #2563eb)',
                   color: '#ffffff',
                   border: 'none',
                   borderRadius: '10px',
@@ -2278,7 +2278,7 @@ export const StreamlinedOrderFlow = ({
                   fontSize: '0.88rem',
                   fontWeight: 800,
                   cursor: 'pointer',
-                  boxShadow: '0 4px 12px rgba(234, 88, 12, 0.3)',
+                  boxShadow: '0 4px 12px rgba(37, 99, 235, 0.3)',
                   display: 'inline-flex',
                   alignItems: 'center',
                   gap: '0.4rem',

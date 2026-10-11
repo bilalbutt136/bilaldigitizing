@@ -71,7 +71,7 @@ export const StructuredServicesSection = () => {
              ================================================================== */}
           <div className="card" style={{
             padding: '2.75rem',
-            background: '#ffffff',
+            background: 'var(--color-surface)',
             border: '1.5px solid var(--border-color)',
             borderRadius: '20px',
             boxShadow: 'var(--shadow-md)',
@@ -87,7 +87,7 @@ export const StructuredServicesSection = () => {
                   <Layers size={28} />
                 </div>
                 <div>
-                  <span style={{ fontSize: '0.725rem', fontWeight: 800, background: '#fff7ed', color: 'var(--orange-700)', border: '1px solid var(--orange-200)', padding: '0.2rem 0.6rem', borderRadius: '4px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                  <span style={{ fontSize: '0.725rem', fontWeight: 800, background: 'var(--color-primary-light)', color: 'var(--orange-700)', border: '1px solid var(--orange-200)', padding: '0.2rem 0.6rem', borderRadius: '4px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
                     SECTION 1 — DIGITAL FILES
                   </span>
                   <div style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--orange-600)', marginTop: '0.2rem' }}>
