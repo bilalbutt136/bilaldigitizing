@@ -22,6 +22,20 @@ export async function handleCreateOrder(context) {
         if (!liveTier || liveTier.is_active === false) {
           return NextResponse.json({ error: 'Package no longer available. Refresh pricing and try again.' }, { status: 409 });
         }
+        // Physical patches from the Direct Studio Desk have a fixed 10–14 day
+        // production window. Reject stale or manipulated rush submissions.
+        if (primaryDbRow.type === 'patch' && primaryDbRow.source === 'direct_order_desk') {
+          const width = Number(primaryDbRow.patchWidth);
+          const height = Number(primaryDbRow.patchHeight);
+          if (primaryDbRow.isRush === true) {
+            return NextResponse.json({ error: 'Rush production is not available for Custom Patches.' }, { status: 400 });
+          }
+          if (![width, height].every(value => Number.isFinite(value) && value >= 0.5 && value <= 24)) {
+            return NextResponse.json({ error: 'Choose valid patch dimensions between 0.5 and 24 inches.' }, { status: 400 });
+          }
+          primaryDbRow.patchWidth = width;
+          primaryDbRow.patchHeight = height;
+        }
         const quote = calculatePackageQuote({
           tier: liveTier,
           service: primaryDbRow.type,
@@ -124,6 +138,7 @@ export async function handleCreateOrder(context) {
           patchBorderStyle: primaryDbRow.patchBorderStyle,
           patchWidth: primaryDbRow.patchWidth,
           patchHeight: primaryDbRow.patchHeight,
+          patchProductionTime: primaryDbRow.type === 'patch' && primaryDbRow.source === 'direct_order_desk' ? '10–14 days' : null,
           patchQuantity: primaryDbRow.patchQuantity,
           patchItems: primaryDbRow.patchItems || [],
           placementItems: primaryDbRow.placementItems || [],

@@ -102,7 +102,9 @@ export const StreamlinedOrderFlow = ({
   // 2. PATCH FIELDS
   const [patchStyle, setPatchStyle] = useState('Embroidered Twill');
   const [patchBacking, setPatchBacking] = useState('Velcro (Hook & Loop)');
-  const [patchTurnaround, setPatchTurnaround] = useState('standard'); // standard (free), rush (+$25)
+  const [patchSizeOption, setPatchSizeOption] = useState('3');
+  const [patchCustomWidth, setPatchCustomWidth] = useState('3');
+  const [patchCustomHeight, setPatchCustomHeight] = useState('3');
 
   // 3. VECTOR FIELDS
   const [vectorFormat, setVectorFormat] = useState('all');
@@ -126,6 +128,7 @@ export const StreamlinedOrderFlow = ({
   const fileInputRef = useRef(null);
   const uploadSectionRef = useRef(null);
   const customSizeRef = useRef(null);
+  const patchSizeRef = useRef(null);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -149,7 +152,9 @@ export const StreamlinedOrderFlow = ({
         if (draft.designQuantity) setDesignQuantity(Math.max(1, Number(draft.designQuantity) || 1));
         if (draft.patchQuantity) setPatchQuantity(Math.max(50, Number(draft.patchQuantity) || 50));
         if (draft.turnaround) setTurnaround(draft.turnaround);
-        if (draft.patchTurnaround) setPatchTurnaround(draft.patchTurnaround);
+        if (['2', '2.5', '3', '4', '5', 'custom'].includes(String(draft.patchSizeOption))) setPatchSizeOption(String(draft.patchSizeOption));
+        if (draft.patchCustomWidth !== undefined) setPatchCustomWidth(String(draft.patchCustomWidth));
+        if (draft.patchCustomHeight !== undefined) setPatchCustomHeight(String(draft.patchCustomHeight));
         if (draft.vectorTurnaround) setVectorTurnaround(draft.vectorTurnaround);
         if (draft.fileFormat) setFileFormat(draft.fileFormat);
         if (draft.vectorFormat) setVectorFormat(draft.vectorFormat);
@@ -179,7 +184,9 @@ export const StreamlinedOrderFlow = ({
         designQuantity,
         patchQuantity: Math.max(50, Number(patchQuantity) || 50),
         turnaround,
-        patchTurnaround,
+        patchSizeOption,
+        patchCustomWidth,
+        patchCustomHeight,
         vectorTurnaround,
         fileFormat,
         vectorFormat,
@@ -201,13 +208,24 @@ export const StreamlinedOrderFlow = ({
   const calculatePricing = () => {
     const safePatchQty = Math.max(50, parseInt(patchQuantity, 10) || 50);
     const quantity = selectedService === 'patch' ? safePatchQty : Math.max(1, Number(designQuantity) || 1);
-    const isRush = selectedService === 'patch' ? patchTurnaround === 'rush'
+    const isRush = selectedService === 'patch' ? false
       : selectedService === 'vector' ? vectorTurnaround === 'rush' : turnaround === 'rush';
     return calculatePackageQuote({ tier: currentTier, service: selectedService, quantity, isRush });
   };
   const pricing = calculatePricing() || { unitPrice: 0, subtotal: 0, rush: 0, total: 0, quantity: 0, patchPieces: 0, tierTitle: '' };
   const hasValidLivePrice = Boolean(currentTier?.id && pricing.total > 0);
   // Helper Labels for Summary
+  const getPatchDimensions = () => {
+    const width = Number(patchSizeOption === 'custom' ? patchCustomWidth : patchSizeOption);
+    const height = Number(patchSizeOption === 'custom' ? patchCustomHeight : patchSizeOption);
+    return { width, height };
+  };
+  const getPatchSizeLabel = () => {
+    const { width, height } = getPatchDimensions();
+    if (!Number.isFinite(width) || !Number.isFinite(height) || width <= 0 || height <= 0) return 'Enter patch size';
+    return `${width}" × ${height}"`;
+  };
+
   const getSizeLabel = () => {
     if (selectedService === 'embroidery') {
       if (sizeOption === 'custom') return `${customWidth}" × ${customHeight}"`;
@@ -397,6 +415,21 @@ export const StreamlinedOrderFlow = ({
       }
     }
 
+    // Custom patch dimensions must be valid before authentication and checkout.
+    if (selectedService === 'patch') {
+      const { width, height } = getPatchDimensions();
+      if (![width, height].every(n => Number.isFinite(n) && n >= 0.5 && n <= 24)) {
+        setValidationAlert({
+          title: 'Patch Size Required',
+          message: 'Enter a width and height between 0.5 and 24 inches.',
+          actionText: 'Enter Size',
+          onAction: () => patchSizeRef.current?.querySelector('input')?.focus()
+        });
+        patchSizeRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return;
+      }
+    }
+
     // 3. Require Login/Signup if visitor is not authenticated
     if (!isUserAuthenticated) {
       saveDraft();
@@ -459,8 +492,8 @@ export const StreamlinedOrderFlow = ({
 
       } else if (selectedService === 'patch') {
         derivedTitle = `${firstFileName} - ${patchStyle} Patches (${pricing.patchPieces} Pcs)`;
-        isRush = patchTurnaround === 'rush';
-        derivedSize = `${patchStyle} (${patchBacking})`;
+        isRush = false;
+        derivedSize = `${getPatchSizeLabel()} ${patchStyle} (${patchBacking})`;
         targetFormats = ['DST', 'PDF Proof Sheet', 'Physical Courier Delivery'];
       } else if (selectedService === 'vector') {
         isRush = vectorTurnaround === 'rush';
@@ -489,8 +522,11 @@ export const StreamlinedOrderFlow = ({
         isRush: isRush,
         notes: additionalDetails.trim(),
         placement: derivedSize,
-        width: sizeOption === 'custom' ? customWidth : '3.5',
-        height: sizeOption === 'custom' ? customHeight : '3.5',
+        width: selectedService === 'patch' ? getPatchDimensions().width : (sizeOption === 'custom' ? customWidth : '3.5'),
+        height: selectedService === 'patch' ? getPatchDimensions().height : (sizeOption === 'custom' ? customHeight : '3.5'),
+        patchWidth: selectedService === 'patch' ? getPatchDimensions().width : undefined,
+        patchHeight: selectedService === 'patch' ? getPatchDimensions().height : undefined,
+        patchProductionTime: selectedService === 'patch' ? '10–14 days' : undefined,
         fabricType: selectedService === 'embroidery' ? additionalDetails.trim() || 'Standard' : null,
         patchStyle: selectedService === 'patch' ? patchStyle : null,
         patchBacking: selectedService === 'patch' ? patchBacking : null,
@@ -1197,158 +1233,102 @@ export const StreamlinedOrderFlow = ({
                     </div>
                   </div>
 
-                  {/* Turnaround */}
+                  {/* Custom Patches size options and physical production timeline */}
                   <div className="bdigi-form-row">
-                    <label className="bdigi-label">Turnaround</label>
-                    <div className="bdigi-select-wrapper">
-                      <select
-                        value={patchTurnaround}
-                        onChange={(e) => setPatchTurnaround(e.target.value)}
-                        className="bdigi-select"
-                      >
-                        <option value="standard">Standard (5–7 Days Production) — Free</option>
-                        <option value="rush">Rush Express (3–4 Days Production) — +$25</option>
-                      </select>
-                      <div className="bdigi-select-arrow">
-                        <ChevronDown size={17} />
+                    <label htmlFor="bdigi-patch-size" className="bdigi-label">Size</label>
+                    <div>
+                      <div className="bdigi-select-wrapper">
+                        <select id="bdigi-patch-size" value={patchSizeOption} onChange={(e) => setPatchSizeOption(e.target.value)} className="bdigi-select">
+                          <option value="2">2" × 2"</option>
+                          <option value="2.5">2.5" × 2.5"</option>
+                          <option value="3">3" × 3"</option>
+                          <option value="4">4" × 4"</option>
+                          <option value="5">5" × 5"</option>
+                          <option value="custom">Custom Size</option>
+                        </select>
+                        <span className="bdigi-select-arrow"><ChevronDown size={17}/></span>
                       </div>
+                      {patchSizeOption === 'custom' && (
+                        <div ref={patchSizeRef} style={{ display: 'flex', gap: '0.45rem', alignItems: 'center', marginTop: '0.4rem', flexWrap: 'wrap' }}>
+                          <input className="bdigi-input" type="number" inputMode="decimal" min="0.5" max="24" step="0.25"
+                            aria-label="Patch width in inches" placeholder="W" value={patchCustomWidth}
+                            onChange={(e) => setPatchCustomWidth(e.target.value)}
+                            style={{ width: '85px', height: '39px', textAlign: 'center', padding: '0 0.45rem' }} />
+                          <span style={{ color: 'var(--color-text-muted)', fontWeight: 800 }}>×</span>
+                          <input className="bdigi-input" type="number" inputMode="decimal" min="0.5" max="24" step="0.25"
+                            aria-label="Patch height in inches" placeholder="H" value={patchCustomHeight}
+                            onChange={(e) => setPatchCustomHeight(e.target.value)}
+                            style={{ width: '85px', height: '39px', textAlign: 'center', padding: '0 0.45rem' }} />
+                          <span style={{ color: 'var(--color-text-muted)', fontSize: '0.78rem' }}>in</span>
+                        </div>
+                      )}
                     </div>
+                  </div>
+
+                  <div className="bdigi-form-row">
+                    <span className="bdigi-label">Production</span>
+                    <div style={{
+                      padding: '0.65rem 0.85rem',
+                      background: 'var(--color-primary-light)',
+                      border: '1px solid var(--color-border)',
+                      borderRadius: '10px',
+                      color: 'var(--color-text-primary)',
+                      fontSize: '0.88rem', fontWeight: 800
+                    }}>10–14 days</div>
                   </div>
 
                   {/* Patch Additional Details */}
                   <div className="bdigi-form-row" style={{ alignItems: 'flex-start' }}>
                     <label className="bdigi-label" style={{ paddingTop: '0.45rem' }}>Notes</label>
                     <textarea
-                      rows={2}
+                      rows={1}
                       value={additionalDetails}
                       onChange={(e) => setAdditionalDetails(e.target.value)}
-                      placeholder="Custom dimensions (e.g. 3&quot; round), border style (merrowed vs laser cut), thread colors, special instructions..."
+                      placeholder="Border, colors, notes..."
                       className="bdigi-textarea"
+                      style={{ minHeight: '43px', height: '46px' }}
                     />
                   </div>
 
-                  {/* QUANTITY OF PATCHES (DEFAULT 50, MINIMUM 50 STRICTLY ENFORCED) */}
+                  {/* Compact quantity with 50-piece minimum and quick presets */}
                   <div className="bdigi-form-row">
-                    <label className="bdigi-label">Patch Quantity</label>
-                    <div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
-                        <div
-                          style={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            border: '1.5px solid var(--color-border, #cbd5e1)',
-                            borderRadius: '10px',
-                            background: 'var(--color-surface, #ffffff)',
-                            overflow: 'hidden'
+                    <label htmlFor="bdigi-patch-quantity" className="bdigi-label">Quantity</label>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                      <div style={{ display: 'inline-flex', alignItems: 'center', flexShrink: 0,
+                        border: '1.5px solid var(--color-border)', borderRadius: '10px',
+                        background: 'var(--color-surface)', overflow: 'hidden' }}>
+                        <button type="button" aria-label="Decrease patch quantity"
+                          disabled={Number(patchQuantity) <= 50}
+                          onClick={() => setPatchQuantity(prev => Math.max(50, (Number(prev) || 50) - 10))}
+                          style={{ width: '32px', height: '36px', border: 'none', background: 'none', cursor: Number(patchQuantity) <= 50 ? 'not-allowed' : 'pointer', opacity: Number(patchQuantity) <= 50 ? 0.45 : 1, color: 'var(--color-text-primary)' }}>
+                          <Minus size={14} />
+                        </button>
+                        <input id="bdigi-patch-quantity" type="number" min="50" max="100000" step="1"
+                          value={patchQuantity}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setPatchQuantity(val === '' ? '' : Math.max(1, parseInt(val, 10) || 1));
                           }}
-                        >
-                          <button
-                            type="button"
-                            onClick={() => setPatchQuantity(prev => Math.max(50, (parseInt(prev, 10) || 50) - 10))}
-                            disabled={Number(patchQuantity) <= 50}
-                            style={{
-                              width: '38px',
-                              height: '38px',
-                              background: 'none',
-                              border: 'none',
-                              color: Number(patchQuantity) <= 50 ? '#94a3b8' : 'var(--color-text-primary, #0f172a)',
-                              cursor: Number(patchQuantity) <= 50 ? 'not-allowed' : 'pointer',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              opacity: Number(patchQuantity) <= 50 ? 0.45 : 1
-                            }}
-                            aria-label="Decrease patch quantity"
-                            title={Number(patchQuantity) <= 50 ? "Minimum 50 patches required" : "Decrease by 10"}
-                          >
-                            <Minus size={14} />
-                          </button>
-                          <input
-                            type="number"
-                            min="50"
-                            step="10"
-                            value={patchQuantity}
-                            onChange={(e) => {
-                              const val = e.target.value;
-                              if (val === '') {
-                                setPatchQuantity('');
-                              } else {
-                                const num = parseInt(val, 10);
-                                setPatchQuantity(isNaN(num) ? 50 : Math.max(1, num));
-                              }
-                            }}
-                            onBlur={() => {
-                              const num = parseInt(patchQuantity, 10);
-                              if (isNaN(num) || num < 50) {
-                                setPatchQuantity(50);
-                              } else {
-                                setPatchQuantity(num);
-                              }
-                            }}
-                            className="bdigi-input"
-                            style={{
-                              width: '75px',
-                              height: '38px',
-                              textAlign: 'center',
-                              border: 'none',
-                              borderRadius: 0,
-                              fontWeight: 900,
-                              fontSize: '0.98rem',
-                              padding: '0 0.25rem'
-                            }}
-                          />
-                          <button
-                            type="button"
-                            onClick={() => setPatchQuantity(prev => (parseInt(prev, 10) || 50) + 10)}
-                            style={{
-                              width: '38px',
-                              height: '38px',
-                              background: 'none',
-                              border: 'none',
-                              color: 'var(--color-text-primary, #0f172a)',
-                              cursor: 'pointer',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center'
-                            }}
-                            aria-label="Increase patch quantity"
-                            title="Increase by 10"
-                          >
-                            <Plus size={14} />
-                          </button>
-                        </div>
-
-                        {/* Quick Batch Chips */}
-                        <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap' }}>
-                          {[50, 100, 200, 250, 500, 1000].map(tierQty => {
-                            const isSelected = Number(patchQuantity) === tierQty;
-                            return (
-                              <button
-                                key={tierQty}
-                                type="button"
-                                onClick={() => setPatchQuantity(tierQty)}
-                                style={{
-                                  padding: '0.3rem 0.6rem',
-                                  borderRadius: '8px',
-                                  border: isSelected ? '1.5px solid #0284c7' : '1px solid var(--color-border, #cbd5e1)',
-                                  background: isSelected ? '#0284c7' : 'var(--color-subtle, #f8fafc)',
-                                  color: isSelected ? '#ffffff' : 'var(--color-text-secondary, #475569)',
-                                  fontWeight: 800,
-                                  fontSize: '0.76rem',
-                                  cursor: 'pointer',
-                                  transition: 'all 0.15s ease'
-                                }}
-                              >
-                                {tierQty} pcs
-                              </button>
-                            );
-                          })}
-                        </div>
+                          onBlur={() => setPatchQuantity(prev => Math.max(50, Math.min(100000, parseInt(prev, 10) || 50)))}
+                          className="bdigi-input" aria-label="Patch quantity, minimum 50"
+                          style={{ width: '66px', height: '36px', border: 'none', borderRadius: 0, textAlign: 'center', fontWeight: 900, padding: '0 0.25rem' }} />
+                        <button type="button" aria-label="Increase patch quantity"
+                          onClick={() => setPatchQuantity(prev => Math.min(100000, (Number(prev) || 50) + 10))}
+                          style={{ width: '32px', height: '36px', border: 'none', background: 'none', cursor: 'pointer', color: 'var(--color-text-primary)' }}>
+                          <Plus size={14} />
+                        </button>
                       </div>
-
-                      <div style={{ marginTop: '0.35rem', fontSize: '0.75rem', color: '#0284c7', fontWeight: 700 }}>
-                        ✦ Minimum batch: 50 pieces • Rate: ${hasValidLivePrice ? pricing.unitPrice.toFixed(2) : "—"} / patch
+                      <div className="bdigi-select-wrapper" style={{ width: 'auto', flex: '0 1 135px', minWidth: '118px' }}>
+                        <select className="bdigi-select" aria-label="Quick patch quantity"
+                          value={[50,100,200,250,500,1000].includes(Number(patchQuantity)) ? String(patchQuantity) : ''}
+                          onChange={(e) => { if (e.target.value) setPatchQuantity(Number(e.target.value)); }}
+                          style={{ height: '38px', padding: '0.3rem 1.7rem 0.3rem 0.5rem', fontSize: '0.8rem' }}>
+                          <option value="">Custom qty</option>
+                          {[50,100,200,250,500,1000].map(qty => <option key={qty} value={qty}>{qty} pcs</option>)}
+                        </select>
+                        <span className="bdigi-select-arrow" style={{ right: '7px' }}><ChevronDown size={14}/></span>
                       </div>
+                      <span style={{ color: 'var(--color-text-muted)', fontSize: '0.72rem', fontWeight: 700 }}>Min 50</span>
                     </div>
                   </div>
                 </div>
@@ -1574,12 +1554,12 @@ export const StreamlinedOrderFlow = ({
                           color: isUploadHighlighted ? '#dc2626' : 'var(--color-text-primary, #0f172a)'
                         }}>
                           {selectedService === 'patch'
-                            ? 'Upload Patch Artwork or Logo'
+                            ? 'Upload Artwork'
                             : `Upload ${designQuantity} ${designQuantity === 1 ? 'Design File' : 'Design Files'}`}
                         </div>
                         <div style={{ fontSize: '0.74rem', color: 'var(--color-text-muted, #64748b)' }}>
                           {selectedService === 'patch'
-                            ? 'Attach your logo or design for proofing (Max 50MB)'
+                            ? 'Max 50MB'
                             : 'JPG, PNG, PDF, AI, DST (Max 50MB)'}
                         </div>
                       </div>
@@ -1606,8 +1586,8 @@ export const StreamlinedOrderFlow = ({
                     <span style={{ color: uploadedFiles.length > 0 ? '#059669' : 'var(--color-text-muted, #64748b)', fontWeight: 700 }}>
                       {selectedService === 'patch'
                         ? (uploadedFiles.length === 0
-                            ? '0 files attached (1 artwork file required for patch proof)'
-                            : `✓ ${uploadedFiles.length} file attached (Ready for production proof)`)
+                            ? '1 file required'
+                            : `✓ ${uploadedFiles.length} attached`)
                         : (uploadedFiles.length === 0
                             ? `0 of ${designQuantity} files attached`
                             : uploadedFiles.length >= designQuantity
@@ -1733,6 +1713,10 @@ export const StreamlinedOrderFlow = ({
                         <span>Backing:</span>
                         <strong style={{ color: 'var(--color-text-primary, #0f172a)' }}>{patchBacking}</strong>
                       </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--color-text-secondary, #475569)' }}>
+                        <span>Size:</span>
+                        <strong style={{ color: 'var(--color-text-primary, #0f172a)' }}>{getPatchSizeLabel()}</strong>
+                      </div>
                     </>
                   ) : (
                     <>
@@ -1751,9 +1735,9 @@ export const StreamlinedOrderFlow = ({
 
                   <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--color-text-secondary, #475569)' }}>
                     <span>Turnaround:</span>
-                    <strong style={{ color: (turnaround === 'rush' || patchTurnaround === 'rush' || vectorTurnaround === 'rush') ? '#ea580c' : '#059669' }}>
+                    <strong style={{ color: selectedService !== 'patch' && (turnaround === 'rush' || vectorTurnaround === 'rush') ? '#ea580c' : '#059669' }}>
                       {selectedService === 'patch'
-                        ? (patchTurnaround === 'rush' ? 'Rush (3–4 Days)' : 'Standard (5–7 Days)')
+                        ? '10–14 business days'
                         : ((turnaround === 'rush' || vectorTurnaround === 'rush') ? 'Rush (2–4h)' : 'Standard (Free)')}
                     </strong>
                   </div>

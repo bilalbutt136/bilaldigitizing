@@ -47,9 +47,10 @@ test('Custom Patches flow strictly enforces default 50 and minimum 50 patches', 
 test('Artwork upload for Patches asks for patch logo/artwork rather than 50 separate files', () => {
   const source = read('src/components/customer/StreamlinedOrderFlow.jsx');
 
-  // For patches, upload header must specifically say Patch Artwork or Logo
-  assert.equal(source.includes('Upload Patch Artwork or Logo'), true);
-  assert.equal(source.includes('1 artwork file required'), true);
+  // Compact copy preserves the one-artwork requirement without extra instructions.
+  assert.equal(source.includes("? 'Upload Artwork'"), true);
+  assert.equal(source.includes("? '1 file required'"), true);
+  assert.equal(source.includes('multiple={selectedService !== \'patch\'}'), true);
 });
 
 test('Embroidery and Vector maintain clean designQuantity separation', () => {
