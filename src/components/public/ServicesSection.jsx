@@ -3,16 +3,9 @@
 import React, { useState } from 'react';
 import { useAppState } from '../../context/StateContext';
 import {
-  LayoutGrid as _LayoutGrid,
-  Layers,
-  PenTool,
-  Tag,
-  CheckCircle as _CheckCircle,
-  Sparkles,
   ArrowRight,
   Clock,
   ChevronDown,
-  Upload,
   CheckCircle2,
   PackageCheck
 } from 'lucide-react';
@@ -148,7 +141,7 @@ export const ServicesSection = () => {
 
   return (
     <section id="services" style={{
-      padding: '5.5rem 0 6rem',
+      padding: '3.5rem 0 5.5rem',
       background: 'var(--bg-main)',
       color: 'var(--text-main)',
       fontFamily: 'var(--font-body, "Inter", sans-serif)',
@@ -158,84 +151,11 @@ export const ServicesSection = () => {
     }}>
       <div className="container">
 
-        {/* Section Header */}
-        <div style={{ textAlign: 'center', maxWidth: '800px', margin: '0 auto 2.75rem' }}>
-          <div className="badge-pill-glow" style={{ marginBottom: '1rem' }}>
-            <Sparkles size={16} style={{ color: 'var(--orange-500)' }} />
-            <span>Professional Studio Services</span>
-          </div>
-
-          <h2 style={{
-            fontSize: 'clamp(2.1rem, 3.8vw, 2.85rem)',
-            fontFamily: 'var(--font-heading)',
-            fontWeight: '900',
-            color: 'var(--navy-950)',
-            margin: '0 0 1rem 0',
-            lineHeight: '1.18',
-            letterSpacing: '-0.025em'
-          }}>
-            {activeTab === 'embroidery' && (
-              <>Commercial <span className="text-gradient-orange">Embroidery Digitizing</span></>
-            )}
-            {activeTab === 'vector-art' && (
-              <>Precision <span className="text-gradient-orange">Vector Art Conversion</span></>
-            )}
-            {activeTab === 'patches' && (
-              <>Premium <span className="text-gradient-orange">Physical Custom Patches</span></>
-            )}
-          </h2>
-
-          <p style={{
-            fontSize: '1.1rem',
-            color: 'var(--text-muted)',
-            lineHeight: '1.65',
-            margin: '0 auto',
-          }}>
-            {activeTab === 'embroidery' && 'Machine-ready embroidery stitch files (.DST, .PES, .EMB) with efficient pathing, calculated pull compensation, and free minor production revisions.'}
-            {activeTab === 'vector-art' && 'Clean, infinitely scalable vector graphics (.AI, .EPS, .SVG, .PDF) with hand-drawn Bézier curves and Pantone color separations ready for press.'}
-            {activeTab === 'patches' && 'Custom embroidered, high-density woven, 3D molded PVC, and laser-engraved leather emblems delivered straight to your door.'}
-          </p>
-        </div>
-
         {/* ====================================================================
             VIEW 2: EMBROIDERY TAB (Dynamic Embroidery Packages)
            ==================================================================== */}
         {activeTab === 'embroidery' && (
           <div>
-            {/* 1. Introduction Banner */}
-            <div className="theme-service-banner" style={{
-              background: 'var(--banner-bg)',
-              color: 'var(--text-main)',
-              borderRadius: '24px',
-              padding: '3rem 2.5rem',
-              marginBottom: '3.5rem',
-              border: '1.5px solid var(--banner-border)',
-              boxShadow: 'var(--shadow-lg)',
-              position: 'relative',
-              overflow: 'hidden'
-            }}>
-              <div style={{ maxWidth: '820px' }}>
-                <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', background: 'rgba(249, 115, 22, 0.12)', border: '1px solid rgba(249, 115, 22, 0.3)', color: 'var(--orange-600)', padding: '0.35rem 0.95rem', borderRadius: '9999px', fontSize: '0.85rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '1.25rem' }}>
-                  <Layers size={16} /> Factory-Grade Machine Embroidery Digitizing
-                </div>
-                <h3 style={{ fontSize: 'clamp(1.85rem, 3.2vw, 2.4rem)', fontWeight: 900, marginBottom: '1rem', lineHeight: 1.2, color: 'var(--banner-title)' }}>
-                  Engineered for Clean, Efficient Commercial Sew-Outs
-                </h3>
-                <p style={{ color: 'var(--banner-desc)', fontSize: '1.05rem', lineHeight: 1.65, marginBottom: '2rem' }}>
-                  We convert your logos and artwork into high-efficiency stitch files designed specifically for your fabric type (caps, pique polos, fleece hoodies, performance wear, or leather) and machine make.
-                </p>
-                <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-                  <button
-                    type="button"
-                    className="btn btn-primary-orange btn-lg"
-                    onClick={() => handleLaunchOrder('embroidery')}
-                    style={{ fontWeight: 800, padding: '0.85rem 2rem' }}
-                  >
-                    <Upload size={18} /> Order Embroidery Digitizing
-                  </button>
-                </div>
-              </div>
-            </div>
 
             {/* 2. Key Benefits Grid */}
             <div style={{ marginBottom: '3.5rem' }}>
@@ -361,41 +281,6 @@ export const ServicesSection = () => {
            ==================================================================== */}
         {activeTab === 'vector-art' && (
           <div>
-            {/* 1. Introduction Banner */}
-            <div className="theme-service-banner" style={{
-              background: 'var(--banner-bg)',
-              color: 'var(--text-main)',
-              borderRadius: '24px',
-              padding: '3rem 2.5rem',
-              marginBottom: '3.5rem',
-              border: '1.5px solid var(--banner-border)',
-              boxShadow: 'var(--shadow-lg)',
-              position: 'relative',
-              overflow: 'hidden'
-            }}>
-              <div style={{ maxWidth: '820px' }}>
-                <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', background: 'rgba(59, 130, 246, 0.15)', border: '1px solid rgba(59, 130, 246, 0.3)', color: '#38bdf8', padding: '0.35rem 0.95rem', borderRadius: '9999px', fontSize: '0.85rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '1.25rem' }}>
-                  <PenTool size={16} /> Precision Vector Redraw & Color Separation
-                </div>
-                <h3 style={{ fontSize: 'clamp(1.85rem, 3.2vw, 2.4rem)', fontWeight: 900, marginBottom: '1rem', lineHeight: 1.2, color: 'var(--banner-title)' }}>
-                  Infinitely Scalable Vector Art Ready For Any Print Application
-                </h3>
-                <p style={{ color: 'var(--banner-desc)', fontSize: '1.05rem', lineHeight: 1.65, marginBottom: '2rem' }}>
-                  Convert blurry low-resolution JPEGs, pixelated PNGs, photographs, or hand sketches into razor-sharp scalable vector artwork with clean Bézier nodes, exact Pantone color matching, and separated print layers.
-                </p>
-                <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-                  <button
-                    type="button"
-                    className="btn btn-primary-orange btn-lg"
-                    onClick={() => handleLaunchOrder('vector')}
-                    style={{ fontWeight: 800, padding: '0.85rem 2rem', background: '#2563eb', borderColor: '#2563eb' }}
-                  >
-                    <Upload size={18} /> Order Vector Art Conversion
-                  </button>
-                </div>
-              </div>
-            </div>
-
             {/* 2. Key Benefits Grid */}
             <div style={{ marginBottom: '3.5rem' }}>
               <h3 style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--color-text-primary)', marginBottom: '1.5rem', textAlign: 'center' }}>
@@ -520,41 +405,6 @@ export const ServicesSection = () => {
            ==================================================================== */}
         {activeTab === 'patches' && (
           <div>
-            {/* 1. Introduction Banner */}
-            <div className="theme-service-banner" style={{
-              background: 'var(--banner-bg)',
-              color: 'var(--text-main)',
-              borderRadius: '24px',
-              padding: '3rem 2.5rem',
-              marginBottom: '3.5rem',
-              border: '1.5px solid var(--banner-border)',
-              boxShadow: 'var(--shadow-lg)',
-              position: 'relative',
-              overflow: 'hidden'
-            }}>
-              <div style={{ maxWidth: '820px' }}>
-                <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', background: 'rgba(16, 185, 129, 0.15)', border: '1px solid rgba(16, 185, 129, 0.3)', color: '#34d399', padding: '0.35rem 0.95rem', borderRadius: '9999px', fontSize: '0.85rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '1.25rem' }}>
-                  <Tag size={16} /> Premium Custom Physical Patches & Emblems
-                </div>
-                <h3 style={{ fontSize: 'clamp(1.85rem, 3.2vw, 2.4rem)', fontWeight: 900, marginBottom: '1rem', lineHeight: 1.2, color: 'var(--banner-title)' }}>
-                  Custom Embroidered, Woven & 3D Molded PVC Patches
-                </h3>
-                <p style={{ color: 'var(--banner-desc)', fontSize: '1.05rem', lineHeight: 1.65, marginBottom: '2rem' }}>
-                  Elevate your uniforms, headwear, jackets, and tactical gear with commercial-quality custom patches. Available with Velcro hook & loop, iron-on, or adhesive backings delivered to your doorstep.
-                </p>
-                <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-                  <button
-                    type="button"
-                    className="btn btn-primary-orange btn-lg"
-                    onClick={() => handleLaunchOrder('patch')}
-                    style={{ fontWeight: 800, padding: '0.85rem 2rem', background: '#059669', borderColor: '#059669' }}
-                  >
-                    <Upload size={18} /> Order Custom Patches
-                  </button>
-                </div>
-              </div>
-            </div>
-
             {/* 2. Types of Patches Available */}
             <div style={{ marginBottom: '3.5rem' }}>
               <h3 style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--color-text-primary)', marginBottom: '1.5rem', textAlign: 'center' }}>
