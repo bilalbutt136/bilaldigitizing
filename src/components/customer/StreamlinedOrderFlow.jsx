@@ -3,6 +3,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useAppState } from '../../context/StateContext';
 import { getAvailableTiers, getServiceStartingPrice, calculatePackageQuote, formatUSD } from '../../utils/livePricing';
+import { requiredEmbroideryRank, eligibleEmbroideryTiers, chooseEmbroideryTier } from '../../utils/embroiderySizeEligibility';
 import { MONTHLY_DESIGN_LIMITS, findPublishedMonthlyBundle } from '../../utils/monthlyBundles';
 import {
   Upload,
@@ -106,16 +107,28 @@ export const StreamlinedOrderFlow = ({
     return '';
   });
 
-  const currentTier = currentServiceTiers.find(t =>
-    (t.id && String(t.id) === String(selectedTierId)) ||
-    (t.title && t.title.toLowerCase() === String(selectedTierId).toLowerCase())
-  ) || (selectedTierId ? null : currentServiceTiers[0] || null);
-
   // 1. EMBROIDERY FIELDS
   const [fileFormat, setFileFormat] = useState('all');
   const [sizeOption, setSizeOption] = useState('left-chest');
   const [customWidth, setCustomWidth] = useState('3.5');
   const [customHeight, setCustomHeight] = useState('3.5');
+  // Admin package order determines capacity: up to 4" => tier 1+, 7" => tier 2+, 12" => tier 3+.
+  // Never downgrade a manually chosen premium tier when the size becomes smaller.
+  const minEmbroideryRank = requiredEmbroideryRank(sizeOption, customWidth, customHeight);
+  const eligibleEmbroidery = eligibleEmbroideryTiers(currentServiceTiers, minEmbroideryRank);
+  const requestedTier = currentServiceTiers.find(t =>
+    (t.id && String(t.id) === String(selectedTierId)) ||
+    (t.title && t.title.toLowerCase() === String(selectedTierId).toLowerCase())
+  ) || (selectedTierId ? null : currentServiceTiers[0] || null);
+  const currentTier = selectedService === 'embroidery'
+    ? chooseEmbroideryTier(currentServiceTiers, minEmbroideryRank, requestedTier)
+    : requestedTier;
+  useEffect(() => {
+    if (selectedService !== 'embroidery' || orderMode === 'monthly' || !currentTier) return;
+    const activeId = String(currentTier.id || currentTier.title);
+    if (selectedTierId !== activeId) setSelectedTierId(activeId);
+  }, [selectedService, orderMode, currentTier?.id, currentTier?.title, selectedTierId]);
+
   const [turnaround, setTurnaround] = useState('standard'); // standard (free), rush (+$10)
 
   // 2. PATCH FIELDS
@@ -378,6 +391,17 @@ export const StreamlinedOrderFlow = ({
 
   // Submit Order and Launch Instant Stripe Checkout / Payment Page
   const handleFinalSubmitOrder = async () => {
+    if (!isMonthlyMode && selectedService === 'embroidery' && (!minEmbroideryRank || !currentTier)) {
+      setValidationAlert({
+        title: 'Size & Package Mismatch',
+        message: !minEmbroideryRank
+          ? 'Enter a valid custom width and height up to 12 inches. Larger designs need a custom quotation.'
+          : 'No published embroidery package supports this size. Please contact the studio.',
+        actionText: 'Review Size & Package',
+        onAction: () => {}
+      });
+      return;
+    }
     if (!hasValidLivePrice) {
       setValidationAlert({ title: 'Pricing Unavailable', message: 'Choose a currently published package before ordering.', actionText: 'Review Packages', onAction: () => {} });
       return;
@@ -1007,29 +1031,39 @@ export const StreamlinedOrderFlow = ({
               {/* 1. EMBROIDERY OPTIONS */}
               {selectedService === 'embroidery' && (
                 <div>
-                  {/* Package Tier Dropdown (Live from Admin Dynamic Pricing Tiers) */}
+                  {/* Package Tier Dropdown: larger designs require suitable package capacity */}
                   <div className="bdigi-form-row">
                     <label className="bdigi-label">Package</label>
-                    <div className="bdigi-select-wrapper">
-                      <select
-                        value={currentTier?.id || currentTier?.title || ''}
-                        onChange={(e) => setSelectedTierId(e.target.value)}
-                        className="bdigi-select"
-                      >
-                        {!currentTier && <option value="">Select a valid package</option>}
-                        {currentServiceTiers.map(tier => {
-                          const val = String(tier.id || tier.title);
-                          const displayPrice = Number(tier.price).toFixed(2);
-                          return (
-                            <option key={val} value={val}>
-                              {tier.title} — ${displayPrice}
-                            </option>
-                          );
-                        })}
-                      </select>
-                      <div className="bdigi-select-arrow">
-                        <ChevronDown size={17} />
+                    <div>
+                      <div className="bdigi-select-wrapper">
+                        <select
+                          aria-label="Embroidery package"
+                          value={currentTier?.id || currentTier?.title || ''}
+                          onChange={(e) => setSelectedTierId(e.target.value)}
+                          className="bdigi-select"
+                        >
+                          {!currentTier && <option value="">No eligible package for this size</option>}
+                          {currentServiceTiers.map(tier => {
+                            const val = String(tier.id || tier.title);
+                            const allowed = eligibleEmbroidery.some(item => String(item.id || item.title) === val);
+                            return (
+                              <option key={val} value={val} disabled={!allowed}>
+                                {tier.title} — ${Number(tier.price).toFixed(2)}{!allowed ? ' (size too large)' : ''}
+                              </option>
+                            );
+                          })}
+                        </select>
+                        <div className="bdigi-select-arrow"><ChevronDown size={17} /></div>
                       </div>
+                      {minEmbroideryRank === null ? (
+                        <div role="alert" style={{ fontSize: '0.76rem', color: 'var(--color-text-secondary)', marginTop: '0.35rem' }}>
+                          Enter dimensions up to 12″. Larger sizes require a custom quote.
+                        </div>
+                      ) : minEmbroideryRank > 1 ? (
+                        <div role="status" style={{ fontSize: '0.76rem', color: 'var(--color-text-secondary)', marginTop: '0.35rem' }}>
+                          {minEmbroideryRank === 2 ? '7″ size: Medium package or higher.' : '12″ size: Full Back package or higher.'} Smaller packages are unavailable.
+                        </div>
+                      ) : null}
                     </div>
                   </div>
 

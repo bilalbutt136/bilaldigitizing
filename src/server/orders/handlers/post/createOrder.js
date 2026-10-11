@@ -1,6 +1,7 @@
 import { NextResponse, after } from 'next/server';
 import { logServerCaughtError } from '../../../../lib/observability/apiObservability.js';
 import { calculatePackageQuote } from '../../../../utils/livePricing.js';
+import { isEmbroideryOrderTierEligible } from '../../../../utils/embroiderySizeEligibility.js';
 import { findPublishedMonthlyBundle, MONTHLY_BUNDLE_CONFIG_KEY } from '../../../../utils/monthlyBundles.js';
 
 export async function handleCreateOrder(context) {
@@ -47,7 +48,7 @@ export async function handleCreateOrder(context) {
         }
         const { data: liveTier, error: tierError } = await supabase
           .from('pricing_tiers')
-          .select('id,service_type,title,price,is_active')
+          .select('id,service_type,title,price,is_active,display_order,sort_order')
           .eq('id', primaryDbRow.package_id)
           .maybeSingle();
         if (tierError) {
@@ -56,6 +57,16 @@ export async function handleCreateOrder(context) {
         }
         if (!liveTier || liveTier.is_active === false) {
           return NextResponse.json({ error: 'Package no longer available. Refresh pricing and try again.' }, { status: 409 });
+        }
+        // Enforce artwork size on the server as well, not only in the browser.
+        // The placement string is created by the direct-order UI; missing,
+        // unrecognized, invalid or oversized requests cannot use a cheaper tier.
+        if (primaryDbRow.type === 'embroidery' && !isAdmin) {
+          if (!isEmbroideryOrderTierEligible(primaryDbRow.placement, liveTier)) {
+            return NextResponse.json({
+              error: 'The selected embroidery package does not support this design size. Choose an eligible package before checkout.'
+            }, { status: 409 });
+          }
         }
         // Physical patches from the Direct Studio Desk have a fixed 10–14 day
         // production window. Reject stale or manipulated rush submissions.
