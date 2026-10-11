@@ -34,37 +34,24 @@ test('before after comparison uses only matching actual gallery images', () => {
   assert.doesNotMatch(hero, /TRUSTED BY 1,200\+ BRANDS/);
 });
 
-test('first-screen layout keeps CTA and full detail visible on typical desktop viewports', () => {
+test('desktop hero uses one unified height-aware layout at 100% browser zoom', () => {
+  assert.match(css, /Unified VIP desktop sizing/);
+  assert.match(css, /min-width: 1025px/);
+  assert.match(css, /min-height: 690px/);
+  assert.match(css, /max-width: 1780px/);
+  assert.match(css, /font-size: clamp\(2\.55rem, 3\.13vw, 3\.85rem\)/);
+  assert.match(css, /grid-template-rows: auto minmax\(0, 1fr\)/);
+  assert.match(css, /max-height: calc\(100svh - 269px\)/);
+  assert.match(css, /max-height: 780px/);
+  assert.match(css, /max-height: 899px/);
+  assert.match(css, /max-height: 689px/);
+});
+test('mobile and tablet keep accessible content without viewport clipping', () => {
+  assert.match(css, /@media \(max-width: 1024px\)/);
+  assert.match(css, /@media\(max-width:640px\)/);
+  assert.match(css, /Landscape tablets|Tablets stay two-column/);
+  assert.match(css, /prefers-reduced-motion/);
+  assert.match(css, /focus-visible/);
   assert.match(hero, /vip-hero-duplicate-tabs/);
   assert.match(hero, /vip-hero-duplicate-vector-promo/);
-  assert.match(css, /First-screen fit/);
-  assert.match(css, /min-height: calc\(100svh - 69px\)/);
-  assert.match(css, /height: min\(43vh,355px\)/);
-  assert.match(css, /max-height: 800px/);
-  assert.match(css, /max-width: 640px/);
-  assert.match(css, /\.vip-hero-duplicate-tabs \{ display: none/);
-});
-
-test('wide-screen VIP hero balancing expands layout without overriding compact screens', () => {
-  assert.match(css, /Wide-screen hero balance/);
-  assert.match(css, /min-width: 1450px/);
-  assert.match(css, /min-height: 780px/);
-  assert.match(css, /max-width: min\(1640px, calc\(100% - 44px\)\)/);
-  assert.match(css, /height: min\(48vh, 440px\)/);
-  assert.match(css, /min-height: 980px/);
-  assert.match(css, /min-width: 1350px/);
-  assert.match(css, /Compact laptop view must retain the original first-screen sizing/);
-});
-
-test('immersive first-screen design fills full desktop hero without clipping accessible mobile content', () => {
-  assert.match(css, /Immersive first-screen composition/);
-  assert.match(css, /grid-template-rows: auto minmax\(0,1fr\)/);
-  assert.match(css, /max-width: 1780px/);
-  assert.match(css, /max-height: 64svh/);
-  assert.match(css, /min-width: 1025px/);
-  assert.match(css, /max-width: 1349px/);
-  assert.match(css, /Landscape tablets/);
-  assert.match(css, /height: auto !important; align-items: center/);
-  assert.match(css, /min-width: 1450px/);
-  assert.match(css, /min-height: 800px/);
 });
