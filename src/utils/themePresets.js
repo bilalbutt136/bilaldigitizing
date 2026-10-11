@@ -8,110 +8,110 @@
 export const THEME_PRESETS = [
   {
     id: 'studio-orange',
-    name: 'Executive Studio Pro',
+    name: 'Royal Executive Navy & Gold',
     category: 'Creative Studio',
-    description: 'Precision luxury slate surfaces, obsidian headers, subtle warm ambient glow, and vivid amber CTA buttons.',
+    description: 'Precision luxury royal navy obsidian surfaces, crisp white cards, and warm amber gold CTA buttons.',
     bestFor: 'High-End Commercial Digitizing & Vector Studio',
     palette: {
-      primary: '#ea580c',
-      secondary: '#f97316',
-      accent: '#fb923c',
+      primary: '#d97706',
+      secondary: '#f59e0b',
+      accent: '#fbbf24',
       surface: '#ffffff'
     },
     tokens: {
       light: {
-        '--color-primary': '#ea580c',
-        '--color-primary-hover': '#c2410c',
-        '--color-primary-light': '#fff7ed',
-        '--color-primary-glow': 'rgba(234, 88, 12, 0.28)',
+        '--color-primary': '#d97706',
+        '--color-primary-hover': '#b45309',
+        '--color-primary-light': '#fffbeb',
+        '--color-primary-glow': 'rgba(217, 119, 6, 0.28)',
         '--color-primary-text': '#ffffff',
-        '--color-secondary': '#f97316',
-        '--color-secondary-hover': '#ea580c',
-        '--color-accent': '#fb923c',
-        '--color-accent-light': '#fff7ed',
+        '--color-secondary': '#f59e0b',
+        '--color-secondary-hover': '#d97706',
+        '--color-accent': '#fbbf24',
+        '--color-accent-light': '#fffdf5',
         '--color-background': '#f8fafc',
         '--color-surface': '#ffffff',
-        '--color-surface-elevated': '#ffffff',
-        '--color-subtle': '#f1f5f9',
-        '--color-input': '#f8f9fa',
+        '--color-surface-elevated': '#f1f5f9',
+        '--color-subtle': '#eef4fa',
+        '--color-input': '#f8fafc',
         '--color-border': '#e2e8f0',
         '--color-border-hover': '#cbd5e1',
-        '--color-border-focus': '#ea580c',
-        '--color-text-primary': '#090d16',
+        '--color-border-focus': '#d97706',
+        '--color-text-primary': '#0a0f1d',
         '--color-text-secondary': '#334155',
         '--color-text-muted': '#64748b',
         '--color-text-on-primary': '#ffffff',
-        '--hero-bg': 'radial-gradient(ellipse 90% 60% at 50% -10%, rgba(249, 115, 22, 0.08) 0%, rgba(241, 245, 249, 0.8) 50%, #f8fafc 100%)',
+        '--hero-bg': 'radial-gradient(ellipse 90% 60% at 50% -10%, rgba(245, 158, 11, 0.08) 0%, rgba(241, 245, 249, 0.8) 50%, #f8fafc 100%)',
         '--hero-tabs-bg': '#ffffff',
         '--hero-tabs-border': '#e2e8f0',
-        '--hero-text-primary': '#090d16',
+        '--hero-text-primary': '#0a0f1d',
         '--hero-text-secondary': '#334155',
         '--hero-card-bg': '#ffffff',
         '--hero-card-border': '#e2e8f0',
-        '--hero-card-shadow': '0 16px 40px -10px rgba(15, 23, 42, 0.08), 0 4px 12px -2px rgba(15, 23, 42, 0.03)',
-        '--banner-bg': 'linear-gradient(135deg, #ffffff 0%, #fffbf6 50%, #f8fafc 100%)',
-        '--banner-border': 'rgba(234, 88, 12, 0.16)',
-        '--banner-title': '#090d16',
+        '--hero-card-shadow': '0 16px 40px -10px rgba(10, 15, 29, 0.08), 0 4px 12px -2px rgba(10, 15, 29, 0.03)',
+        '--banner-bg': 'linear-gradient(135deg, #ffffff 0%, #fffdfa 50%, #f8fafc 100%)',
+        '--banner-border': 'rgba(217, 119, 6, 0.18)',
+        '--banner-title': '#0a0f1d',
         '--banner-desc': '#334155',
         '--stats-bar-bg': '#f8fafc',
         '--stats-card-bg': '#ffffff',
         '--stats-card-border': '#e2e8f0',
-        '--stats-number-color': '#090d16',
+        '--stats-number-color': '#0a0f1d',
         '--stats-label-color': '#64748b',
-        '--cta-bg': 'radial-gradient(ellipse 90% 70% at 50% 0%, rgba(249, 115, 22, 0.08) 0%, rgba(241, 245, 249, 0.7) 50%, #f8fafc 100%)',
-        '--cta-title': '#090d16',
+        '--cta-bg': 'radial-gradient(ellipse 90% 70% at 50% 0%, rgba(245, 158, 11, 0.08) 0%, rgba(241, 245, 249, 0.7) 50%, #f8fafc 100%)',
+        '--cta-title': '#0a0f1d',
         '--cta-desc': '#334155',
-        '--cta-badge-bg': '#fff7ed',
-        '--cta-badge-border': '#fed7aa',
-        '--cta-badge-text': '#c2410c',
-        '--cta-btn-outline-color': '#090d16',
+        '--cta-badge-bg': '#fffbeb',
+        '--cta-badge-border': '#fde68a',
+        '--cta-badge-text': '#b45309',
+        '--cta-btn-outline-color': '#0a0f1d',
         '--cta-btn-outline-border': '#cbd5e1'
       },
       dark: {
-        '--color-primary': '#f97316',
-        '--color-primary-hover': '#ea580c',
-        '--color-primary-light': 'rgba(249, 115, 22, 0.18)',
-        '--color-primary-glow': 'rgba(249, 115, 22, 0.40)',
+        '--color-primary': '#f59e0b',
+        '--color-primary-hover': '#d97706',
+        '--color-primary-light': 'rgba(245, 158, 11, 0.16)',
+        '--color-primary-glow': 'rgba(245, 158, 11, 0.40)',
         '--color-primary-text': '#ffffff',
-        '--color-secondary': '#fb923c',
-        '--color-secondary-hover': '#f97316',
-        '--color-accent': '#f97316',
-        '--color-accent-light': 'rgba(249, 115, 22, 0.12)',
-        '--color-background': '#090d16',
-        '--color-surface': '#111827',
-        '--color-surface-elevated': '#1e293b',
-        '--color-subtle': '#1e293b',
-        '--color-input': '#1e293b',
-        '--color-border': 'rgba(255, 255, 255, 0.16)',
-        '--color-border-hover': 'rgba(255, 255, 255, 0.32)',
-        '--color-border-focus': '#f97316',
+        '--color-secondary': '#fbbf24',
+        '--color-secondary-hover': '#f59e0b',
+        '--color-accent': '#f59e0b',
+        '--color-accent-light': 'rgba(245, 158, 11, 0.12)',
+        '--color-background': '#070b14',
+        '--color-surface': '#0f172a',
+        '--color-surface-elevated': '#16223b',
+        '--color-subtle': '#16223b',
+        '--color-input': '#111c30',
+        '--color-border': 'rgba(255, 255, 255, 0.12)',
+        '--color-border-hover': 'rgba(245, 158, 11, 0.35)',
+        '--color-border-focus': '#f59e0b',
         '--color-text-primary': '#ffffff',
         '--color-text-secondary': '#e2e8f0',
         '--color-text-muted': '#94a3b8',
         '--color-text-on-primary': '#ffffff',
-        '--hero-bg': 'radial-gradient(ellipse 90% 60% at 50% -10%, rgba(249, 115, 22, 0.15) 0%, rgba(15, 23, 42, 0.95) 50%, #090d16 100%)',
-        '--hero-tabs-bg': '#111827',
-        '--hero-tabs-border': 'rgba(255, 255, 255, 0.16)',
+        '--hero-bg': 'radial-gradient(ellipse 90% 60% at 50% -10%, rgba(245, 158, 11, 0.16) 0%, rgba(15, 23, 42, 0.95) 50%, #070b14 100%)',
+        '--hero-tabs-bg': '#0f172a',
+        '--hero-tabs-border': 'rgba(255, 255, 255, 0.14)',
         '--hero-text-primary': '#ffffff',
         '--hero-text-secondary': '#cbd5e1',
-        '--hero-card-bg': '#111827',
-        '--hero-card-border': 'rgba(255, 255, 255, 0.16)',
+        '--hero-card-bg': '#0f172a',
+        '--hero-card-border': 'rgba(255, 255, 255, 0.14)',
         '--hero-card-shadow': '0 20px 50px -15px rgba(0, 0, 0, 0.7)',
-        '--banner-bg': 'linear-gradient(135deg, #111827 0%, #1e293b 50%, #090d16 100%)',
-        '--banner-border': 'rgba(249, 115, 22, 0.28)',
+        '--banner-bg': 'linear-gradient(135deg, #0f172a 0%, #16223b 50%, #070b14 100%)',
+        '--banner-border': 'rgba(245, 158, 11, 0.28)',
         '--banner-title': '#ffffff',
         '--banner-desc': '#cbd5e1',
-        '--stats-bar-bg': '#090d16',
-        '--stats-card-bg': '#111827',
-        '--stats-card-border': 'rgba(255, 255, 255, 0.14)',
+        '--stats-bar-bg': '#070b14',
+        '--stats-card-bg': '#0f172a',
+        '--stats-card-border': 'rgba(255, 255, 255, 0.12)',
         '--stats-number-color': '#ffffff',
         '--stats-label-color': '#94a3b8',
-        '--cta-bg': 'radial-gradient(ellipse 90% 70% at 50% 0%, rgba(249, 115, 22, 0.15) 0%, rgba(15, 23, 42, 0.95) 50%, #090d16 100%)',
+        '--cta-bg': 'radial-gradient(ellipse 90% 70% at 50% 0%, rgba(245, 158, 11, 0.16) 0%, rgba(15, 23, 42, 0.95) 50%, #070b14 100%)',
         '--cta-title': '#ffffff',
         '--cta-desc': '#cbd5e1',
-        '--cta-badge-bg': 'rgba(249, 115, 22, 0.15)',
-        '--cta-badge-border': 'rgba(249, 115, 22, 0.35)',
-        '--cta-badge-text': '#fb923c',
+        '--cta-badge-bg': 'rgba(245, 158, 11, 0.15)',
+        '--cta-badge-border': 'rgba(245, 158, 11, 0.35)',
+        '--cta-badge-text': '#fbbf24',
         '--cta-btn-outline-color': '#ffffff',
         '--cta-btn-outline-border': 'rgba(255, 255, 255, 0.22)'
       }
@@ -157,22 +157,23 @@ export function applyThemePresetToDOM(presetId = 'studio-orange', mode = 'light'
   });
 
   // 4. Map semantic tokens to legacy aliases for complete backward compatibility
-  root.style.setProperty('--orange-500', tokenSet['--color-primary'] || (mode === 'dark' ? '#fb923c' : '#ea580c'));
-  root.style.setProperty('--orange-600', tokenSet['--color-primary-hover'] || (mode === 'dark' ? '#f97316' : '#c2410c'));
-  root.style.setProperty('--orange-400', tokenSet['--color-secondary'] || (mode === 'dark' ? '#fdba74' : '#f97316'));
-  root.style.setProperty('--orange-50', tokenSet['--color-primary-light'] || (mode === 'dark' ? 'rgba(251, 146, 60, 0.15)' : '#fff7ed'));
-  root.style.setProperty('--orange-glow', tokenSet['--color-primary-glow'] || 'rgba(249, 115, 22, 0.35)');
-  root.style.setProperty('--bg-main', tokenSet['--color-background'] || (mode === 'dark' ? '#090d16' : '#f8fafc'));
-  root.style.setProperty('--bg-card', tokenSet['--color-surface'] || (mode === 'dark' ? '#111827' : '#ffffff'));
-  root.style.setProperty('--bg-surface', tokenSet['--color-surface-elevated'] || (mode === 'dark' ? '#1e293b' : '#ffffff'));
-  root.style.setProperty('--bg-subtle', tokenSet['--color-subtle'] || (mode === 'dark' ? '#1e293b' : '#f1f5f9'));
-  root.style.setProperty('--bg-input', tokenSet['--color-input'] || (mode === 'dark' ? '#162035' : '#f8f9fa'));
-  root.style.setProperty('--border-color', tokenSet['--color-border'] || (mode === 'dark' ? 'rgba(255, 255, 255, 0.16)' : '#e2e8f0'));
-  root.style.setProperty('--text-main', tokenSet['--color-text-primary'] || (mode === 'dark' ? '#ffffff' : '#090d16'));
+  root.style.setProperty('--orange-500', tokenSet['--color-secondary'] || (mode === 'dark' ? '#fbbf24' : '#f59e0b'));
+  root.style.setProperty('--orange-600', tokenSet['--color-primary'] || (mode === 'dark' ? '#f59e0b' : '#d97706'));
+  root.style.setProperty('--orange-700', tokenSet['--color-primary-hover'] || (mode === 'dark' ? '#d97706' : '#b45309'));
+  root.style.setProperty('--orange-400', tokenSet['--color-accent'] || (mode === 'dark' ? '#fbbf24' : '#fbbf24'));
+  root.style.setProperty('--orange-50', tokenSet['--color-primary-light'] || (mode === 'dark' ? 'rgba(245, 158, 11, 0.15)' : '#fffbeb'));
+  root.style.setProperty('--orange-glow', tokenSet['--color-primary-glow'] || 'rgba(245, 158, 11, 0.35)');
+  root.style.setProperty('--bg-main', tokenSet['--color-background'] || (mode === 'dark' ? '#070b14' : '#f8fafc'));
+  root.style.setProperty('--bg-card', tokenSet['--color-surface'] || (mode === 'dark' ? '#0f172a' : '#ffffff'));
+  root.style.setProperty('--bg-surface', tokenSet['--color-surface-elevated'] || (mode === 'dark' ? '#16223b' : '#f1f5f9'));
+  root.style.setProperty('--bg-subtle', tokenSet['--color-subtle'] || (mode === 'dark' ? '#16223b' : '#eef4fa'));
+  root.style.setProperty('--bg-input', tokenSet['--color-input'] || (mode === 'dark' ? '#111c30' : '#f8fafc'));
+  root.style.setProperty('--border-color', tokenSet['--color-border'] || (mode === 'dark' ? 'rgba(255, 255, 255, 0.12)' : '#e2e8f0'));
+  root.style.setProperty('--text-main', tokenSet['--color-text-primary'] || (mode === 'dark' ? '#ffffff' : '#0a0f1d'));
   root.style.setProperty('--text-secondary', tokenSet['--color-text-secondary'] || (mode === 'dark' ? '#e2e8f0' : '#334155'));
   root.style.setProperty('--text-muted', tokenSet['--color-text-muted'] || (mode === 'dark' ? '#94a3b8' : '#64748b'));
   root.style.setProperty('--text-light', tokenSet['--color-text-muted'] || (mode === 'dark' ? '#94a3b8' : '#94a3b8'));
-  root.style.setProperty('--text-heading', tokenSet['--color-text-primary'] || (mode === 'dark' ? '#ffffff' : '#090d16'));
+  root.style.setProperty('--text-heading', tokenSet['--color-text-primary'] || (mode === 'dark' ? '#ffffff' : '#0a0f1d'));
 
   // Dynamic high-contrast mapping for legacy navy palette tokens & hero navigation tabs
   if (mode === 'dark') {
@@ -181,13 +182,13 @@ export function applyThemePresetToDOM(presetId = 'studio-orange', mode = 'light'
     root.style.setProperty('--navy-800', '#f1f5f9');
     root.style.setProperty('--navy-700', '#e2e8f0');
     root.style.setProperty('--navy-600', '#cbd5e1');
-    root.style.setProperty('--navy-100', tokenSet['--color-subtle'] || '#141d2f');
-    root.style.setProperty('--hero-tabs-bg', tokenSet['--hero-tabs-bg'] || tokenSet['--color-surface'] || '#0c192c');
-    root.style.setProperty('--hero-tabs-border', tokenSet['--hero-tabs-border'] || tokenSet['--color-border'] || 'rgba(56, 189, 248, 0.22)');
+    root.style.setProperty('--navy-100', tokenSet['--color-subtle'] || '#16223b');
+    root.style.setProperty('--hero-tabs-bg', tokenSet['--hero-tabs-bg'] || tokenSet['--color-surface'] || '#0f172a');
+    root.style.setProperty('--hero-tabs-border', tokenSet['--hero-tabs-border'] || tokenSet['--color-border'] || 'rgba(255, 255, 255, 0.14)');
     root.style.setProperty('--hero-tabs-text', '#f8fafc');
-    root.style.setProperty('--hero-tabs-icon', tokenSet['--color-primary'] || '#38bdf8');
+    root.style.setProperty('--hero-tabs-icon', tokenSet['--color-primary'] || '#f59e0b');
   } else {
-    root.style.setProperty('--navy-950', '#090d16');
+    root.style.setProperty('--navy-950', '#0a0f1d');
     root.style.setProperty('--navy-900', '#0f172a');
     root.style.setProperty('--navy-800', '#1e293b');
     root.style.setProperty('--navy-700', '#334155');
@@ -195,8 +196,8 @@ export function applyThemePresetToDOM(presetId = 'studio-orange', mode = 'light'
     root.style.setProperty('--navy-100', '#f1f5f9');
     root.style.setProperty('--hero-tabs-bg', tokenSet['--hero-tabs-bg'] || '#ffffff');
     root.style.setProperty('--hero-tabs-border', tokenSet['--hero-tabs-border'] || 'rgba(15, 23, 42, 0.12)');
-    root.style.setProperty('--hero-tabs-text', '#0f172a');
-    root.style.setProperty('--hero-tabs-icon', tokenSet['--color-secondary'] || '#1e40af');
+    root.style.setProperty('--hero-tabs-text', '#0a0f1d');
+    root.style.setProperty('--hero-tabs-icon', tokenSet['--color-primary'] || '#d97706');
   }
 
   // 5. Handle optional custom brand overrides (Admin Branding Manager)
