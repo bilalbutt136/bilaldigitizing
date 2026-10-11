@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import './HeroSectionVIP.css';
 import { useNavigate } from '../../utils/navigation';
 import { useAppState } from '../../context/StateContext';
 import { normalizeCategory } from '../../utils/categoryUtils';
@@ -202,6 +203,8 @@ export const HeroSection = () => {
         id: item.id || `live-port-${idx}`,
         title: item.title || 'Studio Production Sew-Out',
         imageUrl: item.digitized_image || item.digitizedImage || item.afterImg || item.after_img || item.image || item.original_image,
+        beforeUrl: item.original_image || item.originalImage || item.beforeImg || item.before_img || '',
+        afterUrl: item.digitized_image || item.digitizedImage || item.afterImg || item.after_img || '',
         category: item.category || 'Embroidery',
         stitchCount: item.stitch_count || item.stitchCount || '',
         formats: item.formats || ''
@@ -238,6 +241,8 @@ export const HeroSection = () => {
         id: item.id || `live-port-all-${idx}`,
         title: item.title || 'Studio Production Sew-Out',
         imageUrl: item.digitized_image || item.digitizedImage || item.afterImg || item.after_img || item.image || item.original_image,
+        beforeUrl: item.original_image || item.originalImage || item.beforeImg || item.before_img || '',
+        afterUrl: item.digitized_image || item.digitizedImage || item.afterImg || item.after_img || '',
         category: item.category || 'Embroidery',
         stitchCount: item.stitch_count || item.stitchCount || '',
         formats: item.formats || ''
@@ -411,7 +416,7 @@ export const HeroSection = () => {
   ];
 
   return (
-    <section className="theme-hero-section" style={{
+    <section className="theme-hero-section vip-hero" style={{
       background: 'var(--hero-bg)',
       color: 'var(--hero-text-primary)',
       padding: 'clamp(1rem, 2.5vh, 2.25rem) 0',
@@ -426,7 +431,7 @@ export const HeroSection = () => {
         left: '-5%',
         width: '600px',
         height: '600px',
-        background: 'radial-gradient(circle, rgba(249, 115, 22, 0.1) 0%, transparent 60%)',
+        background: 'radial-gradient(circle, rgba(37, 99, 235, 0.12) 0%, transparent 60%)',
         pointerEvents: 'none',
         zIndex: 0
       }} />
@@ -704,7 +709,7 @@ export const HeroSection = () => {
         {/* 2-Column Hero Dynamic Presentation (Balanced 50/50 Grid - Aligned to Center) */}
         <div className="hero-grid-layout" style={{
           display: 'grid',
-          gridTemplateColumns: 'minmax(0, 1.05fr) minmax(0, 0.95fr)',
+          gridTemplateColumns: 'minmax(0, 1.03fr) minmax(0, 0.97fr)',
           gap: 'clamp(1.25rem, 2.5vw, 2.25rem)',
           alignItems: 'center',
           width: '100%',
@@ -732,7 +737,7 @@ export const HeroSection = () => {
 
             {/* Dynamic Main Title */}
             <h1 className="hero-title" style={{
-              fontSize: 'clamp(1.5rem, 2.7vw, 2.35rem)',
+              fontSize: 'clamp(2.45rem, 3.8vw, 4.6rem)',
               fontWeight: 900,
               lineHeight: 1.16,
               color: 'var(--color-text-primary)',
@@ -742,22 +747,18 @@ export const HeroSection = () => {
               wordBreak: 'break-word',
               overflowWrap: 'break-word'
             }}>
-              {title.includes('&') ? (
-                <>
-                  {title.split('&')[0]} & <span className="text-gradient-orange">{title.split('&')[1]}</span>
-                </>
+              {title.includes('Commercial Shops') ? (
+                <>{title.split('Commercial Shops')[0]}<span className="vip-hero-title-highlight">Commercial Shops</span>{title.split('Commercial Shops').slice(1).join('Commercial Shops')}</>
+              ) : title.includes('&') ? (
+                <>{title.split('&')[0]} & <span className="vip-hero-title-highlight">{title.split('&').slice(1).join('&')}</span></>
               ) : title.includes('Services') ? (
-                <>
-                  {title.replace('Services', '')} <span className="text-gradient-orange">Services</span>
-                </>
-              ) : (
-                title
-              )}
+                <>{title.replace('Services', '')}<span className="vip-hero-title-highlight">Services</span></>
+              ) : (title)}
             </h1>
 
             {/* Dynamic Highlight / Subheading */}
             <div className="hero-highlight-row" style={{
-              fontSize: 'clamp(0.88rem, 1.55vw, 1.05rem)',
+              fontSize: 'clamp(0.94rem, 1.45vw, 1.12rem)',
               fontWeight: 800,
               color: 'var(--color-primary)',
               marginBottom: '0.45rem',
@@ -773,7 +774,7 @@ export const HeroSection = () => {
 
             {/* Dynamic Description */}
             <p className="hero-description-text" style={{
-              fontSize: 'clamp(0.82rem, 1.3vw, 0.92rem)',
+              fontSize: 'clamp(0.95rem, 1.1vw, 1.07rem)',
               lineHeight: 1.5,
               color: 'var(--color-text-secondary)',
               marginBottom: '0.75rem',
@@ -784,29 +785,38 @@ export const HeroSection = () => {
               {description}
             </p>
 
-            {/* Service Features Checkmarks List */}
-            <div className="hero-features-box" style={{
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '0.4rem',
-              marginBottom: '0.85rem',
-              background: 'var(--color-surface, var(--bg-card))',
-              border: '1px solid var(--color-border)',
-              padding: 'clamp(0.65rem, 1.5vw, 0.85rem) clamp(0.85rem, 1.5vw, 1.15rem)',
-              borderRadius: '14px',
-              textAlign: 'left',
-              width: '100%',
-              boxSizing: 'border-box',
-              boxShadow: 'var(--shadow-sm)'
-            }}>
-              {featuresList.slice(0, 3).map((featText, idx) => (
-                <div key={idx} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.55rem', fontSize: '0.82rem', color: 'var(--color-text-primary)', fontWeight: 600, wordBreak: 'break-word' }}>
-                  <div style={{ background: 'var(--color-primary-light)', border: '1px solid var(--color-border)', padding: '2px', borderRadius: '50%', display: 'flex', flexShrink: 0, marginTop: '2px' }}>
-                    <CheckCircle2 size={13} style={{ color: 'var(--color-primary)' }} />
-                  </div>
-                  <span style={{ lineHeight: 1.42 }}>{featText}</span>
-                </div>
-              ))}
+            {/* CMS-driven service capabilities, now visually structured and actionable. */}
+            <div className="hero-features-box" aria-label="Studio capabilities">
+              {featuresList.slice(0,3).map((featText, idx) => {
+                const parts = String(featText || '').split(/\s*[·•]\s*/).filter(Boolean);
+                const heading = parts[0] || '';
+                const summary = parts.slice(1).join(' · ');
+                const service = /vector|redraw/i.test(heading) ? 'vector'
+                  : /patch/i.test(heading) ? 'patch'
+                  : /embroider|digitiz/i.test(heading) ? 'embroidery' : null;
+                const Icon = service === 'vector' ? PenTool : service === 'patch' ? Tag
+                  : service === 'embroidery' ? Layers : ShieldCheck;
+                const Row = service ? 'button' : 'div';
+                return (
+                  <Row
+                    key={idx}
+                    type={service ? 'button' : undefined}
+                    className="vip-hero-feature"
+                    aria-label={service ? 'Start ' + heading : undefined}
+                    onClick={service ? () => {
+                      if (openOrderWizard) openOrderWizard({ type: service });
+                      else navigate('/order?service=' + encodeURIComponent(service));
+                    } : undefined}
+                  >
+                    <span className="vip-hero-feature-icon"><Icon size={21} aria-hidden="true" /></span>
+                    <span className="vip-hero-feature-copy">
+                      <span className="vip-hero-feature-title">{heading}</span>
+                      {summary && <span className="vip-hero-feature-detail">{summary}</span>}
+                    </span>
+                    {service && <ChevronRight size={18} aria-hidden="true" className="vip-hero-feature-chevron" />}
+                  </Row>
+                );
+              })}
             </div>
 
             {/* CTA Buttons Group (Always Side-by-Side on Desktop/Tablet) */}
@@ -818,7 +828,7 @@ export const HeroSection = () => {
             }}>
               <button
                 type="button"
-                className="btn btn-primary-orange btn-lg"
+                className="btn btn-primary-orange btn-lg vip-hero-primary"
                 onClick={handlePrimaryAction}
                 style={{
                   background: 'linear-gradient(120deg, var(--color-action-start, #2563eb) 0%, var(--color-action-end, #4338ca) 100%)',
@@ -835,14 +845,14 @@ export const HeroSection = () => {
                   cursor: 'pointer'
                 }}
               >
-                <Upload size={16} />
+                <span className="vip-hero-primary-icon"><Upload size={20} aria-hidden="true" /></span>
                 <span>{primaryCtaText}</span>
-                <ArrowRight size={16} />
+                <ArrowRight size={18} aria-hidden="true" />
               </button>
 
               <button
                 type="button"
-                className="btn btn-outline btn-lg"
+                className="btn btn-outline btn-lg vip-hero-secondary"
                 onClick={handleSecondaryAction}
                 style={{
                   background: 'var(--color-surface, transparent)',
@@ -860,6 +870,7 @@ export const HeroSection = () => {
                 }}
               >
                 <span>{secondaryCtaText}</span>
+                <ArrowRight size={16} aria-hidden="true" />
               </button>
             </div>
 
@@ -869,15 +880,15 @@ export const HeroSection = () => {
               flexWrap: 'wrap',
               gap: '1rem'
             }}>
-              {statsList.map((stat, i) => {
+              {statsList.slice(0,4).map((stat, i) => {
                 const IconComp = ICON_MAP[stat.icon] || Star;
                 return (
-                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                    <div style={{ background: 'var(--color-primary-light)', padding: '3px', borderRadius: '6px', display: 'flex' }}>
+                  <div key={i} className="vip-hero-stat" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    <div className="vip-hero-stat-icon" style={{ background: 'var(--color-primary-light)', padding: '3px', borderRadius: '6px', display: 'flex' }}>
                       <IconComp size={13} style={{ color: 'var(--color-primary)', flexShrink: 0 }} />
                     </div>
                     <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--color-text-secondary)', whiteSpace: 'nowrap' }}>
-                      <strong style={{ color: 'var(--color-primary)', marginRight: '3px' }}>{stat.value}</strong>
+                      <strong className="vip-hero-stat-value" style={{ color: 'var(--color-primary)', marginRight: '3px' }}>{stat.value}</strong>
                       {stat.label}
                     </span>
                   </div>
@@ -915,7 +926,7 @@ export const HeroSection = () => {
               }}
             >
               <Sparkles size={13} style={{ color: 'var(--color-primary)' }} />
-              <span>100% Real Studio Sew-Out Samples</span>
+              <span>Studio Portfolio Samples</span>
             </div>
 
             <div
@@ -937,7 +948,7 @@ export const HeroSection = () => {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.55rem', gap: '0.5rem', flexWrap: 'wrap' }}>
                 <div style={{ minWidth: 0, flex: 1 }}>
                   <div style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--color-primary)', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '0.35rem', letterSpacing: '0.06em' }}>
-                    <span className="blinking-green-dot" /> LIVE SHOWCASE
+                    <span className="blinking-green-dot" /> STUDIO PORTFOLIO
                   </div>
                   <div style={{ fontSize: '0.92rem', fontWeight: 800, color: 'var(--color-text-primary)', marginTop: '2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                     {(currentImage?.title || previewTitle || '').replace(/Emrboidery/gi, 'Embroidery')}
@@ -1184,6 +1195,27 @@ export const HeroSection = () => {
                 )}
               </div>
 
+              {currentImage?.imageUrl && (
+                <div className="vip-hero-gallery-caption">
+                  <span><CheckCircle2 size={15} aria-hidden="true" /> Studio portfolio artwork</span>
+                  <span>View design details <ArrowRight size={14} aria-hidden="true" /></span>
+                </div>
+              )}
+
+              {currentImage?.beforeUrl && currentImage?.afterUrl && currentImage.beforeUrl !== currentImage.afterUrl && (
+                <div className="vip-hero-before-after" aria-label="Real artwork before and after digitizing">
+                  <div>
+                    <span>ORIGINAL ARTWORK</span>
+                    <img src={getOptimizedImageUrl(currentImage.beforeUrl, 320)} alt="Original artwork before digitizing" loading="lazy" decoding="async" />
+                  </div>
+                  <ArrowRight size={18} aria-hidden="true" className="vip-hero-before-after-arrow" />
+                  <div>
+                    <span>FINISHED STUDIO WORK</span>
+                    <img src={getOptimizedImageUrl(currentImage.afterUrl, 320)} alt="Finished studio artwork after digitizing" loading="lazy" decoding="async" />
+                  </div>
+                </div>
+              )}
+
               {/* Bottom Pagination Dots with Brand Orange Active Bar (if multiple images) */}
               {hasMultipleImages && (
                 <div style={{
@@ -1205,7 +1237,7 @@ export const HeroSection = () => {
                           width: isActive ? '24px' : '6px',
                           borderRadius: '9999px',
                           border: 'none',
-                          background: isActive ? 'var(--orange-500, #ea580c)' : 'var(--color-border, rgba(148, 163, 184, 0.45))',
+                          background: isActive ? 'var(--color-primary)' : 'var(--color-border, rgba(148, 163, 184, 0.45))',
                           cursor: 'pointer',
                           transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
                           padding: 0,
