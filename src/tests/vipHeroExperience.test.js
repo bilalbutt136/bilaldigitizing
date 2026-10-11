@@ -44,3 +44,14 @@ test('first-screen layout keeps CTA and full detail visible on typical desktop v
   assert.match(css, /max-width: 640px/);
   assert.match(css, /\.vip-hero-duplicate-tabs \{ display: none/);
 });
+
+test('wide-screen VIP hero balancing expands layout without overriding compact screens', () => {
+  assert.match(css, /Wide-screen hero balance/);
+  assert.match(css, /min-width: 1450px/);
+  assert.match(css, /min-height: 780px/);
+  assert.match(css, /max-width: min\(1640px, calc\(100% - 44px\)\)/);
+  assert.match(css, /height: min\(48vh, 440px\)/);
+  assert.match(css, /min-height: 980px/);
+  assert.match(css, /min-width: 1350px/);
+  assert.match(css, /Compact laptop view must retain the original first-screen sizing/);
+});

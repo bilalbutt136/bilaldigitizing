@@ -421,3 +421,98 @@
   }
   .vip-hero .vip-hero-before-after img { height: 62px; }
 }
+
+
+/* Wide-screen hero balance: fill the available canvas without simulated page zoom.
+   Constrained to taller/wider screens; compact laptop settings above remain intact. */
+@media (min-width: 1450px) and (min-height: 780px) {
+  .vip-hero.theme-hero-section { padding: 16px 0 20px !important; }
+  .vip-hero > .container {
+    max-width: min(1640px, calc(100% - 44px)) !important;
+  }
+  .vip-hero .vip-hero-duplicate-tabs { margin-bottom: .55rem !important; }
+  .vip-hero .hero-grid-layout {
+    grid-template-columns: minmax(0, 1.04fr) minmax(0, .96fr) !important;
+    gap: clamp(1.5rem, 2.2vw, 2.55rem) !important;
+  }
+  .vip-hero .hero-badge-container { margin-bottom: .5rem !important; }
+  .vip-hero .badge-pill-glow { padding: .43rem .8rem !important; font-size: .78rem !important; }
+  .vip-hero .hero-title {
+    font-size: clamp(2.55rem, 2.85vw, 3.35rem) !important;
+    line-height: 1.065 !important;
+    letter-spacing: -.049em !important;
+    margin-bottom: .56rem !important;
+    max-width: none !important;
+  }
+  .vip-hero .hero-highlight-row {
+    font-size: clamp(.96rem,1.07vw,1.09rem) !important;
+    line-height: 1.34 !important;
+    margin-bottom: .48rem !important;
+  }
+  .vip-hero .hero-description-text {
+    font-size: clamp(.96rem,1vw,1.04rem) !important;
+    line-height: 1.52 !important;
+    max-width: 760px !important;
+    margin-bottom: .7rem !important;
+  }
+  .vip-hero .hero-features-box {
+    padding: .25rem .8rem !important;
+    border-radius: 17px !important;
+    margin-bottom: .75rem !important;
+  }
+  .vip-hero .vip-hero-feature { gap: .66rem; padding: .5rem .18rem; }
+  .vip-hero .vip-hero-feature-icon {
+    width: 35px; height: 35px; flex-basis: 35px; border-radius: 11px;
+  }
+  .vip-hero .vip-hero-feature-icon svg { width: 19px; height: 19px; }
+  .vip-hero .vip-hero-feature-title { font-size: .89rem; line-height: 1.32; }
+  .vip-hero .vip-hero-feature-detail { font-size: .76rem; line-height: 1.4; }
+  .vip-hero .hero-cta-buttons-row { gap: .75rem !important; margin: .7rem 0 .65rem !important; }
+  .vip-hero .vip-hero-primary,.vip-hero .vip-hero-secondary {
+    min-height: 52px !important;
+    padding: .65rem 1rem !important;
+    font-size: .94rem !important;
+    border-radius: 14px !important;
+  }
+  .vip-hero .vip-hero-primary-icon { width: 31px; height: 31px; }
+  .vip-hero .vip-hero-primary-icon svg { width: 19px; height: 19px; }
+  .vip-hero .hero-trust-badges-row { gap: .4rem .85rem !important; }
+  .vip-hero .vip-hero-stat-icon { width: 29px; height: 29px; }
+  .vip-hero .vip-hero-stat-icon svg { width: 15px; height: 15px; }
+  .vip-hero .vip-hero-stat span { font-size: .76rem !important; }
+  .vip-hero .vip-hero-stat-value { font-size: .81rem !important; }
+  .vip-hero .hero-showcase-card {
+    max-width: none !important;
+    padding: .9rem !important;
+    border-radius: 23px !important;
+  }
+  .vip-hero .hero-showcase-image-box {
+    height: min(48vh, 440px) !important;
+    min-height: 0 !important; max-height: min(48vh, 440px) !important;
+    border-radius: 17px !important;
+  }
+  .vip-hero .vip-hero-gallery-caption { margin-top: .55rem; font-size: .71rem; }
+  .vip-hero .vip-hero-before-after { margin-top: .42rem; padding: .55rem; }
+  .vip-hero .vip-hero-before-after img { height: 73px; }
+}
+@media (min-width: 1450px) and (min-height: 980px) {
+  .vip-hero .hero-title { font-size: clamp(2.75rem, 3vw, 3.65rem) !important; }
+  .vip-hero .vip-hero-feature { padding: .66rem .2rem; }
+  .vip-hero .hero-showcase-image-box {
+    height: min(52vh, 555px) !important;
+    max-height: min(52vh, 555px) !important;
+  }
+}
+@media (min-width: 1350px) and (max-width: 1449px) and (min-height: 830px) {
+  .vip-hero .hero-title { font-size: clamp(2.35rem, 2.83vw, 2.95rem) !important; }
+  .vip-hero .hero-showcase-image-box {
+    height: min(46vh, 410px) !important;
+    max-height: min(46vh, 410px) !important;
+  }
+  .vip-hero .hero-features-box { margin-bottom: .8rem !important; }
+  .vip-hero .vip-hero-feature { padding: .48rem .2rem; }
+  .vip-hero .vip-hero-primary,.vip-hero .vip-hero-secondary {
+    min-height: 49px !important; font-size: .9rem !important;
+  }
+}
+/* Compact laptop view must retain the original first-screen sizing. */
