@@ -38,7 +38,7 @@ function OrderContent() {
             margin: '0 0 0.35rem',
             color: 'var(--color-text-primary, #0f172a)'
           }}>
-            Commercial Embroidery Digitizing & <span style={{ color: 'var(--color-primary)' }}>Custom Patches</span>
+            Embroidery, Vector Art & <span style={{ color: 'var(--color-primary)' }}>Custom Patches</span>
           </h1>
 
           <p style={{
@@ -48,7 +48,7 @@ function OrderContent() {
             margin: '0 auto 0.75rem',
             lineHeight: 1.45
           }}>
-            Upload design, select options, and get production stitch files in 4–12 hours.
+            Choose a service and package, upload artwork, and review the exact quote before checkout. Production times vary by package.
           </p>
 
           <div style={{
@@ -62,7 +62,7 @@ function OrderContent() {
             color: 'var(--color-text-secondary, #475569)'
           }}>
             <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-              <Zap size={13} style={{ color: 'var(--color-primary)' }} /> 4–12h Delivery
+              <Zap size={13} style={{ color: 'var(--color-primary)' }} /> Package-Based Turnaround
             </span>
             <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
               <CheckCircle2 size={13} style={{ color: '#059669' }} /> 100% Hand Pathing
@@ -128,7 +128,7 @@ function OrderContent() {
                 Do I need to create an account before ordering?
               </h4>
               <p style={{ margin: 0, color: 'var(--color-text-muted, #64748b)', lineHeight: 1.55 }}>
-                No! You can order seamlessly as a guest. All machine files, status updates, and digital proofs will be emailed directly to you, and you can track your order anytime on the site.
+                Yes. You can choose your service and configure an order before signing in, but a verified customer account is required to submit the order and securely track payment, files, and production updates.
               </p>
             </div>
           </div>
