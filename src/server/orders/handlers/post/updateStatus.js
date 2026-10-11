@@ -55,6 +55,11 @@ export async function handleUpdateStatus(context) {
           monthlyProgress = getMonthlyProgress(parsed, null, targetOrder?.paid_at);
         }
       } catch {}
+      if (monthlyProgress && !isAdmin &&
+          (String(extraData?.paymentStatus || extraData?.payment_status || '').toLowerCase() === 'paid') &&
+          String(targetOrder?.payment_status || '').toLowerCase() !== 'paid') {
+        return NextResponse.json({ error: 'Payment status must be verified by checkout.' }, { status: 403 });
+      }
       if (monthlyProgress && newStatus !== 'delivered' &&
           (extraData?.deliveries || extraData?.uploadedMachineFiles)) {
         return NextResponse.json({ error: 'Monthly delivery history cannot be changed through a status action.' }, { status: 403 });

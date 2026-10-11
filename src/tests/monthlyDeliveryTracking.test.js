@@ -43,6 +43,7 @@ test('server requires staff, paid bundle and optimistic concurrency for monthly 
   assert.match(server,/!isAdmin/);
   assert.match(server,/monthlyDeliveryId/);
   assert.match(server,/targetOrder\?\.payment_status/);
+  assert.match(server,/Payment status must be verified by checkout/);
   assert.match(server,/prepareMonthlyDelivery/);
   assert.match(server,/updateQuery\.eq\('updated_at', targetOrder\.updated_at\)/);
   assert.match(server,/monthlyDelivery\.progress\.complete \? 'completed' : 'in_progress'/);
