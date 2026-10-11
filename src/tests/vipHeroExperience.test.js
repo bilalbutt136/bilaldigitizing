@@ -33,3 +33,14 @@ test('before after comparison uses only matching actual gallery images', () => {
   assert.match(hero, /Studio portfolio artwork/);
   assert.doesNotMatch(hero, /TRUSTED BY 1,200\+ BRANDS/);
 });
+
+test('first-screen layout keeps CTA and full detail visible on typical desktop viewports', () => {
+  assert.match(hero, /vip-hero-duplicate-tabs/);
+  assert.match(hero, /vip-hero-duplicate-vector-promo/);
+  assert.match(css, /First-screen fit/);
+  assert.match(css, /min-height: calc\(100svh - 69px\)/);
+  assert.match(css, /height: min\(43vh,355px\)/);
+  assert.match(css, /max-height: 800px/);
+  assert.match(css, /max-width: 640px/);
+  assert.match(css, /\.vip-hero-duplicate-tabs \{ display: none/);
+});

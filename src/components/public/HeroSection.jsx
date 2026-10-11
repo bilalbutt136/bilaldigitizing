@@ -628,7 +628,7 @@ export const HeroSection = () => {
       <div className="container" style={{ position: 'relative', zIndex: 1, maxWidth: '1380px', width: '100%', boxSizing: 'border-box' }}>
 
         {/* Top Navigation Tabs Switcher (Embroidery & Custom Patches Focus) */}
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 'clamp(0.85rem, 1.8vw, 1.25rem)', width: '100%' }}>
+        <div className="vip-hero-duplicate-tabs" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 'clamp(0.85rem, 1.8vw, 1.25rem)', width: '100%' }}>
           <div
             className="hero-nav-tabs-wrapper"
             style={{
@@ -683,7 +683,7 @@ export const HeroSection = () => {
           </div>
 
           {/* Subtle Vector Art Secondary Pill */}
-          <div style={{ marginTop: '0.45rem', textAlign: 'center', fontSize: '0.78rem', color: 'var(--hero-tabs-text, var(--color-text-muted))' }}>
+          <div className="vip-hero-duplicate-vector-promo" style={{ marginTop: '0.45rem', textAlign: 'center', fontSize: '0.78rem', color: 'var(--hero-tabs-text, var(--color-text-muted))' }}>
             <span>Need logo redraw or vector conversion? </span>
             <button
               type="button"

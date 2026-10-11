@@ -265,3 +265,159 @@
   .vip-hero .vip-hero-before-after { gap: .25rem; padding: .55rem; }
   .vip-hero .vip-hero-before-after > div > span { font-size: .58rem; }
 }
+
+
+/* First-screen fit: protect the headline, service choices and CTA from dropping
+   below the fold on normal laptop/desktop displays. No overflow clipping. */
+@media (min-width: 1025px) {
+  .vip-hero.theme-hero-section {
+    min-height: calc(100svh - 69px) !important;
+    padding: 12px 0 14px !important;
+  }
+  .vip-hero .hero-nav-tabs-wrapper { box-shadow: 0 3px 13px rgba(34,55,120,.06) !important; }
+  .vip-hero .hero-grid-layout {
+    gap: clamp(1.1rem,2.1vw,2rem) !important;
+    align-items: center !important;
+  }
+  .vip-hero .hero-badge-container { margin-bottom: .36rem !important; }
+  .vip-hero .badge-pill-glow { padding: .35rem .7rem !important; font-size: .71rem !important; }
+  .vip-hero .hero-title {
+    font-size: clamp(2.15rem,2.6vw,2.75rem) !important;
+    letter-spacing: -.046em !important;
+    line-height: 1.09 !important;
+    margin-bottom: .48rem !important;
+  }
+  .vip-hero .hero-highlight-row {
+    font-size: clamp(.85rem,1.05vw,1rem) !important;
+    line-height: 1.3 !important;
+    margin-bottom: .45rem !important;
+  }
+  .vip-hero .hero-description-text {
+    font-size: clamp(.83rem,.98vw,.94rem) !important;
+    line-height: 1.47 !important;
+    margin-bottom: .57rem !important;
+  }
+  .vip-hero .hero-features-box {
+    padding: .2rem .65rem !important;
+    margin-bottom: .65rem !important;
+    border-radius: 15px !important;
+  }
+  .vip-hero .vip-hero-feature { gap: .56rem; padding: .38rem .2rem; }
+  .vip-hero .vip-hero-feature-icon {
+    width: 31px; height: 31px; flex-basis: 31px; border-radius: 9px;
+  }
+  .vip-hero .vip-hero-feature-icon svg { width: 17px; height: 17px; }
+  .vip-hero .vip-hero-feature-title { font-size: .83rem; line-height: 1.25; }
+  .vip-hero .vip-hero-feature-detail { font-size: .7rem; line-height: 1.3; }
+  .vip-hero .hero-cta-buttons-row { margin: .5rem 0 .48rem !important; gap: .55rem !important; }
+  .vip-hero .vip-hero-primary,.vip-hero .vip-hero-secondary {
+    min-height: 46px !important;
+    padding: .5rem .9rem !important;
+    border-radius: 12px !important; font-size: .87rem !important;
+  }
+  .vip-hero .vip-hero-primary-icon { width: 27px; height: 27px; border-radius: 8px; }
+  .vip-hero .vip-hero-primary-icon svg { width: 17px; height: 17px; }
+  .vip-hero .hero-trust-badges-row { gap: .3rem .75rem !important; }
+  .vip-hero .vip-hero-stat { padding: 0 !important; gap: .32rem !important; }
+  .vip-hero .vip-hero-stat-icon { width: 24px; height: 24px; border-radius: 7px !important; }
+  .vip-hero .vip-hero-stat-icon svg { width: 12px; height: 12px; }
+  .vip-hero .vip-hero-stat span { font-size: .7rem !important; }
+  .vip-hero .vip-hero-stat-value { font-size: .76rem !important; }
+  .vip-hero .hero-showcase-card { padding: .65rem !important; border-radius: 19px !important; }
+  .vip-hero .hero-showcase-image-box {
+    height: min(43vh,355px) !important;
+    min-height: 0 !important;
+    max-height: min(43vh,355px) !important;
+    aspect-ratio: auto !important;
+    border-radius: 13px !important;
+  }
+  .vip-hero .vip-hero-gallery-caption { margin-top: .42rem; font-size: .65rem; }
+  .vip-hero .vip-hero-before-after { margin-top: .35rem; padding: .45rem; }
+  .vip-hero .vip-hero-before-after img { height: 65px; }
+}
+@media (min-width: 1025px) and (max-height: 800px) {
+  .vip-hero.theme-hero-section { min-height: calc(100svh - 69px) !important; padding: 8px 0 9px !important; }
+  .vip-hero .hero-title { font-size: clamp(1.95rem,2.42vw,2.45rem) !important; line-height: 1.06 !important; }
+  .vip-hero .hero-description-text { line-height: 1.39 !important; }
+  .vip-hero .hero-features-box { margin-bottom: .4rem !important; }
+  .vip-hero .vip-hero-feature { padding: .3rem .18rem; }
+  .vip-hero .hero-showcase-image-box { height: min(40vh,310px) !important; max-height: min(40vh,310px) !important; }
+}
+/* The secondary vector promo duplicated the actual clickable Vector service row,
+   adding height without giving customers a new action. */
+.vip-hero .vip-hero-duplicate-vector-promo { display: none !important; }
+/* On narrow screens, users need actionable copy before the gallery;
+   retain natural scroll rather than cutting off information. */
+@media (max-width: 1024px) {
+  .vip-hero .hero-left-content { order: 1 !important; }
+  .vip-hero .hero-right-visual { order: 2 !important; }
+  .vip-hero .hero-title {
+    font-size: clamp(2rem,4.2vw,2.85rem) !important;
+    line-height: 1.1 !important;
+    margin-bottom: .6rem !important;
+  }
+  .vip-hero .hero-badge-container { margin-bottom: .5rem !important; }
+  .vip-hero .hero-features-box { margin-bottom: .75rem !important; }
+  .vip-hero .hero-cta-buttons-row { margin: .7rem 0 !important; }
+  .vip-hero .hero-showcase-image-box { height: 300px !important; max-height: 300px !important; min-height: 0 !important; aspect-ratio: auto !important; }
+}
+@media (max-width: 640px) {
+  .vip-hero.theme-hero-section { padding: .75rem 0 1.35rem !important; }
+  .vip-hero .vip-hero-duplicate-tabs { display: none !important; }
+  .vip-hero .hero-title { font-size: clamp(1.9rem,8vw,2.3rem) !important; margin-bottom: .45rem !important; }
+  .vip-hero .hero-highlight-row { font-size: .81rem !important; margin-bottom: .38rem !important; }
+  .vip-hero .hero-description-text { font-size: .84rem !important; line-height: 1.47 !important; margin-bottom: .55rem !important; }
+  .vip-hero .hero-features-box { padding: .2rem .52rem !important; margin-bottom: .55rem !important; }
+  .vip-hero .vip-hero-feature { gap: .48rem; padding: .42rem .12rem; }
+  .vip-hero .vip-hero-feature-icon { flex-basis: 30px; width: 30px; height: 30px; border-radius: 9px; }
+  .vip-hero .vip-hero-feature-title { font-size: .77rem; }
+  .vip-hero .vip-hero-feature-detail { font-size: .67rem; }
+  .vip-hero .hero-cta-buttons-row { margin: .5rem 0 .65rem !important; gap: .5rem !important; }
+  .vip-hero .vip-hero-primary,.vip-hero .vip-hero-secondary { min-height: 44px !important; padding: .45rem .75rem !important; }
+  .vip-hero .vip-hero-primary-icon { width: 27px; height: 27px; }
+  .vip-hero .hero-trust-badges-row { gap: .3rem .6rem !important; }
+  .vip-hero .vip-hero-stat-icon { width: 25px; height: 25px; }
+  .vip-hero .hero-showcase-image-box { height: 215px !important; max-height: 215px !important; }
+}
+
+
+/* Compact laptops and landscape tablets should also see the showcase above the fold. */
+@media (min-width: 900px) and (max-width: 1024px) {
+  .vip-hero.theme-hero-section {
+    min-height: calc(100svh - 69px) !important;
+    padding: .6rem 0 .75rem !important;
+    display: flex !important;
+    justify-content: center !important;
+  }
+  .vip-hero .vip-hero-duplicate-tabs { display: none !important; }
+  .vip-hero .hero-grid-layout {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1.12fr) minmax(0, .88fr) !important;
+    gap: 1rem !important;
+    align-items: center !important;
+  }
+  .vip-hero .hero-left-content { order: 1 !important; text-align: left !important; }
+  .vip-hero .hero-right-visual { order: 2 !important; }
+  .vip-hero .hero-title { font-size: clamp(1.8rem,3vw,2.1rem) !important; margin-bottom: .45rem !important; }
+  .vip-hero .hero-highlight-row { font-size: .87rem !important; margin-bottom: .35rem !important; }
+  .vip-hero .hero-description-text { font-size: .81rem !important; line-height: 1.39 !important; margin-bottom: .45rem !important; }
+  .vip-hero .badge-pill-glow { font-size: .67rem !important; padding: .34rem .52rem !important; }
+  .vip-hero .hero-features-box { padding: .2rem .5rem !important; margin-bottom: .45rem !important; }
+  .vip-hero .vip-hero-feature { gap: .5rem; padding: .34rem .08rem; }
+  .vip-hero .vip-hero-feature-title { font-size: .78rem; }
+  .vip-hero .vip-hero-feature-detail { font-size: .68rem; }
+  .vip-hero .vip-hero-feature-icon { flex-basis: 30px; width: 30px; height: 30px; }
+  .vip-hero .hero-cta-buttons-row { margin: .55rem 0 !important; gap: .42rem !important; }
+  .vip-hero .vip-hero-primary,.vip-hero .vip-hero-secondary { min-height: 43px !important; font-size: .8rem !important; padding: .4rem .55rem !important; }
+  .vip-hero .vip-hero-primary-icon { width: 25px; height: 25px; }
+  .vip-hero .hero-trust-badges-row { gap: .25rem .65rem !important; }
+  .vip-hero .vip-hero-stat-icon { width: 24px; height: 24px; }
+  .vip-hero .vip-hero-stat span { font-size: .68rem !important; }
+  .vip-hero .hero-showcase-card { padding: .62rem !important; border-radius: 17px !important; }
+  .vip-hero .hero-showcase-image-box {
+    height: min(38vh,300px) !important;
+    min-height: 0 !important; max-height: min(38vh,300px) !important;
+    aspect-ratio: auto !important;
+  }
+  .vip-hero .vip-hero-before-after img { height: 62px; }
+}
