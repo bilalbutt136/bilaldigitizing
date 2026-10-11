@@ -183,7 +183,7 @@ export const WhyChooseUs = () => {
     : activeDefaultSteps;
 
   return (
-    <section id="why-choose-us" style={{ padding: '5.5rem 0', background: 'var(--bg-main)', borderTop: '1px solid var(--border-color)', position: 'relative' }}>
+    <section id="why-choose-us" style={{ padding: '5.5rem 0', background: 'transparent', position: 'relative' }}>
       <style>{`
         .vip-trust-grid {
           display: grid;

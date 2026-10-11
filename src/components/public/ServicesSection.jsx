@@ -142,12 +142,10 @@ export const ServicesSection = () => {
   return (
     <section id="services" style={{
       padding: '3.5rem 0 5.5rem',
-      background: 'var(--bg-main)',
+      background: 'transparent',
       color: 'var(--text-main)',
       fontFamily: 'var(--font-body, "Inter", sans-serif)',
-      position: 'relative',
-      borderTop: '1px solid var(--border-color)',
-      borderBottom: '1px solid var(--border-color)'
+      position: 'relative'
     }}>
       <div className="container">
 

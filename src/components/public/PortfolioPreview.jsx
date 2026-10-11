@@ -69,7 +69,7 @@ export const PortfolioPreview = () => {
     : combinedItems.filter(item => item.mappedCategory === activeCategory);
 
   return (
-    <section style={{ backgroundColor: 'var(--bg-main)', padding: '5.5rem 0', fontFamily: 'var(--font-body, "Inter", sans-serif)', borderTop: '1px solid var(--border-color)' }}>
+    <section style={{ backgroundColor: 'transparent', padding: '5.5rem 0', fontFamily: 'var(--font-body, "Inter", sans-serif)' }}>
       <div className="container">
         
         {/* Header */}

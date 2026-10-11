@@ -34,7 +34,7 @@ export const TestimonialsFAQ = () => {
   const displayTestimonials = filteredTestimonials.length > 0 ? filteredTestimonials : activeTestimonials;
 
   return (
-    <section id="testimonials" style={{ padding: '5.5rem 0', background: 'var(--bg-main)', position: 'relative', borderTop: '1px solid var(--border-color)' }}>
+    <section id="testimonials" style={{ padding: '5.5rem 0', background: 'transparent', position: 'relative' }}>
       <div className="container">
         
         {/* Testimonials Block */}

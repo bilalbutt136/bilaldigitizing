@@ -115,10 +115,8 @@ export const TrustStatsBar = () => {
     <section
       className="theme-trust-stats-bar"
       style={{
-        backgroundColor: 'var(--stats-bar-bg)',
-        borderTop: '1px solid var(--border-color)',
-        borderBottom: '1px solid var(--border-color)',
-        padding: '3rem 0',
+        backgroundColor: 'var(--stats-bar-bg, transparent)',
+        padding: '3.5rem 0',
         position: 'relative',
         overflow: 'hidden'
       }}

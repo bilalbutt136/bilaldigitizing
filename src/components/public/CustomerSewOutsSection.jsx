@@ -74,7 +74,7 @@ export const CustomerSewOutsSection = () => {
   const samplesList = combinedDbSamples;
 
   return (
-    <section id="sew-outs" style={{ padding: '5rem 0', background: 'var(--bg-main)', borderBottom: '1px solid var(--border-color)' }}>
+    <section id="sew-outs" style={{ padding: '5rem 0', background: 'transparent' }}>
       <div className="container">
         
         {/* Section Header */}

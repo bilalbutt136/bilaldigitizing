@@ -238,7 +238,6 @@ export const CustomPatchesSection = ({ hideTabs: _hideTabs = false, hideHero = f
         <section style={{
           padding: 'clamp(2.5rem, 5vh, 3.5rem) 0',
           background: 'var(--hero-bg, linear-gradient(135deg, #0b1329 0%, #0f172a 60%, #1e1b4b 100%))',
-          borderBottom: '1px solid var(--border-color)',
           position: 'relative',
           overflow: 'hidden'
         }}>

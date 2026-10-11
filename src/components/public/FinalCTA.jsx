@@ -65,8 +65,7 @@ export const FinalCTA = () => {
       display: 'flex',
       flexDirection: 'column',
       alignItems: 'center',
-      justifyContent: 'center',
-      borderTop: '1px solid var(--border-color)'
+      justifyContent: 'center'
     }}>
       {/* Background Radial Glow */}
       <div style={{
