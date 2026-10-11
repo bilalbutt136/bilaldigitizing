@@ -62,3 +62,12 @@ test('pricing-page selection reaches the wizard by live package ID', () => {
   assert.match(store, /const hasValidPrice = Number\.isFinite\(unitPrice\) && unitPrice > 0/);
   assert.doesNotMatch(store, /selectedStoreItem\.price \|\| '\$10\.00'/);
 });
+
+test('direct order URL remains an order page, not a forced mobile app redirect', () => {
+  const next = fs.readFileSync('next.config.js', 'utf8');
+  const orderRedirect = /source:\s*'\/order',\s*destination:\s*'\/\?app=true&tab=home'/;
+  assert.doesNotMatch(next, orderRedirect);
+  assert.match(next, /source:\s*'\/app'/);
+  const page = fs.readFileSync('app/order/page.jsx', 'utf8');
+  assert.match(page, /<StreamlinedOrderFlow initialService=\{service\}/);
+});

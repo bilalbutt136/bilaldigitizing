@@ -122,11 +122,7 @@ const nextConfig = {
         destination: '/?app=true&tab=home',
         permanent: false,
       },
-      {
-        source: '/order',
-        destination: '/?app=true&tab=home',
-        permanent: false,
-      },
+
       {
         source: '/orders',
         destination: '/?app=true&tab=orders',
