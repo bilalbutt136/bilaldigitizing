@@ -77,7 +77,7 @@ export async function handleUpdateStatus(context) {
           return NextResponse.json({ error: 'Delivery ID missing or does not match.' }, { status: 400 });
         }
         try {
-          monthlyDelivery = prepareMonthlyDelivery(originalMonthlyNotes, first, extraData.monthlyDesignCount, targetOrder.paid_at);
+          monthlyDelivery = prepareMonthlyDelivery(originalMonthlyNotes, first, extraData.monthlyDesignId, targetOrder.paid_at || targetOrder.created_at);
         } catch (err) {
           return NextResponse.json({ error: err.message }, { status: 409 });
         }

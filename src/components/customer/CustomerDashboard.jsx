@@ -1877,7 +1877,7 @@ export const CustomerDashboard = () => {
                                         color: ord.monthlyProgress.complete ? 'var(--color-success, #059669)' : 'var(--color-primary)' }}>
                                         {ord.monthlyProgress.complete ? '✓ Monthly Plan Completed' :
                                           ord.monthlyProgress.expired ? 'Monthly period ended' :
-                                          `${ord.monthlyProgress.delivered}/${ord.monthlyProgress.quota} designs delivered`}
+                                          `${ord.monthlyProgress.uploaded}/${ord.monthlyProgress.quota} uploaded · ${ord.monthlyProgress.delivered} delivered`}
                                       </div>
                                     )}
                                   </td>
@@ -2094,7 +2094,7 @@ export const CustomerDashboard = () => {
                                         color: ord.monthlyProgress.complete ? 'var(--color-success, #059669)' : 'var(--color-primary)' }}>
                                         {ord.monthlyProgress.complete ? '✓ Monthly Plan Completed' :
                                           ord.monthlyProgress.expired ? 'Monthly period ended' :
-                                          `${ord.monthlyProgress.delivered}/${ord.monthlyProgress.quota} designs delivered`}
+                                          `${ord.monthlyProgress.uploaded}/${ord.monthlyProgress.quota} uploaded · ${ord.monthlyProgress.delivered} delivered`}
                                       </div>
                                     )}
                                   </div>

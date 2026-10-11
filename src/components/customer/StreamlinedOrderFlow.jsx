@@ -999,7 +999,7 @@ export const StreamlinedOrderFlow = ({
                     })}
                   </div>
                   <div style={{ padding: '0.9rem 1rem', background: 'var(--color-primary-light)', border: '1px solid var(--color-border)', borderRadius: '12px', color: 'var(--color-text-secondary)', fontSize: '0.8rem', lineHeight: 1.6 }}>
-                    <strong style={{ color: 'var(--color-text-primary)' }}>How it works:</strong> Purchase a bundle, then send designs throughout the next 30 days through your order conversation. Studio staff track fulfillment. This is not an automatic recurring subscription.
+                    <strong style={{ color: 'var(--color-text-primary)' }}>How it works:</strong> Purchase a bundle, then upload designs from your order tracker during the next 30 days. Studio staff track fulfillment. This is not an automatic recurring subscription.
                   </div>
                 </section>
               ) : (

@@ -5,7 +5,7 @@ import { getServerAuthUser } from '../../../../src/lib/supabase/serverAuth';
 import { checkDistributedRateLimit, getClientIp, getRateLimitHeaders } from '../../../../src/lib/rateLimit';
 import { enforceApiBurstLimit } from '../../../../src/lib/apiBurstGuard.js';
 
-const CLIENT_FOLDERS = new Set(['artwork', 'orders', 'store-orders', 'chat-attachments']);
+const CLIENT_FOLDERS = new Set(['artwork', 'orders', 'store-orders', 'chat-attachments', 'monthly-designs']);
 const WORKER_FOLDERS = new Set(['worker-uploads']);
 const ADMIN_FOLDERS = new Set([
   ...CLIENT_FOLDERS,

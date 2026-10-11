@@ -63,7 +63,7 @@ export default function MonthlyBundlesEditor() {
         <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.86rem', lineHeight: 1.6, margin: '0.35rem 0' }}>
           Configure 10, 25, 50 and 100-design prepaid 30-day bundles separately for Embroidery and Vector Art.
           No auto-renewal or subscription charge is activated. Leave a plan disabled until pricing is ready.
-          Artwork can be supplied after checkout using the order conversation.
+          Customers upload each new design from the paid order tracker.
         </p>
         <button type="button" onClick={load} disabled={loading || saving} style={{ border: '1px solid var(--color-border)', borderRadius: 8, padding: '0.45rem 0.7rem', background: 'var(--color-subtle)', color: 'var(--color-text-primary)', display: 'inline-flex', gap: 6, alignItems: 'center', cursor: 'pointer' }}><RefreshCw size={14} /> Reload Live Prices</button>
       </div>

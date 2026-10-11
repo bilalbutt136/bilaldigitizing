@@ -467,7 +467,7 @@ export function mapDatabaseOrderToClientOrder(order) {
         output_file_url: resolvedOutputFileUrl,
         deliveries: notesData.deliveries || [],
         monthlyBundle: notesData.monthlyBundle || null,
-        monthlyProgress: getMonthlyProgress(notesData, null, order.paid_at),
+        monthlyProgress: getMonthlyProgress(notesData, null, order.paid_at || (isPaidComputed ? order.created_at : null)),
         workerFiles: workerFiles,
         worker_files: workerFiles,
         workerId: order.worker_id,

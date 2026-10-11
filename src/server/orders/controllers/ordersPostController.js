@@ -13,6 +13,7 @@ import { handleAssignWorker } from '../handlers/post/assignWorker.js';
 import { handleWorkerBidAndAccept } from '../handlers/post/workerBidAndAccept.js';
 import { handleWorkerSubmitUpload } from '../handlers/post/workerSubmitUpload.js';
 import { handleAdminReviewWorker } from '../handlers/post/adminReviewWorker.js';
+import { handleSubmitMonthlyDesign } from '../handlers/post/submitMonthlyDesign.js';
 
 const POST_HANDLERS = {
   createOrder: handleCreateOrder,
@@ -26,7 +27,8 @@ const POST_HANDLERS = {
   assignWorker: handleAssignWorker,
   workerBidAndAccept: handleWorkerBidAndAccept,
   workerSubmitUpload: handleWorkerSubmitUpload,
-  adminReviewWorker: handleAdminReviewWorker
+  adminReviewWorker: handleAdminReviewWorker,
+  submitMonthlyDesign: handleSubmitMonthlyDesign
 };
 
 export async function handleOrdersPost(request) {

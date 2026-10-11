@@ -45,7 +45,7 @@ import {
   XCircle,
   Star
 } from 'lucide-react';
-import { uploadFileToCloudinaryFull, fetchOrderById } from '../../services/supabaseService';
+import { uploadFileToCloudinaryFull, fetchOrderById, getAuthHeaders } from '../../services/supabaseService';
 import { AssignWorkerModal } from '../admin/AssignWorkerModal';
 import { ReviewWorkerUploadModal } from '../admin/ReviewWorkerUploadModal';
 import { CustomerInvoiceModal } from '../common/CustomerInvoiceModal';
@@ -112,7 +112,11 @@ export const OrderTrackerDrawer = () => {
   const [revisionImage, setRevisionImage] = useState(null);
   const [deliveryMessage, setDeliveryMessage] = useState('');
   const [isDelivering, setIsDelivering] = useState(false);
-  const [monthlyDeliveryCount, setMonthlyDeliveryCount] = useState(1);
+  const [monthlyDeliverDesignId, setMonthlyDeliverDesignId] = useState('');
+  const [monthlyArtFile, setMonthlyArtFile] = useState(null);
+  const [monthlyArtTitle, setMonthlyArtTitle] = useState('');
+  const [monthlyArtLoading, setMonthlyArtLoading] = useState(false);
+  const [monthlyArtProgress, setMonthlyArtProgress] = useState(0);
   const [_showLightbox, _setShowLightbox] = useState(false);
   const [lightboxArtwork, setLightboxArtwork] = useState(null);
   const [showWorksheetModal, setShowWorksheetModal] = useState(false);
@@ -335,8 +339,10 @@ export const OrderTrackerDrawer = () => {
       setIsRequirementsOpen(false);
       setAdminFilesList([]);
       setDeliveryMessage('');
-      setMonthlyDeliveryCount(1);
-      setMonthlyDeliveryCount(1);
+      setMonthlyDeliverDesignId('');
+      setMonthlyArtFile(null);
+      setMonthlyArtTitle('');
+      setMonthlyArtProgress(0);
       setIsDelivering(false);
     }
   }, [selectedOrderForDrawer, ord?.id]);
@@ -432,7 +438,51 @@ export const OrderTrackerDrawer = () => {
     parsedNotes = ord.notes;
   }
 
-  const monthlyProgress = getMonthlyProgress(parsedNotes, null, ord.paid_at);
+  const monthlyProgress = getMonthlyProgress(parsedNotes, null, ord.paid_at || (isPaid ? (ord.created_at || ord.createdAt) : null));
+
+  const monthlyDeliverTarget = monthlyProgress?.designs.find(d => d.id === monthlyDeliverDesignId)
+    || monthlyProgress?.designs.find(d => d.status !== 'Delivered')
+    || monthlyProgress?.designs[0] || null;
+
+  const handleSubmitMonthlyArt = async (event) => {
+    event.preventDefault();
+    if (!monthlyProgress || !monthlyArtFile || monthlyArtLoading) return;
+    if (!isPaid || monthlyProgress.remaining < 1 || monthlyProgress.expired) {
+      showToast('Your monthly plan is not accepting new designs.', 'error');
+      return;
+    }
+    if (monthlyArtFile.size > 50 * 1024 * 1024 || monthlyArtFile.size === 0) {
+      showToast('Upload one artwork file up to 50MB.', 'error');
+      return;
+    }
+    setMonthlyArtLoading(true);
+    setMonthlyArtProgress(1);
+    try {
+      const cloud = await uploadFileToCloudinaryFull(monthlyArtFile, 'client-uploads', 'monthly-designs', setMonthlyArtProgress);
+      if (!cloud?.url) throw new Error('File upload was not completed.');
+      const response = await fetch('/api/orders', {
+        method: 'POST', headers: await getAuthHeaders(), cache: 'no-store',
+        body: JSON.stringify({
+          action: 'submitMonthlyDesign',
+          payload: { orderId: ord.id, designId: 'design_' + crypto.randomUUID().replaceAll('-', ''),
+            title: monthlyArtTitle.trim() || monthlyArtFile.name,
+            file: { url: cloud.url, name: monthlyArtFile.name } }
+        })
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok || !result.success) throw new Error(result.error || 'Design could not be added.');
+      const refreshed = await fetchOrderById(ord.id);
+      if (refreshed) setSelectedOrderForDrawer(refreshed);
+      setMonthlyArtFile(null);
+      setMonthlyArtTitle('');
+      setMonthlyArtProgress(0);
+      showToast('Design #' + result.designNumber + ' submitted. ' + result.remaining + ' slots left.', 'success');
+    } catch (err) {
+      showToast(err?.message || 'Upload failed. Please retry.', 'error');
+    } finally {
+      setMonthlyArtLoading(false);
+    }
+  };
 
   const cancellationData = ord.cancellation || parsedNotes.cancellation || (Array.isArray(parsedNotes.cancellations) ? parsedNotes.cancellations[0] : {}) || {};
 
@@ -676,6 +726,10 @@ export const OrderTrackerDrawer = () => {
 
   const handleAdminDeliverOrder = async (e) => {
     e.preventDefault();
+    if (monthlyProgress && !monthlyDeliverTarget) {
+      showToast('Customer must upload a design before delivery.', 'error');
+      return;
+    }
 
     if (adminFilesList.length === 0) {
       showToast('Select at least one deliverable file before sending this delivery.', 'error');
@@ -736,7 +790,7 @@ export const OrderTrackerDrawer = () => {
         title: newDeliveryNumber === 1 ? 'Initial Delivery' : `Delivery #${newDeliveryNumber}`,
         deliveryDate: new Date().toISOString(),
         deliveryMessage: deliveryNoteText,
-        ...(monthlyProgress ? { monthlyDesignCount: monthlyDeliveryCount } : {}),
+        ...(monthlyProgress ? { monthlyDesignId: monthlyDeliverTarget?.id } : {}),
         deliveredBy: authUser?.name || 'Master Digitizer Desk',
         files: uploadedCloudinaryFiles
       };
@@ -744,7 +798,7 @@ export const OrderTrackerDrawer = () => {
       const updatedDeliveries = [newDeliveryItem, ...baseDeliveries];
 
       const deliveryResult = await updateOrderStatus(ord.id, 'delivered', {
-        ...(monthlyProgress ? { monthlyDeliveryId: newDeliveryItem.id, monthlyDesignCount: monthlyDeliveryCount } : {}),
+        ...(monthlyProgress ? { monthlyDeliveryId: newDeliveryItem.id, monthlyDesignId: monthlyDeliverTarget?.id } : {}),
         status: 'delivered',
         clientEmail: ord.client_email || ord.clientEmail,
         clientName: ord.client_name || ord.clientName,
@@ -767,6 +821,7 @@ export const OrderTrackerDrawer = () => {
       setDeliveryMessage('');
       setSelectedDeliveryIndex(0);
       if (monthlyProgress) {
+        setMonthlyDeliverDesignId('');
         const liveOrder = await fetchOrderById(ord.id).catch(() => null);
         if (liveOrder) setSelectedOrderForDrawer(liveOrder);
       }
@@ -1517,37 +1572,91 @@ export const OrderTrackerDrawer = () => {
               }} />
             </div>
           </div>
-          {/* Live prepaid monthly bundle progress for both customer and admin */}
+
+          {/* A monthly slot is consumed by a NEW customer upload, not a delivery or revision. */}
           {monthlyProgress && (
-            <section aria-label="Monthly plan progress" style={{ padding: isMobileLayout ? '0.9rem' : '1.1rem 1.25rem',
-              background: 'var(--color-surface)', border: '1.5px solid var(--color-border)',
-              borderRadius: '14px', display: 'grid', gap: '0.65rem' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', gap: '0.65rem', alignItems: 'center', flexWrap: 'wrap' }}>
+            <section aria-label="Monthly design tracker" style={{ display: 'grid', gap: '0.75rem', padding: '1rem',
+              background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: 14,
+              color: 'var(--color-text-primary)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
                 <div>
-                  <strong style={{ color: 'var(--color-text-primary)', fontSize: '1rem' }}>Monthly Design Plan</strong>
-                  <div style={{ color: 'var(--color-text-muted)', fontSize: '0.78rem', marginTop: '0.1rem' }}>
-                    {monthlyProgress.complete ? 'All designs delivered · Plan completed' :
-                      monthlyProgress.expired ? '30-day period ended' :
-                      !isPaid ? 'Starts after payment' :
-                      monthlyProgress.remaining + ' designs remaining'}
+                  <strong>Monthly Design Plan</strong>
+                  <div style={{ fontSize: '0.77rem', color: 'var(--color-text-muted)', marginTop: 3 }}>
+                    {monthlyProgress.complete ? 'Plan Completed' :
+                      monthlyProgress.expired ? '30-day upload period ended' :
+                      monthlyProgress.remaining === 0 ? 'All slots used · Deliveries in progress' :
+                      monthlyProgress.remaining + ' new designs remaining'}
                   </div>
                 </div>
-                <strong style={{ fontSize: '1.2rem', fontWeight: 900, color: monthlyProgress.complete ? 'var(--color-success, #059669)' : 'var(--color-primary)' }}>
-                  {monthlyProgress.delivered} / {monthlyProgress.quota} <span style={{ fontSize: '0.77rem' }}>Delivered</span>
+                <strong style={{ fontSize: '1.22rem', color: 'var(--color-primary)' }}>
+                  {monthlyProgress.uploaded}/{monthlyProgress.quota} <span style={{ fontSize: '0.72rem' }}>Uploaded</span>
                 </strong>
               </div>
-              <div role="progressbar" aria-label="Monthly designs delivered" aria-valuemin={0}
-                aria-valuemax={monthlyProgress.quota} aria-valuenow={monthlyProgress.delivered}
-                style={{ background: 'var(--color-subtle)', borderRadius: '999px', height: '9px', overflow: 'hidden' }}>
-                <div style={{ background: monthlyProgress.complete ? 'var(--color-success, #059669)' : 'var(--color-primary)',
-                  width: (monthlyProgress.delivered / monthlyProgress.quota * 100) + '%', height: '100%', borderRadius: '999px' }}/>
+              <div role="progressbar" aria-label="Monthly design upload quota" aria-valuemin={0}
+                aria-valuemax={monthlyProgress.quota} aria-valuenow={monthlyProgress.uploaded}
+                style={{ height: 9, background: 'var(--color-subtle)', borderRadius: 999, overflow: 'hidden' }}>
+                <div style={{ width: (monthlyProgress.uploaded / monthlyProgress.quota * 100) + '%',
+                  height: '100%', background: 'var(--color-primary)', borderRadius: 999 }}/>
               </div>
-              {monthlyProgress.complete && <div role="status" style={{ color: 'var(--color-success-text, #059669)', fontWeight: 800, fontSize: '0.84rem' }}>
-                ✓ Plan complete! All {monthlyProgress.quota} designs delivered. Thank you.
-              </div>}
-              {monthlyProgress.endsAt && !monthlyProgress.complete && <span style={{ color: 'var(--color-text-muted)', fontSize: '0.75rem' }}>
-                Period ends {new Date(monthlyProgress.endsAt).toLocaleDateString()}
+              <div style={{ display: 'flex', justifyContent: 'space-between', gap: 9,
+                fontSize: '0.77rem', fontWeight: 750, color: 'var(--color-text-secondary)' }}>
+                <span>{monthlyProgress.delivered} delivered</span><span>{monthlyProgress.pending} awaiting delivery</span>
+              </div>
+              {monthlyProgress.endsAt && <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>
+                New uploads until {new Date(monthlyProgress.endsAt).toLocaleDateString()}
               </span>}
+              {monthlyProgress.complete && <div role="status" style={{ color: 'var(--color-success, #059669)', fontWeight: 850 }}>
+                ✓ All {monthlyProgress.quota} designs delivered — plan completed.
+              </div>}
+              {!isAdmin && isPaid && !monthlyProgress.expired && monthlyProgress.remaining > 0 && (
+                <form aria-label="Submit new monthly design" onSubmit={handleSubmitMonthlyArt}
+                  style={{ display: 'grid', gap: 8, background: 'var(--color-subtle)', padding: 12, borderRadius: 11 }}>
+                  <strong style={{ fontSize: '0.9rem' }}>Upload Design #{monthlyProgress.uploaded + 1}</strong>
+                  <input type="text" maxLength={100} value={monthlyArtTitle}
+                    onChange={e => setMonthlyArtTitle(e.target.value)} disabled={monthlyArtLoading}
+                    placeholder="Design name (optional)" aria-label="Monthly design name"
+                    style={{ width: '100%', padding: 10, borderRadius: 8, boxSizing: 'border-box',
+                      color: 'var(--color-text-primary)', background: 'var(--color-input)',
+                      border: '1px solid var(--color-border)' }}/>
+                  <input type="file" accept=".png,.jpg,.jpeg,.pdf,.ai,.eps,.svg,.psd,.dst,.pes,.emb,.zip"
+                    aria-label="Monthly design artwork" disabled={monthlyArtLoading}
+                    onChange={e => { setMonthlyArtFile(e.target.files?.[0] || null); e.target.value = ''; }}
+                    style={{ maxWidth: '100%' }}/>
+                  {monthlyArtFile && <span style={{ fontSize: '0.75rem' }}>{monthlyArtFile.name}</span>}
+                  <button type="submit" disabled={!monthlyArtFile || monthlyArtLoading}
+                    style={{ background: 'var(--color-primary)', color: 'white', border: 0,
+                      borderRadius: 9, padding: '0.7rem 1rem', fontWeight: 850, cursor: 'pointer' }}>
+                    {monthlyArtLoading ? 'Uploading ' + monthlyArtProgress + '%…' :
+                      'Submit Design #' + (monthlyProgress.uploaded + 1)}
+                  </button>
+                  <small style={{ color: 'var(--color-text-muted)' }}>1 file per design · Max 50MB · Revisions are free slots</small>
+                </form>
+              )}
+              {!isAdmin && monthlyProgress.remaining === 0 && (
+                <span role="status" style={{ fontSize: '0.81rem', fontWeight: 750 }}>
+                  All {monthlyProgress.quota} design slots used. Buy another plan for extra designs.
+                </span>
+              )}
+              {monthlyProgress.designs.length > 0 && (
+                <div style={{ display: 'grid', gap: 6 }}>
+                  <strong style={{ fontSize: '0.86rem' }}>Submitted Designs</strong>
+                  {monthlyProgress.designs.map(design => (
+                    <div key={design.id} style={{ padding: '0.6rem 0.75rem', border: '1px solid var(--color-border)',
+                      borderRadius: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                      flexWrap: 'wrap', gap: 7 }}>
+                      <div style={{ display: 'grid', gap: 2, minWidth: 0 }}>
+                        <strong style={{ fontSize: '0.83rem' }}>#{design.number} {design.name}</strong>
+                        {design.file?.url && <a href={design.file.url} target="_blank" rel="noopener noreferrer"
+                          style={{ fontSize: '0.73rem', color: 'var(--color-primary)' }}>View artwork</a>}
+                      </div>
+                      <strong style={{ fontSize: '0.74rem',
+                        color: design.status === 'Delivered' ? 'var(--color-success, #059669)' : 'var(--color-primary)' }}>
+                        {design.status}
+                      </strong>
+                    </div>
+                  ))}
+                </div>
+              )}
             </section>
           )}
 
@@ -1700,7 +1809,7 @@ export const OrderTrackerDrawer = () => {
             )}
 
             {/* ADMIN DELIVERY COMPOSER */}
-            {isAdmin && (!monthlyProgress || (!monthlyProgress.complete && !monthlyProgress.expired)) && (
+            {isAdmin && (
               <form onSubmit={handleAdminDeliverOrder} style={{ display: 'flex', flexDirection: 'column', gap: '1rem', background: 'var(--bg-surface)', padding: '1.25rem', borderRadius: '14px', border: '1.5px dashed var(--orange-500)', marginBottom: '1.25rem' }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <span style={{ fontWeight: 800, color: 'var(--text-main)', fontSize: '0.92rem' }}>
@@ -1827,22 +1936,16 @@ export const OrderTrackerDrawer = () => {
                 )}
 
                 {monthlyProgress && (
-                  <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '0.65rem',
-                    padding: '0.65rem 0.8rem', background: 'var(--color-primary-light)',
-                    border: '1px solid var(--color-border)', borderRadius: '10px' }}>
-                    <label htmlFor="monthly-delivery-count" style={{ color: 'var(--color-text-primary)', fontSize: '0.84rem', fontWeight: 800 }}>
-                      Designs in this delivery
-                    </label>
-                    <select id="monthly-delivery-count" value={monthlyDeliveryCount} onChange={e => setMonthlyDeliveryCount(Number(e.target.value))}
-                      style={{ padding: '0.35rem 0.55rem', border: '1px solid var(--color-border)', borderRadius: 8,
-                        background: 'var(--color-input)', color: 'var(--color-text-primary)', fontWeight: 800 }}>
-                      <option value={0}>0 — Revision only</option>
-                      {Array.from({ length: Math.min(monthlyProgress.remaining, 20) }, (_, i) => i + 1)
-                        .map(n => <option value={n} key={n}>{n} {n === 1 ? 'design' : 'designs'}</option>)}
+                  <div style={{ padding: '0.7rem', borderRadius: 10, background: 'var(--color-primary-light)', display: 'grid', gap: 8 }}>
+                    <label htmlFor="monthly-design-target" style={{ fontWeight: 850 }}>Design to deliver</label>
+                    <select id="monthly-design-target" value={monthlyDeliverTarget?.id || ''}
+                      onChange={e => setMonthlyDeliverDesignId(e.target.value)} className="form-control">
+                      {!monthlyDeliverTarget && <option value="">No customer designs uploaded yet</option>}
+                      {monthlyProgress.designs.map(design => (
+                        <option value={design.id} key={design.id}>#{design.number} {design.name} ({design.status})</option>
+                      ))}
                     </select>
-                    <span style={{ fontSize: '0.73rem', color: 'var(--color-text-muted)' }}>
-                      Counts automatically when files are sent · {monthlyProgress.remaining} left
-                    </span>
+                    <small style={{ color: 'var(--color-text-secondary)' }}>Re-delivery to the same design is a revision, not a new slot.</small>
                   </div>
                 )}
 
@@ -1865,7 +1968,7 @@ export const OrderTrackerDrawer = () => {
                   <button
                     type="submit"
                     className="btn btn-primary-orange"
-                    disabled={isDelivering || isAdminUploading || hasAdminUploadFailures || !allAdminFilesUploaded || (monthlyProgress && monthlyDeliveryCount > monthlyProgress.remaining)}
+                    disabled={isDelivering || isAdminUploading || hasAdminUploadFailures || !allAdminFilesUploaded || (monthlyProgress && !monthlyDeliverTarget)}
                     style={{
                       fontWeight: 800,
                       gap: '0.4rem',
