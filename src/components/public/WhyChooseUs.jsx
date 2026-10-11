@@ -214,7 +214,7 @@ export const WhyChooseUs = () => {
           left: 0;
           right: 0;
           height: 3px;
-          background: linear-gradient(90deg, transparent, var(--color-primary, #d97706), transparent);
+          background: linear-gradient(90deg, transparent, var(--color-primary, #ea580c), transparent);
           opacity: 0;
           transition: opacity 0.3s ease;
         }
@@ -297,13 +297,13 @@ export const WhyChooseUs = () => {
                   width: '52px',
                   height: '52px',
                   borderRadius: '14px',
-                  background: 'var(--color-primary-light, rgba(217, 119, 6, 0.1))',
-                  border: '1px solid rgba(217, 119, 6, 0.22)',
-                  color: 'var(--color-primary, #d97706)',
+                  background: 'var(--color-primary-light, rgba(249, 115, 22, 0.1))',
+                  border: '1px solid rgba(249, 115, 22, 0.22)',
+                  color: 'var(--color-primary, #ea580c)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  boxShadow: '0 4px 14px var(--color-primary-glow, rgba(217, 119, 6, 0.12))'
+                  boxShadow: '0 4px 14px var(--color-primary-glow, rgba(249, 115, 22, 0.12))'
                 }}>
                   <IconRenderer iconName={item.icon} size={24} />
                 </div>
@@ -312,9 +312,9 @@ export const WhyChooseUs = () => {
                   fontWeight: 800,
                   letterSpacing: '0.06em',
                   textTransform: 'uppercase',
-                  color: 'var(--color-primary, #d97706)',
-                  background: 'rgba(217, 119, 6, 0.08)',
-                  border: '1px solid rgba(217, 119, 6, 0.2)',
+                  color: 'var(--color-primary, #ea580c)',
+                  background: 'rgba(249, 115, 22, 0.08)',
+                  border: '1px solid rgba(249, 115, 22, 0.2)',
                   padding: '0.25rem 0.65rem',
                   borderRadius: '9999px'
                 }}>
@@ -361,11 +361,11 @@ export const WhyChooseUs = () => {
                   <span style={{
                     fontSize: '0.75rem',
                     fontWeight: 900,
-                    background: 'linear-gradient(135deg, var(--color-secondary, #f59e0b) 0%, var(--color-primary, #d97706) 100%)',
+                    background: 'linear-gradient(135deg, #ff6b00 0%, #ea580c 100%)',
                     color: '#ffffff',
                     padding: '0.35rem 0.85rem',
                     borderRadius: '9999px',
-                    boxShadow: '0 4px 14px var(--color-primary-glow, rgba(217, 119, 6, 0.32))',
+                    boxShadow: '0 4px 14px rgba(234, 88, 12, 0.32)',
                     letterSpacing: '0.05em'
                   }}>
                     STEP {item.step_number || `0${idx + 1}`}
@@ -375,9 +375,9 @@ export const WhyChooseUs = () => {
                     width: '44px',
                     height: '44px',
                     borderRadius: '12px',
-                    background: 'var(--color-primary-light, rgba(217, 119, 6, 0.1))',
-                    border: '1px solid rgba(217, 119, 6, 0.2)',
-                    color: 'var(--color-primary, #d97706)',
+                    background: 'var(--color-primary-light, rgba(249, 115, 22, 0.1))',
+                    border: '1px solid rgba(249, 115, 22, 0.2)',
+                    color: 'var(--color-primary, #ea580c)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center'
@@ -397,7 +397,7 @@ export const WhyChooseUs = () => {
 
               {/* VIP Step Progress Indicator */}
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '1.5rem', paddingTop: '1rem', borderTop: '1px solid var(--border-color)' }}>
-                <span style={{ fontSize: '0.72rem', fontWeight: 800, color: 'var(--color-primary, #d97706)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                <span style={{ fontSize: '0.72rem', fontWeight: 800, color: 'var(--color-primary, #ea580c)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                   Phase 0{idx + 1} of 04
                 </span>
                 <div style={{ display: 'flex', gap: '5px', alignItems: 'center' }}>
@@ -408,7 +408,7 @@ export const WhyChooseUs = () => {
                         width: s === idx + 1 ? '16px' : '6px',
                         height: '5px',
                         borderRadius: '9999px',
-                        background: s === idx + 1 ? 'var(--color-primary, #d97706)' : 'var(--border-color)',
+                        background: s === idx + 1 ? 'var(--color-primary, #ea580c)' : 'var(--border-color)',
                         transition: 'all 0.3s ease'
                       }}
                     />

@@ -269,8 +269,8 @@ export const PortfolioPage = () => {
               {filteredItems.map((item) => {
                 const isVector = item.categoryKey === 'vector';
                 const isPatch = item.categoryKey === 'patches';
-                const _badgeBg = isVector ? 'rgba(6, 182, 212, 0.12)' : isPatch ? 'rgba(168, 85, 247, 0.12)' : 'rgba(217, 119, 6, 0.12)';
-                const _badgeColor = isVector ? '#0891b2' : isPatch ? '#9333ea' : '#d97706';
+                const _badgeBg = isVector ? 'rgba(6, 182, 212, 0.12)' : isPatch ? 'rgba(168, 85, 247, 0.12)' : 'rgba(249, 115, 22, 0.12)';
+                const _badgeColor = isVector ? '#0891b2' : isPatch ? '#9333ea' : '#ea580c';
 
                 return (
                   <div
@@ -334,9 +334,9 @@ export const PortfolioPage = () => {
                         {/* Top Category Badge */}
                         <div style={{ position: 'absolute', top: '12px', left: '12px' }}>
                           <span style={{
-                            background: 'var(--color-primary-light, rgba(217, 119, 6, 0.12))',
-                            color: 'var(--color-primary, #d97706)',
-                            border: '1px solid rgba(217, 119, 6, 0.35)',
+                            background: 'rgba(249, 115, 22, 0.12)',
+                            color: '#ea580c',
+                            border: '1px solid #ea580c40',
                             fontSize: '0.725rem',
                             fontWeight: 800,
                             padding: '0.3rem 0.75rem',

@@ -8,11 +8,11 @@ import { getPackageSizeInfo } from '../../utils/packageSizeUtils';
 
 const PALETTES = [
   {
-    color: '#d97706',
-    bgLight: 'rgba(217, 119, 6, 0.1)',
-    border: '#fde68a',
-    btnGradient: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
-    glow: 'rgba(217, 119, 6, 0.25)'
+    color: '#ea580c',
+    bgLight: 'rgba(234, 88, 12, 0.1)',
+    border: '#fed7aa',
+    btnGradient: 'linear-gradient(135deg, #ea580c 0%, #c2410c 100%)',
+    glow: 'rgba(234, 88, 12, 0.22)'
   },
   {
     color: '#2563eb',
@@ -36,11 +36,11 @@ const PALETTES = [
     glow: 'rgba(124, 58, 237, 0.22)'
   },
   {
-    color: '#0284c7',
-    bgLight: 'rgba(2, 132, 199, 0.1)',
-    border: '#bae6fd',
-    btnGradient: 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)',
-    glow: 'rgba(2, 132, 199, 0.22)'
+    color: '#d97706',
+    bgLight: 'rgba(217, 119, 6, 0.1)',
+    border: '#fde68a',
+    btnGradient: 'linear-gradient(135deg, #d97706 0%, #b45309 100%)',
+    glow: 'rgba(217, 119, 6, 0.22)'
   }
 ];
 

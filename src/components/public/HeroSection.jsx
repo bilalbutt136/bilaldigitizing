@@ -950,16 +950,16 @@ export const HeroSection = () => {
                     <span style={{
                       fontSize: '0.72rem',
                       fontWeight: 800,
-                      background: 'var(--color-primary-light, rgba(217, 119, 6, 0.12))',
-                      color: 'var(--color-primary, #d97706)',
-                      border: '1px solid rgba(217, 119, 6, 0.25)',
+                      background: 'rgba(249, 115, 22, 0.12)',
+                      color: 'var(--orange-600, #ea580c)',
+                      border: '1px solid rgba(249, 115, 22, 0.25)',
                       padding: '0.2rem 0.6rem',
                       borderRadius: '9999px',
                       display: 'inline-flex',
                       alignItems: 'center',
                       gap: '0.3rem'
                     }}>
-                      <span style={{ color: 'var(--color-primary, #d97706)' }}>★</span>
+                      <span style={{ color: '#ea580c' }}>★</span>
                       {currentImage.stitchCount && <span>{currentImage.stitchCount}</span>}
                       {currentImage.formats && (
                         <span style={{ opacity: 0.9 }}>{currentImage.stitchCount ? '· ' : ''}{currentImage.formats}</span>

@@ -6,8 +6,8 @@ import { useAppState } from '../../context/StateContext';
 import { useNavigate } from '../../utils/navigation';
 
 const THEMES = {
-  orange: { bg: 'linear-gradient(90deg, #d97706 0%, #f59e0b 50%, #d97706 100%)', text: '#ffffff', badgeBg: 'rgba(255,255,255,0.22)', btnBg: '#ffffff', btnColor: '#d97706' },
-  navy: { bg: 'linear-gradient(90deg, #0a0f1d 0%, #0f172a 50%, #0a0f1d 100%)', text: '#ffffff', badgeBg: 'rgba(245, 158, 11, 0.25)', btnBg: '#f59e0b', btnColor: '#0a0f1d' },
+  orange: { bg: 'linear-gradient(90deg, #ea580c 0%, #f97316 50%, #ea580c 100%)', text: '#ffffff', badgeBg: 'rgba(255,255,255,0.22)', btnBg: '#ffffff', btnColor: '#ea580c' },
+  navy: { bg: 'linear-gradient(90deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%)', text: '#ffffff', badgeBg: 'rgba(249, 115, 22, 0.25)', btnBg: '#f97316', btnColor: '#ffffff' },
   emerald: { bg: 'linear-gradient(90deg, #065f46 0%, #059669 50%, #065f46 100%)', text: '#ffffff', badgeBg: 'rgba(255,255,255,0.22)', btnBg: '#ffffff', btnColor: '#065f46' },
   crimson: { bg: 'linear-gradient(90deg, #991b1b 0%, #dc2626 50%, #991b1b 100%)', text: '#ffffff', badgeBg: 'rgba(255,255,255,0.22)', btnBg: '#ffffff', btnColor: '#991b1b' },
   royal: { bg: 'linear-gradient(90deg, #312e81 0%, #4338ca 50%, #312e81 100%)', text: '#ffffff', badgeBg: 'rgba(255,255,255,0.22)', btnBg: '#ffffff', btnColor: '#312e81' }
@@ -257,7 +257,7 @@ export const AnnouncementBar = () => {
           onClick={handleActionClick}
           style={{
             background: themeObj.btnBg || '#ffffff',
-            color: themeObj.btnColor || '#d97706',
+            color: themeObj.btnColor || '#ea580c',
             border: 'none',
             padding: '0.2rem 0.75rem',
             borderRadius: '9999px',
@@ -346,7 +346,7 @@ export const AnnouncementBar = () => {
         top: 0,
         bottom: 0,
         width: '28px',
-        background: `linear-gradient(to right, ${safeThemeKey === 'orange' ? '#d97706' : '#0a0f1d'}, transparent)`,
+        background: `linear-gradient(to right, ${safeThemeKey === 'orange' ? '#ea580c' : '#0f172a'}, transparent)`,
         zIndex: 15,
         pointerEvents: 'none'
       }} />
@@ -372,7 +372,7 @@ export const AnnouncementBar = () => {
         top: 0,
         bottom: 0,
         width: '56px',
-        background: `linear-gradient(to left, ${safeThemeKey === 'orange' ? '#d97706' : '#0a0f1d'} 70%, transparent)`,
+        background: `linear-gradient(to left, ${safeThemeKey === 'orange' ? '#ea580c' : '#0f172a'} 70%, transparent)`,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'flex-end',
