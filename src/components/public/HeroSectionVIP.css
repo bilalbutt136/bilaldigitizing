@@ -662,3 +662,46 @@ body.dark-mode .vip-hero .hero-showcase-image-box {
   .vip-hero .hero-showcase-card { padding: .5rem !important; border-radius: 16px !important; }
   .vip-hero .hero-showcase-image-box { border-radius: 10px !important; }
 }
+
+
+/* Hero typography paint safety: never paint a colored rectangle behind
+   transparent letters. The brand can choose a solid OR gradient finish.
+   A CSS background shorthand with !important previously reset background-clip
+   to border-box in Chromium, making the heading unreadable. */
+.vip-hero .vip-hero-title-highlight,
+.vip-hero .hero-highlight-row .text-gradient-orange,
+[data-theme="dark"] .vip-hero .vip-hero-title-highlight,
+[data-theme="dark"] .vip-hero .hero-highlight-row .text-gradient-orange,
+body.dark-mode .vip-hero .vip-hero-title-highlight,
+body.dark-mode .vip-hero .hero-highlight-row .text-gradient-orange {
+  color: var(--color-action-start, var(--color-primary, #1d4ed8)) !important;
+  background: linear-gradient(105deg,
+    var(--color-action-start, #1d4ed8) 8%,
+    var(--color-action-end, #5b21b6) 96%) !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+}
+/* Solid finish must render real colored glyphs, never transparent glyphs
+   over a flat opaque background. This also covers dark mode. */
+html[data-brand-finish="solid"] .vip-hero .vip-hero-title-highlight,
+html[data-brand-finish="solid"] .vip-hero .hero-highlight-row .text-gradient-orange {
+  color: var(--color-action-start, var(--color-primary, #1d4ed8)) !important;
+  background: none !important;
+  -webkit-background-clip: border-box !important;
+  background-clip: border-box !important;
+  -webkit-text-fill-color: var(--color-action-start, var(--color-primary, #1d4ed8)) !important;
+}
+/* Honor Windows forced-color / high-contrast preference as well. */
+@media (forced-colors: active) {
+  .vip-hero .vip-hero-title-highlight,
+  .vip-hero .hero-highlight-row .text-gradient-orange,
+  html[data-brand-finish="solid"] .vip-hero .vip-hero-title-highlight,
+  html[data-brand-finish="solid"] .vip-hero .hero-highlight-row .text-gradient-orange {
+    background: none !important;
+    -webkit-background-clip: border-box !important;
+    background-clip: border-box !important;
+    color: CanvasText !important;
+    -webkit-text-fill-color: CanvasText !important;
+  }
+}
