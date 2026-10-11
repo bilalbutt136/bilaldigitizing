@@ -1139,7 +1139,7 @@ export const CustomerDashboard = () => {
           )}
 
           {/* Optional App Mode / PWA Install Banner for Mobile Screens - Only on Dashboard */}
-          {activeTab === 'dashboard' && !isStandaloneApp && !isAppPromptDismissed && (
+          {Boolean(siteSettings?.enableAppInstallPrompt) && activeTab === 'dashboard' && !isStandaloneApp && !isAppPromptDismissed && (
             <div
               className="mobile-only-flex"
               style={{

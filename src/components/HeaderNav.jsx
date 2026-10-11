@@ -1966,30 +1966,32 @@ export const HeaderNav = () => {
               </button>
 
               {/* Install / Open Mobile App Compact Banner/Button */}
-              <button
-                type="button"
-                onClick={handleInstallMobileApp}
-                style={{
-                  background: isDark ? 'rgba(5, 150, 105, 0.15)' : '#ecfdf5',
-                  color: isDark ? '#6ee7b7' : '#047857',
-                  border: isDark ? '1px solid rgba(5, 150, 105, 0.3)' : '1px solid #a7f3d0',
-                  borderRadius: '10px',
-                  padding: '0.55rem 0.85rem',
-                  fontWeight: 800,
-                  fontSize: '0.8rem',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '0.45rem',
-                  cursor: 'pointer',
-                  width: '100%',
-                  transition: 'all 0.15s ease'
-                }}
-              >
-                <Smartphone size={15} />
-                <span>{isAppInstalled ? 'Launch Mobile App (1-Tap Access)' : 'Install Mobile App (1-Tap Access)'}</span>
-                {isAppInstalled ? <ArrowRight size={13} /> : <Download size={13} />}
-              </button>
+              {Boolean(siteSettings?.enableAppInstallPrompt) && (
+                <button
+                  type="button"
+                  onClick={handleInstallMobileApp}
+                  style={{
+                    background: isDark ? 'rgba(5, 150, 105, 0.15)' : '#ecfdf5',
+                    color: isDark ? '#6ee7b7' : '#047857',
+                    border: isDark ? '1px solid rgba(5, 150, 105, 0.3)' : '1px solid #a7f3d0',
+                    borderRadius: '10px',
+                    padding: '0.55rem 0.85rem',
+                    fontWeight: 800,
+                    fontSize: '0.8rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.45rem',
+                    cursor: 'pointer',
+                    width: '100%',
+                    transition: 'all 0.15s ease'
+                  }}
+                >
+                  <Smartphone size={15} />
+                  <span>{isAppInstalled ? 'Launch Mobile App (1-Tap Access)' : 'Install Mobile App (1-Tap Access)'}</span>
+                  {isAppInstalled ? <ArrowRight size={13} /> : <Download size={13} />}
+                </button>
+              )}
             </div>
           </aside>
         </>

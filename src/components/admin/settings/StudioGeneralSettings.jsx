@@ -37,6 +37,7 @@ export const StudioGeneralSettings = () => {
   const [rushTurnaround, setRushTurnaround] = useState(siteSettings?.rushTurnaround || '2 - 4 Hours Express');
   const [maxUploadSize, setMaxUploadSize] = useState(siteSettings?.maxUploadSize || '100 MB');
   const [invoiceFooterNote, setInvoiceFooterNote] = useState(siteSettings?.invoiceFooterNote || 'Thank you for your business with BDigitizing. For any technical sew-out questions, contact support 24/7.');
+  const [enableAppInstallPrompt, setEnableAppInstallPrompt] = useState(Boolean(siteSettings?.enableAppInstallPrompt));
 
   useEffect(() => {
     if (siteSettings) {
@@ -63,6 +64,7 @@ export const StudioGeneralSettings = () => {
       if (siteSettings.rushTurnaround !== undefined) setRushTurnaround(siteSettings.rushTurnaround);
       if (siteSettings.maxUploadSize !== undefined) setMaxUploadSize(siteSettings.maxUploadSize);
       if (siteSettings.invoiceFooterNote !== undefined) setInvoiceFooterNote(siteSettings.invoiceFooterNote);
+      if (siteSettings.enableAppInstallPrompt !== undefined) setEnableAppInstallPrompt(Boolean(siteSettings.enableAppInstallPrompt));
     }
   }, [siteSettings]);
 
@@ -91,7 +93,8 @@ export const StudioGeneralSettings = () => {
         standardTurnaround: standardTurnaround.trim(),
         rushTurnaround: rushTurnaround.trim(),
         maxUploadSize: maxUploadSize.trim(),
-        invoiceFooterNote: invoiceFooterNote.trim()
+        invoiceFooterNote: invoiceFooterNote.trim(),
+        enableAppInstallPrompt: Boolean(enableAppInstallPrompt)
       });
       showToast('Studio details and operational defaults saved to live database!', 'success');
     } catch {
@@ -285,6 +288,38 @@ export const StudioGeneralSettings = () => {
             value={invoiceFooterNote}
             onChange={(e) => setInvoiceFooterNote(e.target.value)}
           />
+        </div>
+
+        {/* Customer Mobile App Install Prompts Toggle */}
+        <div style={{
+          marginTop: '1.25rem',
+          padding: '1rem 1.25rem',
+          borderRadius: '12px',
+          border: '1px solid var(--border-color)',
+          background: 'var(--color-subtle, var(--bg-subtle))',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: '1rem',
+          flexWrap: 'wrap'
+        }}>
+          <div>
+            <div style={{ fontSize: '0.88rem', fontWeight: 800, color: 'var(--color-text-primary)' }}>
+              Customer Mobile App Install Prompt & Banners
+            </div>
+            <div style={{ fontSize: '0.78rem', color: 'var(--color-text-muted)', marginTop: '0.2rem' }}>
+              Show floating "Install BDigitizing App" popup and banners on the website to visiting customers. (Currently disabled as requested).
+            </div>
+          </div>
+          <label style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontWeight: 700, fontSize: '0.85rem', color: 'var(--color-text-primary)' }}>
+            <input
+              type="checkbox"
+              checked={enableAppInstallPrompt}
+              onChange={(e) => setEnableAppInstallPrompt(e.target.checked)}
+              style={{ width: 18, height: 18, accentColor: 'var(--color-primary, #f97316)', cursor: 'pointer' }}
+            />
+            <span>{enableAppInstallPrompt ? 'Enabled' : 'Disabled (Hidden)'}</span>
+          </label>
         </div>
       </div>
 

@@ -136,6 +136,7 @@ export function normalizePublicCatalog(data = {}) {
     heroServiceText: configMap.hero_service_text || null,
     siteSettings: {
       ...rawSettings,
+      enableAppInstallPrompt: Boolean(rawSettings.enableAppInstallPrompt),
       logoUrl: headerLogoUrl,
       headerLogoUrl,
       footerLogoUrl,

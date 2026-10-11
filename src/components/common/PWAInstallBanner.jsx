@@ -11,6 +11,7 @@ const EXPLICIT_DISMISS_COOLDOWN_MS = 24 * 60 * 60 * 1000;
 
 export const PWAInstallBanner = () => {
   const { setMobileMode, siteSettings = {} } = useAppState();
+  const enableAppInstallPrompt = Boolean(siteSettings?.enableAppInstallPrompt);
   const appIconUrl = siteSettings.appIconUrl || '/icon-512x512.png';
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [showBanner, setShowBanner] = useState(false);
@@ -56,10 +57,10 @@ export const PWAInstallBanner = () => {
       localStorage.getItem('bdigi_pwa_installed') === 'true';
 
     const revealInstallNotice = (delay = MOBILE_PROMPT_DELAY_MS) => {
-      if (!isMobileViewport || isDismissed || installedByBrowser) return;
+      if (!enableAppInstallPrompt || !isMobileViewport || isDismissed || installedByBrowser) return;
       clearTimeout(showTimer);
       showTimer = setTimeout(() => {
-        if (!installedByBrowser) setShowBanner(true);
+        if (!installedByBrowser && enableAppInstallPrompt) setShowBanner(true);
       }, delay);
     };
 
@@ -113,6 +114,7 @@ export const PWAInstallBanner = () => {
     };
 
     const handleManualTrigger = () => {
+      if (!enableAppInstallPrompt) return;
       const promptEvent =
         deferredPromptRef.current || window.deferredPWAInstallPrompt;
 
@@ -135,7 +137,7 @@ export const PWAInstallBanner = () => {
     window.addEventListener('bdigi_trigger_pwa_install', handleManualTrigger);
 
     // Chromium: show only after we have a real native install event whenever possible.
-    if (isMobileViewport && !isDismissed && !storedInstalled) {
+    if (enableAppInstallPrompt && isMobileViewport && !isDismissed && !storedInstalled) {
       if (existingPrompt) {
         revealInstallNotice();
       } else if (isIOSDevice) {
@@ -160,7 +162,7 @@ export const PWAInstallBanner = () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstall);
       window.removeEventListener('bdigi_trigger_pwa_install', handleManualTrigger);
     };
-  }, []);
+  }, [enableAppInstallPrompt]);
 
   // Auto-hide quietly if ignored. This only suppresses the card for the current
   // browser session; the explicit X button applies the longer 24-hour cooldown.

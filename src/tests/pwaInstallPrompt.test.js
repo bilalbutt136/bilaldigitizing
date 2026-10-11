@@ -67,3 +67,27 @@ test('installed mode suppresses the website install notice', () => {
   assert.match(banner, /if \(isStandalone \|\| !showBanner\) return null/);
   assert.match(banner, /window\.matchMedia\('\(display-mode: standalone\)'\)/);
 });
+
+test('customer mobile app install notice and buttons are disabled by default on website', () => {
+  const banner = read('src/components/common/PWAInstallBanner.jsx');
+  const header = read('src/components/HeaderNav.jsx');
+  const dashboard = read('src/components/customer/CustomerDashboard.jsx');
+  const stateContext = read('src/context/StateContext.jsx');
+  const adminSettings = read('src/components/admin/settings/StudioGeneralSettings.jsx');
+
+  // Verify default disabled in state context
+  assert.match(stateContext, /enableAppInstallPrompt:\s*false/);
+
+  // Verify PWAInstallBanner checks enableAppInstallPrompt
+  assert.match(banner, /const enableAppInstallPrompt = Boolean\(siteSettings\?\.enableAppInstallPrompt\)/);
+  assert.match(banner, /!enableAppInstallPrompt \|\| !isMobileViewport/);
+
+  // Verify HeaderNav and CustomerDashboard conditionally guard install actions
+  assert.match(header, /Boolean\(siteSettings\?\.enableAppInstallPrompt\)\s*&&\s*\(/);
+  assert.match(dashboard, /Boolean\(siteSettings\?\.enableAppInstallPrompt\)\s*&&\s*activeTab === 'dashboard'/);
+
+  // Verify Admin portal provides toggle to enable when ready
+  assert.match(adminSettings, /enableAppInstallPrompt/);
+  assert.match(adminSettings, /Customer Mobile App Install Prompt & Banners/);
+});
+
