@@ -516,3 +516,230 @@
   }
 }
 /* Compact laptop view must retain the original first-screen sizing. */
+
+
+/*
+ * Immersive first-screen composition.
+ * On wide monitors the entire hero, not just its background, occupies
+ * the available visible screen. The copy and real portfolio grow together.
+ * Narrow/short laptops deliberately keep the verified compact rules.
+ */
+@media (min-width: 1450px) and (min-height: 800px) {
+  .vip-hero.theme-hero-section {
+    min-height: calc(100svh - 69px) !important;
+    padding: 12px 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: stretch !important;
+  }
+  .vip-hero > .container {
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    width: calc(100% - clamp(36px,4.5vw,92px)) !important;
+    max-width: 1780px !important;
+    display: grid !important;
+    grid-template-rows: auto minmax(0,1fr) !important;
+    row-gap: clamp(10px,1.8vh,19px) !important;
+    align-items: stretch !important;
+  }
+  .vip-hero .vip-hero-duplicate-tabs { margin: 0 !important; align-self: center; }
+  .vip-hero .hero-grid-layout {
+    height: 100% !important;
+    min-height: 0 !important;
+    grid-template-columns: minmax(0,1.05fr) minmax(0,.95fr) !important;
+    gap: clamp(22px,2.4vw,43px) !important;
+    align-items: stretch !important;
+  }
+  .vip-hero .hero-left-content {
+    min-height: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+  }
+  .vip-hero .hero-badge-container { margin-bottom: clamp(.5rem,1.2vh,.75rem) !important; }
+  .vip-hero .badge-pill-glow { font-size: .79rem !important; padding: .42rem .86rem !important; }
+  .vip-hero .hero-title {
+    font-size: clamp(3rem,3.06vw,3.75rem) !important;
+    line-height: 1.035 !important;
+    margin-bottom: .6rem !important;
+  }
+  .vip-hero .hero-highlight-row {
+    font-size: clamp(1rem,1.13vw,1.14rem) !important;
+    margin-bottom: .55rem !important;
+  }
+  .vip-hero .hero-description-text {
+    font-size: clamp(.98rem,1.06vw,1.08rem) !important;
+    line-height: 1.49 !important;
+    max-width: none !important;
+    margin-bottom: .8rem !important;
+  }
+  .vip-hero .hero-features-box {
+    padding: .28rem .84rem !important;
+    margin-bottom: .8rem !important;
+    border-radius: 18px !important;
+  }
+  .vip-hero .vip-hero-feature { padding: .58rem .18rem !important; gap: .76rem !important; }
+  .vip-hero .vip-hero-feature-icon { width: 39px; height: 39px; flex-basis: 39px; }
+  .vip-hero .vip-hero-feature-icon svg { width: 20px; height: 20px; }
+  .vip-hero .vip-hero-feature-title { font-size: .96rem !important; }
+  .vip-hero .vip-hero-feature-detail { font-size: .8rem !important; }
+  .vip-hero .hero-cta-buttons-row { gap: .8rem !important; margin: .7rem 0 .78rem !important; }
+  .vip-hero .vip-hero-primary,.vip-hero .vip-hero-secondary {
+    min-height: 56px !important;
+    padding: .7rem 1.2rem !important;
+    border-radius: 15px !important;
+    font-size: 1rem !important;
+  }
+  .vip-hero .vip-hero-primary-icon { width: 33px; height: 33px; }
+  .vip-hero .hero-trust-badges-row { gap: .48rem 1.05rem !important; }
+  .vip-hero .vip-hero-stat-icon { width: 30px; height: 30px; }
+  .vip-hero .vip-hero-stat span { font-size: .78rem !important; }
+  .vip-hero .vip-hero-stat-value { font-size: .84rem !important; }
+  .vip-hero .hero-right-visual { align-items: stretch !important; justify-content: center !important; }
+  .vip-hero .hero-showcase-card {
+    height: 100% !important;
+    max-width: none !important;
+    display: flex !important;
+    flex-direction: column !important;
+    padding: clamp(.75rem,1vw,1.2rem) !important;
+    border-radius: 25px !important;
+  }
+  .vip-hero .hero-showcase-image-box {
+    flex: 1 1 auto !important;
+    height: auto !important;
+    min-height: min(35vh,300px) !important;
+    max-height: none !important;
+    aspect-ratio: auto !important;
+    border-radius: 18px !important;
+  }
+  .vip-hero .vip-hero-gallery-caption { margin-top: .62rem !important; font-size: .74rem !important; }
+  .vip-hero .vip-hero-before-after { margin-top: .55rem !important; }
+  .vip-hero .vip-hero-before-after img { height: 76px !important; }
+}
+@media (min-width: 1450px) and (min-height: 800px) and (max-height: 870px) {
+  .vip-hero .hero-title { font-size: clamp(2.85rem,2.93vw,3.45rem) !important; }
+  .vip-hero .hero-description-text { line-height: 1.42 !important; }
+  .vip-hero .vip-hero-feature { padding: .46rem .16rem !important; }
+  .vip-hero .hero-features-box { margin-bottom: .55rem !important; }
+  .vip-hero .hero-cta-buttons-row { margin: .55rem 0 .55rem !important; }
+}
+@media (min-width: 1350px) and (max-width: 1449px) and (min-height: 840px) {
+  .vip-hero.theme-hero-section {
+    min-height: calc(100svh - 69px) !important;
+    padding: 12px 0 !important;
+    justify-content: stretch !important;
+  }
+  .vip-hero > .container {
+    flex: 1 1 auto !important;
+    display: grid !important;
+    grid-template-rows: auto minmax(0,1fr) !important;
+    row-gap: 12px !important;
+    max-width: calc(100% - 42px) !important;
+    min-height: 0 !important;
+  }
+  .vip-hero .vip-hero-duplicate-tabs { margin-bottom: 0 !important; }
+  .vip-hero .hero-grid-layout { height: 100% !important; align-items: stretch !important; }
+  .vip-hero .hero-left-content {
+    display: flex !important; flex-direction: column !important;
+    justify-content: center !important;
+  }
+  .vip-hero .hero-showcase-card {
+    height: 100% !important; max-width: none !important;
+    display: flex !important; flex-direction: column !important;
+  }
+  .vip-hero .hero-showcase-image-box {
+    flex: 1 !important; height: auto !important;
+    min-height: 300px !important; max-height: none !important;
+  }
+}
+
+
+/* Shorter wide desktop: save the last few pixels without shrinking the brand. */
+@media (min-width: 1450px) and (min-height: 800px) and (max-height: 870px) {
+  .vip-hero .hero-title {
+    font-size: clamp(2.7rem,2.78vw,3.25rem) !important;
+    margin-bottom: .43rem !important;
+  }
+  .vip-hero .hero-badge-container { margin-bottom: .28rem !important; }
+  .vip-hero .hero-highlight-row { margin-bottom: .36rem !important; }
+  .vip-hero .hero-description-text { line-height: 1.34 !important; margin-bottom: .5rem !important; }
+  .vip-hero .vip-hero-feature { padding: .31rem .15rem !important; }
+  .vip-hero .hero-features-box { margin-bottom: .4rem !important; }
+  .vip-hero .hero-cta-buttons-row { margin: .42rem 0 .43rem !important; }
+  .vip-hero .vip-hero-primary,.vip-hero .vip-hero-secondary { min-height: 52px !important; }
+}
+/* Smaller laptops: eliminate big bands above/below the gallery, keep compact copy. */
+@media (min-width: 1025px) and (max-width: 1349px) and (min-height: 700px),
+       (min-width: 1350px) and (max-width: 1449px) and (max-height: 839px) and (min-height: 700px) {
+  .vip-hero.theme-hero-section {
+    min-height: calc(100svh - 69px) !important;
+    padding: 9px 0 !important;
+    justify-content: stretch !important;
+  }
+  .vip-hero > .container {
+    flex: 1 1 auto !important;
+    display: grid !important;
+    grid-template-rows: auto minmax(0,1fr) !important;
+    row-gap: 10px !important;
+    min-height: 0 !important;
+  }
+  .vip-hero .vip-hero-duplicate-tabs { margin: 0 !important; }
+  .vip-hero .hero-grid-layout { height: 100% !important; align-items: stretch !important; }
+  .vip-hero .hero-left-content {
+    display: flex !important; flex-direction: column !important;
+    justify-content: center !important;
+  }
+  .vip-hero .hero-right-visual { align-items: stretch !important; }
+  .vip-hero .hero-showcase-card {
+    height: 100% !important; max-width: none !important;
+    display: flex !important; flex-direction: column !important;
+  }
+  .vip-hero .hero-showcase-image-box {
+    flex: 1 1 auto !important;
+    height: auto !important;
+    min-height: 240px !important;
+    max-height: none !important;
+  }
+}
+/* Larger 1440px laptops can handle bigger type without hiding buttons. */
+@media (min-width: 1350px) and (max-width: 1449px) and (min-height: 840px) {
+  .vip-hero .hero-title { font-size: clamp(2.65rem,3.05vw,3rem) !important; line-height: 1.06 !important; }
+  .vip-hero .hero-highlight-row { font-size: 1rem !important; }
+  .vip-hero .hero-description-text { font-size: .98rem !important; }
+  .vip-hero .vip-hero-feature { padding: .6rem .2rem !important; }
+  .vip-hero .vip-hero-feature-title { font-size: .9rem !important; }
+  .vip-hero .vip-hero-primary,.vip-hero .vip-hero-secondary { min-height: 54px !important; font-size: .96rem !important; }
+}
+
+
+/* Respect the short wide-screen fold: artwork should fill, not force overflow. */
+@media (min-width: 1450px) and (min-height: 800px) and (max-height: 870px) {
+  .vip-hero .hero-showcase-image-box {
+    max-height: 64svh !important;
+  }
+}
+@media (min-width: 1450px) and (min-height: 871px) {
+  .vip-hero .hero-left-content {
+    justify-content: space-evenly !important;
+  }
+}
+
+
+/* Landscape tablets: center the two-column hero in the available first screen. */
+@media (min-width: 900px) and (max-width: 1024px) and (min-height: 700px) {
+  .vip-hero.theme-hero-section {
+    min-height: calc(100svh - 69px) !important;
+    padding: 10px 0 !important;
+    justify-content: stretch !important;
+  }
+  .vip-hero > .container {
+    display: flex !important;
+    flex-direction: column !important;
+    flex: 1 1 auto !important;
+    justify-content: center !important;
+    min-height: 0 !important;
+  }
+  .vip-hero .hero-grid-layout { height: auto !important; align-items: center !important; }
+  .vip-hero .hero-right-visual { align-items: stretch !important; }
+  .vip-hero .hero-showcase-card { max-width: none !important; }
+}

@@ -55,3 +55,16 @@ test('wide-screen VIP hero balancing expands layout without overriding compact s
   assert.match(css, /min-width: 1350px/);
   assert.match(css, /Compact laptop view must retain the original first-screen sizing/);
 });
+
+test('immersive first-screen design fills full desktop hero without clipping accessible mobile content', () => {
+  assert.match(css, /Immersive first-screen composition/);
+  assert.match(css, /grid-template-rows: auto minmax\(0,1fr\)/);
+  assert.match(css, /max-width: 1780px/);
+  assert.match(css, /max-height: 64svh/);
+  assert.match(css, /min-width: 1025px/);
+  assert.match(css, /max-width: 1349px/);
+  assert.match(css, /Landscape tablets/);
+  assert.match(css, /height: auto !important; align-items: center/);
+  assert.match(css, /min-width: 1450px/);
+  assert.match(css, /min-height: 800px/);
+});
