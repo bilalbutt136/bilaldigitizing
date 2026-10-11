@@ -41,7 +41,23 @@ export const WhyChooseUs = () => {
   const dbSettings = homePageConfig?.settings || {};
 
   const title = dbSettings[`why_title_${currentKey}`] || dbSettings.why_title || 'Why Choose BDigitizing?';
-  const subtext = dbSettings[`why_sub_${currentKey}`] || dbSettings.why_sub || 'Industry-leading quality, unmatched speed, and a commitment to perfection.';
+  const rawSubtext = dbSettings[`why_sub_${currentKey}`] || dbSettings.why_sub || '';
+  const subtext = (rawSubtext && !rawSubtext.includes('Industry-leading quality'))
+    ? rawSubtext
+    : 'Fast turnaround, factory-grade precision, and guaranteed clean sew-outs.';
+
+  // Helper to ensure descriptions are crisp, short & customer-friendly
+  const formatShortDesc = (desc, fallback) => {
+    if (!desc) return fallback;
+    if (desc.includes('Over a decade of master expertise')) return 'Over a decade of master craft trusted by 5,000+ brands.';
+    if (desc.includes('No auto-tracing. Every stitch')) return 'Every stitch mapped by hand for clean, snag-free sew-outs.';
+    if (desc.includes('We tweak and refine until')) return 'Free tweaks until you are 100% satisfied with your files.';
+    if (desc.includes('Express shipping for patches')) return 'Instant file downloads plus express worldwide patch shipping.';
+    if (desc.includes('Round-the-clock customer service')) return 'Real studio experts ready to help anytime via chat or email.';
+    if (desc.includes('Enterprise-grade encryption')) return 'Encrypted checkout and safe file storage guaranteed.';
+    if (desc.includes('Premium quality guaranteed on every single order')) return 'Flawless commercial sew-outs or your money back.';
+    return desc;
+  };
 
   // Trust Features Data source
   const allFeaturesStr = homePageConfig?.settings?.trust_features;
@@ -60,25 +76,59 @@ export const WhyChooseUs = () => {
     trustFeatures = rawTrustFeatures.filter(f => (!f.service_key || f.service_key === 'all') && f.is_active !== false).sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
   }
 
-  // Hardcoded fallback if DB is empty
-  if (trustFeatures.length === 0) {
-    trustFeatures = [
-      { icon: 'Award', title: '11+ Years Experience', description: 'Over a decade of master expertise handling complex designs for global brands.' },
-      { icon: 'MousePointer2', title: '100% Manual Digitizing', description: 'No auto-tracing. Every stitch and node is manually plotted for perfection.' },
-      { icon: 'RefreshCw', title: 'Free Unlimited Revisions', description: 'We tweak and refine until you are 100% satisfied with the result.' },
-      { icon: 'Globe', title: 'Worldwide Delivery', description: 'Express shipping for patches, instant downloads for digital files globally.' },
-      { icon: 'Headset', title: '24/7 Support', description: 'Round-the-clock customer service ready to answer technical queries.' },
-      { icon: 'Shield', title: 'Secure Payments', description: 'Enterprise-grade encryption for all your transactions and files.' },
-      { icon: 'ThumbsUp', title: 'Satisfaction Guarantee', description: 'Premium quality guaranteed on every single order, large or small.' }
-    ];
-  }
+  // Curated 6 VIP Pillars fallback (perfect 3x2 matrix on desktop, 2x3 on tablet, 1x6 on mobile)
+  const defaultTrustFeatures = [
+    {
+      icon: 'Award',
+      badge: 'SINCE 2013',
+      title: '11+ Years Experience',
+      description: 'Over a decade of master craft trusted by 5,000+ brands.'
+    },
+    {
+      icon: 'MousePointer2',
+      badge: 'ZERO AUTO-TRACE',
+      title: '100% Manual Digitizing',
+      description: 'Every stitch mapped by hand for clean, snag-free sew-outs.'
+    },
+    {
+      icon: 'RefreshCw',
+      badge: 'UNLIMITED',
+      title: 'Free Edits & Revisions',
+      description: 'Free tweaks until you are 100% satisfied with your files.'
+    },
+    {
+      icon: 'Globe',
+      badge: 'WORLDWIDE',
+      title: 'Fast Global Delivery',
+      description: 'Instant file downloads plus express worldwide patch shipping.'
+    },
+    {
+      icon: 'Headset',
+      badge: '24/7 LIVE',
+      title: 'Round-the-Clock Support',
+      description: 'Real studio experts ready to help anytime via chat or email.'
+    },
+    {
+      icon: 'ShieldCheck',
+      badge: 'RISK-FREE',
+      title: 'Satisfaction Guaranteed',
+      description: 'Flawless commercial sew-outs or your money back.'
+    }
+  ];
+
+  const featuresToRender = trustFeatures.length > 0
+    ? trustFeatures.slice(0, 6).map((item, idx) => ({
+        ...item,
+        badge: item.badge || defaultTrustFeatures[idx]?.badge || 'VERIFIED',
+        description: formatShortDesc(item.description || item.desc, defaultTrustFeatures[idx]?.description)
+      }))
+    : defaultTrustFeatures;
 
   // Workflow Data Source
   const rawWorkflowSteps = homePageConfig?.workflowSteps || [];
-  // Try to find steps matching the current service, fallback to 'all' if none exist for current service
   let matchedSteps = rawWorkflowSteps.filter(s => s.service === currentKey && s.is_active !== false).sort((a, b) => a.sort_order - b.sort_order);
   if (matchedSteps.length === 0) {
-     matchedSteps = rawWorkflowSteps.filter(s => s.service === 'all' && s.is_active !== false).sort((a, b) => a.sort_order - b.sort_order);
+    matchedSteps = rawWorkflowSteps.filter(s => s.service === 'all' && s.is_active !== false).sort((a, b) => a.sort_order - b.sort_order);
   }
 
   const workflowTitle = currentKey === 'all' ? 'How It Works: Our Process' :
@@ -86,41 +136,136 @@ export const WhyChooseUs = () => {
     currentKey === 'patches' ? 'How It Works: Custom Patches Production' :
     'How It Works: Embroidery Digitizing';
 
-  const workflowSubtext = currentKey === 'all' ? 'From initial request to final delivery in 4 simple steps.' :
-    currentKey === 'vector-art' ? 'Pixel-perfect node tracing and color separation for print and vinyl cutting.' :
-    currentKey === 'patches' ? 'Crafting premium physical emblems from digital proofing to doorstep delivery.' :
-    'From initial logo upload to machine-ready stitch file delivery in 4 simple steps.';
+  const workflowSubtext = currentKey === 'all' ? 'From artwork upload to production-ready files in 4 easy steps.' :
+    currentKey === 'vector-art' ? 'From low-resolution image to press-ready vector in 4 easy steps.' :
+    currentKey === 'patches' ? 'From your logo to custom manufactured emblems delivered to your door.' :
+    'From your logo to machine-ready stitch files in 4 easy steps.';
 
+  const defaultAllSteps = [
+    { step_number: '01', icon: 'Upload', title: 'Upload Artwork', description: 'Drop your logo or sketch and pick your service.' },
+    { step_number: '02', icon: 'Layers', title: 'Master Processing', description: 'Our studio experts manually digitize your design.' },
+    { step_number: '03', icon: 'FileCheck', title: 'Free Proof Review', description: 'Check your high-res digital proof before final sew-out.' },
+    { step_number: '04', icon: 'Download', title: 'Download & Stitch', description: 'Instant machine files (.DST, .PES) or tracked patch delivery.' }
+  ];
 
-  let stepsToRender = matchedSteps;
+  const defaultVectorSteps = [
+    { step_number: '01', icon: 'Upload', title: 'Send Artwork', description: 'Upload your low-res JPG, PNG, screenshot, or sketch.' },
+    { step_number: '02', icon: 'PenTool', title: 'Hand Vector Redraw', description: 'Redrawn node-by-node in Illustrator with zero auto-trace.' },
+    { step_number: '03', icon: 'Palette', title: 'Color Separation', description: 'Calibrated Pantone (PMS) spot colors ready for press.' },
+    { step_number: '04', icon: 'Download', title: 'Instant Download', description: 'Get editable .AI, .EPS, .SVG and print-ready PDF files.' }
+  ];
 
-  if (stepsToRender.length === 0) {
-    stepsToRender = currentKey === 'all' ? [
-      { step_number: 1, icon: 'Upload', title: 'Select Service & Upload', description: 'Choose your desired service and upload your artwork with specifications.' },
-      { step_number: 2, icon: 'Layers', title: 'Expert Processing', description: 'Our studio experts process your design via digitizing, vector tracing, or patch prototyping.' },
-      { step_number: 3, icon: 'FileCheck', title: 'Quality Assurance', description: 'Every order undergoes strict quality checks and digital proofing before finalization.' },
-      { step_number: 4, icon: 'Download', title: 'Instant Delivery / Shipping', description: 'Download digital files instantly or receive your physical patches via express shipping.' }
-    ] : currentKey === 'vector-art' ? [
-      { step_number: 1, icon: 'Upload', title: 'Upload Low-Res Image', description: 'Upload your pixelated JPEG, PNG, or hand sketch with target printing specifications.' },
-      { step_number: 2, icon: 'PenTool', title: 'Manual Vector Tracing', description: 'Vector artists redraw your logo node-by-node in Illustrator — zero auto-tracing.' },
-      { step_number: 3, icon: 'Palette', title: 'Color Separation', description: 'Clean Pantone spot color layer separation ready for screen printing films.' },
-      { step_number: 4, icon: 'Download', title: 'Instant Vector Delivery', description: 'Download resolution-independent master vector source files (.AI, .EPS, .SVG, .PDF).' }
-    ] : currentKey === 'patches' ? [
-      { step_number: 1, icon: 'Upload', title: 'Artwork Submission', description: 'Upload your artwork and choose patch material (Embroidered, Woven, PVC, Leather).' },
-      { step_number: 2, icon: 'FileCheck', title: 'Digital Proof & Approval', description: 'Receive a high-resolution 1:1 digital mockup & physical sample proof for final approval.' },
-      { step_number: 3, icon: 'Sparkles', title: 'Precision Production', description: 'High-density embroidery, fine woven thread weaving, or 3D waterproof PVC molding.' },
-      { step_number: 4, icon: 'Truck', title: 'Express Shipping', description: 'Every emblem undergoes strict quality inspection before express physical shipping.' }
-    ] : [
-      { step_number: 1, icon: 'Upload', title: 'Upload Artwork', description: 'Submit your logo file and specify target fabric type (polo, cap, hoodie) and dimensions.' },
-      { step_number: 2, icon: 'Layers', title: 'Manual Pathing', description: 'Master digitizers set Wilcom underlay density, satin stitch directions, and pull compensation.' },
-      { step_number: 3, icon: 'Cpu', title: 'Virtual Simulation', description: 'Every machine file undergoes pathing simulation to guarantee zero thread trims and breaks.' },
-      { step_number: 4, icon: 'Download', title: 'Instant Download', description: 'Download production-ready machine files (.DST, .PES, .EMB) with free revisions.' }
-    ];
-  }
+  const defaultPatchSteps = [
+    { step_number: '01', icon: 'Upload', title: 'Submit Design', description: 'Upload artwork & select Embroidered, Woven, PVC, or Leather.' },
+    { step_number: '02', icon: 'FileCheck', title: '12-Hr Free Proof', description: 'Receive high-res digital mockup & sew-out sample approval.' },
+    { step_number: '03', icon: 'Sparkles', title: 'Precision Crafting', description: 'Manufactured with durable stitching and military backings.' },
+    { step_number: '04', icon: 'Truck', title: 'Doorstep Delivery', description: 'Tracked express shipping delivered straight to your door.' }
+  ];
 
+  const defaultEmbroiderySteps = [
+    { step_number: '01', icon: 'Upload', title: 'Upload Logo', description: 'Submit your artwork and fabric type (caps, polos, hoodies).' },
+    { step_number: '02', icon: 'Layers', title: 'Manual Digitizing', description: 'Hand-mapped stitch pathing with calculated pull compensation.' },
+    { step_number: '03', icon: 'Cpu', title: 'Sew-Out Simulation', description: 'Virtual stitch test run to guarantee zero thread breaks.' },
+    { step_number: '04', icon: 'Download', title: 'Download & Sew', description: 'Instant machine files (.DST, .PES, .EMB) in 4–12 hours.' }
+  ];
+
+  const activeDefaultSteps = currentKey === 'vector-art' ? defaultVectorSteps :
+    currentKey === 'patches' ? defaultPatchSteps :
+    currentKey === 'embroidery' ? defaultEmbroiderySteps :
+    defaultAllSteps;
+
+  const stepsToRender = (matchedSteps.length > 0)
+    ? matchedSteps.slice(0, 4).map((item, idx) => ({
+        ...item,
+        step_number: item.step_number ? (String(item.step_number).padStart(2, '0')) : `0${idx + 1}`,
+        description: item.description || activeDefaultSteps[idx]?.description || ''
+      }))
+    : activeDefaultSteps;
 
   return (
-    <section id="why-choose-us" style={{ padding: '5.5rem 0', background: 'var(--bg-main)', borderTop: '1px solid var(--border-color)' }}>
+    <section id="why-choose-us" style={{ padding: '5.5rem 0', background: 'var(--bg-main)', borderTop: '1px solid var(--border-color)', position: 'relative' }}>
+      <style>{`
+        .vip-trust-grid {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 1.5rem;
+          margin-bottom: 5.5rem;
+        }
+        .vip-trust-card {
+          position: relative;
+          background: var(--color-surface, var(--bg-card));
+          border: 1.5px solid var(--color-border, var(--border-color));
+          border-radius: 20px;
+          padding: 2rem 1.75rem;
+          transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+          display: flex;
+          flex-direction: column;
+          overflow: hidden;
+        }
+        .vip-trust-card:hover {
+          transform: translateY(-5px);
+          border-color: rgba(249, 115, 22, 0.35);
+          box-shadow: 0 16px 36px -8px rgba(249, 115, 22, 0.14), var(--shadow-md);
+        }
+        .vip-trust-card .card-top-shimmer,
+        .vip-step-card .card-top-shimmer {
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          height: 3px;
+          background: linear-gradient(90deg, transparent, var(--color-primary, #ea580c), transparent);
+          opacity: 0;
+          transition: opacity 0.3s ease;
+        }
+        .vip-trust-card:hover .card-top-shimmer,
+        .vip-step-card:hover .card-top-shimmer {
+          opacity: 1;
+        }
+        .vip-step-grid {
+          display: grid;
+          grid-template-columns: repeat(4, 1fr);
+          gap: 1.5rem;
+        }
+        .vip-step-card {
+          position: relative;
+          background: var(--color-surface, var(--bg-card));
+          border: 1.5px solid var(--color-border, var(--border-color));
+          border-radius: 20px;
+          padding: 2.25rem 1.75rem;
+          transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+          display: flex;
+          flex-direction: column;
+          justify-content: space-between;
+          overflow: hidden;
+        }
+        .vip-step-card:hover {
+          transform: translateY(-5px);
+          border-color: rgba(249, 115, 22, 0.35);
+          box-shadow: 0 16px 36px -8px rgba(249, 115, 22, 0.14), var(--shadow-md);
+        }
+        @media (max-width: 1024px) {
+          .vip-trust-grid {
+            grid-template-columns: repeat(2, 1fr) !important;
+            gap: 1.25rem !important;
+          }
+          .vip-step-grid {
+            grid-template-columns: repeat(2, 1fr) !important;
+            gap: 1.25rem !important;
+          }
+        }
+        @media (max-width: 640px) {
+          .vip-trust-grid {
+            grid-template-columns: 1fr !important;
+            gap: 1rem !important;
+          }
+          .vip-step-grid {
+            grid-template-columns: 1fr !important;
+            gap: 1rem !important;
+          }
+        }
+      `}</style>
+
       <div className="container">
 
         {/* Trust Grid Section Header */}
@@ -130,67 +275,60 @@ export const WhyChooseUs = () => {
             <span>Industry Proven Precision</span>
           </div>
 
-          <h2 style={{ fontSize: 'clamp(2rem, 3.5vw, 2.75rem)', color: 'var(--navy-950)', marginBottom: '1rem', fontWeight: 900, letterSpacing: '-0.02em' }}>
+          <h2 style={{ fontSize: 'clamp(2rem, 3.5vw, 2.75rem)', color: 'var(--navy-950)', marginBottom: '0.85rem', fontWeight: 900, letterSpacing: '-0.02em' }}>
             {title.includes('BDigitizing') ? (
               <>Why Choose <span className="text-gradient-orange">BDigitizing</span>?</>
             ) : (
               title
             )}
           </h2>
-          <p style={{ color: 'var(--text-muted)', fontSize: '1.1rem', lineHeight: 1.65 }}>
+          <p style={{ color: 'var(--text-muted)', fontSize: '1.05rem', lineHeight: 1.6, maxWidth: '640px', margin: '0 auto' }}>
             {subtext}
           </p>
         </div>
 
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 260px), 1fr))',
-          gap: '1.5rem',
-          marginBottom: '5.5rem'
-        }}>
-          {trustFeatures.map((item, idx) => {
-            return (
-              <div
-                key={item.id || idx}
-                className="card"
-                style={{
-                  padding: '2.25rem 1.75rem',
-                  background: 'var(--bg-card)',
-                  border: '1.5px solid var(--border-color)',
-                  borderRadius: '20px',
-                  boxShadow: 'var(--shadow-sm)',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  textAlign: 'center',
-                  cursor: 'default',
-                  transition: 'all 0.3s ease'
-                }}
-              >
+        {/* VIP Trust Grid */}
+        <div className="vip-trust-grid">
+          {featuresToRender.map((item, idx) => (
+            <div key={item.id || idx} className="vip-trust-card">
+              <div className="card-top-shimmer" />
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
                 <div style={{
-                  width: '60px',
-                  height: '60px',
-                  borderRadius: '16px',
-                  background: 'var(--color-primary-light)',
-                  border: '1px solid var(--color-border)',
-                  color: 'var(--color-primary)',
+                  width: '52px',
+                  height: '52px',
+                  borderRadius: '14px',
+                  background: 'var(--color-primary-light, rgba(249, 115, 22, 0.1))',
+                  border: '1px solid rgba(249, 115, 22, 0.22)',
+                  color: 'var(--color-primary, #ea580c)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  marginBottom: '1.35rem',
-                  boxShadow: '0 4px 16px var(--color-primary-glow)'
+                  boxShadow: '0 4px 14px var(--color-primary-glow, rgba(249, 115, 22, 0.12))'
                 }}>
-                  <IconRenderer iconName={item.icon} size={28} />
+                  <IconRenderer iconName={item.icon} size={24} />
                 </div>
-                <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--navy-900)', marginBottom: '0.6rem' }}>
-                  {item.title}
-                </h3>
-                <p style={{ fontSize: '0.925rem', color: 'var(--text-muted)', lineHeight: 1.6, margin: 0 }}>
-                  {item.description || item.desc}
-                </p>
+                <span style={{
+                  fontSize: '0.68rem',
+                  fontWeight: 800,
+                  letterSpacing: '0.06em',
+                  textTransform: 'uppercase',
+                  color: 'var(--color-primary, #ea580c)',
+                  background: 'rgba(249, 115, 22, 0.08)',
+                  border: '1px solid rgba(249, 115, 22, 0.2)',
+                  padding: '0.25rem 0.65rem',
+                  borderRadius: '9999px'
+                }}>
+                  {item.badge}
+                </span>
               </div>
-            );
-          })}
+              <h3 style={{ fontSize: '1.18rem', fontWeight: 800, color: 'var(--navy-950)', marginBottom: '0.45rem', letterSpacing: '-0.015em' }}>
+                {item.title}
+              </h3>
+              <p style={{ fontSize: '0.92rem', color: 'var(--text-muted)', lineHeight: 1.55, margin: 0 }}>
+                {item.description || item.desc}
+              </p>
+            </div>
+          ))}
         </div>
 
         {/* Workflow Section Header */}
@@ -208,78 +346,80 @@ export const WhyChooseUs = () => {
             )}
           </h2>
 
-          <p style={{ color: 'var(--text-muted)', fontSize: '1.1rem', lineHeight: 1.65 }}>
+          <p style={{ color: 'var(--text-muted)', fontSize: '1.05rem', lineHeight: 1.6, maxWidth: '640px', margin: '0 auto' }}>
             {workflowSubtext}
           </p>
         </div>
 
-        {/* Workflow Timeline Grid */}
-        <div className="grid-responsive-4">
-          {stepsToRender.map((item, idx) => {
-            return (
-              <div
-                key={item.id || idx}
-                className="card"
-                style={{
-                  padding: '2.25rem 1.75rem',
-                  textAlign: 'left',
-                  background: 'var(--color-surface, var(--bg-card))',
-                  border: '1.5px solid var(--color-border)',
-                  borderRadius: '20px',
-                  boxShadow: 'var(--shadow-sm)',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  justifyContent: 'space-between',
-                  cursor: 'default'
-                }}
-              >
-                <div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-                    <span style={{
-                      fontSize: '0.8rem',
-                      fontWeight: 900,
-                      background: 'linear-gradient(135deg, var(--color-secondary), var(--color-primary))',
-                      color: 'var(--color-text-on-primary, #ffffff)',
-                      padding: '0.35rem 0.85rem',
-                      borderRadius: '9999px',
-                      boxShadow: '0 4px 12px var(--color-primary-glow)',
-                      letterSpacing: '0.04em'
-                    }}>
-                      STEP {item.step_number || `0${idx + 1}`}
-                    </span>
+        {/* VIP Workflow Step Grid */}
+        <div className="vip-step-grid">
+          {stepsToRender.map((item, idx) => (
+            <div key={item.id || idx} className="vip-step-card">
+              <div className="card-top-shimmer" />
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
+                  <span style={{
+                    fontSize: '0.75rem',
+                    fontWeight: 900,
+                    background: 'linear-gradient(135deg, #ff6b00 0%, #ea580c 100%)',
+                    color: '#ffffff',
+                    padding: '0.35rem 0.85rem',
+                    borderRadius: '9999px',
+                    boxShadow: '0 4px 14px rgba(234, 88, 12, 0.32)',
+                    letterSpacing: '0.05em'
+                  }}>
+                    STEP {item.step_number || `0${idx + 1}`}
+                  </span>
 
-                    <div style={{
-                      width: '44px',
-                      height: '44px',
-                      borderRadius: '12px',
-                      background: 'var(--color-primary-light)',
-                      border: '1px solid var(--color-border)',
-                      color: 'var(--color-primary)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center'
-                    }}>
-                      <IconRenderer iconName={item.icon} fallbackIcon={CheckCircle2} size={22} />
-                    </div>
+                  <div style={{
+                    width: '44px',
+                    height: '44px',
+                    borderRadius: '12px',
+                    background: 'var(--color-primary-light, rgba(249, 115, 22, 0.1))',
+                    border: '1px solid rgba(249, 115, 22, 0.2)',
+                    color: 'var(--color-primary, #ea580c)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}>
+                    <IconRenderer iconName={item.icon} fallbackIcon={CheckCircle2} size={22} />
                   </div>
+                </div>
 
-                  <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--navy-950)', marginBottom: '0.75rem', lineHeight: 1.35 }}>
-                    {item.title}
-                  </h3>
+                <h3 style={{ fontSize: '1.18rem', fontWeight: 800, color: 'var(--navy-950)', marginBottom: '0.45rem', letterSpacing: '-0.015em', lineHeight: 1.35 }}>
+                  {item.title}
+                </h3>
 
-                  <p style={{ fontSize: '0.925rem', color: 'var(--text-muted)', lineHeight: 1.6, margin: 0 }}>
-                    {item.description || item.desc}
-                  </p>
+                <p style={{ fontSize: '0.92rem', color: 'var(--text-muted)', lineHeight: 1.55, margin: 0 }}>
+                  {item.description || item.desc}
+                </p>
+              </div>
+
+              {/* VIP Step Progress Indicator */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '1.5rem', paddingTop: '1rem', borderTop: '1px solid var(--border-color)' }}>
+                <span style={{ fontSize: '0.72rem', fontWeight: 800, color: 'var(--color-primary, #ea580c)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                  Phase 0{idx + 1} of 04
+                </span>
+                <div style={{ display: 'flex', gap: '5px', alignItems: 'center' }}>
+                  {[1, 2, 3, 4].map(s => (
+                    <span
+                      key={s}
+                      style={{
+                        width: s === idx + 1 ? '16px' : '6px',
+                        height: '5px',
+                        borderRadius: '9999px',
+                        background: s === idx + 1 ? 'var(--color-primary, #ea580c)' : 'var(--border-color)',
+                        transition: 'all 0.3s ease'
+                      }}
+                    />
+                  ))}
                 </div>
               </div>
-            );
-          })}
+            </div>
+          ))}
         </div>
 
       </div>
     </section>
   );
 };
-
-
-
