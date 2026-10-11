@@ -348,7 +348,7 @@ export const ServiceProcessTimelineSection = ({
                 {steps.map((p, pIdx) => (
                   <div key={pIdx} style={{ display: 'flex', gap: '1.15rem', alignItems: 'flex-start' }}>
                     <div style={{
-                      background: 'linear-gradient(120deg, var(--color-action-start, #2563eb) 0%, var(--color-action-end, #4338ca) 100%)',
+                      background: 'var(--color-action-bg)',
                       color: 'var(--color-text-on-primary, #ffffff)',
                       fontWeight: 900,
                       fontSize: '0.85rem',

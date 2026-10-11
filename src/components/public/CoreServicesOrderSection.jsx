@@ -1775,7 +1775,7 @@ export const CoreServicesOrderSection = ({ defaultService = 'digitizing', hideTa
                 onClick={handleSubmitOrder}
                 disabled={isSubmitting}
                 className="btn btn-primary-orange btn-lg"
-                style={{ width: '100%', justifyContent: 'center', fontWeight: 800, gap: '0.5rem', background: 'linear-gradient(120deg, var(--color-action-start, #2563eb) 0%, var(--color-action-end, #4338ca) 100%)', borderColor: 'var(--color-primary)', boxShadow: '0 4px 14px var(--color-primary-glow)' }}
+                style={{ width: '100%', justifyContent: 'center', fontWeight: 800, gap: '0.5rem', background: 'var(--color-action-bg)', borderColor: 'var(--color-primary)', boxShadow: '0 4px 14px var(--color-primary-glow)' }}
               >
                 {isSubmitting ? 'Processing Order...' : `Complete Order ($${liveFinalPrice.toFixed(2)})`} <ArrowRight size={18} />
               </button>

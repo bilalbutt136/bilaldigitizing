@@ -21,6 +21,7 @@ export default function ThemePreviewCard({
   themePreset,
   isSelected = false,
   mode = 'light',
+  finish = 'gradient',
   onSelect = () => {}
 }) {
   if (!themePreset) return null;
@@ -36,13 +37,21 @@ export default function ThemePreviewCard({
   const textColor = tokens['--color-text-primary'] || (isDark ? '#f8fafc' : '#0f172a');
   const textMuted = tokens['--color-text-muted'] || '#64748b';
   const borderColor = tokens['--color-border'] || (isDark ? 'rgba(255,255,255,0.1)' : 'rgba(15,23,42,0.1)');
-  const textOnPrimary = tokens['--color-text-on-primary'] || '#ffffff';
+  const textOnPrimary = '#ffffff';
+  const actionStart = tokens['--color-action-start'] || primaryColor;
+  const actionEnd = tokens['--color-action-end'] || accentColor;
+  const buttonBackground = finish === 'solid' ? actionStart : 'linear-gradient(115deg, ' + actionStart + ', ' + actionEnd + ')';
 
   return (
     <div
+      role="button"
+      tabIndex={0}
+      aria-label={'Preview ' + themePreset.name}
+      aria-pressed={isSelected}
       onClick={() => onSelect(themePreset.id)}
+      onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSelect(themePreset.id); } }}
       style={{
-        background: isDark ? '#111827' : '#ffffff',
+        background: surfaceColor,
         borderRadius: '18px',
         border: isSelected ? `2.5px solid ${primaryColor}` : '1.5px solid var(--border-color)',
         padding: '1.25rem',
@@ -97,7 +106,7 @@ export default function ThemePreviewCard({
       <div>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.4rem', paddingRight: isSelected ? '28px' : '0' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
-            <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: 'var(--navy-950)', margin: 0 }}>
+            <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: textColor, margin: 0 }}>
               {themePreset.name}
             </h3>
           </div>
@@ -110,19 +119,19 @@ export default function ThemePreviewCard({
             padding: '0.2rem 0.55rem',
             borderRadius: '9999px',
             background: isDark ? 'rgba(255,255,255,0.08)' : 'var(--bg-subtle)',
-            color: 'var(--text-muted)'
+            color: textMuted
           }}>
             {themePreset.category}
           </span>
         </div>
 
-        <p style={{ fontSize: '0.825rem', color: 'var(--text-muted)', lineHeight: 1.45, marginBottom: '0.75rem' }}>
+        <p style={{ fontSize: '0.825rem', color: textMuted, lineHeight: 1.45, marginBottom: '0.75rem' }}>
           {themePreset.description}
         </p>
 
         {/* 4-Dot Color Palette Preview */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
-          <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', marginRight: '2px' }}>
+          <span style={{ fontSize: '0.75rem', fontWeight: 700, color: textMuted, marginRight: '2px' }}>
             Palette:
           </span>
           <div title="Primary" style={{ width: '18px', height: '18px', borderRadius: '50%', background: themePreset.palette.primary, border: '2px solid rgba(255,255,255,0.8)', boxShadow: '0 1px 4px rgba(0,0,0,0.15)' }} />
@@ -178,7 +187,7 @@ export default function ThemePreviewCard({
             <button
               type="button"
               style={{
-                background: primaryColor,
+                background: buttonBackground,
                 color: textOnPrimary,
                 border: 'none',
                 borderRadius: '6px',

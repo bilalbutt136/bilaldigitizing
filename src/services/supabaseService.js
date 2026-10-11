@@ -1036,7 +1036,7 @@ export async function updateHomePageSettingsInSupabase(payloadArray) {
 // Fetch the full public catalog from Supabase (services, pricing tiers,
 // patch cards, store products, portfolio items, sew outs, hero slides, digitizers,
 // and the cms_content key/value store). Returns null when not configured.
-export async function fetchCatalogFromSupabase() {
+export async function fetchCatalogFromSupabase(options = {}) {
   return runDedupedApiRead('public-catalog-all', async () => {
     try {
       const res = await fetch('/api/catalog?action=fetchAll');
@@ -1046,7 +1046,7 @@ export async function fetchCatalogFromSupabase() {
     } catch {
       return null;
     }
-  }, { ttlMs: 60_000 });
+  }, { ttlMs: 60_000, force: Boolean(options.force) });
 }
 
 // ============================================================

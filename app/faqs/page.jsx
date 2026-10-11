@@ -553,7 +553,7 @@ export default function FAQsPage() {
             <Link
               href="/contact"
               style={{
-                background: 'linear-gradient(135deg, #4f46e5 0%, #2563eb 100%)',
+                background: 'var(--color-action-bg, linear-gradient(135deg,#2563eb,#4338ca))',
                 color: '#ffffff',
                 border: 'none',
                 padding: '0.95rem 2.25rem',

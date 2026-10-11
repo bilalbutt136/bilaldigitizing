@@ -45,8 +45,8 @@ describe('Dark Mode & Theme Contrast Standards (WCAG 2.1 AA)', () => {
     assert.equal(Math.round(sameRatio), 1);
   });
 
-  test('THEME_PRESETS maintains exactly one official brand theme (Signature Sapphire)', () => {
-    assert.equal(THEME_PRESETS.length, 1);
+  test('THEME_PRESETS includes 8 curated brand themes while preserving Sapphire as default', () => {
+    assert.equal(THEME_PRESETS.length, 8);
     assert.equal(THEME_PRESETS[0].id, 'studio-orange');
     assert.equal(THEME_PRESETS[0].name, 'Signature Sapphire');
     assert.equal(THEME_PRESETS[0].palette.primary, '#1d4ed8');

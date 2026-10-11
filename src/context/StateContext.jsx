@@ -60,7 +60,7 @@ import {
   stopNotificationSound,
   markNotificationSoundPlayed
 } from '../utils/audioNotification';
-import { THEME_PRESETS, applyThemePresetToDOM } from '../utils/themePresets';
+import { THEME_PRESETS, applyThemePresetToDOM, isValidBrandPreset } from '../utils/themePresets';
 import { navigateTo } from '../utils/navigation';
 import { formatOrderId, formatDimensions, formatFabric, formatDesignTitle } from '../utils/formatters';
 import {
@@ -156,7 +156,7 @@ export const StateProvider = ({ children, initialCatalog = null }) => {
 
   // Global Theme Mode State ('light' | 'dark') & Color Preset
   const [theme, setThemeState] = useState('light');
-  const [colorTheme, setColorThemeState] = useState('studio-orange');
+  const [colorTheme, setColorThemeState] = useState(initialCatalog?.siteSettings?.themePreset || 'studio-orange');
   const [customBrandColors, setCustomBrandColorsState] = useState(null);
 
   const _applyThemeToDOM = (tMode = theme, cPreset = colorTheme, cBrand = customBrandColors) => {
@@ -186,26 +186,26 @@ export const StateProvider = ({ children, initialCatalog = null }) => {
     }
 
     setThemeState(savedMode);
-    setColorThemeState('studio-orange');
-    setCustomBrandColorsState(savedBrand);
+    setColorThemeState(isValidBrandPreset(initialCatalog?.siteSettings?.themePreset) ? initialCatalog.siteSettings.themePreset : 'studio-orange');
+    setCustomBrandColorsState(null);
 
     if (typeof window !== 'undefined') {
       localStorage.setItem('bdigi_color_theme', 'studio-orange');
     }
 
-    applyThemePresetToDOM('studio-orange', savedMode, savedBrand);
+    applyThemePresetToDOM(initialCatalog?.siteSettings?.themePreset || 'studio-orange', savedMode, initialCatalog?.siteSettings?.customBrandColors || null, initialCatalog?.siteSettings?.themeFinish || 'gradient');
   }, []);
 
   const toggleTheme = () => {
     const nextTheme = theme === 'light' ? 'dark' : 'light';
     setThemeState(nextTheme);
 
-    const activePreset = 'studio-orange';
+    const activePreset = colorTheme;
 
     if (typeof window !== 'undefined') {
       localStorage.setItem('bdigi_theme', nextTheme);
     }
-    applyThemePresetToDOM(activePreset, nextTheme, customBrandColors);
+    applyThemePresetToDOM(activePreset, nextTheme, customBrandColors, siteSettings?.themeFinish);
     showToast(nextTheme === 'dark' ? 'Dark Mode enabled 🌙' : 'Light Mode enabled ☀️', 'info');
   };
 
@@ -213,16 +213,16 @@ export const StateProvider = ({ children, initialCatalog = null }) => {
     const validTheme = newTheme === 'dark' ? 'dark' : 'light';
     setThemeState(validTheme);
 
-    const activePreset = 'studio-orange';
+    const activePreset = colorTheme;
 
     if (typeof window !== 'undefined') {
       localStorage.setItem('bdigi_theme', validTheme);
     }
-    applyThemePresetToDOM(activePreset, validTheme, customBrandColors);
+    applyThemePresetToDOM(activePreset, validTheme, customBrandColors, siteSettings?.themeFinish);
   };
 
   const setColorTheme = (_presetId = 'studio-orange', customBrand = null) => {
-    const targetPreset = 'studio-orange';
+    const targetPreset = isValidBrandPreset(_presetId) ? _presetId : 'studio-orange';
     setColorThemeState(targetPreset);
     if (customBrand) {
       setCustomBrandColorsState(customBrand);
@@ -233,7 +233,7 @@ export const StateProvider = ({ children, initialCatalog = null }) => {
         localStorage.setItem('bdigi_custom_brand', JSON.stringify(customBrand));
       }
     }
-    applyThemePresetToDOM(targetPreset, theme, customBrand || customBrandColors);
+    applyThemePresetToDOM(targetPreset, theme, customBrand || customBrandColors, siteSettings?.themeFinish);
   };
 
   // Mobile view starts deterministically for SSR/hydration; browser display mode is resolved after mount.
@@ -331,7 +331,7 @@ export const StateProvider = ({ children, initialCatalog = null }) => {
         localStorage.removeItem('bdigi_custom_brand');
       }
     }
-    applyThemePresetToDOM(colorTheme, theme, brandOverrides);
+    applyThemePresetToDOM(colorTheme, theme, brandOverrides, siteSettings?.themeFinish);
     showToast('Brand colors updated successfully!', 'success');
   };
 
@@ -444,6 +444,46 @@ export const StateProvider = ({ children, initialCatalog = null }) => {
       ]
     };
   });
+  // Server catalog/Supabase remains the single source of truth for branding.
+  // Admin updates propagate through site_config Realtime and cross-tab storage.
+  useEffect(() => {
+    const selected = isValidBrandPreset(siteSettings?.themePreset)
+      ? siteSettings.themePreset : 'studio-orange';
+    const finish = siteSettings?.themeFinish === 'solid' ? 'solid' : 'gradient';
+    const brand = siteSettings?.customBrandColors || null;
+    setColorThemeState(selected);
+    setCustomBrandColorsState(brand);
+    applyThemePresetToDOM(selected, theme, brand, finish);
+  }, [siteSettings?.themePreset, siteSettings?.themeFinish, siteSettings?.customBrandColors, theme]);
+
+  // Lightweight fallback for already-open visitor tabs when Supabase Realtime
+  // has not published the site_config table. No private settings are transferred.
+  useEffect(() => {
+    let stopped = false;
+    const checkLiveBrand = async () => {
+      if (document.visibilityState === 'hidden') return;
+      try {
+        const response = await fetch('/api/brand-theme', { cache: 'no-store' });
+        if (!response.ok) return;
+        const next = await response.json();
+        if (stopped || !isValidBrandPreset(next?.themePreset)) return;
+        setSiteSettings(current => {
+          const finish = next.themeFinish === 'solid' ? 'solid' : 'gradient';
+          const a = JSON.stringify(current?.customBrandColors || null);
+          const b = JSON.stringify(next.customBrandColors || null);
+          if (current?.themePreset === next.themePreset && (current?.themeFinish || 'gradient') === finish && a === b) return current;
+          return { ...current, themePreset: next.themePreset, themeFinish: finish, customBrandColors: next.customBrandColors || null };
+        });
+      } catch { /* Preserve last known good palette on temporary network failures. */ }
+    };
+    // Server-preloaded catalog handles initial state; check active tabs thereafter.
+    const interval = window.setInterval(checkLiveBrand, 30000);
+    const handleFocus = () => { void checkLiveBrand(); };
+    document.addEventListener('visibilitychange', handleFocus);
+    window.addEventListener('focus', handleFocus);
+    return () => { stopped = true; window.clearInterval(interval); document.removeEventListener('visibilitychange', handleFocus); window.removeEventListener('focus', handleFocus); };
+  }, []);
+
   const [digitizers, setDigitizers] = useState(initialCatalog?.digitizers || []);
 
   // Admin whitelist (server-managed via public.admins table)
@@ -1200,7 +1240,7 @@ export const StateProvider = ({ children, initialCatalog = null }) => {
       tablesToSync.forEach(table => {
         catalogChannel.on('postgres_changes', { event: '*', schema: 'public', table: table }, async () => {
           try {
-            const catalog = await fetchCatalogFromSupabase();
+            const catalog = await fetchCatalogFromSupabase({ force: true });
             if (catalog) {
               persistLiveCatalogToStorage(catalog);
               if (catalog.servicesList) setServicesList(catalog.servicesList);
@@ -2793,47 +2833,28 @@ export const StateProvider = ({ children, initialCatalog = null }) => {
   };
 
   const updateSiteSettings = async (newSettings) => {
-    let mergedSettings = null;
-    setSiteSettings(prev => {
-      const merged = {
-        ...prev,
-        ...newSettings,
-        promotions: newSettings?.promotions || prev?.promotions || [],
-        service_discounts: newSettings?.service_discounts || newSettings?.serviceDiscounts || prev?.service_discounts || { embroidery: 20, vector: 10, patch: 5, enabled: true },
-        serviceDiscounts: newSettings?.service_discounts || newSettings?.serviceDiscounts || prev?.serviceDiscounts || { embroidery: 20, vector: 10, patch: 5, enabled: true },
-        announcement: {
-          ...(prev?.announcement || {}),
-          ...(newSettings?.announcement || {})
-        },
-        promotionalBanner: {
-          ...(prev?.promotionalBanner || {}),
-          ...(newSettings?.promotionalBanner || {})
-        },
-        promoCodes: newSettings?.promoCodes || prev?.promoCodes || []
-      };
-      mergedSettings = merged;
-
-      if (typeof window !== 'undefined') {
-        try {
-          localStorage.setItem('site_settings_live', JSON.stringify(merged));
-          if (merged.metaPixelId) {
-            localStorage.setItem('meta_pixel_id', merged.metaPixelId);
-          }
-          window.dispatchEvent(new CustomEvent('site_settings_updated', { detail: merged }));
-          window.dispatchEvent(new CustomEvent('bdigi_promotions_sync', { detail: merged }));
-          if ('BroadcastChannel' in window) {
-            const promoBc = new BroadcastChannel('bdigi_promotions_sync');
-            promoBc.postMessage(merged);
-            promoBc.close();
-          }
-        } catch {}
-      }
-
-      return merged;
-    });
-
-    const settingsToSave = mergedSettings || newSettings;
-    await saveCmsConfigToSupabase('site_settings', settingsToSave);
+    // Persist the complete config; updating a partial object would erase other settings.
+    const previous = siteSettings || {};
+    const mergedSettings = {
+      ...previous, ...newSettings,
+      promotions: newSettings?.promotions || previous?.promotions || [],
+      service_discounts: newSettings?.service_discounts || newSettings?.serviceDiscounts || previous?.service_discounts || { embroidery: 20, vector: 10, patch: 5, enabled: true },
+      serviceDiscounts: newSettings?.service_discounts || newSettings?.serviceDiscounts || previous?.serviceDiscounts || { embroidery: 20, vector: 10, patch: 5, enabled: true },
+      announcement: { ...(previous?.announcement || {}), ...(newSettings?.announcement || {}) },
+      promotionalBanner: { ...(previous?.promotionalBanner || {}), ...(newSettings?.promotionalBanner || {}) },
+      promoCodes: newSettings?.promoCodes || previous?.promoCodes || []
+    };
+    const persisted = await saveCmsConfigToSupabase('site_settings', mergedSettings);
+    if (!persisted) throw new Error('Could not save settings in Supabase. No changes applied.');
+    setSiteSettings(mergedSettings);
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('site_settings_live', JSON.stringify(mergedSettings));
+        if (mergedSettings.metaPixelId) localStorage.setItem('meta_pixel_id', mergedSettings.metaPixelId);
+        window.dispatchEvent(new CustomEvent('site_settings_updated', { detail: mergedSettings }));
+        window.dispatchEvent(new CustomEvent('bdigi_promotions_sync', { detail: mergedSettings }));
+      } catch {}
+    }
     if (newSettings.metaPixelId !== undefined) {
       await saveCmsConfigToSupabase('meta_pixel_id', newSettings.metaPixelId);
     }

@@ -19,6 +19,10 @@
   --color-action-start: #2563eb;
   --color-action-end: #4338ca;
 
+  --color-action-bg: linear-gradient(116deg,#2563eb,#4338ca);
+  --color-action-text: #ffffff;
+  --brand-title-fill: linear-gradient(105deg,#1d4ed8,#5b21b6);
+
   /* 4-Layer Surface System — clear visual separation */
   --color-background: #f6f8fd;        /* Slate-50 Page canvas */
   --color-surface: #ffffff;           /* Cards, panels — clean white */
@@ -344,8 +348,8 @@ h1, h2, h3, h4, h5, h6 {
 .btn-primary-orange,
 .btn-blue,
 .btn-navy {
-  background: linear-gradient(120deg, var(--color-action-start, #2563eb) 0%, var(--color-action-end, #4338ca) 100%) !important;
-  color: var(--color-text-on-primary, #ffffff) !important;
+  background: var(--color-action-bg, linear-gradient(120deg,#2563eb,#4338ca)) !important;
+  color: var(--color-action-text, #ffffff) !important;
   box-shadow: var(--shadow-md), 0 4px 14px var(--color-primary-glow);
   border: none;
 }

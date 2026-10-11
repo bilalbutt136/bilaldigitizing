@@ -1,3 +1,5 @@
+import { CURATED_BRANDS, buildCuratedTheme } from './brandPaletteLibrary.js';
+
 /**
  * Central Theme Presets & Design Token Configuration System
  * 
@@ -123,13 +125,20 @@ export const THEME_PRESETS = [
   }
 ];
 
+// Preserve the existing Sapphire preset as the unchanged launch default.
+THEME_PRESETS.push(...CURATED_BRANDS.map(brand => buildCuratedTheme(brand, THEME_PRESETS[0].tokens)));
+
+export function isValidBrandPreset(value) {
+  return THEME_PRESETS.some(preset => preset.id === value);
+}
+
 /**
  * Apply theme preset directly to DOM root elements
  * @param {string} presetId - Preset ID from THEME_PRESETS
  * @param {'light'|'dark'} mode - 'light' or 'dark'
  * @param {Object} [customBrandOverrides] - Optional custom brand colors { primary, secondary, accent }
  */
-export function applyThemePresetToDOM(presetId = 'studio-orange', mode = 'light', customBrandOverrides = null) {
+export function applyThemePresetToDOM(presetId = 'studio-orange', mode = 'light', customBrandOverrides = null, finish = 'gradient') {
   if (typeof document === 'undefined') return;
 
   const root = document.documentElement;
@@ -158,11 +167,25 @@ export function applyThemePresetToDOM(presetId = 'studio-orange', mode = 'light'
 
   // 2. Extract active token set
   const tokenSet = (mode === 'dark' ? theme.tokens.dark : theme.tokens.light) || {};
+  const appearance = finish === 'solid' ? 'solid' : 'gradient';
+  root.setAttribute('data-brand-finish', appearance);
 
   // 3. Apply CSS custom properties directly on :root element
   Object.entries(tokenSet).forEach(([propName, propValue]) => {
     root.style.setProperty(propName, propValue);
   });
+
+  // A single finish-aware action background powers all reusable CTAs and the VIP hero.
+  // Solid and Gradient both retain readable action text on dark/light modes.
+  const actionStart = tokenSet['--color-action-start'] || '#2563eb';
+  const actionEnd = tokenSet['--color-action-end'] || '#4338ca';
+  const primary = tokenSet['--color-primary'] || '#1d4ed8';
+  const secondary = tokenSet['--color-secondary'] || '#5b21b6';
+  root.style.setProperty('--color-action-bg', appearance === 'solid' ? actionStart : 'linear-gradient(116deg,' + actionStart + ' 0%,' + actionEnd + ' 100%)');
+  root.style.setProperty('--color-action-text', '#ffffff');
+  root.style.setProperty('--brand-title-fill', appearance === 'solid' ? primary : 'linear-gradient(105deg,' + primary + ' 8%,' + secondary + ' 96%)');
+  root.style.setProperty('--brand-hero-tint', tokenSet['--hero-bg']);
+  root.style.setProperty('--brand-cta-bg', tokenSet['--cta-bg']);
 
   // 4. Map semantic tokens to legacy aliases for complete backward compatibility
   root.style.setProperty('--orange-500', tokenSet['--color-primary'] || (mode === 'dark' ? '#fb923c' : '#ea580c'));
@@ -195,11 +218,11 @@ export function applyThemePresetToDOM(presetId = 'studio-orange', mode = 'light'
     root.style.setProperty('--hero-tabs-text', '#f8fafc');
     root.style.setProperty('--hero-tabs-icon', tokenSet['--color-primary'] || '#38bdf8');
   } else {
-    root.style.setProperty('--navy-950', '#0b1730');
+    root.style.setProperty('--navy-950', tokenSet['--color-text-primary'] || '#0b1730');
     root.style.setProperty('--navy-900', '#142443');
     root.style.setProperty('--navy-800', '#243859');
-    root.style.setProperty('--navy-700', '#344461');
-    root.style.setProperty('--navy-600', '#586984');
+    root.style.setProperty('--navy-700', tokenSet['--color-text-secondary'] || '#344461');
+    root.style.setProperty('--navy-600', tokenSet['--color-text-muted'] || '#586984');
     root.style.setProperty('--navy-100', '#eef3fd');
     root.style.setProperty('--hero-tabs-bg', tokenSet['--hero-tabs-bg'] || '#ffffff');
     root.style.setProperty('--hero-tabs-border', tokenSet['--hero-tabs-border'] || 'rgba(15, 23, 42, 0.12)');
@@ -219,4 +242,18 @@ export function applyThemePresetToDOM(presetId = 'studio-orange', mode = 'light'
   if (customBrandOverrides?.accent) {
     root.style.setProperty('--color-accent', customBrandOverrides.accent);
   }
+  // Optional admin HEX overrides must drive the same shared action and headline
+  // roles as a curated preset, not only recolor badges.
+  const isHex = v => /^#[0-9a-f]{6}$/i.test(String(v || ''));
+  const customPrimary = isHex(customBrandOverrides?.primary) ? customBrandOverrides.primary : null;
+  const customSecondary = isHex(customBrandOverrides?.secondary) ? customBrandOverrides.secondary : null;
+  if (customPrimary || customSecondary) {
+    const first = customPrimary || actionStart;
+    const last = customSecondary || actionEnd;
+    root.style.setProperty('--color-action-start', first);
+    root.style.setProperty('--color-action-end', last);
+    root.style.setProperty('--color-action-bg', appearance === 'solid' ? first : 'linear-gradient(116deg,' + first + ' 0%,' + last + ' 100%)');
+    root.style.setProperty('--brand-title-fill', appearance === 'solid' ? first : 'linear-gradient(105deg,' + first + ' 8%,' + last + ' 96%)');
+  }
+  themeMeta?.setAttribute('content', tokenSet['--color-background'] || (mode === 'dark' ? '#080f20' : '#f6f8fd'));
 }

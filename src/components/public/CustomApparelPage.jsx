@@ -187,7 +187,7 @@ export const CustomApparelPage = () => {
                         position: 'absolute',
                         top: '14px',
                         left: '14px',
-                        background: 'linear-gradient(135deg, #4f46e5 0%, #2563eb 100%)',
+                        background: 'var(--color-action-bg)',
                         color: '#ffffff',
                         fontSize: '0.725rem',
                         fontWeight: 800,

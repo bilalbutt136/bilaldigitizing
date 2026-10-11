@@ -20,7 +20,7 @@ test('VIP hero has strong brand CTA, dark-mode responsive style and accessible c
   assert.match(hero, /vip-hero-secondary/);
   assert.match(hero, /vip-hero-feature/);
   assert.match(hero, /aria-label="Studio capabilities"/);
-  assert.match(css, /linear-gradient\(112deg,#0e64f2/);
+  assert.match(css, /background: var\(--color-action-bg/);
   assert.match(css, /\[data-theme="dark"\] \.vip-hero/);
   assert.match(css, /@media\(max-width:640px\)/);
   assert.match(css, /prefers-reduced-motion/);

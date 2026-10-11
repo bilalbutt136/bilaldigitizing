@@ -17,6 +17,7 @@ function revalidateAllSitePages() {
     revalidatePath('/portfolio');
     revalidatePath('/');
     revalidateTag('homepage', 'max');
+    revalidateTag('catalog', 'max');
   } catch (e) {
     console.warn('[Revalidate Error]:', e);
   }
@@ -103,10 +104,14 @@ async function POST_impl(req) {
     }));
 
     // Upsert to both site_config and home_page_settings with admin privileges
-    await Promise.allSettled([
+    const [publicSave, editorSave] = await Promise.all([
       supabase.from('site_config').upsert(records, { onConflict: 'key' }),
       supabase.from('home_page_settings').upsert(records, { onConflict: 'key' })
     ]);
+    if (publicSave.error || editorSave.error) {
+      console.error('[CMS API POST SAVE]', publicSave.error?.message, editorSave.error?.message);
+      return NextResponse.json({ success: false, error: 'Could not persist all site settings.' }, { status: 503 });
+    }
 
     revalidateAllSitePages();
 

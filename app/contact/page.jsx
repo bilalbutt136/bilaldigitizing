@@ -427,7 +427,7 @@ export default function ContactPage() {
                   type="submit"
                   disabled={submitting}
                   style={{
-                    background: 'linear-gradient(135deg, #4f46e5 0%, #2563eb 100%)',
+                    background: 'var(--color-action-bg, linear-gradient(135deg,#2563eb,#4338ca))',
                     color: '#ffffff',
                     border: 'none',
                     padding: '0.9rem 2rem',
@@ -475,7 +475,7 @@ export default function ContactPage() {
                   else window.location.href = '/order';
                 }}
                 style={{
-                  background: 'linear-gradient(135deg, #4f46e5 0%, #2563eb 100%)',
+                  background: 'var(--color-action-bg, linear-gradient(135deg,#2563eb,#4338ca))',
                   color: '#ffffff',
                   border: 'none',
                   padding: '0.85rem 1.75rem',

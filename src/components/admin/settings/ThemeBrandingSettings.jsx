@@ -3,8 +3,8 @@
 import React, { useState } from 'react';
 import { useAppState } from '../../../context/StateContext';
 import { Palette, Sun, Moon, Sparkles, RefreshCw, Sliders, Check as _Check, Eye, Copy as _Copy, ArrowRight, ShieldCheck as _ShieldCheck, Tag as _Tag } from 'lucide-react';
-import ThemePreviewCard from '../../common/ThemePreviewCard';
-import { THEME_PRESETS } from '../../../utils/themePresets';
+import BrandPaletteGallery from './BrandPaletteGallery';
+
 import BrandingAssetManager from './BrandingAssetManager';
 
 export const ThemeBrandingSettings = () => {
@@ -13,6 +13,7 @@ export const ThemeBrandingSettings = () => {
     setTheme,
     customBrandColors,
     setCustomBrandColors,
+    siteSettings,
     showToast,
     updateSiteSettings
   } = useAppState();
@@ -21,46 +22,36 @@ export const ThemeBrandingSettings = () => {
   const [customPrimary, setCustomPrimary] = useState(customBrandColors?.primary || '#1d4ed8');
   const [customSecondary, setCustomSecondary] = useState(customBrandColors?.secondary || '#5b21b6');
   const [customAccent, setCustomAccent] = useState(customBrandColors?.accent || '#7c3aed');
-  const [isCustomBrandActive, setIsCustomBrandActive] = useState(Boolean(customBrandColors));
+  const isCustomBrandActive = Boolean(siteSettings?.customBrandColors);
   const [isSaving, setIsSaving] = useState(false);
 
 
   const handleSaveCustomBrand = async (e) => {
     e?.preventDefault?.();
+    if (![customPrimary, customSecondary, customAccent].every(v => /^#[0-9a-f]{6}$/i.test(v))) {
+      showToast('Enter valid 6-digit HEX color codes.', 'error');
+      return;
+    }
     setIsSaving(true);
     try {
-      const brandPayload = {
-        primary: customPrimary,
-        secondary: customSecondary,
-        accent: customAccent
-      };
+      const brandPayload = { primary: customPrimary, secondary: customSecondary, accent: customAccent };
+      await updateSiteSettings({ customBrandColors: brandPayload });
       setCustomBrandColors(brandPayload);
-      setIsCustomBrandActive(true);
-
-      // Persist to Supabase site_settings
-      await updateSiteSettings({
-        themePreset: 'studio-orange',
-        customBrandColors: brandPayload,
-        themeMode: theme
-      });
-
-      showToast('Custom brand colors saved and applied across the studio!', 'success');
+      showToast('Custom brand colors published across the website.', 'success');
     } catch {
-      showToast('Failed to persist custom brand colors to database.', 'error');
-    } finally {
-      setIsSaving(false);
-    }
+      showToast('Failed to save brand colors in database.', 'error');
+    } finally { setIsSaving(false); }
   };
 
   const handleResetBrandColors = async () => {
-    setCustomBrandColors(null);
-    setIsCustomBrandActive(false);
-    await updateSiteSettings({
-      customBrandColors: null
-    });
-    showToast('Reset brand colors to theme default palette.', 'info');
+    try {
+      await updateSiteSettings({ customBrandColors: null });
+      setCustomBrandColors(null);
+      showToast('Custom overrides cleared. Selected brand restored.', 'success');
+    } catch {
+      showToast('Could not reset brand overrides.', 'error');
+    }
   };
-
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
 
@@ -136,31 +127,7 @@ export const ThemeBrandingSettings = () => {
         </div>
       </div>
 
-      {/* 2. Official Brand Theme Card */}
-      <div className="card" style={{ padding: '2rem', background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '20px', boxShadow: 'var(--shadow-sm)' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '0.75rem' }}>
-          <div>
-            <h4 style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--color-text-primary)', margin: '0 0 0.25rem' }}>
-              Official Brand Theme
-            </h4>
-            <p style={{ fontSize: '0.825rem', color: 'var(--color-text-muted)', margin: 0 }}>
-              High-end commercial digitizing and vector studio design system applied platform-wide.
-            </p>
-          </div>
-          <span style={{ fontSize: '0.75rem', fontWeight: 800, background: 'var(--color-primary-light)', color: 'var(--color-primary)', padding: '0.3rem 0.75rem', borderRadius: '9999px' }}>
-            Active: {THEME_PRESETS[0]?.name || 'Executive Studio Pro'}
-          </span>
-        </div>
-
-        <div style={{ maxWidth: '420px' }}>
-          <ThemePreviewCard
-            themePreset={THEME_PRESETS[0]}
-            isSelected={true}
-            mode={theme}
-            onSelect={() => {}}
-          />
-        </div>
-      </div>
+      <BrandPaletteGallery siteSettings={siteSettings} updateSiteSettings={updateSiteSettings} showToast={showToast} />
 
       {/* 3. Custom Brand Colors Override Form */}
       <div className="card" style={{ padding: '2rem', background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '20px', boxShadow: 'var(--shadow-sm)' }}>

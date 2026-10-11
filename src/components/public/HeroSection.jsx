@@ -831,7 +831,7 @@ export const HeroSection = () => {
                 className="btn btn-primary-orange btn-lg vip-hero-primary"
                 onClick={handlePrimaryAction}
                 style={{
-                  background: 'linear-gradient(120deg, var(--color-action-start, #2563eb) 0%, var(--color-action-end, #4338ca) 100%)',
+                  background: 'var(--color-action-bg)',
                   color: 'var(--color-text-on-primary, #ffffff)',
                   border: 'none',
                   padding: '0.72rem 1.45rem',
@@ -1393,7 +1393,7 @@ export const HeroSection = () => {
                   handlePrimaryAction();
                 }}
                 style={{
-                  background: 'linear-gradient(120deg, var(--color-action-start, #2563eb) 0%, var(--color-action-end, #4338ca) 100%)',
+                  background: 'var(--color-action-bg)',
                   color: '#ffffff',
                   padding: '0.65rem 1.3rem',
                   borderRadius: '10px',

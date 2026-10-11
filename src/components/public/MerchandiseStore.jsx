@@ -183,7 +183,7 @@ export const MerchandiseStore = () => {
                         position: 'absolute',
                         top: '12px',
                         left: '12px',
-                        background: 'linear-gradient(135deg, #4f46e5 0%, #2563eb 100%)',
+                        background: 'var(--color-action-bg)',
                         border: '1.5px solid #ffffff',
                         color: '#ffffff',
                         fontSize: '0.725rem',
