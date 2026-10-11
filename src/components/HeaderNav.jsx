@@ -310,7 +310,7 @@ export const HeaderNav = () => {
     <header style={{ position: 'sticky', top: 0, zIndex: 1000, background: 'var(--bg-card)', backdropFilter: isScrolled ? 'blur(12px)' : 'none', borderBottom: '1px solid var(--border-color)', transition: 'all 0.3s ease', boxShadow: isScrolled ? 'var(--shadow-sm)' : 'none' }}>
       {/* Main Brand Navbar */}
 
-      <div style={{
+      <div className="site-header-main" style={{
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
@@ -329,9 +329,10 @@ export const HeaderNav = () => {
               window.scrollTo({ top: 0, behavior: 'smooth' });
             }
           }}
+          className="site-header-brand"
           style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', cursor: 'pointer', flexShrink: 0, textDecoration: 'none' }}
         >
-          <div style={{
+          <div className="site-header-logo-frame" style={{
             background: '#ffffff',
             border: '1px solid rgba(226, 232, 240, 0.9)',
             padding: '2px 6px',
@@ -346,10 +347,11 @@ export const HeaderNav = () => {
             <img
               src={siteSettings?.headerLogoUrl || siteSettings?.logoUrl || '/logo.png'}
               alt="BDigitizing Logo"
+              className="site-header-logo-image"
               style={{ height: '38px', width: 'auto', maxWidth: '170px', objectFit: 'contain', display: 'block' }}
             />
           </div>
-          <div>
+          <div className="site-header-brand-text">
             <div style={{ fontFamily: 'var(--font-heading)', fontWeight: 800, fontSize: '1.15rem', color: 'var(--text-main)', letterSpacing: '-0.02em', lineHeight: 1, whiteSpace: 'nowrap' }}>
               BDigitizing
             </div>
@@ -647,7 +649,7 @@ export const HeaderNav = () => {
           )}
 
           {/* Mobile Right Action Area (Inbox, Notifications Bell & Clean Three-Lines Menu) */}
-          <div className="mobile-only-flex" style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', flexShrink: 0 }}>
+          <div className="mobile-only-flex site-header-mobile-actions" style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', flexShrink: 0 }}>
             {/* Mobile Inbox Icon */}
             <button
               type="button"
