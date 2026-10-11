@@ -17,6 +17,8 @@ import {
 export const PromotionsManager = () => {
   const { siteSettings, updateSiteSettings, showToast, clients = [] } = useAppState();
   const [copiedCode, setCopiedCode] = useState(null);
+  const [promoSaving, setPromoSaving] = useState(false);
+  const promotionsEnabled = siteSettings?.promotionsEnabled === true;
 
   // 2-Step Modal states for "Create a promotion"
   const [isPromoModalOpen, setIsPromoModalOpen] = useState(false);
@@ -110,7 +112,7 @@ export const PromotionsManager = () => {
   }, [siteSettings]);
 
   // Derive active promo
-  const activePromo = promotions.find(p => p.status === 'active');
+  const activePromo = promotionsEnabled ? promotions.find(p => p.status === 'active') : null;
 
   // Helper to build dynamic announcement banner matching active promotion rates
   const buildDynamicAnnouncement = (promo) => {
@@ -158,10 +160,38 @@ export const PromotionsManager = () => {
     };
   };
 
+  const handleStopAllPromotions = async () => {
+    if (promoSaving) return;
+    setPromoSaving(true);
+    const paused = promotions.map(p => ({ ...p, status: 'paused' }));
+    const disabled = { embroidery: 0, vector: 0, patch: 0, enabled: false };
+    try {
+      await updateSiteSettings({
+        promotionsEnabled: false,
+        promotions: paused,
+        service_discounts: disabled,
+        serviceDiscounts: disabled,
+        announcement: { enabled: false, text: '', promoCode: '', showCountdown: false, showCodeBadge: false },
+        promotionalBanner: { enabled: false },
+        promoCodes: (siteSettings?.promoCodes || []).map(c => ({ ...c, isActive: false }))
+      });
+      setPromotions(paused);
+      setServiceDiscounts(disabled);
+      showToast?.('All promotions, coupons and sale banners are OFF.', 'success');
+    } catch (err) {
+      console.error('Failed to switch off promotions:', err);
+      showToast?.('Failed to save. Promotions OFF remains the safe public default; please retry.', 'error');
+    } finally { setPromoSaving(false); }
+  };
+
   // ---------------------------------------------------------------------------
   // SAVE LIVE SERVICE-SPECIFIC DISCOUNTS (Top Control Desk)
   // ---------------------------------------------------------------------------
   const handleSaveLiveServiceDiscounts = async () => {
+    if (!promotionsEnabled) {
+      showToast?.('Promotions are OFF. No discounts can be started.', 'info');
+      return;
+    }
     setIsSavingServices(true);
     try {
       const emb = Math.max(0, Math.min(100, Number(serviceDiscounts.embroidery) || 0));
@@ -200,48 +230,9 @@ export const PromotionsManager = () => {
         return p;
       });
 
-      if (!activeFound && updatedPromotions.length > 0) {
-        // Activate the first promotion with these service rates, pausing the rest
-        updatedPromotions = updatedPromotions.map((p, idx) => {
-          if (idx === 0) {
-            return {
-              ...p,
-              status: 'active',
-              discountPercent: maxDiscount,
-              serviceDiscounts: { embroidery: emb, vector: vec, patch: pch },
-              serviceStatus: { ...serviceStatus },
-              servicesIncluded: `Embroidery (${emb}%), Vector (${vec}%), Patches (${pch}%)`,
-              promoCode: `SAVE${maxDiscount}`,
-              endDate: (p.endDate && p.endDate >= defaultStartStr) ? p.endDate : defaultEndStr
-            };
-          }
-          return { ...p, status: 'paused' };
-        });
-      } else if (updatedPromotions.length === 0) {
-        // Create an initial active promotion
-        const defaultPromo = {
-          id: `promo_${Date.now()}`,
-          name: 'STUDIO PROMO',
-          type: 'all_orders',
-          discountPercent: maxDiscount,
-          serviceDiscounts: { embroidery: emb, vector: vec, patch: pch },
-          serviceStatus: { ...serviceStatus },
-          startDate: defaultStartStr,
-          endDate: defaultEndStr,
-          status: 'active',
-          maxOrdersLimit: 500,
-          ordersCount: 0,
-          servicesIncluded: `Embroidery (${emb}%), Vector (${vec}%), Patches (${pch}%)`,
-          promoCode: `SAVE${maxDiscount}`,
-          createdAt: new Date().toISOString()
-        };
-        updatedPromotions = [defaultPromo];
-      }
-
+      // Keep paused and deleted promotions inactive: saving discount rates must never auto-start a campaign.
       const activeP = updatedPromotions.find(p => p.status === 'active');
       const syncedAnnouncement = buildDynamicAnnouncement(activeP);
-
-      setPromotions(updatedPromotions);
 
       if (updateSiteSettings) {
         await updateSiteSettings({
@@ -252,6 +243,7 @@ export const PromotionsManager = () => {
         });
       }
 
+      setPromotions(updatedPromotions);
       if (showToast) {
         showToast(`✓ Live Service Discounts Synced! (Embroidery: ${emb}%, Vector: ${vec}%, Patches: ${pch}%)`, 'success');
       }
@@ -267,6 +259,7 @@ export const PromotionsManager = () => {
   // CREATE PROMOTION ACTION (Simple 2-Step)
   // ---------------------------------------------------------------------------
   const handleOpenCreatePromoModal = () => {
+    if (!promotionsEnabled) return;
     setPromoForm({
       name: '',
       discountMode: 'granular',
@@ -296,6 +289,8 @@ export const PromotionsManager = () => {
   };
 
   const handleConfirmPromotion = async () => {
+    if (!promotionsEnabled || promoSaving) return;
+    setPromoSaving(true);
     const promoId = `promo_${Date.now()}`;
     const isGranular = promoForm.discountMode === 'granular';
 
@@ -340,126 +335,88 @@ export const PromotionsManager = () => {
     const syncedAnnouncement = buildDynamicAnnouncement(newPromo);
     const syncedPromotionalBanner = { enabled: false };
 
-    setPromotions(updatedPromotions);
-    setServiceDiscounts({ embroidery: emb, vector: vec, patch: pch, enabled: true });
-    setIsPromoModalOpen(false);
-
-    if (showToast) {
-      showToast(`🎉 Promotion "${cleanName}" activated! (Embroidery: ${emb}%, Vector: ${vec}%, Patches: ${pch}%)`, 'success');
-    }
-
     try {
-      if (updateSiteSettings) {
-        await updateSiteSettings({
-          promotions: updatedPromotions,
-          service_discounts: { embroidery: emb, vector: vec, patch: pch, enabled: true },
-          serviceDiscounts: { embroidery: emb, vector: vec, patch: pch, enabled: true },
-          announcement: syncedAnnouncement,
-          promotionalBanner: syncedPromotionalBanner
-        });
-      }
+      await updateSiteSettings({
+        promotions: updatedPromotions,
+        service_discounts: { embroidery: emb, vector: vec, patch: pch, enabled: true },
+        serviceDiscounts: { embroidery: emb, vector: vec, patch: pch, enabled: true },
+        announcement: syncedAnnouncement,
+        promotionalBanner: syncedPromotionalBanner
+      });
+      setPromotions(updatedPromotions);
+      setServiceDiscounts({ embroidery: emb, vector: vec, patch: pch, enabled: true });
+      setIsPromoModalOpen(false);
+      showToast?.('Promotion saved.', 'success');
     } catch (err) {
-      console.error('Error saving new promotion to Supabase:', err);
-    }
+      console.error('Promotion creation failed:', err);
+      showToast?.('Promotion was not saved. Try again.', 'error');
+    } finally { setPromoSaving(false); }
   };
 
   // ---------------------------------------------------------------------------
   // TOGGLE START / PAUSE (100% Instant Live Database Connection)
   // ---------------------------------------------------------------------------
   const handleTogglePromoStatus = async (promoId) => {
-    let newlyActive = null;
-
+    if (promoSaving) return;
     const currentTarget = promotions.find(p => p.id === promoId);
-    const targetStatus = currentTarget?.status === 'active' ? 'paused' : 'active';
-
-    const updatedPromotions = promotions.map(p => {
-      if (p.id === promoId) {
-        const updated = { ...p, status: targetStatus };
-        if (targetStatus === 'active') newlyActive = updated;
-        return updated;
-      }
-      // If activating this promo, ensure all other campaigns are paused (strictly single active promo)
-      if (targetStatus === 'active') {
-        return { ...p, status: 'paused' };
-      }
-      return p;
-    });
-
-    const activePromoItem = newlyActive || updatedPromotions.find(p => p.status === 'active');
-    const updatedAnnouncement = buildDynamicAnnouncement(activePromoItem);
-    const updatedBanner = { enabled: false };
-
-    if (activePromoItem && activePromoItem.serviceDiscounts) {
-      setServiceDiscounts({
-        embroidery: activePromoItem.serviceDiscounts.embroidery ?? 20,
-        vector: activePromoItem.serviceDiscounts.vector ?? 10,
-        patch: activePromoItem.serviceDiscounts.patch ?? 5,
-        enabled: true
-      });
+    if (!currentTarget) return;
+    const activating = currentTarget.status !== 'active';
+    if (activating && !promotionsEnabled) {
+      showToast?.('Promotions are OFF. Start is disabled.', 'info');
+      return;
     }
-
-    setPromotions(updatedPromotions);
-
-    const targetPromo = updatedPromotions.find(p => p.id === promoId);
-    const isNowActive = targetPromo?.status === 'active';
-
-    if (showToast) {
-      showToast(
-        `Promotion "${targetPromo?.name || 'Campaign'}" is now ${isNowActive ? 'ACTIVE (Live on website)' : 'PAUSED (Hidden from website)'}`,
-        isNowActive ? 'success' : 'info'
-      );
-    }
-
-    // Persist directly to Supabase live database
+    const updated = promotions.map(p => p.id === promoId
+      ? { ...p, status: activating ? 'active' : 'paused' }
+      : activating ? { ...p, status: 'paused' } : p);
+    const active = updated.find(p => p.status === 'active');
+    const disabled = { embroidery: 0, vector: 0, patch: 0, enabled: false };
+    setPromoSaving(true);
     try {
-      if (updateSiteSettings) {
-        await updateSiteSettings({
-          promotions: updatedPromotions,
-          announcement: updatedAnnouncement,
-          promotionalBanner: updatedBanner,
-          ...(activePromoItem?.serviceDiscounts ? {
-            service_discounts: { ...activePromoItem.serviceDiscounts, enabled: isNowActive },
-            serviceDiscounts: { ...activePromoItem.serviceDiscounts, enabled: isNowActive }
-          } : {})
-        });
-      }
+      await updateSiteSettings({
+        promotions: updated,
+        announcement: buildDynamicAnnouncement(active),
+        promotionalBanner: { enabled: false },
+        ...(!active ? { service_discounts: disabled, serviceDiscounts: disabled } : {})
+      });
+      setPromotions(updated);
+      if (!active) setServiceDiscounts(disabled);
+      showToast?.('Promotion ' + (activating ? 'started.' : 'paused.'), 'success');
     } catch (err) {
-      console.error('Database sync error on toggle:', err);
-      if (showToast) showToast('Failed to sync promotion with database', 'error');
-    }
+      console.error('Failed to update promotion:', err);
+      showToast?.('Promotion change was not saved. Please retry.', 'error');
+    } finally { setPromoSaving(false); }
   };
 
   // ---------------------------------------------------------------------------
   // DELETE PROMOTION
   // ---------------------------------------------------------------------------
   const handleDeletePromotion = async (promoId) => {
-    if (!confirm('Are you sure you want to delete this promotion?')) return;
-    const updatedPromotions = promotions.filter(p => p.id !== promoId);
-
-    const remainingActive = updatedPromotions.find(p => p.status === 'active');
-    const updatedAnnouncement = buildDynamicAnnouncement(remainingActive);
-    const updatedBanner = { enabled: false };
-
-    setPromotions(updatedPromotions);
-    if (showToast) showToast('Promotion removed', 'info');
-
+    if (promoSaving || !window.confirm('Delete this promotion permanently?')) return;
+    const updated = promotions.filter(p => p.id !== promoId);
+    const active = promotionsEnabled ? updated.find(p => p.status === 'active') : null;
+    const disabled = { embroidery: 0, vector: 0, patch: 0, enabled: false };
+    setPromoSaving(true);
     try {
-      if (updateSiteSettings) {
-        await updateSiteSettings({
-          promotions: updatedPromotions,
-          announcement: updatedAnnouncement,
-          promotionalBanner: updatedBanner
-        });
-      }
+      await updateSiteSettings({
+        promotions: updated,
+        announcement: buildDynamicAnnouncement(active),
+        promotionalBanner: { enabled: false },
+        ...(!active ? { service_discounts: disabled, serviceDiscounts: disabled } : {})
+      });
+      setPromotions(updated);
+      if (!active) setServiceDiscounts(disabled);
+      showToast?.('Promotion deleted successfully.', 'success');
     } catch (err) {
-      console.error('Database sync error on delete:', err);
-    }
+      console.error('Failed to delete promotion:', err);
+      showToast?.('Promotion could not be deleted. Please retry.', 'error');
+    } finally { setPromoSaving(false); }
   };
 
   // ---------------------------------------------------------------------------
   // SEND A COUPON ACTION
   // ---------------------------------------------------------------------------
   const handleOpenSendCouponModal = () => {
+    if (!promotionsEnabled) return;
     const randomSuffix = Math.random().toString(36).substring(2, 6).toUpperCase();
     setCouponForm({
       code: `LOYAL${randomSuffix}`,
@@ -476,6 +433,7 @@ export const PromotionsManager = () => {
 
   const handleSendCouponSubmit = async (e) => {
     e?.preventDefault();
+    if (!promotionsEnabled) return;
     const cleanCode = (couponForm.code || '').trim().toUpperCase();
     const newCouponItem = {
       code: cleanCode,
@@ -516,6 +474,14 @@ export const PromotionsManager = () => {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', width: '100%', maxWidth: '1200px', margin: '0 auto' }}>
+      <section aria-label="Promotion master control" style={{ padding: '1rem', borderRadius: 14, border: '1px solid var(--color-border)', background: 'var(--color-surface)' }}>
+        <strong style={{ color: 'var(--color-text-primary)' }}>Promotions: {promotionsEnabled ? 'ON' : 'OFF'}</strong>
+        <p style={{ margin: '0.35rem 0 0.75rem', color: 'var(--color-text-secondary)', fontSize: '.85rem' }}>Promotional discounts and banners are disabled sitewide. Old campaigns may be deleted individually below.</p>
+        <button type="button" onClick={handleStopAllPromotions} disabled={promoSaving}
+          style={{ padding: '.6rem 1rem', borderRadius: 9, border: '1px solid #fecaca', background: '#991b1b', color: '#fff', fontWeight: 800, cursor: 'pointer' }}>
+          {promoSaving ? 'Saving…' : 'Turn OFF All Promotions'}
+        </button>
+      </section>
 
       {/* Clean Top Header Card */}
       <div style={{
@@ -616,7 +582,7 @@ export const PromotionsManager = () => {
           <button
             type="button"
             onClick={handleSaveLiveServiceDiscounts}
-            disabled={isSavingServices}
+            disabled={isSavingServices || promoSaving || !promotionsEnabled}
             style={{
               display: 'inline-flex',
               alignItems: 'center',
@@ -977,6 +943,7 @@ export const PromotionsManager = () => {
 
           <button
             type="button"
+            disabled={!promotionsEnabled || promoSaving}
             onClick={handleOpenCreatePromoModal}
             style={{
               width: '100%',
@@ -1055,6 +1022,7 @@ export const PromotionsManager = () => {
 
           <button
             type="button"
+            disabled={!promotionsEnabled || promoSaving}
             onClick={handleOpenSendCouponModal}
             style={{
               width: '100%',
@@ -1250,7 +1218,9 @@ export const PromotionsManager = () => {
 
                       {/* Status Badge */}
                       <td style={{ padding: '1rem' }}>
-                        {isExpired ? (
+                        {!promotionsEnabled ? (
+                          <span style={{ fontSize: '0.75rem', background: '#fee2e2', color: '#991b1b', border: '1px solid #fecaca', padding: '0.25rem 0.65rem', borderRadius: '9999px', fontWeight: 800 }}>OFF</span>
+                        ) : isExpired ? (
                           <span style={{ fontSize: '0.75rem', background: 'var(--color-surface-elevated)', color: '#64748b', border: '1px solid #cbd5e1', padding: '0.2rem 0.6rem', borderRadius: '9999px', fontWeight: 800 }}>
                             EXPIRED
                           </span>
@@ -1272,6 +1242,7 @@ export const PromotionsManager = () => {
                           {/* START / PAUSE BUTTON */}
                           <button
                             type="button"
+                            disabled={promoSaving || (!promotionsEnabled && !isActive)}
                             onClick={() => handleTogglePromoStatus(promo.id)}
                             title={isActive ? 'Click to Pause promotion' : 'Click to Start promotion'}
                             style={{
@@ -1303,6 +1274,7 @@ export const PromotionsManager = () => {
                           {/* Delete Button */}
                           <button
                             type="button"
+                            disabled={promoSaving}
                             onClick={() => handleDeletePromotion(promo.id)}
                             title="Delete Promotion"
                             style={{

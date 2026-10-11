@@ -51,7 +51,8 @@ export function getServiceDisplayName(service) {
 /**
  * Resolves the currently active promotion from an array of promotions
  */
-export function getActivePromotion(promotions) {
+export function getActivePromotion(promotions, siteSettings = null) {
+  if (siteSettings?.promotionsEnabled === false) return null;
   if (!Array.isArray(promotions) || promotions.length === 0) return null;
   
   const now = new Date();
@@ -71,6 +72,7 @@ export function getActivePromotion(promotions) {
  * Respects granular service discounts, siteSettings overrides, and falls back to flat promo discount.
  */
 export function getServiceDiscountPercent(service, activePromo = null, siteSettings = null) {
+  if (siteSettings?.promotionsEnabled === false) return 0;
   const normKey = normalizeServiceKey(service);
 
   // 1. Check if active promotion defines granular serviceDiscounts
@@ -136,7 +138,9 @@ export function calculateOrderPricing({
   let promoDiscountPercent = 0;
   const hasGranularRates = activePromo && activePromo.status === 'active' && activePromo.serviceDiscounts && typeof activePromo.serviceDiscounts[serviceKey] === 'number';
 
-  if (customPromoPercent !== null && customPromoPercent !== undefined && !isNaN(customPromoPercent) && !hasGranularRates) {
+  if (siteSettings?.promotionsEnabled === false) {
+    promoDiscountPercent = 0;
+  } else if (customPromoPercent !== null && customPromoPercent !== undefined && !isNaN(customPromoPercent) && !hasGranularRates) {
     promoDiscountPercent = Math.max(0, Math.min(100, Number(customPromoPercent)));
   } else {
     promoDiscountPercent = getServiceDiscountPercent(serviceKey, activePromo, siteSettings);

@@ -96,7 +96,7 @@ export const AnnouncementBar = () => {
     };
   }, [announcement?.text, announcement?.enabled, activePromo?.discountPercent, activePromo?.id]);
 
-  if (isDismissed || !announcement?.enabled || !announcement?.text) {
+  if (siteSettings?.promotionsEnabled !== true || isDismissed || !announcement?.enabled || !announcement?.text) {
     return null;
   }
 

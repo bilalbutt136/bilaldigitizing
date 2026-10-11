@@ -74,7 +74,7 @@ export const PackageCard = ({ cat = {}, idx = 0, onSelect, forceCategory = '' })
   const IconComp = cat.icon || (idx === 0 ? Zap : idx === 1 ? Trophy : Sparkles);
 
   const { siteSettings } = useAppState?.() || {};
-  const activePromo = Array.isArray(siteSettings?.promotions) ? siteSettings.promotions.find(p => p.status === 'active') : null;
+  const activePromo = siteSettings?.promotionsEnabled === true && Array.isArray(siteSettings?.promotions) ? siteSettings.promotions.find(p => p.status === 'active') : null;
   const promoPercent = getServiceDiscountPercent(rawService, activePromo, siteSettings);
 
   // Rate Formatting with exact 2 decimal places e.g. $4.50, $15.00

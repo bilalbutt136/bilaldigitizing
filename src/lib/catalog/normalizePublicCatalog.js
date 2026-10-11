@@ -29,18 +29,24 @@ export function normalizePublicCatalog(data = {}) {
   const appIconUrl = brandingRow?.app_icon_url || rawSettings.appIconUrl || '/icon-512x512.png';
   const ogImageUrl = brandingRow?.og_image_url || rawSettings.ogImageUrl || appIconUrl;
   const brandingThemeColor = brandingRow?.theme_color || rawSettings.themeColor || '#ffffff';
-  const parsedAnnouncement = typeof configMap.announcement === 'object' && configMap.announcement
-    ? configMap.announcement
-    : (typeof rawSettings.announcement === 'object' ? rawSettings.announcement : null);
-  const parsedPromoCodes = Array.isArray(configMap.promoCodes)
-    ? configMap.promoCodes
-    : (Array.isArray(rawSettings.promoCodes) ? rawSettings.promoCodes : []);
-  const parsedPromotions = Array.isArray(configMap.promotions)
-    ? configMap.promotions
-    : (Array.isArray(rawSettings.promotions) ? rawSettings.promotions : []);
+  const parsedAnnouncement = typeof rawSettings.announcement === 'object' && configMap.announcement
+    ? rawSettings.announcement
+    : (typeof configMap.announcement === 'object' ? configMap.announcement : null);
+  const parsedPromoCodes = Array.isArray(rawSettings.promoCodes)
+    ? rawSettings.promoCodes
+    : (Array.isArray(configMap.promoCodes) ? configMap.promoCodes : []);
+  const parsedPromotions = Array.isArray(rawSettings.promotions)
+    ? rawSettings.promotions
+    : (Array.isArray(configMap.promotions) ? configMap.promotions : []);
 
-  const currentActivePromo = parsedPromotions.find(p => p?.status === 'active');
-  const parsedServiceDiscounts =
+  // No promotion runs unless the administrator explicitly enables the master switch.
+  const promotionsEnabled = rawSettings.promotionsEnabled === true;
+  const currentActivePromo = promotionsEnabled ? parsedPromotions.find(p => p?.status === 'active') : null;
+  const parsedServiceDiscounts = !promotionsEnabled
+    ? { embroidery: 0, vector: 0, patch: 0, enabled: false }
+    :
+    rawSettings.service_discounts ||
+    rawSettings.serviceDiscounts ||
     configMap.service_discounts ||
     configMap.serviceDiscounts ||
     currentActivePromo?.serviceDiscounts ||
@@ -72,7 +78,9 @@ export function normalizePublicCatalog(data = {}) {
       : `Get ${currentActivePromo.discountPercent}% OFF on All Custom Embroidery Digitizing & Vector Art Orders!`)
     : '';
 
-  const dynamicAnnouncement = currentActivePromo
+  const dynamicAnnouncement = !promotionsEnabled
+    ? { enabled: false, text: '', promoCode: '', badge: '', linkText: '', linkUrl: '/order' }
+    : currentActivePromo
     ? {
         enabled: parsedAnnouncement?.enabled !== false,
         badge: (currentActivePromo.name || 'SALE').toUpperCase(),
@@ -143,6 +151,7 @@ export function normalizePublicCatalog(data = {}) {
       googleAnalyticsId: rawSettings.googleAnalyticsId || configMap.google_analytics_id || configMap.googleAnalyticsId || null,
       tiktokPixelId: rawSettings.tiktokPixelId || configMap.tiktok_pixel_id || configMap.tiktokPixelId || null,
       customHeaderScript: rawSettings.customHeaderScript || configMap.custom_header_script || configMap.customHeaderScript || null,
+      promotionsEnabled,
       promotions: parsedPromotions,
       service_discounts: parsedServiceDiscounts,
       serviceDiscounts: parsedServiceDiscounts,
@@ -155,7 +164,7 @@ export function normalizePublicCatalog(data = {}) {
         ctaText: 'Claim Offer',
         ctaLink: '/order'
       },
-      promoCodes: parsedPromoCodes
+      promoCodes: promotionsEnabled ? parsedPromoCodes : parsedPromoCodes.map(code => ({ ...code, isActive: false }))
     },
     pricing: configMap.pricing || null,
     serviceCms: {

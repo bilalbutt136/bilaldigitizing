@@ -611,7 +611,7 @@ export const CoreServicesOrderSection = ({ defaultService = 'digitizing', hideTa
 
     const primaryArtworkUrl = allUploadedFiles[0]?.url || null;
 
-    const activePromo = getActivePromotion(siteSettings?.promotions);
+    const activePromo = getActivePromotion(siteSettings?.promotions, siteSettings);
     const promoPercent = getServiceDiscountPercent(activeService, activePromo, siteSettings);
     const rawPrice = parseFloat(totalPrice) || 0;
     const promoDiscountAmount = promoPercent > 0 ? parseFloat(((rawPrice * promoPercent) / 100).toFixed(2)) : 0;
@@ -676,7 +676,7 @@ export const CoreServicesOrderSection = ({ defaultService = 'digitizing', hideTa
     }
   };
 
-  const liveActivePromo = getActivePromotion(siteSettings?.promotions);
+  const liveActivePromo = getActivePromotion(siteSettings?.promotions, siteSettings);
   const livePromoPercent = getServiceDiscountPercent(activeService, liveActivePromo, siteSettings);
   const baseCalculatedPrice = parseFloat(calculatePrice()) || 0;
   const livePromoDiscount = livePromoPercent > 0 ? parseFloat(((baseCalculatedPrice * livePromoPercent) / 100).toFixed(2)) : 0;

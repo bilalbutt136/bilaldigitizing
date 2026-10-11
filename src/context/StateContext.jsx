@@ -371,6 +371,7 @@ export const StateProvider = ({ children, initialCatalog = null }) => {
       appIconUrl: '/icon-512x512.png',
       faviconUrl: '/favicon.png',
       ogImageUrl: '/icon-512x512.png',
+      promotionsEnabled: false,
       promotions: [
         {
           id: 'promo-sale-granular',
@@ -397,20 +398,10 @@ export const StateProvider = ({ children, initialCatalog = null }) => {
           createdAt: new Date().toISOString()
         }
       ],
-      service_discounts: {
-        embroidery: 20,
-        vector: 10,
-        patch: 5,
-        enabled: true
-      },
-      serviceDiscounts: {
-        embroidery: 20,
-        vector: 10,
-        patch: 5,
-        enabled: true
-      },
+      service_discounts: { embroidery: 0, vector: 0, patch: 0, enabled: false },
+      serviceDiscounts: { embroidery: 0, vector: 0, patch: 0, enabled: false },
       announcement: {
-        enabled: true,
+        enabled: false,
         badge: 'SALE',
         text: 'Special Studio Promo: 20% OFF Digitizing, 10% OFF Vector, 5% OFF Patches!',
         promoCode: 'SAVEPROMO',
@@ -439,7 +430,7 @@ export const StateProvider = ({ children, initialCatalog = null }) => {
           discountValue: 15,
           minOrder: 0,
           description: '15% off all embroidery digitizing and vector conversion services',
-          isActive: true
+          isActive: false
         }
       ]
     };
@@ -2837,7 +2828,8 @@ export const StateProvider = ({ children, initialCatalog = null }) => {
     const previous = siteSettings || {};
     const mergedSettings = {
       ...previous, ...newSettings,
-      promotions: newSettings?.promotions || previous?.promotions || [],
+      promotionsEnabled: newSettings?.promotionsEnabled === undefined ? previous?.promotionsEnabled === true : newSettings.promotionsEnabled === true,
+      promotions: newSettings?.promotions ?? previous?.promotions ?? [],
       service_discounts: newSettings?.service_discounts || newSettings?.serviceDiscounts || previous?.service_discounts || { embroidery: 20, vector: 10, patch: 5, enabled: true },
       serviceDiscounts: newSettings?.service_discounts || newSettings?.serviceDiscounts || previous?.serviceDiscounts || { embroidery: 20, vector: 10, patch: 5, enabled: true },
       announcement: { ...(previous?.announcement || {}), ...(newSettings?.announcement || {}) },
@@ -2867,7 +2859,7 @@ export const StateProvider = ({ children, initialCatalog = null }) => {
     if (newSettings.customHeaderScript !== undefined) {
       await saveCmsConfigToSupabase('custom_header_script', newSettings.customHeaderScript);
     }
-    if (newSettings.promotions) {
+    if (newSettings.promotions !== undefined) {
       await saveCmsConfigToSupabase('promotions', newSettings.promotions);
     }
     if (newSettings.service_discounts || newSettings.serviceDiscounts) {
