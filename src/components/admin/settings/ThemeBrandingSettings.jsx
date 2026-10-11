@@ -18,7 +18,7 @@ export const ThemeBrandingSettings = () => {
   } = useAppState();
 
   // Custom Brand Colors Local State
-  const [customPrimary, setCustomPrimary] = useState(customBrandColors?.primary || '#ea580c');
+  const [customPrimary, setCustomPrimary] = useState(customBrandColors?.primary || '#1d4ed8');
   const [customSecondary, setCustomSecondary] = useState(customBrandColors?.secondary || '#f97316');
   const [customAccent, setCustomAccent] = useState(customBrandColors?.accent || '#fb923c');
   const [isCustomBrandActive, setIsCustomBrandActive] = useState(Boolean(customBrandColors));

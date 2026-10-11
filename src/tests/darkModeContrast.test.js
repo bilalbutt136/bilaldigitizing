@@ -45,11 +45,11 @@ describe('Dark Mode & Theme Contrast Standards (WCAG 2.1 AA)', () => {
     assert.equal(Math.round(sameRatio), 1);
   });
 
-  test('THEME_PRESETS maintains exactly one official brand theme (Executive Studio Pro)', () => {
+  test('THEME_PRESETS maintains exactly one official brand theme (Signature Sapphire)', () => {
     assert.equal(THEME_PRESETS.length, 1);
     assert.equal(THEME_PRESETS[0].id, 'studio-orange');
-    assert.equal(THEME_PRESETS[0].name, 'Executive Studio Pro');
-    assert.equal(THEME_PRESETS[0].palette.primary, '#ea580c');
+    assert.equal(THEME_PRESETS[0].name, 'Signature Sapphire');
+    assert.equal(THEME_PRESETS[0].palette.primary, '#1d4ed8');
   });
 
   test('All theme presets meet WCAG 2.1 AA text contrast requirements in dark mode', () => {
@@ -164,9 +164,9 @@ describe('Dark Mode & Theme Contrast Standards (WCAG 2.1 AA)', () => {
     assert.ok(rootClasses.has('dark-mode'), 'document.documentElement should have .dark-mode');
     assert.ok(bodyClasses.has('dark'), 'document.body should have .dark');
     assert.ok(bodyClasses.has('dark-mode'), 'document.body should have .dark-mode');
-    assert.equal(styleStore['--color-background'], '#090d16');
-    assert.equal(styleStore['--color-surface'], '#111827');
-    assert.equal(styleStore['--color-text-primary'], '#ffffff');
+    assert.equal(styleStore['--color-background'], '#080f20');
+    assert.equal(styleStore['--color-surface'], '#101b32');
+    assert.equal(styleStore['--color-text-primary'], '#f8faff');
     assert.equal(styleStore['--navy-950'], '#ffffff');
     assert.equal(styleStore['--navy-900'], '#f8fafc');
 
@@ -179,10 +179,10 @@ describe('Dark Mode & Theme Contrast Standards (WCAG 2.1 AA)', () => {
     assert.ok(!rootClasses.has('dark-mode'), 'document.documentElement should not have .dark-mode in light mode');
     assert.ok(!bodyClasses.has('dark'), 'document.body should not have .dark in light mode');
     assert.ok(!bodyClasses.has('dark-mode'), 'document.body should not have .dark-mode in light mode');
-    assert.equal(styleStore['--color-background'], '#f8fafc');
+    assert.equal(styleStore['--color-background'], '#f6f8fd');
     assert.equal(styleStore['--color-surface'], '#ffffff');
-    assert.equal(styleStore['--color-text-primary'], '#090d16');
-    assert.equal(styleStore['--navy-950'], '#090d16');
-    assert.equal(styleStore['--navy-900'], '#0f172a');
+    assert.equal(styleStore['--color-text-primary'], '#0b1730');
+    assert.equal(styleStore['--navy-950'], '#0b1730');
+    assert.equal(styleStore['--navy-900'], '#142443');
   });
 });

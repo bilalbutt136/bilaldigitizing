@@ -75,7 +75,7 @@ export const FinalCTA = () => {
         transform: 'translate(-50%, -50%)',
         width: '800px',
         height: '800px',
-        background: 'radial-gradient(circle, rgba(249, 115, 22, 0.08) 0%, rgba(15, 23, 42, 0) 70%)',
+        background: 'radial-gradient(circle, var(--color-primary-glow, rgba(37, 99, 235, 0.13)) 0%, rgba(15, 23, 42, 0) 70%)',
         pointerEvents: 'none',
         zIndex: 0,
       }} />

@@ -25,7 +25,7 @@ h1, h2, h3, h4, h5, h6,
   font-family: var(--font-heading) !important;
   font-weight: 700;
   letter-spacing: -0.025em; /* tracking-tight */
-  color: #0f172a; /* text-slate-900 */
+  color: var(--color-text-primary, #0b1730);
 }
 
 h1 {
@@ -67,7 +67,7 @@ p,
 .text-description {
   font-family: var(--font-body);
   font-weight: 400;
-  color: #475569; /* text-slate-600 */
+  color: var(--color-text-secondary, #344461);
   line-height: 1.625; /* leading-relaxed */
 }
 
@@ -126,7 +126,7 @@ body.dark-mode .clean-card {
 /* 4. Buttons & Primary CTAs */
 .btn-vip-primary,
 .btn-royal-blue {
-  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%) !important;
+  background: linear-gradient(120deg, #2563eb 0%, #4338ca 100%) !important;
   color: #ffffff !important;
   border-radius: 0.75rem !important; /* rounded-xl */
   padding: 0.75rem 1.6rem;

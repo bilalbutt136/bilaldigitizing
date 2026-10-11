@@ -7,18 +7,20 @@
   /* ==========================================================================
      CENTRAL SEMANTIC DESIGN TOKENS — LIGHT MODE (Clean VIP Studio)
      ========================================================================== */
-  --color-primary: #ea580c;
-  --color-primary-hover: #c2410c;
+  --color-primary: #1d4ed8;
+  --color-primary-hover: #1e40af;
   --color-primary-light: #ffedd5;
   --color-primary-glow: rgba(249, 115, 22, 0.30);
   --color-primary-text: #ffffff;
 
-  --color-secondary: #f97316;
-  --color-accent: #fb923c;
-  --color-accent-light: #fff7ed;
+  --color-secondary: #5b21b6;
+  --color-accent: #7c3aed;
+  --color-accent-light: #f3edff;
+  --color-action-start: #2563eb;
+  --color-action-end: #4338ca;
 
   /* 4-Layer Surface System — clear visual separation */
-  --color-background: #f8fafc;        /* Slate-50 Page canvas */
+  --color-background: #f6f8fd;        /* Slate-50 Page canvas */
   --color-surface: #ffffff;           /* Cards, panels — clean white */
   --color-surface-elevated: #f1f5f9;  /* Slate-100 Inner sections */
   --color-subtle: #e2e8f0;            /* Slate-200 Sidebars, hover states */
@@ -156,7 +158,7 @@
    HIGH-END GRADIENT TYPOGRAPHY & STYLISH TOKENS
    ========================================================================== */
 .text-gradient-orange {
-  background: linear-gradient(135deg, #ff5500 0%, #ea580c 50%, #f97316 100%) !important;
+  background: linear-gradient(110deg, #1d4ed8 5%, #4f46e5 56%, #7c3aed 100%) !important;
   -webkit-background-clip: text !important;
   -webkit-text-fill-color: transparent !important;
   display: inline-block;
@@ -342,7 +344,7 @@ h1, h2, h3, h4, h5, h6 {
 .btn-primary-orange,
 .btn-blue,
 .btn-navy {
-  background: linear-gradient(135deg, var(--color-secondary) 0%, var(--color-primary) 100%) !important;
+  background: linear-gradient(120deg, var(--color-action-start, #2563eb) 0%, var(--color-action-end, #4338ca) 100%) !important;
   color: var(--color-text-on-primary, #ffffff) !important;
   box-shadow: var(--shadow-md), 0 4px 14px var(--color-primary-glow);
   border: none;
@@ -628,9 +630,9 @@ h1, h2, h3, h4, h5, h6 {
 [data-theme="dark"], .dark, body.dark-mode {
   /* Dynamic tokens are injected by applyThemePresetToDOM into :root.
      Default obsidian fallback values below: */
-  --color-background: #090d16;
-  --color-surface: #111827;
-  --color-surface-elevated: #1e293b;
+  --color-background: #080f20;
+  --color-surface: #101b32;
+  --color-surface-elevated: #172640;
   --color-surface-hover: #1f293d;
   --color-subtle: #1e293b;
   --color-input: #162032;
@@ -638,12 +640,12 @@ h1, h2, h3, h4, h5, h6 {
   --color-border: rgba(255, 255, 255, 0.16);
   --color-border-subtle: rgba(255, 255, 255, 0.10);
   --color-border-hover: rgba(255, 255, 255, 0.32);
-  --color-border-focus: #f97316;
+  --color-border-focus: #78afff;
 
   /* Typography: WCAG 2.1 AA Compliant Contrast Ratios */
-  --color-text-primary: #ffffff;     /* Contrast > 16:1 against #090d16 */
-  --color-text-secondary: #e2e8f0;   /* Contrast > 11:1 against #090d16 */
-  --color-text-muted: #94a3b8;       /* Contrast 5.5:1 against #111827 (WCAG AA Pass > 4.5:1) */
+  --color-text-primary: #f8faff;     /* Contrast > 16:1 against #090d16 */
+  --color-text-secondary: #cad6ec;   /* Contrast > 11:1 against #090d16 */
+  --color-text-muted: #a5b6d1;       /* Contrast 5.5:1 against #111827 (WCAG AA Pass > 4.5:1) */
   --color-text-on-primary: #ffffff;
 
   /* Status colors adjusted for dark mode contrast */
