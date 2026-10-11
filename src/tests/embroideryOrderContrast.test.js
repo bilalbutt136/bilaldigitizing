@@ -2,29 +2,30 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 
-const source=fs.readFileSync('src/components/customer/StreamlinedOrderFlow.jsx','utf8');
-test('package buttons always display readable names and live prices',()=>{
- assert.match(source,/className="bdigi-package-name"/);
- assert.match(source,/className="bdigi-package-price"/);
- assert.match(source,/className="bdigi-package-status"/);
- assert.match(source,/disabled=\{!allowed\}/);
- assert.match(source,/formatUSD\(tier.price\)/);
- assert.match(source,/aria-label=\{tier.title/);
- assert.match(source,/setSelectedTierId\(val\)/);
+const source = fs.readFileSync('src/components/customer/StreamlinedOrderFlow.jsx','utf8');
+
+test('Embroidery and Vector both use one native select visual style', () => {
+  assert.match(source,/id="bdigi-embroidery-package"/);
+  assert.match(source,/htmlFor="bdigi-embroidery-package"/);
+  assert.match(source,/className="bdigi-select"/);
+  assert.match(source,/className="bdigi-select-wrapper"/);
+  assert.match(source,/aria-label="Embroidery package"/);
+  assert.match(source,/eligibleEmbroidery\.map\(tier =>/);
+  assert.doesNotMatch(source,/bdigi-package-option/);
 });
-test('bright blue selected and readable rose locked palettes in light and dark',()=>{
- assert.match(source,/\.bdigi-package-option\[aria-pressed="true"\]/);
- assert.match(source,/\.bdigi-package-option:disabled \{/);
- assert.match(source,/opacity: 1;/);
- assert.match(source,/background: #fff1f2;/);
- assert.match(source,/color: #881337;/);
- assert.match(source,/\[data-theme="dark"\] \.bdigi-package-option:disabled/);
- assert.match(source,/color: #ffe4e6;/);
- assert.match(source,/\.bdigi-package-notice/);
- assert.match(source,/focus-visible/);
- assert.match(source,/hover:not\(:disabled\):not\(\[aria-pressed="true"\]\)/);
+test('size-restricted dropdown shows only eligible packages without faint disabled items', () => {
+  assert.match(source,/disabled=\{eligibleEmbroidery\.length === 0\}/);
+  assert.match(source,/formatUSD\(tier\.price\)/);
+  assert.match(source,/setSelectedTierId\(event\.target\.value\)/);
+  assert.match(source,/No package available for this size/);
+  assert.match(source,/7″: Standard or Premium/);
+  assert.match(source,/12″: Premium only/);
+  assert.match(source,/\.bdigi-select option \{/);
+  assert.match(source,/\[data-theme="dark"\] \.bdigi-select option/);
+  assert.match(source,/\.bdigi-embroidery-package-row \.bdigi-select/);
+  assert.match(source,/focus-visible/);
 });
-test('matching CTA and summary styling avoids orange brand conflict',()=>{
- assert.match(source,/color: 'var\(--color-primary, #1d4ed8\)', lineHeight: 1/);
- assert.match(source,/background: 'var\(--color-action-bg, linear-gradient\(120deg, #1d4ed8, #4338ca\)\)'/);
+test('order total and checkout retain common brand color tokens', () => {
+  assert.match(source,/color: 'var\(--color-primary, #1d4ed8\)', lineHeight: 1/);
+  assert.match(source,/background: 'var\(--color-action-bg, linear-gradient\(120deg, #1d4ed8, #4338ca\)\)'/);
 });

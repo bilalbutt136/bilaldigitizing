@@ -53,10 +53,12 @@ test('order UI auto-promotes without downgrading manually selected premium tiers
  const src=fs.readFileSync('src/components/customer/StreamlinedOrderFlow.jsx','utf8');
  assert.match(src,/chooseEmbroideryTier\(currentServiceTiers, minEmbroideryRank, requestedTier\)/);
  assert.match(src,/setSelectedTierId\(currentTierKey\)/);
- assert.match(src,/disabled=\{!allowed\}/);
  assert.match(src,/Size & Package Mismatch/);
- assert.match(src,/bdigi-package-options/);
- assert.match(src,/aria-pressed=\{active\}/);
- assert.match(src,/Too small/);
- assert.match(src,/Smaller packages are locked/);
+ assert.match(src,/htmlFor="bdigi-embroidery-package"/);
+ assert.match(src,/id="bdigi-embroidery-package"/);
+ assert.match(src,/className="bdigi-select"/);
+ assert.match(src,/eligibleEmbroidery\.map\(tier =>/);
+ assert.match(src,/disabled=\{eligibleEmbroidery\.length === 0\}/);
+ assert.match(src,/onChange=\{\(event\) => setSelectedTierId\(event\.target\.value\)\}/);
+ assert.doesNotMatch(src,/className="bdigi-package-options"/);
 });
