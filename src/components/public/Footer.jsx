@@ -147,34 +147,30 @@ export const Footer = () => {
           {/* Column 1: Brand Info & Social Channels */}
           <div style={{ maxWidth: '300px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.25rem', color: '#ffffff' }}>
-              {(siteSettings?.footerLogoUrl || siteSettings?.logoUrl) ? (
+              <div style={{
+                background: '#ffffff',
+                border: '1px solid rgba(255, 255, 255, 0.25)',
+                padding: '3px 6px',
+                borderRadius: '10px',
+                boxShadow: '0 4px 14px rgba(0, 0, 0, 0.25)',
+                flexShrink: 0,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxSizing: 'border-box'
+              }}>
                 <img
-                  src={siteSettings.footerLogoUrl || siteSettings.logoUrl}
+                  src={siteSettings?.footerLogoUrl || siteSettings?.logoUrl || '/logo.png'}
                   alt="BDigitizing Logo"
-                  style={{ height: '38px', width: 'auto', maxHeight: '42px', objectFit: 'contain', display: 'block', flexShrink: 0 }}
+                  style={{
+                    height: '36px',
+                    width: 'auto',
+                    maxWidth: '160px',
+                    objectFit: 'contain',
+                    display: 'block'
+                  }}
                 />
-              ) : (
-                <div style={{
-                  background: 'linear-gradient(135deg, #0f172a, #1e293b)',
-                  border: '1.5px solid rgba(249, 115, 22, 0.4)',
-                  padding: '0.4rem',
-                  borderRadius: '10px',
-                  boxShadow: '0 4px 12px rgba(249, 115, 22, 0.25)',
-                  flexShrink: 0,
-                  width: '40px',
-                  height: '40px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  boxSizing: 'border-box'
-                }}>
-                  <img
-                    src="/logo.png"
-                    alt="BDigitizing Logo"
-                    style={{ width: '26px', height: '30px', objectFit: 'contain', display: 'block' }}
-                  />
-                </div>
-              )}
+              </div>
               <span style={{ fontFamily: 'var(--font-heading)', fontWeight: 900, fontSize: '1.4rem', letterSpacing: '-0.02em' }}>
                 BDigitizing
               </span>

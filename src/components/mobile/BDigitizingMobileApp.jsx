@@ -962,7 +962,7 @@ export const BDigitizingMobileApp = ({ initialTab = 'home' }) => {
           width: '76px',
           height: '76px',
           borderRadius: '22px',
-          background: 'var(--color-surface)',
+          background: '#ffffff',
           border: '1.5px solid #e2e8f0',
           display: 'flex',
           alignItems: 'center',
@@ -1648,7 +1648,9 @@ export const BDigitizingMobileApp = ({ initialTab = 'home' }) => {
                   height: '30px',
                   objectFit: 'contain',
                   borderRadius: '8px',
-                  background: 'var(--color-surface)',
+                  background: '#ffffff',
+                  padding: '2px',
+                  border: '1px solid #e2e8f0',
                   flexShrink: 0
                 }}
               />

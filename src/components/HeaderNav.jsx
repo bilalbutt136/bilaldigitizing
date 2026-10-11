@@ -331,34 +331,24 @@ export const HeaderNav = () => {
           }}
           style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', cursor: 'pointer', flexShrink: 0, textDecoration: 'none' }}
         >
-          {(siteSettings?.headerLogoUrl || siteSettings?.logoUrl) ? (
+          <div style={{
+            background: '#ffffff',
+            border: '1px solid rgba(226, 232, 240, 0.9)',
+            padding: '2px 6px',
+            borderRadius: '9px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            boxShadow: '0 2px 6px rgba(0, 0, 0, 0.04)',
+            flexShrink: 0,
+            boxSizing: 'border-box'
+          }}>
             <img
-              src={siteSettings.headerLogoUrl || siteSettings.logoUrl}
+              src={siteSettings?.headerLogoUrl || siteSettings?.logoUrl || '/logo.png'}
               alt="BDigitizing Logo"
-              style={{ height: '38px', width: 'auto', maxWidth: '170px', objectFit: 'contain', display: 'block', flexShrink: 0 }}
+              style={{ height: '38px', width: 'auto', maxWidth: '170px', objectFit: 'contain', display: 'block' }}
             />
-          ) : (
-            <div style={{
-              background: 'linear-gradient(135deg, var(--color-surface-elevated, #090d16), rgba(249, 115, 22, 0.12))',
-              border: '1.5px solid rgba(249, 115, 22, 0.35)',
-              padding: '0.35rem',
-              borderRadius: 'var(--radius-md)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              boxShadow: '0 4px 12px var(--color-primary-glow)',
-              flexShrink: 0,
-              width: '38px',
-              height: '38px',
-              boxSizing: 'border-box'
-            }}>
-              <img
-                src="/logo.png"
-                alt="BDigitizing Logo"
-                style={{ width: '24px', height: '28px', objectFit: 'contain', display: 'block' }}
-              />
-            </div>
-          )}
+          </div>
           <div>
             <div style={{ fontFamily: 'var(--font-heading)', fontWeight: 800, fontSize: '1.15rem', color: 'var(--text-main)', letterSpacing: '-0.02em', lineHeight: 1, whiteSpace: 'nowrap' }}>
               BDigitizing
@@ -1345,34 +1335,24 @@ export const HeaderNav = () => {
                 onClick={() => setIsMobileMenuOpen(false)}
                 style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.6rem', textDecoration: 'none' }}
               >
-                {(siteSettings?.headerLogoUrl || siteSettings?.logoUrl) ? (
+                <div style={{
+                  background: '#ffffff',
+                  border: '1px solid rgba(226, 232, 240, 0.9)',
+                  padding: '2px 5px',
+                  borderRadius: '8px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxShadow: '0 2px 6px rgba(0, 0, 0, 0.04)',
+                  flexShrink: 0,
+                  boxSizing: 'border-box'
+                }}>
                   <img
-                    src={siteSettings.headerLogoUrl || siteSettings.logoUrl}
+                    src={siteSettings?.headerLogoUrl || siteSettings?.logoUrl || '/logo.png'}
                     alt="BDigitizing Logo"
-                    style={{ height: '34px', width: 'auto', maxWidth: '150px', objectFit: 'contain', display: 'block', flexShrink: 0 }}
+                    style={{ height: '34px', width: 'auto', maxWidth: '140px', objectFit: 'contain', display: 'block' }}
                   />
-                ) : (
-                  <div style={{
-                    background: 'linear-gradient(135deg, #090d16, rgba(249, 115, 22, 0.12))',
-                    border: '1.5px solid rgba(249, 115, 22, 0.35)',
-                    padding: '0.3rem',
-                    borderRadius: '8px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    boxShadow: '0 2px 8px var(--color-primary-glow)',
-                    flexShrink: 0,
-                    width: '34px',
-                    height: '34px',
-                    boxSizing: 'border-box'
-                  }}>
-                    <img
-                      src="/logo.png"
-                      alt="BDigitizing Logo"
-                      style={{ width: '22px', height: '26px', objectFit: 'contain', display: 'block' }}
-                    />
-                  </div>
-                )}
+                </div>
                 <div>
                   <div style={{ fontFamily: 'var(--font-heading)', fontSize: '1.05rem', fontWeight: 900, color: isDark ? '#f8fafc' : '#0f172a', letterSpacing: '-0.02em', lineHeight: 1, whiteSpace: 'nowrap' }}>
                     BDigitizing

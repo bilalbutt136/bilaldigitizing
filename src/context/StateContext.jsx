@@ -365,6 +365,12 @@ export const StateProvider = ({ children, initialCatalog = null }) => {
       canonicalUrl: 'https://bdigitizing.com',
       supportEmail: 'support@bdigitizing.com',
       invoiceFooterNote: 'Thank you for your business with BDigitizing. For any technical sew-out questions, contact support 24/7.',
+      headerLogoUrl: '/logo.png',
+      footerLogoUrl: '/logo.png',
+      logoUrl: '/logo.png',
+      appIconUrl: '/icon-512x512.png',
+      faviconUrl: '/favicon.png',
+      ogImageUrl: '/icon-512x512.png',
       promotions: [
         {
           id: 'promo-sale-granular',

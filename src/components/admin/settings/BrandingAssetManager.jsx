@@ -34,7 +34,7 @@ const ASSETS = [
     accept: '.png,image/png',
     allowed: ['image/png'],
     folder: 'branding/app-icon',
-    preview: { width: 112, height: 112, background: 'var(--color-surface)', borderRadius: 24 },
+    preview: { width: 112, height: 112, background: '#ffffff', borderRadius: 24 },
     normalizePwaIcon: true
   },
   {
@@ -51,22 +51,22 @@ const ASSETS = [
   {
     field: 'header_logo_url',
     label: 'Header Navigation Logo',
-    recommended: '250 × 60 px · Transparent PNG / SVG',
+    recommended: '250 × 60 px · PNG / SVG / JPG / WebP',
     tip: 'Use a horizontal logo with comfortable side padding. It will scale by height in desktop and mobile navigation.',
-    accept: '.png,.svg,image/png,image/svg+xml',
-    allowed: ['image/png', 'image/svg+xml'],
+    accept: '.png,.jpg,.jpeg,.svg,.webp,image/png,image/jpeg,image/svg+xml,image/webp',
+    allowed: ['image/png', 'image/jpeg', 'image/svg+xml', 'image/webp'],
     folder: 'branding/header-logo',
-    preview: { width: 220, height: 72, background: 'var(--color-surface)', borderRadius: 12 }
+    preview: { width: 220, height: 72, background: '#ffffff', borderRadius: 12 }
   },
   {
     field: 'footer_logo_url',
     label: 'Footer Logo',
-    recommended: '250 × 60 px · Transparent PNG / SVG',
+    recommended: '250 × 60 px · PNG / SVG / JPG / WebP',
     tip: 'Upload a light or dark-safe variant that stays readable on the footer background.',
-    accept: '.png,.svg,image/png,image/svg+xml',
-    allowed: ['image/png', 'image/svg+xml'],
+    accept: '.png,.jpg,.jpeg,.svg,.webp,image/png,image/jpeg,image/svg+xml,image/webp',
+    allowed: ['image/png', 'image/jpeg', 'image/svg+xml', 'image/webp'],
     folder: 'branding/footer-logo',
-    preview: { width: 220, height: 72, background: '#090d16', borderRadius: 12 }
+    preview: { width: 220, height: 72, background: '#ffffff', borderRadius: 12 }
   },
   {
     field: 'og_image_url',
