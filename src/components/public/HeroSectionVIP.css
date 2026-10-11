@@ -624,3 +624,47 @@
     overflow: hidden !important;
   }
 }
+
+
+/* Clean studio portfolio: a single, seamless artwork stage.
+   Preserve the complete image instead of cropping original files. */
+.vip-hero .hero-showcase-card {
+  background: #ffffff !important;
+  border: 1px solid rgba(107, 129, 181, .16) !important;
+  border-radius: 20px !important;
+  padding: clamp(.57rem, .77vw, .82rem) !important;
+  box-shadow: 0 15px 40px rgba(25, 49, 103, .13) !important;
+}
+.vip-hero .hero-showcase-image-box {
+  background: #ffffff !important;
+  border: none !important;
+  box-shadow: none !important;
+  border-radius: 12px !important;
+  padding: 0 !important;
+  isolation: isolate;
+}
+.vip-hero .hero-showcase-image-box > img {
+  background: #ffffff !important;
+  object-fit: contain !important;
+  object-position: center center !important;
+  filter: none !important;
+}
+.vip-hero .vip-hero-gallery-caption {
+  margin-top: .39rem !important;
+  font-size: .72rem !important;
+}
+[data-theme="dark"] .vip-hero .hero-showcase-card,
+body.dark-mode .vip-hero .hero-showcase-card {
+  background: #142039 !important;
+  border-color: rgba(144, 166, 226, .18) !important;
+  box-shadow: 0 15px 40px rgba(0, 0, 0, .28) !important;
+}
+/* Light neutral paper lets artwork colors remain accurate in both themes. */
+[data-theme="dark"] .vip-hero .hero-showcase-image-box,
+body.dark-mode .vip-hero .hero-showcase-image-box {
+  background: #ffffff !important;
+}
+@media (max-width: 640px) {
+  .vip-hero .hero-showcase-card { padding: .5rem !important; border-radius: 16px !important; }
+  .vip-hero .hero-showcase-image-box { border-radius: 10px !important; }
+}

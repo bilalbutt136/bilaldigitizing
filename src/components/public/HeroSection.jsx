@@ -995,7 +995,7 @@ export const HeroSection = () => {
                 </div>
               </div>
 
-              {/* Full, Clear Showcase Image Container (Fills frame edge-to-edge with ambient backdrop + 100% uncut artwork) */}
+              {/* Single clean art stage without cropping or blurred borders */}
               <div
                 className="hero-showcase-image-box"
                 onTouchStart={handleTouchStart}
@@ -1010,8 +1010,8 @@ export const HeroSection = () => {
                   maxHeight: '440px',
                   borderRadius: '16px',
                   overflow: 'hidden',
-                  background: 'radial-gradient(ellipse at center, rgba(255,255,255,0.98) 0%, rgba(241,245,249,0.9) 100%)',
-                  boxShadow: 'inset 0 0 0 1px rgba(0, 0, 0, 0.05), 0 8px 30px rgba(0, 0, 0, 0.06)',
+                  background: '#ffffff',
+                  boxShadow: 'none',
                   opacity: isFading ? 0.35 : 1,
                   transition: 'opacity 0.25s ease-in-out',
                   display: 'flex',
@@ -1024,34 +1024,7 @@ export const HeroSection = () => {
                 {/* Full, Auto-Adjusted Showcase Image or Empty State */}
                 {currentImage?.imageUrl ? (
                   <>
-                    {/* Ambient Blurred Artwork Backdrop: Fills entire frame edge-to-edge with rich matching hues */}
-                    <div
-                      aria-hidden="true"
-                      style={{
-                        position: 'absolute',
-                        inset: '-15px',
-                        backgroundImage: `url(${getOptimizedImageUrl(currentImage.imageUrl, 400)})`,
-                        backgroundPosition: 'center',
-                        backgroundSize: 'cover',
-                        filter: 'blur(30px) saturate(1.3) brightness(0.94)',
-                        opacity: 0.52,
-                        transform: 'scale(1.18)',
-                        pointerEvents: 'none'
-                      }}
-                    />
-                    {/* Subtle vignette layer to elevate foreground artwork contrast */}
-                    <div
-                      aria-hidden="true"
-                      style={{
-                        position: 'absolute',
-                        inset: 0,
-                        background: 'radial-gradient(circle at center, rgba(255,255,255,0.05) 0%, rgba(15,23,42,0.12) 100%)',
-                        pointerEvents: 'none',
-                        zIndex: 1
-                      }}
-                    />
-
-                    {/* Master Uncut Artwork: Full 100% resolution, never cropped or truncated */}
+                    {/* Original artwork: full resolution and uncropped */}
                     <img
                       src={getOptimizedImageUrl(currentImage.imageUrl, 1080)}
                       alt={currentImage?.title || "Studio Showcase"}
@@ -1070,7 +1043,7 @@ export const HeroSection = () => {
                         objectPosition: 'center',
                         display: 'block',
                         transition: 'transform 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-                        filter: 'drop-shadow(0 8px 24px rgba(0, 0, 0, 0.16))'
+                        filter: 'none'
                       }}
                       draggable="false"
                     />
@@ -1158,6 +1131,7 @@ export const HeroSection = () => {
                       onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--orange-500)'; e.currentTarget.style.transform = 'translateY(-50%) scale(1.08)'; }}
                       onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(15, 23, 42, 0.75)'; e.currentTarget.style.transform = 'translateY(-50%) scale(1)'; }}
                       title="Previous Showcase Image"
+                      aria-label="Previous portfolio sample"
                     >
                       <ChevronLeft size={18} />
                     </button>
@@ -1188,6 +1162,7 @@ export const HeroSection = () => {
                       onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--orange-500)'; e.currentTarget.style.transform = 'translateY(-50%) scale(1.08)'; }}
                       onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(15, 23, 42, 0.75)'; e.currentTarget.style.transform = 'translateY(-50%) scale(1)'; }}
                       title="Next Showcase Image"
+                      aria-label="Next portfolio sample"
                     >
                       <ChevronRight size={18} />
                     </button>

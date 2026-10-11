@@ -55,3 +55,17 @@ test('mobile and tablet keep accessible content without viewport clipping', () =
   assert.match(hero, /vip-hero-duplicate-tabs/);
   assert.match(hero, /vip-hero-duplicate-vector-promo/);
 });
+
+test('showcase has one clean image stage without artificial grey side gutters', () => {
+  assert.doesNotMatch(hero, /Ambient Blurred Artwork Backdrop/);
+  assert.doesNotMatch(hero, /Subtle vignette layer to elevate foreground artwork contrast/);
+  assert.doesNotMatch(hero, /blur\(30px\) saturate\(1\.3\)/);
+  assert.doesNotMatch(hero, /drop-shadow\(0 8px 24px/);
+  assert.match(hero, /objectFit: 'contain'/);
+  assert.match(hero, /aria-label="Previous portfolio sample"/);
+  assert.match(hero, /aria-label="Next portfolio sample"/);
+  assert.match(css, /Clean studio portfolio: a single, seamless artwork stage/);
+  assert.match(css, /\.hero-showcase-image-box > img/);
+  assert.match(css, /background: #ffffff !important/);
+  assert.match(css, /\[data-theme="dark"\] \.vip-hero \.hero-showcase-card/);
+});
