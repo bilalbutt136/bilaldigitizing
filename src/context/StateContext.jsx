@@ -2240,6 +2240,7 @@ export const StateProvider = ({ children, initialCatalog = null }) => {
       return oClean === cleanTargetId || o.id === orderId || o.id === targetWithHash;
     });
 
+    let serverSavedOrder = null;
     if (isSupabaseConfigured) {
       try {
         const clientEmailForApi = (targetOrder?.clientEmail || targetOrder?.client_email || safeExtraData?.clientEmail || safeExtraData?.client_email || '').toLowerCase().trim();
@@ -2254,6 +2255,7 @@ export const StateProvider = ({ children, initialCatalog = null }) => {
         if (!persistenceResult?.success) {
           throw new Error(persistenceResult?.error || 'Order update was not persisted.');
         }
+        if (persistenceResult.data?.order) serverSavedOrder = mapDatabaseOrderToClientOrder(persistenceResult.data.order);
       } catch (sbErr) {
         console.warn('Supabase update order status notice:', sbErr);
         showToast(sbErr?.message || 'Order update failed to save.', 'error');
@@ -2284,7 +2286,8 @@ export const StateProvider = ({ children, initialCatalog = null }) => {
           paymentStatus: isPaidComputed ? 'paid' : resolvedPayStatus,
           isPaid: isPaidComputed,
           paid_at: isPaidComputed ? (ord.paid_at || new Date().toISOString()) : ord.paid_at,
-          history: [...(ord.history || []), { timestamp: new Date().toISOString(), label: `Status updated to ${resolvedStatus}` }]
+          history: [...(ord.history || []), { timestamp: new Date().toISOString(), label: `Status updated to ${resolvedStatus}` }],
+          ...(serverSavedOrder || {})
         };
 
         setSelectedOrderForDrawer(prevDrawer => {

@@ -15,7 +15,7 @@ test('admin delivery uploads files before enabling send and exposes per-file pro
   assert.match(drawer, /progress === 100/);
   assert.match(drawer, /Upload complete and verified/);
   assert.match(drawer, /Retry failed uploads before sending/);
-  assert.match(drawer, /disabled=\{isDelivering \|\| isAdminUploading \|\| hasAdminUploadFailures \|\| !allAdminFilesUploaded\}/);
+  assert.match(drawer, /disabled=\{isDelivering \|\| isAdminUploading \|\| hasAdminUploadFailures \|\| !allAdminFilesUploaded \|\| \(monthlyProgress && monthlyDeliveryCount > monthlyProgress\.remaining\)\}/);
   assert.equal(drawer.includes("'Uploading & Delivering...'"), false);
 
   assert.match(storage, /Math\.min\(99, Math\.round/);

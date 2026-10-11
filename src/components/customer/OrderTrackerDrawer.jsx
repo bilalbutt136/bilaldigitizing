@@ -52,6 +52,7 @@ import { CustomerInvoiceModal } from '../common/CustomerInvoiceModal';
 import { CustomerReviewModal } from './CustomerReviewModal';
 import { fetchOrderReview } from '../../services/reviewService';
 import { getMobileOrderTrackingState } from '../../utils/orderTracking';
+import { getMonthlyProgress } from '../../utils/monthlyProgress';
 
 // Supported machine formats mapping
 const _MACHINE_FORMAT_EXTENSIONS = {
@@ -111,6 +112,7 @@ export const OrderTrackerDrawer = () => {
   const [revisionImage, setRevisionImage] = useState(null);
   const [deliveryMessage, setDeliveryMessage] = useState('');
   const [isDelivering, setIsDelivering] = useState(false);
+  const [monthlyDeliveryCount, setMonthlyDeliveryCount] = useState(1);
   const [_showLightbox, _setShowLightbox] = useState(false);
   const [lightboxArtwork, setLightboxArtwork] = useState(null);
   const [showWorksheetModal, setShowWorksheetModal] = useState(false);
@@ -333,6 +335,8 @@ export const OrderTrackerDrawer = () => {
       setIsRequirementsOpen(false);
       setAdminFilesList([]);
       setDeliveryMessage('');
+      setMonthlyDeliveryCount(1);
+      setMonthlyDeliveryCount(1);
       setIsDelivering(false);
     }
   }, [selectedOrderForDrawer, ord?.id]);
@@ -427,6 +431,8 @@ export const OrderTrackerDrawer = () => {
   } else if (ord.notes && typeof ord.notes === 'object') {
     parsedNotes = ord.notes;
   }
+
+  const monthlyProgress = getMonthlyProgress(parsedNotes, null, ord.paid_at);
 
   const cancellationData = ord.cancellation || parsedNotes.cancellation || (Array.isArray(parsedNotes.cancellations) ? parsedNotes.cancellations[0] : {}) || {};
 
@@ -725,11 +731,12 @@ export const OrderTrackerDrawer = () => {
       const newDeliveryNumber = Math.max(baseDeliveries.length + 1, maxExistingNum + 1);
 
       const newDeliveryItem = {
-        id: `delivery_${Date.now()}`,
+        id: `delivery_${Date.now()}_${Math.random().toString(36).slice(2,9)}`,
         deliveryNumber: newDeliveryNumber,
         title: newDeliveryNumber === 1 ? 'Initial Delivery' : `Delivery #${newDeliveryNumber}`,
         deliveryDate: new Date().toISOString(),
         deliveryMessage: deliveryNoteText,
+        ...(monthlyProgress ? { monthlyDesignCount: monthlyDeliveryCount } : {}),
         deliveredBy: authUser?.name || 'Master Digitizer Desk',
         files: uploadedCloudinaryFiles
       };
@@ -737,6 +744,7 @@ export const OrderTrackerDrawer = () => {
       const updatedDeliveries = [newDeliveryItem, ...baseDeliveries];
 
       const deliveryResult = await updateOrderStatus(ord.id, 'delivered', {
+        ...(monthlyProgress ? { monthlyDeliveryId: newDeliveryItem.id, monthlyDesignCount: monthlyDeliveryCount } : {}),
         status: 'delivered',
         clientEmail: ord.client_email || ord.clientEmail,
         clientName: ord.client_name || ord.clientName,
@@ -758,7 +766,11 @@ export const OrderTrackerDrawer = () => {
       setAdminFilesList([]);
       setDeliveryMessage('');
       setSelectedDeliveryIndex(0);
-      showToast(`🎉 Delivery #${newDeliveryNumber} successfully sent to client!`, 'success');
+      if (monthlyProgress) {
+        const liveOrder = await fetchOrderById(ord.id).catch(() => null);
+        if (liveOrder) setSelectedOrderForDrawer(liveOrder);
+      }
+      showToast(monthlyProgress ? 'Monthly designs delivered and progress updated.' : `🎉 Delivery #${newDeliveryNumber} successfully sent to client!`, 'success');
     } catch (err) {
       console.error('Delivery error:', err);
       showToast(err?.message || 'Delivery failed. Please try again.', 'error');
@@ -1505,6 +1517,40 @@ export const OrderTrackerDrawer = () => {
               }} />
             </div>
           </div>
+          {/* Live prepaid monthly bundle progress for both customer and admin */}
+          {monthlyProgress && (
+            <section aria-label="Monthly plan progress" style={{ padding: isMobileLayout ? '0.9rem' : '1.1rem 1.25rem',
+              background: 'var(--color-surface)', border: '1.5px solid var(--color-border)',
+              borderRadius: '14px', display: 'grid', gap: '0.65rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', gap: '0.65rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                <div>
+                  <strong style={{ color: 'var(--color-text-primary)', fontSize: '1rem' }}>Monthly Design Plan</strong>
+                  <div style={{ color: 'var(--color-text-muted)', fontSize: '0.78rem', marginTop: '0.1rem' }}>
+                    {monthlyProgress.complete ? 'All designs delivered · Plan completed' :
+                      monthlyProgress.expired ? '30-day period ended' :
+                      !isPaid ? 'Starts after payment' :
+                      monthlyProgress.remaining + ' designs remaining'}
+                  </div>
+                </div>
+                <strong style={{ fontSize: '1.2rem', fontWeight: 900, color: monthlyProgress.complete ? 'var(--color-success, #059669)' : 'var(--color-primary)' }}>
+                  {monthlyProgress.delivered} / {monthlyProgress.quota} <span style={{ fontSize: '0.77rem' }}>Delivered</span>
+                </strong>
+              </div>
+              <div role="progressbar" aria-label="Monthly designs delivered" aria-valuemin={0}
+                aria-valuemax={monthlyProgress.quota} aria-valuenow={monthlyProgress.delivered}
+                style={{ background: 'var(--color-subtle)', borderRadius: '999px', height: '9px', overflow: 'hidden' }}>
+                <div style={{ background: monthlyProgress.complete ? 'var(--color-success, #059669)' : 'var(--color-primary)',
+                  width: (monthlyProgress.delivered / monthlyProgress.quota * 100) + '%', height: '100%', borderRadius: '999px' }}/>
+              </div>
+              {monthlyProgress.complete && <div role="status" style={{ color: 'var(--color-success-text, #059669)', fontWeight: 800, fontSize: '0.84rem' }}>
+                ✓ Plan complete! All {monthlyProgress.quota} designs delivered. Thank you.
+              </div>}
+              {monthlyProgress.endsAt && !monthlyProgress.complete && <span style={{ color: 'var(--color-text-muted)', fontSize: '0.75rem' }}>
+                Period ends {new Date(monthlyProgress.endsAt).toLocaleDateString()}
+              </span>}
+            </section>
+          )}
+
           {/* ADMIN UNPAID NOTICE */}
           {!isPaid && isAdmin && (
             <div style={{
@@ -1563,7 +1609,7 @@ export const OrderTrackerDrawer = () => {
                     {isAdmin ? 'Delivery Desk' : 'Your files'}
                   </h4>
                   <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-                    {isAdmin ? 'Upload finished files and delivery notes.' : (isDelivered ? 'Ready to download.' : 'Your finished files will appear here when ready.')}
+                    {isAdmin ? 'Upload finished files and delivery notes.' : ((isDelivered || (monthlyProgress && parsedNotes.deliveries?.length > 0)) ? 'Delivered files are ready to download.' : 'Your finished files will appear here when ready.')}
                   </div>
                 </div>
               </div>
@@ -1654,7 +1700,7 @@ export const OrderTrackerDrawer = () => {
             )}
 
             {/* ADMIN DELIVERY COMPOSER */}
-            {isAdmin && (
+            {isAdmin && (!monthlyProgress || (!monthlyProgress.complete && !monthlyProgress.expired)) && (
               <form onSubmit={handleAdminDeliverOrder} style={{ display: 'flex', flexDirection: 'column', gap: '1rem', background: 'var(--bg-surface)', padding: '1.25rem', borderRadius: '14px', border: '1.5px dashed var(--orange-500)', marginBottom: '1.25rem' }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <span style={{ fontWeight: 800, color: 'var(--text-main)', fontSize: '0.92rem' }}>
@@ -1780,6 +1826,26 @@ export const OrderTrackerDrawer = () => {
                   </div>
                 )}
 
+                {monthlyProgress && (
+                  <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '0.65rem',
+                    padding: '0.65rem 0.8rem', background: 'var(--color-primary-light)',
+                    border: '1px solid var(--color-border)', borderRadius: '10px' }}>
+                    <label htmlFor="monthly-delivery-count" style={{ color: 'var(--color-text-primary)', fontSize: '0.84rem', fontWeight: 800 }}>
+                      Designs in this delivery
+                    </label>
+                    <select id="monthly-delivery-count" value={monthlyDeliveryCount} onChange={e => setMonthlyDeliveryCount(Number(e.target.value))}
+                      style={{ padding: '0.35rem 0.55rem', border: '1px solid var(--color-border)', borderRadius: 8,
+                        background: 'var(--color-input)', color: 'var(--color-text-primary)', fontWeight: 800 }}>
+                      <option value={0}>0 — Revision only</option>
+                      {Array.from({ length: Math.min(monthlyProgress.remaining, 20) }, (_, i) => i + 1)
+                        .map(n => <option value={n} key={n}>{n} {n === 1 ? 'design' : 'designs'}</option>)}
+                    </select>
+                    <span style={{ fontSize: '0.73rem', color: 'var(--color-text-muted)' }}>
+                      Counts automatically when files are sent · {monthlyProgress.remaining} left
+                    </span>
+                  </div>
+                )}
+
                 {/* Delivery Notes */}
                 <div>
                   <label style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--navy-800)', marginBottom: '0.3rem', display: 'block' }}>
@@ -1799,7 +1865,7 @@ export const OrderTrackerDrawer = () => {
                   <button
                     type="submit"
                     className="btn btn-primary-orange"
-                    disabled={isDelivering || isAdminUploading || hasAdminUploadFailures || !allAdminFilesUploaded}
+                    disabled={isDelivering || isAdminUploading || hasAdminUploadFailures || !allAdminFilesUploaded || (monthlyProgress && monthlyDeliveryCount > monthlyProgress.remaining)}
                     style={{
                       fontWeight: 800,
                       gap: '0.4rem',

@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { getMonthlyProgress, prepareMonthlyDelivery } from '../../../../utils/monthlyProgress.js';
 
 export async function handleUpdateStatus(context) {
   const { payload, supabase, user, isAdmin } = context;
@@ -11,7 +12,7 @@ export async function handleUpdateStatus(context) {
       let targetOrder = null;
       const { data: byIn } = await supabase
         .from('orders')
-        .select('id, title, client_name, client_email, service_category, service_type, price, status, payment_status, notes, output_file_url, worker_file_url, user_id, created_at, updated_at')
+        .select('id, title, client_name, client_email, service_category, service_type, price, status, payment_status, paid_at, notes, output_file_url, worker_file_url, user_id, created_at, updated_at')
         .in('id', candidateIds)
         .maybeSingle();
 
@@ -20,7 +21,7 @@ export async function handleUpdateStatus(context) {
       } else if (cleanId.length >= 3) {
         const { data: byIlike } = await supabase
           .from('orders')
-          .select('id, title, client_name, client_email, service_category, service_type, price, status, payment_status, notes, output_file_url, worker_file_url, user_id, created_at, updated_at')
+          .select('id, title, client_name, client_email, service_category, service_type, price, status, payment_status, paid_at, notes, output_file_url, worker_file_url, user_id, created_at, updated_at')
           .ilike('id', `%${cleanId}%`)
           .maybeSingle();
         if (byIlike) targetOrder = byIlike;
@@ -43,6 +44,43 @@ export async function handleUpdateStatus(context) {
         }
       }
 
+      // Server-authoritative prepaid monthly usage and one-delivery-one-credit rule.
+      let originalMonthlyNotes = null;
+      let monthlyProgress = null;
+      let monthlyDelivery = null;
+      try {
+        const parsed = typeof targetOrder?.notes === 'string' ? JSON.parse(targetOrder.notes) : targetOrder?.notes;
+        if (parsed?.monthlyBundle) {
+          originalMonthlyNotes = parsed;
+          monthlyProgress = getMonthlyProgress(parsed, null, targetOrder?.paid_at);
+        }
+      } catch {}
+      if (monthlyProgress && newStatus !== 'delivered' &&
+          (extraData?.deliveries || extraData?.uploadedMachineFiles)) {
+        return NextResponse.json({ error: 'Monthly delivery history cannot be changed through a status action.' }, { status: 403 });
+      }
+      if (monthlyProgress && newStatus === 'completed' && !monthlyProgress.complete) {
+        return NextResponse.json({ error: 'Monthly plan closes automatically when all included designs are delivered.' }, { status: 409 });
+      }
+      if (monthlyProgress && newStatus === 'delivered') {
+        if (!isAdmin) return NextResponse.json({ error: 'Only studio staff can confirm monthly design deliveries.' }, { status: 403 });
+        if (String(targetOrder?.payment_status || '').toLowerCase() !== 'paid') {
+          return NextResponse.json({ error: 'Monthly plan must be paid before production delivery.' }, { status: 409 });
+        }
+        const first = Array.isArray(extraData?.deliveries) ? extraData.deliveries[0] : null;
+        if (!first || first.id !== extraData?.monthlyDeliveryId) {
+          return NextResponse.json({ error: 'Delivery ID missing or does not match.' }, { status: 400 });
+        }
+        try {
+          monthlyDelivery = prepareMonthlyDelivery(originalMonthlyNotes, first, extraData.monthlyDesignCount, targetOrder.paid_at);
+        } catch (err) {
+          return NextResponse.json({ error: err.message }, { status: 409 });
+        }
+        // Never trust historical delivery entries provided by the browser.
+        extraData.deliveries = monthlyDelivery.deliveries;
+        extraData.deliveryNumber = monthlyDelivery.entry.deliveryNumber;
+      }
+
       // Update payment_status when admin sets it or when client checkout confirms payment
       let payStatus = null;
       if (isAdmin) {
@@ -60,6 +98,7 @@ export async function handleUpdateStatus(context) {
       } else if (payStatus === 'paid' && (resolvedStatus === 'awaiting_payment' || resolvedStatus === 'pending_payment' || resolvedStatus === 'submitted' || !resolvedStatus)) {
         resolvedStatus = 'in_progress';
       }
+      if (monthlyDelivery) resolvedStatus = monthlyDelivery.progress.complete ? 'completed' : 'in_progress';
       const updatePayload = { status: resolvedStatus, updated_at: new Date().toISOString() };
       if (payStatus === 'paid') {
         updatePayload.payment_status = 'paid';
@@ -122,12 +161,25 @@ export async function handleUpdateStatus(context) {
       }
 
       const resolvedId = targetOrder?.id || rawId;
-      const { error } = await supabase
-        .from('orders')
+      if (monthlyDelivery) {
+        const priorMs = Date.parse(targetOrder.updated_at);
+        updatePayload.updated_at = new Date(Math.max(Date.now(), Number.isFinite(priorMs) ? priorMs + 1 : Date.now())).toISOString();
+      }
+      let updateQuery = supabase.from('orders')
         .update(updatePayload)
-        .in('id', Array.from(new Set([resolvedId, ...candidateIds])));
+        .eq('id', resolvedId);
+      // Optimistic compare-and-swap prevents two concurrent deliveries from
+      // both claiming the same remaining design credit or overwriting history.
+      if (monthlyDelivery) {
+        // A compact concurrency guard avoids passing potentially huge delivery-history JSON in a URL.
+        updateQuery = updateQuery.eq('updated_at', targetOrder.updated_at);
 
+      }
+      const { data: savedRows, error } = await updateQuery.select('id');
       if (error) throw error;
+      if (monthlyDelivery && (!savedRows || savedRows.length !== 1)) {
+        return NextResponse.json({ error: 'Order updated elsewhere. Refresh before sending again.' }, { status: 409 });
+      }
 
       // Process uploaded machine files & deliveries files for delivery
       const allDeliveryFiles = [
@@ -336,6 +388,17 @@ export async function handleUpdateStatus(context) {
             } catch (emErr) {
               console.warn('[Delivery Email Import Notice]:', emErr?.message);
             }
+          }
+
+          if (monthlyDelivery?.progress.complete) {
+            await insertNotif({
+              id: `monthly-complete-${resolvedOrderId}`,
+              recipient_role: 'client', recipient_email: clientEmail,
+              title: 'Monthly Plan Completed',
+              message: `All ${monthlyDelivery.progress.quota} designs have been delivered. Your monthly bundle is complete. Thank you!`,
+              type: 'success',
+              link: `/client-portal?tab=orders&trackOrder=${resolvedOrderId}`
+            });
           }
 
         } else if (newStatus === 'completed') {

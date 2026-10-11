@@ -7,7 +7,7 @@ export async function handleAdminReviewWorker(context) {
 
       const { data: targetOrder, error: orderFetchErr } = await supabase
         .from('orders')
-        .select('id, title, status, worker_id, worker_file_url, worker_file_name, client_name, client_email')
+        .select('id, title, status, worker_id, worker_file_url, worker_file_name, client_name, client_email, notes')
         .eq('id', orderId)
         .maybeSingle();
 
@@ -18,6 +18,11 @@ export async function handleAdminReviewWorker(context) {
       const nowIso = new Date().toISOString();
 
       if (decision === 'approve') {
+        // Monthly orders require a counted design delivery through the Admin Delivery Desk.
+        // This prevents worker approval from silently delivering files without updating quota.
+        let month = null;
+        try { month = typeof targetOrder.notes === 'string' ? JSON.parse(targetOrder.notes)?.monthlyBundle : targetOrder.notes?.monthlyBundle; } catch {}
+        if (month) return NextResponse.json({ error: 'For monthly plans, use the Order Delivery Desk to send and count finished designs.' }, { status: 409 });
         // Approve & Deliver to Client
         const updatePayload = {
           worker_status: 'Completed',

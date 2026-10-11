@@ -2,6 +2,7 @@ import { supabase, isSupabaseConfigured } from '../lib/supabase/client.js';
 import { getSiteUrl } from '../utils/siteUrl.js';
 import { filterAndSanitizeNotifications } from '../utils/notificationRouter.js';
 import { normalizePublicCatalog } from '../lib/catalog/normalizePublicCatalog.js';
+import { getMonthlyProgress } from '../utils/monthlyProgress.js';
 import { fetchClientQuery, invalidateClientQuery } from './clientQueryService.js';
 import { dedupeRouteTransition } from '../utils/throttleDebounce.js';
 
@@ -465,6 +466,8 @@ export function mapDatabaseOrderToClientOrder(order) {
         outputFileUrl: resolvedOutputFileUrl,
         output_file_url: resolvedOutputFileUrl,
         deliveries: notesData.deliveries || [],
+        monthlyBundle: notesData.monthlyBundle || null,
+        monthlyProgress: getMonthlyProgress(notesData, null, order.paid_at),
         workerFiles: workerFiles,
         worker_files: workerFiles,
         workerId: order.worker_id,

@@ -1872,6 +1872,14 @@ export const CustomerDashboard = () => {
                                   {/* Delivery & Order Status (NEW) */}
                                   <td style={{ padding: '0.5rem 0.75rem' }}>
                                     {getOrderDeliveryStatusBadge(ord)}
+                                    {ord.monthlyProgress && (
+                                      <div style={{ marginTop: '0.3rem', fontSize: '0.73rem', fontWeight: 800,
+                                        color: ord.monthlyProgress.complete ? 'var(--color-success, #059669)' : 'var(--color-primary)' }}>
+                                        {ord.monthlyProgress.complete ? '✓ Monthly Plan Completed' :
+                                          ord.monthlyProgress.expired ? 'Monthly period ended' :
+                                          `${ord.monthlyProgress.delivered}/${ord.monthlyProgress.quota} designs delivered`}
+                                      </div>
+                                    )}
                                   </td>
 
                                   {/* Payment Status */}
@@ -2081,6 +2089,14 @@ export const CustomerDashboard = () => {
 
                                   <div style={{ marginTop: '0.4rem' }}>
                                     {getOrderDeliveryStatusBadge(ord)}
+                                    {ord.monthlyProgress && (
+                                      <div style={{ marginTop: '0.3rem', fontSize: '0.73rem', fontWeight: 800,
+                                        color: ord.monthlyProgress.complete ? 'var(--color-success, #059669)' : 'var(--color-primary)' }}>
+                                        {ord.monthlyProgress.complete ? '✓ Monthly Plan Completed' :
+                                          ord.monthlyProgress.expired ? 'Monthly period ended' :
+                                          `${ord.monthlyProgress.delivered}/${ord.monthlyProgress.quota} designs delivered`}
+                                      </div>
+                                    )}
                                   </div>
                                 </div>
                               </div>
