@@ -83,7 +83,7 @@ export const OrderWizardModal = () => {
               ⚡ Direct Studio Order Desk
             </span>
             <span style={{ fontSize: '0.7rem', fontWeight: 800, color: '#059669', background: '#ecfdf5', padding: '2px 8px', borderRadius: '9999px', border: '1px solid #a7f3d0' }}>
-              4–12H Delivery
+              Delivery Time Varies
             </span>
           </div>
 
@@ -115,7 +115,7 @@ export const OrderWizardModal = () => {
               ? null
               : (orderWizardInitialData?.type || orderWizardInitialData?.category || null)
           }
-          initialPackage={orderWizardInitialData?.selectedPackage || null}
+          initialPackage={orderWizardInitialData?.selectedPackage || orderWizardInitialData?.package_id || (orderWizardInitialData?.title ? { title: orderWizardInitialData.title } : null)}
           _isModal={true}
           onCloseModal={handleSafeClose}
           onOrderComplete={() => {

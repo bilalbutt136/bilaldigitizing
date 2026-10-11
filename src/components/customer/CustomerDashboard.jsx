@@ -56,6 +56,7 @@ import { fetchChatUnreadCounts } from '../../services/chatUnreadService';
 import { isSupabaseConfigured } from '../../lib/supabase/client';
 import CustomerSupportChat from './CustomerSupportChat';
 import { matchCategory } from '../../utils/categoryUtils';
+import { getServiceStartingPrice, formatUSD } from '../../utils/livePricing';
 
 export const CustomerDashboard = () => {
   const navigate = useNavigate();
@@ -3360,7 +3361,7 @@ export const CustomerDashboard = () => {
                       4-12 Hr Delivery
                     </span>
                     <span style={{ fontSize: '0.72rem', fontWeight: 800, background: 'var(--bg-subtle, #f1f5f9)', color: 'var(--color-text-primary, #0f172a)', padding: '0.15rem 0.55rem', borderRadius: '5px' }}>
-                      Starts $10.00
+                      {getServiceStartingPrice(dynamicPricingTiers, 'embroidery') === null ? 'Pricing unavailable' : 'From ' + formatUSD(getServiceStartingPrice(dynamicPricingTiers, 'embroidery'))}
                     </span>
                   </div>
                 </div>
@@ -3496,7 +3497,7 @@ export const CustomerDashboard = () => {
                       Physical Shipping
                     </span>
                     <span style={{ fontSize: '0.72rem', fontWeight: 800, background: 'var(--bg-subtle, #f1f5f9)', color: 'var(--color-text-primary, #0f172a)', padding: '0.15rem 0.55rem', borderRadius: '5px' }}>
-                      Starts $3.50 / pc
+                      {getServiceStartingPrice(dynamicPricingTiers, 'patch') === null ? 'Pricing unavailable' : 'From ' + formatUSD(getServiceStartingPrice(dynamicPricingTiers, 'patch')) + ' / pc'}
                     </span>
                   </div>
                 </div>

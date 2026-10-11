@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { useAppState } from '../../context/StateContext';
-import { matchCategory } from '../../utils/categoryUtils';
+import { getAvailableTiers, getServiceStartingPrice, calculatePackageQuote, formatUSD } from '../../utils/livePricing';
 import {
   Upload,
   Check,
@@ -22,91 +22,6 @@ import {
   Zap
 } from 'lucide-react';
 import { uploadFileToCloudinaryFull } from '../../services/supabaseService';
-
-// Default Canonical Packages matching DynamicPricingEditor & Website Pricing Page
-const CANONICAL_DEFAULT_PACKAGES = {
-  embroidery: [
-    {
-      id: 'emb-left-chest',
-      service_type: 'embroidery',
-      display_order: 1,
-      title: 'Left Chest & Cap Small Logo',
-      price: 10.00,
-      turnaround_time: '4–12 Hours'
-    },
-    {
-      id: 'emb-mid-size',
-      service_type: 'embroidery',
-      display_order: 2,
-      title: 'Mid-Size Jacket & Sleeve Design',
-      price: 20.00,
-      turnaround_time: '6–12 Hours'
-    },
-    {
-      id: 'emb-full-back',
-      service_type: 'embroidery',
-      display_order: 3,
-      title: 'Full Back & 3D Puff Foam',
-      price: 30.00,
-      turnaround_time: '8–12 Hours'
-    }
-  ],
-  vector: [
-    {
-      id: 'vec-simple',
-      service_type: 'vector_art',
-      display_order: 1,
-      title: 'Simple Logo & Typography Redraw',
-      price: 15.00,
-      turnaround_time: '6–12 Hours'
-    },
-    {
-      id: 'vec-medium',
-      service_type: 'vector_art',
-      display_order: 2,
-      title: 'Medium Detail Artwork with Colors',
-      price: 25.00,
-      turnaround_time: '6–12 Hours'
-    },
-    {
-      id: 'vec-complex',
-      service_type: 'vector_art',
-      display_order: 3,
-      title: 'Complex Intricate Mascot & Illustration',
-      price: 40.00,
-      turnaround_time: '12–24 Hours'
-    }
-  ],
-  patch: [
-    {
-      id: 'pat-sample',
-      service_type: 'patches',
-      display_order: 1,
-      title: 'Sample Batch (50+ Pcs)',
-      min_pieces: 50,
-      price: 3.50,
-      turnaround_time: '3–5 Days'
-    },
-    {
-      id: 'pat-standard',
-      service_type: 'patches',
-      display_order: 2,
-      title: 'Standard Batch (50+ Pcs)',
-      min_pieces: 50,
-      price: 4.50,
-      turnaround_time: '4–7 Days'
-    },
-    {
-      id: 'pat-premium',
-      service_type: 'patches',
-      display_order: 3,
-      title: 'Premium Batch (50+ Pcs)',
-      min_pieces: 50,
-      price: 5.50,
-      turnaround_time: '5–8 Days'
-    }
-  ]
-};
 
 export const StreamlinedOrderFlow = ({
   initialService = null,
@@ -149,17 +64,12 @@ export const StreamlinedOrderFlow = ({
   });
 
   // Dynamic Tiers for the selected service (Editable from Admin Dynamic Pricing Editor)
-  const getActiveTiers = (serviceKey) => {
-    const dbTiers = (dynamicPricingTiers || [])
-      .filter(t => matchCategory(t?.service_type, serviceKey))
-      .sort((a, b) => (Number(a.display_order) || 0) - (Number(b.display_order) || 0));
-
-    if (dbTiers && dbTiers.length > 0) {
-      return dbTiers;
-    }
-    return CANONICAL_DEFAULT_PACKAGES[serviceKey] || [];
+  const getActiveTiers = (serviceKey) => getAvailableTiers(dynamicPricingTiers, serviceKey);
+  const startingPrices = {
+    embroidery: getServiceStartingPrice(dynamicPricingTiers, 'embroidery'),
+    vector: getServiceStartingPrice(dynamicPricingTiers, 'vector'),
+    patch: getServiceStartingPrice(dynamicPricingTiers, 'patch')
   };
-
   const currentServiceTiers = getActiveTiers(selectedService);
 
   // Selected Package Tier State (Dynamically linked to DB / Admin Tiers)
@@ -175,7 +85,7 @@ export const StreamlinedOrderFlow = ({
   const currentTier = currentServiceTiers.find(t =>
     (t.id && String(t.id) === String(selectedTierId)) ||
     (t.title && t.title.toLowerCase() === String(selectedTierId).toLowerCase())
-  ) || currentServiceTiers[0] || null;
+  ) || (selectedTierId ? null : currentServiceTiers[0] || null);
 
   // 1. EMBROIDERY FIELDS
   const [fileFormat, setFileFormat] = useState('all');
@@ -282,59 +192,16 @@ export const StreamlinedOrderFlow = ({
     }
   };
 
-  // Live Price Calculation derived directly from dynamic active tier
+  // Active administrator-configured Supabase prices only.
   const calculatePricing = () => {
-    const unitBase = Number(currentTier?.price) || 15;
-    let rushFee = 0;
-
-    if (selectedService === 'embroidery') {
-      const orderQty = Math.max(1, designQuantity);
-      if (turnaround === 'rush') rushFee = 10;
-      return {
-        unitPrice: unitBase,
-        subtotal: unitBase * orderQty,
-        rush: rushFee,
-        total: (unitBase * orderQty) + rushFee,
-        quantity: orderQty,
-        tierTitle: currentTier?.title || 'Left Chest & Cap Small Logo'
-      };
-    }
-
-    if (selectedService === 'patch') {
-      // Patch Quantity strictly defaults to 50, minimum 50
-      const parsedQty = parseInt(patchQuantity, 10);
-      const safePatchQty = Math.max(50, isNaN(parsedQty) ? 50 : parsedQty);
-      if (patchTurnaround === 'rush') rushFee = 25;
-      const patchSubtotal = unitBase * safePatchQty;
-      return {
-        unitPrice: unitBase,
-        subtotal: patchSubtotal,
-        rush: rushFee,
-        total: patchSubtotal + rushFee,
-        patchPieces: safePatchQty,
-        quantity: safePatchQty,
-        tierTitle: currentTier?.title || 'Sample Batch (50+ Pcs)'
-      };
-    }
-
-    if (selectedService === 'vector') {
-      const orderQty = Math.max(1, designQuantity);
-      if (vectorTurnaround === 'rush') rushFee = 10;
-      return {
-        unitPrice: unitBase,
-        subtotal: unitBase * orderQty,
-        rush: rushFee,
-        total: (unitBase * orderQty) + rushFee,
-        quantity: orderQty,
-        tierTitle: currentTier?.title || 'Simple Logo & Typography Redraw'
-      };
-    }
-
-    return { unitPrice: 15, subtotal: 15, rush: 0, total: 15, quantity: 1, tierTitle: 'Standard' };
+    const safePatchQty = Math.max(50, parseInt(patchQuantity, 10) || 50);
+    const quantity = selectedService === 'patch' ? safePatchQty : Math.max(1, Number(designQuantity) || 1);
+    const isRush = selectedService === 'patch' ? patchTurnaround === 'rush'
+      : selectedService === 'vector' ? vectorTurnaround === 'rush' : turnaround === 'rush';
+    return calculatePackageQuote({ tier: currentTier, service: selectedService, quantity, isRush });
   };
-
-  const pricing = calculatePricing();
-
+  const pricing = calculatePricing() || { unitPrice: 0, subtotal: 0, rush: 0, total: 0, quantity: 0, patchPieces: 0, tierTitle: '' };
+  const hasValidLivePrice = Boolean(currentTier?.id && pricing.total > 0);
   // Helper Labels for Summary
   const getSizeLabel = () => {
     if (selectedService === 'embroidery') {
@@ -407,25 +274,14 @@ export const StreamlinedOrderFlow = ({
             format: res.format || file.name.split('.').pop()
           });
         } else {
-          const localUrl = URL.createObjectURL(file);
-          uploadedList.push({
-            name: file.name,
-            size: file.size,
-            type: file.type,
-            url: localUrl,
-            format: file.name.split('.').pop()
-          });
+          throw new Error('Artwork was not stored on the server.');
         }
       } catch (err) {
-        console.warn('Upload fallback applied for:', file.name, err);
-        const localUrl = URL.createObjectURL(file);
-        uploadedList.push({
-          name: file.name,
-          size: file.size,
-          type: file.type,
-          url: localUrl,
-          format: file.name.split('.').pop()
-        });
+        console.error('[Order artwork upload failed]', err);
+        setUploadError('Artwork upload failed. Please retry before submitting.');
+        setIsUploadHighlighted(true);
+        setIsUploading(false);
+        return;
       }
     }
 
@@ -468,6 +324,10 @@ export const StreamlinedOrderFlow = ({
 
   // Submit Order and Launch Instant Stripe Checkout / Payment Page
   const handleFinalSubmitOrder = async () => {
+    if (!hasValidLivePrice) {
+      setValidationAlert({ title: 'Pricing Unavailable', message: 'Choose a currently published package before ordering.', actionText: 'Review Packages', onAction: () => {} });
+      return;
+    }
     // 1. Validate required design file upload
     if (uploadedFiles.length === 0) {
       const errorMsg = selectedService === 'patch'
@@ -604,14 +464,20 @@ export const StreamlinedOrderFlow = ({
       }
 
       const primaryArtworkUrl = uploadedFiles[0]?.url || null;
+      if (!primaryArtworkUrl || primaryArtworkUrl.startsWith('blob:')) throw new Error('Artwork upload is incomplete. Please upload your design again.');
 
       const orderPayload = {
         title: derivedTitle,
         type: selectedService,
         serviceCategory: cleanService,
+        source: 'direct_order_desk',
+        package_id: currentTier.id,
+        unit_price: pricing.unitPrice,
+        rush_fee: pricing.rush,
         package_name: orderPackageName,
         package_tier: orderPackageName,
-        quantity: selectedService === 'patch' ? pricing.patchPieces : Math.max(1, designQuantity),
+        quantity: pricing.quantity,
+        patchQuantity: selectedService === 'patch' ? pricing.patchPieces : undefined,
         price: pricing.total,
         totalPrice: pricing.total,
         base_price: pricing.subtotal,
@@ -638,7 +504,8 @@ export const StreamlinedOrderFlow = ({
       };
 
       const created = await createOrder(orderPayload);
-      const resultingId = created?.id || `ORD_${Date.now()}`;
+      if (!created?.id) throw new Error('Order not confirmed by server. Please try again.');
+      const resultingId = String(created.id);
 
       // Clean pending draft and store order id
       if (typeof window !== 'undefined') {
@@ -758,7 +625,7 @@ export const StreamlinedOrderFlow = ({
           transition: all 0.18s ease;
         }
         .bdigi-select:focus {
-          border-color: #ea580c;
+          border-color: var(--color-primary);
           box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
         }
         .bdigi-select-arrow {
@@ -786,7 +653,7 @@ export const StreamlinedOrderFlow = ({
           transition: all 0.18s ease;
         }
         .bdigi-textarea:focus {
-          border-color: #ea580c;
+          border-color: var(--color-primary);
           box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
         }
         .bdigi-input {
@@ -803,7 +670,7 @@ export const StreamlinedOrderFlow = ({
           transition: all 0.18s ease;
         }
         .bdigi-input:focus {
-          border-color: #ea580c;
+          border-color: var(--color-primary);
           box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
         }
         .bdigi-summary-card {
@@ -871,7 +738,7 @@ export const StreamlinedOrderFlow = ({
                 textAlign: 'center'
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.borderColor = '#ea580c';
+                e.currentTarget.style.borderColor = 'var(--color-primary)';
                 e.currentTarget.style.transform = 'translateY(-3px)';
                 e.currentTarget.style.boxShadow = '0 10px 24px rgba(37, 99, 235, 0.12)';
               }}
@@ -911,7 +778,7 @@ export const StreamlinedOrderFlow = ({
               <div>
                 <div style={{ marginBottom: '0.75rem' }}>
                   <span style={{ fontSize: '0.76rem', color: 'var(--color-text-muted, #64748b)', fontWeight: 700 }}>From </span>
-                  <span style={{ fontSize: '1.15rem', fontWeight: 900, color: 'var(--color-primary)' }}>$10.00</span>
+                  <span style={{ fontSize: '1.15rem', fontWeight: 900, color: 'var(--color-primary)' }}>{formatUSD(startingPrices.embroidery)}</span>
                 </div>
 
                 <button
@@ -995,7 +862,7 @@ export const StreamlinedOrderFlow = ({
               <div>
                 <div style={{ marginBottom: '0.75rem' }}>
                   <span style={{ fontSize: '0.76rem', color: 'var(--color-text-muted, #64748b)', fontWeight: 700 }}>From </span>
-                  <span style={{ fontSize: '1.15rem', fontWeight: 900, color: '#7c3aed' }}>$15.00</span>
+                  <span style={{ fontSize: '1.15rem', fontWeight: 900, color: '#7c3aed' }}>{formatUSD(startingPrices.vector)}</span>
                 </div>
 
                 <button
@@ -1079,7 +946,7 @@ export const StreamlinedOrderFlow = ({
               <div>
                 <div style={{ marginBottom: '0.75rem' }}>
                   <span style={{ fontSize: '0.76rem', color: 'var(--color-text-muted, #64748b)', fontWeight: 700 }}>From </span>
-                  <span style={{ fontSize: '1.15rem', fontWeight: 900, color: '#0284c7' }}>$3.50<span style={{ fontSize: '0.76rem', fontWeight: 600 }}>/pc</span></span>
+                  <span style={{ fontSize: '1.15rem', fontWeight: 900, color: '#0284c7' }}>{formatUSD(startingPrices.patch)}{startingPrices.patch !== null && <span style={{ fontSize: '0.76rem', fontWeight: 600 }}>/pc</span>}</span>
                 </div>
 
                 <button
@@ -1214,6 +1081,7 @@ export const StreamlinedOrderFlow = ({
             </div>
           </div>
 
+          {!getActiveTiers(selectedService).length && <p role="status" style={{ color: 'var(--color-warning-text)', fontWeight: 700, padding: '0.75rem' }}>Pricing is temporarily unavailable. Please try again later.</p>}
           {/* 2-COLUMN ORDER DESK: LEFT OPTIONS & UPLOAD VS RIGHT STICKY PRICE & QUANTITY */}
           <div className="bdigi-order-container">
 
@@ -1232,6 +1100,7 @@ export const StreamlinedOrderFlow = ({
                         onChange={(e) => setSelectedTierId(e.target.value)}
                         className="bdigi-select"
                       >
+                        {!currentTier && <option value="">Select a valid package</option>}
                         {currentServiceTiers.map(tier => {
                           const val = String(tier.id || tier.title);
                           const displayPrice = Number(tier.price).toFixed(2);
@@ -1431,7 +1300,7 @@ export const StreamlinedOrderFlow = ({
                         </button>
                       </div>
                       <span style={{ fontSize: '0.84rem', fontWeight: 700, color: 'var(--color-text-muted, #64748b)' }}>
-                        ${pricing.unitPrice.toFixed(2)} each design
+                        ${hasValidLivePrice ? pricing.unitPrice.toFixed(2) : "—"} each design
                       </span>
                     </div>
                   </div>
@@ -1450,6 +1319,7 @@ export const StreamlinedOrderFlow = ({
                         onChange={(e) => setSelectedTierId(e.target.value)}
                         className="bdigi-select"
                       >
+                        {!currentTier && <option value="">Select a valid package</option>}
                         {currentServiceTiers.map(tier => {
                           const val = String(tier.id || tier.title);
                           const displayPrice = Number(tier.price).toFixed(2);
@@ -1656,7 +1526,7 @@ export const StreamlinedOrderFlow = ({
                       </div>
 
                       <div style={{ marginTop: '0.35rem', fontSize: '0.75rem', color: '#0284c7', fontWeight: 700 }}>
-                        ✦ Minimum batch: 50 pieces • Rate: ${pricing.unitPrice.toFixed(2)} / patch
+                        ✦ Minimum batch: 50 pieces • Rate: ${hasValidLivePrice ? pricing.unitPrice.toFixed(2) : "—"} / patch
                       </div>
                     </div>
                   </div>
@@ -1675,6 +1545,7 @@ export const StreamlinedOrderFlow = ({
                         onChange={(e) => setSelectedTierId(e.target.value)}
                         className="bdigi-select"
                       >
+                        {!currentTier && <option value="">Select a valid package</option>}
                         {currentServiceTiers.map(tier => {
                           const val = String(tier.id || tier.title);
                           const displayPrice = Number(tier.price).toFixed(2);
@@ -1798,7 +1669,7 @@ export const StreamlinedOrderFlow = ({
                         </button>
                       </div>
                       <span style={{ fontSize: '0.84rem', fontWeight: 700, color: 'var(--color-text-muted, #64748b)' }}>
-                        ${pricing.unitPrice.toFixed(2)} each design
+                        ${hasValidLivePrice ? pricing.unitPrice.toFixed(2) : "—"} each design
                       </span>
                     </div>
                   </div>
@@ -2070,7 +1941,7 @@ export const StreamlinedOrderFlow = ({
                     <span>Quantity:</span>
                     <strong style={{ color: 'var(--color-text-primary, #0f172a)' }}>
                       {selectedService === 'patch'
-                        ? `${pricing.patchPieces} Patches`
+                        ? `${Math.max(50, Number(patchQuantity) || 50)} Patches`
                         : `${designQuantity} ${designQuantity === 1 ? 'Design' : 'Designs'}`}
                     </strong>
                   </div>
@@ -2090,8 +1961,8 @@ export const StreamlinedOrderFlow = ({
                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.84rem', color: 'var(--color-text-secondary, #475569)', marginBottom: '0.3rem' }}>
                     <span>
                       {selectedService === 'patch'
-                        ? `Subtotal (${pricing.patchPieces} × $${pricing.unitPrice.toFixed(2)}):`
-                        : `Subtotal (${designQuantity} × $${pricing.unitPrice.toFixed(2)}):`}
+                        ? `Subtotal (${pricing.patchPieces} × $${hasValidLivePrice ? pricing.unitPrice.toFixed(2) : "—"}):`
+                        : `Subtotal (${designQuantity} × $${hasValidLivePrice ? pricing.unitPrice.toFixed(2) : "—"}):`}
                     </span>
                     <span>${pricing.subtotal.toFixed(2)}</span>
                   </div>
@@ -2108,7 +1979,7 @@ export const StreamlinedOrderFlow = ({
                       Total Due:
                     </span>
                     <span style={{ fontSize: '1.75rem', fontWeight: 900, color: selectedService === 'patch' ? '#0284c7' : '#ea580c', lineHeight: 1 }}>
-                      ${pricing.total.toFixed(2)}
+                      {hasValidLivePrice ? formatUSD(pricing.total) : 'Pricing unavailable'}
                     </span>
                   </div>
                 </div>
@@ -2116,7 +1987,7 @@ export const StreamlinedOrderFlow = ({
                 {/* CTA BUTTON */}
                 <button
                   type="button"
-                  disabled={isSubmitting || isUploading}
+                  disabled={isSubmitting || isUploading || !hasValidLivePrice}
                   onClick={handleFinalSubmitOrder}
                   style={{
                     width: '100%',
@@ -2147,7 +2018,7 @@ export const StreamlinedOrderFlow = ({
                     </>
                   ) : (
                     <>
-                      <Lock size={15} /> Place Order & Pay (${pricing.total.toFixed(2)})
+                      <Lock size={15} /> {hasValidLivePrice ? 'Place Order & Pay (' + formatUSD(pricing.total) + ')' : 'Pricing unavailable'}
                     </>
                   )}
                 </button>

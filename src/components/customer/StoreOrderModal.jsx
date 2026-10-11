@@ -100,8 +100,9 @@ export const StoreOrderModal = () => {
   if (!isStoreOrderModalOpen || !selectedStoreItem) return null;
 
   // Calculate prices
-  const unitPrice = parseFloat((selectedStoreItem.price || '$10.00').replace(/[^0-9.]/g, '')) || 10.00;
-  const totalPrice = (unitPrice * quantity).toFixed(2);
+  const unitPrice = Number.parseFloat(String(selectedStoreItem.price ?? '').replace(/[^0-9.]/g, ''));
+  const hasValidPrice = Number.isFinite(unitPrice) && unitPrice > 0;
+  const totalPrice = (hasValidPrice ? unitPrice * quantity : 0).toFixed(2);
   const totalPriceNum = parseFloat(totalPrice);
   const hasEnoughWallet = walletBalance >= totalPriceNum;
 
@@ -119,6 +120,10 @@ export const StoreOrderModal = () => {
   };
 
   const handleCompleteStoreOrder = async (paymentMethod) => {
+    if (!hasValidPrice) {
+      showToast('This product has no valid live price. Please contact support before ordering.', 'error');
+      return;
+    }
     if (!isAuthenticated) {
       showToast('Please sign in or register an account to complete your store order', 'info');
       setAuthModalMode('login');
@@ -143,11 +148,15 @@ export const StoreOrderModal = () => {
 
     // Perform real Cloudinary upload if a rawFile exists
     if (uploadedArtwork?.rawFile) {
-      const uploaded = await uploadFileToCloudinaryFull(uploadedArtwork.rawFile, 'client-uploads', 'store-orders');
-      if (uploaded && uploaded.url) {
-        clientArtwork = uploaded.url; // Use real remote URL instead of local Data URL
-      } else {
-        showToast('Artwork upload failed, proceeding with default order details.', 'warning');
+      try {
+        const uploaded = await uploadFileToCloudinaryFull(uploadedArtwork.rawFile, 'client-uploads', 'store-orders');
+        if (!uploaded?.secure_url && !uploaded?.url) throw new Error('Upload not confirmed');
+        clientArtwork = uploaded.secure_url || uploaded.url;
+      } catch (error) {
+        console.error('[StoreOrderModal] Artwork upload failed', error);
+        showToast('Artwork upload failed. Please retry before placing your order.', 'error');
+        setIsSubmitting(false);
+        return;
       }
     }
 

@@ -3,6 +3,7 @@
 import React from 'react';
 import { useNavigate } from '../../utils/navigation';
 import { useAppState } from '../../context/StateContext';
+import { getServiceStartingPrice, formatUSD } from '../../utils/livePricing';
 import { 
   Layers, 
   Tag, 
@@ -16,7 +17,7 @@ import {
 
 export const StructuredServicesSection = () => {
   const navigate = useNavigate();
-  const { protectedNavigate, openOrderWizard, serviceCmsContent = {} } = useAppState();
+  const { protectedNavigate, openOrderWizard, serviceCmsContent = {}, dynamicPricingTiers = [] } = useAppState();
 
   const embHero = serviceCmsContent?.embroidery?.hero || {};
   const vecHero = serviceCmsContent?.vector?.hero || {};
@@ -91,7 +92,7 @@ export const StructuredServicesSection = () => {
                     SECTION 1 — DIGITAL FILES
                   </span>
                   <div style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--orange-600)', marginTop: '0.2rem' }}>
-                    {embHero.badge || 'STARTS $10.00 FLAT'}
+                    {getServiceStartingPrice(dynamicPricingTiers, 'embroidery') === null ? 'Pricing unavailable' : 'FROM ' + formatUSD(getServiceStartingPrice(dynamicPricingTiers, 'embroidery'))}
                   </div>
                 </div>
               </div>

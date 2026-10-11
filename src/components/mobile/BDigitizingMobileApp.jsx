@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
+import { getServiceStartingPrice, formatUSD } from '../../utils/livePricing';
 import { useAppState, formatOrderId } from '../../context/StateContext';
 import { useNavigate } from '../../utils/navigation';
 import { isModalBackConsumed } from '../../utils/modalHistoryManager';
@@ -121,7 +122,7 @@ export const BDigitizingMobileApp = ({ initialTab = 'home' }) => {
     setMobileMode,
     mobileActiveTab: _mobileActiveTab,
     setMobileTab: setGlobalMobileTab,
-    dynamicPricingTiers: _dynamicPricingTiers = [],
+    dynamicPricingTiers = [],
     notifications: globalNotifications = [],
     markNotificationAsRead: markGlobalNotificationAsRead,
     markAllNotificationsAsRead: markAllGlobalNotificationsAsRead,
@@ -867,6 +868,11 @@ export const BDigitizingMobileApp = ({ initialTab = 'home' }) => {
     }
   };
 
+  const mobileStartingPrice = (service) => {
+    const price = getServiceStartingPrice(dynamicPricingTiers, service);
+    return price === null ? 'Pricing unavailable' : 'From ' + formatUSD(price) + (service === 'patch' ? ' / pc' : '');
+  };
+
   // Search filter across categories
   const allServicesData = [
     {
@@ -874,7 +880,7 @@ export const BDigitizingMobileApp = ({ initialTab = 'home' }) => {
       category: 'embroidery',
       title: 'Embroidery Digitizing',
       subtitle: 'Left Chest, Cap Front, 3D Puff, Jacket Back & Applique',
-      startingPrice: 'From $10.00',
+      startingPrice: mobileStartingPrice('embroidery'),
       eta: '4–12 Hours',
       icon: Layers,
       color: '#059669',
@@ -885,7 +891,7 @@ export const BDigitizingMobileApp = ({ initialTab = 'home' }) => {
       category: 'vector',
       title: 'Vector Art Tracing',
       subtitle: 'Logo Redraw, Screen Print Color Separation, Raster to Vector',
-      startingPrice: 'From $15.00',
+      startingPrice: mobileStartingPrice('vector'),
       eta: '6–12 Hours',
       icon: PenTool,
       color: 'var(--color-primary)',
@@ -895,8 +901,8 @@ export const BDigitizingMobileApp = ({ initialTab = 'home' }) => {
       id: 'patch',
       category: 'patches',
       title: 'Custom Physical Patches',
-      subtitle: 'Sample Batch $3.50/pc (50+ Pcs) • Production Batch $4.50/pc',
-      startingPrice: 'Starts $3.50 / pc',
+      subtitle: 'Choose your patch package and quantity (minimum 50 pieces)',
+      startingPrice: mobileStartingPrice('patch'),
       eta: '3–7 Days',
       icon: Package,
       color: '#0284c7',
@@ -907,7 +913,7 @@ export const BDigitizingMobileApp = ({ initialTab = 'home' }) => {
       category: 'embroidery',
       title: '3D Puff Foam Digitizing',
       subtitle: 'High density stitch pathing calibrated for raised foam caps & beanies',
-      startingPrice: 'From $35.00',
+      startingPrice: 'View Embroidery Packages',
       eta: '8–12 Hours',
       icon: Zap,
       color: '#d97706',
@@ -918,7 +924,7 @@ export const BDigitizingMobileApp = ({ initialTab = 'home' }) => {
       category: 'vector',
       title: 'Pantone Spot Color Separation',
       subtitle: 'Print-ready vector layers for silk screen printing & direct-to-garment',
-      startingPrice: 'From $25.00',
+      startingPrice: 'View Vector Packages',
       eta: '6–12 Hours',
       icon: Sparkles,
       color: '#7c3aed',
@@ -1952,7 +1958,7 @@ export const BDigitizingMobileApp = ({ initialTab = 'home' }) => {
                     Embroidery Digitizing
                   </div>
                   <span style={{ fontSize: '0.8rem', color: isDark ? '#34d399' : '#047857', fontWeight: 900, display: 'block', marginTop: '0.3rem' }}>
-                    From $10.00
+                    {mobileStartingPrice('embroidery')}
                   </span>
                 </div>
               </div>
@@ -1987,7 +1993,7 @@ export const BDigitizingMobileApp = ({ initialTab = 'home' }) => {
                     Vector Art Tracing
                   </div>
                   <span style={{ fontSize: '0.8rem', color: isDark ? '#fb923c' : '#ea580c', fontWeight: 900, display: 'block', marginTop: '0.3rem' }}>
-                    From $15.00
+                    {mobileStartingPrice('vector')}
                   </span>
                 </div>
               </div>
@@ -2022,7 +2028,7 @@ export const BDigitizingMobileApp = ({ initialTab = 'home' }) => {
                     Custom Patches
                   </div>
                   <span style={{ fontSize: '0.8rem', color: isDark ? '#38bdf8' : '#0284c7', fontWeight: 900, display: 'block', marginTop: '0.3rem' }}>
-                    Starts $3.50 / pc
+                    {mobileStartingPrice('patch')}
                   </span>
                   <span style={{ fontSize: '0.68rem', color: isDark ? '#94a3b8' : '#64748b', fontWeight: 700, display: 'block', marginTop: '0.1rem' }}>
                     50 Pcs Minimum

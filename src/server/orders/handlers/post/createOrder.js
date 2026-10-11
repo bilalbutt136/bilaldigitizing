@@ -1,9 +1,48 @@
 import { NextResponse, after } from 'next/server';
 import { logServerCaughtError } from '../../../../lib/observability/apiObservability.js';
+import { calculatePackageQuote } from '../../../../utils/livePricing.js';
 
 export async function handleCreateOrder(context) {
   const { payload, supabase, user, isAdmin } = context;
       const { primaryDbRow, orderFiles } = payload;
+      // Verify selected-package orders against the authoritative live database.
+      if (primaryDbRow?.source === 'direct_order_desk' || primaryDbRow?.package_id) {
+        if (!primaryDbRow?.package_id || !['embroidery', 'vector', 'patch'].includes(primaryDbRow.type)) {
+          return NextResponse.json({ error: 'Select a valid package before ordering.' }, { status: 400 });
+        }
+        const { data: liveTier, error: tierError } = await supabase
+          .from('pricing_tiers')
+          .select('id,service_type,title,price,is_active')
+          .eq('id', primaryDbRow.package_id)
+          .maybeSingle();
+        if (tierError) {
+          console.error('[Order pricing verification]', tierError.message);
+          return NextResponse.json({ error: 'Could not verify current package pricing.' }, { status: 503 });
+        }
+        if (!liveTier || liveTier.is_active === false) {
+          return NextResponse.json({ error: 'Package no longer available. Refresh pricing and try again.' }, { status: 409 });
+        }
+        const quote = calculatePackageQuote({
+          tier: liveTier,
+          service: primaryDbRow.type,
+          quantity: primaryDbRow.quantity,
+          isRush: primaryDbRow.isRush === true
+        });
+        const matchesMoney = (value, expected) => value !== null && value !== undefined && value !== '' &&
+          Number.isFinite(Number(value)) && Math.abs(Number(value) - expected) < 0.005;
+        if (!quote || !matchesMoney(primaryDbRow.price, quote.total) ||
+          !matchesMoney(primaryDbRow.base_price, quote.subtotal) ||
+          !matchesMoney(primaryDbRow.unit_price, quote.unitPrice) ||
+          !matchesMoney(primaryDbRow.rush_fee, quote.rush)) {
+          return NextResponse.json({ error: 'The price changed or this quote is invalid. Refresh and try again.' }, { status: 409 });
+        }
+        if (['paid','completed','wallet'].includes(String(primaryDbRow.payment_status || primaryDbRow.paymentStatus || '').toLowerCase())) {
+          return NextResponse.json({ error: 'Direct orders require verified checkout before payment can be marked complete.' }, { status: 400 });
+        }
+        primaryDbRow.price = quote.total;
+        primaryDbRow.base_price = quote.subtotal;
+        primaryDbRow.package_name = liveTier.title;
+      }
       const clientEmail = (user?.email || primaryDbRow.clientEmail || primaryDbRow.email || '').toLowerCase().trim();
 
       if (!clientEmail) {

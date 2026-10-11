@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { Layers, PenTool, Tag, ArrowRight, CheckCircle, Sparkles, Clock, ShieldCheck, Zap } from 'lucide-react';
 import { useAppState } from '../../src/context/StateContext';
-import { matchCategory } from '../../src/utils/categoryUtils';
+import { getAvailableTiers } from '../../src/utils/livePricing';
 
 const DEFAULT_ALL_PACKAGES = {
   embroidery: [
@@ -266,9 +266,10 @@ export default function PricingPage() {
   const { openOrderWizard, dynamicPricingTiers = [] } = useAppState();
   const [activeTab, setActiveTab] = useState('all'); // 'all' | 'embroidery' | 'vector_art' | 'patches'
 
-  const handleOrder = (serviceType, title, price) => {
+  const handleOrder = (serviceType, title, price, packageId) => {
     if (openOrderWizard) {
       openOrderWizard({
+        package_id: packageId || null,
         tierKey: 'standard',
         type: serviceType,
         category: serviceType,
@@ -279,17 +280,17 @@ export default function PricingPage() {
   };
 
   const getCategoryCount = (categoryKey) => {
-    const dbTiers = dynamicPricingTiers.filter(t => matchCategory(t.service_type, categoryKey));
-    return dbTiers.length > 0 ? dbTiers.length : (DEFAULT_ALL_PACKAGES[categoryKey] || []).length;
+    const dbTiers = getAvailableTiers(dynamicPricingTiers, categoryKey);
+    return dbTiers.length;
   };
 
-  // Helper to build packages list dynamically from DB or defaults
+  // Show only verified, currently available packages from the live catalog.
   const getPackages = () => {
     if (activeTab === 'all') {
-      // Core overview: 1 = Orange (Embroidery), 2 = Blue (Vector), 3 = Green (Patches)
-      const dbEmb = dynamicPricingTiers.find(t => matchCategory(t.service_type, 'embroidery'));
-      const dbVec = dynamicPricingTiers.find(t => matchCategory(t.service_type, 'vector_art'));
-      const dbPatch = dynamicPricingTiers.find(t => matchCategory(t.service_type, 'patches'));
+      // Overview of the currently published package catalog.
+      const dbEmb = getAvailableTiers(dynamicPricingTiers, 'embroidery')[0];
+      const dbVec = getAvailableTiers(dynamicPricingTiers, 'vector_art')[0];
+      const dbPatch = getAvailableTiers(dynamicPricingTiers, 'patches')[0];
 
       const coreDefs = [
         { cat: 'embroidery', pkgNum: 1, def: DEFAULT_ALL_PACKAGES.embroidery[0], db: dbEmb },
@@ -297,7 +298,7 @@ export default function PricingPage() {
         { cat: 'patches', pkgNum: 3, def: DEFAULT_ALL_PACKAGES.patches[2], db: dbPatch }
       ];
 
-      return coreDefs.map(({ cat, pkgNum, def, db }) => {
+      return coreDefs.filter(({ db }) => Boolean(db)).map(({ cat, pkgNum, def, db }) => {
         const theme = getPackageTierTheme(pkgNum, cat);
         const data = db || def;
         return {
@@ -322,11 +323,9 @@ export default function PricingPage() {
     }
 
     // Specific category selected: render ALL dynamic packages in DB or defaults
-    const dbTiers = dynamicPricingTiers
-      .filter(t => matchCategory(t.service_type, activeTab))
-      .sort((a, b) => (a.display_order || 0) - (b.display_order || 0));
+    const dbTiers = getAvailableTiers(dynamicPricingTiers, activeTab);
 
-    const sourcePackages = dbTiers.length > 0 ? dbTiers : (DEFAULT_ALL_PACKAGES[activeTab] || []);
+    const sourcePackages = dbTiers;
 
     return sourcePackages.map((data, idx) => {
       const pkgNum = idx + 1;
@@ -561,7 +560,7 @@ export default function PricingPage() {
                 {/* Bottom Order CTA */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
                   <button 
-                    onClick={() => handleOrder(pkg.serviceType, pkg.title, pkg.price)}
+                    onClick={() => handleOrder(pkg.serviceType, pkg.title, pkg.price, pkg.id)}
                     style={{ 
                       width: '100%', 
                       justifyContent: 'center', 

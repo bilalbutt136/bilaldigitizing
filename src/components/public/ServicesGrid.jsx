@@ -3,6 +3,7 @@
 import React from 'react';
 import { useNavigate } from '../../utils/navigation';
 import { useAppState } from '../../context/StateContext';
+import { getServiceStartingPrice, getAvailableTiers, formatUSD } from '../../utils/livePricing';
 import { 
   Layers, 
   PenTool, 
@@ -16,7 +17,9 @@ import {
 
 export const ServicesGrid = () => {
   const navigate = useNavigate();
-  const { protectedNavigate, openOrderWizard } = useAppState();
+  const { protectedNavigate, openOrderWizard, dynamicPricingTiers = [] } = useAppState();
+  const embroideryTiers = getAvailableTiers(dynamicPricingTiers, 'embroidery');
+  const embroideryFrom = getServiceStartingPrice(dynamicPricingTiers, 'embroidery');
 
   const handleOrderRedirect = (serviceType, route) => {
     if (route) {
@@ -92,7 +95,7 @@ export const ServicesGrid = () => {
                   <Layers size={32} />
                 </div>
                 <span style={{ fontSize: '0.85rem', fontWeight: 800, background: 'var(--color-primary-light)', color: 'var(--color-primary)', border: '1.5px solid var(--color-border)', padding: '0.35rem 0.85rem', borderRadius: '9999px' }}>
-                  Starting $10.00
+                  {embroideryFrom === null ? 'Pricing unavailable' : 'From ' + formatUSD(embroideryFrom)}
                 </span>
               </div>
 
@@ -107,7 +110,7 @@ export const ServicesGrid = () => {
               {/* Pricing Tiers Badge */}
               <div style={{ background: 'var(--color-subtle, var(--bg-subtle))', padding: '0.75rem 1rem', borderRadius: '10px', border: '1px solid var(--color-border)', marginBottom: '1.5rem', fontSize: '0.825rem' }}>
                 <strong style={{ color: 'var(--color-text-primary)', display: 'block', marginBottom: '0.25rem' }}>Pricing Tiers:</strong>
-                <span style={{ color: 'var(--color-text-secondary)' }}>Left Chest ($10) • Cap/Hat ($12) • Jacket Back ($35)</span>
+                <span style={{ color: 'var(--color-text-secondary)' }}>{embroideryTiers.length ? embroideryTiers.map(t => t.title + ' (' + formatUSD(t.price) + ')').join(' • ') : 'No active packages available'}</span>
               </div>
 
               <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 1.5rem 0', display: 'flex', flexDirection: 'column', gap: '0.5rem', fontSize: '0.875rem', color: 'var(--color-text-secondary)' }}>
