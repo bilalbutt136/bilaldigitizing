@@ -52,8 +52,11 @@ test('server recognizes only valid placement labels and enforces same capacity r
 test('order UI auto-promotes without downgrading manually selected premium tiers',()=>{
  const src=fs.readFileSync('src/components/customer/StreamlinedOrderFlow.jsx','utf8');
  assert.match(src,/chooseEmbroideryTier\(currentServiceTiers, minEmbroideryRank, requestedTier\)/);
- assert.match(src,/setSelectedTierId\(activeId\)/);
+ assert.match(src,/setSelectedTierId\(currentTierKey\)/);
  assert.match(src,/disabled=\{!allowed\}/);
  assert.match(src,/Size & Package Mismatch/);
- assert.match(src,/No eligible package for this size/);
+ assert.match(src,/bdigi-package-options/);
+ assert.match(src,/aria-pressed=\{active\}/);
+ assert.match(src,/Too small/);
+ assert.match(src,/Smaller packages are locked/);
 });

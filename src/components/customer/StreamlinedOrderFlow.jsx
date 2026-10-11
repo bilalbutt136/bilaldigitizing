@@ -123,11 +123,11 @@ export const StreamlinedOrderFlow = ({
   const currentTier = selectedService === 'embroidery'
     ? chooseEmbroideryTier(currentServiceTiers, minEmbroideryRank, requestedTier)
     : requestedTier;
+  const currentTierKey = currentTier ? String(currentTier.id || currentTier.title) : '';
   useEffect(() => {
-    if (selectedService !== 'embroidery' || orderMode === 'monthly' || !currentTier) return;
-    const activeId = String(currentTier.id || currentTier.title);
-    if (selectedTierId !== activeId) setSelectedTierId(activeId);
-  }, [selectedService, orderMode, currentTier?.id, currentTier?.title, selectedTierId]);
+    if (selectedService !== 'embroidery' || orderMode === 'monthly' || !currentTierKey) return;
+    if (selectedTierId !== currentTierKey) setSelectedTierId(currentTierKey);
+  }, [selectedService, orderMode, currentTierKey, selectedTierId]);
 
   const [turnaround, setTurnaround] = useState('standard'); // standard (free), rush (+$10)
 
@@ -840,6 +840,136 @@ export const StreamlinedOrderFlow = ({
           color: var(--color-text-primary, #0f172a);
           letter-spacing: -0.01em;
         }
+        /* Sharp, high-contrast package selector. Never depend on the OS's
+           near-invisible disabled <option> rendering. */
+        .bdigi-package-options {
+          display: grid;
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+          gap: .48rem;
+          min-width: 0;
+        }
+        .bdigi-package-option {
+          min-width: 0;
+          min-height: 88px;
+          padding: .58rem .3rem;
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+          align-items: center;
+          gap: .26rem;
+          background: #ffffff;
+          border: 2px solid #b8c8e5;
+          border-radius: 13px;
+          color: #0f172a;
+          font-family: inherit;
+          line-height: 1.24;
+          text-align: center;
+          cursor: pointer;
+          transition: border-color .17s, background .17s, box-shadow .17s;
+        }
+        .bdigi-package-option:hover:not(:disabled):not([aria-pressed="true"]) {
+          border-color: #1d4ed8;
+          background: #eff6ff;
+        }
+        .bdigi-package-option[aria-pressed="true"] {
+          background: var(--color-action-bg, linear-gradient(120deg, #1d4ed8, #4338ca));
+          border-color: #1d4ed8;
+          box-shadow: 0 7px 18px rgba(29, 78, 216, .26);
+          color: #ffffff;
+        }
+        .bdigi-package-option:disabled {
+          background: #fff1f2;
+          color: #881337;
+          border-color: #fda4af;
+          opacity: 1;
+          cursor: not-allowed;
+          box-shadow: none;
+        }
+        .bdigi-package-name {
+          font-size: .74rem;
+          font-weight: 900;
+          letter-spacing: .015em;
+          line-height: 1.3;
+          overflow-wrap: anywhere;
+        }
+        .bdigi-package-price {
+          font-size: 1.12rem;
+          font-weight: 950;
+          letter-spacing: -.03em;
+          font-variant-numeric: tabular-nums;
+        }
+        .bdigi-package-status {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: .22rem;
+          font-size: .71rem;
+          font-weight: 850;
+          line-height: 1.2;
+        }
+        .bdigi-package-notice {
+          display: flex;
+          align-items: center;
+          gap: .48rem;
+          padding: .54rem .65rem;
+          margin-top: .55rem;
+          border: 1px solid #93c5fd;
+          border-radius: 10px;
+          background: #eff6ff;
+          color: #1e40af;
+          font-size: .81rem;
+          font-weight: 800;
+          line-height: 1.35;
+        }
+        .bdigi-package-notice svg { flex: none; }
+        .bdigi-package-notice.is-warning {
+          background: #fff1f2;
+          color: #9f1239;
+          border-color: #fda4af;
+        }
+        [data-theme="dark"] .bdigi-package-option {
+          background: #14243d;
+          border-color: #506588;
+          color: #f8fafc;
+        }
+        [data-theme="dark"] .bdigi-package-option:hover:not(:disabled):not([aria-pressed="true"]) {
+          background: #1c365d;
+          border-color: #93c5fd;
+        }
+        [data-theme="dark"] .bdigi-package-option[aria-pressed="true"] {
+          background: var(--color-action-bg, linear-gradient(120deg, #1d4ed8, #4338ca));
+          color: #ffffff;
+          border-color: #93c5fd;
+        }
+        [data-theme="dark"] .bdigi-package-option:disabled {
+          background: #3e1d31;
+          border-color: #fda4af;
+          color: #ffe4e6;
+        }
+        [data-theme="dark"] .bdigi-package-notice {
+          color: #dbeafe;
+          background: #132d53;
+          border-color: #60a5fa;
+        }
+        [data-theme="dark"] .bdigi-package-notice.is-warning {
+          background: #43182e;
+          border-color: #fb7185;
+          color: #ffe4e6;
+        }
+        .bdigi-package-option:focus-visible,
+        .bdigi-select:focus-visible {
+          outline: 3px solid #2563eb;
+          outline-offset: 3px;
+        }
+        .bdigi-select option { color: #0f172a; background: #ffffff; }
+        [data-theme="dark"] .bdigi-select option { color: #ffffff; background: #15243d; }
+        @media (max-width: 520px) {
+          .bdigi-package-options { gap: .34rem; }
+          .bdigi-package-option { min-height: 79px; padding: .42rem .15rem; }
+          .bdigi-package-name { font-size: .68rem; }
+          .bdigi-package-price { font-size: 1rem; }
+          .bdigi-package-status { font-size: .66rem; }
+        }
         .bdigi-select-wrapper {
           position: relative;
           width: 100%;
@@ -913,8 +1043,8 @@ export const StreamlinedOrderFlow = ({
         .bdigi-summary-card {
           position: sticky;
           top: 1.5rem;
-          background: ${isDark ? '#1e293b' : '#f8fafc'};
-          border: 1.5px solid var(--color-border, #e2e8f0);
+          background: ${isDark ? '#101d32' : '#ffffff'};
+          border: 1.5px solid ${isDark ? '#45628d' : '#c4d5ee'};
           border-radius: 18px;
           padding: 1.4rem;
           box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
@@ -1031,37 +1161,43 @@ export const StreamlinedOrderFlow = ({
               {/* 1. EMBROIDERY OPTIONS */}
               {selectedService === 'embroidery' && (
                 <div>
-                  {/* Package Tier Dropdown: larger designs require suitable package capacity */}
-                  <div className="bdigi-form-row">
-                    <label className="bdigi-label">Package</label>
+                  {/* Always-visible, high-contrast tier choices. Native disabled select
+                      options are unreadable on some browsers and OS themes. */}
+                  <div className="bdigi-form-row bdigi-embroidery-package-row">
+                    <span className="bdigi-label" id="bdigi-embroidery-package-label">Package</span>
                     <div>
-                      <div className="bdigi-select-wrapper">
-                        <select
-                          aria-label="Embroidery package"
-                          value={currentTier?.id || currentTier?.title || ''}
-                          onChange={(e) => setSelectedTierId(e.target.value)}
-                          className="bdigi-select"
-                        >
-                          {!currentTier && <option value="">No eligible package for this size</option>}
-                          {currentServiceTiers.map(tier => {
-                            const val = String(tier.id || tier.title);
-                            const allowed = eligibleEmbroidery.some(item => String(item.id || item.title) === val);
-                            return (
-                              <option key={val} value={val} disabled={!allowed}>
-                                {tier.title} — ${Number(tier.price).toFixed(2)}{!allowed ? ' (size too large)' : ''}
-                              </option>
-                            );
-                          })}
-                        </select>
-                        <div className="bdigi-select-arrow"><ChevronDown size={17} /></div>
+                      <div className="bdigi-package-options" role="group" aria-labelledby="bdigi-embroidery-package-label">
+                        {currentServiceTiers.map((tier, index) => {
+                          const val = String(tier.id || tier.title);
+                          const allowed = eligibleEmbroidery.some(item => String(item.id || item.title) === val);
+                          const active = allowed && String(currentTier?.id || currentTier?.title) === val;
+                          return (
+                            <button
+                              key={val}
+                              type="button"
+                              className="bdigi-package-option"
+                              aria-pressed={active}
+                              aria-label={tier.title + ', ' + formatUSD(tier.price) + (allowed ? (active ? ', selected' : ', available') : ', unavailable for chosen size')}
+                              disabled={!allowed}
+                              onClick={() => setSelectedTierId(val)}
+                            >
+                              <span className="bdigi-package-name">{tier.badge_text || tier.title}</span>
+                              <span className="bdigi-package-price">{formatUSD(tier.price)}</span>
+                              <span className="bdigi-package-status">
+                                {!allowed ? <><Lock size={12} aria-hidden="true" /> Too small</> : active ? <><Check size={12} aria-hidden="true" /> Selected</> : 'Choose'}
+                              </span>
+                            </button>
+                          );
+                        })}
                       </div>
                       {minEmbroideryRank === null ? (
-                        <div role="alert" style={{ fontSize: '0.76rem', color: 'var(--color-text-secondary)', marginTop: '0.35rem' }}>
-                          Enter dimensions up to 12″. Larger sizes require a custom quote.
+                        <div className="bdigi-package-notice is-warning" role="alert">
+                          <AlertCircle size={16} aria-hidden="true" /> Enter valid custom dimensions up to 12″; larger sizes need a custom quote.
                         </div>
                       ) : minEmbroideryRank > 1 ? (
-                        <div role="status" style={{ fontSize: '0.76rem', color: 'var(--color-text-secondary)', marginTop: '0.35rem' }}>
-                          {minEmbroideryRank === 2 ? '7″ size: Medium package or higher.' : '12″ size: Full Back package or higher.'} Smaller packages are unavailable.
+                        <div className="bdigi-package-notice" role="status">
+                          <ShieldCheck size={16} aria-hidden="true" />
+                          {minEmbroideryRank === 2 ? '7″ needs Standard or Premium.' : '12″ needs Premium.'} Smaller packages are locked.
                         </div>
                       ) : null}
                     </div>
@@ -1594,13 +1730,13 @@ export const StreamlinedOrderFlow = ({
                       border: isUploadHighlighted
                         ? '2px solid #ef4444'
                         : isDragOver
-                          ? '2px dashed #ea580c'
+                          ? '2px dashed #2563eb'
                           : '1.5px dashed var(--color-border, #cbd5e1)',
                       borderRadius: '10px',
                       background: isUploadHighlighted
                         ? (isDark ? 'rgba(239, 68, 68, 0.15)' : '#fef2f2')
                         : isDragOver
-                          ? (isDark ? 'rgba(37, 99, 235, 0.12)' : '#fff7ed')
+                          ? (isDark ? 'rgba(37, 99, 235, 0.12)' : '#eff6ff')
                           : (isDark ? '#1e293b' : '#f8fafc'),
                       boxShadow: isUploadHighlighted
                         ? '0 0 0 4px rgba(239, 68, 68, 0.22), 0 4px 14px rgba(239, 68, 68, 0.16)'
@@ -1630,8 +1766,8 @@ export const StreamlinedOrderFlow = ({
                           width: '36px',
                           height: '36px',
                           borderRadius: '8px',
-                          background: isUploadHighlighted ? '#fee2e2' : selectedService === 'patch' ? '#f0f9ff' : '#fff7ed',
-                          color: isUploadHighlighted ? '#dc2626' : selectedService === 'patch' ? '#0284c7' : '#ea580c',
+                          background: isUploadHighlighted ? '#fee2e2' : '#eff6ff',
+                          color: isUploadHighlighted ? '#dc2626' : '#1d4ed8',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
@@ -1662,9 +1798,9 @@ export const StreamlinedOrderFlow = ({
                       style={{
                         fontSize: '0.78rem',
                         fontWeight: 800,
-                        color: isUploadHighlighted ? '#dc2626' : selectedService === 'patch' ? '#0284c7' : '#ea580c',
-                        background: isUploadHighlighted ? '#fee2e2' : selectedService === 'patch' ? '#f0f9ff' : '#fff7ed',
-                        border: isUploadHighlighted ? '1px solid #fca5a5' : selectedService === 'patch' ? '1px solid #bae6fd' : '1px solid #fed7aa',
+                        color: isUploadHighlighted ? '#dc2626' : '#1d4ed8',
+                        background: isUploadHighlighted ? '#fee2e2' : '#eff6ff',
+                        border: isUploadHighlighted ? '1px solid #fca5a5' : '1px solid #93c5fd',
                         padding: '0.3rem 0.75rem',
                         borderRadius: '6px',
                         whiteSpace: 'nowrap'
@@ -1884,7 +2020,7 @@ export const StreamlinedOrderFlow = ({
                     <span style={{ fontSize: '0.94rem', fontWeight: 800, color: 'var(--color-text-primary, #0f172a)' }}>
                       Total Due:
                     </span>
-                    <span style={{ fontSize: '1.75rem', fontWeight: 900, color: selectedService === 'patch' ? '#0284c7' : '#ea580c', lineHeight: 1 }}>
+                    <span style={{ fontSize: '1.75rem', fontWeight: 900, color: 'var(--color-primary, #1d4ed8)', lineHeight: 1 }}>
                       {hasValidLivePrice ? formatUSD(pricing.total) : 'Pricing unavailable'}
                     </span>
                   </div>
@@ -1901,11 +2037,7 @@ export const StreamlinedOrderFlow = ({
                     padding: '0 1.25rem',
                     borderRadius: '12px',
                     border: 'none',
-                    background: selectedService === 'patch'
-                      ? 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)'
-                      : selectedService === 'vector'
-                        ? 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)'
-                        : 'linear-gradient(135deg, #2563eb 0%, #1e40af 100%)',
+                    background: 'var(--color-action-bg, linear-gradient(120deg, #1d4ed8, #4338ca))',
                     color: '#ffffff',
                     fontSize: '0.96rem',
                     fontWeight: 900,
@@ -1914,7 +2046,7 @@ export const StreamlinedOrderFlow = ({
                     alignItems: 'center',
                     justifyContent: 'center',
                     gap: '0.45rem',
-                    boxShadow: '0 4px 16px rgba(37, 99, 235, 0.25)',
+                    boxShadow: '0 7px 21px rgba(29, 78, 216, 0.28)',
                     transition: 'all 0.18s ease'
                   }}
                 >
