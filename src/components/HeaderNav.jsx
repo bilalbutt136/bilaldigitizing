@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useNavigate, useLocation } from '../utils/navigation';
 import { useAppState } from '../context/StateContext';
+import { MOBILE_WHITE_BRAND_MARK_URL } from '../lib/branding/whiteBrandMark';
 import {
   Home,
   Scissors as _Scissors,
@@ -344,12 +345,15 @@ export const HeaderNav = () => {
             flexShrink: 0,
             boxSizing: 'border-box'
           }}>
-            <img
-              src={siteSettings?.headerLogoUrl || siteSettings?.logoUrl || '/logo.png'}
-              alt="BDigitizing Logo"
-              className="site-header-logo-image"
-              style={{ height: '38px', width: 'auto', maxWidth: '170px', objectFit: 'contain', display: 'block' }}
-            />
+            <picture className="site-header-brand-picture">
+              <source media="(max-width: 768px)" srcSet={MOBILE_WHITE_BRAND_MARK_URL} />
+              <img
+                src={siteSettings?.headerLogoUrl || siteSettings?.logoUrl || '/logo.png'}
+                alt="BDigitizing Logo"
+                className="site-header-logo-image"
+                style={{ height: '38px', width: 'auto', maxWidth: '170px', objectFit: 'contain', display: 'block' }}
+              />
+            </picture>
           </div>
           <div className="site-header-brand-text">
             <div style={{ fontFamily: 'var(--font-heading)', fontWeight: 800, fontSize: '1.15rem', color: 'var(--text-main)', letterSpacing: '-0.02em', lineHeight: 1, whiteSpace: 'nowrap' }}>

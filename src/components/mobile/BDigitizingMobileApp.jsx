@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { getServiceStartingPrice, formatUSD } from '../../utils/livePricing';
 import { useAppState, formatOrderId } from '../../context/StateContext';
+import { MOBILE_WHITE_BRAND_MARK_URL } from '../../lib/branding/whiteBrandMark';
 import { useNavigate } from '../../utils/navigation';
 import { isModalBackConsumed } from '../../utils/modalHistoryManager';
 import { useModalBackNavigation } from '../../hooks/useModalBackNavigation';
@@ -1054,7 +1055,7 @@ export const BDigitizingMobileApp = ({ initialTab = 'home' }) => {
             </button>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
-              <img src={mobileAppIconUrl} alt="BDigitizing" style={{ width: '24px', height: '24px', objectFit: 'contain', borderRadius: '6px', background: '#ffffff' }} />
+              <img src={MOBILE_WHITE_BRAND_MARK_URL} alt="BDigitizing" style={{ width: '24px', height: '24px', objectFit: 'contain', borderRadius: '6px', background: '#ffffff' }} />
               <div style={{ fontSize: '1.15rem', fontWeight: 900, color: '#047857', letterSpacing: '-0.02em' }}>
                 BDigitizing
               </div>
@@ -1641,7 +1642,7 @@ export const BDigitizingMobileApp = ({ initialTab = 'home' }) => {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: isDark ? 'var(--color-surface, #111827)' : '#ffffff', padding: '0.75rem 1rem', borderRadius: '16px', border: isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid #cbd5e1', boxShadow: '0 2px 8px rgba(0,0,0,0.02)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', minWidth: 0, flex: 1 }}>
               <img
-                src={mobileAppIconUrl}
+                src={MOBILE_WHITE_BRAND_MARK_URL}
                 alt="BDigitizing"
                 style={{
                   width: '30px',

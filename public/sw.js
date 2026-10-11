@@ -1,5 +1,5 @@
 // BDigitizing Studio PWA Service Worker with Native Push & Lock-Screen Alerts
-const CACHE_VERSION = 'bdigi-pwa-v4.4';
+const CACHE_VERSION = 'bdigi-pwa-v4.5';
 const STATIC_ASSETS = [
   '/artwork-placeholder.svg',
   '/service-preview-placeholder.svg',
@@ -94,6 +94,10 @@ self.addEventListener('fetch', (event) => {
   // Branding assets and the dynamic manifest update immediately, with cached fallback only when offline.
   if (
     requestUrl.pathname === '/manifest.webmanifest' ||
+    requestUrl.pathname === '/logo.png' ||
+    requestUrl.pathname === '/logo-icon.png' ||
+    requestUrl.pathname === '/logo-small.png' ||
+    requestUrl.pathname === '/pwa-icon-source.png' ||
     requestUrl.pathname.includes('favicon') ||
     requestUrl.pathname.includes('apple-touch-icon') ||
     requestUrl.pathname.includes('icon-')
