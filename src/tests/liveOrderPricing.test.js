@@ -41,8 +41,8 @@ test('direct order flow and server enforce canonical pricing rather than browser
   const mobile = fs.readFileSync('src/components/mobile/BDigitizingMobileApp.jsx', 'utf8');
   assert.match(flow, /getServiceStartingPrice\(dynamicPricingTiers, 'embroidery'\)/);
   assert.doesNotMatch(flow, />\$10\.00<\/span>/);
-  assert.match(flow, /source: 'direct_order_desk'/);
-  assert.match(flow, /package_id: currentTier.id/);
+  assert.match(flow, /source: isMonthlyMode \? 'monthly_design_bundle' : 'direct_order_desk'/);
+  assert.match(flow, /package_id: isMonthlyMode \? null : currentTier.id/);
   assert.match(flow, /disabled=\{isSubmitting \|\| isUploading \|\| !hasValidLivePrice\}/);
   assert.doesNotMatch(flow, /URL\.createObjectURL\(file\)/);
   assert.match(server, /\.from\('pricing_tiers'\)/);

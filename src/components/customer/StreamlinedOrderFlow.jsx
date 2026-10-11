@@ -3,6 +3,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useAppState } from '../../context/StateContext';
 import { getAvailableTiers, getServiceStartingPrice, calculatePackageQuote, formatUSD } from '../../utils/livePricing';
+import { MONTHLY_DESIGN_LIMITS, findPublishedMonthlyBundle } from '../../utils/monthlyBundles';
 import {
   Upload,
   Check,
@@ -47,6 +48,24 @@ export const StreamlinedOrderFlow = ({
 
   const isDark = theme === 'dark';
   const incomingPackage = initialPackage || _initialPackage;
+  const [orderMode, setOrderMode] = useState('regular');
+  const [monthlyCount, setMonthlyCount] = useState(10);
+  const [monthlyPlans, setMonthlyPlans] = useState([]);
+  const [monthlyLoading, setMonthlyLoading] = useState(true);
+  const [monthlyError, setMonthlyError] = useState('');
+  useEffect(() => {
+    let live = true;
+    fetch('/api/monthly-bundles', { cache: 'no-store' })
+      .then(async response => {
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || 'Monthly plans unavailable');
+        return data.plans || [];
+      })
+      .then(data => { if (live) setMonthlyPlans(data); })
+      .catch(error => { if (live) setMonthlyError(error.message); })
+      .finally(() => { if (live) setMonthlyLoading(false); });
+    return () => { live = false; };
+  }, []);
 
   // Has the customer chosen a service yet?
   // When starting the order from general entry points, show the 3 services selection screen first!
@@ -134,6 +153,7 @@ export const StreamlinedOrderFlow = ({
 
   // Helper to select service and proceed to order customization
   const handleSelectService = (serviceKey) => {
+    setOrderMode('regular');
     setSelectedService(serviceKey);
     setSelectedTierId('');
     setHasSelectedService(true);
@@ -149,6 +169,8 @@ export const StreamlinedOrderFlow = ({
         if (typeof draft.hasSelectedService === 'boolean') setHasSelectedService(draft.hasSelectedService);
         if (draft.selectedService) setSelectedService(draft.selectedService);
         if (draft.selectedTierId) setSelectedTierId(draft.selectedTierId);
+        if (draft.orderMode === 'monthly' && ['embroidery','vector'].includes(draft.selectedService)) setOrderMode('monthly');
+        if (MONTHLY_DESIGN_LIMITS.includes(Number(draft.monthlyCount))) setMonthlyCount(Number(draft.monthlyCount));
         if (draft.designQuantity) setDesignQuantity(Math.max(1, Number(draft.designQuantity) || 1));
         if (draft.patchQuantity) setPatchQuantity(Math.max(50, Number(draft.patchQuantity) || 50));
         if (draft.turnaround) setTurnaround(draft.turnaround);
@@ -181,6 +203,8 @@ export const StreamlinedOrderFlow = ({
         hasSelectedService,
         selectedService,
         selectedTierId: currentTier?.id || currentTier?.title,
+        orderMode,
+        monthlyCount,
         designQuantity,
         patchQuantity: Math.max(50, Number(patchQuantity) || 50),
         turnaround,
@@ -212,8 +236,15 @@ export const StreamlinedOrderFlow = ({
       : selectedService === 'vector' ? vectorTurnaround === 'rush' : turnaround === 'rush';
     return calculatePackageQuote({ tier: currentTier, service: selectedService, quantity, isRush });
   };
-  const pricing = calculatePricing() || { unitPrice: 0, subtotal: 0, rush: 0, total: 0, quantity: 0, patchPieces: 0, tierTitle: '' };
-  const hasValidLivePrice = Boolean(currentTier?.id && pricing.total > 0);
+  const isMonthlyMode = orderMode === 'monthly' && selectedService !== 'patch';
+  const monthlyPlan = isMonthlyMode ? findPublishedMonthlyBundle({ plans: monthlyPlans }, selectedService, monthlyCount) : null;
+  const monthlyQuote = monthlyPlan ? {
+    unitPrice: monthlyPlan.price, subtotal: monthlyPlan.price, rush: 0,
+    total: monthlyPlan.price, quantity: monthlyPlan.designs,
+    tierTitle: monthlyPlan.title, patchPieces: 0
+  } : null;
+  const pricing = (isMonthlyMode ? monthlyQuote : calculatePricing()) || { unitPrice: 0, subtotal: 0, rush: 0, total: 0, quantity: 0, patchPieces: 0, tierTitle: '' };
+  const hasValidLivePrice = isMonthlyMode ? Boolean(monthlyQuote) : Boolean(currentTier?.id && pricing.total > 0);
   // Helper Labels for Summary
   const getPatchDimensions = () => {
     const width = Number(patchSizeOption === 'custom' ? patchCustomWidth : patchSizeOption);
@@ -351,8 +382,9 @@ export const StreamlinedOrderFlow = ({
       setValidationAlert({ title: 'Pricing Unavailable', message: 'Choose a currently published package before ordering.', actionText: 'Review Packages', onAction: () => {} });
       return;
     }
-    // 1. Validate required design file upload
-    if (uploadedFiles.length === 0) {
+    // Monthly prepaid bundles can receive artwork over the 30-day period.
+    // Single orders still require artwork before checkout.
+    if (!isMonthlyMode && uploadedFiles.length === 0) {
       const errorMsg = selectedService === 'patch'
         ? 'Please choose or upload your patch artwork or logo before continuing.'
         : 'Please choose or upload your design file before continuing.';
@@ -391,7 +423,7 @@ export const StreamlinedOrderFlow = ({
     }
 
     // 2. Validate custom dimensions if custom size is selected
-    if (selectedService === 'embroidery' && sizeOption === 'custom') {
+    if (!isMonthlyMode && selectedService === 'embroidery' && sizeOption === 'custom') {
       const numW = parseFloat(customWidth);
       const numH = parseFloat(customHeight);
       if (!customWidth || !customHeight || isNaN(numW) || isNaN(numH) || numW <= 0 || numH <= 0) {
@@ -463,13 +495,13 @@ export const StreamlinedOrderFlow = ({
           ? 'Vector Art'
           : 'Embroidery Digitizing';
 
-      const orderPackageName = currentTier?.title || 'Standard';
-      let derivedTitle = `${firstFileName} - ${orderPackageName}`;
+      const orderPackageName = isMonthlyMode ? monthlyPlan.title : (currentTier?.title || 'Standard');
+      let derivedTitle = isMonthlyMode ? `${cleanService} • ${monthlyCount} Design Monthly Bundle` : `${firstFileName} - ${orderPackageName}`;
       let isRush = false;
       let targetFormats = ['DST', 'PES', 'EMB', 'PDF'];
-      let derivedSize = 'Left Chest (Up to 4")';
+      let derivedSize = isMonthlyMode ? '30-day prepaid design bundle; submit artwork via order conversation' : 'Left Chest (Up to 4")';
 
-      if (selectedService === 'embroidery') {
+      if (!isMonthlyMode && selectedService === 'embroidery') {
         isRush = turnaround === 'rush';
         if (sizeOption === 'custom') {
           derivedSize = `${customWidth}" × ${customHeight}" (Custom)`;
@@ -495,21 +527,24 @@ export const StreamlinedOrderFlow = ({
         isRush = false;
         derivedSize = `${getPatchSizeLabel()} ${patchStyle} (${patchBacking})`;
         targetFormats = ['DST', 'PDF Proof Sheet', 'Physical Courier Delivery'];
-      } else if (selectedService === 'vector') {
+      } else if (!isMonthlyMode && selectedService === 'vector') {
         isRush = vectorTurnaround === 'rush';
         derivedSize = 'Scalable Vector';
         targetFormats = vectorFormat === 'ai' ? ['AI'] : vectorFormat === 'svg' ? ['SVG'] : ['AI', 'EPS', 'SVG', 'PDF', 'PNG'];
       }
 
-      const primaryArtworkUrl = uploadedFiles[0]?.url || null;
-      if (!primaryArtworkUrl || primaryArtworkUrl.startsWith('blob:')) throw new Error('Artwork upload is incomplete. Please upload your design again.');
+      const primaryArtworkUrl = isMonthlyMode ? null : (uploadedFiles[0]?.url || null);
+      if (!isMonthlyMode && (!primaryArtworkUrl || primaryArtworkUrl.startsWith('blob:'))) throw new Error('Artwork upload is incomplete. Please upload your design again.');
 
       const orderPayload = {
         title: derivedTitle,
         type: selectedService,
         serviceCategory: cleanService,
-        source: 'direct_order_desk',
-        package_id: currentTier.id,
+        source: isMonthlyMode ? 'monthly_design_bundle' : 'direct_order_desk',
+        monthly_plan_id: isMonthlyMode ? monthlyPlan.id : undefined,
+        monthly_plan_designs: isMonthlyMode ? monthlyPlan.designs : undefined,
+        monthly_plan_duration_days: isMonthlyMode ? 30 : undefined,
+        package_id: isMonthlyMode ? null : currentTier.id,
         unit_price: pricing.unitPrice,
         rush_fee: pricing.rush,
         package_name: orderPackageName,
@@ -520,21 +555,21 @@ export const StreamlinedOrderFlow = ({
         totalPrice: pricing.total,
         base_price: pricing.subtotal,
         isRush: isRush,
-        notes: additionalDetails.trim(),
+        notes: isMonthlyMode ? '30-day prepaid bundle. Submit designs through order conversation. No auto-renewal.' : additionalDetails.trim(),
         placement: derivedSize,
         width: selectedService === 'patch' ? getPatchDimensions().width : (sizeOption === 'custom' ? customWidth : '3.5'),
         height: selectedService === 'patch' ? getPatchDimensions().height : (sizeOption === 'custom' ? customHeight : '3.5'),
         patchWidth: selectedService === 'patch' ? getPatchDimensions().width : undefined,
         patchHeight: selectedService === 'patch' ? getPatchDimensions().height : undefined,
         patchProductionTime: selectedService === 'patch' ? '10–14 days' : undefined,
-        fabricType: selectedService === 'embroidery' ? additionalDetails.trim() || 'Standard' : null,
+        fabricType: selectedService === 'embroidery' && !isMonthlyMode ? additionalDetails.trim() || 'Standard' : null,
         patchStyle: selectedService === 'patch' ? patchStyle : null,
         patchBacking: selectedService === 'patch' ? patchBacking : null,
         targetFormats: targetFormats,
         image_url: primaryArtworkUrl,
         artworkUrl: primaryArtworkUrl,
         logo: primaryArtworkUrl,
-        uploadedFiles: uploadedFiles,
+        uploadedFiles: isMonthlyMode ? [] : uploadedFiles,
         client_name: cleanName,
         clientName: cleanName,
         client_email: cleanEmail,
@@ -740,6 +775,15 @@ export const StreamlinedOrderFlow = ({
           .bdigi-service-card { transition: none; }
           .bdigi-service-card:hover { transform: none; }
         }
+        .bdigi-order-mode-switch { display: flex; padding: 4px; gap: 4px; border-radius: 14px; background: var(--color-subtle); border: 1px solid var(--color-border); }
+        .bdigi-mode-option { padding: 0.56rem 1.1rem; background: transparent; border: 1px solid transparent; border-radius: 10px; font-size: 0.84rem; font-weight: 850; cursor: pointer; color: var(--color-text-secondary); }
+        .bdigi-mode-option.is-selected { color: #fff; background: linear-gradient(120deg, #2563eb, #4338ca); box-shadow: 0 4px 12px rgba(37,99,235,0.20); }
+        .bdigi-mode-option:focus-visible,.bdigi-monthly-card:focus-visible { outline: 3px solid var(--color-border-focus, #2563eb); outline-offset: 2px; }
+        .bdigi-monthly-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.75rem; }
+        .bdigi-monthly-card { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.45rem; padding: 1.25rem 0.6rem; border-radius: 15px; border: 1.5px solid var(--color-border); background: var(--color-surface); color: var(--color-text-primary); cursor: pointer; text-align: center; }
+        .bdigi-monthly-card.is-selected { border-color: var(--color-primary); background: var(--color-primary-light); box-shadow: 0 5px 18px var(--color-primary-glow); }
+        .bdigi-monthly-card:disabled { cursor: not-allowed; opacity: 0.55; }
+        @media(max-width:600px) { .bdigi-order-mode-switch{width:100%;}.bdigi-mode-option{flex:1;padding:0.52rem 0.4rem;}.bdigi-monthly-grid{gap:0.5rem;}.bdigi-monthly-card{padding:0.9rem 0.3rem;}}
         .bdigi-order-container {
           display: grid;
           grid-template-columns: 1fr 340px;
@@ -897,54 +941,69 @@ export const StreamlinedOrderFlow = ({
       ) : (
         /* STEP 2: ORDER CUSTOMIZATION DESK (SHOWN ONCE SERVICE IS SELECTED) */
         <div>
-          {/* Compact service switcher — original streamlined form stays unchanged below */}
+          {/* Customer can change service using the back button above. */}
           <div className="bdigi-service-nav">
-            <button
-              type="button"
-              onClick={() => setHasSelectedService(false)}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '0.35rem',
-                padding: '0.42rem 0.75rem',
-                borderRadius: '999px',
-                border: '1px solid var(--color-border, #dbe4f4)',
-                background: 'var(--color-subtle, #f1f5f9)',
-                color: 'var(--color-text-secondary, #475569)',
-                fontWeight: 800,
-                fontSize: '0.76rem',
-                cursor: 'pointer'
-              }}
-            >
-              <ArrowLeft size={14} aria-hidden="true" /> Change Service
+            <button type="button" onClick={() => { setHasSelectedService(false); setOrderMode('regular'); }}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', padding: '0.5rem 0.9rem',
+                borderRadius: '999px', border: '1px solid var(--color-border)',
+                background: 'var(--color-subtle)', color: 'var(--color-text-primary)', fontWeight: 800, fontSize: '0.82rem', cursor: 'pointer' }}>
+              <ArrowLeft size={15} aria-hidden="true" /> Change Service
             </button>
-            <div className="bdigi-service-switch" role="group" aria-label="Choose service">
-              {serviceChoices.map(({ key, name, Icon, accent, tint }) => (
-                <button
-                  key={key}
-                  type="button"
-                  className="bdigi-switch-tab"
-                  style={{ '--service-accent': accent, '--service-tint': tint }}
-                  aria-pressed={selectedService === key}
-                  onClick={() => {
-                    setSelectedService(key);
-                    setSelectedTierId('');
-                  }}
-                >
-                  <Icon size={14} aria-hidden="true" />
-                  <span>{name}{key === 'patch' ? ' (Min 50)' : ''}</span>
-                </button>
-              ))}
-            </div>
+            {selectedService !== 'patch' && (
+              <div role="group" aria-label="Choose order type" className="bdigi-order-mode-switch">
+                {[{ id: 'regular', title: 'Regular Order' }, { id: 'monthly', title: 'Monthly Plan' }].map(item => (
+                  <button type="button" key={item.id} aria-pressed={orderMode === item.id}
+                    onClick={() => setOrderMode(item.id)}
+                    className={'bdigi-mode-option ' + (orderMode === item.id ? 'is-selected' : '')}>
+                    {item.title}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
-          {!getActiveTiers(selectedService).length && <p role="status" style={{ color: 'var(--color-warning-text)', fontWeight: 700, padding: '0.75rem' }}>Pricing is temporarily unavailable. Please try again later.</p>}
+          {!isMonthlyMode && !getActiveTiers(selectedService).length && <p role="status" style={{ color: 'var(--color-warning-text)', fontWeight: 700, padding: '0.75rem' }}>Pricing is temporarily unavailable. Please try again later.</p>}
           {/* 2-COLUMN ORDER DESK: LEFT OPTIONS & UPLOAD VS RIGHT STICKY PRICE & QUANTITY */}
           <div className="bdigi-order-container">
 
             {/* LEFT COLUMN: CUSTOMER INSTRUCTIONS & OPTIONS */}
             <div>
 
+              {isMonthlyMode ? (
+                <section aria-label="Monthly plan choices" style={{ display: 'grid', gap: '0.85rem' }}>
+                  <div>
+                    <h3 style={{ margin: 0, color: 'var(--color-text-primary)', fontSize: '1.22rem', fontWeight: 900 }}>Choose Your Monthly Bundle</h3>
+                    <p style={{ margin: '0.25rem 0 0', color: 'var(--color-text-muted)', fontSize: '0.81rem', lineHeight: 1.5 }}>
+                      Prepaid 30-day design bundle · Pay once · No auto-renewal
+                    </p>
+                  </div>
+                  {monthlyError && <p role="alert" style={{ color: 'var(--color-error-text, #b91c1c)', margin: 0 }}>{monthlyError}</p>}
+                  {monthlyLoading && <p role="status" style={{ color: 'var(--color-text-secondary)' }}>Loading live monthly prices...</p>}
+                  <div className="bdigi-monthly-grid">
+                    {MONTHLY_DESIGN_LIMITS.map(count => {
+                      const plan = findPublishedMonthlyBundle({ plans: monthlyPlans }, selectedService, count);
+                      const selected = monthlyCount === count;
+                      return (
+                        <button key={count} type="button" disabled={!plan || monthlyLoading}
+                          className={'bdigi-monthly-card ' + (selected ? 'is-selected' : '')}
+                          aria-pressed={selected}
+                          onClick={() => setMonthlyCount(count)}>
+                          <strong style={{ fontSize: '1.5rem', fontWeight: 950, lineHeight: 1 }}>{count}</strong>
+                          <span style={{ fontSize: '0.78rem', fontWeight: 750 }}>designs / 30 days</span>
+                          <span style={{ fontWeight: 900, fontSize: '1.1rem', color: plan ? 'var(--color-primary)' : 'var(--color-text-muted)' }}>
+                            {plan ? formatUSD(plan.price) : 'Not available'}
+                          </span>
+                          {plan?.description && <span style={{ fontSize: '0.73rem', color: 'var(--color-text-secondary)' }}>{plan.description}</span>}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <div style={{ padding: '0.9rem 1rem', background: 'var(--color-primary-light)', border: '1px solid var(--color-border)', borderRadius: '12px', color: 'var(--color-text-secondary)', fontSize: '0.8rem', lineHeight: 1.6 }}>
+                    <strong style={{ color: 'var(--color-text-primary)' }}>How it works:</strong> Purchase a bundle, then send designs throughout the next 30 days through your order conversation. Studio staff track fulfillment. This is not an automatic recurring subscription.
+                  </div>
+                </section>
+              ) : (
+                <>
               {/* 1. EMBROIDERY OPTIONS */}
               {selectedService === 'embroidery' && (
                 <div>
@@ -1673,6 +1732,8 @@ export const StreamlinedOrderFlow = ({
                 </div>
               </div>
 
+                </>
+              )}
             </div>
 
             {/* RIGHT COLUMN: STICKY ORDER SUMMARY & PRICE COUNT */}
@@ -1697,13 +1758,19 @@ export const StreamlinedOrderFlow = ({
                   </div>
 
                   <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--color-text-secondary, #475569)' }}>
-                    <span>{selectedService === 'patch' ? 'Patch Tier:' : 'Package:'}</span>
+                    <span>{isMonthlyMode ? 'Plan:' : selectedService === 'patch' ? 'Patch Tier:' : 'Package:'}</span>
                     <strong style={{ color: 'var(--color-text-primary, #0f172a)', textAlign: 'right', maxWidth: '180px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={pricing.tierTitle}>
                       {pricing.tierTitle}
                     </strong>
                   </div>
 
-                  {selectedService === 'patch' ? (
+                  {isMonthlyMode ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>Designs included:</span><strong>{monthlyCount} / 30 days</strong></div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>Payment:</span><strong>Once · No auto-renew</strong></div>
+                      <span style={{ fontSize: '0.73rem', lineHeight: 1.4 }}>Submit designs via your order conversation during the month.</span>
+                    </div>
+                  ) : selectedService === 'patch' ? (
                     <>
                       <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--color-text-secondary, #475569)' }}>
                         <span>Style:</span>
@@ -1733,39 +1800,39 @@ export const StreamlinedOrderFlow = ({
                     </>
                   )}
 
-                  <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--color-text-secondary, #475569)' }}>
+                  {!isMonthlyMode && <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--color-text-secondary, #475569)' }}>
                     <span>Turnaround:</span>
                     <strong style={{ color: selectedService !== 'patch' && (turnaround === 'rush' || vectorTurnaround === 'rush') ? '#ea580c' : '#059669' }}>
                       {selectedService === 'patch'
                         ? '10–14 days'
                         : ((turnaround === 'rush' || vectorTurnaround === 'rush') ? 'Rush (2–4h)' : 'Standard (Free)')}
                     </strong>
-                  </div>
+                  </div>}
 
-                  <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--color-text-secondary, #475569)' }}>
+                  {!isMonthlyMode && <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--color-text-secondary, #475569)' }}>
                     <span>Quantity:</span>
                     <strong style={{ color: 'var(--color-text-primary, #0f172a)' }}>
                       {selectedService === 'patch'
                         ? `${Math.max(50, Number(patchQuantity) || 50)} Patches`
                         : `${designQuantity} ${designQuantity === 1 ? 'Design' : 'Designs'}`}
                     </strong>
-                  </div>
+                  </div>}
 
-                  <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--color-text-secondary, #475569)' }}>
+                  {!isMonthlyMode && <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--color-text-secondary, #475569)' }}>
                     <span>Files:</span>
                     <strong style={{ color: uploadedFiles.length > 0 ? '#059669' : '#94a3b8' }}>
                       {selectedService === 'patch'
                         ? (uploadedFiles.length > 0 ? `${uploadedFiles.length} Artwork Attached` : 'Required')
                         : (uploadedFiles.length > 0 ? `${uploadedFiles.length} of ${designQuantity} Attached` : 'Required')}
                     </strong>
-                  </div>
+                  </div>}
                 </div>
 
                 {/* LIVE PRICE COUNT BREAKDOWN */}
                 <div style={{ borderTop: '1px solid var(--color-border, #e2e8f0)', paddingTop: '0.75rem', marginBottom: '1.15rem' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.84rem', color: 'var(--color-text-secondary, #475569)', marginBottom: '0.3rem' }}>
                     <span>
-                      {selectedService === 'patch'
+                      {isMonthlyMode ? 'Monthly bundle (one-time):' : selectedService === 'patch'
                         ? `Subtotal (${pricing.patchPieces} × $${hasValidLivePrice ? pricing.unitPrice.toFixed(2) : "—"}):`
                         : `Subtotal (${designQuantity} × $${hasValidLivePrice ? pricing.unitPrice.toFixed(2) : "—"}):`}
                     </span>
@@ -1823,7 +1890,7 @@ export const StreamlinedOrderFlow = ({
                     </>
                   ) : (
                     <>
-                      <Lock size={15} /> {hasValidLivePrice ? 'Place Order & Pay (' + formatUSD(pricing.total) + ')' : 'Pricing unavailable'}
+                      <Lock size={15} /> {hasValidLivePrice ? (isMonthlyMode ? 'Buy 30-Day Bundle (' : 'Place Order & Pay (') + formatUSD(pricing.total) + ')' : 'Pricing unavailable'}
                     </>
                   )}
                 </button>

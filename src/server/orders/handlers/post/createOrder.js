@@ -1,10 +1,45 @@
 import { NextResponse, after } from 'next/server';
 import { logServerCaughtError } from '../../../../lib/observability/apiObservability.js';
 import { calculatePackageQuote } from '../../../../utils/livePricing.js';
+import { findPublishedMonthlyBundle, MONTHLY_BUNDLE_CONFIG_KEY } from '../../../../utils/monthlyBundles.js';
 
 export async function handleCreateOrder(context) {
   const { payload, supabase, user, isAdmin } = context;
       const { primaryDbRow, orderFiles } = payload;
+      // Monthly design bundles are prepaid, 30-day, one-time purchases.
+      // Never trust the browser-provided plan price, quantity or plan status.
+      if (primaryDbRow?.source === 'monthly_design_bundle') {
+        const service = primaryDbRow.type;
+        const designs = Number(primaryDbRow.quantity);
+        if (!['embroidery', 'vector'].includes(service) ||
+            ![10, 25, 50, 100].includes(designs) ||
+            String(primaryDbRow.monthly_plan_id || '') !== service + '-' + designs ||
+            primaryDbRow.isRush === true || Number(primaryDbRow.rush_fee || 0) !== 0 ||
+            primaryDbRow.package_id) {
+          return NextResponse.json({ error: 'Invalid monthly bundle selection.' }, { status: 400 });
+        }
+        const { data: monthlyConfig, error: monthlyError } = await supabase
+          .from('site_config').select('value').eq('key', MONTHLY_BUNDLE_CONFIG_KEY).maybeSingle();
+        if (monthlyError) return NextResponse.json({ error: 'Monthly pricing is temporarily unavailable.' }, { status: 503 });
+        const liveBundle = findPublishedMonthlyBundle(monthlyConfig?.value, service, designs);
+        if (!liveBundle) return NextResponse.json({ error: 'This monthly plan is not currently published.' }, { status: 409 });
+        const matches = amount => amount !== null && amount !== undefined &&
+          amount !== '' && Number.isFinite(Number(amount)) &&
+          Math.abs(Number(amount) - liveBundle.price) < 0.005;
+        if (!matches(primaryDbRow.price) || !matches(primaryDbRow.base_price)) {
+          return NextResponse.json({ error: 'Monthly plan price changed. Refresh before checkout.' }, { status: 409 });
+        }
+        // The paid amount represents the complete bundle, not a per-design rate.
+        primaryDbRow.price = liveBundle.price;
+        primaryDbRow.base_price = liveBundle.price;
+        primaryDbRow.unit_price = liveBundle.price;
+        primaryDbRow.rush_fee = 0;
+        primaryDbRow.package_name = liveBundle.title;
+        primaryDbRow.monthly_plan_id = liveBundle.id;
+        primaryDbRow.monthly_plan_designs = liveBundle.designs;
+        primaryDbRow.monthly_plan_duration_days = 30;
+      }
+
       // Verify selected-package orders against the authoritative live database.
       if (primaryDbRow?.source === 'direct_order_desk' || primaryDbRow?.package_id) {
         if (!primaryDbRow?.package_id || !['embroidery', 'vector', 'patch'].includes(primaryDbRow.type)) {
@@ -140,6 +175,14 @@ export async function handleCreateOrder(context) {
           patchHeight: primaryDbRow.patchHeight,
           patchProductionTime: primaryDbRow.type === 'patch' && primaryDbRow.source === 'direct_order_desk' ? '10–14 days' : null,
           patchQuantity: primaryDbRow.patchQuantity,
+          monthlyBundle: primaryDbRow.source === 'monthly_design_bundle' ? {
+            planId: primaryDbRow.monthly_plan_id,
+            designs: primaryDbRow.monthly_plan_designs,
+            durationDays: 30,
+            paymentType: 'one_time',
+            autoRenew: false,
+            usageTracking: 'managed_by_studio'
+          } : null,
           patchItems: primaryDbRow.patchItems || [],
           placementItems: primaryDbRow.placementItems || [],
           uploadedFiles: orderFiles || []

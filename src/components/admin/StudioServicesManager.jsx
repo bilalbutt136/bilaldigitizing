@@ -3,8 +3,9 @@
 import React, { useState } from 'react';
 import { HeroServicesEditor } from './HeroServicesEditor';
 import { DynamicPricingEditor } from './DynamicPricingEditor';
+import MonthlyBundlesEditor from './MonthlyBundlesEditor';
 import { ProductionProcessTimelineEditor } from './ProductionProcessTimelineEditor';
-import { Layers, Sparkles, FileCheck } from 'lucide-react';
+import { Layers, Sparkles, FileCheck, CalendarDays } from 'lucide-react';
 
 export const StudioServicesManager = () => {
   const [activeTab, setActiveTab] = useState('dynamic_pricing');
@@ -38,6 +39,17 @@ export const StudioServicesManager = () => {
         >
           <Layers size={18} />
           <span>Master Service Packages Manager</span>
+        </button>
+
+        <button type="button"
+          onClick={() => setActiveTab('monthly_bundles')}
+          aria-pressed={activeTab === 'monthly_bundles'}
+          style={{ background: 'transparent', border: 'none',
+            borderBottom: activeTab === 'monthly_bundles' ? '3px solid var(--color-primary)' : '3px solid transparent',
+            padding: '0.65rem 1.25rem', fontWeight: 800, fontSize: '0.95rem',
+            color: activeTab === 'monthly_bundles' ? 'var(--color-primary)' : 'var(--color-text-secondary)',
+            display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+          <CalendarDays size={18}/> Monthly Plans
         </button>
 
         <button
@@ -87,6 +99,7 @@ export const StudioServicesManager = () => {
 
       <div>
         {activeTab === 'dynamic_pricing' && <DynamicPricingEditor />}
+        {activeTab === 'monthly_bundles' && <MonthlyBundlesEditor />}
         {activeTab === 'homepage_services' && <HeroServicesEditor />}
         {activeTab === 'process_timelines' && <ProductionProcessTimelineEditor />}
       </div>
