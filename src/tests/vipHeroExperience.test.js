@@ -30,7 +30,12 @@ test('before after comparison uses only matching actual gallery images', () => {
   assert.match(hero, /beforeUrl: item\.original_image/);
   assert.match(hero, /afterUrl: item\.digitized_image/);
   assert.match(hero, /currentImage\.beforeUrl !== currentImage\.afterUrl/);
-  assert.match(hero, /Studio portfolio artwork/);
+  // Decorative labels were removed; the sample, its title and detail inspection remain.
+  assert.doesNotMatch(hero, /Studio portfolio artwork/);
+  assert.doesNotMatch(hero, /View design details/);
+  assert.doesNotMatch(hero, /STUDIO PORTFOLIO/);
+  assert.match(hero, /currentImage\?\.title \|\| previewTitle/);
+  assert.match(hero, /onClick=\{handleImageClick\}/);
   assert.doesNotMatch(hero, /TRUSTED BY 1,200\+ BRANDS/);
 });
 

@@ -947,9 +947,6 @@ export const HeroSection = () => {
               {/* Header Title & Slide Index Counter */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.55rem', gap: '0.5rem', flexWrap: 'wrap' }}>
                 <div style={{ minWidth: 0, flex: 1 }}>
-                  <div style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--color-primary)', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '0.35rem', letterSpacing: '0.06em' }}>
-                    <span className="blinking-green-dot" /> STUDIO PORTFOLIO
-                  </div>
                   <div style={{ fontSize: '0.92rem', fontWeight: 800, color: 'var(--color-text-primary)', marginTop: '2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                     {(currentImage?.title || previewTitle || '').replace(/Emrboidery/gi, 'Embroidery')}
                   </div>
@@ -1169,13 +1166,6 @@ export const HeroSection = () => {
                   </>
                 )}
               </div>
-
-              {currentImage?.imageUrl && (
-                <div className="vip-hero-gallery-caption">
-                  <span><CheckCircle2 size={15} aria-hidden="true" /> Studio portfolio artwork</span>
-                  <span>View design details <ArrowRight size={14} aria-hidden="true" /></span>
-                </div>
-              )}
 
               {currentImage?.beforeUrl && currentImage?.afterUrl && currentImage.beforeUrl !== currentImage.afterUrl && (
                 <div className="vip-hero-before-after" aria-label="Real artwork before and after digitizing">
