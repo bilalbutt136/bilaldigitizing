@@ -32,6 +32,9 @@ export async function handleApproveCancellation(context) {
       }
 
       const cancellation = notesObj.cancellation || {};
+      if (orderData.status !== 'cancellation_requested' || cancellation.status !== 'pending') {
+        return NextResponse.json({ error: 'No pending cancellation request for this order.' }, { status: 409 });
+      }
 
       // Strict Idempotency Check: Never issue duplicate refund or double process
       if (cancellation.refund_issued === true) {

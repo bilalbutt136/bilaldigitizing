@@ -71,16 +71,19 @@ export async function handleRequestCancellation(context) {
       notesObj.cancellation = cancelRecord;
       notesObj.cancellations = [cancelRecord, ...(Array.isArray(notesObj.cancellations) ? notesObj.cancellations : [])];
 
-      const { error: updateErr } = await supabase
+      const { data: updatedOrders, error: updateErr } = await supabase
         .from('orders')
         .update({
           status: 'cancellation_requested',
           notes: JSON.stringify(notesObj),
           updated_at: nowIso
         })
-        .eq('id', canonicalOrderId);
+        .eq('id', canonicalOrderId)
+        .eq('status', orderData.status)
+        .select('id');
 
       if (updateErr) throw updateErr;
+      if (!updatedOrders?.length) return NextResponse.json({ error: 'The order changed while submitting your request. Please refresh and try again.' }, { status: 409 });
 
       // Admin Notification
       try {

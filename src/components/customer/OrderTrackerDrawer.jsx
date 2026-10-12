@@ -141,7 +141,7 @@ export const OrderTrackerDrawer = () => {
   // Cancellation Workflow States
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
   const [cancelReason, setCancelReason] = useState('');
-  const [_isSubmittingCancel, setIsSubmittingCancel] = useState(false);
+  const [isSubmittingCancel, setIsSubmittingCancel] = useState(false);
   const [isProcessingAdminCancel, setIsProcessingAdminCancel] = useState(false);
 
   // Section Refs for smooth scrolling on the single page
@@ -151,6 +151,8 @@ export const OrderTrackerDrawer = () => {
   const modificationRef = useRef(null);
 
   const handleCloseDrawer = () => {
+    setIsCancelModalOpen(false);
+    setCancelReason('');
     setSelectedOrderForDrawer(null);
     if (typeof window !== 'undefined' && window.history && window.history.replaceState) {
       try {
@@ -172,7 +174,7 @@ export const OrderTrackerDrawer = () => {
     modalId: 'order_tracker_drawer'
   });
 
-  const { handleSafeClose: _handleSafeCloseCancelModal } = useModalBackNavigation({
+  const { handleSafeClose: handleSafeCloseCancelModal } = useModalBackNavigation({
     isOpen: isCancelModalOpen,
     onClose: () => setIsCancelModalOpen(false),
     modalId: 'order_cancel_modal'
@@ -414,7 +416,7 @@ export const OrderTrackerDrawer = () => {
   const isDelivered = normalizedStatus === 'delivered' || normalizedStatus === 'completed';
   const isCompleted = normalizedStatus === 'completed';
   const isInRevision = normalizedStatus === 'revision';
-  const _isCancellable = !isDelivered && !isCompleted && ord.status !== 'cancelled' && ord.status !== 'cancellation_requested';
+  const isCancellable = !isDelivered && !isCompleted && ord.status !== 'cancelled' && ord.status !== 'cancellation_requested';
 
 
   const isCurrentlyOnAdminPortal = currentView === 'admin' || (typeof window !== 'undefined' && (window.location.pathname.includes('admin') || window.location.pathname.includes('admin-portal')));
@@ -569,7 +571,7 @@ export const OrderTrackerDrawer = () => {
     showToast('Modification request sent to master digitizer desk.', 'success');
   };
 
-  const _handleCustomerSubmitCancellation = async (e) => {
+  const handleCustomerSubmitCancellation = async (e) => {
     if (e && e.preventDefault) e.preventDefault();
     const cleanR = cancelReason.trim();
     if (!cleanR) {
@@ -1544,6 +1546,29 @@ export const OrderTrackerDrawer = () => {
                   </div>
                 )}
               </div>
+            </div>
+          )}
+
+
+          {/* Customers can request cancellation for any order not yet delivered or completed. */}
+          {!isAdmin && isCancellable && (
+            <div style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              gap: '0.75rem', flexWrap: 'wrap', padding: '0.9rem 1rem',
+              background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '12px'
+            }}>
+              <div style={{ flex: '1 1 240px' }}>
+                <strong style={{ display: 'block', color: 'var(--text-main)', fontSize: '0.88rem' }}>Need to cancel this order?</strong>
+                <span style={{ color: 'var(--text-muted)', fontSize: '0.78rem' }}>
+                  Send a request for studio review. Eligible paid orders are refunded to your Studio Wallet after approval.
+                </span>
+              </div>
+              <button type="button" onClick={() => setIsCancelModalOpen(true)}
+                style={{ border: '1px solid #dc2626', background: isDark ? 'rgba(239,68,68,0.1)' : '#fff1f2',
+                  color: isDark ? '#fca5a5' : '#b91c1c', borderRadius: '8px', padding: '0.65rem 0.95rem',
+                  fontWeight: 800, cursor: 'pointer', fontSize: '0.82rem' }}>
+                Request Cancellation
+              </button>
             </div>
           )}
 
@@ -2927,7 +2952,7 @@ export const OrderTrackerDrawer = () => {
 
           {/* Primary actions */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', width: isMobileLayout ? '100%' : 'auto', marginLeft: isMobileLayout ? 0 : 'auto' }}>
-            {!isPaid && !isAdmin ? (
+            {!isPaid && !isAdmin && ord.status !== 'cancelled' && ord.status !== 'cancellation_requested' ? (
               <button
                 type="button"
                 onClick={handleLaunchPayment}
@@ -3062,6 +3087,61 @@ export const OrderTrackerDrawer = () => {
 
       </div>
       </div>
+
+
+      {/* Customer cancellation request — confirmation and reason are required before API submission. */}
+      {isCancelModalOpen && !isAdmin && isCancellable && (
+        <div role="presentation" onMouseDown={(e) => { if (e.target === e.currentTarget && !isSubmittingCancel) handleSafeCloseCancelModal(); }}
+          style={{ position: 'fixed', inset: 0, zIndex: 100500, background: 'rgba(2,6,23,0.78)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
+          <form role="dialog" aria-modal="true" aria-labelledby="order-cancellation-heading"
+            onSubmit={handleCustomerSubmitCancellation}
+            style={{ width: '100%', maxWidth: '470px', maxHeight: 'calc(100dvh - 2rem)', overflowY: 'auto',
+              borderRadius: '16px', background: 'var(--color-surface, #ffffff)',
+              border: '1px solid var(--border-color)', boxShadow: '0 24px 70px rgba(0,0,0,0.3)',
+              padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: '0.75rem', alignItems: 'start' }}>
+              <div>
+                <h3 id="order-cancellation-heading" style={{ margin: 0, fontSize: '1.15rem', color: 'var(--text-main)' }}>
+                  Request Order Cancellation
+                </h3>
+                <p style={{ margin: '0.4rem 0 0', fontSize: '0.83rem', color: 'var(--text-muted)' }}>
+                  Order {formatOrderId(ord.id)} — {ord.title || 'Studio Order'}
+                </p>
+              </div>
+              <button type="button" disabled={isSubmittingCancel} onClick={handleSafeCloseCancelModal}
+                aria-label="Close cancellation form"
+                style={{ background: 'transparent', border: 0, color: 'var(--text-main)', padding: '0.25rem', cursor: 'pointer' }}>
+                <X size={20} />
+              </button>
+            </div>
+            <p style={{ margin: 0, fontSize: '0.83rem', lineHeight: 1.55, color: 'var(--text-main)' }}>
+              Submitting this form requests a review; it does not immediately cancel your order.
+              If approved, any eligible payment will be credited to your Studio Wallet.
+            </p>
+            <label htmlFor="order-cancellation-reason" style={{ fontSize: '0.82rem', fontWeight: 800, color: 'var(--text-main)' }}>
+              Reason for cancellation <span aria-hidden="true">*</span>
+            </label>
+            <textarea id="order-cancellation-reason" value={cancelReason}
+              onChange={(e) => setCancelReason(e.target.value)} required maxLength={1000} rows={4}
+              placeholder="Please tell us why you want to cancel..."
+              style={{ resize: 'vertical', width: '100%', borderRadius: '9px', padding: '0.75rem',
+                border: '1px solid var(--border-color)', color: 'var(--text-main)',
+                background: 'var(--bg-card)', font: 'inherit', fontSize: '0.85rem' }} />
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.65rem', flexWrap: 'wrap' }}>
+              <button type="button" disabled={isSubmittingCancel} onClick={handleSafeCloseCancelModal}
+                className="btn btn-outline" style={{ fontWeight: 700 }}>Keep Order</button>
+              <button type="submit" disabled={isSubmittingCancel || !cancelReason.trim()}
+                style={{ border: 0, borderRadius: '8px', padding: '0.7rem 1rem',
+                  background: '#dc2626', color: '#fff', fontWeight: 800,
+                  opacity: isSubmittingCancel || !cancelReason.trim() ? 0.6 : 1,
+                  cursor: isSubmittingCancel || !cancelReason.trim() ? 'not-allowed' : 'pointer' }}>
+                {isSubmittingCancel ? 'Submitting...' : 'Submit Cancellation Request'}
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
 
       {/* Lightbox Modal */}
       {lightboxArtwork && (

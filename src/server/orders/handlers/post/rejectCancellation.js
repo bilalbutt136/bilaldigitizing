@@ -32,6 +32,9 @@ export async function handleRejectCancellation(context) {
       }
 
       const cancellation = notesObj.cancellation || {};
+      if (orderData.status !== 'cancellation_requested' || cancellation.status !== 'pending') {
+        return NextResponse.json({ error: 'No pending cancellation request for this order.' }, { status: 409 });
+      }
       const revertStatus = cancellation.previous_status || 'in_progress';
       const cleanRejection = String(rejectionReason || 'Cancellation request declined by studio operations. Order remains active in production.').trim();
 

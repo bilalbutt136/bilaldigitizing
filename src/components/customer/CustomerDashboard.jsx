@@ -246,7 +246,7 @@ export const CustomerDashboard = () => {
     return s !== 'delivered' && s !== 'completed' && s !== 'cancelled' && s !== 'cancellation_requested';
   };
 
-  const _handleOpenCancellation = (order) => {
+  const handleOpenCancellation = (order) => {
     if (!order) return;
     setSelectedOrderForDrawer(order);
     setTimeout(() => {
@@ -1942,7 +1942,7 @@ export const CustomerDashboard = () => {
                                         </button>
                                       )}
 
-                                      {!isPaid && (
+                                      {!isPaid && String(ord.status || '').toLowerCase() !== 'cancelled' && String(ord.status || '').toLowerCase() !== 'cancellation_requested' && (
                                         <button
                                           type="button"
                                           onClick={() => handlePayOrder(ord)}
@@ -2103,6 +2103,8 @@ export const CustomerDashboard = () => {
                               </div>
 
                               {/* Card Footer Actions */}
+                              {_isOrderCancellable(ord) && <button type="button" onClick={() => handleOpenCancellation(ord)}
+                                style={{ width: '100%', marginTop: '0.65rem', borderRadius: 8, padding: '0.55rem', background: '#fff1f2', color: '#b91c1c', border: '1px solid #ef4444', fontWeight: 800 }}>Request Cancellation</button>}
                               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.75rem', paddingTop: '0.65rem', borderTop: isDark ? '1px solid var(--color-border, #334155)' : '1px solid #f1f5f9', flexWrap: 'wrap', gap: '0.4rem' }}>
                                 <div>
                                   {getPaymentStatusBadge(ord)}
