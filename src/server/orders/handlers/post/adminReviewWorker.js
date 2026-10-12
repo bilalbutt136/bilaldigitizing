@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { logServerCaughtError } from '../../../../lib/observability/apiObservability.js';
 
 export async function handleAdminReviewWorker(context) {
   const { payload, supabase, isAdmin } = context;
@@ -185,12 +186,12 @@ export async function handleAdminReviewWorker(context) {
           await liveChannel.send({
             type: 'broadcast',
             event: 'order_updated',
-            payload: { ...targetOrder, ...orderUpdatePayload, id: orderId }
+            payload: { ...targetOrder, ...updatePayload, id: orderId }
           });
           await liveChannel.send({
             type: 'broadcast',
             event: 'order_change',
-            payload: { order: { ...targetOrder, ...orderUpdatePayload, id: orderId }, eventType: 'UPDATE' }
+            payload: { order: { ...targetOrder, ...updatePayload, id: orderId }, eventType: 'UPDATE' }
           });
         } catch (error) { logServerCaughtError(error, { operation: 'orders.review_approved_broadcast_failed' }); }
 

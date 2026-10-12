@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { logServerCaughtError } from '../../../../lib/observability/apiObservability.js';
 
 export async function handleRejectCancellation(context) {
   const { payload, supabase, user, isAdmin } = context;

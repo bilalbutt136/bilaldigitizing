@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getMonthlyProgress, prepareMonthlyDelivery } from '../../../../utils/monthlyProgress.js';
+import { logServerCaughtError } from '../../../../lib/observability/apiObservability.js';
 
 export async function handleUpdateStatus(context) {
   const { payload, supabase, user, isAdmin } = context;
@@ -26,6 +27,7 @@ export async function handleUpdateStatus(context) {
           .maybeSingle();
         if (byIlike) targetOrder = byIlike;
       }
+      const resolvedOrderId = targetOrder?.id || cleanId || rawId || orderId;
 
       if (!isAdmin) {
         if (!user) {
@@ -193,7 +195,6 @@ export async function handleUpdateStatus(context) {
       ];
 
       if (allDeliveryFiles.length > 0) {
-        const resolvedOrderId = targetOrder?.id || orderId;
         for (const file of allDeliveryFiles) {
           const fUrl = file.url || file.fileUrl || file.public_url || file.file_url;
           if (!fUrl || file.error) continue;
@@ -243,7 +244,6 @@ export async function handleUpdateStatus(context) {
           }
         }
         if (!clientName) clientName = 'Valued Client';
-        const resolvedOrderId = targetOrder?.id || rawId;
         const ordTitle = targetOrder?.title || extraData?.title || `Order #${resolvedOrderId}`;
 
         // Do not auto-create Inbox conversations for order status changes.

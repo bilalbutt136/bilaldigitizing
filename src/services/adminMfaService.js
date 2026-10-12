@@ -1,5 +1,6 @@
 'use client';
 
+import { supabase } from '../lib/supabase/client';
 import { getAuthHeaders } from './supabaseService';
 
 async function getAdminAuthHeaders() {

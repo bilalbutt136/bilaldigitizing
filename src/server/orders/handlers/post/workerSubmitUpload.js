@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getServerAuthUser } from '../../../../lib/supabase/serverAuth';
+import { logServerCaughtError } from '../../../../lib/observability/apiObservability.js';
 
 export async function handleWorkerSubmitUpload(context) {
   const { request, payload, supabase, user, isAdmin } = context;

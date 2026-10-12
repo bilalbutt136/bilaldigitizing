@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { logServerCaughtError } from '../../../../lib/observability/apiObservability.js';
 
 export async function handleAssignWorker(context) {
   const { payload, supabase, isAdmin } = context;

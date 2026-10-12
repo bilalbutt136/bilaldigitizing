@@ -123,7 +123,7 @@ function escapeSqlValue(tableName, columnName, value) {
     (tableName === 'tracking_events' && columnName === 'metadata') ||
     (tableName === 'media_assets' && columnName === 'metadata');
 
-  if (isJsonCol) {
+  if (isJson) {
     if (typeof value === 'object') {
       return `'${JSON.stringify(value).replace(/'/g, "''")}'::jsonb`;
     }

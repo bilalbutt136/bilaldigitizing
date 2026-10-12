@@ -89,7 +89,8 @@ export const CustomerDashboard = () => {
     unreadOrdersCount = 0,
     markOrdersAsRead,
     dynamicPricingTiers = [],
-    refreshOrders
+    refreshOrders,
+    siteSettings = {}
   } = useAppState();
 
   // Safe User Resolution - declared at top to prevent any TDZ errors

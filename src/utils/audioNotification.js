@@ -822,7 +822,7 @@ export const playAdminChime = (force = false) => {
  */
 export const playNotificationSound = (type = 'chat', force = false, messageId = null, context = {}) => {
   let resolvedContext = context;
-  let _resolvedMsgId = messageId;
+  let resolvedMsgId = messageId;
 
   if (messageId && typeof messageId === 'object' && (!context || Object.keys(context).length === 0)) {
     resolvedContext = messageId;
