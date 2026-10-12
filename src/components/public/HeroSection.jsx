@@ -23,7 +23,6 @@ import {
   Zap,
   ChevronLeft,
   ChevronRight,
-  ZoomIn,
   X
 } from 'lucide-react';
 
@@ -1016,7 +1015,6 @@ export const HeroSection = () => {
                   justifyContent: 'center',
                   cursor: currentImage?.imageUrl ? 'zoom-in' : 'default'
                 }}
-                title={currentImage?.imageUrl ? 'Tap to inspect high-resolution sample' : undefined}
               >
                 {/* Full, Auto-Adjusted Showcase Image or Empty State */}
                 {currentImage?.imageUrl ? (
@@ -1045,30 +1043,6 @@ export const HeroSection = () => {
                       draggable="false"
                     />
 
-                    {/* Tap to inspect badge */}
-                    <div
-                      style={{
-                        position: 'absolute',
-                        bottom: '10px',
-                        right: '10px',
-                        background: 'rgba(15, 23, 42, 0.72)',
-                        backdropFilter: 'blur(8px)',
-                        color: '#ffffff',
-                        fontSize: '0.7rem',
-                        fontWeight: 700,
-                        padding: '0.24rem 0.6rem',
-                        borderRadius: '9999px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.3rem',
-                        pointerEvents: 'none',
-                        zIndex: 5,
-                        boxShadow: '0 2px 8px rgba(0,0,0,0.25)'
-                      }}
-                    >
-                      <ZoomIn size={12} />
-                      <span>Tap to inspect</span>
-                    </div>
                   </>
                 ) : (
                   <div style={{
@@ -1183,7 +1157,7 @@ export const HeroSection = () => {
 
               {/* Bottom Pagination Dots with Brand Orange Active Bar (if multiple images) */}
               {hasMultipleImages && (
-                <div style={{
+                <div className="hero-showcase-pagination" style={{
                   display: 'flex',
                   justifyContent: 'center',
                   alignItems: 'center',
@@ -1196,6 +1170,10 @@ export const HeroSection = () => {
                       <button
                         key={imgItem.id || idx}
                         type="button"
+                        className="hero-showcase-pagination-dot"
+                        data-active={isActive ? 'true' : 'false'}
+                        aria-label={`Show portfolio sample ${idx + 1} of ${activeShowcaseImages.length}`}
+                        aria-current={isActive ? 'true' : undefined}
                         onClick={() => handleDotClick(idx)}
                         style={{
                           height: '6px',

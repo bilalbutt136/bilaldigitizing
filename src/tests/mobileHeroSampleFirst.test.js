@@ -75,10 +75,10 @@ describe('Mobile Hero Sample First & VIP Presentation', () => {
       'HeroSection must include hero-mobile-vip-banner for real production sew-out branding'
     );
 
-    // Tap to inspect badge & Lightbox modal
+    // Interactive lightbox without an obstructing text badge
     assert.match(heroCode, /lightboxSample/, 'HeroSection must maintain lightboxSample state');
     assert.match(heroCode, /handleImageClick/, 'HeroSection must support tapping image to open sample preview');
-    assert.match(heroCode, /Tap to inspect/, 'Showcase image container must expose Tap to inspect indicator');
+    assert.doesNotMatch(heroCode, /Tap to inspect/, 'Showcase image must not carry a text overlay or tooltip');
     assert.match(heroCode, /hero-sample-lightbox-card/, 'HeroSection must render full-screen interactive lightbox modal');
     assert.match(heroCode, /Order Similar Quality/, 'Lightbox modal must include high-converting CTA action');
   });
