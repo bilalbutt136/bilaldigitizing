@@ -334,6 +334,14 @@ export function isOrderPaymentConfirmedNotification(notif) {
 /**
  * Detects if a notification represents an "Order Delivered / Files Ready" event.
  */
+export function isOrderCancellationNotification(notif) {
+  if (!notif) return false;
+  const id = String(notif.id || '').toLowerCase();
+  const title = String(notif.title || '').toLowerCase();
+  return /(?:^|-)cancel(?:-|$)|approved-cancel|rejected-cancel/.test(id)
+    || /cancellation|order cancelled|order canceled/.test(title);
+}
+
 export function isOrderDeliveredNotification(notif) {
   if (!notif) return false;
   if (notif.isDelivery === true || notif.soundType === 'delivery' || Boolean(notif.deliveryNumber)) {
@@ -540,8 +548,12 @@ export function filterAndSanitizeNotifications(notifications, { currentUserEmail
       const isPlaced = isOrderPlacedNotification(notif);
       const isPaid = isOrderPaymentConfirmedNotification(notif);
       const isDelivered = isOrderDeliveredNotification(notif);
+      const isCancellation = isOrderCancellationNotification(notif);
 
-      if (isPlaced) {
+      if (isCancellation) {
+        // Cancellation decisions and requests must reach the customer; they are not routine status spam.
+        otherNotifications.push(notif);
+      } else if (isPlaced) {
         // Keep only 1 placed notification per order (prefer latest)
         if (!orderPlacedMap.has(cleanOrderId)) {
           orderPlacedMap.set(cleanOrderId, notif);

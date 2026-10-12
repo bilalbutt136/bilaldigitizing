@@ -1550,6 +1550,15 @@ export const OrderTrackerDrawer = () => {
           )}
 
 
+          {!isAdmin && cancellationData.status === 'rejected' && ord.status !== 'cancelled' && (
+            <div style={{ padding: '0.9rem 1rem', background: '#fff7ed', border: '1px solid #fdba74', borderRadius: 12 }}>
+              <strong style={{ display: 'block', color: '#9a3412', fontSize: '0.85rem' }}>Cancellation declined</strong>
+              <p style={{ margin: '0.3rem 0 0', color: '#9a3412', fontSize: '0.8rem' }}>
+                This order remains active. {cancellationData.admin_rejection_reason || 'The studio has reviewed your request.'}
+              </p>
+            </div>
+          )}
+
           {/* Customers can request cancellation for any order not yet delivered or completed. */}
           {!isAdmin && isCancellable && (
             <div style={{

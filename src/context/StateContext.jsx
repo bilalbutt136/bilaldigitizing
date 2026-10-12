@@ -19,6 +19,7 @@ import {
   fetchCatalogFromSupabase,
   fetchClientsFromSupabase,
   fetchOrdersFromSupabase,
+  invalidateOrdersCache,
   fetchOrderById,
   fetchAdminUsers,
   addAdminUserInSupabase,
@@ -67,8 +68,10 @@ import {
   filterAndSanitizeNotifications,
   isOrderPlacedNotification,
   isOrderPaymentConfirmedNotification,
-  isOrderDeliveredNotification
+  isOrderDeliveredNotification,
+  isOrderCancellationNotification
 } from '../utils/notificationRouter';
+import { getCompactNotificationText } from '../utils/notificationPreview.js';
 
 export { formatOrderId, formatDimensions, formatFabric, formatDesignTitle };
 
@@ -890,7 +893,20 @@ export const StateProvider = ({ children, initialCatalog = null }) => {
           saveNotificationsToStorage(sanitized, emailToUse);
           return sanitized;
         });
-        showToast(`🔔 ${notif.title || 'New Notification'}: ${notif.message || ''}`, 'info');
+        // Decision notifications also reconcile the customer's order status even if
+        // the orders Realtime broadcast was missed while this tab was backgrounded.
+        if (isOrderCancellationNotification(notif) && (notif.order_id || notif.orderId)) {
+          fetchOrderById(notif.order_id || notif.orderId).then(freshOrder => {
+            if (!freshOrder) return;
+            const updatedId = String(freshOrder.id || '').replace(/^#+/, '');
+            setOrders(prev => (prev || []).map(order =>
+              String(order.id || '').replace(/^#+/, '') === updatedId ? { ...order, ...freshOrder } : order
+            ));
+            setSelectedOrderForDrawer(prev => prev && String(prev.id || '').replace(/^#+/, '') === updatedId
+              ? { ...prev, ...freshOrder } : prev);
+          }).catch(err => console.warn('Cancellation order refresh notice:', err?.message));
+        }
+        showToast(`🔔 ${getCompactNotificationText(notif).title}: ${getCompactNotificationText(notif).message}`, 'info');
       },
       onNotificationUpdate: (notif) => {
         if (!notif || !notif.id) return;
@@ -1351,8 +1367,9 @@ export const StateProvider = ({ children, initialCatalog = null }) => {
             const isOrdPlaced = isOrderPlacedNotification(notif);
             const isOrdPaid = isOrderPaymentConfirmedNotification(notif);
             const isOrdDelivered = isOrderDeliveredNotification(notif);
-            const isOrderRelated = Boolean(notif.order_id || notif.orderId || isOrdPlaced || isOrdPaid || isOrdDelivered);
-            if (isOrderRelated && !isOrdPlaced && !isOrdPaid && !isOrdDelivered) {
+            const isCancellation = isOrderCancellationNotification(notif);
+            const isOrderRelated = Boolean(notif.order_id || notif.orderId || isOrdPlaced || isOrdPaid || isOrdDelivered || isCancellation);
+            if (isOrderRelated && !isOrdPlaced && !isOrdPaid && !isOrdDelivered && !isCancellation) {
               return; // Ignore other order status notifications (internal revisions, etc.)
             }
           }
@@ -2529,7 +2546,8 @@ export const StateProvider = ({ children, initialCatalog = null }) => {
         return o;
       }));
       showToast('Cancellation request submitted to studio administration.', 'info');
-      if (refreshOrders) refreshOrders();
+      invalidateOrdersCache();
+      if (refreshOrders) refreshOrders({ force: true });
       return { success: true, cancellation: data.cancellation };
     } catch (err) {
       showToast(err.message || 'Error submitting cancellation request.', 'error');
@@ -2567,7 +2585,8 @@ export const StateProvider = ({ children, initialCatalog = null }) => {
         setWalletBalance(data.newBalance);
       }
       showToast(`Order ${formatOrderId(orderId)} cancelled.${data.refundIssued ? ` $${data.refundAmount.toFixed(2)} refunded to wallet.` : ''}`, 'success');
-      if (refreshOrders) refreshOrders();
+      invalidateOrdersCache();
+      if (refreshOrders) refreshOrders({ force: true });
       return { success: true, ...data };
     } catch (err) {
       showToast(err.message || 'Error approving cancellation.', 'error');
@@ -2602,7 +2621,8 @@ export const StateProvider = ({ children, initialCatalog = null }) => {
         return o;
       }));
       showToast(`Cancellation declined. Order restored to ${restoredStatus}.`, 'info');
-      if (refreshOrders) refreshOrders();
+      invalidateOrdersCache();
+      if (refreshOrders) refreshOrders({ force: true });
       return { success: true, ...data };
     } catch (err) {
       showToast(err.message || 'Error rejecting cancellation.', 'error');

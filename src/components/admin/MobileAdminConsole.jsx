@@ -26,6 +26,7 @@ import { subscribeToChatMessages, subscribeToConversations } from '../../service
 import { playMessageChimeForMessage } from '../../utils/audioNotification';
 import { useAdminIdleSession } from '../../hooks/useAdminIdleSession';
 import { getMonthlyProgress } from '../../utils/monthlyProgress';
+import { getCompactNotificationText } from '../../utils/notificationPreview.js';
 
 const resolveMonthlyProgress = (order) => {
   if (!order) return null;
@@ -809,11 +810,11 @@ export default function MobileAdminConsole() {
                       </span>
                       <span style={{ minWidth: 0, flex: 1 }}>
                         <span style={{ display: 'block', fontSize: '0.78rem', fontWeight: unread ? 900 : 800, color: 'var(--color-text-primary, #0f172a)' }}>
-                          {notification?.title || 'Notification'}
+                          {getCompactNotificationText(notification).title}
                         </span>
                         {notification?.message && (
                           <span style={{ display: 'block', marginTop: '0.25rem', fontSize: '0.7rem', lineHeight: 1.4, color: 'var(--text-muted, #64748b)' }}>
-                            {notification.message}
+                            {getCompactNotificationText(notification).message}
                           </span>
                         )}
                         <span style={{ display: 'block', marginTop: '0.35rem', fontSize: '0.64rem', color: '#94a3b8', fontWeight: 700 }}>

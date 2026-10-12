@@ -118,6 +118,10 @@ function runDedupedApiRead(key, factory, { ttlMs = 0, force = false, hardMinInte
   return promise;
 }
 
+export function invalidateOrdersCache() {
+  clearCompletedApiReads('orders:');
+}
+
 function clearCompletedApiReads(prefix) {
   for (const key of completedApiReads.keys()) {
     if (key.startsWith(prefix)) completedApiReads.delete(key);
@@ -314,7 +318,7 @@ export async function fetchOrdersFromSupabase(_customEmail = null, _customOrderI
       const url = '/api/orders?action=fetchAll&view=summary';
       const res = await fetch(url, {
         headers,
-        cache: 'default',
+        cache: options?.force ? 'no-store' : 'default',
         credentials: 'include'
       });
       const data = await res.json();
@@ -454,8 +458,8 @@ export function mapDatabaseOrderToClientOrder(order) {
         clientName: order.client_name,
         clientEmail: order.client_email,
         serviceCategory: order.service_category,
-        paymentStatus: isPaidComputed ? 'paid' : (order.payment_status || order.paymentStatus || 'pending'),
-        payment_status: isPaidComputed ? 'paid' : (order.payment_status || order.paymentStatus || 'pending'),
+        paymentStatus: pStatusLower === 'refunded' ? 'refunded' : (isPaidComputed ? 'paid' : (order.payment_status || order.paymentStatus || 'pending')),
+        payment_status: pStatusLower === 'refunded' ? 'refunded' : (isPaidComputed ? 'paid' : (order.payment_status || order.paymentStatus || 'pending')),
         isPaid: isPaidComputed,
         artworkUrl: primaryArtworkUrl,
         image_url: primaryArtworkUrl,

@@ -46,6 +46,7 @@ import {
 } from '../utils/notificationRouter';
 import { subscribeToChatMessages, subscribeToConversations } from '../services/supabaseService';
 import { fetchChatUnreadCounts } from '../services/chatUnreadService';
+import { getCompactNotificationText } from '../utils/notificationPreview.js';
 
 export const HeaderNav = () => {
   const navigate = useNavigate();
@@ -843,7 +844,8 @@ export const HeaderNav = () => {
                           }}
                         >
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem' }}>
-                            <div style={{ fontSize: '0.82rem', fontWeight: 800, color: 'var(--color-text-primary, var(--navy-900))' }}>{item.title}</div>
+                            <div style={{ fontSize: '0.82rem', fontWeight: 800, color: 'var(--color-text-primary, var(--navy-900))', minWidth: 0, flex: 1,
+                                    overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>{getCompactNotificationText(item).title}</div>
                             <span
                               style={{ fontSize: '0.66rem', color: 'var(--color-text-muted)', whiteSpace: 'nowrap', fontWeight: 600 }}
                               title={getNotificationFullDateTime(item, orders)}
@@ -851,7 +853,7 @@ export const HeaderNav = () => {
                               {formatNotificationExactTime(item, orders)}
                             </span>
                           </div>
-                          <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginTop: '0.2rem', lineHeight: 1.4 }}>{item.message}</div>
+                          <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginTop: '0.2rem', lineHeight: 1.4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{getCompactNotificationText(item).message}</div>
                         </div>
                       ))
                     )}
@@ -1189,7 +1191,8 @@ export const HeaderNav = () => {
                                 }}
                               >
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem' }}>
-                                  <div style={{ fontSize: '0.82rem', fontWeight: 800, color: 'var(--color-text-primary, var(--navy-900))' }}>{item.title}</div>
+                                  <div style={{ fontSize: '0.82rem', fontWeight: 800, color: 'var(--color-text-primary, var(--navy-900))', minWidth: 0, flex: 1,
+                                    overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>{getCompactNotificationText(item).title}</div>
                                   <span
                                     style={{ fontSize: '0.66rem', color: 'var(--color-text-muted)', whiteSpace: 'nowrap', fontWeight: 600 }}
                                     title={getNotificationFullDateTime(item, orders)}
@@ -1197,7 +1200,7 @@ export const HeaderNav = () => {
                                     {formatNotificationExactTime(item, orders)}
                                   </span>
                                 </div>
-                                <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginTop: '0.2rem', lineHeight: 1.4 }}>{item.message}</div>
+                                <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginTop: '0.2rem', lineHeight: 1.4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{getCompactNotificationText(item).message}</div>
                               </div>
                             ))
                           )}

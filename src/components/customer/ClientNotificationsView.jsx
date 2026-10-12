@@ -28,6 +28,7 @@ import {
   formatNotificationExactTime,
   getNotificationFullDateTime
 } from '../../utils/notificationRouter';
+import { getCompactNotificationText } from '../../utils/notificationPreview.js';
 
 export const ClientNotificationsView = ({ onNavigateToOrder, userEmail, isAdmin = false }) => {
   const navigate = useNavigate();
@@ -322,7 +323,7 @@ export const ClientNotificationsView = ({ onNavigateToOrder, userEmail, isAdmin 
                       overflow: 'hidden',
                       textOverflow: 'ellipsis'
                     }}>
-                      {notif.title || 'Studio Notification'}
+                      {getCompactNotificationText(notif).title}
                     </h5>
                     <span
                       style={{ fontSize: '0.68rem', color: 'var(--color-text-muted, #94a3b8)', flexShrink: 0, marginLeft: '0.5rem', fontWeight: 600 }}
@@ -341,7 +342,7 @@ export const ClientNotificationsView = ({ onNavigateToOrder, userEmail, isAdmin 
                     textOverflow: 'ellipsis',
                     whiteSpace: 'nowrap'
                   }}>
-                    {notif.message || notif.body || 'Tap to view details.'}
+                    {getCompactNotificationText(notif).message || 'Tap to view details.'}
                   </p>
                 </div>
 

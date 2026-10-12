@@ -625,6 +625,18 @@ export const CustomerDashboard = () => {
   }, [myOrders, orderFilterTab]);
 
   const getPaymentStatusBadge = (statusOrOrder) => {
+    const paymentStatus = String(typeof statusOrOrder === 'object' && statusOrOrder !== null
+      ? (statusOrOrder.payment_status || statusOrOrder.paymentStatus || '') : (statusOrOrder || '')).toLowerCase().trim();
+    if (paymentStatus !== 'refunded' && typeof statusOrOrder === 'object' && statusOrOrder !== null
+      && String(statusOrOrder.status || '').toLowerCase() === 'cancelled'
+      && ['unpaid', 'pending', 'awaiting_payment', 'pending_payment'].includes(paymentStatus)) {
+      return <span className="badge" style={{ padding: '0.2rem 0.55rem', borderRadius: 9999, fontSize: '0.725rem', fontWeight: 800,
+        background: '#f1f5f9', color: '#475569', border: '1px solid #cbd5e1' }}>CLOSED</span>;
+    }
+    if (paymentStatus === 'refunded') {
+      return <span className="badge" style={{ padding: '0.2rem 0.55rem', borderRadius: 9999, fontSize: '0.725rem', fontWeight: 800,
+        background: '#dcfce7', color: '#166534', border: '1px solid #86efac' }}>REFUNDED</span>;
+    }
     const isPaidComputed = typeof statusOrOrder === 'object' && statusOrOrder !== null
       ? isOrderPaid(statusOrOrder)
       : isOrderPaid({ payment_status: statusOrOrder });
@@ -680,6 +692,16 @@ export const CustomerDashboard = () => {
     const s = String(ord?.status || 'submitted').toLowerCase().trim();
     const pStatus = String(ord?.payment_status || ord?.paymentStatus || '').toLowerCase().trim();
     const isUnpaid = s === 'awaiting_payment' || s === 'pending_payment' || pStatus === 'unpaid' || (!isPaid && (s === 'awaiting_payment' || s === 'pending_payment' || s === 'submitted'));
+
+    if (s === 'cancelled' || s === 'cancellation_requested') {
+      const cancelled = s === 'cancelled';
+      return <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', padding: '0.25rem 0.65rem',
+        borderRadius: 9999, fontSize: '0.74rem', fontWeight: 900, whiteSpace: 'nowrap',
+        background: cancelled ? '#fee2e2' : '#fef3c7', color: cancelled ? '#991b1b' : '#92400e',
+        border: cancelled ? '1px solid #fca5a5' : '1px solid #fde68a' }}>
+        {cancelled ? 'Cancelled' : 'Cancellation Pending'}
+      </span>;
+    }
 
     if (isUnpaid && !isPaid) {
       return (
