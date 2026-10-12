@@ -705,3 +705,21 @@ html[data-brand-finish="solid"] .vip-hero .hero-highlight-row .text-gradient-ora
     -webkit-text-fill-color: CanvasText !important;
   }
 }
+
+/* Phones and narrow tablets: put the live portfolio sample above hero copy.
+   Earlier VIP copy-first rules targeted <=1024px and overrode the shared
+   sample-first layout; the 900-1024px two-column tablet layout stays intact. */
+@media (max-width: 899px) {
+  .vip-hero .hero-grid-layout {
+    display: flex !important;
+    flex-direction: column !important;
+  }
+  .vip-hero .hero-right-visual {
+    order: 1 !important;
+    width: 100% !important;
+  }
+  .vip-hero .hero-left-content {
+    order: 2 !important;
+    width: 100% !important;
+  }
+}
