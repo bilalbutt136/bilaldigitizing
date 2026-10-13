@@ -89,6 +89,7 @@ import {
   formatNotificationExactTime,
   getNotificationFullDateTime
 } from '../../utils/notificationRouter';
+import { getCompactNotificationText } from '../../utils/notificationPreview.js';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import { GoogleCustomSignInButton } from '../auth/GoogleCustomSignInButton';
 
@@ -4958,8 +4959,8 @@ export const BDigitizingMobileApp = ({ initialTab = 'home' }) => {
                     }}
                   >
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.4rem', marginBottom: '0.2rem' }}>
-                      <h5 style={{ margin: 0, fontSize: '0.88rem', fontWeight: 800, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a' }}>
-                        {n.title || 'Studio Notification'}
+                      <h5 style={{ margin: 0, fontSize: '0.84rem', fontWeight: 800, flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a' }}>
+                        {getCompactNotificationText(n).title}
                       </h5>
                       <span
                         style={{ fontSize: '0.68rem', color: isDark ? '#94a3b8' : '#64748b', whiteSpace: 'nowrap', fontWeight: 600, flexShrink: 0 }}
@@ -4968,8 +4969,8 @@ export const BDigitizingMobileApp = ({ initialTab = 'home' }) => {
                         {formatNotificationExactTime(n, orders)}
                       </span>
                     </div>
-                    <p style={{ margin: '0.2rem 0 0', fontSize: '0.78rem', color: isDark ? 'var(--color-text-secondary, #94a3b8)' : '#475569' }}>
-                      {n.message || n.body}
+                    <p style={{ margin: '0.2rem 0 0', fontSize: '0.74rem', lineHeight: 1.35, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: isDark ? 'var(--color-text-secondary, #94a3b8)' : '#475569' }}>
+                      {getCompactNotificationText(n).message}
                     </p>
                   </div>
                 ))

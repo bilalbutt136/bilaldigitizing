@@ -1,5 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import {
   filterAndSanitizeNotifications,
   isOrderCancellationNotification
@@ -47,6 +48,43 @@ test('short notification previews do not reveal client email, order title, or pr
   assert.equal(getCompactNotificationText({ title: 'Important Notice', message: 'x'.repeat(250) }).message.length <= 90, true);
   assert.equal(getCompactNotificationText({ id: 'notif-approved-cancel-16502-2', title: 'Cancellation approved', order_id: '16502' }).title, 'Cancellation approved');
   assert.equal(getCompactNotificationText({ id: 'notif-rejected-cancel-16502-3', title: 'Cancellation declined', order_id: '16502' }).title, 'Cancellation declined');
+});
+
+
+test('notification lists use compact previews on web, admin, client, and mobile app', () => {
+  const relativeSources = [
+    '../components/HeaderNav.jsx',
+    '../components/admin/MobileAdminConsole.jsx',
+    '../components/customer/ClientNotificationsView.jsx',
+    '../components/mobile/BDigitizingMobileApp.jsx'
+  ];
+  for (const relativeSource of relativeSources) {
+    const source = readFileSync(new URL(relativeSource, import.meta.url), 'utf8');
+    assert.match(source, /getCompactNotificationText/, relativeSource);
+    assert.match(source, /getCompactNotificationText\((?:item|notification|notif|n)\)\.title/, relativeSource);
+    assert.match(source, /getCompactNotificationText\((?:item|notification|notif|n)\)\.message/, relativeSource);
+  }
+
+  const mobileSource = readFileSync(new URL('../components/mobile/BDigitizingMobileApp.jsx', import.meta.url), 'utf8');
+  assert.doesNotMatch(mobileSource, /\{n\.title\s*\|\|\s*'Studio Notification'\}/);
+  assert.doesNotMatch(mobileSource, /\{n\.message\s*\|\|\s*n\.body\}/);
+});
+
+test('generic and new-order previews stay brief without changing the original notice', () => {
+  const original = {
+    id: 'notif-ord-16502-admin',
+    order_id: '#16502',
+    title: '🚨 New Order: WhatsApp Image 2026-09-25 at 9.50.59 AM - Left Chest & Cap Small Logo',
+    message: 'Owner (owner@example.com) submitted an order with many details'
+  };
+  assert.deepEqual(getCompactNotificationText(original), {
+    title: 'New order',
+    message: 'Order #16502 · View order'
+  });
+  assert.match(original.title, /WhatsApp Image/); // only the visible preview changes
+  const generic = getCompactNotificationText({ title: 'A'.repeat(180), message: 'B'.repeat(200) });
+  assert.ok(generic.title.length <= 45);
+  assert.ok(generic.message.length <= 72);
 });
 
 test('customer tracking reflects cancellation pending, cancelled, and continuing after declined request', () => {

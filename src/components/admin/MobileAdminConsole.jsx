@@ -809,11 +809,11 @@ export default function MobileAdminConsole() {
                         <Bell size={16} />
                       </span>
                       <span style={{ minWidth: 0, flex: 1 }}>
-                        <span style={{ display: 'block', fontSize: '0.78rem', fontWeight: unread ? 900 : 800, color: 'var(--color-text-primary, #0f172a)' }}>
+                        <span style={{ display: 'block', fontSize: '0.78rem', fontWeight: unread ? 900 : 800, color: 'var(--color-text-primary, #0f172a)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                           {getCompactNotificationText(notification).title}
                         </span>
                         {notification?.message && (
-                          <span style={{ display: 'block', marginTop: '0.25rem', fontSize: '0.7rem', lineHeight: 1.4, color: 'var(--text-muted, #64748b)' }}>
+                          <span style={{ display: 'block', marginTop: '0.25rem', fontSize: '0.7rem', lineHeight: 1.4, color: 'var(--text-muted, #64748b)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                             {getCompactNotificationText(notification).message}
                           </span>
                         )}
