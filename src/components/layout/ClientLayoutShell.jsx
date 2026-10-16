@@ -22,6 +22,7 @@ const CheckoutModal = dynamic(() => import('../customer/CheckoutModal').then(mod
 const OrderTrackerDrawer = dynamic(() => import('../customer/OrderTrackerDrawer').then(mod => mod.OrderTrackerDrawer), { ssr: false });
 const DepositModal = dynamic(() => import('../customer/DepositModal').then(mod => mod.DepositModal), { ssr: false });
 const GlobalUploadModal = dynamic(() => import('../common/GlobalUploadModal'), { ssr: false });
+const LiveChatWidget = dynamic(() => import('../common/LiveChatWidget').then(mod => mod.LiveChatWidget), { ssr: false });
 
 export const ClientLayoutShell = ({ children }) => {
   const { mobileMode } = useAppState();
@@ -86,6 +87,7 @@ export const ClientLayoutShell = ({ children }) => {
       {!isAppMode && !isCompactShell && <PWAInstallBanner />}
       <PWARegistrar />
       {!isAppMode && <WhatsAppMessagePopup />}
+      {!isAppMode && !isCompactShell && <LiveChatWidget />}
     </div>
   );
 };

@@ -100,7 +100,8 @@ export default function CustomerSupportChat({
   defaultOrderId = null,
   initialTopic = '',
   chatType = 'inbox', // 'inbox' | 'support'
-  onSwitchChannel = null
+  onSwitchChannel = null,
+  onClose = null
 }) {
   const { authUser, currentUser } = useAppState();
 
@@ -769,7 +770,14 @@ export default function CustomerSupportChat({
           box-sizing: border-box;
         }
         @media (min-width: 1025px) {
-          .customer-chat-root {
+                  .live-chat-floating-container .customer-chat-root {
+          border-radius: 0 !important;
+          border: none !important;
+          box-shadow: none !important;
+          min-height: 0 !important;
+          height: 100% !important;
+        }
+        .customer-chat-root {
             border-radius: 16px;
             border: 1.5px solid #e2e8f0;
             box-shadow: 0 4px 24px rgba(15, 23, 42, 0.06);
@@ -1026,6 +1034,29 @@ export default function CustomerSupportChat({
           >
             <RefreshCw size={13} />
           </button>
+          {typeof onClose === 'function' && (
+            <button
+              type="button"
+              onClick={onClose}
+              style={{
+                background: 'rgba(255,255,255,0.08)',
+                border: '1px solid rgba(255,255,255,0.12)',
+                borderRadius: '8px',
+                padding: '6px 8px',
+                color: '#ffffff',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.3rem',
+                fontSize: '0.72rem',
+                fontWeight: 700
+              }}
+              title="Close chat"
+              aria-label="Close chat"
+            >
+              <X size={13} />
+            </button>
+          )}
         </div>
       </div>
 
