@@ -87,7 +87,7 @@ export const ClientLayoutShell = ({ children }) => {
       {!isAppMode && !isCompactShell && <PWAInstallBanner />}
       <PWARegistrar />
       {!isAppMode && <WhatsAppMessagePopup />}
-      {!isAppMode && !isCompactShell && <LiveChatWidget />}
+      <LiveChatWidget />
     </div>
   );
 };

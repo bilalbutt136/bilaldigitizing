@@ -11,7 +11,8 @@ describe('Live Chat Floating Widget & Realtime Support System', () => {
     const file = read('src/components/common/LiveChatWidget.jsx');
 
     // Floating position and styling
-    assert.match(file, /fixed bottom-6 right-6 z-\[999\]/);
+    assert.match(file, /live-chat-floating-btn-wrap/);
+    assert.match(file, /z-index:\s*9999999/);
     assert.match(file, /linear-gradient\(135deg, #6366f1 0%, #7c3aed 50%, #4f46e5 100%\)/);
 
     // Online indicator dot at top-right with pulse animation
@@ -31,7 +32,7 @@ describe('Live Chat Floating Widget & Realtime Support System', () => {
     const file = read('src/components/common/LiveChatWidget.jsx');
 
     // Authenticated path renders CustomerSupportChat with real Supabase chat
-    assert.match(file, /import CustomerSupportChat from '\.\.\/customer\/CustomerSupportChat'/);
+    assert.match(file, /import\('\.\.\/customer\/CustomerSupportChat'\)/);
     assert.match(file, /<CustomerSupportChat/);
     assert.match(file, /onClose=\{handleClose\}/);
     assert.match(file, /onSwitchChannel=/);
@@ -68,7 +69,7 @@ describe('Live Chat Floating Widget & Realtime Support System', () => {
     const shell = read('src/components/layout/ClientLayoutShell.jsx');
 
     assert.match(shell, /import\('\.\.\/common\/LiveChatWidget'\)\.then\(mod => mod\.LiveChatWidget\)/);
-    assert.match(shell, /\{!isAppMode && !isCompactShell && <LiveChatWidget \/>\}/);
+    assert.match(shell, /<LiveChatWidget \/>/);
     assert.match(shell, /\{!isAppMode && <WhatsAppMessagePopup \/>\}/);
   });
 

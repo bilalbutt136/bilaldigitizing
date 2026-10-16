@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import dynamic from 'next/dynamic';
 import { useAppState } from '../../context/StateContext';
 import {
   X,
@@ -12,11 +13,22 @@ import {
   ExternalLink,
   LogIn
 } from 'lucide-react';
-import CustomerSupportChat from '../customer/CustomerSupportChat';
 import { subscribeToChatMessages, subscribeToConversations } from '../../services/supabaseService';
 import { fetchChatUnreadCounts } from '../../services/chatUnreadService';
 
+// Lazy-load the heavy chat engine so the launcher button renders immediately
+const CustomerSupportChat = dynamic(() => import('../customer/CustomerSupportChat'), {
+  ssr: false,
+  loading: () => (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', padding: '2rem', color: '#64748b' }}>
+      <Loader2 size={24} className="animate-spin" style={{ color: '#6366f1', marginBottom: '0.75rem' }} />
+      <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>Loading BDigitizing Live Chat...</span>
+    </div>
+  )
+});
+
 export const LiveChatWidget = () => {
+  const [mounted, setMounted] = useState(false);
   const {
     authUser,
     currentUser,
@@ -54,9 +66,14 @@ export const LiveChatWidget = () => {
   ).trim();
   const cleanWaNumber = whatsappNumber.replace(/[^0-9+]/g, '');
 
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   // 1. Sync unread counts for logged-in users via Supabase Realtime
   useEffect(() => {
-    let mounted = true;
+    if (!mounted) return;
+    let isMounted = true;
     if (!userEmail && !isAdmin) {
       setUnreadCount(0);
       return;
@@ -65,7 +82,7 @@ export const LiveChatWidget = () => {
     const refreshCounts = async (force = false) => {
       try {
         const counts = await fetchChatUnreadCounts({ email: userEmail, isAdmin, force });
-        if (mounted) {
+        if (isMounted) {
           setUnreadCount(counts.total || 0);
         }
       } catch {}
@@ -84,16 +101,17 @@ export const LiveChatWidget = () => {
     document.addEventListener('visibilitychange', handleVisibility);
 
     return () => {
-      mounted = false;
+      isMounted = false;
       unsubscribeMessages();
       unsubscribeConversations();
       window.removeEventListener('focus', handleFocus);
       document.removeEventListener('visibilitychange', handleVisibility);
     };
-  }, [userEmail, isAdmin]);
+  }, [mounted, userEmail, isAdmin]);
 
   // 2. Incoming message popup preview for closed state
   useEffect(() => {
+    if (!mounted) return;
     const handleNewChatMessage = (event) => {
       const msg = event?.detail;
       if (!msg) return;
@@ -115,10 +133,11 @@ export const LiveChatWidget = () => {
       window.removeEventListener('bdigi_new_chat_message', handleNewChatMessage);
       if (previewTimerRef.current) clearTimeout(previewTimerRef.current);
     };
-  }, [isAdmin, userEmail, isOpen]);
+  }, [mounted, isAdmin, userEmail, isOpen]);
 
   // 3. Listen for global events to open live chat (e.g. from nav buttons or CTA)
   useEffect(() => {
+    if (!mounted) return;
     const handleOpenLiveChat = (e) => {
       const requestedChannel = e?.detail?.channel;
       if (requestedChannel === 'inbox' || requestedChannel === 'support') {
@@ -129,7 +148,7 @@ export const LiveChatWidget = () => {
 
     window.addEventListener('bdigi_open_live_chat', handleOpenLiveChat);
     return () => window.removeEventListener('bdigi_open_live_chat', handleOpenLiveChat);
-  }, []);
+  }, [mounted]);
 
   const handleToggleOpen = () => {
     setIsOpen(prev => {
@@ -193,10 +212,47 @@ export const LiveChatWidget = () => {
     setGuestMessage(text);
   };
 
+  if (!mounted) return null;
+
   return (
     <div className="live-chat-floating-root">
-      {/* GLOBAL EMBED OVERRIDE STYLES */}
+      {/* GLOBAL EMBED & POSITIONING STYLES */}
       <style dangerouslySetInnerHTML={{ __html: `
+        .live-chat-floating-btn-wrap {
+          position: fixed !important;
+          bottom: max(24px, env(safe-area-inset-bottom, 24px));
+          right: 24px;
+          z-index: 9999999 !important;
+        }
+        html.mobile-app-active .live-chat-floating-btn-wrap,
+        [data-mobile-mode="app"] .live-chat-floating-btn-wrap {
+          bottom: calc(76px + env(safe-area-inset-bottom, 0px)) !important;
+        }
+        .live-chat-floating-container {
+          position: fixed !important;
+          bottom: 96px;
+          right: 24px;
+          width: min(400px, calc(100vw - 32px));
+          height: min(600px, calc(100vh - 120px));
+          z-index: 9999999 !important;
+        }
+        html.mobile-app-active .live-chat-floating-container,
+        [data-mobile-mode="app"] .live-chat-floating-container {
+          bottom: calc(140px + env(safe-area-inset-bottom, 0px)) !important;
+        }
+        @media (max-width: 640px) {
+          .live-chat-floating-container {
+            bottom: 0 !important;
+            right: 0 !important;
+            left: 0 !important;
+            top: 0 !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            height: 100dvh !important;
+            max-height: 100vh !important;
+            border-radius: 0 !important;
+          }
+        }
         .live-chat-floating-container .customer-chat-root {
           border-radius: 0 !important;
           border: none !important;
@@ -217,7 +273,7 @@ export const LiveChatWidget = () => {
       {/* FLOATING CHAT WINDOW / MODAL */}
       {isOpen && (
         <div
-          className="live-chat-floating-container fixed inset-0 sm:inset-auto sm:bottom-[90px] sm:right-6 sm:w-[400px] sm:h-[600px] sm:max-h-[calc(100vh-110px)] z-[1000] flex flex-col bg-white dark:bg-slate-900 sm:rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden transition-all duration-200"
+          className="live-chat-floating-container flex flex-col bg-white dark:bg-slate-900 sm:rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden transition-all duration-200"
           style={{
             boxShadow: '0 20px 45px -10px rgba(15, 23, 42, 0.28), 0 0 0 1px rgba(0, 0, 0, 0.08)'
           }}
@@ -628,7 +684,7 @@ export const LiveChatWidget = () => {
             position: 'fixed',
             bottom: '96px',
             right: '24px',
-            zIndex: 998,
+            zIndex: 9999998,
             maxWidth: '300px',
             background: '#0f172a',
             color: '#ffffff',
@@ -686,13 +742,7 @@ export const LiveChatWidget = () => {
       )}
 
       {/* FLOATING LAUNCHER BUTTON (EXACT MATCH TO USER SCREENSHOT) */}
-      <div
-        className="fixed bottom-6 right-6 z-[999]"
-        style={{
-          bottom: 'max(24px, env(safe-area-inset-bottom, 24px))',
-          right: '24px'
-        }}
-      >
+      <div className="live-chat-floating-btn-wrap">
         <button
           type="button"
           onClick={handleToggleOpen}
@@ -702,18 +752,19 @@ export const LiveChatWidget = () => {
           title={isOpen ? 'Close chat' : 'Live Chat (Online)'}
           style={{
             position: 'relative',
-            width: '58px',
-            height: '58px',
+            width: '60px',
+            height: '60px',
             borderRadius: '50%',
             background: 'linear-gradient(135deg, #6366f1 0%, #7c3aed 50%, #4f46e5 100%)',
-            boxShadow: '0 10px 25px -4px rgba(99, 102, 241, 0.45), 0 4px 6px -2px rgba(124, 58, 237, 0.25)',
+            boxShadow: '0 10px 25px -4px rgba(99, 102, 241, 0.5), 0 4px 6px -2px rgba(124, 58, 237, 0.3)',
             border: 'none',
             cursor: 'pointer',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             transition: 'transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease',
-            outline: 'none'
+            outline: 'none',
+            pointerEvents: 'auto'
           }}
           onMouseDown={(e) => { e.currentTarget.style.transform = 'scale(0.92)'; }}
           onMouseUp={(e) => { e.currentTarget.style.transform = 'scale(1.05)'; }}
@@ -725,8 +776,8 @@ export const LiveChatWidget = () => {
             <X size={26} color="#ffffff" strokeWidth={2.4} />
           ) : (
             <svg
-              width="26"
-              height="26"
+              width="28"
+              height="28"
               viewBox="0 0 24 24"
               fill="none"
               stroke="#ffffff"
@@ -743,17 +794,18 @@ export const LiveChatWidget = () => {
           <span
             style={{
               position: 'absolute',
-              top: '1px',
-              right: '1px',
+              top: '2px',
+              right: '2px',
               width: '14px',
               height: '14px',
               borderRadius: '50%',
               background: '#22c55e',
               border: '2.5px solid #ffffff',
-              boxShadow: '0 1px 3px rgba(0,0,0,0.15)',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'center'
+              justifyContent: 'center',
+              zIndex: 10
             }}
           >
             <span
@@ -788,7 +840,8 @@ export const LiveChatWidget = () => {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                animation: 'chatBounceGentle 2s infinite'
+                animation: 'chatBounceGentle 2s infinite',
+                zIndex: 11
               }}
             >
               {unreadCount > 99 ? '99+' : unreadCount}
@@ -801,7 +854,7 @@ export const LiveChatWidget = () => {
           <div
             style={{
               position: 'absolute',
-              bottom: '70px',
+              bottom: '72px',
               right: '0',
               background: '#0f172a',
               color: '#ffffff',
