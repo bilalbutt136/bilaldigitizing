@@ -57,6 +57,7 @@ export const LiveChatWidget = () => {
   const [isSubmittingInquiry, setIsSubmittingInquiry] = useState(false);
   const [inquirySuccess, setInquirySuccess] = useState(false);
   const [inquiryError, setInquiryError] = useState('');
+  const [sentMessages, setSentMessages] = useState([]);
 
   // WhatsApp link configuration
   const whatsappNumber = (
@@ -201,8 +202,8 @@ export const LiveChatWidget = () => {
   // Submit guest inquiry
   const handleGuestSubmit = async (e) => {
     e.preventDefault();
-    if (!guestName.trim() || !guestEmail.trim() || !guestMessage.trim()) {
-      setInquiryError('Please complete your name, email and message.');
+    if (!guestEmail.trim() || !guestMessage.trim()) {
+      setInquiryError('Please enter your email and message.');
       return;
     }
 
@@ -214,10 +215,10 @@ export const LiveChatWidget = () => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          name: guestName.trim(),
+          name: guestName.trim() || guestEmail.split('@')[0] || 'Visitor',
           email: guestEmail.trim(),
-          service: guestService,
-          subject: `Live Chat Inquiry: ${guestService}`,
+          service: guestService || 'Embroidery Digitizing',
+          subject: `Live Chat Inquiry: ${guestService || 'Embroidery Digitizing'}`,
           message: guestMessage.trim()
         })
       });
@@ -229,6 +230,7 @@ export const LiveChatWidget = () => {
       }
 
       setInquirySuccess(true);
+      setSentMessages(prev => [...prev, { text: guestMessage.trim(), time: new Date() }]);
       setGuestMessage('');
     } catch (err) {
       setInquiryError(err.message || 'Error sending message.');
@@ -382,31 +384,31 @@ export const LiveChatWidget = () => {
               {/* GUEST HEADER */}
               <div
                 style={{
-                  background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
+                  background: 'linear-gradient(135deg, #6366f1 0%, #7c3aed 100%)',
                   padding: '0.85rem 1rem',
                   color: '#ffffff',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between',
-                  borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+                  borderBottom: '1px solid rgba(255, 255, 255, 0.15)',
                   flexShrink: 0
                 }}
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', minWidth: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', minWidth: 0 }}>
                   <div style={{ position: 'relative', flexShrink: 0 }}>
                     <div
                       style={{
-                        width: '38px',
-                        height: '38px',
-                        borderRadius: '12px',
-                        background: 'linear-gradient(135deg, #6366f1 0%, #7c3aed 100%)',
-                        color: '#ffffff',
+                        width: '36px',
+                        height: '36px',
+                        borderRadius: '50%',
+                        background: '#ffffff',
+                        color: '#6366f1',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
                         fontWeight: 900,
-                        fontSize: '0.95rem',
-                        boxShadow: '0 2px 8px rgba(99, 102, 241, 0.4)'
+                        fontSize: '0.9rem',
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.15)'
                       }}
                     >
                       BD
@@ -414,13 +416,13 @@ export const LiveChatWidget = () => {
                     <span
                       style={{
                         position: 'absolute',
-                        bottom: '-1px',
-                        right: '-1px',
+                        bottom: '0px',
+                        right: '0px',
                         width: '10px',
                         height: '10px',
                         borderRadius: '50%',
                         background: '#22c55e',
-                        border: '2px solid #0f172a'
+                        border: '2px solid #ffffff'
                       }}
                     />
                   </div>
@@ -429,350 +431,269 @@ export const LiveChatWidget = () => {
                       <h3 style={{ fontSize: '0.92rem', fontWeight: 800, margin: 0, color: '#ffffff' }}>
                         BDigitizing Live Support
                       </h3>
-                      <ShieldCheck size={14} color="#38bdf8" />
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginTop: '0.1rem' }}>
                       <span style={{
-                        background: 'rgba(34, 197, 94, 0.18)',
-                        color: '#4ade80',
-                        fontSize: '0.62rem',
+                        background: 'rgba(34, 197, 94, 0.25)',
+                        color: '#ffffff',
+                        fontSize: '0.6rem',
                         fontWeight: 800,
                         padding: '0.05rem 0.35rem',
                         borderRadius: '6px'
                       }}>
                         Online
                       </span>
-                      <span style={{ fontSize: '0.68rem', color: '#94a3b8' }}>
-                        Typically replies in minutes
-                      </span>
+                    </div>
+                    <div style={{ fontSize: '0.68rem', color: '#e0e7ff', marginTop: '0.1rem' }}>
+                      Typically replies in minutes
                     </div>
                   </div>
                 </div>
 
-                <button
-                  type="button"
-                  onClick={handleClose}
-                  style={{
-                    background: 'rgba(255,255,255,0.08)',
-                    border: '1px solid rgba(255,255,255,0.15)',
-                    borderRadius: '8px',
-                    padding: '7px',
-                    color: '#ffffff',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center'
-                  }}
-                  title="Close chat"
-                  aria-label="Close chat"
-                >
-                  <X size={16} />
-                </button>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                  <button
+                    type="button"
+                    onClick={handleOpenAuth}
+                    style={{
+                      background: 'rgba(255,255,255,0.18)',
+                      border: '1px solid rgba(255,255,255,0.25)',
+                      borderRadius: '8px',
+                      padding: '4px 8px',
+                      color: '#ffffff',
+                      fontSize: '0.7rem',
+                      fontWeight: 700,
+                      cursor: 'pointer'
+                    }}
+                    title="Sign In"
+                  >
+                    Sign In
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleClose}
+                    style={{
+                      background: 'rgba(255,255,255,0.18)',
+                      border: '1px solid rgba(255,255,255,0.25)',
+                      borderRadius: '8px',
+                      padding: '6px',
+                      color: '#ffffff',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}
+                    title="Close chat"
+                    aria-label="Close chat"
+                  >
+                    <X size={16} />
+                  </button>
+                </div>
               </div>
 
-              {/* GUEST BODY (SCROLLABLE) */}
+              {/* CHAT MESSAGES STREAM */}
               <div
                 className="live-chat-body-solid"
                 style={{
                   flex: 1,
                   minHeight: 0,
                   overflowY: 'auto',
-                  padding: '1rem',
+                  padding: '0.9rem',
                   display: 'flex',
                   flexDirection: 'column',
-                  gap: '1rem',
+                  gap: '0.75rem',
                   backgroundColor: '#f8fafc',
                   background: '#f8fafc'
                 }}
               >
-                {/* STUDIO GREETING BUBBLE */}
+                {/* STUDIO WELCOME BUBBLE */}
                 <div style={{
+                  maxWidth: '88%',
+                  alignSelf: 'flex-start',
                   background: '#ffffff',
                   backgroundColor: '#ffffff',
-                  border: '1px solid var(--color-border, #e2e8f0)',
-                  borderRadius: '16px',
-                  padding: '0.9rem',
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.04)'
+                  border: '1px solid #e2e8f0',
+                  borderRadius: '14px 14px 14px 2px',
+                  padding: '0.75rem 0.85rem',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.03)'
                 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.4rem' }}>
-                    <div style={{
-                      width: '24px',
-                      height: '24px',
-                      borderRadius: '50%',
-                      background: '#7c3aed',
-                      color: '#ffffff',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontSize: '0.7rem',
-                      fontWeight: 800
-                    }}>
-                      BD
-                    </div>
-                    <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--color-text-primary, #0f172a)' }}>
-                      Studio Representative
-                    </span>
-                    <span style={{ fontSize: '0.65rem', color: '#94a3b8', marginLeft: 'auto' }}>
-                      Just now
-                    </span>
-                  </div>
-                  <p style={{ fontSize: '0.82rem', color: 'var(--color-text-secondary, #475569)', lineHeight: 1.5, margin: 0 }}>
-                    👋 Welcome! Our digitizers and vector artists are available 24/7. Need a quick quote, format guidance (.DST, .PES), or turnaround estimate? Send us a message below or sign in for real-time live chat.
+                  <p style={{ fontSize: '0.82rem', color: '#1e293b', lineHeight: 1.45, margin: 0 }}>
+                    👋 Hi there! Welcome to BDigitizing Studio. Need a quick quote, format help (.DST, .PES), or turnaround estimate? Type a message below or tap WhatsApp!
                   </p>
                 </div>
 
-                {/* SIGN IN QUICK PROMPT */}
-                <div style={{
-                  background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.08) 0%, rgba(124, 58, 237, 0.08) 100%)',
-                  border: '1px solid rgba(124, 58, 237, 0.2)',
-                  borderRadius: '14px',
-                  padding: '0.8rem 0.9rem',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  gap: '0.75rem'
-                }}>
-                  <div style={{ minWidth: 0 }}>
-                    <div style={{ fontSize: '0.8rem', fontWeight: 800, color: '#4338ca', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                      <Sparkles size={14} color="#6366f1" /> Real-Time Live Chat
-                    </div>
-                    <div style={{ fontSize: '0.72rem', color: '#64748b' }}>
-                      Sign in with Google or Email in 5 seconds
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={handleOpenAuth}
-                    style={{
-                      background: 'linear-gradient(135deg, #6366f1 0%, #7c3aed 100%)',
-                      color: '#ffffff',
-                      border: 'none',
-                      borderRadius: '8px',
-                      padding: '0.45rem 0.85rem',
-                      fontSize: '0.75rem',
-                      fontWeight: 700,
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.3rem',
-                      boxShadow: '0 2px 8px rgba(99, 102, 241, 0.25)',
-                      flexShrink: 0
-                    }}
-                  >
-                    <LogIn size={13} /> Sign In
-                  </button>
-                </div>
-
-                {/* QUICK CHIP QUESTIONS */}
-                <div>
-                  <div style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', marginBottom: '0.4rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                    Quick Inquiry Topics:
-                  </div>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
-                    {[
-                      'Need quote for embroidery file (.DST/.PES)',
-                      'Vector art conversion turnaround time',
-                      'Custom patches pricing & minimum 50 pcs',
-                      'Do you offer 4-8 hour rush delivery?'
-                    ].map((prompt, idx) => (
-                      <button
-                        key={idx}
-                        type="button"
-                        onClick={() => handleApplyPrompt(prompt)}
-                        style={{
-                          background: 'var(--color-surface, #ffffff)',
-                          border: '1px solid var(--color-border, #cbd5e1)',
-                          borderRadius: '16px',
-                          padding: '0.3rem 0.65rem',
-                          fontSize: '0.72rem',
-                          color: 'var(--color-text-secondary, #334155)',
-                          cursor: 'pointer',
-                          fontWeight: 600,
-                          textAlign: 'left'
-                        }}
-                      >
-                        💬 {prompt}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* INQUIRY FORM */}
-                {inquirySuccess ? (
-                  <div style={{
-                    background: '#f0fdf4',
-                    border: '1px solid #bbf7d0',
-                    borderRadius: '14px',
-                    padding: '1.25rem 1rem',
-                    textAlign: 'center',
-                    color: '#15803d'
-                  }}>
-                    <CheckCircle2 size={32} color="#16a34a" style={{ margin: '0 auto 0.5rem' }} />
-                    <h4 style={{ fontSize: '0.95rem', fontWeight: 800, margin: '0 0 0.35rem 0' }}>
-                      Message Received!
-                    </h4>
-                    <p style={{ fontSize: '0.78rem', margin: '0 0 1rem 0', color: '#166534', lineHeight: 1.4 }}>
-                      Thank you! Our digitizing team has received your inquiry. We will review your request and reply to your email shortly.
-                    </p>
+                {/* QUICK CHIP TOPICS */}
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem', margin: '0.1rem 0' }}>
+                  {[
+                    'Need quote for embroidery file (.DST/.PES)',
+                    'Vector art conversion turnaround time',
+                    'Custom patches pricing & minimum 50 pcs'
+                  ].map((prompt, idx) => (
                     <button
+                      key={idx}
                       type="button"
-                      onClick={() => setInquirySuccess(false)}
+                      onClick={() => handleApplyPrompt(prompt)}
                       style={{
                         background: '#ffffff',
-                        border: '1px solid #86efac',
-                        borderRadius: '8px',
-                        padding: '0.4rem 0.85rem',
-                        fontSize: '0.75rem',
-                        fontWeight: 700,
-                        color: '#15803d',
-                        cursor: 'pointer'
+                        border: '1px solid #cbd5e1',
+                        borderRadius: '16px',
+                        padding: '0.25rem 0.6rem',
+                        fontSize: '0.7rem',
+                        color: '#4338ca',
+                        cursor: 'pointer',
+                        fontWeight: 600,
+                        boxShadow: '0 1px 2px rgba(0,0,0,0.02)',
+                        textAlign: 'left'
                       }}
                     >
-                      Send Another Question
+                      💬 {prompt}
                     </button>
-                  </div>
-                ) : (
-                  <form onSubmit={handleGuestSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
-                    <div style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                      Direct Message to Studio:
+                  ))}
+                </div>
+
+                {/* USER SENT MESSAGES IN CONVERSATION */}
+                {sentMessages.map((msg, idx) => (
+                  <React.Fragment key={idx}>
+                    <div style={{
+                      maxWidth: '85%',
+                      alignSelf: 'flex-end',
+                      background: 'linear-gradient(135deg, #6366f1 0%, #7c3aed 100%)',
+                      color: '#ffffff',
+                      borderRadius: '14px 14px 2px 14px',
+                      padding: '0.65rem 0.85rem',
+                      fontSize: '0.82rem',
+                      lineHeight: 1.4,
+                      boxShadow: '0 2px 6px rgba(99, 102, 241, 0.25)'
+                    }}>
+                      {msg.text}
+                      <div style={{ fontSize: '0.6rem', color: 'rgba(255,255,255,0.7)', textAlign: 'right', marginTop: '0.2rem' }}>
+                        Sent ✓
+                      </div>
                     </div>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
-                      <input
-                        type="text"
-                        placeholder="Your Name *"
-                        required
-                        value={guestName}
-                        onChange={(e) => setGuestName(e.target.value)}
-                        style={{
-                          background: '#ffffff',
-                          backgroundColor: '#ffffff',
-                          border: '1.5px solid #cbd5e1',
-                          borderRadius: '8px',
-                          padding: '0.55rem 0.65rem',
-                          fontSize: '0.8rem',
-                          color: '#0f172a'
-                        }}
-                      />
-                      <input
-                        type="email"
-                        placeholder="Email Address *"
-                        required
-                        value={guestEmail}
-                        onChange={(e) => setGuestEmail(e.target.value)}
-                        style={{
-                          background: '#ffffff',
-                          backgroundColor: '#ffffff',
-                          border: '1.5px solid #cbd5e1',
-                          borderRadius: '8px',
-                          padding: '0.55rem 0.65rem',
-                          fontSize: '0.8rem',
-                          color: '#0f172a'
-                        }}
-                      />
+                    <div style={{
+                      maxWidth: '88%',
+                      alignSelf: 'flex-start',
+                      background: '#ffffff',
+                      backgroundColor: '#ffffff',
+                      border: '1px solid #bbf7d0',
+                      borderRadius: '14px 14px 14px 2px',
+                      padding: '0.75rem 0.85rem',
+                      boxShadow: '0 1px 3px rgba(0,0,0,0.03)'
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: '#16a34a', fontWeight: 700, fontSize: '0.78rem', marginBottom: '0.2rem' }}>
+                        <CheckCircle2 size={13} color="#16a34a" /> Message Received!
+                      </div>
+                      <p style={{ fontSize: '0.8rem', color: '#166534', margin: 0, lineHeight: 1.4 }}>
+                        Thank you! Our digitizers have received your inquiry. We will review it and reply to <strong>{guestEmail || 'your email'}</strong> shortly.
+                      </p>
                     </div>
+                  </React.Fragment>
+                ))}
+              </div>
 
-                    <select
-                      value={guestService}
-                      onChange={(e) => setGuestService(e.target.value)}
+              {/* COMPACT CHAT COMPOSER & WHATSAPP */}
+              <div
+                style={{
+                  padding: '0.75rem 0.85rem',
+                  borderTop: '1px solid #e2e8f0',
+                  background: '#ffffff',
+                  backgroundColor: '#ffffff',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '0.45rem',
+                  flexShrink: 0
+                }}
+              >
+                <form onSubmit={handleGuestSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                  <input
+                    type="email"
+                    placeholder="Your Email (for reply) *"
+                    required
+                    value={guestEmail}
+                    onChange={(e) => setGuestEmail(e.target.value)}
+                    style={{
+                      background: '#ffffff',
+                      backgroundColor: '#ffffff',
+                      border: '1.5px solid #cbd5e1',
+                      borderRadius: '8px',
+                      padding: '0.45rem 0.65rem',
+                      fontSize: '0.8rem',
+                      color: '#0f172a',
+                      outline: 'none'
+                    }}
+                  />
+                  <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
+                    <input
+                      type="text"
+                      placeholder="Type your message... *"
+                      required
+                      value={guestMessage}
+                      onChange={(e) => setGuestMessage(e.target.value)}
                       style={{
+                        flex: 1,
                         background: '#ffffff',
                         backgroundColor: '#ffffff',
                         border: '1.5px solid #cbd5e1',
                         borderRadius: '8px',
                         padding: '0.55rem 0.65rem',
-                        fontSize: '0.8rem',
-                        color: '#0f172a'
-                      }}
-                    >
-                      <option value="Embroidery Digitizing">Embroidery Digitizing (.DST, .PES, .EMB)</option>
-                      <option value="Vector Art Tracing">Vector Art Tracing (.AI, .EPS, .SVG)</option>
-                      <option value="Custom Patches">Custom Patches (Min 50 pcs)</option>
-                      <option value="General Support">General Support & Turnaround</option>
-                    </select>
-
-                    <textarea
-                      placeholder="Type your message, requirements, or file format question here... *"
-                      required
-                      rows={3}
-                      value={guestMessage}
-                      onChange={(e) => setGuestMessage(e.target.value)}
-                      style={{
-                        background: '#ffffff',
-                        backgroundColor: '#ffffff',
-                        border: '1.5px solid #cbd5e1',
-                        borderRadius: '8px',
-                        padding: '0.6rem 0.65rem',
                         fontSize: '0.82rem',
                         color: '#0f172a',
-                        resize: 'none'
+                        outline: 'none'
                       }}
                     />
-
-                    {inquiryError && (
-                      <div style={{ color: '#ef4444', fontSize: '0.75rem', fontWeight: 600 }}>
-                        {inquiryError}
-                      </div>
-                    )}
-
                     <button
                       type="submit"
                       disabled={isSubmittingInquiry}
                       style={{
-                        background: 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)',
+                        background: 'linear-gradient(135deg, #6366f1 0%, #7c3aed 100%)',
                         color: '#ffffff',
                         border: 'none',
                         borderRadius: '8px',
-                        padding: '0.6rem 1rem',
-                        fontSize: '0.82rem',
+                        padding: '0.55rem 0.85rem',
+                        fontSize: '0.8rem',
                         fontWeight: 700,
                         cursor: isSubmittingInquiry ? 'not-allowed' : 'pointer',
                         display: 'flex',
                         alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '0.4rem',
-                        boxShadow: '0 2px 8px rgba(99, 102, 241, 0.3)'
+                        gap: '0.3rem',
+                        flexShrink: 0,
+                        boxShadow: '0 2px 6px rgba(99, 102, 241, 0.3)'
                       }}
+                      title="Send message"
+                      aria-label="Send message"
                     >
-                      {isSubmittingInquiry ? (
-                        <>
-                          <Loader2 size={14} className="animate-spin" /> Sending to Studio...
-                        </>
-                      ) : (
-                        <>
-                          <Send size={14} /> Send Message
-                        </>
-                      )}
+                      {isSubmittingInquiry ? <Loader2 size={15} className="animate-spin" /> : <Send size={15} />}
                     </button>
-                  </form>
-                )}
-
-                {/* WHATSAPP REACHOUT OPTION */}
-                {cleanWaNumber && (
-                  <div style={{
-                    marginTop: 'auto',
-                    paddingTop: '0.75rem',
-                    borderTop: '1px solid var(--color-border, #e2e8f0)',
-                    textAlign: 'center'
-                  }}>
-                    <a
-                      href={`https://wa.me/${cleanWaNumber.replace(/^\+/, '')}?text=${encodeURIComponent('Hi BDigitizing Studio! I would like to inquire about embroidery digitizing & vector services.')}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '0.45rem',
-                        fontSize: '0.75rem',
-                        fontWeight: 700,
-                        color: '#16a34a',
-                        textDecoration: 'none'
-                      }}
-                    >
-                      <span>Prefer WhatsApp? Chat on WhatsApp</span>
-                      <ExternalLink size={12} />
-                    </a>
                   </div>
+                  {inquiryError && (
+                    <div style={{ color: '#ef4444', fontSize: '0.72rem', fontWeight: 600 }}>
+                      {inquiryError}
+                    </div>
+                  )}
+                </form>
+
+                {/* WHATSAPP INSTANT REACHOUT */}
+                {cleanWaNumber && (
+                  <a
+                    href={`https://wa.me/${cleanWaNumber.replace(/^\+/, '')}?text=${encodeURIComponent('Hi BDigitizing Studio! I would like to inquire about embroidery digitizing & vector services.')}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '0.4rem',
+                      background: '#f0fdf4',
+                      border: '1px solid #86efac',
+                      borderRadius: '8px',
+                      padding: '0.45rem',
+                      color: '#15803d',
+                      fontSize: '0.75rem',
+                      fontWeight: 700,
+                      textDecoration: 'none'
+                    }}
+                  >
+                    <span>Prefer WhatsApp? Chat on WhatsApp</span>
+                    <ExternalLink size={12} />
+                  </a>
                 )}
               </div>
             </div>
