@@ -47,6 +47,7 @@ export const LiveChatWidget = () => {
   const [showTooltip, setShowTooltip] = useState(false);
   const [latestIncomingPreview, setLatestIncomingPreview] = useState(null);
   const previewTimerRef = useRef(null);
+  const containerRef = useRef(null);
 
   // Guest inquiry form state
   const [guestName, setGuestName] = useState('');
@@ -150,6 +151,34 @@ export const LiveChatWidget = () => {
     return () => window.removeEventListener('bdigi_open_live_chat', handleOpenLiveChat);
   }, [mounted]);
 
+  // 4. Close chat modal with Escape key or click outside on desktop
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        setIsOpen(false);
+      }
+    };
+    const handleClickOutside = (e) => {
+      if (containerRef.current && !containerRef.current.contains(e.target)) {
+        setIsOpen(false);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    const timer = setTimeout(() => {
+      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener('touchstart', handleClickOutside);
+    }, 120);
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      clearTimeout(timer);
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
+    };
+  }, [isOpen]);
+
   const handleToggleOpen = () => {
     setIsOpen(prev => {
       const next = !prev;
@@ -223,6 +252,13 @@ export const LiveChatWidget = () => {
           bottom: max(24px, env(safe-area-inset-bottom, 24px));
           right: 24px;
           z-index: 9999999 !important;
+          transition: transform 0.2s ease, opacity 0.2s ease;
+        }
+        .live-chat-floating-btn-wrap.is-hidden {
+          display: none !important;
+          opacity: 0 !important;
+          visibility: hidden !important;
+          pointer-events: none !important;
         }
         html.mobile-app-active .live-chat-floating-btn-wrap,
         [data-mobile-mode="app"] .live-chat-floating-btn-wrap {
@@ -232,9 +268,20 @@ export const LiveChatWidget = () => {
           position: fixed !important;
           bottom: 96px;
           right: 24px;
-          width: min(400px, calc(100vw - 32px));
+          width: min(420px, calc(100vw - 32px));
           height: min(600px, calc(100vh - 120px));
           z-index: 9999999 !important;
+          background-color: #ffffff !important;
+          background: #ffffff !important;
+          opacity: 1 !important;
+          backdrop-filter: none !important;
+          box-shadow: 0 20px 45px -10px rgba(15, 23, 42, 0.35), 0 0 0 1px rgba(0, 0, 0, 0.08) !important;
+        }
+        [data-theme="dark"] .live-chat-floating-container,
+        .dark .live-chat-floating-container {
+          background-color: #0f172a !important;
+          background: #0f172a !important;
+          box-shadow: 0 20px 45px -10px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.08) !important;
         }
         html.mobile-app-active .live-chat-floating-container,
         [data-mobile-mode="app"] .live-chat-floating-container {
@@ -251,6 +298,13 @@ export const LiveChatWidget = () => {
             height: 100dvh !important;
             max-height: 100vh !important;
             border-radius: 0 !important;
+            background-color: #ffffff !important;
+            background: #ffffff !important;
+          }
+          [data-theme="dark"] .live-chat-floating-container,
+          .dark .live-chat-floating-container {
+            background-color: #0f172a !important;
+            background: #0f172a !important;
           }
         }
         .live-chat-floating-container .customer-chat-root {
@@ -260,6 +314,22 @@ export const LiveChatWidget = () => {
           min-height: 0 !important;
           height: 100% !important;
           width: 100% !important;
+          background-color: #ffffff !important;
+          background: #ffffff !important;
+        }
+        [data-theme="dark"] .live-chat-floating-container .customer-chat-root,
+        .dark .live-chat-floating-container .customer-chat-root {
+          background-color: #0f172a !important;
+          background: #0f172a !important;
+        }
+        .live-chat-body-solid {
+          background-color: #f8fafc !important;
+          background: #f8fafc !important;
+        }
+        [data-theme="dark"] .live-chat-body-solid,
+        .dark .live-chat-body-solid {
+          background-color: #090d16 !important;
+          background: #090d16 !important;
         }
         @keyframes chatBounceGentle {
           0%, 100% { transform: translateY(0); }
@@ -273,16 +343,26 @@ export const LiveChatWidget = () => {
       {/* FLOATING CHAT WINDOW / MODAL */}
       {isOpen && (
         <div
+          ref={containerRef}
           className="live-chat-floating-container flex flex-col bg-white dark:bg-slate-900 sm:rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden transition-all duration-200"
           style={{
-            boxShadow: '0 20px 45px -10px rgba(15, 23, 42, 0.28), 0 0 0 1px rgba(0, 0, 0, 0.08)'
+            backgroundColor: '#ffffff',
+            background: '#ffffff',
+            boxShadow: '0 20px 45px -10px rgba(15, 23, 42, 0.35), 0 0 0 1px rgba(0, 0, 0, 0.08)',
+            opacity: 1
           }}
           role="dialog"
           aria-label="Live Customer Support Chat"
         >
           {activeUser ? (
             /* AUTHENTICATED USER LIVE CHAT */
-            <div className="flex-1 flex flex-col min-h-0 w-full h-full relative">
+            <div
+              className="flex-1 flex flex-col min-h-0 w-full h-full relative"
+              style={{
+                backgroundColor: '#ffffff',
+                background: '#ffffff'
+              }}
+            >
               <CustomerSupportChat
                 defaultOrderId={null}
                 chatType={activeChannel}
@@ -292,7 +372,13 @@ export const LiveChatWidget = () => {
             </div>
           ) : (
             /* GUEST VISITOR EXPERIENCE */
-            <div className="flex-1 flex flex-col min-h-0 w-full h-full bg-slate-50 dark:bg-slate-950">
+            <div
+              className="live-chat-body-solid flex-1 flex flex-col min-h-0 w-full h-full"
+              style={{
+                backgroundColor: '#f8fafc',
+                background: '#f8fafc'
+              }}
+            >
               {/* GUEST HEADER */}
               <div
                 style={{
@@ -368,9 +454,9 @@ export const LiveChatWidget = () => {
                   onClick={handleClose}
                   style={{
                     background: 'rgba(255,255,255,0.08)',
-                    border: '1px solid rgba(255,255,255,0.12)',
+                    border: '1px solid rgba(255,255,255,0.15)',
                     borderRadius: '8px',
-                    padding: '6px',
+                    padding: '7px',
                     color: '#ffffff',
                     cursor: 'pointer',
                     display: 'flex',
@@ -380,15 +466,29 @@ export const LiveChatWidget = () => {
                   title="Close chat"
                   aria-label="Close chat"
                 >
-                  <X size={15} />
+                  <X size={16} />
                 </button>
               </div>
 
               {/* GUEST BODY (SCROLLABLE) */}
-              <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '1rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <div
+                className="live-chat-body-solid"
+                style={{
+                  flex: 1,
+                  minHeight: 0,
+                  overflowY: 'auto',
+                  padding: '1rem',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '1rem',
+                  backgroundColor: '#f8fafc',
+                  background: '#f8fafc'
+                }}
+              >
                 {/* STUDIO GREETING BUBBLE */}
                 <div style={{
-                  background: 'var(--color-surface, #ffffff)',
+                  background: '#ffffff',
+                  backgroundColor: '#ffffff',
                   border: '1px solid var(--color-border, #e2e8f0)',
                   borderRadius: '16px',
                   padding: '0.9rem',
@@ -545,12 +645,13 @@ export const LiveChatWidget = () => {
                         value={guestName}
                         onChange={(e) => setGuestName(e.target.value)}
                         style={{
-                          background: 'var(--color-surface, #ffffff)',
-                          border: '1px solid var(--color-border, #cbd5e1)',
+                          background: '#ffffff',
+                          backgroundColor: '#ffffff',
+                          border: '1.5px solid #cbd5e1',
                           borderRadius: '8px',
-                          padding: '0.5rem 0.65rem',
-                          fontSize: '0.78rem',
-                          color: 'var(--color-text-primary, #0f172a)'
+                          padding: '0.55rem 0.65rem',
+                          fontSize: '0.8rem',
+                          color: '#0f172a'
                         }}
                       />
                       <input
@@ -560,12 +661,13 @@ export const LiveChatWidget = () => {
                         value={guestEmail}
                         onChange={(e) => setGuestEmail(e.target.value)}
                         style={{
-                          background: 'var(--color-surface, #ffffff)',
-                          border: '1px solid var(--color-border, #cbd5e1)',
+                          background: '#ffffff',
+                          backgroundColor: '#ffffff',
+                          border: '1.5px solid #cbd5e1',
                           borderRadius: '8px',
-                          padding: '0.5rem 0.65rem',
-                          fontSize: '0.78rem',
-                          color: 'var(--color-text-primary, #0f172a)'
+                          padding: '0.55rem 0.65rem',
+                          fontSize: '0.8rem',
+                          color: '#0f172a'
                         }}
                       />
                     </div>
@@ -574,12 +676,13 @@ export const LiveChatWidget = () => {
                       value={guestService}
                       onChange={(e) => setGuestService(e.target.value)}
                       style={{
-                        background: 'var(--color-surface, #ffffff)',
-                        border: '1px solid var(--color-border, #cbd5e1)',
+                        background: '#ffffff',
+                        backgroundColor: '#ffffff',
+                        border: '1.5px solid #cbd5e1',
                         borderRadius: '8px',
-                        padding: '0.5rem 0.65rem',
-                        fontSize: '0.78rem',
-                        color: 'var(--color-text-primary, #0f172a)'
+                        padding: '0.55rem 0.65rem',
+                        fontSize: '0.8rem',
+                        color: '#0f172a'
                       }}
                     >
                       <option value="Embroidery Digitizing">Embroidery Digitizing (.DST, .PES, .EMB)</option>
@@ -595,12 +698,13 @@ export const LiveChatWidget = () => {
                       value={guestMessage}
                       onChange={(e) => setGuestMessage(e.target.value)}
                       style={{
-                        background: 'var(--color-surface, #ffffff)',
-                        border: '1px solid var(--color-border, #cbd5e1)',
+                        background: '#ffffff',
+                        backgroundColor: '#ffffff',
+                        border: '1.5px solid #cbd5e1',
                         borderRadius: '8px',
-                        padding: '0.55rem 0.65rem',
-                        fontSize: '0.8rem',
-                        color: 'var(--color-text-primary, #0f172a)',
+                        padding: '0.6rem 0.65rem',
+                        fontSize: '0.82rem',
+                        color: '#0f172a',
                         resize: 'none'
                       }}
                     />
@@ -742,7 +846,10 @@ export const LiveChatWidget = () => {
       )}
 
       {/* FLOATING LAUNCHER BUTTON (EXACT MATCH TO USER SCREENSHOT) */}
-      <div className="live-chat-floating-btn-wrap">
+      <div
+        className={`live-chat-floating-btn-wrap ${isOpen ? 'is-hidden' : ''}`}
+        style={isOpen ? { display: 'none', pointerEvents: 'none' } : undefined}
+      >
         <button
           type="button"
           onClick={handleToggleOpen}

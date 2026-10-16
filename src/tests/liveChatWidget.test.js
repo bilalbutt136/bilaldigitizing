@@ -80,4 +80,21 @@ describe('Live Chat Floating Widget & Realtime Support System', () => {
     assert.match(chat, /typeof onClose === 'function'/);
     assert.match(chat, /live-chat-floating-container \.customer-chat-root/);
   });
+
+  test('6. Solid opaque background and launcher button hiding while chat open', () => {
+    const file = read('src/components/common/LiveChatWidget.jsx');
+
+    // Solid opaque background styles
+    assert.match(file, /background-color:\s*#ffffff !important/);
+    assert.match(file, /live-chat-body-solid/);
+    assert.match(file, /opacity:\s*1 !important/);
+
+    // Launcher hidden when isOpen is true
+    assert.match(file, /live-chat-floating-btn-wrap \$\{isOpen \? 'is-hidden' : ''\}/);
+    assert.match(file, /isOpen \? \{ display: 'none', pointerEvents: 'none' \} : undefined/);
+
+    // Escape and outside-click dismiss listeners
+    assert.match(file, /e\.key === 'Escape'/);
+    assert.match(file, /containerRef\.current/);
+  });
 });
