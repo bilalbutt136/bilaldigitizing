@@ -7,50 +7,39 @@ const read = (relPath) => fs.readFileSync(path.join(process.cwd(), relPath), 'ut
 
 describe('Live Chat Floating Widget & Realtime Support System', () => {
 
-  test('1. LiveChatWidget contains required floating launcher button matching visual spec', () => {
+  test('1. LiveChatWidget has a minimal, accessible launcher matching the reference', () => {
     const file = read('src/components/common/LiveChatWidget.jsx');
 
-    // Floating position and styling
     assert.match(file, /live-chat-floating-btn-wrap/);
     assert.match(file, /z-index:\s*9999999/);
-    assert.match(file, /linear-gradient\(135deg, #6366f1 0%, #7c3aed 50%, #4f46e5 100%\)/);
-
-    // Online indicator dot at top-right with pulse animation
-    assert.match(file, /background:\s*'#22c55e'/);
-    assert.match(file, /border:\s*'2\.5px solid #ffffff'/);
-    assert.match(file, /animation:\s*'ping 2s cubic-bezier\(0, 0, 0\.2, 1\) infinite'/);
-
-    // Chat bubble SVG icon
+    assert.match(file, /className="live-chat-launcher"/);
+    assert.match(file, /background:\s*#6d48ed/);
+    assert.match(file, /width:\s*64px/);
+    assert.match(file, /live-chat-online-dot/);
+    assert.match(file, /background:\s*#35d68b/);
+    assert.match(file, /aria-label="Open support chat"/);
     assert.match(file, /<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/);
-
-    // Unread count badge
     assert.match(file, /unreadCount > 0/);
     assert.match(file, /unreadCount > 99 \? '99\+' : unreadCount/);
+    assert.doesNotMatch(file, /animation:\s*'ping 2s/);
   });
 
-  test('2. LiveChatWidget provides full authenticated live support and guest conversion', () => {
+  test('2. LiveChatWidget preserves authenticated support and a streamlined guest inquiry', () => {
     const file = read('src/components/common/LiveChatWidget.jsx');
 
-    // Authenticated path renders CustomerSupportChat with real Supabase chat
     assert.match(file, /import\('\.\.\/customer\/CustomerSupportChat'\)/);
     assert.match(file, /<CustomerSupportChat/);
     assert.match(file, /onClose=\{handleClose\}/);
     assert.match(file, /onSwitchChannel=/);
-
-    // Guest path provides instant sign-in and quick inquiry
-    assert.match(file, /BDigitizing Live Support/);
-    assert.match(file, /Online/);
-    assert.match(file, /Typically replies in minutes/);
+    assert.match(file, /BDigitizing Support/);
+    assert.match(file, /Get a quote/);
+    assert.match(file, /Turnaround time/);
+    assert.match(file, /Need quote for embroidery file \(\.DST\/\.PES\)/);
     assert.match(file, /fetch\('\/api\/contact'/);
     assert.match(file, /handleOpenAuth/);
     assert.match(file, /setIsAuthModalOpen\(true\)/);
-
-    // Prompt chips for fast inquiry
-    assert.match(file, /Need quote for embroidery file \(\.DST\/\.PES\)/);
-    assert.match(file, /Vector art conversion turnaround time/);
-    assert.match(file, /Custom patches pricing & minimum 50 pcs/);
-
-    // WhatsApp direct reachout
+    assert.match(file, /type="email"/);
+    assert.match(file, /aria-label="Your message"/);
     assert.match(file, /https:\/\/wa\.me\//);
     assert.match(file, /Prefer WhatsApp\? Chat on WhatsApp/);
   });
@@ -81,20 +70,18 @@ describe('Live Chat Floating Widget & Realtime Support System', () => {
     assert.match(chat, /live-chat-floating-container \.customer-chat-root/);
   });
 
-  test('6. Solid opaque background and launcher button hiding while chat open', () => {
+  test('6. Compact mobile panel, solid background and launcher hiding while chat open', () => {
     const file = read('src/components/common/LiveChatWidget.jsx');
 
-    // Solid opaque background styles
     assert.match(file, /background-color:\s*#ffffff !important/);
-    assert.match(file, /live-chat-body-solid/);
+    assert.match(file, /live-chat-guest/);
     assert.match(file, /opacity:\s*1 !important/);
-
-    // Launcher hidden when isOpen is true
-    assert.match(file, /live-chat-floating-btn-wrap \$\{isOpen \? 'is-hidden' : ''\}/);
+    assert.match(file, /height: min\(510px, calc\(100dvh - 114px\)\)/);
+    assert.match(file, /live-chat-floating-btn-wrap/);
+    assert.match(file, /isOpen \? ' is-hidden' : ''/);
     assert.match(file, /isOpen \? \{ display: 'none', pointerEvents: 'none' \} : undefined/);
-
-    // Escape and outside-click dismiss listeners
     assert.match(file, /e\.key === 'Escape'/);
     assert.match(file, /containerRef\.current/);
   });
+
 });

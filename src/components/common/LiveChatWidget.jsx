@@ -8,10 +8,7 @@ import {
   Send,
   Loader2,
   CheckCircle2,
-  ShieldCheck,
-  Sparkles,
-  ExternalLink,
-  LogIn
+  ExternalLink
 } from 'lucide-react';
 import { subscribeToChatMessages, subscribeToConversations } from '../../services/supabaseService';
 import { fetchChatUnreadCounts } from '../../services/chatUnreadService';
@@ -44,7 +41,6 @@ export const LiveChatWidget = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [activeChannel, setActiveChannel] = useState('support');
   const [unreadCount, setUnreadCount] = useState(0);
-  const [showTooltip, setShowTooltip] = useState(false);
   const [latestIncomingPreview, setLatestIncomingPreview] = useState(null);
   const previewTimerRef = useRef(null);
   const containerRef = useRef(null);
@@ -55,7 +51,6 @@ export const LiveChatWidget = () => {
   const [guestService, setGuestService] = useState('Embroidery Digitizing');
   const [guestMessage, setGuestMessage] = useState('');
   const [isSubmittingInquiry, setIsSubmittingInquiry] = useState(false);
-  const [inquirySuccess, setInquirySuccess] = useState(false);
   const [inquiryError, setInquiryError] = useState('');
   const [sentMessages, setSentMessages] = useState([]);
 
@@ -229,8 +224,7 @@ export const LiveChatWidget = () => {
         throw new Error(data.error || 'Failed to send inquiry. Please try again or use WhatsApp.');
       }
 
-      setInquirySuccess(true);
-      setSentMessages(prev => [...prev, { text: guestMessage.trim(), time: new Date() }]);
+      setSentMessages(prev => [...prev, { text: guestMessage.trim(), email: guestEmail.trim() }]);
       setGuestMessage('');
     } catch (err) {
       setInquiryError(err.message || 'Error sending message.');
@@ -333,6 +327,300 @@ export const LiveChatWidget = () => {
           background-color: #090d16 !important;
           background: #090d16 !important;
         }
+
+        /* Compact, quiet launcher based on the reference */
+        .live-chat-floating-btn-wrap {
+          bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+          right: 24px;
+        }
+        .live-chat-launcher {
+          position: relative;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 64px;
+          height: 64px;
+          border: 0;
+          border-radius: 50%;
+          padding: 0;
+          background: #6d48ed;
+          color: #fff;
+          cursor: pointer;
+          box-shadow: 0 10px 26px rgba(80, 56, 191, .28), 0 3px 8px rgba(39, 24, 89, .12);
+          transition: transform .18s ease, box-shadow .18s ease, background-color .18s ease;
+          -webkit-tap-highlight-color: transparent;
+        }
+        .live-chat-launcher:hover {
+          background: #623edf;
+          transform: translateY(-2px);
+          box-shadow: 0 12px 28px rgba(80, 56, 191, .32), 0 3px 8px rgba(39, 24, 89, .12);
+        }
+        .live-chat-launcher:active { transform: scale(.97); }
+        .live-chat-launcher:focus-visible,
+        .live-chat-guest-header button:focus-visible,
+        .live-chat-guest-chip:focus-visible,
+        .live-chat-send:focus-visible,
+        .live-chat-whatsapp:focus-visible {
+          outline: 3px solid #a5b4fc;
+          outline-offset: 3px;
+        }
+        .live-chat-online-dot {
+          position: absolute;
+          top: 1px;
+          right: 1px;
+          width: 16px;
+          height: 16px;
+          border: 3px solid white;
+          border-radius: 50%;
+          background: #35d68b;
+        }
+        .live-chat-unread-badge {
+          position: absolute;
+          top: -5px;
+          left: -5px;
+          min-width: 21px;
+          height: 21px;
+          display: grid;
+          place-items: center;
+          padding: 0 5px;
+          border: 2px solid white;
+          border-radius: 11px;
+          background: #ef4444;
+          color: #fff;
+          font-size: 11px;
+          font-weight: 700;
+        }
+        .live-chat-floating-container {
+          bottom: calc(100px + env(safe-area-inset-bottom, 0px));
+          right: 24px;
+          width: min(376px, calc(100vw - 32px));
+          height: min(530px, calc(100dvh - 128px));
+          border: 1px solid #e2e8f0 !important;
+          border-radius: 18px !important;
+          box-shadow: 0 16px 48px rgba(15, 23, 42, .18), 0 4px 12px rgba(15, 23, 42, .06) !important;
+        }
+        .live-chat-guest {
+          background: #fff !important;
+          color: #172033;
+        }
+        .live-chat-guest-header {
+          display: flex;
+          flex: 0 0 auto;
+          align-items: center;
+          gap: 11px;
+          padding: 16px;
+          background: #fff;
+          border-bottom: 1px solid #edf0f5;
+        }
+        .live-chat-guest-avatar {
+          position: relative;
+          flex: 0 0 auto;
+          display: grid;
+          place-items: center;
+          width: 38px;
+          height: 38px;
+          border-radius: 13px;
+          background: #f1edff;
+          color: #6d48ed;
+        }
+        .live-chat-guest-avatar::after {
+          content: '';
+          position: absolute;
+          right: -2px;
+          bottom: -1px;
+          width: 11px;
+          height: 11px;
+          border: 2px solid white;
+          border-radius: 50%;
+          background: #35d68b;
+        }
+        .live-chat-header-copy { min-width: 0; flex: 1; }
+        .live-chat-header-copy h3 {
+          margin: 0;
+          font-size: 14px;
+          font-weight: 700;
+          line-height: 1.3;
+          color: #172033;
+        }
+        .live-chat-header-copy p {
+          margin: 3px 0 0;
+          color: #64748b;
+          font-size: 12px;
+          line-height: 1.4;
+        }
+        .live-chat-header-actions { display: flex; align-items: center; gap: 7px; }
+        .live-chat-signin {
+          border: 0;
+          padding: 7px 5px;
+          background: transparent;
+          color: #6d48ed;
+          font-size: 12px;
+          font-weight: 650;
+          cursor: pointer;
+          white-space: nowrap;
+        }
+        .live-chat-close {
+          width: 30px;
+          height: 30px;
+          display: grid;
+          place-items: center;
+          border: 0;
+          border-radius: 9px;
+          background: transparent;
+          color: #64748b;
+          cursor: pointer;
+        }
+        .live-chat-close:hover { background: #f1f5f9; color: #0f172a; }
+        .live-chat-guest-messages {
+          display: flex;
+          flex: 1 1 auto;
+          flex-direction: column;
+          gap: 14px;
+          overflow-y: auto;
+          min-height: 0;
+          padding: 20px 16px;
+          background: #f8fafc;
+        }
+        .live-chat-welcome {
+          align-self: flex-start;
+          max-width: 94%;
+          margin: 0;
+          padding: 13px 15px;
+          border: 1px solid #e9eef5;
+          border-radius: 14px 14px 14px 4px;
+          background: #fff;
+          color: #334155;
+          font-size: 13px;
+          line-height: 1.6;
+        }
+        .live-chat-sent-message {
+          align-self: flex-end;
+          max-width: 90%;
+          padding: 10px 13px;
+          border-radius: 14px 14px 4px 14px;
+          background: #6d48ed;
+          color: #fff;
+          font-size: 13px;
+          line-height: 1.5;
+          overflow-wrap: anywhere;
+          white-space: pre-wrap;
+        }
+        .live-chat-received-message {
+          align-self: flex-start;
+          max-width: 94%;
+          padding: 12px 14px;
+          border: 1px solid #dcefe6;
+          border-radius: 14px 14px 14px 4px;
+          background: #fff;
+          color: #334155;
+          font-size: 13px;
+          line-height: 1.5;
+          overflow-wrap: anywhere;
+        }
+        .live-chat-received-message strong {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          margin-bottom: 4px;
+          color: #15803d;
+          font-weight: 650;
+        }
+        .live-chat-composer {
+          flex: 0 0 auto;
+          padding: 14px 16px 16px;
+          border-top: 1px solid #edf0f5;
+          background: #fff;
+        }
+        .live-chat-quick-actions { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 12px; }
+        .live-chat-guest-chip {
+          padding: 6px 10px;
+          border: 1px solid #e3e6ef;
+          border-radius: 999px;
+          background: #fff;
+          color: #535f76;
+          font-size: 11px;
+          font-weight: 550;
+          cursor: pointer;
+        }
+        .live-chat-guest-chip:hover { border-color: #b8a8fa; color: #5b38d5; background: #faf9ff; }
+        .live-chat-guest-form { display: flex; flex-direction: column; gap: 9px; }
+        .live-chat-guest-field {
+          box-sizing: border-box;
+          width: 100%;
+          min-width: 0;
+          padding: 11px 12px;
+          border: 1px solid #dce3ec;
+          border-radius: 10px;
+          background: #fff;
+          color: #0f172a;
+          font: inherit;
+          font-size: 13px;
+          line-height: 1.45;
+          outline: none;
+        }
+        .live-chat-guest-field::placeholder { color: #94a3b8; }
+        .live-chat-guest-field:focus {
+          border-color: #967cf2;
+          box-shadow: 0 0 0 3px rgba(109, 72, 237, .1);
+        }
+        .live-chat-guest-message-row { display: flex; gap: 8px; align-items: flex-end; }
+        .live-chat-guest-message-row textarea {
+          flex: 1 1 auto;
+          resize: vertical;
+          min-height: 44px;
+          max-height: 110px;
+        }
+        .live-chat-send {
+          flex: 0 0 44px;
+          display: grid;
+          place-items: center;
+          height: 44px;
+          border: 0;
+          border-radius: 11px;
+          background: #6d48ed;
+          color: #fff;
+          cursor: pointer;
+        }
+        .live-chat-send:hover:not(:disabled) { background: #5e3ed5; }
+        .live-chat-send:disabled { opacity: .65; cursor: wait; }
+        .live-chat-form-error { margin: 0; color: #b91c1c; font-size: 12px; }
+        .live-chat-whatsapp {
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          gap: 5px;
+          margin-top: 12px;
+          color: #16814a;
+          font-size: 12px;
+          font-weight: 600;
+          text-decoration: none;
+        }
+        .live-chat-whatsapp:hover { text-decoration: underline; }
+        @media (max-width: 640px) {
+          .live-chat-floating-btn-wrap { right: 20px; bottom: calc(20px + env(safe-area-inset-bottom, 0px)); }
+          .live-chat-floating-container {
+            top: auto !important;
+            left: auto !important;
+            right: 12px !important;
+            bottom: calc(94px + env(safe-area-inset-bottom, 0px)) !important;
+            width: calc(100vw - 24px) !important;
+            height: min(510px, calc(100dvh - 114px)) !important;
+            max-height: calc(100dvh - 114px) !important;
+            border-radius: 18px !important;
+          }
+          html.mobile-app-active .live-chat-floating-container,
+          [data-mobile-mode="app"] .live-chat-floating-container {
+            bottom: calc(152px + env(safe-area-inset-bottom, 0px)) !important;
+            height: min(470px, calc(100dvh - 174px)) !important;
+            max-height: calc(100dvh - 174px) !important;
+          }
+          .live-chat-guest-header { padding: 13px 14px; }
+          .live-chat-guest-messages { padding: 16px 14px; }
+          .live-chat-composer { padding: 12px 14px 14px; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .live-chat-launcher { transition: none; }
+        }
         @keyframes chatBounceGentle {
           0%, 100% { transform: translateY(0); }
           50% { transform: translateY(-4px); }
@@ -374,325 +662,94 @@ export const LiveChatWidget = () => {
             </div>
           ) : (
             /* GUEST VISITOR EXPERIENCE */
-            <div
-              className="live-chat-body-solid flex-1 flex flex-col min-h-0 w-full h-full"
-              style={{
-                backgroundColor: '#f8fafc',
-                background: '#f8fafc'
-              }}
-            >
-              {/* GUEST HEADER */}
-              <div
-                style={{
-                  background: 'linear-gradient(135deg, #6366f1 0%, #7c3aed 100%)',
-                  padding: '0.85rem 1rem',
-                  color: '#ffffff',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  borderBottom: '1px solid rgba(255, 255, 255, 0.15)',
-                  flexShrink: 0
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', minWidth: 0 }}>
-                  <div style={{ position: 'relative', flexShrink: 0 }}>
-                    <div
-                      style={{
-                        width: '36px',
-                        height: '36px',
-                        borderRadius: '50%',
-                        background: '#ffffff',
-                        color: '#6366f1',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontWeight: 900,
-                        fontSize: '0.9rem',
-                        boxShadow: '0 2px 8px rgba(0,0,0,0.15)'
-                      }}
-                    >
-                      BD
-                    </div>
-                    <span
-                      style={{
-                        position: 'absolute',
-                        bottom: '0px',
-                        right: '0px',
-                        width: '10px',
-                        height: '10px',
-                        borderRadius: '50%',
-                        background: '#22c55e',
-                        border: '2px solid #ffffff'
-                      }}
-                    />
-                  </div>
-                  <div style={{ minWidth: 0 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                      <h3 style={{ fontSize: '0.92rem', fontWeight: 800, margin: 0, color: '#ffffff' }}>
-                        BDigitizing Live Support
-                      </h3>
-                      <span style={{
-                        background: 'rgba(34, 197, 94, 0.25)',
-                        color: '#ffffff',
-                        fontSize: '0.6rem',
-                        fontWeight: 800,
-                        padding: '0.05rem 0.35rem',
-                        borderRadius: '6px'
-                      }}>
-                        Online
-                      </span>
-                    </div>
-                    <div style={{ fontSize: '0.68rem', color: '#e0e7ff', marginTop: '0.1rem' }}>
-                      Typically replies in minutes
-                    </div>
-                  </div>
+            <div className="live-chat-guest flex-1 flex flex-col min-h-0 w-full h-full">
+              <header className="live-chat-guest-header">
+                <div className="live-chat-guest-avatar" aria-hidden="true">
+                  <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                  </svg>
                 </div>
-
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
-                  <button
-                    type="button"
-                    onClick={handleOpenAuth}
-                    style={{
-                      background: 'rgba(255,255,255,0.18)',
-                      border: '1px solid rgba(255,255,255,0.25)',
-                      borderRadius: '8px',
-                      padding: '4px 8px',
-                      color: '#ffffff',
-                      fontSize: '0.7rem',
-                      fontWeight: 700,
-                      cursor: 'pointer'
-                    }}
-                    title="Sign In"
-                  >
-                    Sign In
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleClose}
-                    style={{
-                      background: 'rgba(255,255,255,0.18)',
-                      border: '1px solid rgba(255,255,255,0.25)',
-                      borderRadius: '8px',
-                      padding: '6px',
-                      color: '#ffffff',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center'
-                    }}
-                    title="Close chat"
-                    aria-label="Close chat"
-                  >
-                    <X size={16} />
+                <div className="live-chat-header-copy">
+                  <h3>BDigitizing Support</h3>
+                  <p>How can we help you?</p>
+                </div>
+                <div className="live-chat-header-actions">
+                  <button type="button" className="live-chat-signin" onClick={handleOpenAuth}>Sign in</button>
+                  <button type="button" className="live-chat-close" onClick={handleClose} aria-label="Close chat" title="Close chat">
+                    <X size={18} />
                   </button>
                 </div>
-              </div>
+              </header>
 
-              {/* CHAT MESSAGES STREAM */}
-              <div
-                className="live-chat-body-solid"
-                style={{
-                  flex: 1,
-                  minHeight: 0,
-                  overflowY: 'auto',
-                  padding: '0.9rem',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '0.75rem',
-                  backgroundColor: '#f8fafc',
-                  background: '#f8fafc'
-                }}
-              >
-                {/* STUDIO WELCOME BUBBLE */}
-                <div style={{
-                  maxWidth: '88%',
-                  alignSelf: 'flex-start',
-                  background: '#ffffff',
-                  backgroundColor: '#ffffff',
-                  border: '1px solid #e2e8f0',
-                  borderRadius: '14px 14px 14px 2px',
-                  padding: '0.75rem 0.85rem',
-                  boxShadow: '0 1px 3px rgba(0,0,0,0.03)'
-                }}>
-                  <p style={{ fontSize: '0.82rem', color: '#1e293b', lineHeight: 1.45, margin: 0 }}>
-                    👋 Hi there! Welcome to BDigitizing Studio. Need a quick quote, format help (.DST, .PES), or turnaround estimate? Type a message below or tap WhatsApp!
-                  </p>
-                </div>
-
-                {/* QUICK CHIP TOPICS */}
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem', margin: '0.1rem 0' }}>
-                  {[
-                    'Need quote for embroidery file (.DST/.PES)',
-                    'Vector art conversion turnaround time',
-                    'Custom patches pricing & minimum 50 pcs'
-                  ].map((prompt, idx) => (
-                    <button
-                      key={idx}
-                      type="button"
-                      onClick={() => handleApplyPrompt(prompt)}
-                      style={{
-                        background: '#ffffff',
-                        border: '1px solid #cbd5e1',
-                        borderRadius: '16px',
-                        padding: '0.25rem 0.6rem',
-                        fontSize: '0.7rem',
-                        color: '#4338ca',
-                        cursor: 'pointer',
-                        fontWeight: 600,
-                        boxShadow: '0 1px 2px rgba(0,0,0,0.02)',
-                        textAlign: 'left'
-                      }}
-                    >
-                      💬 {prompt}
-                    </button>
-                  ))}
-                </div>
-
-                {/* USER SENT MESSAGES IN CONVERSATION */}
+              <div className="live-chat-guest-messages" aria-live="polite">
+                <p className="live-chat-welcome">
+                  Hi! Need a digitizing quote or help with a file? Send us a message and we’ll reply by email.
+                </p>
                 {sentMessages.map((msg, idx) => (
                   <React.Fragment key={idx}>
-                    <div style={{
-                      maxWidth: '85%',
-                      alignSelf: 'flex-end',
-                      background: 'linear-gradient(135deg, #6366f1 0%, #7c3aed 100%)',
-                      color: '#ffffff',
-                      borderRadius: '14px 14px 2px 14px',
-                      padding: '0.65rem 0.85rem',
-                      fontSize: '0.82rem',
-                      lineHeight: 1.4,
-                      boxShadow: '0 2px 6px rgba(99, 102, 241, 0.25)'
-                    }}>
-                      {msg.text}
-                      <div style={{ fontSize: '0.6rem', color: 'rgba(255,255,255,0.7)', textAlign: 'right', marginTop: '0.2rem' }}>
-                        Sent ✓
-                      </div>
-                    </div>
-
-                    <div style={{
-                      maxWidth: '88%',
-                      alignSelf: 'flex-start',
-                      background: '#ffffff',
-                      backgroundColor: '#ffffff',
-                      border: '1px solid #bbf7d0',
-                      borderRadius: '14px 14px 14px 2px',
-                      padding: '0.75rem 0.85rem',
-                      boxShadow: '0 1px 3px rgba(0,0,0,0.03)'
-                    }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: '#16a34a', fontWeight: 700, fontSize: '0.78rem', marginBottom: '0.2rem' }}>
-                        <CheckCircle2 size={13} color="#16a34a" /> Message Received!
-                      </div>
-                      <p style={{ fontSize: '0.8rem', color: '#166534', margin: 0, lineHeight: 1.4 }}>
-                        Thank you! Our digitizers have received your inquiry. We will review it and reply to <strong>{guestEmail || 'your email'}</strong> shortly.
-                      </p>
+                    <div className="live-chat-sent-message">{msg.text}</div>
+                    <div className="live-chat-received-message">
+                      <strong><CheckCircle2 size={15} /> Message received</strong>
+                      Thanks for reaching out. We'll reply to {msg.email} as soon as we can.
                     </div>
                   </React.Fragment>
                 ))}
               </div>
 
-              {/* COMPACT CHAT COMPOSER & WHATSAPP */}
-              <div
-                style={{
-                  padding: '0.75rem 0.85rem',
-                  borderTop: '1px solid #e2e8f0',
-                  background: '#ffffff',
-                  backgroundColor: '#ffffff',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '0.45rem',
-                  flexShrink: 0
-                }}
-              >
-                <form onSubmit={handleGuestSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+              <div className="live-chat-composer">
+                <div className="live-chat-quick-actions" aria-label="Suggested messages">
+                  <button
+                    type="button"
+                    className="live-chat-guest-chip"
+                    onClick={() => handleApplyPrompt('Need quote for embroidery file (.DST/.PES)')}
+                  >Get a quote</button>
+                  <button
+                    type="button"
+                    className="live-chat-guest-chip"
+                    onClick={() => handleApplyPrompt('Vector art conversion turnaround time')}
+                  >Turnaround time</button>
+                </div>
+                <form onSubmit={handleGuestSubmit} className="live-chat-guest-form">
                   <input
+                    className="live-chat-guest-field"
                     type="email"
-                    placeholder="Your Email (for reply) *"
+                    autoComplete="email"
+                    aria-label="Your email for reply"
+                    placeholder="Your email address"
                     required
                     value={guestEmail}
                     onChange={(e) => setGuestEmail(e.target.value)}
-                    style={{
-                      background: '#ffffff',
-                      backgroundColor: '#ffffff',
-                      border: '1.5px solid #cbd5e1',
-                      borderRadius: '8px',
-                      padding: '0.45rem 0.65rem',
-                      fontSize: '0.8rem',
-                      color: '#0f172a',
-                      outline: 'none'
-                    }}
                   />
-                  <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
-                    <input
-                      type="text"
-                      placeholder="Type your message... *"
+                  <div className="live-chat-guest-message-row">
+                    <textarea
+                      className="live-chat-guest-field"
+                      rows={1}
+                      aria-label="Your message"
+                      placeholder="Write your message..."
                       required
                       value={guestMessage}
                       onChange={(e) => setGuestMessage(e.target.value)}
-                      style={{
-                        flex: 1,
-                        background: '#ffffff',
-                        backgroundColor: '#ffffff',
-                        border: '1.5px solid #cbd5e1',
-                        borderRadius: '8px',
-                        padding: '0.55rem 0.65rem',
-                        fontSize: '0.82rem',
-                        color: '#0f172a',
-                        outline: 'none'
-                      }}
                     />
                     <button
+                      className="live-chat-send"
                       type="submit"
                       disabled={isSubmittingInquiry}
-                      style={{
-                        background: 'linear-gradient(135deg, #6366f1 0%, #7c3aed 100%)',
-                        color: '#ffffff',
-                        border: 'none',
-                        borderRadius: '8px',
-                        padding: '0.55rem 0.85rem',
-                        fontSize: '0.8rem',
-                        fontWeight: 700,
-                        cursor: isSubmittingInquiry ? 'not-allowed' : 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.3rem',
-                        flexShrink: 0,
-                        boxShadow: '0 2px 6px rgba(99, 102, 241, 0.3)'
-                      }}
-                      title="Send message"
                       aria-label="Send message"
+                      title="Send message"
                     >
-                      {isSubmittingInquiry ? <Loader2 size={15} className="animate-spin" /> : <Send size={15} />}
+                      {isSubmittingInquiry ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} />}
                     </button>
                   </div>
-                  {inquiryError && (
-                    <div style={{ color: '#ef4444', fontSize: '0.72rem', fontWeight: 600 }}>
-                      {inquiryError}
-                    </div>
-                  )}
+                  {inquiryError && <p className="live-chat-form-error" role="alert">{inquiryError}</p>}
                 </form>
-
-                {/* WHATSAPP INSTANT REACHOUT */}
                 {cleanWaNumber && (
                   <a
-                    href={`https://wa.me/${cleanWaNumber.replace(/^\+/, '')}?text=${encodeURIComponent('Hi BDigitizing Studio! I would like to inquire about embroidery digitizing & vector services.')}`}
+                    className="live-chat-whatsapp"
+                    href={'https://wa.me/' + cleanWaNumber.replace(/^\+/, '') + '?text=' + encodeURIComponent('Hi BDigitizing Studio! I would like to inquire about embroidery digitizing & vector services.')}
                     target="_blank"
                     rel="noopener noreferrer"
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '0.4rem',
-                      background: '#f0fdf4',
-                      border: '1px solid #86efac',
-                      borderRadius: '8px',
-                      padding: '0.45rem',
-                      color: '#15803d',
-                      fontSize: '0.75rem',
-                      fontWeight: 700,
-                      textDecoration: 'none'
-                    }}
                   >
-                    <span>Prefer WhatsApp? Chat on WhatsApp</span>
-                    <ExternalLink size={12} />
+                    Prefer WhatsApp? Chat on WhatsApp <ExternalLink size={13} aria-hidden="true" />
                   </a>
                 )}
               </div>
@@ -766,139 +823,40 @@ export const LiveChatWidget = () => {
         </div>
       )}
 
-      {/* FLOATING LAUNCHER BUTTON (EXACT MATCH TO USER SCREENSHOT) */}
+      {/* MINIMAL FLOATING SUPPORT BUTTON */}
       <div
-        className={`live-chat-floating-btn-wrap ${isOpen ? 'is-hidden' : ''}`}
+        className={'live-chat-floating-btn-wrap' + (isOpen ? ' is-hidden' : '')}
         style={isOpen ? { display: 'none', pointerEvents: 'none' } : undefined}
       >
         <button
           type="button"
+          className="live-chat-launcher"
           onClick={handleToggleOpen}
-          onMouseEnter={() => setShowTooltip(true)}
-          onMouseLeave={() => setShowTooltip(false)}
-          aria-label={isOpen ? 'Close chat' : 'Open live support chat'}
-          title={isOpen ? 'Close chat' : 'Live Chat (Online)'}
-          style={{
-            position: 'relative',
-            width: '60px',
-            height: '60px',
-            borderRadius: '50%',
-            background: 'linear-gradient(135deg, #6366f1 0%, #7c3aed 50%, #4f46e5 100%)',
-            boxShadow: '0 10px 25px -4px rgba(99, 102, 241, 0.5), 0 4px 6px -2px rgba(124, 58, 237, 0.3)',
-            border: 'none',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            transition: 'transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease',
-            outline: 'none',
-            pointerEvents: 'auto'
-          }}
-          onMouseDown={(e) => { e.currentTarget.style.transform = 'scale(0.92)'; }}
-          onMouseUp={(e) => { e.currentTarget.style.transform = 'scale(1.05)'; }}
-          onMouseOver={(e) => { e.currentTarget.style.transform = 'scale(1.05)'; }}
-          onMouseOut={(e) => { e.currentTarget.style.transform = 'scale(1)'; }}
+          aria-label="Open support chat"
+          title="Chat with BDigitizing Support"
+          aria-haspopup="dialog"
+          aria-expanded={false}
         >
-          {/* ICON: White Chat Message Bubble (or Close X when open) */}
-          {isOpen ? (
-            <X size={26} color="#ffffff" strokeWidth={2.4} />
-          ) : (
-            <svg
-              width="28"
-              height="28"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="#ffffff"
-              strokeWidth="2.3"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              style={{ filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.15))' }}
-            >
-              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-            </svg>
-          )}
-
-          {/* ONLINE INDICATOR GREEN DOT AT TOP-RIGHT (MATCHES SCREENSHOT) */}
-          <span
-            style={{
-              position: 'absolute',
-              top: '2px',
-              right: '2px',
-              width: '14px',
-              height: '14px',
-              borderRadius: '50%',
-              background: '#22c55e',
-              border: '2.5px solid #ffffff',
-              boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              zIndex: 10
-            }}
+          <svg
+            width="30"
+            height="30"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
           >
-            <span
-              style={{
-                position: 'absolute',
-                inset: 0,
-                borderRadius: '50%',
-                background: '#4ade80',
-                opacity: 0.75,
-                animation: 'ping 2s cubic-bezier(0, 0, 0.2, 1) infinite'
-              }}
-            />
-          </span>
-
-          {/* UNREAD MESSAGE COUNT BADGE */}
-          {unreadCount > 0 && !isOpen && (
-            <span
-              style={{
-                position: 'absolute',
-                top: '-4px',
-                left: '-4px',
-                minWidth: '20px',
-                height: '20px',
-                padding: '0 4px',
-                borderRadius: '10px',
-                background: '#ef4444',
-                color: '#ffffff',
-                fontSize: '0.68rem',
-                fontWeight: 900,
-                border: '2px solid #ffffff',
-                boxShadow: '0 2px 6px rgba(239, 68, 68, 0.4)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                animation: 'chatBounceGentle 2s infinite',
-                zIndex: 11
-              }}
-            >
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+          </svg>
+          <span className="live-chat-online-dot" aria-hidden="true" />
+          {unreadCount > 0 && (
+            <span className="live-chat-unread-badge" aria-label={unreadCount + ' unread messages'}>
               {unreadCount > 99 ? '99+' : unreadCount}
             </span>
           )}
         </button>
-
-        {/* HOVER TOOLTIP */}
-        {showTooltip && !isOpen && !latestIncomingPreview && (
-          <div
-            style={{
-              position: 'absolute',
-              bottom: '72px',
-              right: '0',
-              background: '#0f172a',
-              color: '#ffffff',
-              padding: '0.35rem 0.65rem',
-              borderRadius: '8px',
-              fontSize: '0.72rem',
-              fontWeight: 700,
-              whiteSpace: 'nowrap',
-              boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
-              pointerEvents: 'none',
-              border: '1px solid rgba(255,255,255,0.1)'
-            }}
-          >
-            Live Chat • Online
-          </div>
-        )}
       </div>
     </div>
   );
