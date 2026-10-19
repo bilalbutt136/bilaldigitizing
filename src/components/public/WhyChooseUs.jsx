@@ -124,43 +124,6 @@ export const WhyChooseUs = () => {
       }))
     : defaultTrustFeatures;
 
-  // Workflow Data Source
-  const rawWorkflowSteps = homePageConfig?.workflowSteps || [];
-  let matchedSteps = rawWorkflowSteps.filter(s => s.service === currentKey && s.is_active !== false).sort((a, b) => a.sort_order - b.sort_order);
-  if (matchedSteps.length === 0) {
-    matchedSteps = rawWorkflowSteps.filter(s => s.service === 'all' && s.is_active !== false).sort((a, b) => a.sort_order - b.sort_order);
-  }
-
-  const workflowTitle = currentKey === 'vector-art' ? 'How It Works: Vector Art Conversion' :
-    'How It Works: Our Process';
-
-  const workflowSubtext = currentKey === 'vector-art' ? 'From low-resolution image to press-ready vector in 4 easy steps.' :
-    'From artwork upload to production-ready files in 4 easy steps.';
-
-  const defaultAllSteps = [
-    { step_number: '01', icon: 'Upload', title: 'Upload Artwork', description: 'Drop your logo or sketch and pick your service.' },
-    { step_number: '02', icon: 'Layers', title: 'Master Processing', description: 'Our studio experts manually digitize your design.' },
-    { step_number: '03', icon: 'FileCheck', title: 'Free Proof Review', description: 'Check your high-res digital proof before final sew-out.' },
-    { step_number: '04', icon: 'Download', title: 'Download & Stitch', description: 'Instant machine files (.DST, .PES) or tracked patch delivery.' }
-  ];
-
-  const defaultVectorSteps = [
-    { step_number: '01', icon: 'Upload', title: 'Send Artwork', description: 'Upload your low-res JPG, PNG, screenshot, or sketch.' },
-    { step_number: '02', icon: 'PenTool', title: 'Hand Vector Redraw', description: 'Redrawn node-by-node in Illustrator with zero auto-trace.' },
-    { step_number: '03', icon: 'Palette', title: 'Color Separation', description: 'Calibrated Pantone (PMS) spot colors ready for press.' },
-    { step_number: '04', icon: 'Download', title: 'Instant Download', description: 'Get editable .AI, .EPS, .SVG and print-ready PDF files.' }
-  ];
-
-  const activeDefaultSteps = currentKey === 'vector-art' ? defaultVectorSteps : defaultAllSteps;
-
-  const stepsToRender = (matchedSteps.length > 0)
-    ? matchedSteps.slice(0, 4).map((item, idx) => ({
-        ...item,
-        step_number: item.step_number ? (String(item.step_number).padStart(2, '0')) : `0${idx + 1}`,
-        description: item.description || activeDefaultSteps[idx]?.description || ''
-      }))
-    : activeDefaultSteps;
-
   return (
     <section id="why-choose-us" style={{ padding: '5.5rem 0', background: 'transparent', position: 'relative' }}>
       <style>{`
@@ -168,7 +131,7 @@ export const WhyChooseUs = () => {
           display: grid;
           grid-template-columns: repeat(3, 1fr);
           gap: 1.5rem;
-          margin-bottom: 5.5rem;
+          margin-bottom: 0;
         }
         .vip-trust-card {
           position: relative;
@@ -186,8 +149,7 @@ export const WhyChooseUs = () => {
           border-color: rgba(37, 99, 235, 0.35);
           box-shadow: 0 16px 36px -8px rgba(37, 99, 235, 0.14), var(--shadow-md);
         }
-        .vip-trust-card .card-top-shimmer,
-        .vip-step-card .card-top-shimmer {
+        .vip-trust-card .card-top-shimmer {
           position: absolute;
           top: 0;
           left: 0;
@@ -197,48 +159,17 @@ export const WhyChooseUs = () => {
           opacity: 0;
           transition: opacity 0.3s ease;
         }
-        .vip-trust-card:hover .card-top-shimmer,
-        .vip-step-card:hover .card-top-shimmer {
+        .vip-trust-card:hover .card-top-shimmer {
           opacity: 1;
-        }
-        .vip-step-grid {
-          display: grid;
-          grid-template-columns: repeat(4, 1fr);
-          gap: 1.5rem;
-        }
-        .vip-step-card {
-          position: relative;
-          background: var(--color-surface, var(--bg-card));
-          border: 1.5px solid var(--color-border, var(--border-color));
-          border-radius: 20px;
-          padding: 2.25rem 1.75rem;
-          transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-          display: flex;
-          flex-direction: column;
-          justify-content: space-between;
-          overflow: hidden;
-        }
-        .vip-step-card:hover {
-          transform: translateY(-5px);
-          border-color: rgba(37, 99, 235, 0.35);
-          box-shadow: 0 16px 36px -8px rgba(37, 99, 235, 0.14), var(--shadow-md);
         }
         @media (max-width: 1024px) {
           .vip-trust-grid {
             grid-template-columns: repeat(2, 1fr) !important;
             gap: 1.25rem !important;
           }
-          .vip-step-grid {
-            grid-template-columns: repeat(2, 1fr) !important;
-            gap: 1.25rem !important;
-          }
         }
         @media (max-width: 640px) {
           .vip-trust-grid {
-            grid-template-columns: 1fr !important;
-            gap: 1rem !important;
-          }
-          .vip-step-grid {
             grid-template-columns: 1fr !important;
             gap: 1rem !important;
           }
@@ -306,94 +237,6 @@ export const WhyChooseUs = () => {
               <p style={{ fontSize: '0.92rem', color: 'var(--text-muted)', lineHeight: 1.55, margin: 0 }}>
                 {item.description || item.desc}
               </p>
-            </div>
-          ))}
-        </div>
-
-        {/* Workflow Section Header */}
-        <div style={{ textAlign: 'center', maxWidth: '750px', margin: '0 auto 3.5rem' }}>
-          <div className="badge-pill-glow" style={{ marginBottom: '1rem' }}>
-            <ShieldCheck size={16} style={{ color: '#2563eb' }} />
-            <span>Seamless Step-by-Step Process</span>
-          </div>
-
-          <h2 style={{ fontSize: 'clamp(2rem, 3.5vw, 2.75rem)', color: 'var(--navy-950)', marginBottom: '0.75rem', fontWeight: 900, letterSpacing: '-0.02em' }}>
-            {workflowTitle.includes(':') ? (
-              <>{workflowTitle.split(':')[0]}: <span style={{ color: '#2563eb' }}>{workflowTitle.split(':')[1]}</span></>
-            ) : (
-              workflowTitle
-            )}
-          </h2>
-
-          <p style={{ color: 'var(--text-muted)', fontSize: '1.05rem', lineHeight: 1.6, maxWidth: '640px', margin: '0 auto' }}>
-            {workflowSubtext}
-          </p>
-        </div>
-
-        {/* VIP Workflow Step Grid */}
-        <div className="vip-step-grid">
-          {stepsToRender.map((item, idx) => (
-            <div key={item.id || idx} className="vip-step-card">
-              <div className="card-top-shimmer" />
-              <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
-                  <span style={{
-                    fontSize: '0.75rem',
-                    fontWeight: 900,
-                    background: '#2563eb',
-                    color: '#ffffff',
-                    padding: '0.35rem 0.85rem',
-                    borderRadius: '9999px',
-                    boxShadow: '0 4px 14px rgba(37, 99, 235, 0.32)',
-                    letterSpacing: '0.05em'
-                  }}>
-                    STEP {item.step_number || `0${idx + 1}`}
-                  </span>
-
-                  <div style={{
-                    width: '44px',
-                    height: '44px',
-                    borderRadius: '12px',
-                    background: 'rgba(37, 99, 235, 0.08)',
-                    border: '1px solid rgba(37, 99, 235, 0.18)',
-                    color: '#2563eb',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center'
-                  }}>
-                    <IconRenderer iconName={item.icon} fallbackIcon={CheckCircle2} size={22} />
-                  </div>
-                </div>
-
-                <h3 style={{ fontSize: '1.18rem', fontWeight: 800, color: 'var(--navy-950)', marginBottom: '0.45rem', letterSpacing: '-0.015em', lineHeight: 1.35 }}>
-                  {item.title}
-                </h3>
-
-                <p style={{ fontSize: '0.92rem', color: 'var(--text-muted)', lineHeight: 1.55, margin: 0 }}>
-                  {item.description || item.desc}
-                </p>
-              </div>
-
-              {/* VIP Step Progress Indicator */}
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '1.5rem', paddingTop: '1rem', borderTop: '1px solid var(--border-color)' }}>
-                <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#2563eb', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                  Phase 0{idx + 1} of 04
-                </span>
-                <div style={{ display: 'flex', gap: '5px', alignItems: 'center' }}>
-                  {[1, 2, 3, 4].map(s => (
-                    <span
-                      key={s}
-                      style={{
-                        width: s === idx + 1 ? '16px' : '6px',
-                        height: '5px',
-                        borderRadius: '9999px',
-                        background: s === idx + 1 ? '#2563eb' : 'var(--border-color)',
-                        transition: 'all 0.3s ease'
-                      }}
-                    />
-                  ))}
-                </div>
-              </div>
             </div>
           ))}
         </div>
