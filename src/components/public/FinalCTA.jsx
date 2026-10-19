@@ -27,16 +27,28 @@ export const FinalCTA = () => {
         desc: dbSettings.cta_vector_desc || 'Precision node tracing and Pantone spot color separation. Get clean, scalable vector files ready for high-quality printing.',
         btnText: dbSettings.cta_vector_btn || 'Start Vector Conversion'
       };
+    } else if (activeHomeServiceTab === 'patch' || activeHomeServiceTab === 'patches') {
+      return {
+        title: dbSettings.cta_patch_title || 'Transform Your Designs Into Premium Custom Patches',
+        desc: dbSettings.cta_patch_desc || 'High-density embroidered, woven, and PVC patches delivered to your door. Get a free digital proof and fast worldwide shipping.',
+        btnText: dbSettings.cta_patch_btn || 'Order Custom Patches'
+      };
+    } else if (activeHomeServiceTab === 'all' || !activeHomeServiceTab) {
+      return {
+        title: dbSettings.cta_all_title || 'Ready to Elevate Your Embroidery & Custom Patches?',
+        desc: dbSettings.cta_all_desc || 'Upload your artwork for fast digitizing, vector art conversions, or custom physical patches with zero thread breaks and free revisions.',
+        btnText: dbSettings.cta_all_btn || 'Upload Artwork & Start Order'
+      };
     }
     return {
-      title: dbSettings.cta_title || dbSettings.cta_all_title || 'Ready to Elevate Your Embroidery & Custom Patches?',
-      desc: dbSettings.cta_desc || dbSettings.cta_all_desc || 'Upload your artwork for fast digitizing, vector art conversions, or custom physical patches with zero thread breaks and free revisions.',
-      btnText: dbSettings.cta_btn || dbSettings.cta_all_btn || 'Upload Artwork & Start Order'
+      title: dbSettings.cta_emb_title || 'Need a Production-Ready Embroidery File?',
+      desc: dbSettings.cta_emb_desc || 'Upload your artwork, size, placement, and garment details. We will prepare machine-ready stitch files optimized for your production setup.',
+      btnText: dbSettings.cta_emb_btn || 'Upload Artwork & Start Order'
     };
   };
 
   const content = getDynamicContent();
-  const ctaBadge = dbSettings.cta_badge || 'READY TO GET STARTED?';
+  const ctaBadge = dbSettings.cta_badge || 'Ready to Get Started?';
   const ctaSecondaryBtn = dbSettings.cta_secondary_btn || 'View Pricing & Packages';
   const badge1 = dbSettings.cta_trust_badge_1 || 'Secure Payments';
   const badge2 = dbSettings.cta_trust_badge_2 || 'Worldwide Delivery';
@@ -63,7 +75,7 @@ export const FinalCTA = () => {
         transform: 'translate(-50%, -50%)',
         width: '800px',
         height: '800px',
-        background: 'radial-gradient(circle, rgba(37, 99, 235, 0.12) 0%, rgba(15, 23, 42, 0) 70%)',
+        background: 'radial-gradient(circle, var(--color-primary-glow, rgba(37, 99, 235, 0.13)) 0%, rgba(15, 23, 42, 0) 70%)',
         pointerEvents: 'none',
         zIndex: 0,
       }} />
@@ -79,7 +91,7 @@ export const FinalCTA = () => {
         textAlign: 'center',
       }}>
         <div className="badge-pill-glow" style={{ marginBottom: '1.5rem' }}>
-          <Sparkles size={15} style={{ color: '#2563eb' }} />
+          <Sparkles size={15} style={{ color: 'var(--orange-500)' }} />
           <span>{ctaBadge}</span>
         </div>
 
@@ -92,7 +104,11 @@ export const FinalCTA = () => {
           marginBottom: '1.25rem',
           letterSpacing: '-0.025em'
         }}>
-          {content.title}
+          {content.title.includes('Into') ? (
+            <>{content.title.split('Into')[0]} Into <span className="text-gradient-orange">{content.title.split('Into')[1]}</span></>
+          ) : (
+            content.title
+          )}
         </h2>
 
         <p style={{
@@ -115,20 +131,12 @@ export const FinalCTA = () => {
         }}>
           <button
             type="button"
-            className="btn btn-lg"
+            className="btn btn-primary-orange btn-lg"
             onClick={handleCtaClick}
             style={{
-              background: '#2563eb',
-              borderColor: '#2563eb',
-              color: '#ffffff',
               padding: '0.95rem 2.25rem',
               fontSize: '1.05rem',
-              fontWeight: 800,
-              borderRadius: '12px',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-              boxShadow: '0 4px 14px rgba(37, 99, 235, 0.3)'
+              fontWeight: 800
             }}
           >
             <Upload size={18} />
@@ -140,16 +148,11 @@ export const FinalCTA = () => {
             className="btn btn-outline btn-lg"
             onClick={() => navigate('/pricing')}
             style={{
-              color: '#2563eb',
-              background: 'rgba(37, 99, 235, 0.08)',
-              borderColor: 'rgba(37, 99, 235, 0.25)',
+              color: 'var(--color-text-primary)',
+              borderColor: 'var(--color-border)',
               padding: '0.95rem 2rem',
               fontSize: '1.05rem',
-              fontWeight: 700,
-              borderRadius: '12px',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '0.5rem'
+              fontWeight: 700
             }}
           >
             {ctaSecondaryBtn}
@@ -167,19 +170,19 @@ export const FinalCTA = () => {
           width: '100%',
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--cta-desc)', fontSize: '0.85rem', fontWeight: '600' }}>
-            <Shield size={18} style={{ color: '#2563eb', flexShrink: 0 }} />
+            <Shield size={18} style={{ color: 'var(--color-primary)', flexShrink: 0 }} />
             <span>{badge1}</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--cta-desc)', fontSize: '0.85rem', fontWeight: '600' }}>
-            <Globe size={18} style={{ color: '#2563eb', flexShrink: 0 }} />
+            <Globe size={18} style={{ color: 'var(--color-primary)', flexShrink: 0 }} />
             <span>{badge2}</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--cta-desc)', fontSize: '0.85rem', fontWeight: '600' }}>
-            <Lock size={18} style={{ color: '#2563eb', flexShrink: 0 }} />
+            <Lock size={18} style={{ color: 'var(--color-primary)', flexShrink: 0 }} />
             <span>{badge3}</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--cta-desc)', fontSize: '0.85rem', fontWeight: '600' }}>
-            <Zap size={18} style={{ color: '#2563eb', flexShrink: 0 }} />
+            <Zap size={18} style={{ color: 'var(--color-primary)', flexShrink: 0 }} />
             <span>{badge4}</span>
           </div>
         </div>

@@ -9,10 +9,6 @@ import {
 } from 'lucide-react';
 import { PackageCard } from './PackageCard';
 import { ServiceProcessTimelineSection } from './ServiceProcessTimelineSection';
-import { TrustStatsBar } from './TrustStatsBar';
-import { WhyChooseUs } from './WhyChooseUs';
-import { TestimonialsFAQ } from './TestimonialsFAQ';
-import { FinalCTA } from './FinalCTA';
 
 export const EmbroideryDigitizingPage = ({ hideHero = false }) => {
   const { setIsOrderWizardOpen, openOrderWizard, dynamicPricingTiers = [], homePageConfig = {} } = useAppState();
@@ -174,7 +170,7 @@ export const EmbroideryDigitizingPage = ({ hideHero = false }) => {
           right: '-5%',
           width: '500px',
           height: '500px',
-          background: 'radial-gradient(circle, rgba(37, 99, 235, 0.08) 0%, transparent 70%)',
+          background: 'radial-gradient(circle, rgba(168, 85, 247, 0.12) 0%, transparent 70%)',
           pointerEvents: 'none',
           zIndex: 0
         }} />
@@ -185,9 +181,9 @@ export const EmbroideryDigitizingPage = ({ hideHero = false }) => {
             display: 'inline-flex',
             alignItems: 'center',
             gap: '0.4rem',
-            background: 'rgba(37, 99, 235, 0.08)',
-            border: '1px solid rgba(37, 99, 235, 0.25)',
-            color: '#2563eb',
+            background: 'var(--color-primary-light, rgba(255, 122, 0, 0.15))',
+            border: '1px solid var(--border-color)',
+            color: 'var(--color-primary)',
             fontWeight: 800,
             fontSize: '0.85rem',
             textTransform: 'uppercase',
@@ -232,19 +228,19 @@ export const EmbroideryDigitizingPage = ({ hideHero = false }) => {
 
           <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', flexWrap: 'wrap' }}>
             <button
-              className="btn btn-lg"
+              className="btn btn-primary-orange btn-lg"
               onClick={handleStartOrder}
-              style={{ background: '#2563eb', borderColor: '#2563eb', color: '#ffffff', fontWeight: 800, padding: '0.85rem 2rem', fontSize: '1.05rem', borderRadius: '12px', boxShadow: '0 4px 14px rgba(37, 99, 235, 0.3)' }}
+              style={{ fontWeight: 800, padding: '0.85rem 2rem', fontSize: '1.05rem' }}
             >
               {dbSettings.emb_hero_btn_primary || 'Order Embroidery Digitizing'} <ArrowRight size={20} />
             </button>
 
             <a
-              href="/pricing"
+              href="#pricing-tiers"
               className="btn btn-outline btn-lg"
-              style={{ fontWeight: 700, padding: '0.85rem 1.75rem', color: '#2563eb', background: 'rgba(37, 99, 235, 0.08)', borderColor: 'rgba(37, 99, 235, 0.25)', borderRadius: '12px' }}
+              style={{ fontWeight: 700, padding: '0.85rem 1.75rem', color: 'var(--hero-text-primary, var(--color-text-primary))', borderColor: 'var(--border-color)' }}
             >
-              {dbSettings.emb_hero_btn_secondary || 'View Pricing & Packages'}
+              {dbSettings.emb_hero_btn_secondary || 'View Pricing Tiers'}
             </a>
           </div>
 
@@ -252,58 +248,41 @@ export const EmbroideryDigitizingPage = ({ hideHero = false }) => {
         </section>
       )}
 
-      {/* Capability Advantage Details from user request */}
-      <section style={{ padding: '3.5rem 0 2rem', background: 'var(--bg-main)' }}>
-        <div className="container">
-          <div style={{ marginBottom: '3.5rem' }}>
-            <h3 style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--color-text-primary)', marginBottom: '1.5rem', textAlign: 'center' }}>
-              Embroidery Engineering Advantages
-            </h3>
-            <div className="grid-responsive-4">
-              {[
-                { title: '100% Manual Digitizing', desc: 'No automated auto-tracing shortcuts. Every stitch angle and density point is manually mapped by master digitizers.' },
-                { title: 'Efficient Stitch Pathing', desc: 'Optimized sequencing, smart trim reductions, and proper push-pull compensation help reduce production interruptions.' },
-                { title: 'All Machine Formats', desc: 'Full compatibility with Tajima (.DST), Wilcom (.EMB), Brother (.PES), Melco (.EXP), Barudan, and Janome.' },
-                { title: '4–12 Hr Fast Delivery', desc: 'Fast turnaround with production simulation run-sheets, thread sequence charts, and free revisions.' }
-              ].map((item) => (
-                <div key={item.title} className="card" style={{ background: 'var(--color-surface, var(--bg-card))', padding: '1.75rem 1.5rem', borderRadius: '16px', border: '1px solid var(--color-border)', boxShadow: 'var(--shadow-sm)' }}>
-                  <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'rgba(37, 99, 235, 0.08)', color: '#2563eb', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '1rem' }}>
-                    <CheckCircle size={22} />
-                  </div>
-                  <h4 style={{ fontSize: '1.05rem', fontWeight: 800, color: 'var(--color-text-primary)', marginBottom: '0.5rem' }}>{item.title}</h4>
-                  <p style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)', lineHeight: 1.55, margin: 0 }}>{item.desc}</p>
-                </div>
-              ))}
-            </div>
+      {/* Main Content & Packages */}
+      <section id="pricing-tiers" style={{ padding: '5rem 0 6rem', background: 'var(--bg-main)', color: 'var(--color-text-primary)' }}>
+        <div className="container" style={{ maxWidth: '1240px', margin: '0 auto', overflow: 'visible' }}>
+
+          {/* Streamlined Pricing Tiers Grid */}
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 290px), 1fr))',
+            gap: '2rem',
+            maxWidth: '1240px',
+            margin: '0 auto',
+            alignItems: 'stretch',
+            paddingTop: '1rem',
+            overflow: 'visible'
+          }}>
+            {activeCards.map((cat, idx) => (
+              <PackageCard
+                key={cat.id || idx}
+                cat={cat}
+                idx={idx}
+                onSelect={(selectedCat) => handleSelectTier(selectedCat.tierKey || 'standard', selectedCat)}
+                forceCategory="embroidery"
+              />
+            ))}
           </div>
 
-          <div style={{ marginBottom: '3.5rem' }}>
-            <h3 style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--color-text-primary)', marginBottom: '1.5rem', textAlign: 'center' }}>
-              Supported Embroidery Placements & Styles
-            </h3>
-            <div className="grid-responsive-4">
-              {[
-                { name: 'Left Chest & Polo Logos', desc: 'Precision center-out stitching designed specifically for stable front polo and corporate uniform shirts.' },
-                { name: '3D Puff / Foam Caps', desc: 'High-density satin top stitches over EVA puff foam with capped endpoints for clean 3D raised hats.' },
-                { name: 'Full Jacket Backs', desc: 'Large scale designs up to 100,000+ stitches engineered with lightweight underlays to prevent fabric puckering.' },
-                { name: 'Applique & Micro-Text', desc: 'Crisp small lettering down to 4mm and fabric patch tack-down lines with satin border finishes.' }
-              ].map((type) => (
-                <div key={type.name} className="card" style={{ background: 'var(--color-surface, var(--bg-card))', padding: '1.5rem', borderRadius: '16px', border: '1.5px solid var(--color-border)', boxShadow: 'var(--shadow-sm)' }}>
-                  <div style={{ color: '#2563eb', fontWeight: 800, fontSize: '0.8rem', textTransform: 'uppercase', marginBottom: '0.35rem' }}>Embroidery Type</div>
-                  <h4 style={{ fontSize: '1.05rem', fontWeight: 800, color: 'var(--color-text-primary)', marginBottom: '0.5rem' }}>{type.name}</h4>
-                  <p style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)', lineHeight: 1.5, margin: 0 }}>{type.desc}</p>
-                </div>
-              ))}
-            </div>
+          <div style={{ textAlign: 'center', marginTop: '3.5rem', color: '#64748b', fontSize: '0.925rem', fontWeight: 600 }}>
+            📌 <em>{dbSettings.emb_footer_text || 'Prices are flat rates per design with zero hidden charges. Need multiple designs? Click any tier package above to open your instant order form.'}</em>
           </div>
+
         </div>
       </section>
 
-      {/* 5 User-Attached Sections in Exact Sequence */}
-      <TrustStatsBar />
-      <WhyChooseUs />
-      <TestimonialsFAQ />
-      <FinalCTA />
+      {/* Dynamic 2-Column Production Process Steps & Delivery Timeline */}
+      <ServiceProcessTimelineSection serviceType="embroidery" />
 
     </div>
   );

@@ -124,6 +124,64 @@ export const WhyChooseUs = () => {
       }))
     : defaultTrustFeatures;
 
+  // Workflow Data Source
+  const rawWorkflowSteps = homePageConfig?.workflowSteps || [];
+  let matchedSteps = rawWorkflowSteps.filter(s => s.service === currentKey && s.is_active !== false).sort((a, b) => a.sort_order - b.sort_order);
+  if (matchedSteps.length === 0) {
+    matchedSteps = rawWorkflowSteps.filter(s => s.service === 'all' && s.is_active !== false).sort((a, b) => a.sort_order - b.sort_order);
+  }
+
+  const workflowTitle = currentKey === 'all' ? 'How It Works: Our Process' :
+    currentKey === 'vector-art' ? 'How It Works: Vector Art Conversion' :
+    currentKey === 'patches' ? 'How It Works: Custom Patches Production' :
+    'How It Works: Embroidery Digitizing';
+
+  const workflowSubtext = currentKey === 'all' ? 'From artwork upload to production-ready files in 4 easy steps.' :
+    currentKey === 'vector-art' ? 'From low-resolution image to press-ready vector in 4 easy steps.' :
+    currentKey === 'patches' ? 'From your logo to custom manufactured emblems delivered to your door.' :
+    'From your logo to machine-ready stitch files in 4 easy steps.';
+
+  const defaultAllSteps = [
+    { step_number: '01', icon: 'Upload', title: 'Upload Artwork', description: 'Drop your logo or sketch and pick your service.' },
+    { step_number: '02', icon: 'Layers', title: 'Master Processing', description: 'Our studio experts manually digitize your design.' },
+    { step_number: '03', icon: 'FileCheck', title: 'Free Proof Review', description: 'Check your high-res digital proof before final sew-out.' },
+    { step_number: '04', icon: 'Download', title: 'Download & Stitch', description: 'Instant machine files (.DST, .PES) or tracked patch delivery.' }
+  ];
+
+  const defaultVectorSteps = [
+    { step_number: '01', icon: 'Upload', title: 'Send Artwork', description: 'Upload your low-res JPG, PNG, screenshot, or sketch.' },
+    { step_number: '02', icon: 'PenTool', title: 'Hand Vector Redraw', description: 'Redrawn node-by-node in Illustrator with zero auto-trace.' },
+    { step_number: '03', icon: 'Palette', title: 'Color Separation', description: 'Calibrated Pantone (PMS) spot colors ready for press.' },
+    { step_number: '04', icon: 'Download', title: 'Instant Download', description: 'Get editable .AI, .EPS, .SVG and print-ready PDF files.' }
+  ];
+
+  const defaultPatchSteps = [
+    { step_number: '01', icon: 'Upload', title: 'Submit Design', description: 'Upload artwork & select Embroidered, Woven, PVC, or Leather.' },
+    { step_number: '02', icon: 'FileCheck', title: '12-Hr Free Proof', description: 'Receive high-res digital mockup & sew-out sample approval.' },
+    { step_number: '03', icon: 'Sparkles', title: 'Precision Crafting', description: 'Manufactured with durable stitching and military backings.' },
+    { step_number: '04', icon: 'Truck', title: 'Doorstep Delivery', description: 'Tracked express shipping delivered straight to your door.' }
+  ];
+
+  const defaultEmbroiderySteps = [
+    { step_number: '01', icon: 'Upload', title: 'Upload Logo', description: 'Submit your artwork and fabric type (caps, polos, hoodies).' },
+    { step_number: '02', icon: 'Layers', title: 'Manual Digitizing', description: 'Hand-mapped stitch pathing with calculated pull compensation.' },
+    { step_number: '03', icon: 'Cpu', title: 'Sew-Out Simulation', description: 'Virtual stitch test run to guarantee zero thread breaks.' },
+    { step_number: '04', icon: 'Download', title: 'Download & Sew', description: 'Instant machine files (.DST, .PES, .EMB) in 4–12 hours.' }
+  ];
+
+  const activeDefaultSteps = currentKey === 'vector-art' ? defaultVectorSteps :
+    currentKey === 'patches' ? defaultPatchSteps :
+    currentKey === 'embroidery' ? defaultEmbroiderySteps :
+    defaultAllSteps;
+
+  const stepsToRender = (matchedSteps.length > 0)
+    ? matchedSteps.slice(0, 4).map((item, idx) => ({
+        ...item,
+        step_number: item.step_number ? (String(item.step_number).padStart(2, '0')) : `0${idx + 1}`,
+        description: item.description || activeDefaultSteps[idx]?.description || ''
+      }))
+    : activeDefaultSteps;
+
   return (
     <section id="why-choose-us" style={{ padding: '5.5rem 0', background: 'transparent', position: 'relative' }}>
       <style>{`
@@ -131,7 +189,7 @@ export const WhyChooseUs = () => {
           display: grid;
           grid-template-columns: repeat(3, 1fr);
           gap: 1.5rem;
-          margin-bottom: 0;
+          margin-bottom: 5.5rem;
         }
         .vip-trust-card {
           position: relative;
@@ -146,30 +204,62 @@ export const WhyChooseUs = () => {
         }
         .vip-trust-card:hover {
           transform: translateY(-5px);
-          border-color: rgba(37, 99, 235, 0.35);
-          box-shadow: 0 16px 36px -8px rgba(37, 99, 235, 0.14), var(--shadow-md);
+          border-color: rgba(249, 115, 22, 0.35);
+          box-shadow: 0 16px 36px -8px rgba(249, 115, 22, 0.14), var(--shadow-md);
         }
-        .vip-trust-card .card-top-shimmer {
+        .vip-trust-card .card-top-shimmer,
+        .vip-step-card .card-top-shimmer {
           position: absolute;
           top: 0;
           left: 0;
           right: 0;
           height: 3px;
-          background: linear-gradient(90deg, transparent, #2563eb, transparent);
+          background: linear-gradient(90deg, transparent, var(--color-primary, #2563eb), transparent);
           opacity: 0;
           transition: opacity 0.3s ease;
         }
-        .vip-trust-card:hover .card-top-shimmer {
+        .vip-trust-card:hover .card-top-shimmer,
+        .vip-step-card:hover .card-top-shimmer {
           opacity: 1;
+        }
+        .vip-step-grid {
+          display: grid;
+          grid-template-columns: repeat(4, 1fr);
+          gap: 1.5rem;
+        }
+        .vip-step-card {
+          position: relative;
+          background: var(--color-surface, var(--bg-card));
+          border: 1.5px solid var(--color-border, var(--border-color));
+          border-radius: 20px;
+          padding: 2.25rem 1.75rem;
+          transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+          display: flex;
+          flex-direction: column;
+          justify-content: space-between;
+          overflow: hidden;
+        }
+        .vip-step-card:hover {
+          transform: translateY(-5px);
+          border-color: rgba(249, 115, 22, 0.35);
+          box-shadow: 0 16px 36px -8px rgba(249, 115, 22, 0.14), var(--shadow-md);
         }
         @media (max-width: 1024px) {
           .vip-trust-grid {
             grid-template-columns: repeat(2, 1fr) !important;
             gap: 1.25rem !important;
           }
+          .vip-step-grid {
+            grid-template-columns: repeat(2, 1fr) !important;
+            gap: 1.25rem !important;
+          }
         }
         @media (max-width: 640px) {
           .vip-trust-grid {
+            grid-template-columns: 1fr !important;
+            gap: 1rem !important;
+          }
+          .vip-step-grid {
             grid-template-columns: 1fr !important;
             gap: 1rem !important;
           }
@@ -181,13 +271,13 @@ export const WhyChooseUs = () => {
         {/* Trust Grid Section Header */}
         <div style={{ textAlign: 'center', maxWidth: '750px', margin: '0 auto 3.5rem' }}>
           <div className="badge-pill-glow" style={{ marginBottom: '1rem' }}>
-            <Award size={15} style={{ color: '#2563eb' }} />
+            <Award size={15} style={{ color: 'var(--orange-500)' }} />
             <span>Industry Proven Precision</span>
           </div>
 
           <h2 style={{ fontSize: 'clamp(2rem, 3.5vw, 2.75rem)', color: 'var(--navy-950)', marginBottom: '0.85rem', fontWeight: 900, letterSpacing: '-0.02em' }}>
             {title.includes('BDigitizing') ? (
-              <>Why Choose <span style={{ color: '#2563eb' }}>BDigitizing</span>?</>
+              <>Why Choose <span className="text-gradient-orange">BDigitizing</span>?</>
             ) : (
               title
             )}
@@ -207,13 +297,13 @@ export const WhyChooseUs = () => {
                   width: '52px',
                   height: '52px',
                   borderRadius: '14px',
-                  background: 'rgba(37, 99, 235, 0.08)',
-                  border: '1px solid rgba(37, 99, 235, 0.18)',
-                  color: '#2563eb',
+                  background: 'var(--color-primary-light, rgba(249, 115, 22, 0.1))',
+                  border: '1px solid rgba(249, 115, 22, 0.22)',
+                  color: 'var(--color-primary)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  boxShadow: '0 4px 14px rgba(37, 99, 235, 0.12)'
+                  boxShadow: '0 4px 14px var(--color-primary-glow, rgba(249, 115, 22, 0.12))'
                 }}>
                   <IconRenderer iconName={item.icon} size={24} />
                 </div>
@@ -222,9 +312,9 @@ export const WhyChooseUs = () => {
                   fontWeight: 800,
                   letterSpacing: '0.06em',
                   textTransform: 'uppercase',
-                  color: '#2563eb',
-                  background: 'rgba(37, 99, 235, 0.08)',
-                  border: '1px solid rgba(37, 99, 235, 0.2)',
+                  color: 'var(--color-primary)',
+                  background: 'rgba(249, 115, 22, 0.08)',
+                  border: '1px solid rgba(249, 115, 22, 0.2)',
                   padding: '0.25rem 0.65rem',
                   borderRadius: '9999px'
                 }}>
@@ -237,6 +327,94 @@ export const WhyChooseUs = () => {
               <p style={{ fontSize: '0.92rem', color: 'var(--text-muted)', lineHeight: 1.55, margin: 0 }}>
                 {item.description || item.desc}
               </p>
+            </div>
+          ))}
+        </div>
+
+        {/* Workflow Section Header */}
+        <div style={{ textAlign: 'center', maxWidth: '750px', margin: '0 auto 3.5rem' }}>
+          <div className="badge-pill-glow" style={{ marginBottom: '1rem' }}>
+            <ShieldCheck size={16} style={{ color: 'var(--orange-500)' }} />
+            <span>Seamless Step-by-Step Process</span>
+          </div>
+
+          <h2 style={{ fontSize: 'clamp(2rem, 3.5vw, 2.75rem)', color: 'var(--navy-950)', marginBottom: '0.75rem', fontWeight: 900, letterSpacing: '-0.02em' }}>
+            {workflowTitle.includes(':') ? (
+              <>{workflowTitle.split(':')[0]}: <span className="text-gradient-orange">{workflowTitle.split(':')[1]}</span></>
+            ) : (
+              workflowTitle
+            )}
+          </h2>
+
+          <p style={{ color: 'var(--text-muted)', fontSize: '1.05rem', lineHeight: 1.6, maxWidth: '640px', margin: '0 auto' }}>
+            {workflowSubtext}
+          </p>
+        </div>
+
+        {/* VIP Workflow Step Grid */}
+        <div className="vip-step-grid">
+          {stepsToRender.map((item, idx) => (
+            <div key={item.id || idx} className="vip-step-card">
+              <div className="card-top-shimmer" />
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
+                  <span style={{
+                    fontSize: '0.75rem',
+                    fontWeight: 900,
+                    background: 'linear-gradient(135deg, #ff6b00 0%, #2563eb 100%)',
+                    color: '#ffffff',
+                    padding: '0.35rem 0.85rem',
+                    borderRadius: '9999px',
+                    boxShadow: '0 4px 14px rgba(37, 99, 235, 0.32)',
+                    letterSpacing: '0.05em'
+                  }}>
+                    STEP {item.step_number || `0${idx + 1}`}
+                  </span>
+
+                  <div style={{
+                    width: '44px',
+                    height: '44px',
+                    borderRadius: '12px',
+                    background: 'var(--color-primary-light, rgba(249, 115, 22, 0.1))',
+                    border: '1px solid rgba(249, 115, 22, 0.2)',
+                    color: 'var(--color-primary)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}>
+                    <IconRenderer iconName={item.icon} fallbackIcon={CheckCircle2} size={22} />
+                  </div>
+                </div>
+
+                <h3 style={{ fontSize: '1.18rem', fontWeight: 800, color: 'var(--navy-950)', marginBottom: '0.45rem', letterSpacing: '-0.015em', lineHeight: 1.35 }}>
+                  {item.title}
+                </h3>
+
+                <p style={{ fontSize: '0.92rem', color: 'var(--text-muted)', lineHeight: 1.55, margin: 0 }}>
+                  {item.description || item.desc}
+                </p>
+              </div>
+
+              {/* VIP Step Progress Indicator */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '1.5rem', paddingTop: '1rem', borderTop: '1px solid var(--border-color)' }}>
+                <span style={{ fontSize: '0.72rem', fontWeight: 800, color: 'var(--color-primary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                  Phase 0{idx + 1} of 04
+                </span>
+                <div style={{ display: 'flex', gap: '5px', alignItems: 'center' }}>
+                  {[1, 2, 3, 4].map(s => (
+                    <span
+                      key={s}
+                      style={{
+                        width: s === idx + 1 ? '16px' : '6px',
+                        height: '5px',
+                        borderRadius: '9999px',
+                        background: s === idx + 1 ? 'var(--color-primary)' : 'var(--border-color)',
+                        transition: 'all 0.3s ease'
+                      }}
+                    />
+                  ))}
+                </div>
+              </div>
             </div>
           ))}
         </div>

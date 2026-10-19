@@ -25,9 +25,13 @@ export const TestimonialsFAQ = () => {
     isActive: t.is_active !== false
   }));
 
-  // Filter testimonials: show up to 4 active customer reviews matching Image 4
+  // Filter testimonials based on category or show all active
   const activeTestimonials = mappedTestimonials.filter(t => t.isActive);
-  const displayTestimonials = activeTestimonials.length > 0 ? activeTestimonials.slice(0, 4) : [];
+  const filteredTestimonials = activeTestimonials.filter(t => {
+    if (activeTab === 'all') return true;
+    return matchCategory(t.service, activeTab);
+  });
+  const displayTestimonials = filteredTestimonials.length > 0 ? filteredTestimonials : activeTestimonials;
 
   return (
     <section id="testimonials" style={{ padding: '5.5rem 0', background: 'transparent', position: 'relative' }}>
@@ -37,18 +41,22 @@ export const TestimonialsFAQ = () => {
         <div>
           <div style={{ textAlign: 'center', maxWidth: '750px', margin: '0 auto 3.5rem' }}>
             <div className="badge-pill-glow" style={{ marginBottom: '1rem' }}>
-              <Quote size={15} style={{ color: '#2563eb' }} />
+              <Quote size={15} style={{ color: 'var(--orange-500)' }} />
               <span>Verified Customer Feedback</span>
             </div>
             <h2 style={{ fontSize: 'clamp(2rem, 3.5vw, 2.75rem)', color: 'var(--navy-950)', marginBottom: '1rem', fontWeight: 900, letterSpacing: '-0.02em', lineHeight: 1.2 }}>
-              {testTitle || 'Trusted by Commercial Embroiderers & Apparel Brands'}
+              {testTitle.includes('3,900+') || testTitle.includes('1,200+') ? (
+                <>Trusted by <span className="text-gradient-orange">Commercial Embroiderers</span> & Apparel Brands</>
+              ) : (
+                testTitle
+              )}
             </h2>
             <p style={{ color: 'var(--text-muted)', fontSize: '1.1rem', lineHeight: 1.65 }}>
               {testSub}
             </p>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 250px), 1fr))', gap: '1.5rem' }}>
+          <div className="grid-responsive-3" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 320px), 1fr))', gap: '1.5rem' }}>
             {displayTestimonials.map((t, idx) => {
               const serviceLabel = (t.service || 'Embroidery').charAt(0).toUpperCase() + (t.service || 'Embroidery').slice(1);
               return (
@@ -57,7 +65,7 @@ export const TestimonialsFAQ = () => {
                   className="card"
                   style={{
                     background: 'var(--bg-card)',
-                    padding: '2.25rem 1.75rem',
+                    padding: '2.25rem 2rem',
                     borderRadius: '20px',
                     boxShadow: 'var(--shadow-sm)',
                     display: 'flex',
@@ -75,11 +83,11 @@ export const TestimonialsFAQ = () => {
                         ))}
                       </div>
                       <span style={{ 
-                        fontSize: '0.72rem', 
+                        fontSize: '0.75rem', 
                         fontWeight: 800, 
-                        background: 'rgba(37, 99, 235, 0.08)', 
-                        color: '#2563eb',
-                        border: '1px solid rgba(37, 99, 235, 0.2)',
+                        background: 'var(--color-primary-light)', 
+                        color: 'var(--color-primary)',
+                        border: '1px solid var(--color-border)',
                         padding: '0.25rem 0.65rem',
                         borderRadius: '9999px',
                         textTransform: 'uppercase',
@@ -88,7 +96,7 @@ export const TestimonialsFAQ = () => {
                         {serviceLabel}
                       </span>
                     </div>
-                    <p style={{ color: 'var(--color-text-secondary, var(--navy-800))', fontSize: '0.95rem', lineHeight: 1.65, marginBottom: '2rem', fontStyle: 'italic' }}>
+                    <p style={{ color: 'var(--color-text-secondary, var(--navy-800))', fontSize: '0.975rem', lineHeight: 1.65, marginBottom: '2rem', fontStyle: 'italic' }}>
                       "{t.comment}"
                     </p>
                   </div>
@@ -105,15 +113,15 @@ export const TestimonialsFAQ = () => {
                         width: '44px',
                         height: '44px',
                         borderRadius: '50%',
-                        background: '#2563eb',
-                        color: '#ffffff',
+                        background: 'linear-gradient(135deg, var(--color-secondary), var(--color-primary))',
+                        color: 'var(--color-text-on-primary, #ffffff)',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
                         fontWeight: 800,
                         fontSize: '1.05rem',
                         border: '2px solid var(--color-border)',
-                        boxShadow: '0 2px 6px rgba(37, 99, 235, 0.25)',
+                        boxShadow: '0 2px 6px var(--color-primary-glow)',
                         flexShrink: 0
                       }}>
                         {(t.name || 'U').charAt(0).toUpperCase()}
