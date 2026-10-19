@@ -7,16 +7,16 @@ const read = (relPath) => fs.readFileSync(path.join(process.cwd(), relPath), 'ut
 
 describe('Live Chat Floating Widget & Realtime Support System', () => {
 
-  test('1. LiveChatWidget has a minimal, accessible launcher matching the reference', () => {
+  test('1. LiveChatWidget has a clean, accessible launcher dedicated to chat', () => {
     const file = read('src/components/common/LiveChatWidget.jsx');
 
     assert.match(file, /live-chat-floating-btn-wrap/);
     assert.match(file, /z-index:\s*9999999/);
     assert.match(file, /className="live-chat-launcher"/);
-    assert.match(file, /background:\s*#6d48ed/);
-    assert.match(file, /width:\s*64px/);
-    assert.match(file, /live-chat-online-dot/);
-    assert.match(file, /background:\s*#35d68b/);
+    assert.match(file, /width:\s*56px/);
+    assert.match(file, /height:\s*56px/);
+    assert.match(file, /background:\s*linear-gradient\(135deg,\s*#1d4ed8/);
+    assert.doesNotMatch(file, /live-chat-online-dot/);
     assert.match(file, /aria-label="Open support chat"/);
     assert.match(file, /<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/);
     assert.match(file, /unreadCount > 0/);

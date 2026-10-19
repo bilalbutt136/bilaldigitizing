@@ -328,7 +328,7 @@ export const LiveChatWidget = () => {
           background: #090d16 !important;
         }
 
-        /* Compact, quiet launcher based on the reference */
+        /* Clean, professional floating chat launcher */
         .live-chat-floating-btn-wrap {
           bottom: calc(24px + env(safe-area-inset-bottom, 0px));
           right: 24px;
@@ -338,57 +338,48 @@ export const LiveChatWidget = () => {
           display: flex;
           align-items: center;
           justify-content: center;
-          width: 64px;
-          height: 64px;
-          border: 0;
+          width: 56px;
+          height: 56px;
+          border: 1px solid rgba(255, 255, 255, 0.2);
           border-radius: 50%;
           padding: 0;
-          background: #6d48ed;
-          color: #fff;
+          background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%);
+          color: #ffffff;
           cursor: pointer;
-          box-shadow: 0 10px 26px rgba(80, 56, 191, .28), 0 3px 8px rgba(39, 24, 89, .12);
-          transition: transform .18s ease, box-shadow .18s ease, background-color .18s ease;
+          box-shadow: 0 10px 24px -2px rgba(29, 78, 216, 0.38), 0 3px 8px -1px rgba(15, 23, 42, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+          transition: transform .2s ease, box-shadow .2s ease, background .2s ease;
           -webkit-tap-highlight-color: transparent;
         }
         .live-chat-launcher:hover {
-          background: #623edf;
-          transform: translateY(-2px);
-          box-shadow: 0 12px 28px rgba(80, 56, 191, .32), 0 3px 8px rgba(39, 24, 89, .12);
+          background: linear-gradient(135deg, #1e40af 0%, #1d4ed8 100%);
+          transform: translateY(-2px) scale(1.03);
+          box-shadow: 0 14px 28px -2px rgba(29, 78, 216, 0.48), 0 4px 10px -1px rgba(15, 23, 42, 0.16), inset 0 1px 0 rgba(255, 255, 255, 0.3);
         }
-        .live-chat-launcher:active { transform: scale(.97); }
+        .live-chat-launcher:active { transform: scale(.96); }
         .live-chat-launcher:focus-visible,
         .live-chat-guest-header button:focus-visible,
         .live-chat-guest-chip:focus-visible,
         .live-chat-send:focus-visible,
         .live-chat-whatsapp:focus-visible {
-          outline: 3px solid #a5b4fc;
+          outline: 3px solid rgba(37, 99, 235, 0.45);
           outline-offset: 3px;
-        }
-        .live-chat-online-dot {
-          position: absolute;
-          top: 1px;
-          right: 1px;
-          width: 16px;
-          height: 16px;
-          border: 3px solid white;
-          border-radius: 50%;
-          background: #35d68b;
         }
         .live-chat-unread-badge {
           position: absolute;
-          top: -5px;
-          left: -5px;
-          min-width: 21px;
-          height: 21px;
+          top: -3px;
+          right: -3px;
+          min-width: 20px;
+          height: 20px;
           display: grid;
           place-items: center;
           padding: 0 5px;
           border: 2px solid white;
-          border-radius: 11px;
+          border-radius: 10px;
           background: #ef4444;
           color: #fff;
           font-size: 11px;
           font-weight: 700;
+          box-shadow: 0 2px 6px rgba(239, 68, 68, 0.45);
         }
         .live-chat-floating-container {
           bottom: calc(100px + env(safe-area-inset-bottom, 0px));
@@ -838,8 +829,8 @@ export const LiveChatWidget = () => {
           aria-expanded={false}
         >
           <svg
-            width="30"
-            height="30"
+            width="24"
+            height="24"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
@@ -850,7 +841,6 @@ export const LiveChatWidget = () => {
           >
             <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
           </svg>
-          <span className="live-chat-online-dot" aria-hidden="true" />
           {unreadCount > 0 && (
             <span className="live-chat-unread-badge" aria-label={unreadCount + ' unread messages'}>
               {unreadCount > 99 ? '99+' : unreadCount}
