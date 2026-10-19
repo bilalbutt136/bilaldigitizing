@@ -131,15 +131,11 @@ export const WhyChooseUs = () => {
     matchedSteps = rawWorkflowSteps.filter(s => s.service === 'all' && s.is_active !== false).sort((a, b) => a.sort_order - b.sort_order);
   }
 
-  const workflowTitle = currentKey === 'all' ? 'How It Works: Our Process' :
-    currentKey === 'vector-art' ? 'How It Works: Vector Art Conversion' :
-    currentKey === 'patches' ? 'How It Works: Custom Patches Production' :
-    'How It Works: Embroidery Digitizing';
+  const workflowTitle = currentKey === 'vector-art' ? 'How It Works: Vector Art Conversion' :
+    'How It Works: Our Process';
 
-  const workflowSubtext = currentKey === 'all' ? 'From artwork upload to production-ready files in 4 easy steps.' :
-    currentKey === 'vector-art' ? 'From low-resolution image to press-ready vector in 4 easy steps.' :
-    currentKey === 'patches' ? 'From your logo to custom manufactured emblems delivered to your door.' :
-    'From your logo to machine-ready stitch files in 4 easy steps.';
+  const workflowSubtext = currentKey === 'vector-art' ? 'From low-resolution image to press-ready vector in 4 easy steps.' :
+    'From artwork upload to production-ready files in 4 easy steps.';
 
   const defaultAllSteps = [
     { step_number: '01', icon: 'Upload', title: 'Upload Artwork', description: 'Drop your logo or sketch and pick your service.' },
@@ -155,24 +151,7 @@ export const WhyChooseUs = () => {
     { step_number: '04', icon: 'Download', title: 'Instant Download', description: 'Get editable .AI, .EPS, .SVG and print-ready PDF files.' }
   ];
 
-  const defaultPatchSteps = [
-    { step_number: '01', icon: 'Upload', title: 'Submit Design', description: 'Upload artwork & select Embroidered, Woven, PVC, or Leather.' },
-    { step_number: '02', icon: 'FileCheck', title: '12-Hr Free Proof', description: 'Receive high-res digital mockup & sew-out sample approval.' },
-    { step_number: '03', icon: 'Sparkles', title: 'Precision Crafting', description: 'Manufactured with durable stitching and military backings.' },
-    { step_number: '04', icon: 'Truck', title: 'Doorstep Delivery', description: 'Tracked express shipping delivered straight to your door.' }
-  ];
-
-  const defaultEmbroiderySteps = [
-    { step_number: '01', icon: 'Upload', title: 'Upload Logo', description: 'Submit your artwork and fabric type (caps, polos, hoodies).' },
-    { step_number: '02', icon: 'Layers', title: 'Manual Digitizing', description: 'Hand-mapped stitch pathing with calculated pull compensation.' },
-    { step_number: '03', icon: 'Cpu', title: 'Sew-Out Simulation', description: 'Virtual stitch test run to guarantee zero thread breaks.' },
-    { step_number: '04', icon: 'Download', title: 'Download & Sew', description: 'Instant machine files (.DST, .PES, .EMB) in 4–12 hours.' }
-  ];
-
-  const activeDefaultSteps = currentKey === 'vector-art' ? defaultVectorSteps :
-    currentKey === 'patches' ? defaultPatchSteps :
-    currentKey === 'embroidery' ? defaultEmbroiderySteps :
-    defaultAllSteps;
+  const activeDefaultSteps = currentKey === 'vector-art' ? defaultVectorSteps : defaultAllSteps;
 
   const stepsToRender = (matchedSteps.length > 0)
     ? matchedSteps.slice(0, 4).map((item, idx) => ({
@@ -204,8 +183,8 @@ export const WhyChooseUs = () => {
         }
         .vip-trust-card:hover {
           transform: translateY(-5px);
-          border-color: rgba(249, 115, 22, 0.35);
-          box-shadow: 0 16px 36px -8px rgba(249, 115, 22, 0.14), var(--shadow-md);
+          border-color: rgba(37, 99, 235, 0.35);
+          box-shadow: 0 16px 36px -8px rgba(37, 99, 235, 0.14), var(--shadow-md);
         }
         .vip-trust-card .card-top-shimmer,
         .vip-step-card .card-top-shimmer {
@@ -214,7 +193,7 @@ export const WhyChooseUs = () => {
           left: 0;
           right: 0;
           height: 3px;
-          background: linear-gradient(90deg, transparent, var(--color-primary, #2563eb), transparent);
+          background: linear-gradient(90deg, transparent, #2563eb, transparent);
           opacity: 0;
           transition: opacity 0.3s ease;
         }
@@ -241,8 +220,8 @@ export const WhyChooseUs = () => {
         }
         .vip-step-card:hover {
           transform: translateY(-5px);
-          border-color: rgba(249, 115, 22, 0.35);
-          box-shadow: 0 16px 36px -8px rgba(249, 115, 22, 0.14), var(--shadow-md);
+          border-color: rgba(37, 99, 235, 0.35);
+          box-shadow: 0 16px 36px -8px rgba(37, 99, 235, 0.14), var(--shadow-md);
         }
         @media (max-width: 1024px) {
           .vip-trust-grid {
@@ -271,13 +250,13 @@ export const WhyChooseUs = () => {
         {/* Trust Grid Section Header */}
         <div style={{ textAlign: 'center', maxWidth: '750px', margin: '0 auto 3.5rem' }}>
           <div className="badge-pill-glow" style={{ marginBottom: '1rem' }}>
-            <Award size={15} style={{ color: 'var(--orange-500)' }} />
+            <Award size={15} style={{ color: '#2563eb' }} />
             <span>Industry Proven Precision</span>
           </div>
 
           <h2 style={{ fontSize: 'clamp(2rem, 3.5vw, 2.75rem)', color: 'var(--navy-950)', marginBottom: '0.85rem', fontWeight: 900, letterSpacing: '-0.02em' }}>
             {title.includes('BDigitizing') ? (
-              <>Why Choose <span className="text-gradient-orange">BDigitizing</span>?</>
+              <>Why Choose <span style={{ color: '#2563eb' }}>BDigitizing</span>?</>
             ) : (
               title
             )}
@@ -297,13 +276,13 @@ export const WhyChooseUs = () => {
                   width: '52px',
                   height: '52px',
                   borderRadius: '14px',
-                  background: 'var(--color-primary-light, rgba(249, 115, 22, 0.1))',
-                  border: '1px solid rgba(249, 115, 22, 0.22)',
-                  color: 'var(--color-primary)',
+                  background: 'rgba(37, 99, 235, 0.08)',
+                  border: '1px solid rgba(37, 99, 235, 0.18)',
+                  color: '#2563eb',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  boxShadow: '0 4px 14px var(--color-primary-glow, rgba(249, 115, 22, 0.12))'
+                  boxShadow: '0 4px 14px rgba(37, 99, 235, 0.12)'
                 }}>
                   <IconRenderer iconName={item.icon} size={24} />
                 </div>
@@ -312,9 +291,9 @@ export const WhyChooseUs = () => {
                   fontWeight: 800,
                   letterSpacing: '0.06em',
                   textTransform: 'uppercase',
-                  color: 'var(--color-primary)',
-                  background: 'rgba(249, 115, 22, 0.08)',
-                  border: '1px solid rgba(249, 115, 22, 0.2)',
+                  color: '#2563eb',
+                  background: 'rgba(37, 99, 235, 0.08)',
+                  border: '1px solid rgba(37, 99, 235, 0.2)',
                   padding: '0.25rem 0.65rem',
                   borderRadius: '9999px'
                 }}>
@@ -334,13 +313,13 @@ export const WhyChooseUs = () => {
         {/* Workflow Section Header */}
         <div style={{ textAlign: 'center', maxWidth: '750px', margin: '0 auto 3.5rem' }}>
           <div className="badge-pill-glow" style={{ marginBottom: '1rem' }}>
-            <ShieldCheck size={16} style={{ color: 'var(--orange-500)' }} />
+            <ShieldCheck size={16} style={{ color: '#2563eb' }} />
             <span>Seamless Step-by-Step Process</span>
           </div>
 
           <h2 style={{ fontSize: 'clamp(2rem, 3.5vw, 2.75rem)', color: 'var(--navy-950)', marginBottom: '0.75rem', fontWeight: 900, letterSpacing: '-0.02em' }}>
             {workflowTitle.includes(':') ? (
-              <>{workflowTitle.split(':')[0]}: <span className="text-gradient-orange">{workflowTitle.split(':')[1]}</span></>
+              <>{workflowTitle.split(':')[0]}: <span style={{ color: '#2563eb' }}>{workflowTitle.split(':')[1]}</span></>
             ) : (
               workflowTitle
             )}
@@ -361,7 +340,7 @@ export const WhyChooseUs = () => {
                   <span style={{
                     fontSize: '0.75rem',
                     fontWeight: 900,
-                    background: 'linear-gradient(135deg, #ff6b00 0%, #2563eb 100%)',
+                    background: '#2563eb',
                     color: '#ffffff',
                     padding: '0.35rem 0.85rem',
                     borderRadius: '9999px',
@@ -375,9 +354,9 @@ export const WhyChooseUs = () => {
                     width: '44px',
                     height: '44px',
                     borderRadius: '12px',
-                    background: 'var(--color-primary-light, rgba(249, 115, 22, 0.1))',
-                    border: '1px solid rgba(249, 115, 22, 0.2)',
-                    color: 'var(--color-primary)',
+                    background: 'rgba(37, 99, 235, 0.08)',
+                    border: '1px solid rgba(37, 99, 235, 0.18)',
+                    color: '#2563eb',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center'
@@ -397,7 +376,7 @@ export const WhyChooseUs = () => {
 
               {/* VIP Step Progress Indicator */}
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '1.5rem', paddingTop: '1rem', borderTop: '1px solid var(--border-color)' }}>
-                <span style={{ fontSize: '0.72rem', fontWeight: 800, color: 'var(--color-primary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#2563eb', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                   Phase 0{idx + 1} of 04
                 </span>
                 <div style={{ display: 'flex', gap: '5px', alignItems: 'center' }}>
@@ -408,7 +387,7 @@ export const WhyChooseUs = () => {
                         width: s === idx + 1 ? '16px' : '6px',
                         height: '5px',
                         borderRadius: '9999px',
-                        background: s === idx + 1 ? 'var(--color-primary)' : 'var(--border-color)',
+                        background: s === idx + 1 ? '#2563eb' : 'var(--border-color)',
                         transition: 'all 0.3s ease'
                       }}
                     />

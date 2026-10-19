@@ -94,7 +94,7 @@ export const TrustStatsBar = () => {
   // Fallback defaults if DB is empty
   let displayStats = dbStats.filter(s => s.is_active !== false).map(s => ({
     id: s.id,
-    icon: <IconRenderer iconName={s.icon} size={24} color="var(--color-primary)" />,
+    icon: <IconRenderer iconName={s.icon} size={24} color="#2563eb" />,
     value: s.value,
     suffix: s.suffix || (isNaN(parseInt(s.value)) ? '' : '+'),
     label: s.label,
@@ -104,10 +104,10 @@ export const TrustStatsBar = () => {
 
   if (displayStats.length === 0) {
     displayStats = [
-      { id: '1', icon: <Zap size={24} color="var(--orange-500)" />, value: '4–12h', suffix: '', label: 'Average Turnaround', isStatic: true, staticText: '4–12h' },
-      { id: '2', icon: <ShieldCheck size={24} color="var(--orange-500)" />, value: '100%', suffix: '', label: 'Manual Pathing Guarantee', isStatic: true, staticText: '100%' },
-      { id: '3', icon: <FileCheck size={24} color="var(--orange-500)" />, value: 'Clean', suffix: '', label: 'Production-Ready Pathing', isStatic: true, staticText: 'Clean' },
-      { id: '4', icon: <Award size={24} color="var(--orange-500)" />, value: 'Free', suffix: '', label: 'Unlimited Revisions', isStatic: true, staticText: 'Free' }
+      { id: '1', icon: <Zap size={24} color="#2563eb" />, value: '4–12h', suffix: '', label: 'Average Turnaround', isStatic: true, staticText: '4–12h' },
+      { id: '2', icon: <ShieldCheck size={24} color="#2563eb" />, value: '100%', suffix: '', label: 'Manual Pathing Guarantee', isStatic: true, staticText: '100%' },
+      { id: '3', icon: <FileCheck size={24} color="#2563eb" />, value: 'Clean', suffix: '', label: 'Production-Ready Pathing', isStatic: true, staticText: 'Clean' },
+      { id: '4', icon: <Award size={24} color="#2563eb" />, value: 'Free', suffix: '', label: 'Unlimited Revisions', isStatic: true, staticText: 'Free' }
     ];
   }
 
@@ -124,7 +124,7 @@ export const TrustStatsBar = () => {
       <div style={{
         position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)',
         width: '60%', height: '100%',
-        background: 'radial-gradient(ellipse at top, rgba(255, 122, 0, 0.06) 0%, rgba(15, 23, 42, 0) 70%)',
+        background: 'radial-gradient(ellipse at top, rgba(37, 99, 235, 0.06) 0%, rgba(15, 23, 42, 0) 70%)',
         pointerEvents: 'none'
       }} />
 
@@ -148,14 +148,14 @@ export const TrustStatsBar = () => {
               }}
             >
               <div style={{
-                background: 'rgba(255, 122, 0, 0.1)',
+                background: 'rgba(37, 99, 235, 0.08)',
                 padding: '0.75rem',
                 borderRadius: '14px',
                 marginBottom: '0.85rem',
                 display: 'inline-flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                boxShadow: '0 0 16px rgba(255, 122, 0, 0.15)'
+                boxShadow: '0 0 16px rgba(37, 99, 235, 0.12)'
               }}>
                 {stat.icon}
               </div>

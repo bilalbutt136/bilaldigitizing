@@ -21,13 +21,9 @@ export const ServicesSection = () => {
     dynamicPricingTiers = []
   } = useAppState();
 
-  const activeTab = normalizeCategory(activeHomeServiceTab || 'all');
+  const rawTab = normalizeCategory(activeHomeServiceTab || 'embroidery');
+  const activeTab = (rawTab === 'vector-art' || rawTab === 'vector') ? 'vector-art' : 'embroidery';
   const [openFaqIndex, setOpenFaqIndex] = useState(null);
-
-  // Completely removed "Complete Studio Capabilities" overview block per user request
-  if (activeTab === 'all') {
-    return null;
-  }
 
   const _handleSelectTab = (tabId) => {
     if (setActiveHomeServiceTab) {
@@ -199,38 +195,10 @@ export const ServicesSection = () => {
               </div>
             </div>
 
-            {/* 4. Packages & Pricing Grid (Dynamic from DB) */}
-            <div id="embroidery-packages-grid" style={{ marginBottom: '3.5rem', scrollMarginTop: '110px' }}>
-              <div style={{ textAlign: 'center', marginBottom: '1.75rem' }}>
-                <h3 style={{ fontSize: '1.6rem', fontWeight: 900, color: 'var(--color-text-primary)', marginBottom: '0.4rem' }}>
-                  Choose Your Embroidery Package to Start ({embroideryTiers.length} Tiers)
-                </h3>
-                <p style={{ color: 'var(--color-text-muted)', fontSize: '0.925rem', margin: 0 }}>
-                  Select any package tier below to launch your order instantly with pre-configured settings.
-                </p>
-              </div>
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))',
-                gap: '1.5rem',
-                alignItems: 'stretch'
-              }}>
-                {embroideryTiers.map((pkg, idx) => (
-                  <PackageCard
-                    key={pkg.id || idx}
-                    cat={pkg}
-                    idx={idx}
-                    onSelect={(selectedPkg) => handleLaunchOrder('embroidery', idx === 0 ? 'basic' : idx === 1 ? 'standard' : 'premium', selectedPkg)}
-                    forceCategory="embroidery"
-                  />
-                ))}
-              </div>
-            </div>
-
             {/* 5. Turnaround & Delivery Info */}
             <div style={{ background: 'var(--color-subtle, var(--bg-subtle))', border: '1px solid var(--color-border)', borderRadius: '16px', padding: '1.5rem 2rem', marginBottom: '3.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1.5rem' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'var(--color-primary-light)', color: 'var(--color-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'rgba(37, 99, 235, 0.1)', color: '#2563eb', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   <Clock size={24} />
                 </div>
                 <div>
@@ -238,7 +206,7 @@ export const ServicesSection = () => {
                   <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.9rem', color: 'var(--color-text-muted)' }}>Standard Delivery: 8–12 hrs | Express Rush: 4–6 hrs | Delivered straight to your client dashboard & email.</p>
                 </div>
               </div>
-              <button type="button" className="btn btn-primary-orange btn-sm" onClick={() => handleLaunchOrder('embroidery')}>
+              <button type="button" className="btn btn-sm" style={{ background: '#2563eb', borderColor: '#2563eb', color: '#ffffff', fontWeight: 800 }} onClick={() => handleLaunchOrder('embroidery')}>
                 Get Started Now <ArrowRight size={14} />
               </button>
             </div>
@@ -275,7 +243,7 @@ export const ServicesSection = () => {
         )}
 
         {/* ====================================================================
-            VIEW 3: VECTOR ART TAB (Dynamic Vector Packages)
+            VIEW 3: VECTOR ART TAB
            ==================================================================== */}
         {activeTab === 'vector-art' && (
           <div>
@@ -292,7 +260,7 @@ export const ServicesSection = () => {
                   { title: '6–12 Hr Fast Delivery', desc: 'Rapid turnaround with free unlimited node corrections, text edits, and color swatch variations.' }
                 ].map((item) => (
                   <div key={item.title} className="card" style={{ background: 'var(--color-surface, var(--bg-card))', padding: '1.75rem 1.5rem', borderRadius: '16px', border: '1px solid var(--color-border)', boxShadow: 'var(--shadow-sm)' }}>
-                    <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'rgba(59, 130, 246, 0.15)', color: '#38bdf8', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '1rem' }}>
+                    <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'rgba(37, 99, 235, 0.1)', color: '#2563eb', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '1rem' }}>
                       <CheckCircle2 size={22} />
                     </div>
                     <h4 style={{ fontSize: '1.05rem', fontWeight: 800, color: 'var(--color-text-primary)', marginBottom: '0.5rem' }}>{item.title}</h4>
@@ -315,7 +283,7 @@ export const ServicesSection = () => {
                   { name: 'Artwork Modifications & Fonts', desc: 'Font matching, custom re-lettering, color tweaks, and layout adaptations for apparel templates.' }
                 ].map((type) => (
                   <div key={type.name} className="card" style={{ background: 'var(--color-surface, var(--bg-card))', padding: '1.5rem', borderRadius: '16px', border: '1.5px solid var(--color-border)', boxShadow: 'var(--shadow-sm)' }}>
-                    <div style={{ color: '#38bdf8', fontWeight: 800, fontSize: '0.8rem', textTransform: 'uppercase', marginBottom: '0.35rem' }}>Vector Service</div>
+                    <div style={{ color: '#2563eb', fontWeight: 800, fontSize: '0.8rem', textTransform: 'uppercase', marginBottom: '0.35rem' }}>Vector Service</div>
                     <h4 style={{ fontSize: '1.05rem', fontWeight: 800, color: 'var(--color-text-primary)', marginBottom: '0.5rem' }}>{type.name}</h4>
                     <p style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)', lineHeight: 1.5, margin: 0 }}>{type.desc}</p>
                   </div>
@@ -323,38 +291,10 @@ export const ServicesSection = () => {
               </div>
             </div>
 
-            {/* 4. Packages & Pricing Grid (Dynamic from DB) */}
-            <div id="vector-art-packages-grid" style={{ marginBottom: '3.5rem', scrollMarginTop: '110px' }}>
-              <div style={{ textAlign: 'center', marginBottom: '1.75rem' }}>
-                <h3 style={{ fontSize: '1.6rem', fontWeight: 900, color: 'var(--color-text-primary)', marginBottom: '0.4rem' }}>
-                  Choose Your Vector Art Package to Start ({vectorTiers.length} Tiers)
-                </h3>
-                <p style={{ color: 'var(--color-text-muted)', fontSize: '0.925rem', margin: 0 }}>
-                  Select any package tier below to launch your order instantly with pre-configured settings.
-                </p>
-              </div>
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))',
-                gap: '1.5rem',
-                alignItems: 'stretch'
-              }}>
-                {vectorTiers.map((pkg, idx) => (
-                  <PackageCard
-                    key={pkg.id || idx}
-                    cat={pkg}
-                    idx={idx}
-                    onSelect={(selectedPkg) => handleLaunchOrder('vector', idx === 0 ? 'basic' : idx === 1 ? 'standard' : 'premium', selectedPkg)}
-                    forceCategory="vector"
-                  />
-                ))}
-              </div>
-            </div>
-
             {/* 5. Turnaround & Delivery Info */}
             <div style={{ background: 'var(--color-subtle, var(--bg-subtle))', border: '1px solid var(--color-border)', borderRadius: '16px', padding: '1.5rem 2rem', marginBottom: '3.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1.5rem' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'rgba(59, 130, 246, 0.15)', color: '#38bdf8', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'rgba(37, 99, 235, 0.1)', color: '#2563eb', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   <Clock size={24} />
                 </div>
                 <div>
@@ -362,7 +302,7 @@ export const ServicesSection = () => {
                   <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.9rem', color: 'var(--color-text-muted)' }}>Standard Delivery: 6–12 hrs | Rush Orders: 3–6 hrs | Master Vector files (.AI, .EPS, .SVG, .PDF) available via instant download.</p>
                 </div>
               </div>
-              <button type="button" className="btn btn-primary-orange btn-sm" style={{ background: '#2563eb', borderColor: '#2563eb' }} onClick={() => handleLaunchOrder('vector')}>
+              <button type="button" className="btn btn-sm" style={{ background: '#2563eb', borderColor: '#2563eb', color: '#ffffff', fontWeight: 800 }} onClick={() => handleLaunchOrder('vector')}>
                 Get Started Now <ArrowRight size={14} />
               </button>
             </div>
@@ -376,138 +316,14 @@ export const ServicesSection = () => {
                 {serviceFaqs['vector-art'].map((faq, idx) => {
                   const isOpen = openFaqIndex === idx;
                   return (
-                    <div key={faq.q} className="card" style={{ background: 'var(--color-surface, var(--bg-card))', borderRadius: '14px', border: isOpen ? '1.5px solid #3b82f6' : '1px solid var(--color-border)', overflow: 'hidden' }}>
+                    <div key={faq.q} className="card" style={{ background: 'var(--color-surface, var(--bg-card))', borderRadius: '14px', border: isOpen ? '1.5px solid var(--color-primary)' : '1px solid var(--color-border)', overflow: 'hidden' }}>
                       <button
                         type="button"
                         onClick={() => setOpenFaqIndex(isOpen ? null : idx)}
-                        style={{ width: '100%', padding: '1.25rem 1.5rem', background: 'none', border: 'none', display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', textAlign: 'left', fontWeight: 700, fontSize: '1rem', color: isOpen ? '#38bdf8' : 'var(--color-text-primary)' }}
+                        style={{ width: '100%', padding: '1.25rem 1.5rem', background: 'none', border: 'none', display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', textAlign: 'left', fontWeight: 700, fontSize: '1rem', color: isOpen ? 'var(--color-primary)' : 'var(--color-text-primary)' }}
                       >
                         <span>{faq.q}</span>
-                        <ChevronDown size={18} style={{ transform: isOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s', flexShrink: 0, color: '#38bdf8' }} />
-                      </button>
-                      {isOpen && (
-                        <div style={{ padding: '0 1.5rem 1.25rem', fontSize: '0.925rem', color: 'var(--color-text-muted)', lineHeight: 1.6 }}>
-                          {faq.a}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* ====================================================================
-            VIEW 4: PATCHES TAB (Dynamic Patches Packages)
-           ==================================================================== */}
-        {activeTab === 'patches' && (
-          <div>
-            {/* 2. Types of Patches Available */}
-            <div style={{ marginBottom: '3.5rem' }}>
-              <h3 style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--color-text-primary)', marginBottom: '1.5rem', textAlign: 'center' }}>
-                Patch Types & Manufacturing Materials
-              </h3>
-              <div className="grid-responsive-4">
-                {[
-                  { name: 'Custom Embroidered Patches', desc: 'Classic textured 3D embroidery threads stitched over durable twill fabric. Ideal for hats, jackets, and uniforms.' },
-                  { name: 'High-Definition Woven Patches', desc: 'Ultra-thin woven threads creating flat, crisp surfaces capable of rendering micro-details and tiny text.' },
-                  { name: '3D Molded PVC Rubber Patches', desc: '100% waterproof, flexible, and rugged molded PVC rubber with raised 3D dimensional layers.' },
-                  { name: 'Laser Leather & Sublimated Patches', desc: 'Genuine leather, faux leather engraved emblems, and full-color photo-realistic printed patches.' }
-                ].map((type) => (
-                  <div key={type.name} className="card" style={{ background: 'var(--color-surface, var(--bg-card))', padding: '1.5rem', borderRadius: '16px', border: '1.5px solid var(--color-border)', boxShadow: 'var(--shadow-sm)' }}>
-                    <div style={{ color: '#34d399', fontWeight: 800, fontSize: '0.8rem', textTransform: 'uppercase', marginBottom: '0.35rem' }}>Patch Style</div>
-                    <h4 style={{ fontSize: '1.05rem', fontWeight: 800, color: 'var(--color-text-primary)', marginBottom: '0.5rem' }}>{type.name}</h4>
-                    <p style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)', lineHeight: 1.5, margin: 0 }}>{type.desc}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* 3. Backing & Border Options */}
-            <div style={{ marginBottom: '3.5rem' }}>
-              <h3 style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--color-text-primary)', marginBottom: '1.5rem', textAlign: 'center' }}>
-                Backing & Border Finishes
-              </h3>
-              <div className="grid-responsive-4">
-                {[
-                  { title: 'Velcro (Hook & Loop)', desc: 'Military-grade hook backing pre-attached for easy swapping on tactical vests, hats, and jackets.' },
-                  { title: 'Heat-Seal Iron-On', desc: 'Industrial heat-activated adhesive backing for fast application with a standard home iron or heat press.' },
-                  { title: 'Peel & Stick Adhesive', desc: 'Convenient sticky backing for temporary application on clothing, packaging, event passes, or flat surfaces.' },
-                  { title: 'Merrowed / Laser Cut Border', desc: 'Traditional heavy wrap-around merrowed border or ultra-clean laser heat-sealed custom shape edges.' }
-                ].map((opt) => (
-                  <div key={opt.title} className="card" style={{ background: 'var(--color-surface, var(--bg-card))', padding: '1.5rem', borderRadius: '16px', border: '1px solid var(--color-border)', boxShadow: 'var(--shadow-sm)' }}>
-                    <div style={{ width: '38px', height: '38px', borderRadius: '10px', background: 'rgba(16, 185, 129, 0.15)', color: '#34d399', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '0.75rem' }}>
-                      <CheckCircle2 size={20} />
-                    </div>
-                    <h4 style={{ fontSize: '1.025rem', fontWeight: 800, color: 'var(--color-text-primary)', marginBottom: '0.35rem' }}>{opt.title}</h4>
-                    <p style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)', lineHeight: 1.5, margin: 0 }}>{opt.desc}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* 4. Packages & Quantity Pricing Tiers (Dynamic from DB) */}
-            <div id="patches-packages-grid" style={{ marginBottom: '3.5rem', scrollMarginTop: '110px' }}>
-              <div style={{ textAlign: 'center', marginBottom: '1.75rem' }}>
-                <h3 style={{ fontSize: '1.6rem', fontWeight: 900, color: 'var(--color-text-primary)', marginBottom: '0.4rem' }}>
-                  Choose Your Custom Patches Package to Start ({patchTiers.length} Tiers)
-                </h3>
-                <p style={{ color: 'var(--color-text-muted)', fontSize: '0.925rem', margin: 0 }}>
-                  Select any quantity tier below to launch your patch order instantly with pre-configured volume pricing.
-                </p>
-              </div>
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))',
-                gap: '1.5rem',
-                alignItems: 'stretch'
-              }}>
-                {patchTiers.map((pkg, idx) => (
-                  <PackageCard
-                    key={pkg.id || idx}
-                    cat={pkg}
-                    idx={idx}
-                    onSelect={(selectedPkg) => handleLaunchOrder('patch', idx === 0 ? 'basic' : idx === 1 ? 'standard' : 'premium', selectedPkg)}
-                    forceCategory="patch"
-                  />
-                ))}
-              </div>
-            </div>
-
-            {/* 5. Turnaround & Delivery Info */}
-            <div style={{ background: 'var(--color-subtle, var(--bg-subtle))', border: '1px solid var(--color-border)', borderRadius: '16px', padding: '1.5rem 2rem', marginBottom: '3.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1.5rem' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'rgba(16, 185, 129, 0.15)', color: '#34d399', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <PackageCheck size={24} />
-                </div>
-                <div>
-                  <h4 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 800, color: 'var(--color-text-primary)' }}>Free Digital Proof & Doorstep Shipping</h4>
-                  <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.9rem', color: 'var(--color-text-muted)' }}>Free digital mockups in 12 hours | Physical production in 3–5 days | Express tracked worldwide delivery.</p>
-                </div>
-              </div>
-              <button type="button" className="btn btn-primary-orange btn-sm" style={{ background: '#059669', borderColor: '#059669' }} onClick={() => handleLaunchOrder('patch')}>
-                Get Instant Proof <ArrowRight size={14} />
-              </button>
-            </div>
-
-            {/* 6. Tailored Patches FAQs */}
-            <div style={{ maxWidth: '800px', margin: '0 auto' }}>
-              <h3 style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--color-text-primary)', marginBottom: '1.5rem', textAlign: 'center' }}>
-                Frequently Asked Questions — Custom Patches
-              </h3>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                {serviceFaqs.patches.map((faq, idx) => {
-                  const isOpen = openFaqIndex === idx;
-                  return (
-                    <div key={faq.q} className="card" style={{ background: 'var(--color-surface, var(--bg-card))', borderRadius: '14px', border: isOpen ? '1.5px solid #10b981' : '1px solid var(--color-border)', overflow: 'hidden' }}>
-                      <button
-                        type="button"
-                        onClick={() => setOpenFaqIndex(isOpen ? null : idx)}
-                        style={{ width: '100%', padding: '1.25rem 1.5rem', background: 'none', border: 'none', display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', textAlign: 'left', fontWeight: 700, fontSize: '1rem', color: isOpen ? '#34d399' : 'var(--color-text-primary)' }}
-                      >
-                        <span>{faq.q}</span>
-                        <ChevronDown size={18} style={{ transform: isOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s', flexShrink: 0, color: '#34d399' }} />
+                        <ChevronDown size={18} style={{ transform: isOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s', flexShrink: 0, color: 'var(--color-primary)' }} />
                       </button>
                       {isOpen && (
                         <div style={{ padding: '0 1.5rem 1.25rem', fontSize: '0.925rem', color: 'var(--color-text-muted)', lineHeight: 1.6 }}>

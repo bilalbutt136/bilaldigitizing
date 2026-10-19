@@ -149,8 +149,9 @@ export const HeroSection = () => {
   const [isFading, setIsFading] = useState(false);
   const [lightboxSample, setLightboxSample] = useState(null);
 
-  const activeTab = normalizeCategory(activeHomeServiceTab || 'all');
-  const defaultContent = DEFAULT_SERVICE_DATA[activeTab] || DEFAULT_SERVICE_DATA.all;
+  const resolvedTab = normalizeCategory(activeHomeServiceTab || 'embroidery');
+  const activeTab = (resolvedTab === 'all' || resolvedTab === 'patches') ? 'embroidery' : resolvedTab;
+  const defaultContent = DEFAULT_SERVICE_DATA[activeTab] || DEFAULT_SERVICE_DATA.embroidery;
 
   // Real-time DB Slide Override from heroSlides
   const matchedSlide = (heroSlides || []).find(
@@ -409,9 +410,8 @@ export const HeroSection = () => {
   };
 
   const tabs = [
-    { id: 'all', label: 'All Services', icon: LayoutGrid },
     { id: 'embroidery', label: 'Embroidery Digitizing', icon: Layers },
-    { id: 'patches', label: 'Custom Patches', icon: Tag }
+    { id: 'vector-art', label: 'Vector Art', icon: PenTool }
   ];
 
   return (
@@ -440,7 +440,7 @@ export const HeroSection = () => {
         right: '-5%',
         width: '550px',
         height: '550px',
-        background: 'radial-gradient(circle, rgba(99, 102, 241, 0.08) 0%, transparent 60%)',
+        background: 'radial-gradient(circle, rgba(37, 99, 235, 0.08) 0%, transparent 60%)',
         pointerEvents: 'none',
         zIndex: 0
       }} />
@@ -830,7 +830,7 @@ export const HeroSection = () => {
                 className="btn btn-primary-orange btn-lg vip-hero-primary"
                 onClick={handlePrimaryAction}
                 style={{
-                  background: 'var(--color-action-bg)',
+                  background: '#2563eb',
                   color: 'var(--color-text-on-primary, #ffffff)',
                   border: 'none',
                   padding: '0.72rem 1.45rem',
@@ -957,16 +957,16 @@ export const HeroSection = () => {
                     <span style={{
                       fontSize: '0.72rem',
                       fontWeight: 800,
-                      background: 'rgba(249, 115, 22, 0.12)',
-                      color: 'var(--orange-600, #ea580c)',
-                      border: '1px solid rgba(249, 115, 22, 0.25)',
+                      background: 'rgba(37, 99, 235, 0.08)',
+                      color: '#2563eb',
+                      border: '1px solid rgba(37, 99, 235, 0.25)',
                       padding: '0.2rem 0.6rem',
                       borderRadius: '9999px',
                       display: 'inline-flex',
                       alignItems: 'center',
                       gap: '0.3rem'
                     }}>
-                      <span style={{ color: 'var(--color-primary)' }}>★</span>
+                      <span style={{ color: '#2563eb' }}>★</span>
                       {currentImage.stitchCount && <span>{currentImage.stitchCount}</span>}
                       {currentImage.formats && (
                         <span style={{ opacity: 0.9 }}>{currentImage.stitchCount ? '· ' : ''}{currentImage.formats}</span>
@@ -1099,7 +1099,7 @@ export const HeroSection = () => {
                         boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
                         transition: 'all 0.2s ease'
                       }}
-                      onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--orange-500)'; e.currentTarget.style.transform = 'translateY(-50%) scale(1.08)'; }}
+                      onMouseEnter={(e) => { e.currentTarget.style.background = '#2563eb'; e.currentTarget.style.transform = 'translateY(-50%) scale(1.08)'; }}
                       onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(15, 23, 42, 0.75)'; e.currentTarget.style.transform = 'translateY(-50%) scale(1)'; }}
                       title="Previous Showcase Image"
                       aria-label="Previous portfolio sample"
@@ -1130,7 +1130,7 @@ export const HeroSection = () => {
                         boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
                         transition: 'all 0.2s ease'
                       }}
-                      onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--orange-500)'; e.currentTarget.style.transform = 'translateY(-50%) scale(1.08)'; }}
+                      onMouseEnter={(e) => { e.currentTarget.style.background = '#2563eb'; e.currentTarget.style.transform = 'translateY(-50%) scale(1.08)'; }}
                       onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(15, 23, 42, 0.75)'; e.currentTarget.style.transform = 'translateY(-50%) scale(1)'; }}
                       title="Next Showcase Image"
                       aria-label="Next portfolio sample"
@@ -1337,9 +1337,9 @@ export const HeroSection = () => {
                   <span style={{
                     fontSize: '0.76rem',
                     fontWeight: 800,
-                    background: 'rgba(249, 115, 22, 0.12)',
-                    color: 'var(--orange-600, #ea580c)',
-                    border: '1px solid rgba(249, 115, 22, 0.25)',
+                    background: 'rgba(37, 99, 235, 0.08)',
+                    color: '#2563eb',
+                    border: '1px solid rgba(37, 99, 235, 0.25)',
                     padding: '0.22rem 0.65rem',
                     borderRadius: '9999px'
                   }}>
@@ -1355,13 +1355,14 @@ export const HeroSection = () => {
 
               <button
                 type="button"
-                className="btn btn-primary-orange"
+                className="btn"
                 onClick={() => {
                   setLightboxSample(null);
                   handlePrimaryAction();
                 }}
                 style={{
-                  background: 'var(--color-action-bg)',
+                  background: '#2563eb',
+                  borderColor: '#2563eb',
                   color: '#ffffff',
                   padding: '0.65rem 1.3rem',
                   borderRadius: '10px',

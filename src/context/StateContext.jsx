@@ -485,7 +485,7 @@ export const StateProvider = ({ children, initialCatalog = null }) => {
   const [adminUsers, setAdminUsers] = useState([]);
 
   // Dynamic Service-Driven Homepage & CMS Content State
-  const [activeHomeServiceTab, setActiveHomeServiceTab] = useState('all');
+  const [activeHomeServiceTab, setActiveHomeServiceTab] = useState('embroidery');
   const [serviceCmsContent, setServiceCmsContent] = useState(initialCatalog?.serviceCms || {});
   const [homePageConfig, setHomePageConfig] = useState(initialCatalog?.homePageConfig || {
     settings: {},

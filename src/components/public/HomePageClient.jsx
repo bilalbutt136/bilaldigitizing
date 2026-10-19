@@ -56,14 +56,10 @@ export default function HomePageClient({ initialAppMode = false, initialAppTab =
     <div className="website-page-wrapper">
       <HeroSection />
       <ServicesSection />
-      {activeTab === 'all' && (
-        <>
-          <TrustStatsBar />
-          <WhyChooseUs />
-          <TestimonialsFAQ />
-          <FinalCTA />
-        </>
-      )}
+      <TrustStatsBar />
+      <WhyChooseUs />
+      <TestimonialsFAQ />
+      <FinalCTA />
     </div>
   );
 }

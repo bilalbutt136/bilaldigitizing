@@ -361,7 +361,7 @@ export const HeaderNav = () => {
               BDigitizing
             </div>
             <div className="desktop-only" style={{ fontSize: '0.68rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', marginTop: '2px' }}>
-              Embroidery &amp; Patches Studio
+              Embroidery &amp; Vector Studio
             </div>
           </div>
         </Link>
@@ -382,7 +382,7 @@ export const HeaderNav = () => {
                 textDecoration: 'none',
                 background: 'none',
                 border: 'none',
-                color: currentPath === '/' ? 'var(--orange-500)' : 'var(--text-main)',
+                color: currentPath === '/' ? '#2563eb' : 'var(--text-main)',
                 fontWeight: currentPath === '/' ? 800 : 600,
                 fontSize: '0.925rem',
                 cursor: 'pointer',
@@ -410,8 +410,8 @@ export const HeaderNav = () => {
                 style={{
                   background: 'none',
                   border: 'none',
-                  color: (currentPath.includes('/services') || currentPath === '/custom-patches') ? 'var(--orange-500)' : 'var(--text-main)',
-                  fontWeight: (currentPath.includes('/services') || currentPath === '/custom-patches') ? 800 : 600,
+                  color: currentPath.includes('/services') ? '#2563eb' : 'var(--text-main)',
+                  fontWeight: currentPath.includes('/services') ? 800 : 600,
                   fontSize: '0.925rem',
                   cursor: 'pointer',
                   padding: 0,
@@ -472,8 +472,8 @@ export const HeaderNav = () => {
                         boxSizing: 'border-box'
                       }}
                       onMouseOver={(e) => {
-                        e.currentTarget.style.background = 'rgba(249, 115, 22, 0.12)';
-                        e.currentTarget.style.color = 'var(--orange-500)';
+                        e.currentTarget.style.background = 'rgba(37, 99, 235, 0.08)';
+                        e.currentTarget.style.color = '#2563eb';
                       }}
                       onMouseOut={(e) => {
                         e.currentTarget.style.background = 'transparent';
@@ -483,43 +483,7 @@ export const HeaderNav = () => {
                       <PenTool size={16} /> Embroidery Digitizing
                     </Link>
 
-                    {/* Option 2: Custom Patches */}
-                    <Link
-                      href="/custom-patches"
-                      onClick={() => {
-                        setIsServicesOpen(false);
-                      }}
-                      style={{
-                        textDecoration: 'none',
-                        width: '100%',
-                        textAlign: 'left',
-                        padding: '0.55rem 0.85rem',
-                        background: 'transparent',
-                        border: 'none',
-                        borderRadius: '8px',
-                        cursor: 'pointer',
-                        color: 'var(--text-main)',
-                        fontSize: '0.875rem',
-                        fontWeight: 700,
-                        transition: 'all 0.18s ease',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.5rem',
-                        boxSizing: 'border-box'
-                      }}
-                      onMouseOver={(e) => {
-                        e.currentTarget.style.background = 'rgba(249, 115, 22, 0.12)';
-                        e.currentTarget.style.color = 'var(--orange-500)';
-                      }}
-                      onMouseOut={(e) => {
-                        e.currentTarget.style.background = 'transparent';
-                        e.currentTarget.style.color = 'var(--text-main)';
-                      }}
-                    >
-                      <Award size={16} /> Custom Patches
-                    </Link>
-
-                    {/* Option 3: Vector Art */}
+                    {/* Option 2: Vector Art */}
                     <Link
                       href="/services/vector-tracing"
                       onClick={() => {
@@ -544,18 +508,16 @@ export const HeaderNav = () => {
                         boxSizing: 'border-box'
                       }}
                       onMouseOver={(e) => {
-                        e.currentTarget.style.background = 'rgba(249, 115, 22, 0.12)';
-                        e.currentTarget.style.color = 'var(--orange-500)';
+                        e.currentTarget.style.background = 'rgba(37, 99, 235, 0.08)';
+                        e.currentTarget.style.color = '#2563eb';
                       }}
                       onMouseOut={(e) => {
                         e.currentTarget.style.background = 'transparent';
                         e.currentTarget.style.color = 'var(--text-main)';
                       }}
                     >
-                      <ImageIcon size={16} /> Vector Art (Add-on)
+                      <ImageIcon size={16} /> Vector Art
                     </Link>
-
-                    
                   </div>
                 </div>
               )}
@@ -568,7 +530,7 @@ export const HeaderNav = () => {
                 textDecoration: 'none',
                 background: 'none',
                 border: 'none',
-                color: currentPath === '/portfolio' ? 'var(--orange-500)' : 'var(--text-main)',
+                color: currentPath === '/portfolio' ? '#2563eb' : 'var(--text-main)',
                 fontWeight: currentPath === '/portfolio' ? 800 : 600,
                 fontSize: '0.925rem',
                 cursor: 'pointer',
@@ -586,7 +548,7 @@ export const HeaderNav = () => {
                 textDecoration: 'none',
                 background: 'none',
                 border: 'none',
-                color: currentPath === '/pricing' ? 'var(--orange-500)' : 'var(--text-main)',
+                color: currentPath === '/pricing' ? '#2563eb' : 'var(--text-main)',
                 fontWeight: currentPath === '/pricing' ? 800 : 600,
                 fontSize: '0.925rem',
                 cursor: 'pointer',
@@ -604,7 +566,7 @@ export const HeaderNav = () => {
                 textDecoration: 'none',
                 background: 'none',
                 border: 'none',
-                color: currentPath === '/faqs' ? 'var(--orange-500)' : 'var(--text-main)',
+                color: currentPath === '/faqs' ? '#2563eb' : 'var(--text-main)',
                 fontWeight: currentPath === '/faqs' ? 800 : 600,
                 fontSize: '0.925rem',
                 cursor: 'pointer',
@@ -618,9 +580,7 @@ export const HeaderNav = () => {
           </nav>
         )}
 
-
-
-                {/* Right Action CTAs */}
+        {/* Right Action CTAs */}
         <div style={{
           display: 'flex',
           alignItems: 'center',
@@ -630,23 +590,26 @@ export const HeaderNav = () => {
           {/* Primary Get Started Button (Desktop - only for non-authenticated guests) */}
           {!safeIsAuthenticated && safeCurrentView !== 'admin' && safeCurrentView !== 'customer' && !currentPath.includes('admin') && (
             <button
-              className="desktop-only btn btn-primary-orange"
-              onClick={() => {
-                if (openOrderWizard) {
-                  openOrderWizard({ type: 'all' });
-                } else {
-                  protectedNavigate('customer', true, { type: 'all' });
-                }
-              }}
+              className="desktop-only btn"
               style={{
+                background: '#2563eb',
+                borderColor: '#2563eb',
+                color: '#ffffff',
+                fontWeight: 800,
                 display: 'flex',
                 alignItems: 'center',
                 gap: '0.3rem',
                 padding: '0.45rem 0.85rem',
                 fontSize: '0.85rem',
-                fontWeight: 800,
                 borderRadius: '8px',
                 whiteSpace: 'nowrap'
+              }}
+              onClick={() => {
+                if (openOrderWizard) {
+                  openOrderWizard({ type: 'embroidery' });
+                } else {
+                  protectedNavigate('customer', true, { type: 'embroidery' });
+                }
               }}
             >
               Get Started <ArrowRight size={14} />
@@ -716,9 +679,9 @@ export const HeaderNav = () => {
                 }}
                 style={{
                   position: 'relative',
-                  background: isNotificationDropdownOpen ? 'rgba(255, 122, 0, 0.12)' : 'transparent',
-                  border: isNotificationDropdownOpen ? '1.5px solid var(--orange-500)' : '1px solid var(--border-color)',
-                  color: isNotificationDropdownOpen ? 'var(--orange-500)' : 'var(--text-main)',
+                  background: isNotificationDropdownOpen ? 'rgba(37, 99, 235, 0.12)' : 'transparent',
+                  border: isNotificationDropdownOpen ? '1.5px solid #2563eb' : '1px solid var(--border-color)',
+                  color: isNotificationDropdownOpen ? '#2563eb' : 'var(--text-main)',
                   width: '38px',
                   height: '38px',
                   minWidth: '38px',
@@ -898,9 +861,9 @@ export const HeaderNav = () => {
               type="button"
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               style={{
-                background: isMobileMenuOpen ? 'rgba(255, 122, 0, 0.12)' : 'transparent',
-                border: isMobileMenuOpen ? '1.5px solid var(--orange-500)' : '1px solid var(--border-color)',
-                color: isMobileMenuOpen ? 'var(--orange-500)' : 'var(--text-main)',
+                background: isMobileMenuOpen ? 'rgba(37, 99, 235, 0.12)' : 'transparent',
+                border: isMobileMenuOpen ? '1.5px solid #2563eb' : '1px solid var(--border-color)',
+                color: isMobileMenuOpen ? '#2563eb' : 'var(--text-main)',
                 width: '38px',
                 height: '38px',
                 minWidth: '38px',
@@ -963,7 +926,7 @@ export const HeaderNav = () => {
                       display: 'flex',
                       alignItems: 'center',
                       gap: '0.45rem',
-                      background: 'linear-gradient(135deg, var(--color-primary, #ff7a00) 0%, var(--orange-600, #2563eb) 100%)',
+                      background: '#2563eb',
                       color: '#ffffff',
                       border: 'none',
                       padding: '0.45rem 1rem',
@@ -972,17 +935,17 @@ export const HeaderNav = () => {
                       fontWeight: 800,
                       fontSize: '0.85rem',
                       cursor: 'pointer',
-                      boxShadow: '0 3px 12px var(--color-primary-glow, rgba(249, 115, 22, 0.35))',
+                      boxShadow: '0 3px 12px rgba(37, 99, 235, 0.35)',
                       transition: 'all 0.15s ease',
                       flexShrink: 0
                     }}
                     onMouseOver={(e) => {
                       e.currentTarget.style.transform = 'translateY(-1px)';
-                      e.currentTarget.style.boxShadow = '0 5px 16px var(--color-primary-glow, rgba(249, 115, 22, 0.45))';
+                      e.currentTarget.style.boxShadow = '0 5px 16px rgba(37, 99, 235, 0.45)';
                     }}
                     onMouseOut={(e) => {
                       e.currentTarget.style.transform = 'translateY(0)';
-                      e.currentTarget.style.boxShadow = '0 3px 12px var(--color-primary-glow, rgba(249, 115, 22, 0.35))';
+                      e.currentTarget.style.boxShadow = '0 3px 12px rgba(37, 99, 235, 0.35)';
                     }}
                     title="Place a New Custom Digitizing or Vector Order"
                   >
@@ -999,8 +962,8 @@ export const HeaderNav = () => {
                       alignItems: 'center',
                       gap: '0.35rem',
                       fontWeight: 800,
-                      borderColor: 'var(--orange-500)',
-                      color: 'var(--orange-500)',
+                      borderColor: '#2563eb',
+                      color: '#2563eb',
                       background: 'var(--bg-card)',
                       borderRadius: '8px',
                       padding: '0.35rem 0.85rem'
@@ -1017,7 +980,7 @@ export const HeaderNav = () => {
                       }
                     }}
                   >
-                    <User size={14} style={{ color: 'var(--orange-500)' }} /> {isAdmin ? 'Admin Portal' : 'Dashboard'}
+                    <User size={14} style={{ color: '#2563eb' }} /> {isAdmin ? 'Admin Portal' : 'Dashboard'}
                   </button>
                 )}
 
@@ -1751,32 +1714,8 @@ export const HeaderNav = () => {
                           boxSizing: 'border-box'
                         }}
                       >
-                        <ImageIcon size={15} style={{ color: '#3b82f6' }} />
-                        <span>Vector Art (Add-on)</span>
-                      </Link>
-
-                      <Link
-                        href="/custom-patches"
-                        onClick={() => setIsMobileMenuOpen(false)}
-                        style={{
-                          textDecoration: 'none',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '0.55rem',
-                          padding: '0.55rem 0.65rem',
-                          borderRadius: '6px',
-                          background: 'transparent',
-                          border: 'none',
-                          color: isDark ? '#cbd5e1' : '#334155',
-                          fontSize: '0.84rem',
-                          fontWeight: 600,
-                          cursor: 'pointer',
-                          textAlign: 'left',
-                          boxSizing: 'border-box'
-                        }}
-                      >
-                        <Award size={15} style={{ color: '#10b981' }} />
-                        <span>Custom Patches</span>
+                        <ImageIcon size={15} style={{ color: '#2563eb' }} />
+                        <span>Vector Art</span>
                       </Link>
                     </div>
                   )}
