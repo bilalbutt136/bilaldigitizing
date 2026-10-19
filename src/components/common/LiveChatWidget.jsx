@@ -539,16 +539,23 @@ export const LiveChatWidget = () => {
         }
         .live-chat-floating-container {
           position: fixed !important;
-          bottom: 96px;
-          right: 24px;
-          width: min(420px, calc(100vw - 32px));
-          height: min(600px, calc(100vh - 120px));
+          bottom: calc(20px + env(safe-area-inset-bottom, 0px)) !important;
+          right: 20px !important;
+          width: min(380px, calc(100vw - 28px)) !important;
+          height: min(520px, calc(100dvh - 36px)) !important;
+          max-height: calc(100dvh - 36px) !important;
           z-index: 9999999 !important;
           background-color: #ffffff !important;
           background: #ffffff !important;
           opacity: 1 !important;
           backdrop-filter: none !important;
+          border: 1px solid #e2e8f0 !important;
+          border-radius: 18px !important;
           box-shadow: 0 20px 45px -10px rgba(15, 23, 42, 0.35), 0 0 0 1px rgba(0, 0, 0, 0.08) !important;
+          display: flex !important;
+          flex-direction: column !important;
+          overflow: hidden !important;
+          box-sizing: border-box !important;
         }
         [data-theme="dark"] .live-chat-floating-container,
         .dark .live-chat-floating-container {
@@ -659,10 +666,8 @@ export const LiveChatWidget = () => {
           box-shadow: 0 2px 6px rgba(239, 68, 68, 0.45);
         }
         .live-chat-floating-container {
-          bottom: calc(100px + env(safe-area-inset-bottom, 0px));
-          right: 24px;
-          width: min(376px, calc(100vw - 32px));
-          height: min(530px, calc(100dvh - 128px));
+          bottom: calc(20px + env(safe-area-inset-bottom, 0px)) !important;
+          right: 20px !important;
           border: 1px solid #e2e8f0 !important;
           border-radius: 18px !important;
           box-shadow: 0 16px 48px rgba(15, 23, 42, .18), 0 4px 12px rgba(15, 23, 42, .06) !important;
@@ -740,14 +745,14 @@ export const LiveChatWidget = () => {
         }
         .live-chat-close:hover { background: #f1f5f9; color: #0f172a; }
         .live-chat-guest-messages {
-          display: flex;
-          flex: 1 1 auto;
-          flex-direction: column;
-          gap: 14px;
-          overflow-y: auto;
-          min-height: 0;
-          padding: 16px 16px;
-          background: #f8fafc;
+          display: flex !important;
+          flex: 1 1 0% !important;
+          flex-direction: column !important;
+          gap: 12px !important;
+          overflow-y: auto !important;
+          min-height: 0 !important;
+          padding: 12px 14px !important;
+          background: #f8fafc !important;
         }
         .live-chat-welcome {
           align-self: flex-start;
@@ -794,10 +799,11 @@ export const LiveChatWidget = () => {
           font-weight: 650;
         }
         .live-chat-composer {
-          flex: 0 0 auto;
-          padding: 10px 14px 12px;
-          border-top: 1px solid #edf0f5;
-          background: #ffffff;
+          flex: 0 0 auto !important;
+          flex-shrink: 0 !important;
+          padding: 8px 12px 10px !important;
+          border-top: 1px solid #edf0f5 !important;
+          background: #ffffff !important;
         }
         [data-theme="dark"] .live-chat-composer,
         .dark .live-chat-composer {
@@ -960,9 +966,9 @@ export const LiveChatWidget = () => {
             </div>
           ) : (
             /* GUEST VISITOR EXPERIENCE */
-            <div className="live-chat-guest flex-1 flex flex-col min-h-0 w-full h-full">
+            <div className="live-chat-guest flex-1 flex flex-col min-h-0 w-full h-full" style={{ display: 'flex', flexDirection: 'column', flex: '1 1 0%', minHeight: 0, height: '100%', overflow: 'hidden' }}>
               <header className="live-chat-guest-header" style={{
-                padding: '0.85rem 1rem',
+                padding: '0.75rem 1rem',
                 background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
                 color: '#ffffff',
                 display: 'flex',
@@ -971,19 +977,19 @@ export const LiveChatWidget = () => {
                 flexShrink: 0,
                 borderBottom: '1px solid rgba(255, 255, 255, 0.08)'
               }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', minWidth: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', minWidth: 0 }}>
                   <div style={{ position: 'relative', flexShrink: 0 }}>
                     <div style={{
-                      width: '38px',
-                      height: '38px',
-                      borderRadius: '11px',
+                      width: '36px',
+                      height: '36px',
+                      borderRadius: '10px',
                       background: 'linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%)',
                       color: '#ffffff',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                       fontWeight: 900,
-                      fontSize: '1rem',
+                      fontSize: '0.95rem',
                       boxShadow: '0 2px 8px rgba(37, 99, 235, 0.3)'
                     }}>
                       BD
@@ -992,39 +998,17 @@ export const LiveChatWidget = () => {
                       position: 'absolute',
                       bottom: '-1px',
                       right: '-1px',
-                      width: '10px',
-                      height: '10px',
+                      width: '9px',
+                      height: '9px',
                       borderRadius: '50%',
                       background: '#22c55e',
                       border: '2px solid #0f172a'
                     }} />
                   </div>
                   <div style={{ minWidth: 0 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
-                      <h3 style={{ fontSize: '0.98rem', fontWeight: 900, margin: 0, color: '#ffffff', whiteSpace: 'nowrap' }}>
-                        BDigitizing Support
-                      </h3>
-                      <span style={{
-                        background: isAgentConnected ? 'rgba(37, 99, 235, 0.2)' : 'rgba(34, 197, 94, 0.18)',
-                        color: isAgentConnected ? '#60a5fa' : '#4ade80',
-                        fontSize: '0.62rem',
-                        fontWeight: 900,
-                        padding: '0.1rem 0.45rem',
-                        borderRadius: '6px',
-                        letterSpacing: '0.03em',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '0.25rem'
-                      }}>
-                        <span style={{
-                          width: 5,
-                          height: 5,
-                          borderRadius: '50%',
-                          background: isAgentConnected ? '#60a5fa' : '#4ade80'
-                        }} />
-                        {isAgentConnected ? 'Help Desk Live' : 'Online'}
-                      </span>
-                    </div>
+                    <h3 style={{ fontSize: '0.96rem', fontWeight: 900, margin: 0, color: '#ffffff', whiteSpace: 'nowrap' }}>
+                      BDigitizing Support
+                    </h3>
                   </div>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexShrink: 0 }}>
@@ -1035,97 +1019,111 @@ export const LiveChatWidget = () => {
                 </div>
               </header>
 
-              <div className="live-chat-guest-messages" aria-live="polite" style={{ flex: 1, overflowY: 'auto', padding: '1.75rem 1.25rem' }}>
-                <div style={{ textAlign: 'center', maxWidth: '380px', margin: '0 auto' }}>
-                  <div style={{
-                    width: '52px',
-                    height: '52px',
-                    borderRadius: '16px',
-                    background: 'linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%)',
-                    color: '#2563eb',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    margin: '0 auto 0.85rem',
-                    boxShadow: '0 4px 14px rgba(37, 99, 235, 0.12)',
-                    border: '1px solid #fed7aa'
-                  }}>
-                    <Headphones size={26} color="#2563eb" />
-                  </div>
+              <div
+                className="live-chat-guest-messages"
+                aria-live="polite"
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  flex: '1 1 0%',
+                  minHeight: 0,
+                  overflowY: 'auto',
+                  padding: '1rem 1rem',
+                  gap: '0.75rem'
+                }}
+              >
+                {sentMessages.length === 0 && (
+                  <div style={{ textAlign: 'center', maxWidth: '380px', margin: '0 auto', paddingBottom: '0.25rem' }}>
+                    <div style={{
+                      width: '44px',
+                      height: '44px',
+                      borderRadius: '14px',
+                      background: 'linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%)',
+                      color: '#2563eb',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      margin: '0 auto 0.5rem',
+                      boxShadow: '0 4px 12px rgba(37, 99, 235, 0.12)',
+                      border: '1px solid #fed7aa'
+                    }}>
+                      <Headphones size={22} color="#2563eb" />
+                    </div>
 
-                  <h4 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#0f172a', margin: '0 0 0.35rem 0' }}>
-                    24/7 Studio Customer Support
-                  </h4>
+                    <h4 style={{ fontSize: '0.98rem', fontWeight: 800, color: '#0f172a', margin: '0 0 0.25rem 0' }}>
+                      24/7 Studio Customer Support
+                    </h4>
 
-                  <p style={{ fontSize: '0.82rem', margin: '0 0 1.25rem', color: '#64748b', lineHeight: 1.5 }}>
-                    Need assistance with an existing order, stitch simulation, format conversion, or urgent revision? Our team is standing by 24/7.
-                  </p>
+                    <p style={{ fontSize: '0.78rem', margin: '0 0 0.85rem', color: '#64748b', lineHeight: 1.45 }}>
+                      Need assistance with an existing order, stitch simulation, format conversion, or urgent revision? Our team is standing by 24/7.
+                    </p>
 
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', alignItems: 'center', margin: '0 auto' }}>
-                    {[
-                      'Need help with an existing order',
-                      'How do I request a revision?',
-                      'File format questions (.DST, .PES)'
-                    ].map((chip, idx) => (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', alignItems: 'center', margin: '0 auto' }}>
+                      {[
+                        'Need help with an existing order',
+                        'How do I request a revision?',
+                        'File format questions (.DST, .PES)'
+                      ].map((chip, idx) => (
+                        <button
+                          key={idx}
+                          type="button"
+                          onClick={() => handleApplyPrompt(chip)}
+                          style={{
+                            background: '#ffffff',
+                            border: '1px solid #e2e8f0',
+                            borderRadius: '18px',
+                            padding: '0.38rem 0.95rem',
+                            fontSize: '0.76rem',
+                            color: '#334155',
+                            fontWeight: 700,
+                            cursor: 'pointer',
+                            boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+                            transition: 'all 0.15s ease',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '0.35rem',
+                            width: '100%',
+                            maxWidth: '260px',
+                            justifyContent: 'center'
+                          }}
+                        >
+                          <span>💬</span> {chip}
+                        </button>
+                      ))}
+
                       <button
-                        key={idx}
                         type="button"
-                        onClick={() => handleApplyPrompt(chip)}
+                        onClick={() => handleConnectLiveAgent()}
                         style={{
-                          background: '#ffffff',
-                          border: '1px solid #e2e8f0',
-                          borderRadius: '20px',
-                          padding: '0.42rem 1.15rem',
-                          fontSize: '0.78rem',
-                          color: '#334155',
-                          fontWeight: 700,
+                          background: isAgentConnected ? '#dcfce7' : 'linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%)',
+                          color: isAgentConnected ? '#15803d' : '#ffffff',
+                          border: isAgentConnected ? '1px solid #86efac' : 'none',
+                          borderRadius: '18px',
+                          padding: '0.42rem 1rem',
+                          fontSize: '0.76rem',
+                          fontWeight: 800,
                           cursor: 'pointer',
-                          boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
-                          transition: 'all 0.15s ease',
+                          boxShadow: isAgentConnected ? 'none' : '0 2px 8px rgba(37, 99, 235, 0.25)',
                           display: 'inline-flex',
                           alignItems: 'center',
-                          gap: '0.4rem',
+                          gap: '0.35rem',
                           width: '100%',
-                          maxWidth: '280px',
-                          justifyContent: 'center'
+                          maxWidth: '260px',
+                          justifyContent: 'center',
+                          marginTop: '0.15rem',
+                          transition: 'all 0.15s ease'
                         }}
                       >
-                        <span>💬</span> {chip}
+                        <span>{isAgentConnected ? '✅' : '👨‍💼'}</span>
+                        {isAgentConnected ? 'Live Agent Connected' : 'Talk to Live Agent (Help Desk)'}
                       </button>
-                    ))}
-
-                    <button
-                      type="button"
-                      onClick={() => handleConnectLiveAgent()}
-                      style={{
-                        background: isAgentConnected ? '#dcfce7' : 'linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%)',
-                        color: isAgentConnected ? '#15803d' : '#ffffff',
-                        border: isAgentConnected ? '1px solid #86efac' : 'none',
-                        borderRadius: '20px',
-                        padding: '0.45rem 1.15rem',
-                        fontSize: '0.78rem',
-                        fontWeight: 800,
-                        cursor: 'pointer',
-                        boxShadow: isAgentConnected ? 'none' : '0 2px 8px rgba(37, 99, 235, 0.25)',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '0.4rem',
-                        width: '100%',
-                        maxWidth: '280px',
-                        justifyContent: 'center',
-                        marginTop: '0.25rem',
-                        transition: 'all 0.15s ease'
-                      }}
-                    >
-                      <span>{isAgentConnected ? '✅' : '👨‍💼'}</span>
-                      {isAgentConnected ? 'Live Agent Connected' : 'Talk to Live Agent (Help Desk)'}
-                    </button>
+                    </div>
                   </div>
+                )}
 
-                  <div style={{ display: 'none' }}>
-                    <button type="button" className="live-chat-guest-chip" onClick={() => handleApplyPrompt('Need quote for embroidery file (.DST/.PES)')}>Get a quote</button>
-                    <button type="button" className="live-chat-guest-chip" onClick={() => handleApplyPrompt('Vector art conversion turnaround time')}>Turnaround time</button>
-                  </div>
+                <div style={{ display: 'none' }}>
+                  <button type="button" className="live-chat-guest-chip" onClick={() => handleApplyPrompt('Need quote for embroidery file (.DST/.PES)')}>Get a quote</button>
+                  <button type="button" className="live-chat-guest-chip" onClick={() => handleApplyPrompt('Vector art conversion turnaround time')}>Turnaround time</button>
                 </div>
 
                 {sentMessages.map((msg, idx) => {
@@ -1195,8 +1193,19 @@ export const LiveChatWidget = () => {
                 <div ref={messagesEndRef} />
               </div>
 
-              <div className="live-chat-composer" style={{ padding: '0.75rem 1rem', borderTop: '1px solid #e2e8f0', background: '#ffffff' }}>
-                <form onSubmit={handleGuestSubmit} className="live-chat-guest-form" style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              <div
+                className="live-chat-composer"
+                style={{
+                  flex: '0 0 auto',
+                  flexShrink: 0,
+                  padding: '0.65rem 0.85rem',
+                  borderTop: '1px solid #e2e8f0',
+                  background: '#ffffff',
+                  position: 'relative',
+                  zIndex: 10
+                }}
+              >
+                <form onSubmit={handleGuestSubmit} className="live-chat-guest-form" style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', margin: 0 }}>
                   <input
                     type="email"
                     tabIndex={-1}
@@ -1205,7 +1214,7 @@ export const LiveChatWidget = () => {
                     onChange={(e) => setGuestEmail(e.target.value)}
                     style={{ display: 'none' }}
                   />
-                  <div className="live-chat-guest-message-row" style={{ display: 'flex', alignItems: 'flex-end', gap: '0.55rem' }}>
+                  <div className="live-chat-guest-message-row" style={{ display: 'flex', alignItems: 'flex-end', gap: '0.5rem' }}>
                     <button
                       type="button"
                       onClick={() => handleApplyPrompt('Need quote for embroidery file (.DST/.PES)')}
@@ -1213,8 +1222,8 @@ export const LiveChatWidget = () => {
                         background: '#f1f5f9',
                         border: '1px solid #e2e8f0',
                         borderRadius: '50%',
-                        width: '42px',
-                        height: '42px',
+                        width: '38px',
+                        height: '38px',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
@@ -1225,7 +1234,7 @@ export const LiveChatWidget = () => {
                       title="Attach file / Quick prompt"
                       aria-label="Attach file"
                     >
-                      <Paperclip size={18} />
+                      <Paperclip size={17} />
                     </button>
 
                     <textarea
@@ -1241,13 +1250,13 @@ export const LiveChatWidget = () => {
                         flex: 1,
                         border: '1.5px solid #cbd5e1',
                         background: '#f8fafc',
-                        borderRadius: '20px',
-                        padding: '0.62rem 1.05rem',
-                        fontSize: '0.9rem',
+                        borderRadius: '18px',
+                        padding: '0.55rem 0.95rem',
+                        fontSize: '0.88rem',
                         outline: 'none',
                         resize: 'none',
-                        minHeight: '42px',
-                        maxHeight: '120px',
+                        minHeight: '38px',
+                        maxHeight: '110px',
                         lineHeight: '1.4',
                         boxSizing: 'border-box',
                         overflowY: 'auto'
@@ -1261,8 +1270,8 @@ export const LiveChatWidget = () => {
                       aria-label="Send message"
                       title="Send message (Enter)"
                       style={{
-                        width: '42px',
-                        height: '42px',
+                        width: '38px',
+                        height: '38px',
                         borderRadius: '50%',
                         border: 'none',
                         background: guestMessage.trim()
@@ -1278,7 +1287,7 @@ export const LiveChatWidget = () => {
                         transition: 'all 0.15s ease'
                       }}
                     >
-                      {isSubmittingInquiry ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} />}
+                      {isSubmittingInquiry ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
                     </button>
                   </div>
                   {inquiryError && <p className="live-chat-form-error" role="alert" style={{ margin: 0, color: '#dc2626', fontSize: '0.75rem' }}>{inquiryError}</p>}
