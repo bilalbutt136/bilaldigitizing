@@ -918,143 +918,54 @@ export default function CustomerSupportChat({
           </div>
 
           <div style={{ minWidth: 0 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', flexWrap: 'nowrap' }}>
-              <h3 style={{ fontSize: '0.92rem', fontWeight: 800, margin: 0, color: '#ffffff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                {chatType === 'support' ? 'Help Desk' : 'Inbox'}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', flexWrap: 'nowrap' }}>
+              <h3 style={{ fontSize: '1rem', fontWeight: 900, margin: 0, color: '#ffffff', whiteSpace: 'nowrap' }}>
+                BDigitizing Support
               </h3>
-              <ShieldCheck size={14} color="#38bdf8" style={{ flexShrink: 0 }} />
               <span style={{
                 background: 'rgba(34, 197, 94, 0.18)',
                 color: '#4ade80',
-                fontSize: '0.58rem',
+                fontSize: '0.62rem',
                 fontWeight: 900,
-                padding: '0.08rem 0.35rem',
+                padding: '0.1rem 0.45rem',
                 borderRadius: '6px',
                 letterSpacing: '0.03em',
-                flexShrink: 0
+                flexShrink: 0,
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.25rem'
               }}>
+                <span style={{ width: 5, height: 5, borderRadius: '50%', background: '#4ade80' }} />
                 Online
               </span>
             </div>
-            <p style={{ fontSize: '0.72rem', color: '#94a3b8', margin: '0.1rem 0 0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-              {chatType === 'support'
-                ? 'Order help & revisions'
-                : 'Offers & studio messages'}
-            </p>
           </div>
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexShrink: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.2rem', padding: '2px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px' }}>
-            <button
-              type="button"
-              onClick={() => onSwitchChannel?.('inbox')}
-              disabled={chatType === 'inbox' || !onSwitchChannel}
-              style={{
-                border: 'none',
-                borderRadius: '6px',
-                padding: '5px 7px',
-                background: chatType === 'inbox' ? '#ffffff' : 'transparent',
-                color: chatType === 'inbox' ? '#0f172a' : '#cbd5e1',
-                cursor: chatType === 'inbox' || !onSwitchChannel ? 'default' : 'pointer',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '0.25rem',
-                fontSize: '0.68rem',
-                fontWeight: 800
-              }}
-              title="Open Inbox"
-            >
-              <MessageSquare size={12} />
-              <span>Inbox</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => onSwitchChannel?.('support')}
-              disabled={chatType === 'support' || !onSwitchChannel}
-              style={{
-                border: 'none',
-                borderRadius: '6px',
-                padding: '5px 7px',
-                background: chatType === 'support' ? '#ffffff' : 'transparent',
-                color: chatType === 'support' ? '#0f172a' : '#cbd5e1',
-                cursor: chatType === 'support' || !onSwitchChannel ? 'default' : 'pointer',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '0.25rem',
-                fontSize: '0.68rem',
-                fontWeight: 800
-              }}
-              title="Open Help Desk"
-            >
-              <Headphones size={12} />
-              <span>Help Desk</span>
-            </button>
-          </div>
-          <button
-            type="button"
-            onClick={handleToggleSound}
-            style={{
-              background: isAudioEnabled ? 'rgba(34, 197, 94, 0.15)' : 'rgba(255,255,255,0.08)',
-              border: isAudioEnabled ? '1px solid rgba(34, 197, 94, 0.35)' : '1px solid rgba(255,255,255,0.12)',
-              borderRadius: '8px',
-              padding: '6px 9px',
-              color: isAudioEnabled ? '#4ade80' : '#94a3b8',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.35rem',
-              fontSize: '0.72rem',
-              fontWeight: 700,
-              transition: 'all 0.15s ease'
-            }}
-            title={isAudioEnabled ? "Sound enabled (Click to test chime or mute)" : "Sound muted (Click to enable)"}
-          >
-            {isAudioEnabled ? <Volume2 size={13} /> : <VolumeX size={13} />}
-
-          </button>
-
-          <button
-            type="button"
-            onClick={() => fetchMessages(conversationId, { force: true })}
-            style={{
-              background: 'rgba(255,255,255,0.08)',
-              border: '1px solid rgba(255,255,255,0.12)',
-              borderRadius: '8px',
-              padding: '6px 8px',
-              color: '#ffffff',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.3rem',
-              fontSize: '0.72rem',
-              fontWeight: 700
-            }}
-            title="Refresh chat messages"
-          >
-            <RefreshCw size={13} />
-          </button>
           {typeof onClose === 'function' && (
             <button
               type="button"
               onClick={onClose}
               style={{
                 background: 'rgba(255,255,255,0.08)',
-                border: '1px solid rgba(255,255,255,0.12)',
-                borderRadius: '8px',
-                padding: '6px 8px',
-                color: '#ffffff',
+                border: '1px solid rgba(255,255,255,0.14)',
+                borderRadius: '50%',
+                width: '32px',
+                height: '32px',
+                color: '#cbd5e1',
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '0.3rem',
-                fontSize: '0.72rem',
-                fontWeight: 700
+                justifyContent: 'center',
+                transition: 'all 0.15s ease'
               }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.18)'; e.currentTarget.style.color = '#ffffff'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.08)'; e.currentTarget.style.color = '#cbd5e1'; }}
               title="Close chat"
               aria-label="Close chat"
             >
-              <X size={13} />
+              <X size={16} />
             </button>
           )}
         </div>

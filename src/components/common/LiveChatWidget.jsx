@@ -7,7 +7,9 @@ import {
   X,
   Send,
   Loader2,
-  CheckCircle2
+  CheckCircle2,
+  Headphones,
+  Paperclip
 } from 'lucide-react';
 import { subscribeToChatMessages, subscribeToConversations } from '../../services/supabaseService';
 import { fetchChatUnreadCounts } from '../../services/chatUnreadService';
@@ -227,7 +229,7 @@ export const LiveChatWidget = () => {
     setGuestMessage(text);
   };
 
-  if (!mounted) return null;
+  if (!mounted || activeUser) return null;
 
   return (
     <div className="live-chat-floating-root">
@@ -674,17 +676,68 @@ export const LiveChatWidget = () => {
           ) : (
             /* GUEST VISITOR EXPERIENCE */
             <div className="live-chat-guest flex-1 flex flex-col min-h-0 w-full h-full">
-              <header className="live-chat-guest-header">
-                <div className="live-chat-guest-avatar" aria-hidden="true">
-                  <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-                  </svg>
+              <header className="live-chat-guest-header" style={{
+                padding: '0.85rem 1rem',
+                background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
+                color: '#ffffff',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                flexShrink: 0,
+                borderBottom: '1px solid rgba(255, 255, 255, 0.08)'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', minWidth: 0 }}>
+                  <div style={{ position: 'relative', flexShrink: 0 }}>
+                    <div style={{
+                      width: '38px',
+                      height: '38px',
+                      borderRadius: '11px',
+                      background: 'linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%)',
+                      color: '#ffffff',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontWeight: 900,
+                      fontSize: '1rem',
+                      boxShadow: '0 2px 8px rgba(37, 99, 235, 0.3)'
+                    }}>
+                      BD
+                    </div>
+                    <span style={{
+                      position: 'absolute',
+                      bottom: '-1px',
+                      right: '-1px',
+                      width: '10px',
+                      height: '10px',
+                      borderRadius: '50%',
+                      background: '#22c55e',
+                      border: '2px solid #0f172a'
+                    }} />
+                  </div>
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                      <h3 style={{ fontSize: '0.98rem', fontWeight: 900, margin: 0, color: '#ffffff', whiteSpace: 'nowrap' }}>
+                        BDigitizing Support
+                      </h3>
+                      <span style={{
+                        background: 'rgba(34, 197, 94, 0.18)',
+                        color: '#4ade80',
+                        fontSize: '0.62rem',
+                        fontWeight: 900,
+                        padding: '0.1rem 0.45rem',
+                        borderRadius: '6px',
+                        letterSpacing: '0.03em',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.25rem'
+                      }}>
+                        <span style={{ width: 5, height: 5, borderRadius: '50%', background: '#4ade80' }} />
+                        Online
+                      </span>
+                    </div>
+                  </div>
                 </div>
-                <div className="live-chat-header-copy">
-                  <h3>BDigitizing Support</h3>
-                  <p>How can we help you?</p>
-                </div>
-                <div className="live-chat-header-actions">
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexShrink: 0 }}>
                   <button type="button" className="live-chat-signin" onClick={handleOpenAuth}>Sign in</button>
                   <button type="button" className="live-chat-close" onClick={handleClose} aria-label="Close chat" title="Close chat">
                     <X size={18} />
@@ -692,22 +745,72 @@ export const LiveChatWidget = () => {
                 </div>
               </header>
 
-              <div className="live-chat-guest-messages" aria-live="polite">
-                <p className="live-chat-welcome">
-                  Hi! Need a digitizing quote or help with a file? Send us a message and we’ll reply by email.
-                </p>
-                <div className="live-chat-quick-actions" aria-label="Suggested messages">
-                  <button
-                    type="button"
-                    className="live-chat-guest-chip"
-                    onClick={() => handleApplyPrompt('Need quote for embroidery file (.DST/.PES)')}
-                  >Get a quote</button>
-                  <button
-                    type="button"
-                    className="live-chat-guest-chip"
-                    onClick={() => handleApplyPrompt('Vector art conversion turnaround time')}
-                  >Turnaround time</button>
+              <div className="live-chat-guest-messages" aria-live="polite" style={{ flex: 1, overflowY: 'auto', padding: '1.75rem 1.25rem' }}>
+                <div style={{ textAlign: 'center', maxWidth: '380px', margin: '0 auto' }}>
+                  <div style={{
+                    width: '52px',
+                    height: '52px',
+                    borderRadius: '16px',
+                    background: 'linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%)',
+                    color: '#2563eb',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    margin: '0 auto 0.85rem',
+                    boxShadow: '0 4px 14px rgba(37, 99, 235, 0.12)',
+                    border: '1px solid #fed7aa'
+                  }}>
+                    <Headphones size={26} color="#2563eb" />
+                  </div>
+
+                  <h4 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#0f172a', margin: '0 0 0.35rem 0' }}>
+                    24/7 Studio Customer Support
+                  </h4>
+
+                  <p style={{ fontSize: '0.82rem', margin: '0 0 1.25rem', color: '#64748b', lineHeight: 1.5 }}>
+                    Need assistance with an existing order, stitch simulation, format conversion, or urgent revision? Our team is standing by 24/7.
+                  </p>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', alignItems: 'center', margin: '0 auto' }}>
+                    {[
+                      'Need help with an existing order',
+                      'How do I request a revision?',
+                      'File format questions (.DST, .PES)'
+                    ].map((chip, idx) => (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => handleApplyPrompt(chip)}
+                        style={{
+                          background: '#ffffff',
+                          border: '1px solid #e2e8f0',
+                          borderRadius: '20px',
+                          padding: '0.42rem 1.15rem',
+                          fontSize: '0.78rem',
+                          color: '#334155',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                          boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+                          transition: 'all 0.15s ease',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '0.4rem',
+                          width: '100%',
+                          maxWidth: '280px',
+                          justifyContent: 'center'
+                        }}
+                      >
+                        <span>💬</span> {chip}
+                      </button>
+                    ))}
+                  </div>
+
+                  <div style={{ display: 'none' }}>
+                    <button type="button" className="live-chat-guest-chip" onClick={() => handleApplyPrompt('Need quote for embroidery file (.DST/.PES)')}>Get a quote</button>
+                    <button type="button" className="live-chat-guest-chip" onClick={() => handleApplyPrompt('Vector art conversion turnaround time')}>Turnaround time</button>
+                  </div>
                 </div>
+
                 {sentMessages.map((msg, idx) => (
                   <React.Fragment key={idx}>
                     <div className="live-chat-sent-message">{msg.text}</div>
@@ -719,39 +822,99 @@ export const LiveChatWidget = () => {
                 ))}
               </div>
 
-              <div className="live-chat-composer">
-                <form onSubmit={handleGuestSubmit} className="live-chat-guest-form">
-                  <input
-                    className="live-chat-guest-field live-chat-guest-email"
-                    type="email"
-                    autoComplete="email"
-                    aria-label="Your email for reply"
-                    placeholder="Your email address (for reply)..."
-                    required
-                    value={guestEmail}
-                    onChange={(e) => setGuestEmail(e.target.value)}
-                  />
-                  <div className="live-chat-guest-message-row">
+              <div className="live-chat-composer" style={{ padding: '0.75rem 1rem', borderTop: '1px solid #e2e8f0', background: '#ffffff' }}>
+                <form onSubmit={handleGuestSubmit} className="live-chat-guest-form" style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                  {!guestEmail && (
+                    <input
+                      className="live-chat-guest-field live-chat-guest-email"
+                      type="email"
+                      autoComplete="email"
+                      aria-label="Your email for reply"
+                      placeholder="Your email address (for reply)..."
+                      required
+                      value={guestEmail}
+                      onChange={(e) => setGuestEmail(e.target.value)}
+                      style={{
+                        padding: '0.55rem 0.85rem',
+                        fontSize: '0.82rem',
+                        borderRadius: '10px',
+                        border: '1px solid #cbd5e1',
+                        background: '#f8fafc',
+                        outline: 'none'
+                      }}
+                    />
+                  )}
+                  <div className="live-chat-guest-message-row" style={{ display: 'flex', alignItems: 'center', gap: '0.55rem' }}>
+                    <button
+                      type="button"
+                      onClick={() => handleApplyPrompt('Need quote for embroidery file (.DST/.PES)')}
+                      style={{
+                        background: '#f1f5f9',
+                        border: '1px solid #e2e8f0',
+                        borderRadius: '50%',
+                        width: '40px',
+                        height: '40px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        cursor: 'pointer',
+                        color: '#475569',
+                        flexShrink: 0
+                      }}
+                      title="Attach file (available upon sign-in or quote request)"
+                      aria-label="Attach file"
+                    >
+                      <Paperclip size={18} />
+                    </button>
+
                     <textarea
                       className="live-chat-guest-field"
                       rows={1}
                       aria-label="Your message"
-                      placeholder="Write your message..."
+                      placeholder="Describe your question or issue..."
                       required
                       value={guestMessage}
                       onChange={(e) => setGuestMessage(e.target.value)}
+                      style={{
+                        flex: 1,
+                        border: '1.5px solid #cbd5e1',
+                        background: '#f8fafc',
+                        borderRadius: '22px',
+                        padding: '0.62rem 1.05rem',
+                        fontSize: '0.92rem',
+                        outline: 'none',
+                        resize: 'none',
+                        minHeight: '42px',
+                        maxHeight: '100px',
+                        boxSizing: 'border-box'
+                      }}
                     />
+
                     <button
                       className="live-chat-send"
                       type="submit"
                       disabled={isSubmittingInquiry}
                       aria-label="Send message"
                       title="Send message"
+                      style={{
+                        width: '40px',
+                        height: '40px',
+                        borderRadius: '50%',
+                        border: 'none',
+                        background: 'linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%)',
+                        color: '#ffffff',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        cursor: isSubmittingInquiry ? 'wait' : 'pointer',
+                        flexShrink: 0,
+                        boxShadow: '0 2px 8px rgba(37, 99, 235, 0.25)'
+                      }}
                     >
                       {isSubmittingInquiry ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} />}
                     </button>
                   </div>
-                  {inquiryError && <p className="live-chat-form-error" role="alert">{inquiryError}</p>}
+                  {inquiryError && <p className="live-chat-form-error" role="alert" style={{ margin: 0, color: '#dc2626', fontSize: '0.75rem' }}>{inquiryError}</p>}
                 </form>
               </div>
             </div>
