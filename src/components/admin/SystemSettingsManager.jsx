@@ -8,6 +8,8 @@ import { MetaSeoTrackingSettings } from './settings/MetaSeoTrackingSettings';
 import { AdminSecuritySettings } from './settings/AdminSecuritySettings';
 import { StudioGeneralSettings } from './settings/StudioGeneralSettings';
 import { AdminNotificationSettings } from './settings/AdminNotificationSettings';
+import { PaymentMethodSettings } from './settings/PaymentMethodSettings';
+import { CreditCard } from 'lucide-react';
 
 export const SystemSettingsManager = ({ activeSubTab = 'theme' }) => {
   const [currentTab, setCurrentTab] = useState(activeSubTab || 'theme');
@@ -20,6 +22,7 @@ export const SystemSettingsManager = ({ activeSubTab = 'theme' }) => {
 
   const tabs = [
     { id: 'theme', label: 'Theme & Brand Engine', icon: Palette, badge: 'Design' },
+    { id: 'payments', label: 'Payment Gateways & Methods', icon: CreditCard, badge: 'Gateways' },
     { id: 'meta', label: 'Meta Pixel & SEO Tracking', icon: Megaphone, badge: 'Analytics' },
     { id: 'security', label: 'Admin Team & Security', icon: ShieldCheck, badge: 'Access' },
     { id: 'notifications', label: 'Notifications & Audio Tunes', icon: Bell, badge: 'Alerts' },
@@ -87,6 +90,7 @@ export const SystemSettingsManager = ({ activeSubTab = 'theme' }) => {
 
       {/* Render Active Modular Settings Sub-Component */}
       {currentTab === 'theme' && <ThemeBrandingSettings />}
+      {currentTab === 'payments' && <PaymentMethodSettings />}
       {currentTab === 'meta' && <MetaSeoTrackingSettings />}
       {currentTab === 'security' && <AdminSecuritySettings />}
       {(currentTab === 'notifications' || currentTab === 'email') && <AdminNotificationSettings />}

@@ -59,10 +59,10 @@ export function normalizeBoltMethod(rawMethod) {
   if (method === 'paypal' || method === 'dollarpay_paypal') {
     return { requestedMethod: method, providerMethod: 'pyusd', fallbackMethod: 'paypal' };
   }
-  if (method === 'apple_pay' || method === 'dollarpay_apple_pay') {
+  if (method === 'apple_pay' || method === 'applepay' || method === 'dollarpay_apple_pay') {
     return { requestedMethod: method, providerMethod: 'apple_pay', fallbackMethod: 'card' };
   }
-  if (method === 'google_pay' || method === 'dollarpay_google_pay') {
+  if (method === 'google_pay' || method === 'googlepay' || method === 'gpay' || method === 'dollarpay_google_pay') {
     return { requestedMethod: method, providerMethod: 'google_pay', fallbackMethod: 'card' };
   }
   return { requestedMethod: method, providerMethod: method, fallbackMethod: null };

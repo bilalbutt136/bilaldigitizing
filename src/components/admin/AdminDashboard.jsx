@@ -46,7 +46,8 @@ import {
   MessageSquare,
   Headphones,
   Star,
-  Globe
+  Globe,
+  CreditCard
 } from 'lucide-react';
 
 export const AdminDashboard = () => {
@@ -354,6 +355,7 @@ export const AdminDashboard = () => {
       title: 'SYSTEM & SETTINGS',
       items: [
         { id: 'settings-theme', label: 'Theme & Brand Engine', icon: Palette },
+        { id: 'settings-payments', label: 'Payment Gateways & Methods', icon: CreditCard },
         { id: 'settings-meta', label: 'Meta Pixel & SEO', icon: Megaphone },
         { id: 'settings-admin', label: 'Admin Team & Security', icon: ShieldCheck },
         { id: 'settings-email', label: 'Email & Alert Routing', icon: Mail },
@@ -386,6 +388,7 @@ export const AdminDashboard = () => {
     'email-campaigns': 'Email Campaigns',
     contact: 'Contact Information',
     'settings-theme': 'Theme & Brand',
+    'settings-payments': 'Payment Methods & Gateways',
     'settings-meta': 'Meta Pixel & SEO',
     'meta-pixel': 'Meta Pixel & SEO',
     meta: 'Meta Pixel & SEO',
@@ -993,6 +996,7 @@ export const AdminDashboard = () => {
         {activeTab === 'contact' && <ContactInfoManager />}
         {activeTab === 'settings' && <SystemSettingsManager activeSubTab="theme" />}
         {activeTab === 'settings-theme' && <SystemSettingsManager activeSubTab="theme" />}
+        {(activeTab === 'settings-payments' || activeTab === 'payments') && <SystemSettingsManager activeSubTab="payments" />}
         {(activeTab === 'settings-meta' || activeTab === 'meta-pixel' || activeTab === 'meta') && <SystemSettingsManager activeSubTab="meta" />}
         {activeTab === 'settings-admin' && <SystemSettingsManager activeSubTab="security" />}
         {activeTab === 'settings-email' && <SystemSettingsManager activeSubTab="notifications" />}

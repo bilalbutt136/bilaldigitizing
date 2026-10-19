@@ -44,6 +44,25 @@ const CardBrandIcon = () => (
   </div>
 );
 
+const ApplePayBrandIcon = () => (
+  <div style={{
+    width: '42px',
+    height: '42px',
+    borderRadius: '12px',
+    background: '#000000',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    boxShadow: '0 2px 8px rgba(0,0,0,0.18)',
+    flexShrink: 0
+  }}>
+    <svg width="30" height="15" viewBox="0 0 165 67" fill="none">
+      <path d="M50.57 32.54c-.05-7.39 6.03-10.94 6.3-11.11-3.43-5.01-8.77-5.7-10.67-5.78-4.55-.46-8.88 2.68-11.19 2.68-2.31 0-5.88-2.61-9.66-2.54-4.97.07-9.56 2.89-12.12 7.35-5.17 8.98-1.32 22.28 3.71 29.54 2.46 3.55 5.39 7.54 9.23 7.4 3.7-.15 5.1-2.39 9.57-2.39 4.47 0 5.73 2.39 9.63 2.31 3.97-.07 6.49-3.6 8.93-7.17 2.82-4.12 3.98-8.11 4.05-8.32-.09-.04-7.71-2.96-7.76-11.77zM42.27 10.65c2.05-2.48 3.43-5.93 3.05-9.38-2.95.12-6.52 1.96-8.63 4.44-1.85 2.14-3.47 5.66-3.03 9.04 3.29.26 6.56-1.62 8.61-4.1z" fill="#ffffff" />
+      <path d="M78.69 49.33V27.42h8.51c6.51 0 10.82 4.14 10.82 10.95 0 6.84-4.34 10.96-10.89 10.96h-8.44zm4.49-4h3.83c4.27 0 6.94-2.63 6.94-6.96 0-4.3-2.67-6.95-6.94-6.95h-3.83v13.91zM100.86 42.48c0-4.66 3.65-7.35 10.15-7.74l6.09-.36v-1.69c0-2.85-1.92-4.49-5.34-4.49-2.95 0-5.01 1.25-5.54 3.19h-4.04c.48-3.9 4.34-6.84 9.68-6.84 5.92 0 9.4 3.16 9.4 8.65v16.13h-4.16v-3.79h-.18c-1.42 2.45-4.16 4.14-7.46 4.14-5.2 0-8.6-3.16-8.6-7.2zm16.24-2.12v-2.03l-5.32.34c-3.88.24-6.07 1.71-6.07 4.32 0 2.49 2.05 4.14 5.06 4.14 3.88 0 6.33-2.68 6.33-6.77zM126.96 57.65l4.34-13.84-8.83-22.12h4.74l6.23 16.99h.16l6.21-16.99h4.59L131.7 57.65h-4.74z" fill="#ffffff" />
+    </svg>
+  </div>
+);
+
 const GooglePayBrandIcon = () => (
   <div style={{
     width: '42px',
@@ -114,7 +133,8 @@ export const DepositModal = () => {
     authUser,
     currentUser,
     showToast,
-    theme
+    theme,
+    siteSettings
   } = useAppState();
 
   const isDark = theme === 'dark';
@@ -122,7 +142,7 @@ export const DepositModal = () => {
   const [depositAmount, setDepositAmount] = useState('100');
   const [selectedMethod, setSelectedMethod] = useState(null);
   const [isInitializing, setIsInitializing] = useState(false);
-  const [activeView, setActiveView] = useState('select'); // 'select' | 'card' | 'cashapp' | 'paypal' | 'browser_waiting'
+  const [activeView, setActiveView] = useState('select'); // 'select' | 'card' | 'apple_pay' | 'google_pay' | 'cashapp' | 'paypal'
   const [boltPaymentUrl, setBoltPaymentUrl] = useState(null);
   const [invoiceId, setInvoiceId] = useState(null);
   const [isPaid, setIsPaid] = useState(false);
@@ -132,36 +152,52 @@ export const DepositModal = () => {
 
   const presets = [25, 50, 100, 250, 500];
 
-  const paymentMethods = [
+  const configuredMethods = siteSettings?.paymentMethods || {};
+
+  const allPaymentMethods = [
     { 
       id: 'card', 
       name: 'Credit / Debit Card', 
       subtext: 'Visa, Mastercard, Amex, Discover',
       icon: <CardBrandIcon />,
-      badge: 'POPULAR'
+      badge: 'POPULAR',
+      enabled: configuredMethods.card !== false
+    },
+    { 
+      id: 'apple_pay', 
+      name: 'Apple Pay', 
+      subtext: 'Apple Wallet & Express Pay',
+      icon: <ApplePayBrandIcon />,
+      badge: 'FAST',
+      enabled: configuredMethods.apple_pay !== false
     },
     { 
       id: 'google_pay', 
       name: 'Google Pay', 
       subtext: 'Google Wallet & Saved Cards',
       icon: <GooglePayBrandIcon />,
-      badge: 'FAST'
+      badge: 'FAST',
+      enabled: configuredMethods.google_pay !== false
     },
     { 
       id: 'paypal', 
       name: 'PayPal', 
-      subtext: 'PYUSD / PayPal Crypto',
+      subtext: 'PYUSD / PayPal Direct',
       icon: <PayPalBrandIcon />,
-      badge: 'PYUSD'
+      badge: 'PYUSD',
+      enabled: configuredMethods.paypal === true
     },
     { 
       id: 'cashapp', 
       name: 'Cash App Pay', 
       subtext: 'Bitcoin Lightning ⚡ Instant',
       icon: <CashAppBrandIcon />,
-      badge: 'LIGHTNING'
+      badge: 'LIGHTNING',
+      enabled: configuredMethods.cashapp === true
     },
   ];
+
+  const paymentMethods = allPaymentMethods.filter(m => m.enabled);
 
   const handleClose = () => {
     setIsDepositModalOpen(false);
@@ -297,15 +333,27 @@ export const DepositModal = () => {
       setLightningInvoice(lightning);
       setHasCopied(false);
       
-      // Transition directly to the target view - links are opened on explicit user click to prevent popup blocking
+      // Auto-open checkout portal in a new tab if supported
+      if (paymentUrl && (methodId === 'card' || methodId === 'apple_pay' || methodId === 'google_pay')) {
+        try {
+          const win = window.open(paymentUrl, '_blank');
+          if (win) win.focus?.();
+        } catch {}
+      }
+
+      // Transition directly to the target view
       if (methodId === 'card') {
         setActiveView('card');
+      } else if (methodId === 'apple_pay') {
+        setActiveView('apple_pay');
+      } else if (methodId === 'google_pay') {
+        setActiveView('google_pay');
       } else if (methodId === 'cashapp' || methodId === 'lightning' || methodId === 'dollarpay_cashapp') {
         setActiveView('cashapp');
       } else if (methodId === 'paypal' || methodId === 'pyusd' || methodId === 'dollarpay_paypal') {
         setActiveView('paypal');
       } else {
-        setActiveView('browser_waiting');
+        setActiveView('card');
       }
 
     } catch (err) {
@@ -416,9 +464,10 @@ export const DepositModal = () => {
               <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 900, color: '#ffffff' }}>
                 {isPaid ? 'Deposit Successful' : (
                   activeView === 'card' ? 'Credit / Debit Card Deposit' :
+                  activeView === 'apple_pay' ? 'Apple Pay Deposit' :
                   activeView === 'cashapp' ? 'Cash App Lightning Deposit' :
                   activeView === 'paypal' ? 'PayPal PYUSD Deposit' :
-                  activeView === 'browser_waiting' ? 'Google Pay Deposit' :
+                  (activeView === 'google_pay' || activeView === 'browser_waiting') ? 'Google Pay Deposit' :
                   'Studio Wallet Top-Up'
                 )}
               </h3>
@@ -517,157 +566,63 @@ export const DepositModal = () => {
             </div>
 
           ) : activeView === 'card' ? (
-            /* 1. CREDIT / DEBIT CARD ONLY: 2-Step Solana Address Instruction Modal */
-            <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', flex: 1, background: isDark ? 'var(--color-surface, #111827)' : '#f8fafc' }}>
-              <div style={{ textAlign: 'center', marginBottom: '1.15rem' }}>
-                <div style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '0.35rem',
-                  background: isDark ? 'rgba(5, 150, 105, 0.2)' : '#ecfdf5',
-                  color: isDark ? '#34d399' : '#047857',
-                  fontSize: '0.75rem',
-                  fontWeight: 800,
-                  padding: '0.25rem 0.75rem',
-                  borderRadius: '999px',
-                  border: isDark ? '1.5px solid rgba(5, 150, 105, 0.4)' : '1.5px solid #a7f3d0',
-                  marginBottom: '0.5rem'
-                }}>
-                  <ShieldCheck size={14} /> Deposit Gateway Initialized
-                </div>
-                <h3 style={{ fontSize: '1.25rem', fontWeight: 900, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a', margin: '0 0 0.2rem' }}>
-                  Complete in 2 Easy Steps
-                </h3>
-                <p style={{ fontSize: '0.85rem', color: isDark ? 'var(--color-text-secondary, #cbd5e1)' : '#475569', margin: 0 }}>
-                  Deposit Amount: <strong style={{ color: isDark ? '#34d399' : '#047857', fontSize: '1.1rem' }}>${parseFloat(depositAmount || 0).toFixed(2)}</strong>
-                </p>
-              </div>
-
-              {/* Step 1 */}
+            /* 1. CREDIT / DEBIT CARD: Direct VIP Portal View (Confusing 2-step crypto/Solana address completely removed) */
+            <div style={{ padding: '2rem 1.5rem', display: 'flex', flexDirection: 'column', flex: 1, alignItems: 'center', justifyContent: 'center', textAlign: 'center', background: isDark ? 'var(--color-surface, #111827)' : '#f8fafc' }}>
               <div style={{
-                background: isDark ? 'var(--color-subtle, #1e293b)' : '#ffffff',
-                border: isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid #cbd5e1',
-                borderRadius: '14px',
-                padding: '1rem',
-                marginBottom: '0.85rem',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.04)'
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.4rem',
+                background: isDark ? 'rgba(5, 150, 105, 0.2)' : '#ecfdf5',
+                color: isDark ? '#34d399' : '#047857',
+                fontSize: '0.78rem',
+                fontWeight: 800,
+                padding: '0.35rem 0.85rem',
+                borderRadius: '999px',
+                border: isDark ? '1.5px solid rgba(5, 150, 105, 0.4)' : '1.5px solid #a7f3d0',
+                marginBottom: '1rem'
               }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', marginBottom: '0.5rem' }}>
-                  <span style={{
-                    width: '24px',
-                    height: '24px',
-                    borderRadius: '50%',
-                    background: '#059669',
-                    color: '#ffffff',
-                    fontSize: '0.78rem',
-                    fontWeight: 900,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center'
-                  }}>1</span>
-                  <span style={{ fontSize: '0.88rem', fontWeight: 900, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a' }}>
-                    Copy Your Receiving Address:
-                  </span>
-                </div>
-
-                <div style={{
-                  background: isDark ? 'var(--color-surface, #111827)' : '#f1f5f9',
-                  border: isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid #cbd5e1',
-                  borderRadius: '10px',
-                  padding: '0.65rem 0.85rem',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  gap: '0.5rem'
-                }}>
-                  <code style={{
-                    fontFamily: 'monospace',
-                    fontSize: '0.8rem',
-                    fontWeight: 800,
-                    color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a',
-                    wordBreak: 'break-all',
-                    lineHeight: 1.3
-                  }}>
-                    {solanaAddress || 'Receiving link ready'}
-                  </code>
-                  <button
-                    type="button"
-                    onClick={() => copyToClipboard(solanaAddress || boltPaymentUrl, 'Address')}
-                    style={{
-                      background: hasCopied ? '#059669' : (isDark ? 'var(--color-border, #334155)' : '#0f172a'),
-                      color: '#ffffff',
-                      border: 'none',
-                      borderRadius: '8px',
-                      padding: '0.45rem 0.85rem',
-                      fontSize: '0.78rem',
-                      fontWeight: 800,
-                      cursor: 'pointer',
-                      flexShrink: 0,
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.35rem',
-                      transition: 'all 0.15s ease'
-                    }}
-                  >
-                    {hasCopied ? <><Check size={14} /> Copied!</> : <><Copy size={14} /> Copy Address</>}
-                  </button>
-                </div>
+                <ShieldCheck size={16} /> 256-Bit SSL Encrypted Card Deposit
               </div>
 
-              {/* Step 2 */}
-              <div style={{
-                background: isDark ? 'var(--color-subtle, #1e293b)' : '#ffffff',
-                border: isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid #cbd5e1',
-                borderRadius: '14px',
-                padding: '1rem',
-                marginBottom: '1rem',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.04)'
-              }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', marginBottom: '0.5rem' }}>
-                  <span style={{
-                    width: '24px',
-                    height: '24px',
-                    borderRadius: '50%',
-                    background: isDark ? 'var(--color-border, #334155)' : '#0f172a',
-                    color: '#ffffff',
-                    fontSize: '0.78rem',
-                    fontWeight: 900,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center'
-                  }}>2</span>
-                  <span style={{ fontSize: '0.88rem', fontWeight: 900, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a' }}>
-                    Paste on Checkout Portal:
-                  </span>
-                </div>
-                <ul style={{ margin: 0, paddingLeft: '1.15rem', fontSize: '0.82rem', color: isDark ? 'var(--color-text-secondary, #cbd5e1)' : '#334155', lineHeight: 1.6 }}>
-                  <li>Tap <strong style={{ color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a' }}>Proceed to Payment</strong> below to open the deposit portal.</li>
-                  <li>Paste this address when asked to complete your deposit.</li>
-                </ul>
+              <div style={{ marginBottom: '1rem' }}>
+                <CardBrandIcon />
               </div>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: 'auto' }}>
+              <h3 style={{ fontSize: '1.35rem', fontWeight: 900, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a', margin: '0 0 0.35rem' }}>
+                Credit / Debit Card Deposit
+              </h3>
+
+              <p style={{ fontSize: '0.88rem', color: isDark ? 'var(--color-text-secondary, #cbd5e1)' : '#475569', margin: '0 0 1.5rem', maxWidth: '360px', lineHeight: 1.5 }}>
+                Deposit Amount: <strong style={{ color: isDark ? '#34d399' : '#047857', fontSize: '1.2rem' }}>${parseFloat(depositAmount || 0).toFixed(2)}</strong>
+                <br />
+                <span style={{ fontSize: '0.82rem', color: isDark ? 'var(--color-text-muted, #94a3b8)' : '#64748b' }}>
+                  Tap below to complete your deposit on the secure card portal.
+                </span>
+              </p>
+
+              <div style={{ width: '100%', maxWidth: '360px', display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
                 <a
                   href={boltPaymentUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                   style={{
                     width: '100%',
-                    padding: '0.9rem',
+                    padding: '0.95rem 1.25rem',
                     fontSize: '1rem',
                     fontWeight: 900,
-                    borderRadius: '12px',
+                    borderRadius: '14px',
                     background: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
                     color: '#ffffff',
-                    display: 'inline-flex',
+                    display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    gap: '0.5rem',
-                    boxShadow: '0 4px 15px rgba(5, 150, 105, 0.35)',
-                    textDecoration: 'none'
+                    gap: '0.55rem',
+                    boxShadow: '0 6px 20px rgba(5, 150, 105, 0.35)',
+                    textDecoration: 'none',
+                    transition: 'all 0.15s ease'
                   }}
                 >
-                  Proceed to Payment <ExternalLink size={16} />
+                  <Lock size={18} /> Proceed to Card Portal <ExternalLink size={16} />
                 </a>
 
                 <button
@@ -696,9 +651,102 @@ export const DepositModal = () => {
                 </button>
               </div>
 
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.45rem', marginTop: '0.85rem', fontSize: '0.78rem', color: isDark ? 'var(--color-text-muted, #94a3b8)' : '#64748b' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.45rem', marginTop: '1.25rem', fontSize: '0.78rem', color: isDark ? 'var(--color-text-muted, #94a3b8)' : '#64748b' }}>
                 <Loader2 size={14} className="animate-spin" style={{ color: '#059669' }} />
-                Awaiting deposit confirmation...
+                Awaiting deposit confirmation... Instant wallet top-up upon confirmation
+              </div>
+            </div>
+
+          ) : activeView === 'apple_pay' ? (
+            /* 2. APPLE PAY: VIP Direct Portal View */
+            <div style={{ padding: '2rem 1.5rem', display: 'flex', flexDirection: 'column', flex: 1, alignItems: 'center', justifyContent: 'center', textAlign: 'center', background: isDark ? 'var(--color-surface, #111827)' : '#f8fafc' }}>
+              <div style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.4rem',
+                background: isDark ? 'rgba(255, 255, 255, 0.1)' : '#f1f5f9',
+                color: isDark ? '#ffffff' : '#0f172a',
+                fontSize: '0.78rem',
+                fontWeight: 800,
+                padding: '0.35rem 0.85rem',
+                borderRadius: '999px',
+                border: isDark ? '1.5px solid rgba(255, 255, 255, 0.2)' : '1.5px solid #cbd5e1',
+                marginBottom: '1rem'
+              }}>
+                 Apple Pay Express
+              </div>
+
+              <div style={{ marginBottom: '1rem' }}>
+                <ApplePayBrandIcon />
+              </div>
+
+              <h3 style={{ fontSize: '1.35rem', fontWeight: 900, color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a', margin: '0 0 0.35rem' }}>
+                Deposit with Apple Pay
+              </h3>
+
+              <p style={{ fontSize: '0.88rem', color: isDark ? 'var(--color-text-secondary, #cbd5e1)' : '#475569', margin: '0 0 1.5rem', maxWidth: '360px', lineHeight: 1.5 }}>
+                Deposit Amount: <strong style={{ color: isDark ? '#34d399' : '#047857', fontSize: '1.2rem' }}>${parseFloat(depositAmount || 0).toFixed(2)}</strong>
+                <br />
+                <span style={{ fontSize: '0.82rem', color: isDark ? 'var(--color-text-muted, #94a3b8)' : '#64748b' }}>
+                  Tap below to authorize deposit with Touch ID or Face ID.
+                </span>
+              </p>
+
+              <div style={{ width: '100%', maxWidth: '360px', display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
+                <a
+                  href={boltPaymentUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    width: '100%',
+                    padding: '0.95rem 1.25rem',
+                    fontSize: '1rem',
+                    fontWeight: 900,
+                    borderRadius: '14px',
+                    background: '#000000',
+                    color: '#ffffff',
+                    border: '1px solid rgba(255, 255, 255, 0.2)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.55rem',
+                    boxShadow: '0 6px 20px rgba(0, 0, 0, 0.3)',
+                    textDecoration: 'none',
+                    transition: 'all 0.15s ease'
+                  }}
+                >
+                  Deposit with Pay <ExternalLink size={16} />
+                </a>
+
+                <button
+                  type="button"
+                  onClick={() => { setActiveView('select'); setSelectedMethod(null); }}
+                  style={{
+                    width: '100%',
+                    padding: '0.75rem',
+                    background: isDark ? 'var(--color-subtle, #1e293b)' : '#ffffff',
+                    color: isDark ? 'var(--color-text-primary, #ffffff)' : '#0f172a',
+                    border: isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid #cbd5e1',
+                    borderRadius: '12px',
+                    fontSize: '0.88rem',
+                    fontWeight: 800,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.45rem',
+                    transition: 'all 0.15s ease',
+                    boxShadow: '0 2px 5px rgba(0,0,0,0.02)'
+                  }}
+                >
+                  <ArrowLeft size={16} />
+                  <span>Choose Different Method or Amount</span>
+                </button>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.45rem', marginTop: '1.25rem', fontSize: '0.78rem', color: isDark ? 'var(--color-text-muted, #94a3b8)' : '#64748b' }}>
+                <Loader2 size={14} className="animate-spin" style={{ color: '#059669' }} />
+                Listening for Apple Pay confirmation...
               </div>
             </div>
 
@@ -1028,7 +1076,7 @@ export const DepositModal = () => {
               </div>
             </div>
 
-          ) : activeView === 'browser_waiting' ? (
+          ) : (activeView === 'google_pay' || activeView === 'browser_waiting') ? (
             /* 4. GOOGLE PAY View */
             <div style={{ padding: '2rem 1.5rem', display: 'flex', flexDirection: 'column', flex: 1, alignItems: 'center', justifyContent: 'center', textAlign: 'center', background: isDark ? 'var(--color-surface, #111827)' : '#f8fafc' }}>
               <div style={{
