@@ -40,8 +40,9 @@ describe('Live Chat Floating Widget & Realtime Support System', () => {
     assert.match(file, /setIsAuthModalOpen\(true\)/);
     assert.match(file, /type="email"/);
     assert.match(file, /aria-label="Your message"/);
-    assert.match(file, /https:\/\/wa\.me\//);
-    assert.match(file, /Prefer WhatsApp\? Chat on WhatsApp/);
+    assert.doesNotMatch(file, /Prefer WhatsApp\? Chat on WhatsApp/);
+    assert.match(file, /live-chat-composer/);
+    assert.match(file, /live-chat-guest-message-row/);
   });
 
   test('3. Realtime Supabase synchronization for live chat messages and unread counts', () => {

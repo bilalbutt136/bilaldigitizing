@@ -7,8 +7,7 @@ import {
   X,
   Send,
   Loader2,
-  CheckCircle2,
-  ExternalLink
+  CheckCircle2
 } from 'lucide-react';
 import { subscribeToChatMessages, subscribeToConversations } from '../../services/supabaseService';
 import { fetchChatUnreadCounts } from '../../services/chatUnreadService';
@@ -53,15 +52,6 @@ export const LiveChatWidget = () => {
   const [isSubmittingInquiry, setIsSubmittingInquiry] = useState(false);
   const [inquiryError, setInquiryError] = useState('');
   const [sentMessages, setSentMessages] = useState([]);
-
-  // WhatsApp link configuration
-  const whatsappNumber = (
-    siteSettings?.whatsapp ||
-    siteSettings?.contactInfo?.whatsapp ||
-    process.env.NEXT_PUBLIC_BUSINESS_PHONE ||
-    '+1 (347) 915-4498'
-  ).trim();
-  const cleanWaNumber = whatsappNumber.replace(/[^0-9+]/g, '');
 
   useEffect(() => {
     setMounted(true);
@@ -411,8 +401,8 @@ export const LiveChatWidget = () => {
           width: 38px;
           height: 38px;
           border-radius: 13px;
-          background: #f1edff;
-          color: #6d48ed;
+          background: #eff6ff;
+          color: #1d4ed8;
         }
         .live-chat-guest-avatar::after {
           content: '';
@@ -423,7 +413,7 @@ export const LiveChatWidget = () => {
           height: 11px;
           border: 2px solid white;
           border-radius: 50%;
-          background: #35d68b;
+          background: #10b981;
         }
         .live-chat-header-copy { min-width: 0; flex: 1; }
         .live-chat-header-copy h3 {
@@ -444,7 +434,7 @@ export const LiveChatWidget = () => {
           border: 0;
           padding: 7px 5px;
           background: transparent;
-          color: #6d48ed;
+          color: #1d4ed8;
           font-size: 12px;
           font-weight: 650;
           cursor: pointer;
@@ -469,7 +459,7 @@ export const LiveChatWidget = () => {
           gap: 14px;
           overflow-y: auto;
           min-height: 0;
-          padding: 20px 16px;
+          padding: 16px 16px;
           background: #f8fafc;
         }
         .live-chat-welcome {
@@ -489,7 +479,7 @@ export const LiveChatWidget = () => {
           max-width: 90%;
           padding: 10px 13px;
           border-radius: 14px 14px 4px 14px;
-          background: #6d48ed;
+          background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%);
           color: #fff;
           font-size: 13px;
           line-height: 1.5;
@@ -518,48 +508,84 @@ export const LiveChatWidget = () => {
         }
         .live-chat-composer {
           flex: 0 0 auto;
-          padding: 14px 16px 16px;
+          padding: 10px 14px 12px;
           border-top: 1px solid #edf0f5;
-          background: #fff;
+          background: #ffffff;
         }
-        .live-chat-quick-actions { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 12px; }
+        [data-theme="dark"] .live-chat-composer,
+        .dark .live-chat-composer {
+          background: #0f172a;
+          border-top-color: #1e293b;
+        }
+        .live-chat-quick-actions {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 6px;
+          margin-top: 2px;
+        }
         .live-chat-guest-chip {
-          padding: 6px 10px;
-          border: 1px solid #e3e6ef;
+          padding: 5px 11px;
+          border: 1px solid #dbe4f4;
           border-radius: 999px;
-          background: #fff;
-          color: #535f76;
+          background: #ffffff;
+          color: #1d4ed8;
           font-size: 11px;
-          font-weight: 550;
+          font-weight: 600;
           cursor: pointer;
+          transition: all .15s ease;
         }
-        .live-chat-guest-chip:hover { border-color: #b8a8fa; color: #5b38d5; background: #faf9ff; }
-        .live-chat-guest-form { display: flex; flex-direction: column; gap: 9px; }
+        .live-chat-guest-chip:hover {
+          border-color: #2563eb;
+          color: #1e40af;
+          background: #eff6ff;
+          transform: translateY(-1px);
+        }
+        [data-theme="dark"] .live-chat-guest-chip,
+        .dark .live-chat-guest-chip {
+          background: #1e293b;
+          border-color: #334155;
+          color: #60a5fa;
+        }
+        .live-chat-guest-form { display: flex; flex-direction: column; gap: 7px; }
         .live-chat-guest-field {
           box-sizing: border-box;
           width: 100%;
           min-width: 0;
-          padding: 11px 12px;
+          padding: 9px 12px;
           border: 1px solid #dce3ec;
-          border-radius: 10px;
-          background: #fff;
+          border-radius: 9px;
+          background: #f8fafc;
           color: #0f172a;
           font: inherit;
           font-size: 13px;
           line-height: 1.45;
           outline: none;
+          transition: border-color .15s ease, box-shadow .15s ease, background-color .15s ease;
         }
         .live-chat-guest-field::placeholder { color: #94a3b8; }
         .live-chat-guest-field:focus {
-          border-color: #967cf2;
-          box-shadow: 0 0 0 3px rgba(109, 72, 237, .1);
+          border-color: #2563eb;
+          background: #ffffff;
+          box-shadow: 0 0 0 3px rgba(37, 99, 235, .12);
+        }
+        [data-theme="dark"] .live-chat-guest-field,
+        .dark .live-chat-guest-field {
+          background: #1e293b;
+          border-color: #334155;
+          color: #f8fafc;
+        }
+        .live-chat-guest-email {
+          padding: 7px 11px;
+          font-size: 12px;
         }
         .live-chat-guest-message-row { display: flex; gap: 8px; align-items: flex-end; }
         .live-chat-guest-message-row textarea {
           flex: 1 1 auto;
-          resize: vertical;
+          resize: none;
           min-height: 44px;
           max-height: 110px;
+          padding: 9px 12px;
+          border-radius: 10px;
         }
         .live-chat-send {
           flex: 0 0 44px;
@@ -567,26 +593,20 @@ export const LiveChatWidget = () => {
           place-items: center;
           height: 44px;
           border: 0;
-          border-radius: 11px;
-          background: #6d48ed;
-          color: #fff;
+          border-radius: 10px;
+          background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%);
+          color: #ffffff;
           cursor: pointer;
+          transition: transform .15s ease, opacity .15s ease, box-shadow .15s ease;
+          box-shadow: 0 4px 12px rgba(29, 78, 216, 0.22);
         }
-        .live-chat-send:hover:not(:disabled) { background: #5e3ed5; }
+        .live-chat-send:hover:not(:disabled) {
+          background: linear-gradient(135deg, #1e40af 0%, #1d4ed8 100%);
+          transform: translateY(-1px);
+          box-shadow: 0 6px 16px rgba(29, 78, 216, 0.32);
+        }
         .live-chat-send:disabled { opacity: .65; cursor: wait; }
         .live-chat-form-error { margin: 0; color: #b91c1c; font-size: 12px; }
-        .live-chat-whatsapp {
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          gap: 5px;
-          margin-top: 12px;
-          color: #16814a;
-          font-size: 12px;
-          font-weight: 600;
-          text-decoration: none;
-        }
-        .live-chat-whatsapp:hover { text-decoration: underline; }
         @media (max-width: 640px) {
           .live-chat-floating-btn-wrap { right: 20px; bottom: calc(20px + env(safe-area-inset-bottom, 0px)); }
           .live-chat-floating-container {
@@ -676,18 +696,6 @@ export const LiveChatWidget = () => {
                 <p className="live-chat-welcome">
                   Hi! Need a digitizing quote or help with a file? Send us a message and we’ll reply by email.
                 </p>
-                {sentMessages.map((msg, idx) => (
-                  <React.Fragment key={idx}>
-                    <div className="live-chat-sent-message">{msg.text}</div>
-                    <div className="live-chat-received-message">
-                      <strong><CheckCircle2 size={15} /> Message received</strong>
-                      Thanks for reaching out. We'll reply to {msg.email} as soon as we can.
-                    </div>
-                  </React.Fragment>
-                ))}
-              </div>
-
-              <div className="live-chat-composer">
                 <div className="live-chat-quick-actions" aria-label="Suggested messages">
                   <button
                     type="button"
@@ -700,13 +708,25 @@ export const LiveChatWidget = () => {
                     onClick={() => handleApplyPrompt('Vector art conversion turnaround time')}
                   >Turnaround time</button>
                 </div>
+                {sentMessages.map((msg, idx) => (
+                  <React.Fragment key={idx}>
+                    <div className="live-chat-sent-message">{msg.text}</div>
+                    <div className="live-chat-received-message">
+                      <strong><CheckCircle2 size={15} /> Message received</strong>
+                      Thanks for reaching out. We'll reply to {msg.email} as soon as we can.
+                    </div>
+                  </React.Fragment>
+                ))}
+              </div>
+
+              <div className="live-chat-composer">
                 <form onSubmit={handleGuestSubmit} className="live-chat-guest-form">
                   <input
-                    className="live-chat-guest-field"
+                    className="live-chat-guest-field live-chat-guest-email"
                     type="email"
                     autoComplete="email"
                     aria-label="Your email for reply"
-                    placeholder="Your email address"
+                    placeholder="Your email address (for reply)..."
                     required
                     value={guestEmail}
                     onChange={(e) => setGuestEmail(e.target.value)}
@@ -733,16 +753,6 @@ export const LiveChatWidget = () => {
                   </div>
                   {inquiryError && <p className="live-chat-form-error" role="alert">{inquiryError}</p>}
                 </form>
-                {cleanWaNumber && (
-                  <a
-                    className="live-chat-whatsapp"
-                    href={'https://wa.me/' + cleanWaNumber.replace(/^\+/, '') + '?text=' + encodeURIComponent('Hi BDigitizing Studio! I would like to inquire about embroidery digitizing & vector services.')}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    Prefer WhatsApp? Chat on WhatsApp <ExternalLink size={13} aria-hidden="true" />
-                  </a>
-                )}
               </div>
             </div>
           )}
