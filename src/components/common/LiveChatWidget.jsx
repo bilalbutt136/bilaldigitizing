@@ -45,6 +45,8 @@ export const LiveChatWidget = () => {
   const [latestIncomingPreview, setLatestIncomingPreview] = useState(null);
   const previewTimerRef = useRef(null);
   const containerRef = useRef(null);
+  const guestTextareaRef = useRef(null);
+  const messagesEndRef = useRef(null);
 
   // Guest inquiry form state
   const [guestName, setGuestName] = useState('');
@@ -54,6 +56,12 @@ export const LiveChatWidget = () => {
   const [isSubmittingInquiry, setIsSubmittingInquiry] = useState(false);
   const [inquiryError, setInquiryError] = useState('');
   const [sentMessages, setSentMessages] = useState([]);
+
+  useEffect(() => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [sentMessages]);
 
   useEffect(() => {
     setMounted(true);
@@ -186,40 +194,98 @@ export const LiveChatWidget = () => {
     if (setIsAuthModalOpen) setIsAuthModalOpen(true);
   };
 
-  // Submit guest inquiry
-  const handleGuestSubmit = async (e) => {
-    e.preventDefault();
-    if (!guestEmail.trim() || !guestMessage.trim()) {
-      setInquiryError('Please enter your email and message.');
-      return;
+  const getSmartReply = (questionText) => {
+    const q = (questionText || '').toLowerCase();
+    if (q.includes('.dst') || q.includes('.pes') || q.includes('format') || q.includes('extension') || q.includes('emb') || q.includes('file')) {
+      return {
+        title: 'Machine Formats & Delivery',
+        reply: 'We deliver all major machine embroidery formats (.DST, .PES, .EMB, .EXP, .JEF, .VP3, etc.) and print-ready vectors (.AI, .EPS, .PDF, .SVG) along with an official PDF stitch worksheet!'
+      };
     }
+    if (q.includes('revision') || q.includes('edit') || q.includes('change') || q.includes('fix') || q.includes('modify')) {
+      return {
+        title: 'Free Revisions & Edits',
+        reply: 'Minor edits, thread adjustments, and stitch density tweaks are 100% free! You can also request revisions directly from your client dashboard after logging in.'
+      };
+    }
+    if (q.includes('price') || q.includes('quote') || q.includes('cost') || q.includes('rate') || q.includes('how much') || q.includes('$')) {
+      return {
+        title: 'Instant Transparent Pricing',
+        reply: 'Embroidery digitizing is $10 flat for chest/cap logos. Vector tracing starts at $8. Custom patches start at minimum 50 pieces. No hidden setup charges.'
+      };
+    }
+    if (q.includes('turnaround') || q.includes('time') || q.includes('urgent') || q.includes('rush') || q.includes('fast') || q.includes('hour')) {
+      return {
+        title: '2-4 Hour Turnaround',
+        reply: 'Standard delivery is completed within 2 to 4 hours. Super-urgent rush delivery is also available in under 2 hours 24/7/365!'
+      };
+    }
+    return {
+      title: 'Studio Support Online',
+      reply: 'Thanks for asking! Our master digitizers are reviewing your question. If you are ready to place an order or download files, feel free to sign in or click Order Now.'
+    };
+  };
+
+  const adjustTextareaHeight = (element) => {
+    if (!element) return;
+    element.style.height = 'auto';
+    const nextHeight = Math.min(Math.max(element.scrollHeight, 42), 120);
+    element.style.height = `${nextHeight}px`;
+  };
+
+  const handleGuestTextareaChange = (e) => {
+    setGuestMessage(e.target.value);
+    adjustTextareaHeight(e.target);
+  };
+
+  const handleGuestKeyDown = (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleGuestSubmit(e);
+    }
+  };
+
+  // Submit guest inquiry / question
+  const handleGuestSubmit = async (e) => {
+    if (e && e.preventDefault) e.preventDefault();
+    const text = guestMessage.trim();
+    if (!text) return;
 
     setIsSubmittingInquiry(true);
     setInquiryError('');
 
+    const smart = getSmartReply(text);
+    const newEntry = {
+      text,
+      title: smart.title,
+      reply: smart.reply
+    };
+
+    setSentMessages(prev => [...prev, newEntry]);
+    setGuestMessage('');
+
+    if (guestTextareaRef.current) {
+      guestTextareaRef.current.style.height = '42px';
+    }
+
     try {
-      const response = await fetch('/api/contact', {
+      const fallbackEmail = guestEmail.trim() || 'visitor@bdigitizing.com';
+      const fallbackName = guestName.trim() || 'Website Visitor';
+      const safeMsg = text.length < 10 ? `Guest question: ${text}` : text;
+
+      await fetch('/api/contact', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          name: guestName.trim() || guestEmail.split('@')[0] || 'Visitor',
-          email: guestEmail.trim(),
-          service: guestService || 'Embroidery Digitizing',
-          subject: `Live Chat Inquiry: ${guestService || 'Embroidery Digitizing'}`,
-          message: guestMessage.trim()
+          name: fallbackName,
+          email: fallbackEmail,
+          service: 'General Support',
+          subject: `Live Chat Question: ${text.slice(0, 50)}`,
+          message: safeMsg
         })
       });
-
-      const data = await response.json().catch(() => ({}));
-
-      if (!response.ok || !data.success) {
-        throw new Error(data.error || 'Failed to send inquiry. Please try again or use WhatsApp.');
-      }
-
-      setSentMessages(prev => [...prev, { text: guestMessage.trim(), email: guestEmail.trim() }]);
-      setGuestMessage('');
-    } catch (err) {
-      setInquiryError(err.message || 'Error sending message.');
+    } catch {
+      // Quiet background fallback so visitor experience is not interrupted
     } finally {
       setIsSubmittingInquiry(false);
     }
@@ -227,6 +293,12 @@ export const LiveChatWidget = () => {
 
   const handleApplyPrompt = (text) => {
     setGuestMessage(text);
+    if (guestTextareaRef.current) {
+      guestTextareaRef.current.focus();
+      setTimeout(() => {
+        adjustTextareaHeight(guestTextareaRef.current);
+      }, 0);
+    }
   };
 
   if (!mounted || activeUser) return null;
@@ -815,36 +887,25 @@ export const LiveChatWidget = () => {
                   <React.Fragment key={idx}>
                     <div className="live-chat-sent-message">{msg.text}</div>
                     <div className="live-chat-received-message">
-                      <strong><CheckCircle2 size={15} /> Message received</strong>
-                      Thanks for reaching out. We'll reply to {msg.email} as soon as we can.
+                      <strong><CheckCircle2 size={15} /> {msg.title || 'Message received'}</strong>
+                      {msg.reply || "Thanks for reaching out! We'll assist you as soon as we can."}
                     </div>
                   </React.Fragment>
                 ))}
+                <div ref={messagesEndRef} />
               </div>
 
               <div className="live-chat-composer" style={{ padding: '0.75rem 1rem', borderTop: '1px solid #e2e8f0', background: '#ffffff' }}>
                 <form onSubmit={handleGuestSubmit} className="live-chat-guest-form" style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                  {!guestEmail && (
-                    <input
-                      className="live-chat-guest-field live-chat-guest-email"
-                      type="email"
-                      autoComplete="email"
-                      aria-label="Your email for reply"
-                      placeholder="Your email address (for reply)..."
-                      required
-                      value={guestEmail}
-                      onChange={(e) => setGuestEmail(e.target.value)}
-                      style={{
-                        padding: '0.55rem 0.85rem',
-                        fontSize: '0.82rem',
-                        borderRadius: '10px',
-                        border: '1px solid #cbd5e1',
-                        background: '#f8fafc',
-                        outline: 'none'
-                      }}
-                    />
-                  )}
-                  <div className="live-chat-guest-message-row" style={{ display: 'flex', alignItems: 'center', gap: '0.55rem' }}>
+                  <input
+                    type="email"
+                    tabIndex={-1}
+                    aria-hidden="true"
+                    value={guestEmail}
+                    onChange={(e) => setGuestEmail(e.target.value)}
+                    style={{ display: 'none' }}
+                  />
+                  <div className="live-chat-guest-message-row" style={{ display: 'flex', alignItems: 'flex-end', gap: '0.55rem' }}>
                     <button
                       type="button"
                       onClick={() => handleApplyPrompt('Need quote for embroidery file (.DST/.PES)')}
@@ -852,8 +913,8 @@ export const LiveChatWidget = () => {
                         background: '#f1f5f9',
                         border: '1px solid #e2e8f0',
                         borderRadius: '50%',
-                        width: '40px',
-                        height: '40px',
+                        width: '42px',
+                        height: '42px',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
@@ -861,54 +922,60 @@ export const LiveChatWidget = () => {
                         color: '#475569',
                         flexShrink: 0
                       }}
-                      title="Attach file (available upon sign-in or quote request)"
+                      title="Attach file / Quick prompt"
                       aria-label="Attach file"
                     >
                       <Paperclip size={18} />
                     </button>
 
                     <textarea
+                      ref={guestTextareaRef}
                       className="live-chat-guest-field"
                       rows={1}
                       aria-label="Your message"
-                      placeholder="Describe your question or issue..."
-                      required
+                      placeholder="Ask a question..."
                       value={guestMessage}
-                      onChange={(e) => setGuestMessage(e.target.value)}
+                      onChange={handleGuestTextareaChange}
+                      onKeyDown={handleGuestKeyDown}
                       style={{
                         flex: 1,
                         border: '1.5px solid #cbd5e1',
                         background: '#f8fafc',
-                        borderRadius: '22px',
+                        borderRadius: '20px',
                         padding: '0.62rem 1.05rem',
-                        fontSize: '0.92rem',
+                        fontSize: '0.9rem',
                         outline: 'none',
                         resize: 'none',
                         minHeight: '42px',
-                        maxHeight: '100px',
-                        boxSizing: 'border-box'
+                        maxHeight: '120px',
+                        lineHeight: '1.4',
+                        boxSizing: 'border-box',
+                        overflowY: 'auto'
                       }}
                     />
 
                     <button
                       className="live-chat-send"
                       type="submit"
-                      disabled={isSubmittingInquiry}
+                      disabled={isSubmittingInquiry || !guestMessage.trim()}
                       aria-label="Send message"
-                      title="Send message"
+                      title="Send message (Enter)"
                       style={{
-                        width: '40px',
-                        height: '40px',
+                        width: '42px',
+                        height: '42px',
                         borderRadius: '50%',
                         border: 'none',
-                        background: 'linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%)',
+                        background: guestMessage.trim()
+                          ? 'linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%)'
+                          : '#cbd5e1',
                         color: '#ffffff',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        cursor: isSubmittingInquiry ? 'wait' : 'pointer',
+                        cursor: isSubmittingInquiry ? 'wait' : (guestMessage.trim() ? 'pointer' : 'default'),
                         flexShrink: 0,
-                        boxShadow: '0 2px 8px rgba(37, 99, 235, 0.25)'
+                        boxShadow: guestMessage.trim() ? '0 2px 8px rgba(37, 99, 235, 0.25)' : 'none',
+                        transition: 'all 0.15s ease'
                       }}
                     >
                       {isSubmittingInquiry ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} />}
