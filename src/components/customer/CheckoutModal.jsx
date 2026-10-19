@@ -403,22 +403,14 @@ export const CheckoutModal = () => {
         lightningInvoice: lightning
       }));
 
-      // Auto-open checkout portal in a new tab if supported
+      // Direct navigation to payment portal for Card, Apple Pay, Google Pay
       if (paymentUrl && (methodId === 'card' || methodId === 'apple_pay' || methodId === 'google_pay')) {
-        try {
-          const win = window.open(paymentUrl, '_blank');
-          if (win) win.focus?.();
-        } catch {}
+        window.location.href = paymentUrl;
+        return;
       }
 
       // Transition to the target view
-      if (methodId === 'card') {
-        setActiveView('card');
-      } else if (methodId === 'apple_pay') {
-        setActiveView('apple_pay');
-      } else if (methodId === 'google_pay') {
-        setActiveView('google_pay');
-      } else if (methodId === 'cashapp' || methodId === 'lightning' || methodId === 'dollarpay_cashapp') {
+      if (methodId === 'cashapp' || methodId === 'lightning' || methodId === 'dollarpay_cashapp') {
         setActiveView('cashapp');
       } else if (methodId === 'paypal' || methodId === 'pyusd' || methodId === 'dollarpay_paypal') {
         setActiveView('paypal');
@@ -1463,7 +1455,10 @@ export const CheckoutModal = () => {
                       </div>
 
                       {isInitializing && selectedMethod === method.id ? (
-                        <Loader2 size={20} className="animate-spin" style={{ color: '#059669', marginLeft: 'auto' }} />
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: '#059669', fontSize: '0.82rem', fontWeight: 800, marginLeft: 'auto' }}>
+                          <Loader2 size={18} className="animate-spin" />
+                          <span>Redirecting...</span>
+                        </div>
                       ) : (
                         <ChevronRight size={18} style={{ color: isDark ? 'var(--color-text-muted, #94a3b8)' : '#94a3b8', marginLeft: 'auto' }} />
                       )}
