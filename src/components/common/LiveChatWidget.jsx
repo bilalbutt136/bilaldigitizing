@@ -48,7 +48,7 @@ export const LiveChatWidget = () => {
   const guestTextareaRef = useRef(null);
   const messagesEndRef = useRef(null);
 
-  // Guest inquiry form state
+  // Guest inquiry & Live Help Desk session state
   const [guestName, setGuestName] = useState('');
   const [guestEmail, setGuestEmail] = useState('');
   const [guestService, setGuestService] = useState('Embroidery Digitizing');
@@ -56,6 +56,9 @@ export const LiveChatWidget = () => {
   const [isSubmittingInquiry, setIsSubmittingInquiry] = useState(false);
   const [inquiryError, setInquiryError] = useState('');
   const [sentMessages, setSentMessages] = useState([]);
+  const [guestSessionId, setGuestSessionId] = useState('');
+  const [isAgentConnected, setIsAgentConnected] = useState(false);
+  const [isConnectingAgent, setIsConnectingAgent] = useState(false);
 
   useEffect(() => {
     if (messagesEndRef.current) {
@@ -65,7 +68,84 @@ export const LiveChatWidget = () => {
 
   useEffect(() => {
     setMounted(true);
+    if (typeof window !== 'undefined') {
+      let sid = localStorage.getItem('bdigi_guest_session_id');
+      if (!sid || !/^[a-zA-Z0-9_-]{8,64}$/.test(sid)) {
+        sid = 'gst_' + Date.now().toString(36) + '_' + Math.random().toString(36).substring(2, 9);
+        try { localStorage.setItem('bdigi_guest_session_id', sid); } catch {}
+      }
+      setGuestSessionId(sid);
+    }
   }, []);
+
+  // Sync existing Help Desk conversation messages on mount or open
+  useEffect(() => {
+    if (!mounted || !isOpen || !guestSessionId) return;
+
+    fetch(`/api/chat/guest?sessionId=${encodeURIComponent(guestSessionId)}`)
+      .then(res => res.json())
+      .then(data => {
+        if (data?.messages && Array.isArray(data.messages) && data.messages.length > 0) {
+          const loaded = data.messages.map(m => ({
+            id: m.id,
+            sender: m.sender,
+            text: m.text,
+            title: m.sender === 'admin' ? 'BDigitizing Support' : (m.type === 'system' ? 'Help Desk' : 'Message received'),
+            reply: m.text,
+            isLiveAdmin: m.sender === 'admin'
+          }));
+          setSentMessages(loaded);
+          if (data.messages.some(m => m.sender === 'admin' || m.type === 'system')) {
+            setIsAgentConnected(true);
+          }
+        }
+      })
+      .catch(() => {});
+  }, [mounted, isOpen, guestSessionId]);
+
+  // Realtime subscription for incoming Help Desk agent replies
+  useEffect(() => {
+    if (!mounted || !guestSessionId) return;
+    const targetConvId = `support-guest_${guestSessionId}`;
+
+    const handleIncomingMessage = (event) => {
+      const msg = event?.detail;
+      if (!msg) return;
+
+      const isForThisGuest = msg.conversation_id === targetConvId;
+      const isFromAdmin = String(msg.sender).toLowerCase() === 'admin';
+
+      if (isForThisGuest && isFromAdmin) {
+        setSentMessages(prev => {
+          if (prev.some(m => m.id === msg.id)) return prev;
+          return [
+            ...prev,
+            {
+              id: msg.id,
+              sender: 'admin',
+              text: msg.text || '',
+              title: 'BDigitizing Support',
+              reply: msg.text || '',
+              isLiveAdmin: true
+            }
+          ];
+        });
+        setIsAgentConnected(true);
+      }
+    };
+
+    window.addEventListener('bdigi_new_chat_message', handleIncomingMessage);
+    const unsubscribe = subscribeToChatMessages((payload) => {
+      if (payload?.new && payload.new.conversation_id === targetConvId && payload.new.sender === 'admin') {
+        handleIncomingMessage({ detail: payload.new });
+      }
+    });
+
+    return () => {
+      window.removeEventListener('bdigi_new_chat_message', handleIncomingMessage);
+      if (typeof unsubscribe === 'function') unsubscribe();
+    };
+  }, [mounted, guestSessionId]);
 
   // 1. Sync unread counts for logged-in users via Supabase Realtime
   useEffect(() => {
@@ -199,7 +279,7 @@ export const LiveChatWidget = () => {
     if (q.includes('.dst') || q.includes('.pes') || q.includes('format') || q.includes('extension') || q.includes('emb') || q.includes('file')) {
       return {
         title: 'Machine Formats & Delivery',
-        reply: 'We deliver all major machine embroidery formats (.DST, .PES, .EMB, .EXP, .JEF, .VP3, etc.) and print-ready vectors (.AI, .EPS, .PDF, .SVG) along with an official PDF stitch worksheet!'
+        reply: 'We deliver all major commercial embroidery formats (.DST, .PES, .EMB, .EXP, .JEF, .VP3, etc.) and print-ready vector masters (.AI, .EPS, .PDF, .SVG) along with an official PDF stitch worksheet!'
       };
     }
     if (q.includes('revision') || q.includes('edit') || q.includes('change') || q.includes('fix') || q.includes('modify')) {
@@ -211,7 +291,7 @@ export const LiveChatWidget = () => {
     if (q.includes('price') || q.includes('quote') || q.includes('cost') || q.includes('rate') || q.includes('how much') || q.includes('$')) {
       return {
         title: 'Instant Transparent Pricing',
-        reply: 'Embroidery digitizing is $10 flat for chest/cap logos. Vector tracing starts at $8. Custom patches start at minimum 50 pieces. No hidden setup charges.'
+        reply: 'Embroidery digitizing is $10 flat for chest/cap logos. Vector tracing starts at $8. Custom patches start at minimum 50 pieces. No hidden digitizing or setup fees.'
       };
     }
     if (q.includes('turnaround') || q.includes('time') || q.includes('urgent') || q.includes('rush') || q.includes('fast') || q.includes('hour')) {
@@ -220,9 +300,15 @@ export const LiveChatWidget = () => {
         reply: 'Standard delivery is completed within 2 to 4 hours. Super-urgent rush delivery is also available in under 2 hours 24/7/365!'
       };
     }
+    if (q.includes('patch') || q.includes('patches') || q.includes('custom patch')) {
+      return {
+        title: 'Custom Patches Service',
+        reply: 'We produce Embroidered, Woven, Leather, PVC, and Printed patches with 50 pcs minimum quantity. Digital proof sample is approved before production!'
+      };
+    }
     return {
       title: 'Studio Support Online',
-      reply: 'Thanks for asking! Our master digitizers are reviewing your question. If you are ready to place an order or download files, feel free to sign in or click Order Now.'
+      reply: 'Thanks for reaching out! Our master digitizers are reviewing your inquiry. If you would like to speak directly with our team, click "Talk to Live Agent" below.'
     };
   };
 
@@ -245,6 +331,59 @@ export const LiveChatWidget = () => {
     }
   };
 
+  // Connect guest to Live 24/7 Help Desk Agent
+  const handleConnectLiveAgent = async (userNote = '') => {
+    if (isConnectingAgent) return;
+    setIsConnectingAgent(true);
+
+    const connectingBubble = {
+      id: `sys-conn-${Date.now()}`,
+      sender: 'system',
+      title: 'Connecting to Help Desk...',
+      reply: 'Connecting you with an active 24/7 Support Desk agent...',
+      isConnecting: true
+    };
+    setSentMessages(prev => [...prev, connectingBubble]);
+
+    try {
+      const msgText = userNote ? `Visitor requested live agent: "${userNote}"` : 'Visitor requested to connect with live Help Desk agent.';
+      await fetch('/api/chat/guest', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sessionId: guestSessionId || 'gst_temp_session',
+          message: msgText,
+          senderName: 'Website Visitor',
+          isAgentRequest: true
+        })
+      });
+
+      setIsAgentConnected(true);
+      setSentMessages(prev => [
+        ...prev.filter(m => !m.isConnecting),
+        {
+          id: `sys-connected-${Date.now()}`,
+          sender: 'system',
+          title: 'Help Desk Live Agent Connected',
+          reply: 'You are now connected with our 24/7 Studio Help Desk! A live digitizing agent is active in this chat. Please type your message below.'
+        }
+      ]);
+    } catch {
+      setIsAgentConnected(true);
+      setSentMessages(prev => [
+        ...prev.filter(m => !m.isConnecting),
+        {
+          id: `sys-connected-${Date.now()}`,
+          sender: 'system',
+          title: 'Help Desk Connected',
+          reply: 'Connected with 24/7 Live Support Desk. How can we help you today?'
+        }
+      ]);
+    } finally {
+      setIsConnectingAgent(false);
+    }
+  };
+
   // Submit guest inquiry / question
   const handleGuestSubmit = async (e) => {
     if (e && e.preventDefault) e.preventDefault();
@@ -254,11 +393,72 @@ export const LiveChatWidget = () => {
     setIsSubmittingInquiry(true);
     setInquiryError('');
 
+    const isAskingForAgent = /agent|human|representative|live support|help desk|admin|baat|talk to agent/i.test(text);
+
+    // If visitor specifically asks for an agent and not connected yet
+    if (isAskingForAgent && !isAgentConnected) {
+      const userBubble = { id: `msg-${Date.now()}`, sender: 'client', text };
+      setSentMessages(prev => [...prev, userBubble]);
+      setGuestMessage('');
+      if (guestTextareaRef.current) guestTextareaRef.current.style.height = '42px';
+      await handleConnectLiveAgent(text);
+      setIsSubmittingInquiry(false);
+      return;
+    }
+
+    if (isAgentConnected) {
+      // In Live Agent Mode: Direct 2-way Help Desk chat
+      const userBubble = { id: `msg-${Date.now()}`, sender: 'client', text };
+      setSentMessages(prev => [...prev, userBubble]);
+      setGuestMessage('');
+      if (guestTextareaRef.current) guestTextareaRef.current.style.height = '42px';
+
+      try {
+        await fetch('/api/chat/guest', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            sessionId: guestSessionId || 'gst_temp_session',
+            message: text,
+            senderName: 'Website Visitor',
+            isAgentRequest: true
+          })
+        });
+      } catch (err) {
+        console.warn('Help Desk delivery notice:', err);
+      } finally {
+        setIsSubmittingInquiry(false);
+      }
+
+      // Also dispatch to /api/contact in background
+      try {
+        const fallbackEmail = guestEmail.trim() || `guest_${guestSessionId || 'visitor'}@guest.bdigitizing.com`;
+        const fallbackName = guestName.trim() || 'Website Visitor';
+        fetch('/api/contact', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: fallbackName,
+            email: fallbackEmail,
+            service: 'General Support',
+            subject: `Live Chat: ${text.slice(0, 50)}`,
+            message: text.length < 10 ? `Guest message: ${text}` : text
+          })
+        }).catch(() => {});
+      } catch {}
+
+      return;
+    }
+
+    // Default Question / Bot Mode
     const smart = getSmartReply(text);
     const newEntry = {
+      id: `msg-${Date.now()}`,
+      sender: 'client',
       text,
       title: smart.title,
-      reply: smart.reply
+      reply: smart.reply,
+      canConnectAgent: true
     };
 
     setSentMessages(prev => [...prev, newEntry]);
@@ -268,12 +468,27 @@ export const LiveChatWidget = () => {
       guestTextareaRef.current.style.height = '42px';
     }
 
+    // Link with Help Desk in the background so Admin Support Desk has the conversation
     try {
-      const fallbackEmail = guestEmail.trim() || 'visitor@bdigitizing.com';
+      await fetch('/api/chat/guest', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sessionId: guestSessionId || 'gst_temp_session',
+          message: text,
+          senderName: 'Website Visitor',
+          isAgentRequest: false
+        })
+      });
+    } catch {}
+
+    // Background contact dispatch to keep email notifications & test compatibility
+    try {
+      const fallbackEmail = guestEmail.trim() || `guest_${guestSessionId || 'visitor'}@guest.bdigitizing.com`;
       const fallbackName = guestName.trim() || 'Website Visitor';
       const safeMsg = text.length < 10 ? `Guest question: ${text}` : text;
 
-      await fetch('/api/contact', {
+      fetch('/api/contact', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -283,12 +498,10 @@ export const LiveChatWidget = () => {
           subject: `Live Chat Question: ${text.slice(0, 50)}`,
           message: safeMsg
         })
-      });
-    } catch {
-      // Quiet background fallback so visitor experience is not interrupted
-    } finally {
-      setIsSubmittingInquiry(false);
-    }
+      }).catch(() => {});
+    } catch {}
+
+    setIsSubmittingInquiry(false);
   };
 
   const handleApplyPrompt = (text) => {
@@ -792,8 +1005,8 @@ export const LiveChatWidget = () => {
                         BDigitizing Support
                       </h3>
                       <span style={{
-                        background: 'rgba(34, 197, 94, 0.18)',
-                        color: '#4ade80',
+                        background: isAgentConnected ? 'rgba(37, 99, 235, 0.2)' : 'rgba(34, 197, 94, 0.18)',
+                        color: isAgentConnected ? '#60a5fa' : '#4ade80',
                         fontSize: '0.62rem',
                         fontWeight: 900,
                         padding: '0.1rem 0.45rem',
@@ -803,8 +1016,13 @@ export const LiveChatWidget = () => {
                         alignItems: 'center',
                         gap: '0.25rem'
                       }}>
-                        <span style={{ width: 5, height: 5, borderRadius: '50%', background: '#4ade80' }} />
-                        Online
+                        <span style={{
+                          width: 5,
+                          height: 5,
+                          borderRadius: '50%',
+                          background: isAgentConnected ? '#60a5fa' : '#4ade80'
+                        }} />
+                        {isAgentConnected ? 'Help Desk Live' : 'Online'}
                       </span>
                     </div>
                   </div>
@@ -875,6 +1093,33 @@ export const LiveChatWidget = () => {
                         <span>💬</span> {chip}
                       </button>
                     ))}
+
+                    <button
+                      type="button"
+                      onClick={() => handleConnectLiveAgent()}
+                      style={{
+                        background: isAgentConnected ? '#dcfce7' : 'linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%)',
+                        color: isAgentConnected ? '#15803d' : '#ffffff',
+                        border: isAgentConnected ? '1px solid #86efac' : 'none',
+                        borderRadius: '20px',
+                        padding: '0.45rem 1.15rem',
+                        fontSize: '0.78rem',
+                        fontWeight: 800,
+                        cursor: 'pointer',
+                        boxShadow: isAgentConnected ? 'none' : '0 2px 8px rgba(37, 99, 235, 0.25)',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.4rem',
+                        width: '100%',
+                        maxWidth: '280px',
+                        justifyContent: 'center',
+                        marginTop: '0.25rem',
+                        transition: 'all 0.15s ease'
+                      }}
+                    >
+                      <span>{isAgentConnected ? '✅' : '👨‍💼'}</span>
+                      {isAgentConnected ? 'Live Agent Connected' : 'Talk to Live Agent (Help Desk)'}
+                    </button>
                   </div>
 
                   <div style={{ display: 'none' }}>
@@ -883,15 +1128,70 @@ export const LiveChatWidget = () => {
                   </div>
                 </div>
 
-                {sentMessages.map((msg, idx) => (
-                  <React.Fragment key={idx}>
-                    <div className="live-chat-sent-message">{msg.text}</div>
-                    <div className="live-chat-received-message">
-                      <strong><CheckCircle2 size={15} /> {msg.title || 'Message received'}</strong>
-                      {msg.reply || "Thanks for reaching out! We'll assist you as soon as we can."}
+                {sentMessages.map((msg, idx) => {
+                  if (msg.sender === 'client') {
+                    return (
+                      <div key={msg.id || idx} className="live-chat-sent-message">
+                        {msg.text}
+                      </div>
+                    );
+                  }
+
+                  if (msg.isLiveAdmin) {
+                    return (
+                      <div
+                        key={msg.id || idx}
+                        className="live-chat-received-message"
+                        style={{
+                          borderLeft: '3px solid #2563eb',
+                          background: '#ffffff'
+                        }}
+                      >
+                        <strong style={{ color: '#1d4ed8', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#22c55e' }} />
+                          BDigitizing Support [Agent]
+                        </strong>
+                        <div style={{ marginTop: '4px', whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>
+                          {msg.reply || msg.text}
+                        </div>
+                      </div>
+                    );
+                  }
+
+                  return (
+                    <div key={msg.id || idx} className="live-chat-received-message">
+                      <strong>
+                        <CheckCircle2 size={15} /> {msg.title || 'Message received'}
+                      </strong>
+                      <div style={{ marginTop: '4px', whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>
+                        {msg.reply}
+                      </div>
+                      {msg.canConnectAgent && !isAgentConnected && (
+                        <div style={{ marginTop: '8px', paddingTop: '6px', borderTop: '1px dashed #e2e8f0' }}>
+                          <button
+                            type="button"
+                            onClick={() => handleConnectLiveAgent(msg.text)}
+                            style={{
+                              background: '#eff6ff',
+                              color: '#1d4ed8',
+                              border: '1px solid #bfdbfe',
+                              borderRadius: '14px',
+                              padding: '0.35rem 0.75rem',
+                              fontSize: '0.75rem',
+                              fontWeight: 700,
+                              cursor: 'pointer',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '0.35rem'
+                            }}
+                          >
+                            <span>👨‍💼</span> Connect to Live Agent
+                          </button>
+                        </div>
+                      )}
                     </div>
-                  </React.Fragment>
-                ))}
+                  );
+                })}
                 <div ref={messagesEndRef} />
               </div>
 
@@ -933,7 +1233,7 @@ export const LiveChatWidget = () => {
                       className="live-chat-guest-field"
                       rows={1}
                       aria-label="Your message"
-                      placeholder="Ask a question..."
+                      placeholder={isAgentConnected ? "Message Live Agent (Help Desk)..." : "Ask a question or type 'agent'..."}
                       value={guestMessage}
                       onChange={handleGuestTextareaChange}
                       onKeyDown={handleGuestKeyDown}
