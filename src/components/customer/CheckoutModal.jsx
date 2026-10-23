@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { getAuthHeaders, acceptCustomOffer, payCustomOffer } from '../../services/supabaseService';
 import { useModalBackNavigation } from '../../hooks/useModalBackNavigation';
+import { trackGoogleAdsPurchase } from '../../utils/googleAdsTracking';
 
 // Authentic Branded Payment Method SVG Components
 const WalletBrandIcon = () => (
@@ -288,7 +289,7 @@ export const CheckoutModal = () => {
           setIsPaid(true);
           showToast('Payment successful! Funds deducted from your Studio Wallet.', 'success');
 
-          // Track Purchase Event
+          // Track successful purchase in Meta and Google Ads.
           import('../common/MetaPixelTracker').then(({ trackMetaEvent }) => {
             trackMetaEvent('Purchase', {
               value: amount,
@@ -299,6 +300,14 @@ export const CheckoutModal = () => {
               num_items: 1
             }, custRole);
           }).catch(() => {});
+
+          trackGoogleAdsPurchase({
+            tagId: siteSettings?.googleAdsTagId,
+            conversionLabel: siteSettings?.googleAdsPurchaseLabel,
+            value: amount,
+            currency: 'USD',
+            transactionId: orderId
+          });
 
           if (checkoutSession?.offerId) {
             try {
@@ -501,6 +510,25 @@ export const CheckoutModal = () => {
           setIsPaid(true);
           showToast('Payment confirmed! Order assigned to design desk.', 'success');
 
+          const rawPaidAmount = parseFloat(
+            data?.amount ?? checkoutSession?.amount ?? checkoutSession?.price ?? checkoutSession?.totalPrice ?? 0
+          );
+          const paidAmount = Number.isFinite(rawPaidAmount) && rawPaidAmount >= 0 ? rawPaidAmount : 0;
+          const paidTransactionId =
+            data?.orderId ||
+            data?.invoice?.order_id ||
+            checkoutSession?.orderId ||
+            checkoutSession?.invoiceId ||
+            '';
+
+          trackGoogleAdsPurchase({
+            tagId: siteSettings?.googleAdsTagId,
+            conversionLabel: siteSettings?.googleAdsPurchaseLabel,
+            value: paidAmount,
+            currency: 'USD',
+            transactionId: paidTransactionId
+          });
+
           if (checkoutSession?.offerId) {
             try {
               await acceptCustomOffer(checkoutSession.offerId);
@@ -532,7 +560,16 @@ export const CheckoutModal = () => {
       cancelled = true;
       if (timerId) clearTimeout(timerId);
     };
-  }, [isCheckoutModalOpen, checkoutSession, isPaid, showToast, updateOrderStatus, refreshOrders]);
+  }, [
+    isCheckoutModalOpen,
+    checkoutSession,
+    isPaid,
+    showToast,
+    updateOrderStatus,
+    refreshOrders,
+    siteSettings?.googleAdsTagId,
+    siteSettings?.googleAdsPurchaseLabel
+  ]);
 
   const copyToClipboard = (text, label = 'Address') => {
     if (text) {
