@@ -147,6 +147,12 @@ export default async function RootLayout({ children }) {
     ''
   ).trim();
 
+  const googleAdsTagId = String(
+    catalogWithBranding?.siteSettings?.googleAdsTagId ||
+    process.env.NEXT_PUBLIC_GOOGLE_ADS_TAG_ID ||
+    ''
+  ).trim();
+
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
@@ -248,6 +254,24 @@ export default async function RootLayout({ children }) {
               alt=""
             />
           </noscript>
+        )}
+        {googleAdsTagId && (
+          <>
+            <script
+              async
+              src={`https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(googleAdsTagId)}`}
+            ></script>
+            <script
+              dangerouslySetInnerHTML={{
+                __html: `
+                  window.dataLayer = window.dataLayer || [];
+                  window.gtag = window.gtag || function(){ window.dataLayer.push(arguments); };
+                  window.gtag('js', new Date());
+                  window.gtag('config', ${JSON.stringify(googleAdsTagId)});
+                `
+              }}
+            />
+          </>
         )}
         <script src="https://accounts.google.com/gsi/client" async defer></script>
         <script
