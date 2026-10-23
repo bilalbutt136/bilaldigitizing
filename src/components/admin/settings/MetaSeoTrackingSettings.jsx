@@ -25,6 +25,7 @@ import {
   ShieldCheck
 } from 'lucide-react';
 import { VisitorDetailsModal } from '../tracking/VisitorDetailsModal';
+import { GoogleAdsVisitorActivityPanel } from '../tracking/GoogleAdsVisitorActivityPanel';
 import {
   extractMetaPixelId,
   isValidMetaPixelId,
@@ -999,6 +1000,12 @@ export const MetaSeoTrackingSettings = () => {
               </div>
             </div>
           </div>
+
+          <GoogleAdsVisitorActivityPanel
+            events={events}
+            siteSettings={siteSettings}
+            onSelectEvent={setSelectedEvent}
+          />
 
           {/* Full Detailed Table (Exact match of Reference Image 2) */}
           {loadingEvents ? (

@@ -197,37 +197,58 @@ export const parseReferrerInfo = (rawReferrer = '', currentHostname = '') => {
  * Extracts campaign UTM tags and ad click identifiers from URL query
  */
 export const extractMarketingParams = (searchQuery = null) => {
+  const emptyParams = {
+    utm_source: null,
+    utm_medium: null,
+    utm_campaign: null,
+    utm_term: null,
+    utm_content: null,
+    fbclid: null,
+    gclid: null,
+    ttclid: null,
+    utmSource: null,
+    utmMedium: null,
+    utmCampaign: null,
+    utmTerm: null,
+    utmContent: null
+  };
+
   try {
     let queryStr = searchQuery;
-    if (queryStr === null && typeof window !== 'undefined') {
+    const shouldUseStoredAttribution = searchQuery === null && typeof window !== 'undefined';
+
+    if (shouldUseStoredAttribution) {
       queryStr = window.location.search;
     }
-    if (!queryStr) {
-      return {
-        utm_source: null,
-        utm_medium: null,
-        utm_campaign: null,
-        utm_term: null,
-        utm_content: null,
-        fbclid: null,
-        gclid: null,
-        ttclid: null,
-        utmSource: null,
-        utmMedium: null,
-        utmCampaign: null,
-        utmTerm: null,
-        utmContent: null
-      };
-    }
 
-    const sp = new URLSearchParams(queryStr);
-    const params = {};
-
+    const sp = new URLSearchParams(queryStr || '');
+    const params = { ...emptyParams };
     const utmKeys = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'fbclid', 'gclid', 'ttclid'];
+
     utmKeys.forEach(key => {
       const val = sp.get(key);
       params[key] = val ? val.trim() : null;
     });
+
+    const hasFreshAttribution = utmKeys.some(key => Boolean(params[key]));
+
+    if (shouldUseStoredAttribution && typeof window !== 'undefined') {
+      if (hasFreshAttribution) {
+        try {
+          sessionStorage.setItem('bdigi_marketing_attribution', JSON.stringify(params));
+        } catch {}
+      } else {
+        try {
+          const stored = sessionStorage.getItem('bdigi_marketing_attribution');
+          if (stored) {
+            const parsed = JSON.parse(stored);
+            utmKeys.forEach(key => {
+              if (parsed?.[key]) params[key] = String(parsed[key]);
+            });
+          }
+        } catch {}
+      }
+    }
 
     params.utmSource = params.utm_source;
     params.utmMedium = params.utm_medium;
@@ -237,21 +258,7 @@ export const extractMarketingParams = (searchQuery = null) => {
 
     return params;
   } catch {
-    return {
-      utm_source: null,
-      utm_medium: null,
-      utm_campaign: null,
-      utm_term: null,
-      utm_content: null,
-      fbclid: null,
-      gclid: null,
-      ttclid: null,
-      utmSource: null,
-      utmMedium: null,
-      utmCampaign: null,
-      utmTerm: null,
-      utmContent: null
-    };
+    return emptyParams;
   }
 };
 
@@ -413,7 +420,13 @@ export const getVisitorTelemetry = (authUser = null, customRole = null) => {
     // Attribution & Marketing
     referrer: document.referrer || '',
     referrerDomain: refInfo.domain,
-    trafficChannel: refInfo.channel,
+    trafficChannel: mktParams.gclid
+      ? 'Paid Search'
+      : (mktParams.fbclid
+        ? 'Paid Social'
+        : ((mktParams.utm_medium || '').toLowerCase().match(/cpc|ppc|paid/)
+          ? 'Paid Campaign'
+          : refInfo.channel)),
     trafficSource: trafficSummary,
     utmSource: mktParams.utm_source || null,
     utmMedium: mktParams.utm_medium || null,

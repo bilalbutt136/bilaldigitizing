@@ -129,7 +129,7 @@ async function POST_impl(request) {
         try {
           const metaToken = process.env.META_CONVERSIONS_API_TOKEN;
           const metaPixelId = fullTelemetry.metaPixelId || process.env.NEXT_PUBLIC_META_PIXEL_ID;
-          if (metaToken && metaPixelId) {
+          if (metaToken && metaPixelId && fullTelemetry.trackingPlatform !== 'google_ads') {
             const capiPayload = {
               data: [{
                 event_name: eventName,
