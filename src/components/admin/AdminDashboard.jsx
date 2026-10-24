@@ -70,6 +70,7 @@ export const AdminDashboard = () => {
   } = useAppState();
 
   const [activeTabState, setActiveTabState] = useState(activeAdminTab || 'dashboard');
+  const [targetConversationId, setTargetConversationId] = useState(null);
   const [pendingWorkersCount, setPendingWorkersCount] = useState(0);
   const [unreadChatCount, setUnreadChatCount] = useState(0);
   const [unreadSupportCount, setUnreadSupportCount] = useState(0);
@@ -189,9 +190,13 @@ export const AdminDashboard = () => {
       initialTrackSyncedRef.current = true;
       const urlParams = new URLSearchParams(window.location.search);
       const tabParam = urlParams.get('tab');
+      const conversationId = urlParams.get('conversationId');
       const trackId = urlParams.get('trackOrder') || urlParams.get('orderId');
       if (tabParam) {
-        setActiveTab(tabParam);
+        setActiveTab(tabParam === 'chat' ? 'inbox' : tabParam);
+      }
+      if (conversationId) {
+        setTargetConversationId(conversationId);
       }
       if (trackId) {
         if (openOrderTrackerDrawer) {
@@ -984,12 +989,20 @@ export const AdminDashboard = () => {
 
         {/* FIVERR-STYLE MASTER CLIENT MESSAGING INBOX */}
         {activeTab === 'inbox' && (
-          <AdminChatInbox initialChannel="inbox" key="admin-inbox" />
+          <AdminChatInbox
+            initialChannel="inbox"
+            initialConversationId={targetConversationId && !String(targetConversationId).startsWith('support-') ? targetConversationId : null}
+            key="admin-inbox"
+          />
         )}
 
         {/* 24/7 CLIENT SUPPORT TICKETS & DESK */}
         {activeTab === 'support' && (
-          <AdminChatInbox initialChannel="support" key="admin-support" />
+          <AdminChatInbox
+            initialChannel="support"
+            initialConversationId={targetConversationId && String(targetConversationId).startsWith('support-') ? targetConversationId : null}
+            key="admin-support"
+          />
         )}
 
         {activeTab === 'workers' && (

@@ -388,11 +388,33 @@ async function POST_impl(request) {
           clientEmail: cleanEmail,
           messageText: (text || '').trim(),
           channel: isSupportThread ? '24/7 Customer Live Support Desk' : `Studio Inbox (${conversation_id})`,
+          conversationId: conversation_id,
           attachments: normalizedAttachments,
           orderId: (conversation_id.startsWith('ord-') || conversation_id.startsWith('order-') || conversation_id.includes('ORD')) ? conversation_id : null
         });
       } catch (emailErr) {
         console.warn('[Chat Message Email Dispatch Notice]:', emailErr?.message);
+      }
+    }
+
+    const isPublicWebsiteThread =
+      conversation_id.startsWith('inbox-contact_') ||
+      conversation_id.startsWith('support-guest_');
+    const hasRealClientEmail = cleanEmail && !cleanEmail.endsWith('@guest.bdigitizing.com');
+
+    if (effectiveSender === 'admin' && isPublicWebsiteThread && hasRealClientEmail) {
+      try {
+        const { sendNotificationEmail } = await import('../../../../src/lib/emailService');
+        await sendNotificationEmail({
+          type: 'CUSTOMER_REPLY',
+          clientEmail: cleanEmail,
+          clientName: existingConversation?.client_name || 'Customer',
+          messageText: (text || '').trim(),
+          conversationId: conversation_id,
+          attachments: normalizedAttachments
+        });
+      } catch (replyEmailErr) {
+        console.warn('[Chat Public Inquiry Reply Email Notice]:', replyEmailErr?.message);
       }
     }
 

@@ -299,14 +299,14 @@ export const AdminNotificationSettings = () => {
         type: testType,
         adminEmail: targetEmails[0],
         adminEmails: targetEmails,
+        isTest: true
       };
 
       if (testType === 'NEW_MESSAGE') {
         payload.senderName = 'Alex Mercer (Client)';
         payload.clientEmail = 'alex.mercer@example.com';
         payload.messageText = 'Hello BDigitizing Team! Could you please check if this vector logo can be digitized for a left chest cap embroidery?';
-        payload.channel = 'Inbox (#ORD-PREVIEW)';
-        payload.orderId = 'ORD-PREVIEW-101';
+        payload.channel = 'TEST — Inbox Preview';
       } else if (testType === 'NEW_ORDER') {
         payload.orderDetails = {
           orderId: 'ORD-LIVE-TEST',

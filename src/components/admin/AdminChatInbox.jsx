@@ -73,7 +73,7 @@ const formatChatDateHeader = (dateStr) => {
   }
 };
 
-export default function AdminChatInbox({ initialChannel = 'inbox', compactMobile = false, onExitMobileChat = null }) {
+export default function AdminChatInbox({ initialChannel = 'inbox', initialConversationId = null, compactMobile = false, onExitMobileChat = null }) {
   const { authUser, orders: _orders = [] } = useAppState();
 
   const [conversations, setConversations] = useState([]);
@@ -286,6 +286,12 @@ export default function AdminChatInbox({ initialChannel = 'inbox', compactMobile
       setActiveChannel(initialChannel === 'support' ? 'support' : 'inbox');
     }
   }, [initialChannel]);
+
+  useEffect(() => {
+    if (initialConversationId) {
+      setActiveConversationId(initialConversationId);
+    }
+  }, [initialConversationId]);
 
   // 1. Fetch Conversations
   const fetchConversations = async (filter = activeFilter, query = searchQuery, channel = activeChannel, silent = false) => {

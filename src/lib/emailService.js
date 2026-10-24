@@ -213,6 +213,8 @@ export async function sendNotificationEmail(params = {}) {
     revisionNotes,
     deliveryMessage,
     channel,
+    conversationId,
+    isTest = false,
     attachments = [],
     orderDetails = {}
   } = params;
@@ -259,9 +261,16 @@ export async function sendNotificationEmail(params = {}) {
     const targetClientEmail = (clientEmail || recipientEmail || '').toLowerCase().trim();
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://bdigitizing.com';
     const configuredFrom = process.env.RESEND_FROM_ADDRESS || 'BDigitizing <support@bdigitizing.com>';
+    const cleanConversationId = conversationId ? String(conversationId).trim() : '';
+    const isSupportConversation = cleanConversationId.startsWith('support-') || /support/i.test(String(channel || ''));
+    const adminMessageTab = isSupportConversation ? 'support' : 'inbox';
+    const adminReplyUrl = cleanConversationId
+      ? `${siteUrl}/admin-portal?tab=${adminMessageTab}&conversationId=${encodeURIComponent(cleanConversationId)}`
+      : `${siteUrl}/admin-portal?tab=${adminMessageTab}`;
+    const isTestPreview = Boolean(isTest);
 
   // Shared send wrapper with automatic fallback if recipient is rejected by sandbox domain restriction
-  const executeSend = async ({ to, subject, html, isClientReceipt = false }) => {
+  const executeSend = async ({ to, subject, html, isClientReceipt = false, replyTo = null }) => {
     if (!to || !EMAIL_REGEX.test(to)) {
       console.warn(`[emailService] Skipped sending due to invalid recipient email: "${to}"`);
       return null;
@@ -272,7 +281,8 @@ export async function sendNotificationEmail(params = {}) {
         from: configuredFrom,
         to,
         subject,
-        html
+        html,
+        ...(replyTo ? { reply_to: replyTo } : {})
       });
 
       // Check if Resend returned an error object inside successful HTTP response
@@ -368,11 +378,18 @@ export async function sendNotificationEmail(params = {}) {
         </div>
       ` : '';
 
+      const testPreviewBanner = isTestPreview ? `
+        <div style="background:#fff7ed;border:1px solid #fdba74;color:#9a3412;padding:10px 12px;border-radius:8px;margin:0 0 16px;font-size:12px;font-weight:700;">
+          TEST PREVIEW — this is a sample notification, not a real customer conversation.
+        </div>
+      ` : '';
+
       const messageHtml = `
           <div style="max-width: 600px; margin: 0 auto; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 12px; font-family: 'Segoe UI', Arial, sans-serif; box-shadow: 0 4px 12px rgba(0,0,0,0.05); overflow: hidden;">
-            ${emailHeader('CUSTOMER MESSAGE ALERT', `${channelTitle}`, '#3b82f6')}
+            ${emailHeader(isTestPreview ? 'TEST MESSAGE PREVIEW' : 'CUSTOMER MESSAGE ALERT', `${channelTitle}`, '#3b82f6')}
             <div style="padding: 24px 28px; color: #1e293b; line-height: 1.6;">
-              <p style="font-size: 15px; margin-top: 0;">You have received a new inquiry from a customer:</p>
+              ${testPreviewBanner}
+              <p style="font-size: 15px; margin-top: 0;">${isTestPreview ? 'This preview shows how customer message alerts will look:' : 'You have received a new inquiry from a customer:'}</p>
 
               <div style="background: #f8fafc; border-radius: 8px; padding: 14px 18px; margin: 16px 0; border: 1px solid #e2e8f0;">
                 <div style="font-size: 13px; color: #475569; margin-bottom: 4px;"><strong>Customer:</strong> ${senderDisplayName}</div>
@@ -386,8 +403,8 @@ export async function sendNotificationEmail(params = {}) {
               </div>
 
               <div style="text-align: center; margin: 26px 0 10px 0;">
-                <a href="${siteUrl}/admin-portal?tab=chat" style="background: #3b82f6; color: #ffffff; padding: 12px 28px; text-decoration: none; border-radius: 8px; font-weight: 700; font-size: 14px; display: inline-block;">
-                  Open & Reply in Studio Inbox
+                <a href="${adminReplyUrl}" style="background: #3b82f6; color: #ffffff; padding: 12px 28px; text-decoration: none; border-radius: 8px; font-weight: 700; font-size: 14px; display: inline-block;">
+                  ${isTestPreview ? 'Open Studio Inbox' : 'Open & Reply in Studio Inbox'}
                 </a>
               </div>
             </div>
@@ -398,7 +415,7 @@ export async function sendNotificationEmail(params = {}) {
       const adminPromises = targetAdminEmails.map(adminAddr =>
         executeSend({
           to: adminAddr,
-          subject: `💬 New Customer Message: ${senderDisplayName} (${channelTitle})`,
+          subject: `${isTestPreview ? '[TEST] ' : '💬 '}New Customer Message: ${senderDisplayName} (${channelTitle})`,
           html: messageHtml
         })
       );
@@ -614,7 +631,45 @@ export async function sendNotificationEmail(params = {}) {
     }
   }
 
-  // 5. TEST EMAIL (Diagnostics)
+  // 5. ADMIN REPLY TO A PUBLIC WEBSITE INQUIRY / GUEST CHAT
+  else if (type === 'CUSTOMER_REPLY') {
+    const replyText = String(messageText || '').trim();
+    const replyToAddress = process.env.SUPPORT_REPLY_TO || 'support@bdigitizing.com';
+    const replyAttachments = Array.isArray(attachments) ? attachments.filter(att => att?.url) : [];
+    const replyBodyText = replyText || (replyAttachments.length > 0 ? 'We sent you the requested file(s).' : '');
+    const replyAttachmentHtml = replyAttachments.length > 0 ? `
+      <div style="margin-top:14px;padding:12px;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;">
+        <div style="font-size:12px;font-weight:700;color:#475569;margin-bottom:6px;">ATTACHMENTS</div>
+        ${replyAttachments.map(att => `<div style="font-size:12px;margin-bottom:4px;"><a href="${att.url}" style="color:#2563eb;text-decoration:underline;">📎 ${att.name || 'Download file'}</a></div>`).join('')}
+      </div>
+    ` : '';
+
+    if (targetClientEmail && EMAIL_REGEX.test(targetClientEmail) && replyBodyText) {
+      dispatchResults.customerReply = await executeSend({
+        to: targetClientEmail,
+        subject: 'Reply from BDigitizing Studio Support',
+        html: `
+          <div style="max-width:600px;margin:0 auto;background:#ffffff;border:1px solid #cbd5e1;border-radius:12px;font-family:'Segoe UI',Arial,sans-serif;overflow:hidden;">
+            ${emailHeader('SUPPORT REPLY', 'BDigitizing Studio replied to your message', '#2563eb')}
+            <div style="padding:24px 28px;color:#1e293b;line-height:1.6;">
+              <p style="font-size:15px;margin-top:0;">Hi ${clientName || 'there'},</p>
+              <p style="font-size:14px;color:#475569;">Our support team replied to your website inquiry:</p>
+              <div style="background:#eff6ff;padding:18px;border-left:4px solid #2563eb;border-radius:6px;margin:18px 0;">
+                <p style="margin:0;color:#1e293b;font-size:15px;line-height:1.6;white-space:pre-wrap;">${replyBodyText}</p>
+                ${replyAttachmentHtml}
+              </div>
+              <p style="font-size:13px;color:#64748b;">You can reply directly to this email to continue the conversation.</p>
+            </div>
+            ${emailFooter}
+          </div>
+        `,
+        isClientReceipt: true,
+        replyTo: replyToAddress
+      });
+    }
+  }
+
+  // 6. TEST EMAIL (Diagnostics)
   else if (type === 'TEST_EMAIL') {
     const testPromises = targetAdminEmails.map(adminAddr =>
       executeSend({

@@ -783,6 +783,7 @@ test('Chat System & Fiverr-Style Inbox Architecture', async (t) => {
     assert.match(migration, /ADD COLUMN IF NOT EXISTS thread_id text/);
     assert.match(migration, /SET thread_id = conversation_id/);
     assert.match(adminChat, /temp-admin-/);
+    assert.match(adminChat, /initialConversationId/);
     assert.match(adminChat, /invalidateClientQuery\(\['chat-messages', activeConversationId\]\)/);
     assert.match(customerChat, /invalidateClientQuery\(\['chat-messages', conversationId\]\)/);
   });

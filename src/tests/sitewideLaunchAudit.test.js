@@ -18,6 +18,8 @@ test('public contact form never reports delivery success on a rejected request',
   assert.match(route, /\.from\('conversations'\)/);
   assert.match(route, /\.from\('messages'\)/);
   assert.match(route, /unread_admin_count/);
+  assert.match(route, /conversationId=/);
+  assert.match(route, /Open & Reply in Admin Inbox/);
   assert.match(route, /escapeHtml\(inquiry\.message\)/);
   assert.match(route, /if \(error \|\| !data\?\.id\)/);
 });

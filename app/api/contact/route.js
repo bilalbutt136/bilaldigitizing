@@ -185,6 +185,9 @@ async function POST_impl(request) {
       return NextResponse.json({ success: false, error: 'Contact service is temporarily unavailable.' }, { status: 503 });
     }
 
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://bdigitizing.com';
+    const adminReplyUrl = `${siteUrl}/admin-portal?tab=inbox&conversationId=${encodeURIComponent(persisted.conversationId)}`;
+
     const html = [
       '<div style="max-width:640px;margin:auto;padding:24px;font-family:Arial,sans-serif;color:#0b1730">',
       '<h2 style="color:#1d4ed8">New BDigitizing Website Inquiry</h2>',
@@ -195,7 +198,8 @@ async function POST_impl(request) {
       '<p><strong>Subject:</strong> ' + escapeHtml(inquiry.subject || 'General inquiry') + '</p>',
       '<h3>Message</h3>',
       '<p style="white-space:pre-wrap;overflow-wrap:anywhere">' + escapeHtml(inquiry.message) + '</p>',
-      '<p style="margin-top:22px;font-size:12px;color:#64748b">This inquiry is also saved in the Admin Portal → Inbox.</p>',
+      '<p style="margin:24px 0;text-align:center"><a href="' + adminReplyUrl + '" style="display:inline-block;background:#2563eb;color:#fff;text-decoration:none;padding:12px 24px;border-radius:8px;font-weight:700">Open & Reply in Admin Inbox</a></p>',
+      '<p style="margin-top:22px;font-size:12px;color:#64748b">This inquiry is saved in the Admin Portal → Inbox.</p>',
       '</div>'
     ].join('');
 

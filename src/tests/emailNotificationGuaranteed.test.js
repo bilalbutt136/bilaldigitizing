@@ -44,6 +44,7 @@ describe('Guaranteed Admin Email Notification & Auto-Failover System', () => {
         clientEmail: 'john@stitchcraft.com',
         messageText: 'Can you please digitize this logo at 3.5 inches for a flexfit cap?',
         channel: 'Inbox (#ORD-8821)',
+        conversationId: 'inbox-john_stitchcraft_com',
         orderId: 'ORD-8821',
         attachments: [{ name: 'logo_stitchcraft.png', size: 24000 }]
       });
@@ -55,7 +56,8 @@ describe('Guaranteed Admin Email Notification & Auto-Failover System', () => {
       assert.ok(capturedBody.html.includes('Can you please digitize this logo'));
       assert.ok(capturedBody.html.includes('john@stitchcraft.com'));
       assert.ok(capturedBody.html.includes('logo_stitchcraft.png'));
-      assert.ok(capturedBody.html.includes('tab=chat'));
+      assert.ok(capturedBody.html.includes('tab=inbox'));
+      assert.ok(capturedBody.html.includes('conversationId=inbox-john_stitchcraft_com'));
     } finally {
       globalThis.fetch = originalFetch;
       process.env.RESEND_API_KEY = originalApiKey;
@@ -265,6 +267,43 @@ describe('Guaranteed Admin Email Notification & Auto-Failover System', () => {
       assert.equal(sentTo.length, 2);
       assert.deepEqual(sentTo, ['admin1@bdigitizing.com', 'admin2@bdigitizing.com']);
       assert.ok(sentSubjects[0].includes('Test Notification: BDigitizing System Alerts'));
+    } finally {
+      globalThis.fetch = originalFetch;
+      process.env.RESEND_API_KEY = originalApiKey;
+    }
+  });
+
+  test('9. CUSTOMER_REPLY delivers a public inquiry reply to the customer email', async () => {
+    process.env.RESEND_API_KEY = 're_mock_test_key_123';
+    const originalFetch = globalThis.fetch;
+    let capturedBody = null;
+
+    globalThis.fetch = async (url, options) => {
+      if (String(url).includes('resend.com')) {
+        capturedBody = JSON.parse(options.body);
+        return new Response(JSON.stringify({ id: 'mock_customer_reply_123' }), {
+          status: 200,
+          headers: { 'content-type': 'application/json' }
+        });
+      }
+      return originalFetch(url, options);
+    };
+
+    try {
+      const result = await sendNotificationEmail({
+        type: 'CUSTOMER_REPLY',
+        clientEmail: 'alex@example.com',
+        clientName: 'Alex',
+        messageText: 'Yes, we can digitize this logo for cap embroidery.',
+        attachments: [{ name: 'estimate.pdf', url: 'https://bdigitizing.com/files/estimate.pdf' }]
+      });
+
+      assert.equal(result.success, true);
+      assert.equal(capturedBody.to, 'alex@example.com');
+      assert.equal(capturedBody.reply_to, 'support@bdigitizing.com');
+      assert.ok(capturedBody.subject.includes('Reply from BDigitizing Studio Support'));
+      assert.ok(capturedBody.html.includes('Yes, we can digitize this logo'));
+      assert.ok(capturedBody.html.includes('estimate.pdf'));
     } finally {
       globalThis.fetch = originalFetch;
       process.env.RESEND_API_KEY = originalApiKey;

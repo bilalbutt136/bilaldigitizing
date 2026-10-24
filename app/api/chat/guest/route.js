@@ -172,7 +172,8 @@ async function POST_impl(request) {
           senderName: isAgentRequest ? `${senderName} [Live Agent Requested]` : senderName,
           clientEmail: guestEmail,
           messageText: rawMessage,
-          channel: isAgentRequest ? '24/7 Live Support Desk — Agent Requested' : 'Website Live Chat'
+          channel: isAgentRequest ? '24/7 Live Support Desk — Agent Requested' : 'Website Live Chat',
+          conversationId
         });
       } catch (emailErr) {
         logServerCaughtError(emailErr, { operation: 'chat.guest_email_failed' });
