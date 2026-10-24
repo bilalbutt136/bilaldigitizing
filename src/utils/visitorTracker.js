@@ -82,6 +82,29 @@ export const detectBrowser = () => {
   return 'Modern Browser';
 };
 
+const AUTOMATION_UA_PATTERN = /(bot|crawler|spider|headless|lighthouse|pagespeed|google-inspectiontool|bingpreview|slurp|facebookexternalhit|preview|uptimerobot|pingdom|gtmetrix|curl|wget|python-requests|python\/|axios|node-fetch|go-http-client|postmanruntime)/i;
+
+/**
+ * Conservative automation detection. Signals are stored for admin filtering,
+ * but traffic is still persisted so it can be audited instead of silently lost.
+ */
+export const detectAutomationSignals = () => {
+  if (typeof window === 'undefined' || typeof navigator === 'undefined') {
+    return { isLikelyBot: false, botSignals: [] };
+  }
+
+  const ua = navigator.userAgent || '';
+  const botSignals = [];
+
+  if (AUTOMATION_UA_PATTERN.test(ua)) botSignals.push('automation-user-agent');
+  if (navigator.webdriver === true) botSignals.push('webdriver');
+
+  return {
+    isLikelyBot: botSignals.length > 0,
+    botSignals
+  };
+};
+
 /**
  * Parses referrer URL into a human-readable channel & domain
  */
@@ -273,7 +296,8 @@ export const getSessionAndVisitorState = () => {
       visitCount: 1,
       isReturning: false,
       firstSeen: new Date().toISOString(),
-      landingPage: '/'
+      landingPage: '/',
+      persistentStorage: false
     };
   }
 
@@ -281,24 +305,29 @@ export const getSessionAndVisitorState = () => {
   let visitCount = 1;
   let isReturning = false;
   let firstSeen = '';
+  let localStorageAvailable = true;
+  let sessionStorageAvailable = true;
 
   try {
     visitorId = localStorage.getItem('bdigi_vid');
     if (!visitorId) {
       visitorId = `vid_${generateUUID().slice(0, 18)}`;
+      const now = new Date().toISOString();
       localStorage.setItem('bdigi_vid', visitorId);
-      localStorage.setItem('bdigi_v_first_seen', new Date().toISOString());
+      localStorage.setItem('bdigi_v_first_seen', now);
       localStorage.setItem('bdigi_v_count', '1');
+      localStorageAvailable = localStorage.getItem('bdigi_vid') === visitorId;
       visitCount = 1;
       isReturning = false;
-      firstSeen = new Date().toISOString();
+      firstSeen = now;
     } else {
       firstSeen = localStorage.getItem('bdigi_v_first_seen') || new Date().toISOString();
       visitCount = parseInt(localStorage.getItem('bdigi_v_count') || '1', 10);
       isReturning = true;
     }
   } catch {
-    visitorId = `vid_${Date.now()}`;
+    localStorageAvailable = false;
+    visitorId = `vid_ephemeral_${generateUUID().slice(0, 12)}`;
   }
 
   let sessionId = '';
@@ -309,6 +338,7 @@ export const getSessionAndVisitorState = () => {
       sessionId = `sess_${Date.now()}_${generateUUID().slice(0, 8)}`;
       sessionStorage.setItem('bdigi_sid', sessionId);
       sessionStorage.setItem('bdigi_landing_page', window.location.pathname + window.location.search);
+      sessionStorageAvailable = sessionStorage.getItem('bdigi_sid') === sessionId;
       landingPage = window.location.pathname + window.location.search;
 
       // Increment visit count for a new session
@@ -320,7 +350,8 @@ export const getSessionAndVisitorState = () => {
       landingPage = sessionStorage.getItem('bdigi_landing_page') || window.location.pathname;
     }
   } catch {
-    sessionId = `sess_${Date.now()}`;
+    sessionStorageAvailable = false;
+    sessionId = `sess_ephemeral_${generateUUID().slice(0, 12)}`;
     landingPage = window.location.pathname;
   }
 
@@ -328,9 +359,10 @@ export const getSessionAndVisitorState = () => {
     visitorId,
     sessionId,
     visitCount,
-    isReturning,
+    isReturning: visitCount > 1,
     firstSeen,
-    landingPage
+    landingPage,
+    persistentStorage: localStorageAvailable && sessionStorageAvailable
   };
 };
 
@@ -346,6 +378,7 @@ export const getVisitorTelemetry = (authUser = null, customRole = null) => {
   const refInfo = parseReferrerInfo(document.referrer);
   const mktParams = extractMarketingParams();
   const sessionState = getSessionAndVisitorState();
+  const automation = detectAutomationSignals();
 
   // Determine user identity
   let userRole = customRole || 'Guest Visitor';
@@ -444,6 +477,10 @@ export const getVisitorTelemetry = (authUser = null, customRole = null) => {
     screenResolution: typeof window !== 'undefined' && window.screen ? `${window.screen.width}x${window.screen.height}` : '—',
     viewportSize: typeof window !== 'undefined' ? `${window.innerWidth}x${window.innerHeight}` : '—',
     language: typeof navigator !== 'undefined' ? navigator.language : 'en',
+    userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : '',
+    isLikelyBot: automation.isLikelyBot,
+    botSignals: automation.botSignals,
+    persistentStorage: sessionState.persistentStorage,
     timezone: (() => {
       try { return Intl.DateTimeFormat().resolvedOptions().timeZone; } catch { return 'UTC'; }
     })(),

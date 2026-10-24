@@ -12,6 +12,35 @@ import {
 } from 'lucide-react';
 
 const getTelemetry = (event) => event?.telemetry || {};
+const BOT_UA_PATTERN = /(bot|crawler|spider|headless|lighthouse|pagespeed|google-inspectiontool|bingpreview|slurp|facebookexternalhit|preview|uptimerobot|pingdom|gtmetrix|curl|wget|python-requests|python\/|axios|node-fetch|go-http-client|postmanruntime)/i;
+
+const eventKey = (event) => {
+  const tel = getTelemetry(event);
+  return String(
+    event?.id ||
+    event?.event_id ||
+    `${event?.event_time || event?.created_at || ''}:${event?.event_name || ''}:${tel.visitorId || ''}:${event?.page_path || tel.pagePath || ''}`
+  );
+};
+
+const directBotInfo = (event) => {
+  const tel = getTelemetry(event);
+  const reasons = Array.isArray(tel.botSignals) ? [...tel.botSignals] : [];
+  const ua = String(tel.serverUserAgent || tel.userAgent || '');
+
+  if (tel.isLikelyBot && reasons.length === 0) reasons.push('automation-signal');
+  if (BOT_UA_PATTERN.test(ua) && !reasons.includes('automation-user-agent')) {
+    reasons.push('automation-user-agent');
+  }
+
+  return { isBot: Boolean(tel.isLikelyBot) || reasons.length > 0, reasons };
+};
+
+const isRevenueEvent = (eventName = '') =>
+  /purchase/i.test(String(eventName)) || /(payment|order).*(success|complete|paid)/i.test(String(eventName));
+
+const displayRevenue = (event) =>
+  isRevenueEvent(event?.event_name) && event?.value && event.value !== '—' ? event.value : '—';
 
 const isGoogleAdsEvent = (event) => {
   const tel = getTelemetry(event);
@@ -97,18 +126,75 @@ export const GoogleAdsVisitorActivityPanel = ({
   loading = false,
   onSelectEvent
 }) => {
-  const [filter, setFilter] = useState('all');
+  const [filter, setFilter] = useState('humans');
   const [search, setSearch] = useState('');
   const [focusedVisitorId, setFocusedVisitorId] = useState('');
 
+  const automatedEventKeys = useMemo(() => {
+    const keys = new Set();
+    const trafficGroups = new Map();
+
+    events.forEach((event) => {
+      const tel = getTelemetry(event);
+      const key = eventKey(event);
+      if (directBotInfo(event).isBot) keys.add(key);
+
+      const ip = String(tel.ip || '').trim();
+      const ua = String(tel.serverUserAgent || tel.userAgent || '').trim();
+      if (!ip || /unknown/i.test(ip) || !ua) return;
+
+      const groupKey = `${ip}|${ua}`;
+      if (!trafficGroups.has(groupKey)) trafficGroups.set(groupKey, []);
+      trafficGroups.get(groupKey).push(event);
+    });
+
+    // Flag high-speed cookie-less/browser-reset crawling: many new visitor IDs
+    // from the same IP + user agent within a very short window.
+    trafficGroups.forEach((group) => {
+      const sorted = [...group].sort((a, b) =>
+        new Date(a?.event_time || a?.created_at || 0) - new Date(b?.event_time || b?.created_at || 0)
+      );
+
+      for (let start = 0; start < sorted.length; start += 1) {
+        const startTime = new Date(sorted[start]?.event_time || sorted[start]?.created_at || 0).getTime();
+        const windowEvents = [];
+
+        for (let end = start; end < sorted.length; end += 1) {
+          const eventTime = new Date(sorted[end]?.event_time || sorted[end]?.created_at || 0).getTime();
+          if (!Number.isFinite(startTime) || !Number.isFinite(eventTime) || eventTime - startTime > 90_000) break;
+          windowEvents.push(sorted[end]);
+        }
+
+        const visitors = new Set(
+          windowEvents.map((event) => getTelemetry(event).visitorId).filter(Boolean)
+        );
+        const directOnly = windowEvents.every((event) => {
+          const tel = getTelemetry(event);
+          const channel = String(tel.trafficChannel || tel.trafficSource || 'Direct');
+          return /^direct/i.test(channel) && !tel.gclid && !tel.fbclid && !tel.utmSource;
+        });
+
+        if (directOnly && windowEvents.length >= 3 && visitors.size >= 3) {
+          windowEvents.forEach((event) => keys.add(eventKey(event)));
+        }
+      }
+    });
+
+    return keys;
+  }, [events]);
+
+  const isLikelyBotEvent = (event) => automatedEventKeys.has(eventKey(event));
+
   const analytics = useMemo(() => {
-    const googleAdsConversions = events.filter((event) => event?.event_name === 'GoogleAdsPurchase');
-    const googleEvents = events.filter(isGoogleAdsEvent);
+    const humanEvents = events.filter((event) => !automatedEventKeys.has(eventKey(event)));
+    const botEvents = events.filter((event) => automatedEventKeys.has(eventKey(event)));
+    const googleAdsConversions = humanEvents.filter((event) => event?.event_name === 'GoogleAdsPurchase');
+    const googleEvents = humanEvents.filter(isGoogleAdsEvent);
     const uniqueGoogleVisitors = new Set(
       googleEvents.map((event) => getTelemetry(event).visitorId).filter(Boolean)
     ).size;
     const uniqueVisitors = new Set(
-      events.map((event) => getTelemetry(event).visitorId).filter(Boolean)
+      humanEvents.map((event) => getTelemetry(event).visitorId).filter(Boolean)
     ).size;
     const conversionValue = googleAdsConversions.reduce(
       (sum, event) => sum + parseCurrencyValue(event?.value),
@@ -119,9 +205,10 @@ export const GoogleAdsVisitorActivityPanel = ({
       googleAdsConversions,
       uniqueGoogleVisitors,
       uniqueVisitors,
+      botEvents: botEvents.length,
       conversionValue
     };
-  }, [events]);
+  }, [events, automatedEventKeys]);
 
   const visibleEvents = useMemo(() => {
     const needle = search.trim().toLowerCase();
@@ -132,12 +219,15 @@ export const GoogleAdsVisitorActivityPanel = ({
 
       if (focusedVisitorId && tel.visitorId !== focusedVisitorId) return false;
 
+      const isBot = automatedEventKeys.has(eventKey(event));
       const matchesFilter =
         filter === 'all' ||
-        (filter === 'google_ads' && isGoogleAdsEvent(event)) ||
-        (filter === 'purchases' && /purchase/i.test(eventName)) ||
-        (filter === 'checkout' && ['InitiateCheckout', 'AddPaymentInfo'].includes(eventName)) ||
-        (filter === 'pageviews' && eventName === 'PageView');
+        (filter === 'humans' && !isBot) ||
+        (filter === 'bots' && isBot) ||
+        (filter === 'google_ads' && !isBot && isGoogleAdsEvent(event)) ||
+        (filter === 'purchases' && !isBot && /purchase/i.test(eventName)) ||
+        (filter === 'checkout' && !isBot && ['InitiateCheckout', 'AddPaymentInfo'].includes(eventName)) ||
+        (filter === 'pageviews' && !isBot && eventName === 'PageView');
 
       if (!matchesFilter) return false;
       if (!needle) return true;
@@ -161,7 +251,7 @@ export const GoogleAdsVisitorActivityPanel = ({
         tel.transactionId
       ].some((value) => String(value || '').toLowerCase().includes(needle));
     });
-  }, [events, filter, focusedVisitorId, search]);
+  }, [events, filter, focusedVisitorId, search, automatedEventKeys]);
 
   const summaryCards = [
     {
@@ -188,7 +278,7 @@ export const GoogleAdsVisitorActivityPanel = ({
     {
       label: 'Conversion Value',
       value: '$' + analytics.conversionValue.toFixed(2),
-      note: analytics.uniqueVisitors + ' total unique visitors',
+      note: analytics.uniqueVisitors + ' human visitors · ' + analytics.botEvents + ' automated events hidden',
       icon: <BadgeDollarSign size={18} />,
       tone: '#ea580c'
     }
@@ -217,12 +307,16 @@ export const GoogleAdsVisitorActivityPanel = ({
   const renderAttribution = (event) => {
     const tel = getTelemetry(event);
     const googleEvent = isGoogleAdsEvent(event);
+    const botEvent = isLikelyBotEvent(event);
 
     return (
       <div>
         <div className={googleEvent ? 'gav-source gav-source-google' : 'gav-source'}>
-          {googleEvent ? 'Google Ads' : (tel.trafficChannel || 'Direct')}
+          {botEvent ? 'Automated / Bot' : (googleEvent ? 'Google Ads' : (tel.trafficChannel || 'Direct'))}
         </div>
+        {botEvent && (
+          <div className="gav-subtext">Excluded from human metrics</div>
+        )}
         {tel.gclid && (
           <div className="gav-subtext gav-green">
             gclid · {String(tel.gclid).slice(0, 14)}…
@@ -244,7 +338,7 @@ export const GoogleAdsVisitorActivityPanel = ({
         <div>
           <div className="gav-location-primary">{location.primary}</div>
           {location.secondary && (
-            <div className="gav-subtext">{location.secondary}</div>
+            <div className="gav-subtext">Approx. IP · {location.secondary}</div>
           )}
         </div>
       </div>
@@ -608,11 +702,13 @@ export const GoogleAdsVisitorActivityPanel = ({
       <div className="gav-toolbar">
         <div className="gav-filter-row">
           {[
-            ['all', 'All'],
+            ['humans', 'Humans'],
             ['google_ads', 'Google Ads'],
             ['purchases', 'Purchases'],
             ['checkout', 'Checkout'],
-            ['pageviews', 'Page Views']
+            ['pageviews', 'Page Views'],
+            ['bots', 'Bots'],
+            ['all', 'All']
           ].map(([id, label]) => (
             <button
               key={id}
@@ -620,7 +716,7 @@ export const GoogleAdsVisitorActivityPanel = ({
               onClick={() => setFilter(id)}
               className={'gav-filter' + (filter === id ? ' active' : '')}
             >
-              {id === 'all' && <Filter size={12} />}
+              {id === 'humans' && <Filter size={12} />}
               {label}
             </button>
           ))}
@@ -673,7 +769,7 @@ export const GoogleAdsVisitorActivityPanel = ({
                   <th>Source</th>
                   <th>Location</th>
                   <th>Page</th>
-                  <th>Value</th>
+                  <th>Revenue</th>
                   <th></th>
                 </tr>
               </thead>
@@ -711,13 +807,13 @@ export const GoogleAdsVisitorActivityPanel = ({
                         </div>
                       </td>
                       <td className="gav-value">
-                        {event?.value && event.value !== '—' ? event.value : '—'}
+                        {displayRevenue(event)}
                       </td>
                       <td style={{ textAlign: 'right' }}>
                         <button
                           type="button"
                           className="gav-details"
-                          onClick={() => onSelectEvent?.(event)}
+                          onClick={() => onSelectEvent?.({ ...event, __likelyBot: isLikelyBotEvent(event) })}
                         >
                           <Eye size={12} /> Details
                         </button>
@@ -781,7 +877,7 @@ export const GoogleAdsVisitorActivityPanel = ({
                     gap: '.75rem'
                   }}>
                     <div className="gav-value">
-                      {event?.value && event.value !== '—' ? event.value : 'No value'}
+                      {displayRevenue(event) !== '—' ? displayRevenue(event) : 'No revenue'}
                     </div>
                     <button
                       type="button"

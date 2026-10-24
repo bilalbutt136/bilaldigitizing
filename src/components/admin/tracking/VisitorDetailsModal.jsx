@@ -34,6 +34,9 @@ export const VisitorDetailsModal = ({ event, onClose }) => {
   const visitCount = telemetry.visitCount || 1;
   const eventName = event.event_name || 'PageView';
   const role = event.user_role || telemetry.userRole || 'Guest Visitor';
+  const isLikelyBot = Boolean(event.__likelyBot || telemetry.isLikelyBot);
+  const displayRole = isLikelyBot ? 'Likely Automated Traffic' : role;
+  const isRevenueEvent = /purchase/i.test(eventName) || /(payment|order).*(success|complete|paid)/i.test(eventName);
   const pagePath = event.page_path || telemetry.pagePath || '/';
   const eventTime = event.event_time ? new Date(event.event_time).toLocaleString('en-US', {
     dateStyle: 'full',
@@ -137,7 +140,7 @@ export const VisitorDetailsModal = ({ event, onClose }) => {
                 <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/60">
                   <div className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Visitor Status</div>
                   <div className="text-base font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
-                    {role}
+                    {displayRole}
                   </div>
                   <div className="text-xs text-slate-500 mt-1">
                     {isReturning ? `Visit #${visitCount}` : 'New visitor'}
@@ -205,15 +208,15 @@ export const VisitorDetailsModal = ({ event, onClose }) => {
                     </span>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-3 p-3.5">
-                    <span className="font-medium text-slate-500">Target Page & Value</span>
+                    <span className="font-medium text-slate-500">Target Page & Revenue</span>
                     <div className="sm:col-span-2 space-y-1">
                       <div className="font-mono text-xs text-slate-800 dark:text-slate-200">{pagePath}</div>
                       {telemetry.pageTitle && (
                         <div className="text-xs text-slate-500 font-sans">{telemetry.pageTitle}</div>
                       )}
-                      {event.value && event.value !== '—' && (
+                      {isRevenueEvent && event.value && event.value !== '—' && (
                         <span className="inline-block px-2 py-0.5 text-xs font-bold bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 rounded mt-1">
-                          Conversion Value: {event.value}
+                          Confirmed Revenue: {event.value}
                         </span>
                       )}
                     </div>
@@ -228,10 +231,10 @@ export const VisitorDetailsModal = ({ event, onClose }) => {
                   <strong className="block text-sm font-bold text-blue-900 dark:text-blue-300 mb-0.5">
                     Meta Pixel Delivery Status
                   </strong>
-                  {telemetry.metaPixelActive ? (
+                  {!isLikelyBot && (telemetry.metaPixelDelivered ?? telemetry.metaPixelActive) ? (
                     <span>Active and verified. Standard <strong>{eventName}</strong> was delivered directly to Meta Pixel script with Advanced Matching and event ID deduplication.</span>
                   ) : (
-                    <span>Logged in telemetry stream. Active Meta Pixel ID: {telemetry.metaPixelId || 'Not configured in site settings'}.</span>
+                    <span>{isLikelyBot ? 'Automation signals detected. This event is retained for audit and excluded from Meta Pixel/CAPI delivery.' : `Logged in telemetry stream. Active Meta Pixel ID: ${telemetry.metaPixelId || 'Not configured in site settings'}.`}</span>
                   )}
                 </div>
               </div>
@@ -405,25 +408,25 @@ export const VisitorDetailsModal = ({ event, onClose }) => {
                     </span>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-3 p-3.5">
-                    <span className="font-medium text-slate-500">City</span>
+                    <span className="font-medium text-slate-500">Approx. IP City</span>
                     <span className="sm:col-span-2 font-medium text-slate-800 dark:text-slate-200">
                       {telemetry.city || 'Unknown City'}
                     </span>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-3 p-3.5">
-                    <span className="font-medium text-slate-500">Region / State</span>
+                    <span className="font-medium text-slate-500">Approx. IP Region / State</span>
                     <span className="sm:col-span-2 font-medium text-slate-800 dark:text-slate-200">
                       {telemetry.region || '—'}
                     </span>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-3 p-3.5">
-                    <span className="font-medium text-slate-500">Country</span>
+                    <span className="font-medium text-slate-500">Approx. IP Country</span>
                     <span className="sm:col-span-2 font-bold text-slate-800 dark:text-slate-200">
                       {telemetry.country || 'Unknown Country'}
                     </span>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-3 p-3.5">
-                    <span className="font-medium text-slate-500">Edge Coordinates</span>
+                    <span className="font-medium text-slate-500">Approx. Edge Coordinates</span>
                     <span className="sm:col-span-2 font-mono text-xs text-slate-600 dark:text-slate-400">
                       {telemetry.latitude && telemetry.longitude ? `${telemetry.latitude}, ${telemetry.longitude}` : 'Not provided by edge proxy'}
                     </span>

@@ -7,6 +7,7 @@ import { createHash } from 'node:crypto';
 let trackingTableHasMetadataColumn = null;
 const recentServerTrackingDedupe = new Map();
 const SERVER_TRACKING_DEDUPE_MS = 5000;
+const AUTOMATION_UA_PATTERN = /(bot|crawler|spider|headless|lighthouse|pagespeed|google-inspectiontool|bingpreview|slurp|facebookexternalhit|preview|uptimerobot|pingdom|gtmetrix|curl|wget|python-requests|python\/|axios|node-fetch|go-http-client|postmanruntime)/i;
 
 async function POST_impl(request) {
   try {
@@ -33,7 +34,10 @@ async function POST_impl(request) {
     if (action === 'logEvent' && payload && typeof payload === 'object') {
       const rawPagePath = String(payload.pagePath || payload.page_path || payload.path || '/').toLowerCase().trim();
       const rawEventName = String(payload.eventName || payload.event_name || 'PageView').trim();
-      const dedupeKey = `${ip}:${rawEventName}:${rawPagePath}`;
+      const rawDetails = (payload.details && typeof payload.details === 'object') ? payload.details : {};
+      const dedupeVisitor = String(rawDetails.visitorId || rawDetails.visitor_id || 'anon').slice(0, 120);
+      const dedupeSession = String(rawDetails.sessionId || rawDetails.session_id || '').slice(0, 120);
+      const dedupeKey = `${ip}:${dedupeVisitor}:${dedupeSession}:${rawEventName}:${rawPagePath}`;
       const nowTs = Date.now();
       const lastSeen = recentServerTrackingDedupe.get(dedupeKey) || 0;
       if (nowTs - lastSeen < SERVER_TRACKING_DEDUPE_MS) {
@@ -65,6 +69,8 @@ async function POST_impl(request) {
 
       // 2. Synthesize complete technical, attribution, geo, and visitor telemetry
       const clientDetails = (payload.details && typeof payload.details === 'object') ? payload.details : {};
+      const clientBotSignals = Array.isArray(clientDetails.botSignals) ? clientDetails.botSignals : [];
+      const serverBotSignals = AUTOMATION_UA_PATTERN.test(serverUserAgent) ? ['server-automation-user-agent'] : [];
       const fullTelemetry = {
         ...clientDetails,
         ip: clientIp !== 'Unknown IP' ? clientIp : (clientDetails.ip || 'Unknown IP'),
@@ -75,13 +81,18 @@ async function POST_impl(request) {
         longitude: longitude || clientDetails.longitude || '',
         serverUserAgent: serverUserAgent || clientDetails.userAgent || '',
         serverReferer: serverReferer || clientDetails.referrer || '',
+        isLikelyBot: Boolean(clientDetails.isLikelyBot) || serverBotSignals.length > 0,
+        botSignals: [...new Set([...clientBotSignals, ...serverBotSignals])],
         serverReceivedAt: new Date().toISOString()
       };
 
       const eventName = String(payload.eventName || payload.event_name || fullTelemetry.eventName || 'PageView').slice(0, 100);
       const userRole = String(payload.userRole || payload.user_role || fullTelemetry.userRole || 'Guest Visitor').slice(0, 100);
       const sourceStr = String(payload.source || `${fullTelemetry.browser || 'Browser'} on ${fullTelemetry.os || 'OS'} (${fullTelemetry.deviceType || 'Device'})`).slice(0, 150);
-      const valueStr = String(payload.value !== undefined ? payload.value : '—').slice(0, 100);
+      const isRevenueEvent = /purchase/i.test(eventName) || /(payment|order).*(success|complete|paid)/i.test(eventName);
+      const valueStr = isRevenueEvent && payload.value !== undefined
+        ? String(payload.value).slice(0, 100)
+        : '—';
       const pagePath = String(payload.pagePath || payload.page_path || payload.path || fullTelemetry.pagePath || '/').slice(0, 500);
       const nowIso = new Date().toISOString();
 
@@ -129,7 +140,7 @@ async function POST_impl(request) {
         try {
           const metaToken = process.env.META_CONVERSIONS_API_TOKEN;
           const metaPixelId = fullTelemetry.metaPixelId || process.env.NEXT_PUBLIC_META_PIXEL_ID;
-          if (metaToken && metaPixelId && fullTelemetry.trackingPlatform !== 'google_ads') {
+          if (metaToken && metaPixelId && fullTelemetry.trackingPlatform !== 'google_ads' && !fullTelemetry.isLikelyBot) {
             const capiPayload = {
               data: [{
                 event_name: eventName,

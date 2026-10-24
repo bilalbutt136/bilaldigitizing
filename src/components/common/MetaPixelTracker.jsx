@@ -167,7 +167,7 @@ export const MetaPixelTracker = () => {
     const eventId = generateUUID();
 
     // Fire PageView to Meta Pixel with rich event metadata
-    if (activePixelId && window.fbq) {
+    if (activePixelId && window.fbq && !telemetry.isLikelyBot) {
       window.fbq('track', 'PageView', {
         page_title: telemetry.pageTitle,
         page_path: telemetry.pagePath,
@@ -197,73 +197,67 @@ export const MetaPixelTracker = () => {
 
     if (pathname.includes('/services/embroidery-digitizing')) {
       standardEventName = 'ViewContent';
-      viewContentData = { 
+      viewContentData = {
         content_name: 'Embroidery Digitizing', 
         content_category: 'Embroidery Digitizing Services', 
-        content_type: 'service', 
-        value: 10.00, 
-        currency: 'USD' 
+        content_type: 'service'
       };
     } else if (pathname.includes('/services/vector-tracing')) {
       standardEventName = 'ViewContent';
-      viewContentData = { 
+      viewContentData = {
         content_name: 'Vector Art Tracing', 
         content_category: 'Vector Art Services', 
-        content_type: 'service', 
-        value: 8.00, 
-        currency: 'USD' 
+        content_type: 'service'
       };
     } else if (pathname.includes('/custom-patches')) {
       standardEventName = 'ViewContent';
-      viewContentData = { 
+      viewContentData = {
         content_name: 'Custom Physical Patches', 
         content_category: 'Physical Manufactured Emblems', 
-        content_type: 'product', 
-        value: 150.00, 
-        currency: 'USD' 
+        content_type: 'product'
       };
     } else if (pathname.includes('/pricing')) {
       standardEventName = 'ViewContent';
-      viewContentData = { 
+      viewContentData = {
         content_name: 'Commercial Pricing Packages', 
         content_category: 'Pricing', 
-        content_type: 'service' 
+        content_type: 'service'
       };
     } else if (pathname.includes('/portfolio')) {
       standardEventName = 'ViewContent';
-      viewContentData = { 
+      viewContentData = {
         content_name: 'Production Showcase Portfolio', 
         content_category: 'Portfolio', 
         content_type: 'gallery' 
       };
     } else if (pathname.includes('/blogs')) {
       standardEventName = 'ViewContent';
-      viewContentData = { 
+      viewContentData = {
         content_name: 'Embroidery & Vector Knowledgebase', 
         content_category: 'Articles', 
         content_type: 'article' 
       };
-    } else if (pathname === '/order' || pathname.includes('/order?')) {
-      standardEventName = 'InitiateCheckout';
-      viewContentData = { 
-        content_name: 'Order Configuration Wizard', 
-        content_category: 'Studio Checkout', 
-        content_type: 'order' 
-      };
-    } else if (typeof window !== 'undefined' && (window.location.search.includes('payment=success') || pathname.includes('payment=success'))) {
+    } else if (typeof window !== 'undefined' && window.location.search.includes('payment=success')) {
       standardEventName = 'Purchase';
       const searchParams = new URLSearchParams(window.location.search);
       const paidOrderId = searchParams.get('orderId') || '';
-      viewContentData = { 
+      viewContentData = {
         content_name: 'Studio Completed Payment', 
         content_category: 'Order Payment', 
         content_type: 'product',
         order_id: paidOrderId || undefined,
         currency: 'USD' 
       };
+    } else if (pathname === '/order') {
+      standardEventName = 'InitiateCheckout';
+      viewContentData = {
+        content_name: 'Order Configuration Wizard',
+        content_category: 'Studio Checkout',
+        content_type: 'order'
+      };
     }
 
-    if (viewContentData && window.fbq) {
+    if (viewContentData && window.fbq && !telemetry.isLikelyBot) {
       window.fbq('track', standardEventName, {
         ...viewContentData,
         page_title: telemetry.pageTitle,
@@ -284,13 +278,14 @@ export const MetaPixelTracker = () => {
         userRole: telemetry.userRole,
         source: `${telemetry.browser} on ${telemetry.os} (${telemetry.deviceType})`,
         trafficSource: telemetry.trafficSource,
-        value: viewContentData?.value ? `$${viewContentData.value.toFixed(2)}` : '—',
+        value: '—',
         pagePath: telemetry.pagePath,
         eventId: eventId,
         details: {
           ...telemetry,
           eventData: viewContentData || null,
           metaPixelActive: Boolean(activePixelId && window.fbq),
+          metaPixelDelivered: Boolean(activePixelId && window.fbq && !telemetry.isLikelyBot),
           metaPixelId: activePixelId || null
         }
       });
@@ -358,7 +353,7 @@ export const trackMetaEvent = (eventName, data = {}, customUserRole = null) => {
     session_id: telemetry.sessionId
   };
 
-  if (window.fbq) {
+  if (window.fbq && !telemetry.isLikelyBot) {
     if (isStandard) {
       window.fbq('track', eventName, fullEventData, { eventID: eventId });
     } else {
@@ -369,8 +364,9 @@ export const trackMetaEvent = (eventName, data = {}, customUserRole = null) => {
   // Persist to Supabase tracking_events table with complete metadata
   import('../../services/supabaseService').then(({ logTrackingEventToSupabase }) => {
     const role = telemetry.userRole;
-    const valueStr = data?.value !== undefined 
-      ? (typeof data.value === 'number' ? `$${data.value.toFixed(2)}` : String(data.value)) 
+    const isRevenueEvent = /purchase/i.test(eventName) || /(payment|order).*(success|complete|paid)/i.test(eventName);
+    const valueStr = isRevenueEvent && data?.value !== undefined
+      ? (typeof data.value === 'number' ? `$${data.value.toFixed(2)}` : String(data.value))
       : '—';
 
     logTrackingEventToSupabase({
@@ -385,6 +381,7 @@ export const trackMetaEvent = (eventName, data = {}, customUserRole = null) => {
         ...telemetry,
         customEventData: data,
         metaPixelActive: Boolean(currentId && window.fbq),
+        metaPixelDelivered: Boolean(currentId && window.fbq && !telemetry.isLikelyBot),
         metaPixelId: currentId || null
       }
     });
