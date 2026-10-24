@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useAppState } from '../../../context/StateContext';
-import { Palette, Sun, Moon, Sparkles, RefreshCw, Sliders, Check as _Check, Eye, Copy as _Copy, ArrowRight, ShieldCheck as _ShieldCheck, Tag as _Tag } from 'lucide-react';
+import { Palette, Sun, Moon, Sparkles, RefreshCw, Sliders } from 'lucide-react';
 import BrandPaletteGallery from './BrandPaletteGallery';
 
 import BrandingAssetManager from './BrandingAssetManager';
@@ -55,8 +55,6 @@ export const ThemeBrandingSettings = () => {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
 
-      <BrandingAssetManager />
-
       {/* 1. Header Card & Mode Switcher */}
       <div className="card" style={{ padding: '2rem', background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '20px', boxShadow: 'var(--shadow-sm)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1.25rem' }}>
@@ -66,18 +64,18 @@ export const ThemeBrandingSettings = () => {
                 <Palette size={22} />
               </div>
               <h3 style={{ fontSize: '1.35rem', fontWeight: 800, color: 'var(--color-text-primary)', margin: 0 }}>
-                Theme & Design System Engine
+                Brand & Appearance
               </h3>
             </div>
             <p style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)', margin: 0 }}>
-              Official brand theme (Executive Studio Pro), brand color overrides, and light/dark display moods.
+              Manage logos, colors, theme presets, and light/dark appearance.
             </p>
           </div>
 
           {/* Mode Switcher */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'var(--color-subtle, var(--bg-subtle))', padding: '0.4rem 0.6rem', borderRadius: '14px', border: '1px solid var(--border-color)' }}>
             <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--color-text-muted)', paddingLeft: '0.25rem' }}>
-              Mood:
+              Mode:
             </span>
             <button
               type="button"
@@ -99,7 +97,7 @@ export const ThemeBrandingSettings = () => {
               }}
             >
               <Sun size={15} style={{ color: theme === 'light' ? '#f59e0b' : 'inherit' }} />
-              White Mood
+              Light
             </button>
             <button
               type="button"
@@ -121,11 +119,13 @@ export const ThemeBrandingSettings = () => {
               }}
             >
               <Moon size={15} style={{ color: theme === 'dark' ? '#60a5fa' : 'inherit' }} />
-              Darker Mood
+              Dark
             </button>
           </div>
         </div>
       </div>
+
+      <BrandingAssetManager />
 
       <BrandPaletteGallery siteSettings={siteSettings} updateSiteSettings={updateSiteSettings} showToast={showToast} />
 
@@ -135,23 +135,23 @@ export const ThemeBrandingSettings = () => {
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <Sliders size={20} style={{ color: 'var(--color-primary)' }} />
             <h4 style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--color-text-primary)', margin: 0 }}>
-              Custom Brand Color Overrides
+              Brand Colors
             </h4>
           </div>
           {isCustomBrandActive && (
             <span style={{ fontSize: '0.75rem', fontWeight: 800, background: 'var(--color-primary-light)', color: 'var(--color-primary)', padding: '0.25rem 0.75rem', borderRadius: '9999px' }}>
-              ✓ Custom Brand Active
+              Custom colors active
             </span>
           )}
         </div>
         <p style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)', marginBottom: '1.5rem' }}>
-          Override the preset's primary CTA, secondary glow, and accent tones with your official brand hex codes.
+          Fine-tune the primary, secondary, and accent colors used across the site.
         </p>
 
         <form onSubmit={handleSaveCustomBrand} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1.25rem', alignItems: 'flex-end' }}>
           <div>
             <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: 'var(--color-text-primary)', marginBottom: '0.4rem' }}>
-              Primary Brand Color (Buttons & CTAs)
+              Primary
             </label>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'var(--color-subtle, var(--bg-subtle))', border: '1px solid var(--border-color)', borderRadius: '10px', padding: '0.4rem 0.6rem' }}>
               <input
@@ -171,7 +171,7 @@ export const ThemeBrandingSettings = () => {
 
           <div>
             <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: 'var(--color-text-primary)', marginBottom: '0.4rem' }}>
-              Secondary Color (Highlights & Badges)
+              Secondary
             </label>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'var(--color-subtle, var(--bg-subtle))', border: '1px solid var(--border-color)', borderRadius: '10px', padding: '0.4rem 0.6rem' }}>
               <input
@@ -191,7 +191,7 @@ export const ThemeBrandingSettings = () => {
 
           <div>
             <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: 'var(--color-text-primary)', marginBottom: '0.4rem' }}>
-              Accent Color (Glows & Borders)
+              Accent
             </label>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'var(--color-subtle, var(--bg-subtle))', border: '1px solid var(--border-color)', borderRadius: '10px', padding: '0.4rem 0.6rem' }}>
               <input
@@ -211,7 +211,7 @@ export const ThemeBrandingSettings = () => {
 
           <div style={{ display: 'flex', gap: '0.5rem' }}>
             <button type="submit" disabled={isSaving} className="btn btn-primary-orange" style={{ padding: '0.75rem 1.35rem', fontSize: '0.875rem', fontWeight: 800 }}>
-              <Sparkles size={16} /> {isSaving ? 'Saving...' : 'Apply Brand'}
+              <Sparkles size={16} /> {isSaving ? 'Saving...' : 'Save Colors'}
             </button>
             {isCustomBrandActive && (
               <button type="button" onClick={handleResetBrandColors} className="btn btn-outline" style={{ padding: '0.75rem 1rem', fontSize: '0.875rem' }}>
@@ -222,54 +222,7 @@ export const ThemeBrandingSettings = () => {
         </form>
       </div>
 
-      {/* 4. Live Component Sandbox / Design Token Preview */}
-      <div className="card" style={{ padding: '2rem', background: 'var(--color-subtle, var(--bg-subtle))', border: '1px solid var(--border-color)', borderRadius: '20px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.25rem' }}>
-          <Eye size={18} style={{ color: 'var(--color-primary)' }} />
-          <h4 style={{ fontSize: '1rem', fontWeight: 800, color: 'var(--color-text-primary)', margin: 0 }}>
-            Live Design System Sandbox Preview
-          </h4>
-        </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.25rem' }}>
-          <div style={{ padding: '1.25rem', background: 'var(--bg-card)', borderRadius: '14px', border: '1px solid var(--border-color)' }}>
-            <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--color-text-muted)', display: 'block', marginBottom: '0.65rem' }}>BUTTON STYLES</span>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
-              <button className="btn btn-primary-orange" style={{ width: '100%', justifyContent: 'center' }}>
-                Primary Action <ArrowRight size={15} />
-              </button>
-              <button className="btn btn-outline" style={{ width: '100%', justifyContent: 'center' }}>
-                Secondary Outline
-              </button>
-            </div>
-          </div>
 
-          <div style={{ padding: '1.25rem', background: 'var(--bg-card)', borderRadius: '14px', border: '1px solid var(--border-color)' }}>
-            <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--color-text-muted)', display: 'block', marginBottom: '0.65rem' }}>BADGES & PILLS</span>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
-              <span className="badge-pill-glow">
-                <Sparkles size={13} /> Featured Pill
-              </span>
-              <span style={{ fontSize: '0.75rem', fontWeight: 800, background: 'rgba(16, 185, 129, 0.15)', color: '#10b981', padding: '0.35rem 0.75rem', borderRadius: '9999px', border: '1px solid rgba(16, 185, 129, 0.3)' }}>
-                ✓ Production Ready
-              </span>
-              <span style={{ fontSize: '0.75rem', fontWeight: 800, background: 'var(--color-primary-light, rgba(249, 115, 22, 0.15))', color: 'var(--color-primary)', padding: '0.35rem 0.75rem', borderRadius: '9999px', border: '1px solid var(--border-color)' }}>
-                Studio Verified
-              </span>
-            </div>
-          </div>
-
-          <div style={{ padding: '1.25rem', background: 'var(--bg-card)', borderRadius: '14px', border: '1px solid var(--border-color)' }}>
-            <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--color-text-muted)', display: 'block', marginBottom: '0.65rem' }}>TYPOGRAPHY CONTRAST</span>
-            <h4 style={{ fontSize: '1.1rem', fontWeight: 900, color: 'var(--color-text-primary)', margin: '0 0 0.25rem' }}>
-              Headings Contrast
-            </h4>
-            <p style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)', margin: '0 0 0.35rem', lineHeight: 1.5 }}>
-              Body text inherits high-contrast readability in both modes.
-            </p>
-            <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>Muted details & timestamps</span>
-          </div>
-        </div>
-      </div>
 
     </div>
   );

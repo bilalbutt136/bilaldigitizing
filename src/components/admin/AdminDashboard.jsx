@@ -352,14 +352,19 @@ export const AdminDashboard = () => {
       ]
     },
     {
-      title: 'SYSTEM & SETTINGS',
+      title: 'SETTINGS',
       items: [
-        { id: 'settings-theme', label: 'Theme & Brand Engine', icon: Palette },
-        { id: 'settings-payments', label: 'Payment Gateways & Methods', icon: CreditCard },
-        { id: 'settings-meta', label: 'Meta Pixel & SEO', icon: Megaphone },
-        { id: 'settings-admin', label: 'Admin Team & Security', icon: ShieldCheck },
-        { id: 'settings-email', label: 'Email & Alert Routing', icon: Mail },
-        { id: 'settings-general', label: 'Studio Profile & Defaults', icon: Building2 },
+        { id: 'settings-theme', label: 'Brand & Appearance', icon: Palette },
+        { id: 'settings-payments', label: 'Payments', icon: CreditCard },
+        { id: 'settings-meta', label: 'Marketing & Tracking', icon: Megaphone },
+        { id: 'settings-admin', label: 'Admin & Security', icon: ShieldCheck },
+        { id: 'settings-email', label: 'Notifications', icon: Mail },
+        { id: 'settings-general', label: 'Business Profile', icon: Building2 }
+      ]
+    },
+    {
+      title: 'ACCOUNT',
+      items: [
         {
           id: 'public-website',
           label: 'Visit Public Website',
@@ -387,14 +392,14 @@ export const AdminDashboard = () => {
     promotions: 'Promotions',
     'email-campaigns': 'Email Campaigns',
     contact: 'Contact Information',
-    'settings-theme': 'Theme & Brand',
-    'settings-payments': 'Payment Methods & Gateways',
-    'settings-meta': 'Meta Pixel & SEO',
-    'meta-pixel': 'Meta Pixel & SEO',
-    meta: 'Meta Pixel & SEO',
-    'settings-admin': 'Admin Team & Security',
-    'settings-email': 'Email & Alerts',
-    'settings-general': 'Studio Profile & Defaults'
+    'settings-theme': 'Brand & Appearance',
+    'settings-payments': 'Payments',
+    'settings-meta': 'Marketing & Tracking',
+    'meta-pixel': 'Marketing & Tracking',
+    meta: 'Marketing & Tracking',
+    'settings-admin': 'Admin & Security',
+    'settings-email': 'Notifications',
+    'settings-general': 'Business Profile'
   }[activeTab] || 'Operations Desk';
 
   return (
@@ -907,7 +912,11 @@ export const AdminDashboard = () => {
           </div>
         )}
 
-        {activeTab !== 'dashboard' && activeTab !== 'inbox' && activeTab !== 'support' && (
+        {activeTab !== 'dashboard' &&
+          activeTab !== 'inbox' &&
+          activeTab !== 'support' &&
+          !String(activeTab || '').startsWith('settings') &&
+          !['payments', 'meta-pixel', 'meta'].includes(activeTab) && (
           <div style={{
             display: 'flex',
             justifyContent: 'space-between',

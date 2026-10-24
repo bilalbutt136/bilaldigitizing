@@ -5,14 +5,7 @@ import { useAppState } from '../../../context/StateContext';
 import {
   CreditCard,
   ShieldCheck,
-  Zap,
-  Save,
-  CheckCircle2,
-  AlertCircle,
-  HelpCircle,
-  Sparkles,
-  Lock,
-  Globe
+  CheckCircle2
 } from 'lucide-react';
 
 // Authentic Branded Icons
@@ -208,7 +201,7 @@ export const PaymentMethodSettings = () => {
       icon: <CardBrandIcon />,
       enabled: cardEnabled,
       setter: setCardEnabled,
-      badge: 'POPULAR & RECOMMENDED',
+      badge: 'RECOMMENDED',
       badgeColor: '#059669',
       isPrimary: true
     },
@@ -247,7 +240,7 @@ export const PaymentMethodSettings = () => {
       icon: <PayPalBrandIcon />,
       enabled: paypalEnabled,
       setter: setPaypalEnabled,
-      badge: paypalEnabled ? 'ACTIVATED' : 'DISABLED (CLICK TO ACTIVATE)',
+      badge: paypalEnabled ? 'ACTIVE' : 'OPTIONAL',
       badgeColor: paypalEnabled ? '#003087' : '#64748b',
       isPrimary: false
     },
@@ -302,11 +295,11 @@ export const PaymentMethodSettings = () => {
                 <CreditCard size={24} />
               </div>
               <h3 style={{ fontSize: '1.4rem', fontWeight: 900, color: 'var(--color-text-primary)', margin: 0 }}>
-                Payment Gateways & Methods Engine
+                Payments
               </h3>
             </div>
             <p style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)', margin: 0, maxWidth: '640px', lineHeight: 1.5 }}>
-              Control which payment methods are presented to clients during order checkout and Studio Wallet top-ups. Toggle PayPal or Cash App ON whenever needed.
+              Choose which payment methods customers can use at checkout and for wallet deposits.
             </p>
           </div>
 
@@ -343,40 +336,24 @@ export const PaymentMethodSettings = () => {
             </div>
           </div>
         </div>
-
-        {/* Informative notice on direct VIP portal checkout */}
-        <div style={{
-          marginTop: '1.5rem',
-          background: 'rgba(5, 150, 105, 0.08)',
-          border: '1px solid rgba(5, 150, 105, 0.25)',
-          borderRadius: '12px',
-          padding: '0.85rem 1.15rem',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '0.75rem'
-        }}>
-          <Sparkles size={18} style={{ color: '#059669', flexShrink: 0 }} />
-          <div style={{ fontSize: '0.84rem', color: 'var(--color-text-primary)', lineHeight: 1.45 }}>
-            <strong>VIP Direct Checkout Enabled:</strong> Card, Apple Pay, and Google Pay now open the checkout portal directly without confusing address copy/paste steps.
-          </div>
-        </div>
       </div>
 
-      {/* 2. Methods Toggle Cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))', gap: '1.25rem' }}>
+      {/* 2. Payment methods */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 300px), 1fr))', gap: '0.85rem' }}>
         {methodsList.map((method) => {
           return (
             <div
               key={method.id}
+              className="card"
               style={{
                 background: 'var(--bg-card)',
                 border: method.enabled ? '2px solid rgba(5, 150, 105, 0.4)' : '1px solid var(--border-color)',
                 borderRadius: '16px',
-                padding: '1.5rem',
+                padding: '1.1rem',
                 display: 'flex',
                 flexDirection: 'column',
                 justifyContent: 'space-between',
-                gap: '1.25rem',
+                gap: '0.9rem',
                 boxShadow: method.enabled ? '0 4px 18px rgba(5, 150, 105, 0.08)' : 'var(--shadow-sm)',
                 transition: 'all 0.2s ease',
                 position: 'relative'
@@ -482,48 +459,7 @@ export const PaymentMethodSettings = () => {
         })}
       </div>
 
-      {/* 3. Global Save Bar */}
-      <div className="card" style={{
-        padding: '1.25rem 1.75rem',
-        background: 'var(--bg-card)',
-        border: '1px solid var(--border-color)',
-        borderRadius: '16px',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        flexWrap: 'wrap',
-        gap: '1rem',
-        boxShadow: 'var(--shadow-sm)'
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--color-text-muted)', fontSize: '0.85rem' }}>
-          <ShieldCheck size={16} style={{ color: '#059669' }} />
-          <span>Settings sync in real-time with customer checkout and Studio Wallet deposit modals.</span>
-        </div>
 
-        <button
-          type="button"
-          onClick={() => handleSave()}
-          disabled={isSaving}
-          style={{
-            background: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
-            color: '#ffffff',
-            border: 'none',
-            padding: '0.75rem 1.75rem',
-            borderRadius: '12px',
-            fontSize: '0.9rem',
-            fontWeight: 800,
-            cursor: isSaving ? 'not-allowed' : 'pointer',
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '0.5rem',
-            boxShadow: '0 4px 14px rgba(5, 150, 105, 0.35)',
-            transition: 'all 0.15s ease'
-          }}
-        >
-          <Save size={16} />
-          {isSaving ? 'Saving Preferences...' : 'Save Payment Preferences'}
-        </button>
-      </div>
 
     </div>
   );

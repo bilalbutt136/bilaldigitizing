@@ -529,11 +529,11 @@ export const BrandingAssetManager = () => {
               <ImageIcon size={22} />
             </div>
             <h3 style={{ fontSize: '1.25rem', fontWeight: 900, color: 'var(--color-text-primary)', margin: 0 }}>
-              Branding & Logo Management
+              Logo & Brand Assets
             </h3>
           </div>
           <p style={{ margin: 0, maxWidth: 760, fontSize: '0.84rem', lineHeight: 1.55, color: 'var(--color-text-muted)' }}>
-            Upload production branding once and publish it without redeploying. Changes feed the website navigation, footer, browser favicon, Apple/PWA metadata, install manifest, and social share cards.
+            Manage the logo, favicon, app icons, and social-share artwork used across the website.
           </p>
         </div>
         {!loading && (

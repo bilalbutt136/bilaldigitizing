@@ -63,11 +63,11 @@ describe('Payment Methods VIP Enhancements & Admin Controls', () => {
     assert.equal(code.includes('cashapp'), true);
   });
 
-  it('5. SystemSettingsManager registers the Payment Gateways & Methods tab', () => {
+  it('5. SystemSettingsManager registers the Payments settings section', () => {
     const code = fs.readFileSync('src/components/admin/SystemSettingsManager.jsx', 'utf8');
 
     assert.equal(code.includes('PaymentMethodSettings'), true);
-    assert.equal(code.includes('Payment Gateways & Methods'), true);
+    assert.equal(code.includes("label: 'Payments'"), true);
     assert.equal(code.includes("currentTab === 'payments'"), true);
   });
 });

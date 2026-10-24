@@ -49,6 +49,7 @@ const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 export const AdminNotificationSettings = () => {
   const { siteSettings = {}, updateSiteSettings, showToast, authUser } = useAppState();
 
+  const [activeSettingsView, setActiveSettingsView] = useState('routing');
   const [adminEmails, setAdminEmails] = useState(['bilalsadiq612@gmail.com']);
   const [newEmailInput, setNewEmailInput] = useState('');
   const [emailInputError, setEmailInputError] = useState('');
@@ -556,8 +557,8 @@ export const AdminNotificationSettings = () => {
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem', width: '100%' }}>
 
       {/* Header Banner */}
-      <div style={{
-        background: 'linear-gradient(135deg, var(--bg-card) 0%, rgba(249, 115, 22, 0.05) 100%)',
+      <div className="card" style={{
+        background: 'linear-gradient(135deg, var(--bg-card) 0%, rgba(37, 99, 235, 0.04) 100%)',
         border: '1px solid var(--border-color)',
         borderRadius: '16px',
         padding: '1.75rem',
@@ -581,7 +582,7 @@ export const AdminNotificationSettings = () => {
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
                 <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-main)', margin: 0 }}>
-                  Email & Alert Notification Routing
+                  Notifications & Alerts
                 </h2>
                 <span style={{
                   fontSize: '0.68rem',
@@ -596,12 +597,12 @@ export const AdminNotificationSettings = () => {
                 </span>
               </div>
               <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', margin: '0.25rem 0 0' }}>
-                Configure the central destination email and automatic triggers for customer messages, new orders, and revisions.
+                Choose who receives alerts, which events trigger them, and how notification sounds behave.
               </p>
             </div>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
+          <div style={{ display: activeSettingsView === 'routing' ? 'flex' : 'none', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
             <button
               type="button"
               onClick={() => handleSendTestEmail('NEW_ORDER')}
@@ -706,15 +707,32 @@ export const AdminNotificationSettings = () => {
         )}
       </div>
 
+      <div className="vip-inner-tabs" role="tablist" aria-label="Notification settings">
+        <button
+          type="button"
+          className={activeSettingsView === 'routing' ? 'active' : ''}
+          onClick={() => setActiveSettingsView('routing')}
+        >
+          <Mail size={14} /> Email & Rules
+        </button>
+        <button
+          type="button"
+          className={activeSettingsView === 'sounds' ? 'active' : ''}
+          onClick={() => setActiveSettingsView('sounds')}
+        >
+          <Volume2 size={14} /> Sounds
+        </button>
+      </div>
+
       {/* Main Settings Body */}
       <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 480px), 1fr))',
+        display: activeSettingsView === 'routing' ? 'grid' : 'none',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 420px), 1fr))',
         gap: '1.5rem'
       }}>
 
-        {/* Section 1: Multiple Admin Destination Emails & Delivery Engine */}
-        <div style={{
+        {/* Section 1: Admin notification recipients */}
+        <div className="card" style={{
           background: 'var(--bg-card)',
           border: '1px solid var(--border-color)',
           borderRadius: '16px',
@@ -950,8 +968,8 @@ export const AdminNotificationSettings = () => {
             </p>
           </div>
 
-          {/* Engine Status info */}
-          <div style={{
+          {/* Delivery engine diagnostics are intentionally hidden from daily use */}
+          <div className="vip-advanced-diagnostic" style={{
             background: 'var(--bg-main)',
             border: '1px solid var(--border-color)',
             borderRadius: '12px',
@@ -980,8 +998,8 @@ export const AdminNotificationSettings = () => {
           </div>
         </div>
 
-        {/* Section 2: Event Triggers & Notification Toggles */}
-        <div style={{
+        {/* Section 2: Event triggers */}
+        <div className="card" style={{
           background: 'var(--bg-card)',
           border: '1px solid var(--border-color)',
           borderRadius: '16px',
@@ -1169,14 +1187,14 @@ export const AdminNotificationSettings = () => {
 
       </div>
 
-      {/* ── Section 3: Real-Time Audio Notification Tunes & Bell Alert Engine ── */}
-      <div style={{
+      {/* Notification sounds */}
+      <div className="card" style={{
         background: 'var(--bg-card)',
         border: '1px solid var(--border-color)',
         borderRadius: '16px',
         padding: '1.75rem',
         boxShadow: 'var(--shadow-sm)',
-        display: 'flex',
+        display: activeSettingsView === 'sounds' ? 'flex' : 'none',
         flexDirection: 'column',
         gap: '1.5rem'
       }}>
@@ -1209,7 +1227,7 @@ export const AdminNotificationSettings = () => {
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
                 <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--text-main)', margin: 0 }}>
-                  Real-Time Notification Tune &amp; Bell Sound Alerts
+                  Admin Notification Sound
                 </h3>
                 <span style={{
                   fontSize: '0.7rem',
@@ -1224,7 +1242,7 @@ export const AdminNotificationSettings = () => {
                 </span>
               </div>
               <p style={{ fontSize: '0.825rem', color: 'var(--text-muted)', margin: '0.2rem 0 0' }}>
-                Set custom MP3/WAV tunes or crystal chime presets that play whenever customer messages or order notifications arrive.
+                Choose the sound used for new messages and order alerts in the admin portal.
               </p>
             </div>
           </div>
@@ -1500,7 +1518,7 @@ export const AdminNotificationSettings = () => {
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
                   {soundVolume > 0.5 ? <Volume2 size={16} style={{ color: 'var(--orange-500)' }} /> : soundVolume > 0.1 ? <Volume1 size={16} style={{ color: 'var(--orange-500)' }} /> : <VolumeX size={16} style={{ color: 'var(--text-muted)' }} />}
                   <label style={{ fontSize: '0.825rem', fontWeight: 700, color: 'var(--text-main)' }}>
-                    Master Alert Volume
+                    Admin Sound Volume
                   </label>
                 </div>
                 <span style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--orange-500)' }}>
@@ -1533,7 +1551,7 @@ export const AdminNotificationSettings = () => {
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               <div style={{ fontSize: '0.825rem', fontWeight: 700, color: 'var(--text-main)' }}>
-                Live Audio Alert Test Playground:
+                Test notification sounds
               </div>
 
               {/* Test Button 1: Customer Inbox Message */}
@@ -1614,7 +1632,7 @@ export const AdminNotificationSettings = () => {
                   </div>
                   <div>
                     <div style={{ fontSize: '0.875rem', fontWeight: 700, color: 'var(--text-main)' }}>
-                      Test New Order Notification Alert
+                      Test Order Sound
                     </div>
                     <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
                       Plays bell sound as heard when a new embroidery or vector order is placed
@@ -1624,8 +1642,8 @@ export const AdminNotificationSettings = () => {
                 <Play size={16} style={{ color: 'var(--orange-500)' }} />
               </button>
 
-              {/* Engine Status Diagnostic Card */}
-              <div style={{
+              {/* Audio engine diagnostics are intentionally hidden from daily use */}
+              <div className="vip-advanced-diagnostic" style={{
                 padding: '0.9rem 1.1rem',
                 borderRadius: '12px',
                 background: 'var(--bg-main)',
@@ -1686,7 +1704,7 @@ export const AdminNotificationSettings = () => {
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
                   <h4 style={{ fontSize: '0.95rem', fontWeight: 800, color: 'var(--text-main)', margin: 0 }}>
-                    Customer Portal Notification Chime (Basic &amp; Gentle Ringtune)
+                    Customer Notification Sound
                   </h4>
                   <span style={{
                     fontSize: '0.68rem',
@@ -1841,7 +1859,7 @@ export const AdminNotificationSettings = () => {
           ) : (
             <>
               <Save size={16} />
-              <span>Save Notification Audio Tune Settings (Admin &amp; Customer)</span>
+              <span>Save Sound Settings</span>
             </>
           )}
         </button>

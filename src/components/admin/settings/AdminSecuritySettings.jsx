@@ -38,6 +38,7 @@ export const AdminSecuritySettings = () => {
     resetAdminPassword
   } = useAppState();
 
+  const [activeSecurityView, setActiveSecurityView] = useState('admins');
   const [adminEmail, setAdminEmail] = useState(authUser?.email || '');
   const [sessionTimeout, setSessionTimeout] = useState(
     siteSettings?.sessionTimeout && siteSettings.sessionTimeout !== '30m'
@@ -367,20 +368,44 @@ export const AdminSecuritySettings = () => {
             <ShieldCheck size={22} />
           </div>
           <h3 style={{ fontSize: '1.35rem', fontWeight: 800, color: 'var(--color-text-primary)', margin: 0 }}>
-            Admin Team, Security & Access Management
+            Admin & Security
           </h3>
         </div>
         <p style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)', margin: 0 }}>
-          Manage whitelisted studio operators, configure admin passwords, reset existing passwords, configure session timeouts, and control maintenance mode.
+          Manage administrator access, session security, maintenance mode, and AI tools.
         </p>
       </div>
 
+      <div className="vip-inner-tabs" role="tablist" aria-label="Admin security sections">
+        <button
+          type="button"
+          className={activeSecurityView === 'admins' ? 'active' : ''}
+          onClick={() => setActiveSecurityView('admins')}
+        >
+          <_Users size={14} /> Admins
+        </button>
+        <button
+          type="button"
+          className={activeSecurityView === 'security' ? 'active' : ''}
+          onClick={() => setActiveSecurityView('security')}
+        >
+          <ShieldCheck size={14} /> Security
+        </button>
+        <button
+          type="button"
+          className={activeSecurityView === 'ai' ? 'active' : ''}
+          onClick={() => setActiveSecurityView('ai')}
+        >
+          <Sparkles size={14} /> AI Tools
+        </button>
+      </div>
+
       {/* 2. Authorized Administrator Team Directory */}
-      <div className="card" style={{ padding: '2rem', background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '20px', boxShadow: 'var(--shadow-sm)' }}>
+      <div className="card" style={{ display: activeSecurityView === 'admins' ? 'block' : 'none', padding: '2rem', background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '20px', boxShadow: 'var(--shadow-sm)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '1rem' }}>
           <div>
             <h4 style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--color-text-primary)', margin: '0 0 0.25rem' }}>
-              Authorized Studio Administrators
+              Administrators
             </h4>
             <p style={{ fontSize: '0.825rem', color: 'var(--color-text-muted)', margin: 0 }}>
               Whitelisted Supabase accounts with full administrative control. You can set and reset passwords directly.
@@ -470,16 +495,16 @@ export const AdminSecuritySettings = () => {
 
       {/* 3. Security, Operational State & Session Policies */}
       <form onSubmit={handleSaveSecurity} style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
-        <div className="card" style={{ padding: '2rem', background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '20px', boxShadow: 'var(--shadow-sm)' }}>
+        <div className="card" style={{ display: activeSecurityView === 'security' ? 'block' : 'none', padding: '2rem', background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '20px', boxShadow: 'var(--shadow-sm)' }}>
           <h4 style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--color-text-primary)', margin: '0 0 1.25rem' }}>
-            Operational State & Session Security Policies
+            Security & Session Policies
           </h4>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
             {/* Master Admin Email */}
             <div>
               <label style={{ display: 'block', fontSize: '0.825rem', fontWeight: 700, color: 'var(--color-text-primary)', marginBottom: '0.4rem' }}>
-                Primary Master Notification Email
+                Primary Admin Email
               </label>
               <input
                 type="email"
@@ -497,14 +522,14 @@ export const AdminSecuritySettings = () => {
               {/* Session Timeout */}
               <div>
                 <label style={{ display: 'block', fontSize: '0.825rem', fontWeight: 700, color: 'var(--color-text-primary)', marginBottom: '0.4rem' }}>
-                  Admin Inactivity Session Timeout
+                  Inactive Session Timeout
                 </label>
                 <select
                   className="form-control"
                   value={sessionTimeout}
                   onChange={(e) => setSessionTimeout(e.target.value)}
                 >
-                  <option value="never">Never (Stay Active Always - Recommended)</option>
+                  <option value="never">Never (Keep signed in)</option>
                   <option value="7d">7 Days</option>
                   <option value="24h">24 Hours</option>
                   <option value="4h">4 Hours</option>
@@ -512,7 +537,7 @@ export const AdminSecuritySettings = () => {
                   <option value="30m">30 Minutes</option>
                 </select>
                 <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginTop: '0.35rem', display: 'block' }}>
-                  Keep admin continuously logged in and active so customer messages and alerts are received 24/7 without interruption.
+                  Choose how long an inactive admin session can remain signed in.
                 </span>
               </div>
 
@@ -608,8 +633,8 @@ export const AdminSecuritySettings = () => {
           </div>
         </div>
 
-        {/* GOOGLE GEMINI AI POLISH ENGINE & API KEY CONFIGURATION */}
-        <div style={{
+        {/* AI message assistant */}
+        <div className="card" style={{ display: activeSecurityView === 'ai' ? 'block' : 'none',
           background: 'var(--bg-card)',
           border: '1.5px solid var(--border-color)',
           borderRadius: '16px',
@@ -623,10 +648,10 @@ export const AdminSecuritySettings = () => {
               </div>
               <div>
                 <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: 'var(--color-text-primary)', margin: 0 }}>
-                  Google Gemini AI Polish Engine
+                  AI Message Assistant
                 </h3>
                 <p style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', margin: '0.2rem 0 0 0' }}>
-                  Powers 1-click AI message refinement, Roman Urdu translation, and email copy enhancement.
+                  Controls the AI key used for message polish and translation tools.
                 </p>
               </div>
             </div>
@@ -790,7 +815,7 @@ export const AdminSecuritySettings = () => {
           </div>
         </div>
 
-        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+        <div style={{ display: activeSecurityView === 'security' ? 'flex' : 'none', justifyContent: 'flex-end' }}>
           <button type="submit" disabled={isSaving} className="btn btn-primary-orange btn-lg" style={{ fontWeight: 800, padding: '0.85rem 2rem' }}>
             <Save size={18} /> {isSaving ? 'Saving...' : 'Save Security Policies'}
           </button>

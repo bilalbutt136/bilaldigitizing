@@ -225,11 +225,11 @@ export const MetaSeoTrackingSettings = () => {
                 <Megaphone size={22} />
               </div>
               <h3 style={{ fontSize: '1.35rem', fontWeight: 800, color: 'var(--color-text-primary)', margin: 0 }}>
-                Meta Pixel, SEO & Marketing Analytics
+                Marketing & Tracking
               </h3>
             </div>
             <p style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)', margin: 0 }}>
-              Connect Facebook/Instagram tracking, Google Analytics, and optimize global search engine metadata.
+              Manage Meta Pixel, Google Ads tracking, visitor analytics, and SEO settings.
             </p>
           </div>
 
@@ -253,7 +253,7 @@ export const MetaSeoTrackingSettings = () => {
                 gap: '0.35rem'
               }}
             >
-              <Radio size={14} /> Pixels & Tracking
+              <Radio size={14} /> Tracking
             </button>
             <button
               type="button"
@@ -274,7 +274,7 @@ export const MetaSeoTrackingSettings = () => {
                 gap: '0.35rem'
               }}
             >
-              <Search size={14} /> SEO & Social Meta
+              <Search size={14} /> SEO & Sharing
             </button>
             <button
               type="button"
@@ -295,7 +295,7 @@ export const MetaSeoTrackingSettings = () => {
                 gap: '0.35rem'
               }}
             >
-              <Activity size={14} /> Live Event Log
+              <Activity size={14} /> Visitor Activity
             </button>
           </div>
         </div>

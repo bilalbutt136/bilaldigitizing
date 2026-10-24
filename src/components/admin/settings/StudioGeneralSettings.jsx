@@ -114,24 +114,24 @@ export const StudioGeneralSettings = () => {
             <Building2 size={22} />
           </div>
           <h3 style={{ fontSize: '1.35rem', fontWeight: 800, color: 'var(--color-text-primary)', margin: 0 }}>
-            Studio Profile, Contact & Operational Defaults
+            Business Profile & Defaults
           </h3>
         </div>
         <p style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)', margin: 0 }}>
-          Manage your official studio branding, direct customer support channels, currency formats, and invoice defaults.
+          Manage business details, customer contact channels, currency, turnaround, and invoice defaults.
         </p>
       </div>
 
       {/* 2. Studio Identity & Public Contact Details */}
       <div className="card" style={{ padding: '2rem', background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '20px', boxShadow: 'var(--shadow-sm)' }}>
         <h4 style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--color-text-primary)', margin: '0 0 1.25rem' }}>
-          Studio Identity & Public Contact Channels
+          Business Details
         </h4>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.25rem' }}>
           <div>
             <label style={{ display: 'block', fontSize: '0.825rem', fontWeight: 700, color: 'var(--color-text-primary)', marginBottom: '0.35rem' }}>
-              Studio Brand Name *
+              Business Name *
             </label>
             <input
               type="text"
@@ -144,7 +144,7 @@ export const StudioGeneralSettings = () => {
 
           <div>
             <label style={{ display: 'block', fontSize: '0.825rem', fontWeight: 700, color: 'var(--color-text-primary)', marginBottom: '0.35rem' }}>
-              Official Slogan / Tagline
+              Tagline
             </label>
             <input
               type="text"
@@ -168,7 +168,7 @@ export const StudioGeneralSettings = () => {
 
           <div>
             <label style={{ display: 'block', fontSize: '0.825rem', fontWeight: 700, color: 'var(--color-text-primary)', marginBottom: '0.35rem' }}>
-              Customer Support & Orders Email
+              Support Email
             </label>
             <input
               type="email"
@@ -193,7 +193,7 @@ export const StudioGeneralSettings = () => {
 
           <div>
             <label style={{ display: 'block', fontSize: '0.825rem', fontWeight: 700, color: 'var(--color-text-primary)', marginBottom: '0.35rem' }}>
-              Operating Hours Text
+              Business Hours
             </label>
             <input
               type="text"
@@ -217,7 +217,7 @@ export const StudioGeneralSettings = () => {
         </div>
       </div>
 
-      {/* 3. Operational Defaults & Invoice Formatting */}
+      {/* 3. Operational Defaults */}
       <div className="card" style={{ padding: '2rem', background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '20px', boxShadow: 'var(--shadow-sm)' }}>
         <h4 style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--color-text-primary)', margin: '0 0 1.25rem' }}>
           Production & Invoice Defaults
