@@ -353,7 +353,8 @@ export const LiveChatWidget = () => {
         body: JSON.stringify({
           sessionId: guestSessionId || 'gst_temp_session',
           message: msgText,
-          senderName: 'Website Visitor',
+          senderName: guestName.trim() || 'Website Visitor',
+          senderEmail: guestEmail.trim() || '',
           isAgentRequest: true
         })
       });
@@ -420,7 +421,8 @@ export const LiveChatWidget = () => {
           body: JSON.stringify({
             sessionId: guestSessionId || 'gst_temp_session',
             message: text,
-            senderName: 'Website Visitor',
+            senderName: guestName.trim() || 'Website Visitor',
+            senderEmail: guestEmail.trim() || '',
             isAgentRequest: true
           })
         });
@@ -429,23 +431,6 @@ export const LiveChatWidget = () => {
       } finally {
         setIsSubmittingInquiry(false);
       }
-
-      // Also dispatch to /api/contact in background
-      try {
-        const fallbackEmail = guestEmail.trim() || `guest_${guestSessionId || 'visitor'}@guest.bdigitizing.com`;
-        const fallbackName = guestName.trim() || 'Website Visitor';
-        fetch('/api/contact', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            name: fallbackName,
-            email: fallbackEmail,
-            service: 'General Support',
-            subject: `Live Chat: ${text.slice(0, 50)}`,
-            message: text.length < 10 ? `Guest message: ${text}` : text
-          })
-        }).catch(() => {});
-      } catch {}
 
       return;
     }
@@ -476,29 +461,11 @@ export const LiveChatWidget = () => {
         body: JSON.stringify({
           sessionId: guestSessionId || 'gst_temp_session',
           message: text,
-          senderName: 'Website Visitor',
+          senderName: guestName.trim() || 'Website Visitor',
+          senderEmail: guestEmail.trim() || '',
           isAgentRequest: false
         })
       });
-    } catch {}
-
-    // Background contact dispatch to keep email notifications & test compatibility
-    try {
-      const fallbackEmail = guestEmail.trim() || `guest_${guestSessionId || 'visitor'}@guest.bdigitizing.com`;
-      const fallbackName = guestName.trim() || 'Website Visitor';
-      const safeMsg = text.length < 10 ? `Guest question: ${text}` : text;
-
-      fetch('/api/contact', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: fallbackName,
-          email: fallbackEmail,
-          service: 'General Support',
-          subject: `Live Chat Question: ${text.slice(0, 50)}`,
-          message: safeMsg
-        })
-      }).catch(() => {});
     } catch {}
 
     setIsSubmittingInquiry(false);

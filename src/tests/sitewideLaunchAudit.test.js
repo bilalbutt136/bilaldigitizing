@@ -13,6 +13,11 @@ test('public contact form never reports delivery success on a rejected request',
   assert.match(form, /setSubmitError\(message\)/);
   assert.match(route, /checkDistributedRateLimit/);
   assert.match(route, /resolveAdminNotificationConfig/);
+  assert.match(route, /createAdminClient/);
+  assert.match(route, /inbox-contact_/);
+  assert.match(route, /\.from\('conversations'\)/);
+  assert.match(route, /\.from\('messages'\)/);
+  assert.match(route, /unread_admin_count/);
   assert.match(route, /escapeHtml\(inquiry\.message\)/);
   assert.match(route, /if \(error \|\| !data\?\.id\)/);
 });

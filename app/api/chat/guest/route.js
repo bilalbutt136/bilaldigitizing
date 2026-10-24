@@ -7,6 +7,7 @@ import { enforceApiBurstLimit } from '../../../../src/lib/apiBurstGuard.js';
 export const dynamic = 'force-dynamic';
 
 const SESSION_REGEX = /^[a-zA-Z0-9_-]{8,64}$/;
+const GUEST_EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 function sanitizeSessionId(raw) {
   if (!raw || typeof raw !== 'string') return null;
@@ -72,7 +73,10 @@ async function POST_impl(request) {
     }
 
     const conversationId = `support-guest_${sessionId}`;
-    const guestEmail = `guest_${sessionId}@guest.bdigitizing.com`;
+    const providedEmail = String(body?.senderEmail || '').trim().toLowerCase().slice(0, 254);
+    const guestEmail = GUEST_EMAIL_REGEX.test(providedEmail)
+      ? providedEmail
+      : `guest_${sessionId}@guest.bdigitizing.com`;
     const senderName = String(body?.senderName || 'Website Visitor').trim().slice(0, 80);
     const isAgentRequest = Boolean(body?.isAgentRequest);
     const nowIso = new Date().toISOString();
@@ -82,7 +86,7 @@ async function POST_impl(request) {
     // 1. Get or create the guest support conversation
     const { data: existingConv } = await supabase
       .from('conversations')
-      .select('id, unread_admin_count, order_title')
+      .select('id, client_email, client_name, unread_admin_count, order_title')
       .eq('id', conversationId)
       .maybeSingle();
 
@@ -90,6 +94,8 @@ async function POST_impl(request) {
     if (existingConv) {
       unreadCount = Number(existingConv.unread_admin_count || 0) + 1;
       const updateData = {
+        client_email: guestEmail,
+        client_name: senderName,
         last_message: rawMessage.slice(0, 180),
         last_message_at: nowIso,
         status: 'online',
@@ -159,20 +165,20 @@ async function POST_impl(request) {
         console.warn('[Guest Chat Live Broadcast Notice]:', bErr?.message);
       }
 
-      if (isAgentRequest) {
-        try {
-          const { sendNotificationEmail } = await import('../../../../src/lib/emailService');
-          await sendNotificationEmail({
-            type: 'NEW_MESSAGE',
-            senderName: `${senderName} [Live Agent Requested]`,
-            clientEmail: guestEmail,
-            messageText: rawMessage,
-            channel: '24/7 Live Support Desk'
-          });
-        } catch (emailErr) {
-          logServerCaughtError(emailErr, { operation: 'chat.guest_email_failed' });
-        }
+      try {
+        const { sendNotificationEmail } = await import('../../../../src/lib/emailService');
+        await sendNotificationEmail({
+          type: 'NEW_MESSAGE',
+          senderName: isAgentRequest ? `${senderName} [Live Agent Requested]` : senderName,
+          clientEmail: guestEmail,
+          messageText: rawMessage,
+          channel: isAgentRequest ? '24/7 Live Support Desk — Agent Requested' : 'Website Live Chat'
+        });
+      } catch (emailErr) {
+        logServerCaughtError(emailErr, { operation: 'chat.guest_email_failed' });
+      }
 
+      if (isAgentRequest) {
         try {
           const { dispatchChatMessagePush } = await import('../../../../src/lib/pushService.js');
           dispatchChatMessagePush({

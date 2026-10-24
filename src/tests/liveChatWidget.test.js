@@ -35,7 +35,8 @@ describe('Live Chat Floating Widget & Realtime Support System', () => {
     assert.match(file, /Get a quote/);
     assert.match(file, /Turnaround time/);
     assert.match(file, /Need quote for embroidery file \(\.DST\/\.PES\)/);
-    assert.match(file, /fetch\('\/api\/contact'/);
+    assert.match(file, /fetch\('\/api\/chat\/guest'/);
+    assert.doesNotMatch(file, /fetch\('\/api\/contact'/);
     assert.match(file, /handleOpenAuth/);
     assert.match(file, /setIsAuthModalOpen\(true\)/);
     assert.match(file, /type="email"/);
