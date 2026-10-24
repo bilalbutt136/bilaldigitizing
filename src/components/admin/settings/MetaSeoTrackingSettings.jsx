@@ -11,18 +11,11 @@ import {
   RefreshCw,
   Activity,
   Code,
-  Eye,
   CheckCircle2,
   AlertCircle,
   Sparkles,
-  ExternalLink,
-  Copy,
-  Check,
   Zap,
-  HelpCircle,
-  FileCode,
-  Layers,
-  ShieldCheck
+  HelpCircle
 } from 'lucide-react';
 import { VisitorDetailsModal } from '../tracking/VisitorDetailsModal';
 import { GoogleAdsVisitorActivityPanel } from '../tracking/GoogleAdsVisitorActivityPanel';
@@ -109,21 +102,6 @@ export const MetaSeoTrackingSettings = () => {
     } else {
       setSnippetExtractionNotice(null);
     }
-  };
-
-  const formatEventTime = (timeStr) => {
-    if (!timeStr) return new Date().toLocaleString('en-US');
-    const d = new Date(timeStr);
-    if (isNaN(d.getTime())) return String(timeStr);
-    return d.toLocaleString('en-US', {
-      month: 'numeric',
-      day: 'numeric',
-      year: 'numeric',
-      hour: 'numeric',
-      minute: '2-digit',
-      second: '2-digit',
-      hour12: true
-    });
   };
 
   const handleSimulatePageVisit = async () => {
@@ -965,167 +943,63 @@ export const MetaSeoTrackingSettings = () => {
             </div>
           </div>
 
-          {/* Two Info Cards (Exact replica of Reference Image 2) */}
           <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
             gap: '1rem',
-            marginBottom: '1.75rem'
+            flexWrap: 'wrap',
+            padding: '0.95rem 1rem',
+            marginBottom: '1rem',
+            borderRadius: '14px',
+            border: '1px solid var(--border-color, #e2e8f0)',
+            background: 'linear-gradient(135deg, rgba(37,99,235,0.08), rgba(99,102,241,0.04))'
           }}>
-            <div style={{
-              background: 'var(--color-subtle, #f8fafc)',
-              border: '1px solid var(--border-color, #e2e8f0)',
-              borderRadius: '14px',
-              padding: '1.25rem'
-            }}>
-              <div style={{ fontSize: '0.72rem', fontWeight: 800, color: '#6366f1', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.45rem' }}>
-                WHAT THIS DOES
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <div style={{
+                width: '38px',
+                height: '38px',
+                borderRadius: '11px',
+                display: 'grid',
+                placeItems: 'center',
+                background: '#eff6ff',
+                color: '#2563eb',
+                border: '1px solid #dbeafe'
+              }}>
+                <Zap size={18} />
               </div>
-              <div style={{ fontSize: '0.88rem', color: 'var(--color-text-secondary, #334155)', lineHeight: 1.45 }}>
-                Use this to debug setup issues — e.g. confirm a test event arrived after clicking &quot;Simulate page visit&quot;.
+              <div>
+                <div style={{ fontSize: '0.82rem', fontWeight: 900, color: 'var(--color-text-primary, #0f172a)' }}>
+                  Live visitor intelligence
+                </div>
+                <div style={{ fontSize: '0.73rem', color: 'var(--color-text-muted, #64748b)', marginTop: '0.15rem' }}>
+                  Browser activity, server geo, Google Ads attribution and purchase events in one place.
+                </div>
               </div>
             </div>
-
             <div style={{
-              background: 'var(--color-subtle, #f8fafc)',
-              border: '1px solid var(--border-color, #e2e8f0)',
-              borderRadius: '14px',
-              padding: '1.25rem'
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.4rem',
+              padding: '0.4rem 0.65rem',
+              borderRadius: '999px',
+              background: '#ecfdf5',
+              color: '#047857',
+              border: '1px solid #a7f3d0',
+              fontSize: '0.7rem',
+              fontWeight: 900
             }}>
-              <div style={{ fontSize: '0.72rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.45rem' }}>
-                WHEN TO USE IT
-              </div>
-              <div style={{ fontSize: '0.88rem', color: 'var(--color-text-secondary, #334155)', lineHeight: 1.45 }}>
-                Not for ad reporting. Meta Ads Manager has official spend and conversion reports.
-              </div>
+              <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#10b981' }} />
+              Tracking active
             </div>
           </div>
 
           <GoogleAdsVisitorActivityPanel
             events={events}
             siteSettings={siteSettings}
+            loading={loadingEvents}
             onSelectEvent={setSelectedEvent}
           />
-
-          {/* Full Detailed Table (Exact match of Reference Image 2) */}
-          {loadingEvents ? (
-            <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--color-text-muted)' }}>
-              Loading tracking events from Supabase...
-            </div>
-          ) : events.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '3rem 1.5rem', background: 'var(--color-subtle, #f8fafc)', borderRadius: '12px', border: '1px dashed var(--border-color)' }}>
-              <Activity size={36} style={{ color: '#6366f1', opacity: 0.5, margin: '0 auto 0.5rem' }} />
-              <div style={{ fontWeight: 800, color: 'var(--color-text-primary)', fontSize: '1rem' }}>
-                No tracking events registered yet
-              </div>
-              <div style={{ fontSize: '0.82rem', color: 'var(--color-text-muted)', marginTop: '0.25rem' }}>
-                Click &quot;Simulate page visit&quot; above or visit public pages to test event transmission.
-              </div>
-            </div>
-          ) : (
-            <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '950px' }}>
-                <thead>
-                  <tr style={{ borderBottom: '1.5px solid var(--border-color, #e2e8f0)' }}>
-                    <th style={{ padding: '0.85rem 1rem', color: '#64748b', fontWeight: 800, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>WHEN</th>
-                    <th style={{ padding: '0.85rem 1rem', color: '#64748b', fontWeight: 800, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>WHO</th>
-                    <th style={{ padding: '0.85rem 1rem', color: '#64748b', fontWeight: 800, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>WHAT HAPPENED</th>
-                    <th style={{ padding: '0.85rem 1rem', color: '#64748b', fontWeight: 800, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>DEVICE / OS</th>
-                    <th style={{ padding: '0.85rem 1rem', color: '#64748b', fontWeight: 800, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>TRAFFIC CHANNEL</th>
-                    <th style={{ padding: '0.85rem 1rem', color: '#64748b', fontWeight: 800, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>LOCATION</th>
-                    <th style={{ padding: '0.85rem 1rem', color: '#64748b', fontWeight: 800, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>PAGE</th>
-                    <th style={{ padding: '0.85rem 1rem', color: '#64748b', fontWeight: 800, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.04em', textAlign: 'right' }}>DETAILS</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {events.map((ev, idx) => {
-                    const timeDisplay = formatEventTime(ev.event_time || ev.created_at);
-                    const tel = ev.telemetry || {};
-                    const whoDisplay = ev.user_role || (ev.user_email ? `Customer (${ev.user_email})` : 'Guest Visitor');
-                    const whatDisplay = ev.event_name || 'PageView';
-
-                    const deviceDisplay = tel.os ? `${tel.browser || 'Browser'} / ${tel.os} (${tel.deviceType || 'Desktop'})` : (ev.source || 'Desktop');
-                    const trafficChannel = tel.trafficChannel || (ev.traffic_source?.startsWith('{') ? 'Direct' : (ev.traffic_source || 'Direct'));
-                    const locationDisplay = tel.city && tel.city !== 'Unknown'
-                      ? `${tel.city}, ${tel.country || ''}`
-                      : (tel.country && tel.country !== 'Unknown' ? tel.country : '—');
-                    const pageDisplay = ev.page_path || ev.page_url || '/';
-                    const isReturning = Boolean(tel.isReturningVisitor || (tel.visitCount && tel.visitCount > 1));
-
-                    return (
-                      <tr key={ev.id || idx} style={{ borderBottom: '1px solid var(--border-color, #e2e8f0)', background: 'transparent' }}>
-                        <td style={{ padding: '1rem', fontSize: '0.84rem', color: '#64748b', whiteSpace: 'nowrap' }}>
-                          {timeDisplay}
-                        </td>
-                        <td style={{ padding: '1rem', fontSize: '0.84rem' }}>
-                          <div style={{ fontWeight: 600, color: 'var(--color-text-primary, #0f172a)' }}>{whoDisplay}</div>
-                          {isReturning && (
-                            <span style={{ display: 'inline-block', fontSize: '0.68rem', fontWeight: 700, padding: '1px 6px', borderRadius: '4px', background: '#fef3c7', color: '#b45309', marginTop: '2px' }}>
-                              Visit #{tel.visitCount}
-                            </span>
-                          )}
-                        </td>
-                        <td style={{ padding: '1rem', fontSize: '0.88rem' }}>
-                          <span style={{
-                            display: 'inline-block',
-                            padding: '3px 8px',
-                            borderRadius: '6px',
-                            fontWeight: 700,
-                            fontSize: '0.75rem',
-                            background: whatDisplay === 'PageView' ? '#e0f2fe' : (whatDisplay === 'InitiateCheckout' || whatDisplay === 'Purchase' ? '#dcfce7' : '#f3e8ff'),
-                            color: whatDisplay === 'PageView' ? '#0369a1' : (whatDisplay === 'InitiateCheckout' || whatDisplay === 'Purchase' ? '#15803d' : '#7e22ce')
-                          }}>
-                            {whatDisplay}
-                          </span>
-                        </td>
-                        <td style={{ padding: '1rem', fontSize: '0.82rem', color: '#64748b' }}>
-                          {deviceDisplay}
-                        </td>
-                        <td style={{ padding: '1rem', fontSize: '0.82rem' }}>
-                          <span style={{ fontWeight: 600, color: 'var(--color-text-primary, #334155)' }}>{trafficChannel}</span>
-                          {tel.fbclid && (
-                            <span style={{ display: 'block', fontSize: '0.68rem', color: '#2563eb', fontWeight: 700 }}>Meta Ad Click</span>
-                          )}
-                          {tel.utmCampaign && (
-                            <span style={{ display: 'block', fontSize: '0.68rem', color: '#64748b' }}>Campaign: {tel.utmCampaign}</span>
-                          )}
-                        </td>
-                        <td style={{ padding: '1rem', fontSize: '0.82rem', color: '#64748b' }}>
-                          {locationDisplay}
-                        </td>
-                        <td style={{ padding: '1rem', fontSize: '0.82rem', color: '#64748b', fontFamily: 'monospace' }}>
-                          {pageDisplay}
-                        </td>
-                        <td style={{ padding: '1rem', textAlign: 'right' }}>
-                          <button
-                            type="button"
-                            onClick={() => setSelectedEvent(ev)}
-                            style={{
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              gap: '0.35rem',
-                              padding: '0.45rem 0.75rem',
-                              borderRadius: '8px',
-                              border: '1px solid var(--border-color, #cbd5e1)',
-                              background: 'var(--color-surface, #ffffff)',
-                              color: 'var(--color-text-primary, #0f172a)',
-                              fontSize: '0.78rem',
-                              fontWeight: 700,
-                              cursor: 'pointer',
-                              boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
-                            }}
-                          >
-                            <Eye size={13} style={{ color: '#2563eb' }} /> View Details
-                          </button>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          )}
-
         </div>
       )}
 

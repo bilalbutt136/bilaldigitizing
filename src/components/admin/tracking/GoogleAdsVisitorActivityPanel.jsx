@@ -1,7 +1,15 @@
 'use client';
 
 import React, { useMemo, useState } from 'react';
-import { Activity, BadgeDollarSign, Eye, Filter, MapPin, Search, Users } from 'lucide-react';
+import {
+  Activity,
+  BadgeDollarSign,
+  Eye,
+  Filter,
+  MapPin,
+  Search,
+  Users
+} from 'lucide-react';
 
 const getTelemetry = (event) => event?.telemetry || {};
 
@@ -28,13 +36,11 @@ const formatTime = (value) => {
   if (!value) return '—';
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return String(value);
-  return date.toLocaleString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    hour: 'numeric',
-    minute: '2-digit',
-    hour12: true
-  });
+
+  return {
+    date: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+    time: date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })
+  };
 };
 
 const shortVisitorId = (value) => {
@@ -62,28 +68,33 @@ const formatLocation = (telemetry = {}) => {
     .join(', ');
 
   if (locality && country && country.toLowerCase() !== 'unknown') {
-    return {
-      primary: locality,
-      secondary: country
-    };
+    return { primary: locality, secondary: country };
   }
 
   if (country && country.toLowerCase() !== 'unknown') {
-    return {
-      primary: country,
-      secondary: ''
-    };
+    return { primary: country, secondary: '' };
   }
 
-  return {
-    primary: 'Unknown',
-    secondary: 'Location unavailable'
-  };
+  return { primary: 'Unknown', secondary: 'Location unavailable' };
+};
+
+const eventBadgeStyle = (eventName) => {
+  if (/purchase/i.test(eventName)) {
+    return { background: '#dcfce7', color: '#15803d', border: '#bbf7d0' };
+  }
+  if (/checkout|payment/i.test(eventName)) {
+    return { background: '#fef3c7', color: '#b45309', border: '#fde68a' };
+  }
+  if (eventName === 'PageView') {
+    return { background: '#e0f2fe', color: '#0369a1', border: '#bae6fd' };
+  }
+  return { background: '#f3e8ff', color: '#7e22ce', border: '#e9d5ff' };
 };
 
 export const GoogleAdsVisitorActivityPanel = ({
   events = [],
   siteSettings = {},
+  loading = false,
   onSelectEvent
 }) => {
   const [filter, setFilter] = useState('all');
@@ -154,146 +165,448 @@ export const GoogleAdsVisitorActivityPanel = ({
 
   const summaryCards = [
     {
-      label: 'Google Ads Tag',
-      value: siteSettings?.googleAdsTagId ? 'Connected' : 'Not Configured',
-      note: siteSettings?.googleAdsTagId || 'No AW tag saved',
-      icon: <BadgeDollarSign size={18} />
+      label: 'Google Ads',
+      value: siteSettings?.googleAdsTagId ? 'Connected' : 'Not set',
+      note: siteSettings?.googleAdsTagId || 'Google tag missing',
+      icon: <BadgeDollarSign size={18} />,
+      tone: '#2563eb'
     },
     {
-      label: 'Google Ads Visitors',
+      label: 'Ad Visitors',
       value: analytics.uniqueGoogleVisitors,
-      note: 'Unique visitors with Google Ads attribution',
-      icon: <Users size={18} />
+      note: 'Unique paid-search visitors',
+      icon: <Users size={18} />,
+      tone: '#7c3aed'
     },
     {
-      label: 'Ads Purchases Sent',
+      label: 'Purchases Sent',
       value: analytics.googleAdsConversions.length,
-      note: siteSettings?.googleAdsPurchaseLabel ? 'Purchase conversion active' : 'Conversion label missing',
-      icon: <Activity size={18} />
+      note: siteSettings?.googleAdsPurchaseLabel ? 'Conversion event active' : 'Conversion label missing',
+      icon: <Activity size={18} />,
+      tone: '#059669'
     },
     {
-      label: 'Ads Conversion Value',
+      label: 'Conversion Value',
       value: '$' + analytics.conversionValue.toFixed(2),
-      note: analytics.uniqueVisitors + ' unique website visitors recorded',
-      icon: <BadgeDollarSign size={18} />
+      note: analytics.uniqueVisitors + ' total unique visitors',
+      icon: <BadgeDollarSign size={18} />,
+      tone: '#ea580c'
     }
   ];
 
-  return (
-    <section style={{
-      border: '1px solid var(--border-color, #e2e8f0)',
-      borderRadius: '16px',
-      background: 'var(--bg-card, #ffffff)',
-      padding: '1rem',
-      marginBottom: '1.25rem'
-    }}>
-      <div style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        gap: '1rem',
-        alignItems: 'flex-start',
-        flexWrap: 'wrap',
-        marginBottom: '1rem'
-      }}>
-        <div>
-          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-            <BadgeDollarSign size={20} style={{ color: '#2563eb' }} />
-            <h4 style={{
-              margin: 0,
-              color: 'var(--color-text-primary, #0f172a)',
-              fontSize: '1.05rem',
-              fontWeight: 900
-            }}>
-              Google Ads & Visitor Activity
-            </h4>
-          </div>
-          <p style={{
-            margin: '0.25rem 0 0',
-            color: 'var(--color-text-muted, #64748b)',
-            fontSize: '0.78rem'
-          }}>
-            Follow paid-ad visitors from landing page through checkout and successful purchase.
-          </p>
-        </div>
+  const renderVisitor = (event) => {
+    const tel = getTelemetry(event);
+    const visitorId = tel.visitorId || '';
 
-        {focusedVisitorId && (
-          <button
-            type="button"
-            onClick={() => setFocusedVisitorId('')}
-            style={{
-              border: '1px solid #bfdbfe',
-              background: '#eff6ff',
-              color: '#1d4ed8',
-              borderRadius: '9px',
-              padding: '0.45rem 0.7rem',
-              fontWeight: 800,
-              fontSize: '0.75rem',
-              cursor: 'pointer'
-            }}
-          >
-            Clear visitor focus
-          </button>
+    return (
+      <button
+        type="button"
+        disabled={!visitorId}
+        onClick={() => visitorId && setFocusedVisitorId(visitorId)}
+        title={visitorId || 'Anonymous visitor'}
+        className="gav-visitor-button"
+      >
+        <span className="gav-visitor-name">
+          {tel.userName || event?.user_role || 'Guest Visitor'}
+        </span>
+        <span className="gav-visitor-id">{shortVisitorId(visitorId)}</span>
+      </button>
+    );
+  };
+
+  const renderAttribution = (event) => {
+    const tel = getTelemetry(event);
+    const googleEvent = isGoogleAdsEvent(event);
+
+    return (
+      <div>
+        <div className={googleEvent ? 'gav-source gav-source-google' : 'gav-source'}>
+          {googleEvent ? 'Google Ads' : (tel.trafficChannel || 'Direct')}
+        </div>
+        {tel.gclid && (
+          <div className="gav-subtext gav-green">
+            gclid · {String(tel.gclid).slice(0, 14)}…
+          </div>
+        )}
+        {!tel.gclid && tel.utmCampaign && (
+          <div className="gav-subtext">{tel.utmCampaign}</div>
         )}
       </div>
+    );
+  };
 
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))',
-        gap: '0.75rem',
-        marginBottom: '1rem'
-      }}>
+  const renderLocation = (event) => {
+    const location = formatLocation(getTelemetry(event));
+
+    return (
+      <div className="gav-location">
+        <MapPin size={13} />
+        <div>
+          <div className="gav-location-primary">{location.primary}</div>
+          {location.secondary && (
+            <div className="gav-subtext">{location.secondary}</div>
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <section className="gav-shell">
+      <style dangerouslySetInnerHTML={{ __html: `
+        .gav-shell {
+          border: 1px solid var(--border-color, #e2e8f0);
+          border-radius: 16px;
+          background: color-mix(in srgb, var(--bg-card, #ffffff) 94%, white 6%);
+          overflow: hidden;
+          box-shadow: 0 10px 28px rgba(15, 23, 42, 0.05);
+        }
+        .gav-summary {
+          display: grid;
+          grid-template-columns: repeat(4, minmax(0, 1fr));
+          gap: 0.75rem;
+          padding: 1rem;
+          border-bottom: 1px solid var(--border-color, #e2e8f0);
+        }
+        .gav-stat {
+          min-width: 0;
+          padding: 0.9rem 1rem;
+          border: 1px solid var(--border-color, #e2e8f0);
+          border-radius: 12px;
+          background: color-mix(in srgb, var(--color-surface, #ffffff) 94%, white 6%);
+        }
+        .gav-stat-top {
+          display: flex;
+          align-items: center;
+          gap: 0.45rem;
+          margin-bottom: 0.35rem;
+        }
+        .gav-stat-icon {
+          width: 30px;
+          height: 30px;
+          border-radius: 9px;
+          display: grid;
+          place-items: center;
+          background: color-mix(in srgb, currentColor 9%, transparent);
+        }
+        .gav-stat-label {
+          font-size: 0.67rem;
+          font-weight: 900;
+          letter-spacing: 0.055em;
+          text-transform: uppercase;
+          color: var(--color-text-muted, #64748b);
+        }
+        .gav-stat-value {
+          font-size: 1.2rem;
+          font-weight: 900;
+          color: var(--color-text-primary, #0f172a);
+          line-height: 1.15;
+        }
+        .gav-stat-note {
+          margin-top: 0.22rem;
+          font-size: 0.69rem;
+          color: var(--color-text-muted, #64748b);
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+        .gav-toolbar {
+          display: flex;
+          justify-content: space-between;
+          gap: 0.75rem;
+          align-items: center;
+          flex-wrap: wrap;
+          padding: 0.85rem 1rem;
+          border-bottom: 1px solid var(--border-color, #e2e8f0);
+          background: color-mix(in srgb, var(--color-subtle, #f8fafc) 82%, transparent);
+        }
+        .gav-filter-row {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 0.4rem;
+        }
+        .gav-filter {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.3rem;
+          border: 1px solid var(--border-color, #cbd5e1);
+          border-radius: 9px;
+          padding: 0.45rem 0.7rem;
+          background: var(--color-surface, #ffffff);
+          color: var(--color-text-primary, #0f172a);
+          font-size: 0.72rem;
+          font-weight: 800;
+          cursor: pointer;
+          transition: all .18s ease;
+        }
+        .gav-filter:hover {
+          border-color: #93c5fd;
+          transform: translateY(-1px);
+        }
+        .gav-filter.active {
+          background: #2563eb;
+          color: #ffffff;
+          border-color: #2563eb;
+          box-shadow: 0 4px 10px rgba(37, 99, 235, .18);
+        }
+        .gav-search {
+          position: relative;
+          min-width: 260px;
+          flex: 0 1 360px;
+        }
+        .gav-search svg {
+          position: absolute;
+          left: .7rem;
+          top: 50%;
+          transform: translateY(-50%);
+          color: #94a3b8;
+          pointer-events: none;
+        }
+        .gav-search input {
+          width: 100%;
+          border: 1px solid var(--border-color, #cbd5e1);
+          border-radius: 9px;
+          padding: .55rem .75rem .55rem 2.05rem;
+          background: var(--color-surface, #ffffff);
+          color: var(--color-text-primary, #0f172a);
+          font-size: .76rem;
+          outline: none;
+        }
+        .gav-search input:focus {
+          border-color: #60a5fa;
+          box-shadow: 0 0 0 3px rgba(59,130,246,.10);
+        }
+        .gav-focus {
+          margin: .75rem 1rem 0;
+          padding: .6rem .75rem;
+          border-radius: 9px;
+          border: 1px solid #bfdbfe;
+          background: #eff6ff;
+          color: #1e40af;
+          font-size: .73rem;
+          font-weight: 700;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: .75rem;
+        }
+        .gav-focus button {
+          border: 0;
+          background: transparent;
+          color: #2563eb;
+          font-weight: 900;
+          cursor: pointer;
+          font-size: .7rem;
+        }
+        .gav-table-wrap {
+          overflow-x: auto;
+          scrollbar-width: thin;
+        }
+        .gav-table {
+          width: 100%;
+          border-collapse: collapse;
+          min-width: 1050px;
+          text-align: left;
+        }
+        .gav-table th {
+          padding: .72rem .8rem;
+          background: color-mix(in srgb, var(--color-subtle, #f8fafc) 88%, transparent);
+          color: var(--color-text-muted, #64748b);
+          font-size: .66rem;
+          font-weight: 900;
+          letter-spacing: .055em;
+          text-transform: uppercase;
+          white-space: nowrap;
+          border-bottom: 1px solid var(--border-color, #e2e8f0);
+        }
+        .gav-table td {
+          padding: .78rem .8rem;
+          vertical-align: middle;
+          border-bottom: 1px solid color-mix(in srgb, var(--border-color, #e2e8f0) 75%, transparent);
+          font-size: .74rem;
+        }
+        .gav-table tbody tr {
+          transition: background .15s ease;
+        }
+        .gav-table tbody tr:hover {
+          background: color-mix(in srgb, #eff6ff 45%, transparent);
+        }
+        .gav-time-date {
+          color: var(--color-text-primary, #0f172a);
+          font-weight: 800;
+          white-space: nowrap;
+        }
+        .gav-time-clock {
+          color: var(--color-text-muted, #64748b);
+          font-size: .65rem;
+          margin-top: 2px;
+          white-space: nowrap;
+        }
+        .gav-visitor-button {
+          border: 0;
+          background: transparent;
+          padding: 0;
+          text-align: left;
+          cursor: pointer;
+          max-width: 170px;
+        }
+        .gav-visitor-name {
+          display: block;
+          color: var(--color-text-primary, #0f172a);
+          font-weight: 800;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+        .gav-visitor-id {
+          display: block;
+          margin-top: 2px;
+          color: #2563eb;
+          font-size: .63rem;
+          font-family: monospace;
+        }
+        .gav-event {
+          display: inline-flex;
+          align-items: center;
+          border: 1px solid;
+          border-radius: 7px;
+          padding: .28rem .48rem;
+          font-size: .67rem;
+          font-weight: 900;
+          white-space: nowrap;
+        }
+        .gav-source {
+          font-weight: 800;
+          color: var(--color-text-primary, #334155);
+        }
+        .gav-source-google,
+        .gav-green {
+          color: #15803d;
+        }
+        .gav-subtext {
+          font-size: .62rem;
+          color: var(--color-text-muted, #64748b);
+          margin-top: 2px;
+        }
+        .gav-location {
+          display: flex;
+          align-items: flex-start;
+          gap: .35rem;
+          color: #2563eb;
+          min-width: 135px;
+        }
+        .gav-location svg {
+          flex-shrink: 0;
+          margin-top: 2px;
+        }
+        .gav-location-primary {
+          color: var(--color-text-primary, #0f172a);
+          font-weight: 800;
+          line-height: 1.25;
+        }
+        .gav-page {
+          max-width: 180px;
+          color: var(--color-text-muted, #64748b);
+          font-family: monospace;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+        .gav-value {
+          color: #15803d;
+          font-weight: 900;
+          white-space: nowrap;
+        }
+        .gav-details {
+          display: inline-flex;
+          align-items: center;
+          gap: .28rem;
+          border: 1px solid #bfdbfe;
+          background: #eff6ff;
+          color: #1d4ed8;
+          border-radius: 8px;
+          padding: .38rem .55rem;
+          font-size: .67rem;
+          font-weight: 900;
+          cursor: pointer;
+        }
+        .gav-state {
+          display: grid;
+          place-items: center;
+          min-height: 180px;
+          padding: 2rem;
+          text-align: center;
+          color: var(--color-text-muted, #64748b);
+          font-size: .78rem;
+        }
+        .gav-mobile-list {
+          display: none;
+          padding: .75rem;
+          gap: .65rem;
+        }
+        .gav-mobile-card {
+          border: 1px solid var(--border-color, #e2e8f0);
+          border-radius: 12px;
+          padding: .85rem;
+          background: var(--color-surface, #ffffff);
+        }
+        .gav-mobile-top {
+          display: flex;
+          justify-content: space-between;
+          gap: .5rem;
+          align-items: flex-start;
+          margin-bottom: .7rem;
+        }
+        .gav-mobile-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: .65rem;
+          font-size: .7rem;
+        }
+        .gav-mobile-label {
+          display: block;
+          color: var(--color-text-muted, #64748b);
+          font-size: .61rem;
+          font-weight: 900;
+          text-transform: uppercase;
+          margin-bottom: .18rem;
+        }
+        @media (max-width: 1100px) {
+          .gav-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        }
+        @media (max-width: 760px) {
+          .gav-summary { grid-template-columns: 1fr 1fr; padding: .75rem; gap: .55rem; }
+          .gav-stat { padding: .75rem; }
+          .gav-stat-note { white-space: normal; }
+          .gav-toolbar { padding: .75rem; align-items: stretch; }
+          .gav-search { min-width: 100%; flex-basis: 100%; }
+          .gav-filter-row { width: 100%; overflow-x: auto; flex-wrap: nowrap; padding-bottom: 2px; }
+          .gav-filter { white-space: nowrap; }
+          .gav-table-wrap { display: none; }
+          .gav-mobile-list { display: grid; }
+          .gav-focus { margin: .65rem .75rem 0; }
+        }
+        @media (max-width: 480px) {
+          .gav-summary { grid-template-columns: 1fr; }
+          .gav-mobile-grid { grid-template-columns: 1fr; }
+        }
+      ` }} />
+
+      <div className="gav-summary">
         {summaryCards.map((card) => (
-          <div key={card.label} style={{
-            padding: '0.9rem',
-            border: '1px solid var(--border-color, #e2e8f0)',
-            borderRadius: '12px',
-            background: 'var(--color-subtle, #f8fafc)'
-          }}>
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.4rem',
-              color: '#2563eb',
-              marginBottom: '0.3rem'
-            }}>
-              {card.icon}
-              <span style={{
-                fontSize: '0.68rem',
-                fontWeight: 900,
-                textTransform: 'uppercase',
-                letterSpacing: '0.04em'
-              }}>
-                {card.label}
-              </span>
+          <div key={card.label} className="gav-stat">
+            <div className="gav-stat-top">
+              <div className="gav-stat-icon" style={{ color: card.tone }}>{card.icon}</div>
+              <span className="gav-stat-label">{card.label}</span>
             </div>
-            <div style={{
-              color: 'var(--color-text-primary, #0f172a)',
-              fontSize: '1.2rem',
-              fontWeight: 900
-            }}>
-              {card.value}
-            </div>
-            <div style={{
-              color: 'var(--color-text-muted, #64748b)',
-              fontSize: '0.7rem',
-              marginTop: '0.15rem',
-              lineHeight: 1.35
-            }}>
-              {card.note}
-            </div>
+            <div className="gav-stat-value">{card.value}</div>
+            <div className="gav-stat-note" title={card.note}>{card.note}</div>
           </div>
         ))}
       </div>
 
-      <div style={{
-        display: 'flex',
-        gap: '0.55rem',
-        flexWrap: 'wrap',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        marginBottom: '0.85rem'
-      }}>
-        <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
+      <div className="gav-toolbar">
+        <div className="gav-filter-row">
           {[
             ['all', 'All'],
             ['google_ads', 'Google Ads'],
@@ -305,19 +618,7 @@ export const GoogleAdsVisitorActivityPanel = ({
               key={id}
               type="button"
               onClick={() => setFilter(id)}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '0.3rem',
-                border: '1px solid var(--border-color, #cbd5e1)',
-                borderRadius: '8px',
-                padding: '0.42rem 0.65rem',
-                background: filter === id ? '#2563eb' : 'var(--color-surface, #ffffff)',
-                color: filter === id ? '#ffffff' : 'var(--color-text-primary, #0f172a)',
-                fontSize: '0.73rem',
-                fontWeight: 800,
-                cursor: 'pointer'
-              }}
+              className={'gav-filter' + (filter === id ? ' active' : '')}
             >
               {id === 'all' && <Filter size={12} />}
               {label}
@@ -325,190 +626,176 @@ export const GoogleAdsVisitorActivityPanel = ({
           ))}
         </div>
 
-        <div style={{ position: 'relative', minWidth: '240px', flex: '0 1 340px' }}>
-          <Search
-            size={14}
-            style={{
-              position: 'absolute',
-              left: '0.65rem',
-              top: '50%',
-              transform: 'translateY(-50%)',
-              color: '#94a3b8'
-            }}
-          />
+        <div className="gav-search">
+          <Search size={14} />
           <input
             type="search"
             value={search}
             onChange={(event) => setSearch(event.target.value)}
-            placeholder="Search visitor, gclid, page, order..."
-            style={{
-              width: '100%',
-              border: '1px solid var(--border-color, #cbd5e1)',
-              borderRadius: '9px',
-              padding: '0.52rem 0.7rem 0.52rem 1.95rem',
-              background: 'var(--color-surface, #ffffff)',
-              color: 'var(--color-text-primary, #0f172a)',
-              fontSize: '0.76rem'
-            }}
+            placeholder="Search visitor, gclid, location, page, order..."
           />
         </div>
       </div>
 
       {focusedVisitorId && (
-        <div style={{
-          marginBottom: '0.75rem',
-          padding: '0.55rem 0.75rem',
-          borderRadius: '9px',
-          background: '#eff6ff',
-          color: '#1e40af',
-          fontSize: '0.75rem',
-          fontWeight: 700
-        }}>
-          Showing full journey for visitor: {focusedVisitorId}
+        <div className="gav-focus">
+          <span>Showing complete journey for visitor: {focusedVisitorId}</span>
+          <button type="button" onClick={() => setFocusedVisitorId('')}>Clear</button>
         </div>
       )}
 
-      <div style={{ overflowX: 'auto' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '1020px', textAlign: 'left' }}>
-          <thead>
-            <tr style={{ borderBottom: '1px solid var(--border-color, #e2e8f0)' }}>
-              {['When', 'Visitor', 'Activity', 'Attribution', 'Location', 'Page', 'Value', ''].map((heading) => (
-                <th key={heading} style={{
-                  padding: '0.65rem 0.7rem',
-                  color: '#64748b',
-                  fontSize: '0.67rem',
-                  fontWeight: 900,
-                  textTransform: 'uppercase'
-                }}>
-                  {heading}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
+      {loading ? (
+        <div className="gav-state">
+          <div>
+            <Activity size={26} style={{ margin: '0 auto .55rem', color: '#2563eb' }} />
+            Loading visitor activity…
+          </div>
+        </div>
+      ) : visibleEvents.length === 0 ? (
+        <div className="gav-state">
+          <div>
+            <Search size={26} style={{ margin: '0 auto .55rem', color: '#94a3b8' }} />
+            <div style={{ fontWeight: 900, color: 'var(--color-text-primary, #0f172a)', marginBottom: '.2rem' }}>
+              No activity matches this view
+            </div>
+            <div>Try another filter or clear the search field.</div>
+          </div>
+        </div>
+      ) : (
+        <>
+          <div className="gav-table-wrap">
+            <table className="gav-table">
+              <thead>
+                <tr>
+                  <th>When</th>
+                  <th>Visitor</th>
+                  <th>Activity</th>
+                  <th>Source</th>
+                  <th>Location</th>
+                  <th>Page</th>
+                  <th>Value</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                {visibleEvents.slice(0, 100).map((event, index) => {
+                  const tel = getTelemetry(event);
+                  const eventName = event?.event_name || 'PageView';
+                  const time = formatTime(event?.event_time || event?.created_at);
+                  const badge = eventBadgeStyle(eventName);
+
+                  return (
+                    <tr key={event?.id || event?.event_id || index}>
+                      <td>
+                        <div className="gav-time-date">{time.date}</div>
+                        <div className="gav-time-clock">{time.time}</div>
+                      </td>
+                      <td>{renderVisitor(event)}</td>
+                      <td>
+                        <span
+                          className="gav-event"
+                          style={{
+                            background: badge.background,
+                            color: badge.color,
+                            borderColor: badge.border
+                          }}
+                        >
+                          {eventName}
+                        </span>
+                      </td>
+                      <td>{renderAttribution(event)}</td>
+                      <td>{renderLocation(event)}</td>
+                      <td>
+                        <div className="gav-page" title={event?.page_path || tel.pagePath || '/'}>
+                          {event?.page_path || tel.pagePath || '/'}
+                        </div>
+                      </td>
+                      <td className="gav-value">
+                        {event?.value && event.value !== '—' ? event.value : '—'}
+                      </td>
+                      <td style={{ textAlign: 'right' }}>
+                        <button
+                          type="button"
+                          className="gav-details"
+                          onClick={() => onSelectEvent?.(event)}
+                        >
+                          <Eye size={12} /> Details
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="gav-mobile-list">
             {visibleEvents.slice(0, 100).map((event, index) => {
               const tel = getTelemetry(event);
-              const visitorId = tel.visitorId || '';
-              const googleEvent = isGoogleAdsEvent(event);
               const eventName = event?.event_name || 'PageView';
-              const location = formatLocation(tel);
+              const time = formatTime(event?.event_time || event?.created_at);
+              const badge = eventBadgeStyle(eventName);
 
               return (
-                <tr
-                  key={event?.id || event?.event_id || index}
-                  style={{ borderBottom: '1px solid var(--border-color, #eef2f7)' }}
-                >
-                  <td style={{ padding: '0.7rem', fontSize: '0.73rem', color: '#64748b', whiteSpace: 'nowrap' }}>
-                    {formatTime(event?.event_time || event?.created_at)}
-                  </td>
-                  <td style={{ padding: '0.7rem' }}>
-                    <button
-                      type="button"
-                      disabled={!visitorId}
-                      onClick={() => visitorId && setFocusedVisitorId(visitorId)}
-                      title={visitorId || 'Anonymous visitor'}
+                <div key={event?.id || event?.event_id || index} className="gav-mobile-card">
+                  <div className="gav-mobile-top">
+                    <div>{renderVisitor(event)}</div>
+                    <span
+                      className="gav-event"
                       style={{
-                        border: 0,
-                        background: 'transparent',
-                        padding: 0,
-                        textAlign: 'left',
-                        cursor: visitorId ? 'pointer' : 'default'
+                        background: badge.background,
+                        color: badge.color,
+                        borderColor: badge.border
                       }}
                     >
-                      <div style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--color-text-primary, #0f172a)' }}>
-                        {tel.userName || event?.user_role || 'Guest Visitor'}
-                      </div>
-                      <div style={{ fontSize: '0.65rem', color: visitorId ? '#2563eb' : '#94a3b8', fontFamily: 'monospace' }}>
-                        {shortVisitorId(visitorId)}
-                      </div>
-                    </button>
-                  </td>
-                  <td style={{ padding: '0.7rem' }}>
-                    <span style={{
-                      display: 'inline-block',
-                      borderRadius: '6px',
-                      padding: '0.25rem 0.45rem',
-                      background: /purchase/i.test(eventName) ? '#dcfce7' : (eventName === 'PageView' ? '#e0f2fe' : '#f3e8ff'),
-                      color: /purchase/i.test(eventName) ? '#15803d' : (eventName === 'PageView' ? '#0369a1' : '#7e22ce'),
-                      fontSize: '0.68rem',
-                      fontWeight: 900
-                    }}>
                       {eventName}
                     </span>
-                  </td>
-                  <td style={{ padding: '0.7rem', fontSize: '0.72rem' }}>
-                    <div style={{ fontWeight: 800, color: googleEvent ? '#15803d' : 'var(--color-text-primary, #334155)' }}>
-                      {googleEvent ? 'Google Ads' : (tel.trafficChannel || 'Direct')}
+                  </div>
+
+                  <div className="gav-mobile-grid">
+                    <div>
+                      <span className="gav-mobile-label">When</span>
+                      <div className="gav-time-date">{time.date} · {time.time}</div>
                     </div>
-                    {tel.gclid && (
-                      <div style={{ fontSize: '0.62rem', color: '#15803d' }}>
-                        gclid: {String(tel.gclid).slice(0, 18)}…
-                      </div>
-                    )}
-                    {!tel.gclid && tel.utmCampaign && (
-                      <div style={{ fontSize: '0.62rem', color: '#64748b' }}>
-                        {tel.utmCampaign}
-                      </div>
-                    )}
-                  </td>
-                  <td style={{ padding: '0.7rem', fontSize: '0.72rem', color: '#475569', minWidth: '150px' }}>
-                    <div style={{ display: 'flex', gap: '0.35rem', alignItems: 'flex-start' }}>
-                      <MapPin size={13} style={{ color: '#2563eb', marginTop: '2px', flexShrink: 0 }} />
-                      <div>
-                        <div style={{ fontWeight: 800, color: 'var(--color-text-primary, #0f172a)', lineHeight: 1.25 }}>
-                          {location.primary}
-                        </div>
-                        {location.secondary && (
-                          <div style={{ fontSize: '0.64rem', color: '#64748b', marginTop: '1px' }}>
-                            {location.secondary}
-                          </div>
-                        )}
-                      </div>
+                    <div>
+                      <span className="gav-mobile-label">Source</span>
+                      {renderAttribution(event)}
                     </div>
-                  </td>
-                  <td style={{ padding: '0.7rem', fontSize: '0.7rem', color: '#64748b', fontFamily: 'monospace' }}>
-                    {event?.page_path || tel.pagePath || '/'}
-                  </td>
-                  <td style={{ padding: '0.7rem', fontSize: '0.73rem', fontWeight: 800, color: '#15803d' }}>
-                    {event?.value && event.value !== '—' ? event.value : '—'}
-                  </td>
-                  <td style={{ padding: '0.7rem', textAlign: 'right' }}>
+                    <div>
+                      <span className="gav-mobile-label">Location</span>
+                      {renderLocation(event)}
+                    </div>
+                    <div>
+                      <span className="gav-mobile-label">Page</span>
+                      <div className="gav-page">{event?.page_path || tel.pagePath || '/'}</div>
+                    </div>
+                  </div>
+
+                  <div style={{
+                    marginTop: '.75rem',
+                    paddingTop: '.65rem',
+                    borderTop: '1px solid var(--border-color, #e2e8f0)',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    gap: '.75rem'
+                  }}>
+                    <div className="gav-value">
+                      {event?.value && event.value !== '—' ? event.value : 'No value'}
+                    </div>
                     <button
                       type="button"
+                      className="gav-details"
                       onClick={() => onSelectEvent?.(event)}
-                      style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '0.25rem',
-                        border: '1px solid var(--border-color, #cbd5e1)',
-                        background: 'var(--color-surface, #ffffff)',
-                        borderRadius: '7px',
-                        padding: '0.35rem 0.5rem',
-                        color: '#2563eb',
-                        fontSize: '0.67rem',
-                        fontWeight: 800,
-                        cursor: 'pointer'
-                      }}
                     >
                       <Eye size={12} /> Details
                     </button>
-                  </td>
-                </tr>
+                  </div>
+                </div>
               );
             })}
-          </tbody>
-        </table>
-      </div>
-
-      {visibleEvents.length === 0 && (
-        <div style={{
-          textAlign: 'center',
-          padding: '1.5rem',
-          color: 'var(--color-text-muted, #64748b)',
-          fontSize: '0.78rem'
-        }}>
-          No visitor activity matches the current filter.
-        </div>
+          </div>
+        </>
       )}
     </section>
   );
