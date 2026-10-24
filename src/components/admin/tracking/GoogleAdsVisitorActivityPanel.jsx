@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useMemo, useState } from 'react';
-import { Activity, BadgeDollarSign, Eye, Filter, Search, Users } from 'lucide-react';
+import { Activity, BadgeDollarSign, Eye, Filter, MapPin, Search, Users } from 'lucide-react';
 
 const getTelemetry = (event) => event?.telemetry || {};
 
@@ -41,6 +41,44 @@ const shortVisitorId = (value) => {
   const text = String(value || '');
   if (!text) return 'Anonymous';
   return text.length > 18 ? text.slice(0, 10) + '…' + text.slice(-5) : text;
+};
+
+const countryNames = {
+  US: 'United States',
+  CA: 'Canada',
+  GB: 'United Kingdom',
+  AU: 'Australia',
+  PK: 'Pakistan'
+};
+
+const formatLocation = (telemetry = {}) => {
+  const city = String(telemetry.city || '').trim();
+  const region = String(telemetry.region || '').trim();
+  const countryCode = String(telemetry.country || '').trim().toUpperCase();
+  const country = countryNames[countryCode] || countryCode;
+
+  const locality = [city, region]
+    .filter((value) => value && value.toLowerCase() !== 'unknown')
+    .join(', ');
+
+  if (locality && country && country.toLowerCase() !== 'unknown') {
+    return {
+      primary: locality,
+      secondary: country
+    };
+  }
+
+  if (country && country.toLowerCase() !== 'unknown') {
+    return {
+      primary: country,
+      secondary: ''
+    };
+  }
+
+  return {
+    primary: 'Unknown',
+    secondary: 'Location unavailable'
+  };
 };
 
 export const GoogleAdsVisitorActivityPanel = ({
@@ -107,6 +145,7 @@ export const GoogleAdsVisitorActivityPanel = ({
         tel.trafficSource,
         tel.trafficChannel,
         tel.city,
+        tel.region,
         tel.country,
         tel.transactionId
       ].some((value) => String(value || '').toLowerCase().includes(needle));
@@ -330,10 +369,10 @@ export const GoogleAdsVisitorActivityPanel = ({
       )}
 
       <div style={{ overflowX: 'auto' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '850px', textAlign: 'left' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '1020px', textAlign: 'left' }}>
           <thead>
             <tr style={{ borderBottom: '1px solid var(--border-color, #e2e8f0)' }}>
-              {['When', 'Visitor', 'Activity', 'Attribution', 'Page', 'Value', ''].map((heading) => (
+              {['When', 'Visitor', 'Activity', 'Attribution', 'Location', 'Page', 'Value', ''].map((heading) => (
                 <th key={heading} style={{
                   padding: '0.65rem 0.7rem',
                   color: '#64748b',
@@ -352,6 +391,7 @@ export const GoogleAdsVisitorActivityPanel = ({
               const visitorId = tel.visitorId || '';
               const googleEvent = isGoogleAdsEvent(event);
               const eventName = event?.event_name || 'PageView';
+              const location = formatLocation(tel);
 
               return (
                 <tr
@@ -410,6 +450,21 @@ export const GoogleAdsVisitorActivityPanel = ({
                         {tel.utmCampaign}
                       </div>
                     )}
+                  </td>
+                  <td style={{ padding: '0.7rem', fontSize: '0.72rem', color: '#475569', minWidth: '150px' }}>
+                    <div style={{ display: 'flex', gap: '0.35rem', alignItems: 'flex-start' }}>
+                      <MapPin size={13} style={{ color: '#2563eb', marginTop: '2px', flexShrink: 0 }} />
+                      <div>
+                        <div style={{ fontWeight: 800, color: 'var(--color-text-primary, #0f172a)', lineHeight: 1.25 }}>
+                          {location.primary}
+                        </div>
+                        {location.secondary && (
+                          <div style={{ fontSize: '0.64rem', color: '#64748b', marginTop: '1px' }}>
+                            {location.secondary}
+                          </div>
+                        )}
+                      </div>
+                    </div>
                   </td>
                   <td style={{ padding: '0.7rem', fontSize: '0.7rem', color: '#64748b', fontFamily: 'monospace' }}>
                     {event?.page_path || tel.pagePath || '/'}
