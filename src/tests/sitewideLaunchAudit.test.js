@@ -4,24 +4,26 @@ import fs from 'node:fs';
 
 const source = (file) => fs.readFileSync(file, 'utf8');
 
-test('public contact form never reports delivery success on a rejected request', () => {
+test('public contact form saves inquiries before secondary notification delivery', () => {
   const form = source('app/contact/page.jsx');
   const route = source('app/api/contact/route.js');
+
   assert.match(form, /fetch\('\/api\/contact'/);
   assert.doesNotMatch(form, /fetch\('\/api\/email'/);
   assert.match(form, /!response\.ok \|\| result\?\.success !== true/);
   assert.match(form, /setSubmitError\(message\)/);
+
   assert.match(route, /checkDistributedRateLimit/);
-  assert.match(route, /resolveAdminNotificationConfig/);
   assert.match(route, /createAdminClient/);
   assert.match(route, /inbox-contact_/);
   assert.match(route, /\.from\('conversations'\)/);
   assert.match(route, /\.from\('messages'\)/);
   assert.match(route, /unread_admin_count/);
-  assert.match(route, /conversationId=/);
-  assert.match(route, /Open & Reply in Admin Inbox/);
-  assert.match(route, /escapeHtml\(inquiry\.message\)/);
-  assert.match(route, /if \(error \|\| !data\?\.id\)/);
+  assert.match(route, /ensureAdminMessageNotification/);
+  assert.match(route, /sendNotificationEmail/);
+  assert.match(route, /dispatchChatMessagePush/);
+  assert.match(route, /Your inquiry has been received and saved/);
+  assert.doesNotMatch(route, /new Resend\(/);
 });
 
 test('sitewide theme retains full styles and both distinct semantic moods', () => {

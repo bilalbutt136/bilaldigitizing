@@ -156,6 +156,20 @@ async function POST_impl(request) {
       return NextResponse.json({ error: 'Failed to record message in Help Desk.' }, { status: 500 });
     }
 
+    try {
+      const { ensureAdminMessageNotification } = await import('../../../../src/lib/adminMessageNotification.js');
+      await ensureAdminMessageNotification({
+        messageId: insertedMsg.id,
+        conversationId,
+        senderName,
+        clientEmail: guestEmail,
+        messageText: rawMessage,
+        createdAt: insertedMsg.created_at || nowIso
+      });
+    } catch (notificationError) {
+      logServerCaughtError(notificationError, { operation: 'chat.guest_persist_admin_alert' });
+    }
+
     // 3. Post-response fan-out (Realtime broadcast + notifications)
     after(async () => {
       try {

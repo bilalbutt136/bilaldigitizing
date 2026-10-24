@@ -191,6 +191,22 @@ async function POST_impl(req) {
         ? '24/7 Live Support'
         : (orderId ? `Order #${orderId}` : 'Studio Direct Inbox');
 
+      if (sender === 'client' && data.id && conversationId) {
+        try {
+          const { ensureAdminMessageNotification } = await import('../../../src/lib/adminMessageNotification.js');
+          await ensureAdminMessageNotification({
+            messageId: data.id,
+            conversationId,
+            senderName,
+            clientEmail,
+            messageText,
+            createdAt: data.created_at || null
+          });
+        } catch (notificationError) {
+          logServerCaughtError(notificationError, { operation: 'notifications.persist_admin_message_alert_failed' });
+        }
+      }
+
       const { sendNotificationEmail } = await import('../../../src/lib/emailService.js');
       const result = await sendNotificationEmail({
         type: 'NEW_MESSAGE',
@@ -201,6 +217,7 @@ async function POST_impl(req) {
         senderName,
         recipientEmail: sender === 'admin' ? clientEmail : null,
         channel,
+        conversationId,
         attachments
       });
 

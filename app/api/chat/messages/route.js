@@ -346,6 +346,22 @@ async function POST_impl(request) {
       return NextResponse.json({ error: msgErr.message }, { status: 500 });
     }
 
+    if (effectiveSender === 'client') {
+      try {
+        const { ensureAdminMessageNotification } = await import('../../../../src/lib/adminMessageNotification.js');
+        await ensureAdminMessageNotification({
+          messageId: insertedMsg.id,
+          conversationId: conversation_id,
+          senderName: effectiveSenderName,
+          clientEmail: cleanEmail,
+          messageText: (text || '').trim() || normalizedAttachments[0]?.name || 'Sent an attachment.',
+          createdAt: insertedMsg.created_at || nowIso
+        });
+      } catch (notificationError) {
+        console.warn('[Chat Admin Alert Persistence Notice]:', notificationError?.message);
+      }
+    }
+
     // 3. Update conversation last_message snippet and increment unread counter
     try {
       let snippet = (text || '').trim();

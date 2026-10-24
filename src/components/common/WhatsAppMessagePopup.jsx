@@ -101,9 +101,9 @@ export const WhatsAppMessagePopup = () => {
     }
 
     if (isAdmin) {
-      router.push(`/admin-portal?tab=inbox${convId ? `&chatId=${encodeURIComponent(convId)}` : ''}`);
+      router.push(`/admin-portal?tab=${String(convId || '').startsWith('support-') ? 'support' : 'inbox'}${convId ? `&conversationId=${encodeURIComponent(convId)}` : ''}`);
     } else {
-      router.push(`/client-portal?tab=inbox${convId ? `&chatId=${encodeURIComponent(convId)}` : ''}`);
+      router.push(`/client-portal?tab=${String(convId || '').startsWith('support-') ? 'support' : 'inbox'}${convId ? `&conversationId=${encodeURIComponent(convId)}` : ''}`);
     }
   };
 

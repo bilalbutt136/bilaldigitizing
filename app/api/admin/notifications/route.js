@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { supabaseAdmin, hasServiceRole } from '../../../../src/lib/supabaseAdmin';
 import { getServerAuthUser } from '../../../../src/lib/supabase/serverAuth';
 import { enforceApiBurstLimit } from '../../../../src/lib/apiBurstGuard.js';
+import { reconcileAdminMessageNotifications } from '../../../../src/lib/adminMessageNotification.js';
 
 const NOTIFICATION_FIELDS = 'id, user_id, recipient_role, recipient_email, title, message, type, link, order_id, read, created_at, updated_at';
 
@@ -41,6 +42,14 @@ async function GET_impl(request) {
 
     const { searchParams } = new URL(request.url);
     const requestedLimit = Number(searchParams.get('limit') || 100);
+
+    // Self-healing safety net: if a message was saved but its admin alert failed
+    // during the original request, rebuild the missing alert before returning history.
+    try {
+      await reconcileAdminMessageNotifications({ limit: 200 });
+    } catch (reconcileError) {
+      console.warn('[Admin Notification Reconcile Notice]:', reconcileError?.message);
+    }
     const limit = Math.min(200, Math.max(20, Number.isFinite(requestedLimit) ? requestedLimit : 100));
 
     const { data, error } = await supabaseAdmin

@@ -1,7 +1,7 @@
 import { NextResponse, after } from 'next/server';
-import { Resend } from 'resend';
+
 import { checkDistributedRateLimit, getClientIp, getRateLimitHeaders } from '../../../src/lib/rateLimit';
-import { resolveAdminNotificationConfig, EMAIL_REGEX } from '../../../src/lib/emailService';
+import { EMAIL_REGEX } from '../../../src/lib/emailService';
 import { createAdminClient } from '../../../src/lib/supabase/admin';
 import { withApiObservability, logServerCaughtError } from '../../../src/lib/observability/apiObservability';
 
@@ -9,10 +9,6 @@ export const dynamic = 'force-dynamic';
 const SERVICE_TYPES = new Set(['Embroidery Digitizing', 'Vector Art Tracing', 'Custom Patches', 'General Support']);
 
 const safeText = (value, max) => String(value || '').trim().slice(0, max);
-const escapeHtml = (value) => String(value).replace(/[&<>"']/g, (c) => ({
-  '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
-})[c]);
-
 const contactConversationId = (email) =>
   `inbox-contact_${String(email || '').toLowerCase().replace(/[^a-z0-9]/g, '_').slice(0, 120)}`;
 
@@ -122,6 +118,20 @@ async function persistInquiryToAdminInbox(inquiry) {
     throw new Error(`Unable to save contact message: ${messageError.message}`);
   }
 
+  try {
+    const { ensureAdminMessageNotification } = await import('../../../src/lib/adminMessageNotification.js');
+    await ensureAdminMessageNotification({
+      messageId: insertedMessage.id,
+      conversationId,
+      senderName: inquiry.name,
+      clientEmail: inquiry.email,
+      messageText: inquiry.message,
+      createdAt: insertedMessage.created_at || nowIso
+    });
+  } catch (notificationError) {
+    logServerCaughtError(notificationError, { operation: 'contact.persist_admin_alert' });
+  }
+
   return { supabase, conversationId, insertedMessage };
 }
 
@@ -162,7 +172,9 @@ async function POST_impl(request) {
       );
     }
 
-    // Guarantee a fast portal refresh even if Postgres Realtime publication is delayed.
+    // Message persistence + admin alert are already durable. Email, push and
+    // realtime fan-out are best-effort secondary channels and must never make
+    // the customer believe their inquiry was lost.
     after(async () => {
       try {
         const liveChannel = persisted.supabase.channel('bdigitizing-live-hub-v2');
@@ -170,56 +182,57 @@ async function POST_impl(request) {
       } catch (broadcastError) {
         logServerCaughtError(broadcastError, { operation: 'contact.realtime_broadcast_failed' });
       }
+
+      const contextMessage = [
+        `Service: ${inquiry.service}`,
+        inquiry.subject ? `Subject: ${inquiry.subject}` : null,
+        inquiry.phone ? `Phone: ${inquiry.phone}` : null,
+        '',
+        inquiry.message
+      ].filter((line) => line !== null).join('\n');
+
+      try {
+        const { sendNotificationEmail } = await import('../../../src/lib/emailService.js');
+        const emailResult = await sendNotificationEmail({
+          type: 'NEW_MESSAGE',
+          senderName: inquiry.name,
+          clientName: inquiry.name,
+          clientEmail: inquiry.email,
+          messageText: contextMessage,
+          channel: `Website Contact Form — ${inquiry.service}`,
+          conversationId: persisted.conversationId
+        });
+        if (emailResult?.success === false) {
+          logServerCaughtError(new Error(emailResult.error || 'Contact email notification failed'), {
+            operation: 'contact.email_alert_failed'
+          });
+        }
+      } catch (emailError) {
+        logServerCaughtError(emailError, { operation: 'contact.email_alert_failed' });
+      }
+
+      try {
+        const { dispatchChatMessagePush } = await import('../../../src/lib/pushService.js');
+        const pushResult = await dispatchChatMessagePush({
+          senderRole: 'client',
+          senderName: inquiry.name,
+          messageText: inquiry.message,
+          recipientEmail: inquiry.email,
+          conversationId: persisted.conversationId
+        });
+        if (pushResult?.success === false) {
+          logServerCaughtError(new Error(pushResult.error || 'Contact push notification failed'), {
+            operation: 'contact.push_alert_failed'
+          });
+        }
+      } catch (pushError) {
+        logServerCaughtError(pushError, { operation: 'contact.push_alert_failed' });
+      }
     });
-
-    const apiKey = process.env.RESEND_API_KEY;
-    if (!apiKey) {
-      console.error('[Contact] Email delivery provider is not configured.');
-      return NextResponse.json({ success: false, error: 'Contact service is temporarily unavailable. Please use the email address on this page.' }, { status: 503 });
-    }
-
-    // Destination is resolved on the server from trusted studio settings,
-    // never accepted from the public form payload.
-    const { adminEmail } = await resolveAdminNotificationConfig();
-    if (!adminEmail || !EMAIL_REGEX.test(adminEmail)) {
-      return NextResponse.json({ success: false, error: 'Contact service is temporarily unavailable.' }, { status: 503 });
-    }
-
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://bdigitizing.com';
-    const adminReplyUrl = `${siteUrl}/admin-portal?tab=inbox&conversationId=${encodeURIComponent(persisted.conversationId)}`;
-
-    const html = [
-      '<div style="max-width:640px;margin:auto;padding:24px;font-family:Arial,sans-serif;color:#0b1730">',
-      '<h2 style="color:#1d4ed8">New BDigitizing Website Inquiry</h2>',
-      '<p><strong>Name:</strong> ' + escapeHtml(inquiry.name) + '</p>',
-      '<p><strong>Reply-to:</strong> ' + escapeHtml(inquiry.email) + '</p>',
-      '<p><strong>Phone:</strong> ' + escapeHtml(inquiry.phone || 'Not supplied') + '</p>',
-      '<p><strong>Service:</strong> ' + escapeHtml(inquiry.service) + '</p>',
-      '<p><strong>Subject:</strong> ' + escapeHtml(inquiry.subject || 'General inquiry') + '</p>',
-      '<h3>Message</h3>',
-      '<p style="white-space:pre-wrap;overflow-wrap:anywhere">' + escapeHtml(inquiry.message) + '</p>',
-      '<p style="margin:24px 0;text-align:center"><a href="' + adminReplyUrl + '" style="display:inline-block;background:#2563eb;color:#fff;text-decoration:none;padding:12px 24px;border-radius:8px;font-weight:700">Open & Reply in Admin Inbox</a></p>',
-      '<p style="margin-top:22px;font-size:12px;color:#64748b">This inquiry is saved in the Admin Portal → Inbox.</p>',
-      '</div>'
-    ].join('');
-
-    const resend = new Resend(apiKey);
-    const { data, error } = await resend.emails.send({
-      from: process.env.RESEND_FROM_ADDRESS || 'BDigitizing <support@bdigitizing.com>',
-      to: adminEmail,
-      replyTo: inquiry.email,
-      subject: '[Website Inquiry] ' + inquiry.service + ' — ' + inquiry.name,
-      html
-    });
-
-    if (error || !data?.id) {
-      console.error('[Contact] Provider rejected dispatch:', error?.message || 'missing delivery ID');
-      return NextResponse.json({ success: false, error: 'We could not send your message. Please email our support address directly.' }, { status: 502 });
-    }
 
     return NextResponse.json({
       success: true,
-      message: 'Your inquiry has been sent.',
+      message: 'Your inquiry has been received and saved.',
       conversationId: persisted.conversationId
     }, { status: 200 });
   } catch (error) {

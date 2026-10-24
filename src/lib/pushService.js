@@ -223,9 +223,10 @@ export async function dispatchChatMessagePush({
     : `💬 New Message from ${senderName || 'Customer'}`;
 
   const body = snippet;
+  const conversationTab = String(conversationId || '').startsWith('support-') ? 'support' : 'inbox';
   const url = isFromAdmin
-    ? `/client-portal?tab=inbox${conversationId ? `&chatId=${encodeURIComponent(conversationId)}` : ''}`
-    : `/admin-portal?tab=inbox${conversationId ? `&chatId=${encodeURIComponent(conversationId)}` : ''}`;
+    ? `/client-portal?tab=${conversationTab}${conversationId ? `&conversationId=${encodeURIComponent(conversationId)}` : ''}`
+    : `/admin-portal?tab=${conversationTab}${conversationId ? `&conversationId=${encodeURIComponent(conversationId)}` : ''}`;
 
   const payload = {
     title,

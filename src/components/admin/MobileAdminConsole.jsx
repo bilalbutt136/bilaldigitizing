@@ -452,12 +452,19 @@ export default function MobileAdminConsole() {
 
   const handleNotificationOpen = useCallback((notification) => {
     if (notification?.id) markNotificationAsRead?.(notification.id);
+
+    const link = String(notification?.link || '').trim();
+    if (link) {
+      navigate(link);
+      return;
+    }
+
     const orderId = notification?.order_id || notification?.orderId;
     if (orderId) {
       const found = safeOrders.find(order => String(order?.id || '').replace(/^#+/, '') === String(orderId).replace(/^#+/, ''));
       handleOpenOrder(found || orderId);
     }
-  }, [handleOpenOrder, markNotificationAsRead, safeOrders]);
+  }, [handleOpenOrder, markNotificationAsRead, navigate, safeOrders]);
 
   const handleLogout = useCallback(async () => {
     await logout?.();

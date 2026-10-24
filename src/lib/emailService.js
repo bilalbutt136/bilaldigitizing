@@ -34,24 +34,46 @@ export function checkAndSetEmailDedup(key) {
 
 
 async function sendResendEmail(apiKey, payload) {
-  const response = await fetch('https://api.resend.com/emails', {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify(payload)
-  });
+  const maxAttempts = 2;
+  let lastError = null;
 
-  const data = await response.json().catch(() => ({}));
-  if (!response.ok) {
-    const error = new Error(data?.message || data?.error?.message || `Resend request failed with HTTP ${response.status}`);
-    error.status = response.status;
-    error.details = data;
-    throw error;
+  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+    try {
+      const response = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      });
+
+      const data = await response.json().catch(() => ({}));
+      if (response.ok) return data;
+
+      const error = new Error(
+        data?.message ||
+        data?.error?.message ||
+        `Resend request failed with HTTP ${response.status}`
+      );
+      error.status = response.status;
+      error.details = data;
+      lastError = error;
+
+      const retryable = response.status === 429 || response.status >= 500;
+      if (!retryable || attempt === maxAttempts) throw error;
+    } catch (error) {
+      lastError = error;
+      const status = Number(error?.status || 0);
+      const retryable = !status || status === 429 || status >= 500;
+      if (!retryable || attempt === maxAttempts) throw error;
+    }
+
+    // Short bounded retry for transient provider/network failures.
+    await new Promise((resolve) => setTimeout(resolve, 250 * attempt));
   }
 
-  return data;
+  throw lastError || new Error('Resend delivery failed');
 }
 
 /**
