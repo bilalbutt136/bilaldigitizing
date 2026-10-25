@@ -1903,6 +1903,120 @@ body, .site-shell { min-height: 100svh; }
   .faq-category-filter > button { flex: 0 0 auto; scroll-snap-align: start; }
 }
 
+/* VIP website offer: a compact, one-line desktop strip.
+   Preserve the existing mobile/PWA offer card unchanged. */
+.bdigi-vip-desktop-offer { display: none; }
+
+@media (min-width: 769px) {
+  .bdigi-vip-website-slot {
+    max-width: 900px !important;
+    margin-inline: auto !important;
+  }
+  .bdigi-vip-website-slot .bdigi-vip-mobile-offer {
+    display: none !important;
+  }
+  .bdigi-vip-desktop-offer {
+    display: flex;
+    align-items: center;
+    box-sizing: border-box;
+    width: 100%;
+    min-height: 54px;
+    margin: 0.55rem 0 0;
+    padding: 0.45rem 0.7rem 0.45rem 0.85rem;
+    gap: 0.85rem;
+    color: #fff;
+    background: linear-gradient(115deg, #111b30 0%, #192943 70%, #153c41 100%);
+    border: 1px solid rgba(214,181,107,0.37);
+    border-radius: 12px;
+    box-shadow: 0 4px 14px rgba(15,23,42,0.09);
+    overflow: hidden;
+  }
+  .bdigi-vip-desktop-identity {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.38rem;
+    flex: 0 0 auto;
+    white-space: nowrap;
+    color: #f0d598;
+    font-size: 0.65rem;
+    font-weight: 900;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+  .bdigi-vip-desktop-details {
+    display: flex;
+    align-items: baseline;
+    gap: 0.45rem;
+    flex: 1 1 auto;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+  }
+  .bdigi-vip-desktop-title {
+    flex: 0 1 auto;
+    min-width: 0;
+    font-size: 0.82rem;
+    font-weight: 850;
+    text-overflow: ellipsis;
+    overflow: hidden;
+  }
+  .bdigi-vip-desktop-description {
+    flex: 0 1 auto;
+    min-width: 0;
+    font-size: 0.69rem;
+    color: #d2dce8;
+    text-overflow: ellipsis;
+    overflow: hidden;
+  }
+  .bdigi-vip-desktop-discount {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.25rem;
+    white-space: nowrap;
+    flex: 0 0 auto;
+    color: #f3d78e;
+  }
+  .bdigi-vip-desktop-discount span {
+    font-size: 0.58rem;
+    font-weight: 800;
+  }
+  .bdigi-vip-desktop-discount strong {
+    font-size: 1.05rem;
+    font-weight: 950;
+    letter-spacing: -0.03em;
+  }
+  .bdigi-vip-desktop-claim {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.27rem;
+    flex: 0 0 auto;
+    min-height: 36px;
+    padding: 0.45rem 0.75rem;
+    background: #f4d98f;
+    border: 1px solid #efd089;
+    border-radius: 8px;
+    color: #172236;
+    font-size: 0.74rem;
+    font-weight: 900;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: background 150ms ease;
+  }
+  .bdigi-vip-desktop-claim:hover,
+  .bdigi-vip-desktop-claim:focus-visible {
+    color: #172236;
+    background: #fff0c0;
+  }
+}
+@media (min-width: 769px) and (max-width: 1020px) {
+  .bdigi-vip-desktop-offer { gap: 0.65rem; }
+  .bdigi-vip-desktop-description { display: none; }
+}
+@media (max-width: 768px) {
+  .bdigi-vip-desktop-offer { display: none !important; }
+}
+
 /* DESKTOP STREAMING STABILITY */
 .auth-route-shell .route-loading-shell {
   min-height: calc(100svh - 63px) !important;

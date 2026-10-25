@@ -50,6 +50,28 @@ export const StreamlinedOrderFlow = ({
   } = useAppState();
 
   const isDark = theme === 'dark';
+
+  // The configuration screen is an order attempt, not a completed order.
+  // Record it for both entry flows without changing how the customer orders.
+  useEffect(() => {
+    let active = true;
+    const source = _isModal
+      ? 'get_started_popup'
+      : new URLSearchParams(window.location.search).get('source') === 'vip_offer'
+        ? 'vip_promotion_page'
+        : 'direct_order_page';
+    import('../common/MetaPixelTracker').then(({ trackMetaEvent }) => {
+      if (active) {
+        trackMetaEvent('OrderStarted', {
+          entry_point: source,
+          flow: _isModal ? 'popup' : 'separate_page',
+          service: initialService || 'all'
+        });
+      }
+    }).catch(() => {});
+    return () => { active = false; };
+  }, [_isModal, initialService]);
+
   const incomingPackage = initialPackage || _initialPackage;
   const [orderMode, setOrderMode] = useState('regular');
   const [monthlyCount, setMonthlyCount] = useState(10);

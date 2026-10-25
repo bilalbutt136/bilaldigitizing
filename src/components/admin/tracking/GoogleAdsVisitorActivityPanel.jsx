@@ -226,7 +226,7 @@ export const GoogleAdsVisitorActivityPanel = ({
         (filter === 'bots' && isBot) ||
         (filter === 'google_ads' && !isBot && isGoogleAdsEvent(event)) ||
         (filter === 'purchases' && !isBot && /purchase/i.test(eventName)) ||
-        (filter === 'checkout' && !isBot && ['InitiateCheckout', 'AddPaymentInfo'].includes(eventName)) ||
+        (filter === 'checkout' && !isBot && ['OrderStarted', 'InitiateCheckout', 'AddPaymentInfo'].includes(eventName)) ||
         (filter === 'pageviews' && !isBot && eventName === 'PageView');
 
       if (!matchesFilter) return false;

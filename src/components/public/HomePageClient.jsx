@@ -70,7 +70,7 @@ export default function HomePageClient({ initialAppMode = false, initialAppTab =
             siteSettings={siteSettings}
             isDark={theme === 'dark'}
             isAuthenticated={Boolean(isAuthenticated)}
-            href="/order"
+            href="/order?source=vip_offer"
           />
         </div>
       )}

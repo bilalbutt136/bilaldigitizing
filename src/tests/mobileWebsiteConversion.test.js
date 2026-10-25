@@ -32,5 +32,5 @@ test('normal mobile website renders the admin-controlled offer without app mode'
   assert.match(homepage, /<MobileWelcomeOffer/);
   assert.match(webPage, /className="bdigi-vip-website-slot"/);
   assert.match(webPage, /<MobileWelcomeOffer/);
-  assert.match(webPage, /href="\/order"/);
+  assert.match(webPage, /href="\/order\?source=vip_offer"/);
 });

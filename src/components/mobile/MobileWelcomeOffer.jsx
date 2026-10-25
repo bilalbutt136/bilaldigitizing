@@ -15,8 +15,12 @@ export default function MobileWelcomeOffer({ siteSettings, isDark, onExplore, hr
 
   const config = { ...DEFAULT_MOBILE_OFFER_BANNER, ...(currentSettings?.mobileOfferBanner || {}) };
   const ClaimElement = href ? 'a' : 'button';
+  const description = /\d+(?:\.\d+)?%/.test(config.description) && !config.description.includes(`${offer.percent}%`)
+    ? `Up to ${offer.percent}% off eligible studio services.`
+    : config.description;
 
   return (
+    <>
     <section
       aria-label="Current VIP studio offer"
       className="bdigi-vip-mobile-offer"
@@ -61,7 +65,7 @@ export default function MobileWelcomeOffer({ siteSettings, isDark, onExplore, hr
           lineHeight: 1.25, color: '#cbd5e1',
           overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'
         }}>
-          {config.description}
+          {description}
         </p>
       </div>
       <ClaimElement
@@ -103,5 +107,26 @@ export default function MobileWelcomeOffer({ siteSettings, isDark, onExplore, hr
         </span>
       </ClaimElement>
     </section>
+    {href && (
+      <section className="bdigi-vip-desktop-offer" aria-label="Current VIP studio offer">
+        <div className="bdigi-vip-desktop-identity">
+          <Crown size={15} aria-hidden="true" />
+          <span>{config.eyebrow}</span>
+        </div>
+        <div className="bdigi-vip-desktop-details">
+          <strong className="bdigi-vip-desktop-title">{config.headline}</strong>
+          <span className="bdigi-vip-desktop-description">{description}</span>
+        </div>
+        <span className="bdigi-vip-desktop-discount" aria-label={`Up to ${offer.percent} percent off`}>
+          <span>UP TO</span>
+          <strong>{offer.percent}% OFF</strong>
+        </span>
+        <a className="bdigi-vip-desktop-claim" href={href} aria-label={`Claim VIP offer: up to ${offer.percent}% off eligible services`}>
+          {config.ctaText}
+          <ArrowUpRight size={15} aria-hidden="true" />
+        </a>
+      </section>
+    )}
+    </>
   );
 }
