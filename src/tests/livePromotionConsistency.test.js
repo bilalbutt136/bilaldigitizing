@@ -38,6 +38,13 @@ test('admin unrelated settings edits do not overwrite active campaign fields fro
   assert.match(api, /revalidateAllSitePages\(\)/);
 });
 
+test('direct order link renders a server page without client-side search-param suspense bailout', () => {
+  const order = read('app/order/page.jsx');
+  assert.match(order, /export default async function OrderPage\(\{ searchParams \}\)/);
+  assert.match(order, /<StreamlinedOrderFlow initialService=\{service\} \/>/);
+  assert.doesNotMatch(order, /useSearchParams|BAILOUT_TO_CLIENT_SIDE_RENDERING/);
+});
+
 test('eligible order quotes match the live campaign and paused ones do not reduce totals', () => {
   const campaign = { status: 'active', serviceDiscounts: { embroidery: 10, vector: 10, patch: 0 }, serviceStatus: { embroidery: true, vector: true, patch: false } };
   const settings = { promotionsEnabled: true, promotions: [campaign], mobileOfferBanner: { enabled: true } };

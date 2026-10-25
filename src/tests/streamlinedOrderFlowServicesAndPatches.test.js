@@ -66,7 +66,7 @@ test('Order page and wizard modal support initial 3 services selection', () => {
   const modalSource = read('src/components/customer/OrderWizardModal.jsx');
 
   // app/order/page.jsx passes null if searchParams has no service/type
-  assert.equal(orderPageSource.includes("searchParams.get('service') || searchParams.get('type') || null"), true);
+  assert.equal(orderPageSource.includes("params?.service || params?.type || null"), true);
 
   // OrderWizardModal passes null when type is 'all'
   assert.equal(modalSource.includes("orderWizardInitialData?.type === 'all'"), true);

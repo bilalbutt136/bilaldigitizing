@@ -1,7 +1,4 @@
-'use client';
-
-import React, { Suspense } from 'react';
-import { useSearchParams } from 'next/navigation';
+import React from 'react';
 import { StreamlinedOrderFlow } from '../../src/components/customer/StreamlinedOrderFlow';
 import {
   ShieldCheck,
@@ -12,9 +9,9 @@ import {
   FileCheck
 } from 'lucide-react';
 
-function OrderContent() {
-  const searchParams = useSearchParams();
-  const rawService = searchParams.get('service') || searchParams.get('type') || null;
+export default async function OrderPage({ searchParams }) {
+  const params = await searchParams;
+  const rawService = params?.service || params?.type || null;
   const service = rawService
     ? (rawService === 'vector-art' ? 'vector' : (rawService === 'patches' ? 'patch' : rawService))
     : null;
@@ -168,17 +165,5 @@ function OrderContent() {
 
       </div>
     </div>
-  );
-}
-
-export default function OrderPage() {
-  return (
-    <Suspense fallback={
-      <div style={{ minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div style={{ width: '36px', height: '36px', border: '3px solid rgba(37, 99, 235, 0.2)', borderTopColor: 'var(--color-primary)', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
-      </div>
-    }>
-      <OrderContent />
-    </Suspense>
   );
 }
