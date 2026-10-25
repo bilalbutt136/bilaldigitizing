@@ -55,11 +55,14 @@ export const StreamlinedOrderFlow = ({
   // Record it for both entry flows without changing how the customer orders.
   useEffect(() => {
     let active = true;
+    const entrySource = new URLSearchParams(window.location.search).get('source');
     const source = _isModal
-      ? 'get_started_popup'
-      : new URLSearchParams(window.location.search).get('source') === 'vip_offer'
+      ? 'order_popup'
+      : entrySource === 'vip_offer'
         ? 'vip_promotion_page'
-        : 'direct_order_page';
+        : entrySource === 'get_started'
+          ? 'get_started_page'
+          : 'direct_order_page';
     import('../common/MetaPixelTracker').then(({ trackMetaEvent }) => {
       if (active) {
         trackMetaEvent('OrderStarted', {

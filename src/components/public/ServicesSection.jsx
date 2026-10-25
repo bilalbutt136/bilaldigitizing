@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import Link from 'next/link';
 import { useAppState } from '../../context/StateContext';
 import {
   ArrowRight,
@@ -238,9 +239,9 @@ export const ServicesSection = () => {
                   <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.9rem', color: 'var(--color-text-muted)' }}>Standard Delivery: 8–12 hrs | Express Rush: 4–6 hrs | Delivered straight to your client dashboard & email.</p>
                 </div>
               </div>
-              <button type="button" className="btn btn-primary-orange btn-sm" onClick={() => handleLaunchOrder('embroidery')}>
+              <Link href="/order?service=embroidery&source=get_started" className="btn btn-primary-orange btn-sm" style={{ textDecoration: 'none' }}>
                 Get Started Now <ArrowRight size={14} />
-              </button>
+              </Link>
             </div>
 
             {/* 6. Tailored Embroidery FAQs */}
@@ -362,9 +363,9 @@ export const ServicesSection = () => {
                   <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.9rem', color: 'var(--color-text-muted)' }}>Standard Delivery: 6–12 hrs | Rush Orders: 3–6 hrs | Master Vector files (.AI, .EPS, .SVG, .PDF) available via instant download.</p>
                 </div>
               </div>
-              <button type="button" className="btn btn-primary-orange btn-sm" style={{ background: '#2563eb', borderColor: '#2563eb' }} onClick={() => handleLaunchOrder('vector')}>
+              <Link href="/order?service=vector&source=get_started" className="btn btn-primary-orange btn-sm" style={{ background: '#2563eb', borderColor: '#2563eb', textDecoration: 'none' }}>
                 Get Started Now <ArrowRight size={14} />
-              </button>
+              </Link>
             </div>
 
             {/* 6. Tailored Vector FAQs */}

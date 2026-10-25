@@ -1,24 +1,23 @@
 'use client';
 
 import React from 'react';
+import Link from 'next/link';
 import { useNavigate } from '../../utils/navigation';
 import { useAppState } from '../../context/StateContext';
 import { Upload, ArrowRight, Shield, Globe, Zap, CheckCircle2 as _CheckCircle2, Sparkles, Lock } from 'lucide-react';
 
 export const FinalCTA = () => {
   const navigate = useNavigate();
-  const { activeHomeServiceTab, openOrderWizard, protectedNavigate, homePageConfig = {} } = useAppState();
+  const { activeHomeServiceTab, homePageConfig = {} } = useAppState();
 
   const dbSettings = homePageConfig?.settings || {};
 
-  const handleCtaClick = () => {
-    if (openOrderWizard) {
-      const currentKey = activeHomeServiceTab === 'patches' ? 'patch' : (activeHomeServiceTab === 'vector' ? 'vector' : (activeHomeServiceTab === 'embroidery' ? 'embroidery' : 'all'));
-      openOrderWizard({ type: currentKey });
-    } else {
-      protectedNavigate('customer', true);
-    }
-  };
+  const currentService = activeHomeServiceTab === 'patches' || activeHomeServiceTab === 'patch' ? 'patch'
+    : activeHomeServiceTab === 'vector' ? 'vector'
+      : activeHomeServiceTab === 'embroidery' ? 'embroidery' : null;
+  const startOrderHref = currentService
+    ? `/order?service=${currentService}&source=get_started`
+    : '/order?source=get_started';
 
   const getDynamicContent = () => {
     if (activeHomeServiceTab === 'vector') {
@@ -129,10 +128,9 @@ export const FinalCTA = () => {
           marginBottom: '3.5rem',
           width: '100%'
         }}>
-          <button
-            type="button"
-            className="btn btn-primary-orange btn-lg"
-            onClick={handleCtaClick}
+          <Link
+             href={startOrderHref}
+             className="btn btn-primary-orange btn-lg"
             style={{
               padding: '0.95rem 2.25rem',
               fontSize: '1.05rem',
@@ -141,7 +139,7 @@ export const FinalCTA = () => {
           >
             <Upload size={18} />
             {content.btnText}
-          </button>
+           </Link>
 
           <button
             type="button"

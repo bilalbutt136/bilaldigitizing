@@ -627,18 +627,12 @@ export const HeaderNav = () => {
           gap: '0.4rem',
           flexShrink: 0
         }}>
-          {/* Primary Get Started Button (Desktop - only for non-authenticated guests) */}
+          {/* Guest desktop CTA: go to the full order page, not the modal. */}
           {!safeIsAuthenticated && safeCurrentView !== 'admin' && safeCurrentView !== 'customer' && !currentPath.includes('admin') && (
-            <button
-              className="desktop-only btn btn-primary-orange"
-              onClick={() => {
-                if (openOrderWizard) {
-                  openOrderWizard({ type: 'all' });
-                } else {
-                  protectedNavigate('customer', true, { type: 'all' });
-                }
-              }}
-              style={{
+            <Link
+               href="/order?source=get_started"
+               className="desktop-only btn btn-primary-orange"
+               style={{
                 display: 'flex',
                 alignItems: 'center',
                 gap: '0.3rem',
@@ -650,7 +644,7 @@ export const HeaderNav = () => {
               }}
             >
               Get Started <ArrowRight size={14} />
-            </button>
+             </Link>
           )}
 
           {/* Mobile Right Action Area (Inbox, Notifications Bell & Clean Three-Lines Menu) */}
@@ -1976,14 +1970,10 @@ export const HeaderNav = () => {
               flexShrink: 0
             }}>
               {/* Primary CTA: Start Order */}
-              <button
-                type="button"
-                onClick={() => {
-                  setIsMobileMenuOpen(false);
-                  if (openOrderWizard) openOrderWizard({ type: 'all' });
-                  else protectedNavigate('customer', true, { type: 'all' });
-                }}
-                style={{
+               <Link
+                 href="/order?source=get_started"
+                 onClick={() => setIsMobileMenuOpen(false)}
+                 style={{
                   background: 'linear-gradient(120deg, var(--color-action-start, #2563eb) 0%, var(--color-action-end, #4338ca) 100%)',
                   color: '#ffffff',
                   border: 'none',
@@ -2002,8 +1992,8 @@ export const HeaderNav = () => {
               >
                 <Upload size={16} />
                 <span>Start Order</span>
-                <ArrowRight size={15} />
-              </button>
+                 <ArrowRight size={15} />
+               </Link>
 
               {/* Install / Open Mobile App Compact Banner/Button */}
               {Boolean(siteSettings?.enableAppInstallPrompt) && (
