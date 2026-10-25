@@ -13,9 +13,9 @@ import MobileWelcomeOffer from '../mobile/MobileWelcomeOffer';
 
 import { normalizeCategory } from '../../utils/categoryUtils';
 
-export default function HomePageClient({ initialAppMode = false, initialAppTab = 'home' }) {
+export default function HomePageClient({ initialAppMode = false, initialAppTab = 'home', initialServiceTab = null }) {
   const {
-    currentView, setCurrentView, activeHomeServiceTab, mobileMode,
+    currentView, setCurrentView, activeHomeServiceTab, setActiveHomeServiceTab, mobileMode,
     isAuthInitialized, isAuthenticated, authUser, siteSettings, theme
   } = useAppState();
   const activeTab = normalizeCategory(activeHomeServiceTab || 'all');
@@ -23,6 +23,12 @@ export default function HomePageClient({ initialAppMode = false, initialAppTab =
   const shouldRenderApp = Boolean(initialAppMode || mobileMode === 'app');
 
   const isAdminAccount = Boolean(isAuthInitialized && isAuthenticated && authUser?.role === 'admin');
+
+  // Deep-link to the embroidery hero tab for paid-search visitors; all other
+  // homepage visitors retain their usual All Services selection.
+  useEffect(() => {
+    if (initialServiceTab === 'embroidery') setActiveHomeServiceTab('embroidery');
+  }, [initialServiceTab, setActiveHomeServiceTab]);
 
   useEffect(() => {
     if (isAdminAccount) {
