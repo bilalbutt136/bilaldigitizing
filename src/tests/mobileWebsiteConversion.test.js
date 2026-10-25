@@ -11,9 +11,8 @@ test('mobile website header shows login and signup in guest state', () => {
   assert.match(headerArea, /!safeIsAuthenticated &&/);
   assert.match(headerArea, /site-header-login-cta/);
   assert.match(headerArea, /site-header-signup-cta/);
-  assert.match(headerArea, /setAuthModalMode\('login'\)/);
-  assert.match(headerArea, /setAuthModalMode\('signup'\)/);
-  assert.match(headerArea, /setIsAuthModalOpen\(true\)/);
+  assert.match(headerArea, /href="\/login"/);
+  assert.match(headerArea, /href="\/signup"/);
 });
 
 test('inbox and notification icons are only available after sign in', () => {
