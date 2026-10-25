@@ -69,7 +69,7 @@ export default function HomePageClient({ initialAppMode = false, initialAppTab =
             siteSettings={siteSettings}
             isDark={theme === 'dark'}
             isAuthenticated={Boolean(isAuthenticated)}
-            onExplore={() => window.location.assign('/order')}
+            href="/order"
           />
         </div>
       )}

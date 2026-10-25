@@ -32,5 +32,5 @@ test('normal mobile website renders the admin-controlled offer without app mode'
   assert.match(webPage, /getActiveMobileOffer\(siteSettings\)/);
   assert.match(webPage, /className="mobile-only"/);
   assert.match(webPage, /<MobileWelcomeOffer/);
-  assert.match(webPage, /window\.location\.assign\('\/order'\)/);
+  assert.match(webPage, /href="\/order"/);
 });

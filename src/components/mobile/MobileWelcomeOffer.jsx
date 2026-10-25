@@ -6,11 +6,12 @@ import { DEFAULT_MOBILE_OFFER_BANNER, getActiveMobileOffer } from '../../utils/m
 
 // The same compact VIP strip is used on mobile web and in the mobile app.
 // Never show a percentage unless there is a real, active admin promotion.
-export default function MobileWelcomeOffer({ siteSettings, isDark, onExplore }) {
+export default function MobileWelcomeOffer({ siteSettings, isDark, onExplore, href }) {
   const offer = getActiveMobileOffer(siteSettings);
   if (!offer) return null;
 
   const config = { ...DEFAULT_MOBILE_OFFER_BANNER, ...(siteSettings?.mobileOfferBanner || {}) };
+  const ClaimElement = href ? 'a' : 'button';
 
   return (
     <section
@@ -59,9 +60,8 @@ export default function MobileWelcomeOffer({ siteSettings, isDark, onExplore }) 
           {config.description}
         </p>
       </div>
-      <button
-        type="button"
-        onClick={onExplore}
+      <ClaimElement
+        {...(href ? { href } : { type: 'button', onClick: onExplore })}
         aria-label={`Claim VIP offer: up to ${offer.percent}% off eligible studio services`}
         style={{
           flex: '0 0 auto',
@@ -73,6 +73,7 @@ export default function MobileWelcomeOffer({ siteSettings, isDark, onExplore }) 
           border: '1px solid #e5c370',
           borderRadius: '10px',
           cursor: 'pointer',
+          textDecoration: 'none',
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
@@ -96,7 +97,7 @@ export default function MobileWelcomeOffer({ siteSettings, isDark, onExplore }) 
           <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{config.ctaText}</span>
           <ArrowUpRight size={12} style={{ flexShrink: 0 }} />
         </span>
-      </button>
+      </ClaimElement>
     </section>
   );
 }
