@@ -276,6 +276,18 @@ export const HeroSection = () => {
   const hasMultipleImages = activeShowcaseImages.length > 1;
 
   const handleTabClick = (tabId) => {
+    // The embroidery homepage tab has a dedicated, shareable landing URL.
+    if (typeof window !== 'undefined') {
+      const isEmbroideryRoute = window.location.pathname === '/embroidery-digitizing';
+      const isLegacyEmbroideryLink = window.location.pathname === '/' &&
+        new URLSearchParams(window.location.search).get('service') === 'embroidery';
+
+      if (tabId === 'embroidery' && !isEmbroideryRoute) {
+        navigate('/embroidery-digitizing');
+      } else if (tabId !== 'embroidery' && (isEmbroideryRoute || isLegacyEmbroideryLink)) {
+        navigate('/');
+      }
+    }
     if (setActiveHomeServiceTab) {
       setActiveHomeServiceTab(tabId);
     }

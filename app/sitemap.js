@@ -4,6 +4,7 @@ export default function sitemap() {
   return [
     { url: baseUrl, lastModified: new Date(), changeFrequency: 'weekly', priority: 1 },
     { url: `${baseUrl}/order`, lastModified: new Date(), changeFrequency: 'weekly', priority: 1.0 },
+    { url: `${baseUrl}/embroidery-digitizing`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.9 },
     { url: `${baseUrl}/services/embroidery-digitizing`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.9 },
     { url: `${baseUrl}/services/vector-tracing`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.9 },
     { url: `${baseUrl}/custom-patches`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.9 },
