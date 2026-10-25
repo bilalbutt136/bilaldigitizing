@@ -4,8 +4,6 @@ import {
   ShieldCheck,
   Zap,
   CheckCircle2,
-  HelpCircle,
-  MessageCircle,
   FileCheck
 } from 'lucide-react';
 
@@ -75,93 +73,6 @@ export default async function OrderPage({ searchParams }) {
 
         {/* EMBEDDED STREAMLINED ORDER FLOW */}
         <StreamlinedOrderFlow initialService={service} />
-
-        {/* ORDER FAQS & CONFIDENCE ACCORDION */}
-        <div style={{
-          marginTop: '3.5rem',
-          background: 'var(--color-surface, #ffffff)',
-          border: '1.5px solid var(--color-border, #e2e8f0)',
-          borderRadius: '20px',
-          padding: '2rem clamp(1.25rem, 3vw, 2.5rem)',
-          boxShadow: '0 4px 20px rgba(0,0,0,0.03)'
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', marginBottom: '1.5rem' }}>
-            <HelpCircle size={22} style={{ color: 'var(--color-primary)' }} />
-            <h3 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 900, color: 'var(--color-text-primary, #0f172a)' }}>
-              Frequently Asked Questions
-            </h3>
-          </div>
-
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem', fontSize: '0.88rem' }}>
-            <div>
-              <h4 style={{ margin: '0 0 0.35rem', fontWeight: 800, color: 'var(--color-text-primary, #0f172a)' }}>
-                What machine file formats will I receive?
-              </h4>
-              <p style={{ margin: 0, color: 'var(--color-text-muted, #64748b)', lineHeight: 1.55 }}>
-                We deliver Tajima (.DST), Wilcom (.EMB), Brother (.PES), Barudan (.DAT), Melco (.EXP), Janome (.JEF), plus PDF stitch run-sheets with dimensions, stitch count, and thread sequence.
-              </p>
-            </div>
-
-            <div>
-              <h4 style={{ margin: '0 0 0.35rem', fontWeight: 800, color: 'var(--color-text-primary, #0f172a)' }}>
-                What if the file doesn't stitch out properly?
-              </h4>
-              <p style={{ margin: 0, color: 'var(--color-text-muted, #64748b)', lineHeight: 1.55 }}>
-                All orders include free unlimited revisions! If you experience thread breaks or need sizing adjustments for your specific fabric or machine, we adjust and re-deliver at zero extra charge.
-              </p>
-            </div>
-
-            <div>
-              <h4 style={{ margin: '0 0 0.35rem', fontWeight: 800, color: 'var(--color-text-primary, #0f172a)' }}>
-                How does Custom Patch manufacturing work?
-              </h4>
-              <p style={{ margin: 0, color: 'var(--color-text-muted, #64748b)', lineHeight: 1.55 }}>
-                Our minimum order is 50 pieces. We provide a 100% free digital proof within 12 hours. Once approved, we manufacture your physical patches with Velcro, Iron-On, or Sew-On backing and ship directly to your door.
-              </p>
-            </div>
-
-            <div>
-              <h4 style={{ margin: '0 0 0.35rem', fontWeight: 800, color: 'var(--color-text-primary, #0f172a)' }}>
-                Do I need to create an account before ordering?
-              </h4>
-              <p style={{ margin: 0, color: 'var(--color-text-muted, #64748b)', lineHeight: 1.55 }}>
-                Yes. You can choose your service and configure an order before signing in, but a verified customer account is required to submit the order and securely track payment, files, and production updates.
-              </p>
-            </div>
-          </div>
-
-          {/* NEED HELP STRIP */}
-          <div style={{
-            marginTop: '2rem',
-            paddingTop: '1.25rem',
-            borderTop: '1px solid var(--color-border, #e2e8f0)',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            flexWrap: 'wrap',
-            gap: '1rem',
-            fontSize: '0.84rem'
-          }}>
-            <span style={{ color: 'var(--color-text-muted, #64748b)' }}>
-              Need urgent help or have a custom project inquiry?
-            </span>
-            <a
-              href="https://wa.me/923287661555?text=Hello%20BDigitizing,%20I%20have%20a%20question%20about%20placing%20an%20embroidery%20order"
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '0.4rem',
-                color: '#059669',
-                fontWeight: 800,
-                textDecoration: 'none'
-              }}
-            >
-              <MessageCircle size={16} /> Chat with a Master Digitizer on WhatsApp →
-            </a>
-          </div>
-        </div>
 
       </div>
     </div>
