@@ -79,19 +79,28 @@ export default function MobileOfferBannerEditor({ siteSettings, updateSiteSettin
             </label>
           ))}
         </div>
+        <div style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--color-text-secondary)' }}>Compact mobile preview</div>
         <div style={{
-          background: 'linear-gradient(110deg, #0b1932 0%, #075e5a 100%)',
-          borderRadius: '12px', padding: '0.95rem', color: '#fff'
+          maxWidth: '390px', boxSizing: 'border-box',
+          background: 'linear-gradient(112deg, #111b31 0%, #223054 62%, #0c5147 100%)',
+          border: '1px solid rgba(214,181,107,0.4)', borderRadius: '13px',
+          padding: '0.7rem 0.75rem', color: '#fff',
+          display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.6rem'
         }}>
-          <div style={{ fontSize: '0.7rem', fontWeight: 800, letterSpacing: '0.08em', color: '#a7f3d0' }}>{draft.eyebrow}</div>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.7rem', marginTop: '0.35rem' }}>
-            <div style={{ minWidth: 0 }}>
-              <div style={{ fontSize: '1.05rem', fontWeight: 900 }}>{draft.headline}</div>
-              <div style={{ fontSize: '0.76rem', color: '#cbd5e1', marginTop: '0.3rem' }}>{draft.description}</div>
-            </div>
-            {activeOffer && <strong style={{ fontSize: '1.25rem', background: '#ecfdf5', color: '#065f46', padding: '0.5rem', borderRadius: 10, whiteSpace: 'nowrap' }}>Up to {activeOffer.percent}% off</strong>}
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: '0.6rem', fontWeight: 900, letterSpacing: '0.08em', color: '#f5d992' }}>♛ {draft.eyebrow}</div>
+            <div style={{ fontSize: '0.92rem', fontWeight: 900, marginTop: '0.3rem', lineHeight: 1.2, overflowWrap: 'anywhere' }}>{draft.headline}</div>
+            <div style={{ fontSize: '0.67rem', color: '#cbd5e1', marginTop: '0.24rem' }}>{draft.description}</div>
           </div>
-          <div style={{ background: '#fff', color: '#0f2740', padding: '0.5rem', marginTop: '0.8rem', borderRadius: '8px', textAlign: 'center', fontWeight: 850, fontSize: '0.8rem' }}>{draft.ctaText}</div>
+          <div style={{
+            flexShrink: 0, width: '105px', textAlign: 'center', boxSizing: 'border-box',
+            background: 'linear-gradient(155deg, #fff7df 0%, #f4d88e 100%)',
+            color: '#182439', borderRadius: '10px', padding: '0.4rem 0.3rem', fontWeight: 900
+          }}>
+            <div style={{ fontSize: '0.58rem' }}>UP TO</div>
+            <div style={{ fontSize: '1.18rem', whiteSpace: 'nowrap' }}>{activeOffer ? activeOffer.percent : '—'}% OFF</div>
+            <div style={{ fontSize: '0.62rem', overflowWrap: 'anywhere' }}>{draft.ctaText} ↗</div>
+          </div>
         </div>
         <div style={{ fontSize: '0.76rem', fontWeight: 700, color: canDisplay ? '#059669' : 'var(--color-text-secondary)' }}>
           {canDisplay ? 'Ready to show while this live promotion remains active.' : draft.enabled ? 'Banner hidden until you activate a valid promotion in Promotions Manager.' : 'Banner is switched off.'}

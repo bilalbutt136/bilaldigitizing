@@ -1,6 +1,7 @@
 import { NextResponse, after } from 'next/server';
 import { logServerCaughtError } from '../../../../lib/observability/apiObservability.js';
 import { calculatePackageQuote } from '../../../../utils/livePricing.js';
+import { getLiveStudioDiscountPercent } from '../../../../utils/mobileOffer.js';
 import { isEmbroideryOrderTierEligible } from '../../../../utils/embroiderySizeEligibility.js';
 import { findPublishedMonthlyBundle, MONTHLY_BUNDLE_CONFIG_KEY } from '../../../../utils/monthlyBundles.js';
 
@@ -82,11 +83,27 @@ export async function handleCreateOrder(context) {
           primaryDbRow.patchWidth = width;
           primaryDbRow.patchHeight = height;
         }
+        // Resolve the real campaign at order submission. Never trust a
+        // browser-provided discount, and never apply it to monthly bundles.
+        const { data: liveSettingsRow, error: settingsError } = await supabase
+          .from('site_config')
+          .select('value')
+          .eq('key', 'site_settings')
+          .maybeSingle();
+        if (settingsError) {
+          return NextResponse.json({ error: 'Could not verify current studio offers. Please retry.' }, { status: 503 });
+        }
+        let liveSettings = liveSettingsRow?.value || {};
+        if (typeof liveSettings === 'string') {
+          try { liveSettings = JSON.parse(liveSettings); } catch { liveSettings = {}; }
+        }
+        const promoPercent = getLiveStudioDiscountPercent(liveSettings, primaryDbRow.type);
         const quote = calculatePackageQuote({
           tier: liveTier,
           service: primaryDbRow.type,
           quantity: primaryDbRow.quantity,
-          isRush: primaryDbRow.isRush === true
+          isRush: primaryDbRow.isRush === true,
+          discountPercent: promoPercent
         });
         const matchesMoney = (value, expected) => value !== null && value !== undefined && value !== '' &&
           Number.isFinite(Number(value)) && Math.abs(Number(value) - expected) < 0.005;
@@ -101,6 +118,11 @@ export async function handleCreateOrder(context) {
         }
         primaryDbRow.price = quote.total;
         primaryDbRow.base_price = quote.subtotal;
+        primaryDbRow.discount_amount = quote.discountAmount || 0;
+        primaryDbRow.discount_breakdown = promoPercent > 0
+          ? { type: 'studio_promotion', service: primaryDbRow.type, percent: promoPercent, amount: quote.discountAmount || 0 }
+          : null;
+        primaryDbRow.applied_promo_code = null;
         primaryDbRow.package_name = liveTier.title;
       }
       const clientEmail = (user?.email || primaryDbRow.clientEmail || primaryDbRow.email || '').toLowerCase().trim();

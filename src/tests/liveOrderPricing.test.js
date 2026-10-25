@@ -35,6 +35,31 @@ test('quote has consistent quantity, subtotal, rush and patch minimum', () => {
   assert.equal(calculatePackageQuote({ tier: null, service: 'embroidery', quantity: 1 }), null);
 });
 
+test('VIP studio offer reduces only eligible order subtotal, not rush fees', () => {
+  const emb = active('emb-basic', 'embroidery', 12.50);
+  const quote = calculatePackageQuote({ tier: emb, service: 'embroidery', quantity: 2, isRush: true, discountPercent: 10 });
+  assert.equal(quote.subtotal, 25);
+  assert.equal(quote.discountAmount, 2.50);
+  assert.equal(quote.discountPercent, 10);
+  assert.equal(quote.rush, 10);
+  assert.equal(quote.total, 32.50);
+
+  const unchanged = calculatePackageQuote({ tier: emb, service: 'embroidery', quantity: 2, discountPercent: 0 });
+  assert.equal(unchanged.total, 25);
+  assert.equal(Object.hasOwn(unchanged, 'discountAmount'), false);
+});
+
+test('server verifies promotional quotes from live settings rather than browser input', () => {
+  const flow = fs.readFileSync('src/components/customer/StreamlinedOrderFlow.jsx', 'utf8');
+  const server = fs.readFileSync('src/server/orders/handlers/post/createOrder.js', 'utf8');
+  assert.match(flow, /getLiveStudioDiscountPercent\(siteSettings, selectedService\)/);
+  assert.match(flow, /VIP studio saving/);
+  assert.match(server, /getLiveStudioDiscountPercent\(liveSettings, primaryDbRow\.type\)/);
+  assert.match(server, /discountPercent: promoPercent/);
+  assert.match(server, /primaryDbRow\.discount_amount = quote\.discountAmount \|\| 0/);
+  assert.match(server, /matchesMoney\(primaryDbRow\.price, quote\.total\)/);
+});
+
 test('direct order flow and server enforce canonical pricing rather than browser totals', () => {
   const flow = fs.readFileSync('src/components/customer/StreamlinedOrderFlow.jsx', 'utf8');
   const server = fs.readFileSync('src/server/orders/handlers/post/createOrder.js', 'utf8');

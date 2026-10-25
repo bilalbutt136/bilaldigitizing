@@ -3,6 +3,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useAppState } from '../../context/StateContext';
 import { getAvailableTiers, getServiceStartingPrice, calculatePackageQuote, formatUSD } from '../../utils/livePricing';
+import { getLiveStudioDiscountPercent } from '../../utils/mobileOffer.js';
 import { requiredEmbroideryRank, eligibleEmbroideryTiers, chooseEmbroideryTier } from '../../utils/embroiderySizeEligibility';
 import { MONTHLY_DESIGN_LIMITS, findPublishedMonthlyBundle } from '../../utils/monthlyBundles';
 import {
@@ -44,6 +45,7 @@ export const StreamlinedOrderFlow = ({
     setIsAuthModalOpen,
     setAuthModalMode,
     dynamicPricingTiers = [],
+    siteSettings = {},
     theme = 'light'
   } = useAppState();
 
@@ -241,13 +243,15 @@ export const StreamlinedOrderFlow = ({
     }
   };
 
+  // Only live, admin-enabled campaign rates are applied to regular orders.
+  const liveDiscountPercent = getLiveStudioDiscountPercent(siteSettings, selectedService);
   // Active administrator-configured Supabase prices only.
   const calculatePricing = () => {
     const safePatchQty = Math.max(50, parseInt(patchQuantity, 10) || 50);
     const quantity = selectedService === 'patch' ? safePatchQty : Math.max(1, Number(designQuantity) || 1);
     const isRush = selectedService === 'patch' ? false
       : selectedService === 'vector' ? vectorTurnaround === 'rush' : turnaround === 'rush';
-    return calculatePackageQuote({ tier: currentTier, service: selectedService, quantity, isRush });
+    return calculatePackageQuote({ tier: currentTier, service: selectedService, quantity, isRush, discountPercent: liveDiscountPercent });
   };
   const isMonthlyMode = orderMode === 'monthly' && selectedService !== 'patch';
   const monthlyPlan = isMonthlyMode ? findPublishedMonthlyBundle({ plans: monthlyPlans }, selectedService, monthlyCount) : null;
@@ -578,6 +582,7 @@ export const StreamlinedOrderFlow = ({
         price: pricing.total,
         totalPrice: pricing.total,
         base_price: pricing.subtotal,
+        discount_amount: pricing.discountAmount || 0,
         isRush: isRush,
         notes: isMonthlyMode ? '30-day prepaid bundle. Submit designs through order conversation. No auto-renewal.' : additionalDetails.trim(),
         placement: derivedSize,
@@ -1910,6 +1915,13 @@ export const StreamlinedOrderFlow = ({
                     </span>
                     <span>${pricing.subtotal.toFixed(2)}</span>
                   </div>
+
+                  {!isMonthlyMode && pricing.discountAmount > 0 && (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.84rem', color: '#047857', fontWeight: 800, marginBottom: '0.3rem' }}>
+                      <span>VIP studio saving ({pricing.discountPercent}%):</span>
+                      <span>−{formatUSD(pricing.discountAmount)}</span>
+                    </div>
+                  )}
 
                   {pricing.rush > 0 && (
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.84rem', color: 'var(--color-primary)', fontWeight: 700, marginBottom: '0.3rem' }}>

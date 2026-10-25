@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { DEFAULT_MOBILE_OFFER_BANNER, getActiveMobileOffer } from '../utils/mobileOffer.js';
+import { DEFAULT_MOBILE_OFFER_BANNER, getActiveMobileOffer, getLiveStudioDiscountPercent } from '../utils/mobileOffer.js';
 
 const current = new Date('2026-10-25T12:00:00.000Z');
 const active = {
@@ -46,4 +46,20 @@ test('disabled service rates are excluded and zero discounts remain hidden', () 
 
 test('legacy uniform-rate promotions still produce the correct headline percentage', () => {
   assert.equal(getActiveMobileOffer(settings({ promotions: [{ status: 'active', discountPercent: 12 }] }), current)?.percent, 12);
+});
+
+test('VIP discount amount follows the active campaign, independently of banner visibility', () => {
+  assert.equal(getLiveStudioDiscountPercent(settings(), 'embroidery', current), 15);
+  assert.equal(getLiveStudioDiscountPercent(settings(), 'vector', current), 25);
+  assert.equal(getLiveStudioDiscountPercent(settings({
+    mobileOfferBanner: { enabled: false }
+  }), 'vector', current), 25);
+});
+
+test('disabled services, stopped promotions and expired campaigns never discount the checkout', () => {
+  const vip = { ...active, serviceStatus: { embroidery: true, vector: true, patch: false } };
+  assert.equal(getLiveStudioDiscountPercent(settings({ promotions: [vip] }), 'patch', current), 0);
+  assert.equal(getLiveStudioDiscountPercent(settings({ promotionsEnabled: false }), 'embroidery', current), 0);
+  assert.equal(getLiveStudioDiscountPercent(settings({ promotions: [{ ...vip, status: 'paused' }] }), 'vector', current), 0);
+  assert.equal(getLiveStudioDiscountPercent(settings({ promotions: [{ ...vip, endDate: '2026-10-24' }] }), 'vector', current), 0);
 });

@@ -20,20 +20,23 @@ export function getServiceStartingPrice(tiers, service) {
   return prices.length ? Math.min(...prices) : null;
 }
 
-export function calculatePackageQuote({ tier, service, quantity, isRush = false }) {
+export function calculatePackageQuote({ tier, service, quantity, isRush = false, discountPercent = 0 }) {
   if (!tier || !getAvailableTiers([tier], service).length) return null;
   const unitPrice = Number(tier.price);
   const rawQty = Number(quantity);
   if (!Number.isSafeInteger(rawQty) || rawQty < (service === 'patch' ? MIN_PATCH_PIECES : 1) || rawQty > 100000) return null;
   const subtotal = Math.round(unitPrice * rawQty * 100) / 100;
   const rush = isRush ? (RUSH_FEES[service] ?? 0) : 0;
-  const total = Math.round((subtotal + rush) * 100) / 100;
+  const discountRate = Number.isFinite(Number(discountPercent)) ? Math.max(0, Math.min(100, Number(discountPercent))) : 0;
+  const discountAmount = Math.round(subtotal * discountRate) / 100;
+  const total = Math.round((subtotal - discountAmount + rush) * 100) / 100;
   if (!Number.isFinite(total) || total <= 0) return null;
   return {
     unitPrice,
     subtotal,
     rush,
     total,
+    ...(discountRate > 0 ? { discountPercent: discountRate, discountAmount } : {}),
     quantity: rawQty,
     patchPieces: service === 'patch' ? rawQty : undefined,
     tierTitle: tier.title || ''

@@ -38,7 +38,7 @@ test('Custom Patches flow strictly enforces default 50 and minimum 50 patches', 
 
   // Verify the selected quantity is clamped and the centralized quote calculator is used.
   assert.equal(source.includes('safePatchQty = Math.max(50,'), true);
-  assert.equal(source.includes('calculatePackageQuote({ tier: currentTier, service: selectedService, quantity, isRush })'), true);
+  assert.equal(source.includes('calculatePackageQuote({ tier: currentTier, service: selectedService, quantity, isRush, discountPercent: liveDiscountPercent })'), true);
 
   // Verify submission strictly validates minimum 50
   assert.equal(source.includes('Minimum 50 Patches Required'), true);

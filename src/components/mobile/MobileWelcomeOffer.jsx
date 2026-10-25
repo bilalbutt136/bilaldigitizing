@@ -1,79 +1,102 @@
 'use client';
 
 import React from 'react';
-import { ArrowRight, BadgePercent, CheckCircle2 } from 'lucide-react';
+import { ArrowUpRight, Crown } from 'lucide-react';
 import { DEFAULT_MOBILE_OFFER_BANNER, getActiveMobileOffer } from '../../utils/mobileOffer';
 
-export default function MobileWelcomeOffer({ siteSettings, isDark, isAuthenticated, onExplore, onSignup }) {
+// The same compact VIP strip is used on mobile web and in the mobile app.
+// Never show a percentage unless there is a real, active admin promotion.
+export default function MobileWelcomeOffer({ siteSettings, isDark, onExplore }) {
   const offer = getActiveMobileOffer(siteSettings);
   if (!offer) return null;
 
   const config = { ...DEFAULT_MOBILE_OFFER_BANNER, ...(siteSettings?.mobileOfferBanner || {}) };
 
   return (
-    <section aria-label="Current studio promotion" style={{
-      borderRadius: '18px', padding: '1rem', overflow: 'hidden', position: 'relative',
-      background: 'linear-gradient(118deg, #0b1932 0%, #123b54 65%, #075e5a 100%)',
-      color: '#ffffff', border: '1px solid rgba(52,211,153,0.25)',
-      boxShadow: isDark ? 'none' : '0 10px 24px rgba(15, 35, 64, 0.12)'
-    }}>
-      <div aria-hidden="true" style={{
-        position: 'absolute', right: '-35px', top: '-70px', width: '180px',
-        height: '180px', borderRadius: '50%', background: 'rgba(110,231,183,0.08)',
-        pointerEvents: 'none'
-      }} />
-      <div style={{ position: 'relative', zIndex: 1 }}>
+    <section
+      aria-label="Current VIP studio offer"
+      className="bdigi-vip-mobile-offer"
+      style={{
+        boxSizing: 'border-box',
+        width: '100%',
+        borderRadius: '13px',
+        padding: '0.68rem 0.75rem',
+        background: 'linear-gradient(112deg, #111b31 0%, #223054 62%, #0c5147 100%)',
+        border: '1px solid rgba(214,181,107,0.4)',
+        color: '#fff',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: '0.6rem',
+        boxShadow: isDark ? 'none' : '0 5px 14px rgba(15,23,42,0.12)',
+        overflow: 'hidden'
+      }}
+    >
+      <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{
-          display: 'inline-flex', alignItems: 'center', gap: '0.35rem',
-          fontSize: '0.66rem', fontWeight: 900, letterSpacing: '0.12em',
-          color: '#a7f3d0', textTransform: 'uppercase'
+          display: 'flex', alignItems: 'center', gap: '0.3rem',
+          color: '#f5d992', fontSize: '0.62rem', fontWeight: 900,
+          letterSpacing: '0.09em', textTransform: 'uppercase', lineHeight: 1.2
         }}>
-          <BadgePercent size={14} /> {config.eyebrow}
+          <Crown size={13} aria-hidden="true" style={{ flexShrink: 0 }} />
+          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{config.eyebrow}</span>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.8rem', marginTop: '0.55rem' }}>
-          <div style={{ minWidth: 0, flex: 1 }}>
-            <h2 style={{ fontSize: 'clamp(1.03rem, 4.5vw, 1.3rem)', fontWeight: 900, margin: 0, lineHeight: 1.25, letterSpacing: '-0.025em' }}>
-              {config.headline}
-            </h2>
-            <p style={{ color: '#cbd5e1', fontSize: '0.77rem', lineHeight: 1.45, margin: '0.4rem 0 0' }}>
-              {config.description}
-            </p>
-          </div>
-          <div style={{
-            display: 'flex', flexDirection: 'column', alignItems: 'center',
-            background: '#ecfdf5', color: '#065f46',
-            padding: '0.58rem 0.65rem', borderRadius: '13px', minWidth: '82px',
-            flexShrink: 0
-          }}>
-            <span style={{ fontSize: '0.62rem', fontWeight: 900, letterSpacing: '0.05em' }}>UP TO</span>
-            <span style={{ fontSize: '1.62rem', fontWeight: 950, lineHeight: 1.15 }}>{offer.percent}%</span>
-            <span style={{ fontSize: '0.62rem', fontWeight: 900, letterSpacing: '0.05em' }}>OFF</span>
-          </div>
-        </div>
-        <div style={{
-          display: 'flex', alignItems: 'center', gap: '0.45rem',
-          color: '#d1fae5', fontSize: '0.7rem', marginTop: '0.7rem', fontWeight: 650
+        <h2 style={{
+          margin: '0.35rem 0 0', fontSize: 'clamp(0.86rem, 3.6vw, 1.02rem)',
+          fontWeight: 900, lineHeight: 1.2,
+          letterSpacing: '-0.015em',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          whiteSpace: 'nowrap'
         }}>
-          <CheckCircle2 size={13} /> Available on eligible studio services
-        </div>
-        <button type="button" onClick={onExplore} style={{
-          width: '100%', minHeight: '44px', marginTop: '0.78rem',
-          border: 'none', borderRadius: '11px', cursor: 'pointer',
-          background: '#ffffff', color: '#0f2740', fontWeight: 900, fontSize: '0.83rem',
-          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.45rem'
+          {config.headline}
+        </h2>
+        <p style={{
+          margin: '0.24rem 0 0', fontSize: '0.67rem',
+          lineHeight: 1.25, color: '#cbd5e1',
+          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'
         }}>
-          {config.ctaText} <ArrowRight size={16} />
-        </button>
-        {!isAuthenticated && (
-          <button type="button" onClick={onSignup} style={{
-            width: '100%', marginTop: '0.52rem', background: 'transparent',
-            border: 'none', color: '#d1fae5', padding: '0.25rem',
-            fontSize: '0.75rem', fontWeight: 750, cursor: 'pointer'
-          }}>
-            New to BDigitizing? Create an account
-          </button>
-        )}
+          {config.description}
+        </p>
       </div>
+      <button
+        type="button"
+        onClick={onExplore}
+        aria-label={`Claim VIP offer: up to ${offer.percent}% off eligible studio services`}
+        style={{
+          flex: '0 0 auto',
+          width: '105px',
+          minHeight: '61px',
+          padding: '0.34rem 0.3rem',
+          background: 'linear-gradient(155deg, #fff7df 0%, #f4d88e 100%)',
+          color: '#182439',
+          border: '1px solid #e5c370',
+          borderRadius: '10px',
+          cursor: 'pointer',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '0.12rem',
+          boxShadow: '0 2px 9px rgba(0,0,0,0.16)'
+        }}
+      >
+        <span style={{ fontSize: '0.58rem', fontWeight: 850, letterSpacing: '0.07em', lineHeight: 1 }}>
+          UP TO
+        </span>
+        <span style={{ fontSize: '1.28rem', lineHeight: 1, fontWeight: 950, letterSpacing: '-0.035em', whiteSpace: 'nowrap' }}>
+          {offer.percent}% OFF
+        </span>
+        <span style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          gap: '0.15rem', fontWeight: 900, fontSize: '0.63rem',
+          maxWidth: '100%', whiteSpace: 'nowrap', overflow: 'hidden',
+          textOverflow: 'ellipsis'
+        }}>
+          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{config.ctaText}</span>
+          <ArrowUpRight size={12} style={{ flexShrink: 0 }} />
+        </span>
+      </button>
     </section>
   );
 }
