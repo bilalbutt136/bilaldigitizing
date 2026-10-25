@@ -59,17 +59,17 @@ export default function MobileOfferBannerEditor({ siteSettings, updateSiteSettin
     }}>
       <div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--color-primary)', fontWeight: 900, fontSize: '0.75rem', letterSpacing: '0.05em' }}>
-          <BadgePercent size={17} /> MOBILE APP CONVERSION
+          <BadgePercent size={17} /> VIP OFFER DISPLAY
         </div>
-        <h3 style={{ fontSize: '1.16rem', fontWeight: 900, margin: '0.35rem 0', color: 'var(--color-text-primary)' }}>Mobile Discount Banner</h3>
+        <h3 style={{ fontSize: '1.16rem', fontWeight: 900, margin: '0.35rem 0', color: 'var(--color-text-primary)' }}>VIP Discount Banner (Mobile + Desktop)</h3>
         <p style={{ fontSize: '0.83rem', color: 'var(--color-text-secondary)', margin: 0, lineHeight: 1.55 }}>
-          Change the mobile headline, supporting text, and action button here. The percentage comes from your live promotion above; switching this banner off will not cancel the promotion.
+          Edit the VIP banner on mobile and desktop. This switch does not affect the moving top line. Its percentage follows your active live discount campaign.
         </p>
       </div>
       <form onSubmit={handleSave} style={{ display: 'grid', gap: '0.8rem' }}>
         <label style={{ display: 'flex', alignItems: 'center', gap: '0.7rem', fontWeight: 800, color: 'var(--color-text-primary)', fontSize: '0.86rem', cursor: 'pointer' }}>
           <input type="checkbox" checked={draft.enabled === true} onChange={e => setDraft(current => ({ ...current, enabled: e.target.checked }))} style={{ width: 19, height: 19, accentColor: '#059669' }} />
-          Show banner when a promotion is active
+          Show VIP banner when a promotion is active
         </label>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 240px), 1fr))', gap: '0.8rem' }}>
           {FIELDS.map(([key, label, maxLength]) => (
@@ -111,7 +111,7 @@ export default function MobileOfferBannerEditor({ siteSettings, updateSiteSettin
           background: '#047857', color: '#fff', fontWeight: 850, cursor: saving ? 'wait' : 'pointer',
           opacity: saving ? 0.65 : 1
         }}>
-          <Save size={16} /> {saving ? 'Saving...' : 'Save Mobile Banner'}
+          <Save size={16} /> {saving ? 'Saving...' : 'Save VIP Banner'}
         </button>
       </form>
     </section>

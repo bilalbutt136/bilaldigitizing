@@ -27,10 +27,11 @@ test('all site promotions are disabled by default even with stale active records
  assert.equal(quote.promoDiscountAmount,0);
  assert.equal(quote.totalPrice,20);
 });
-test('unspecified master switch also keeps legacy active campaign OFF',()=>{
- const settings=normalizePublicCatalog({site_config:[{key:'promotions',value:historical},{key:'announcement',value:{enabled:true,text:'SAVE 20%'}}]}).siteSettings;
+test('unspecified master switch stops legacy discounts but preserves an explicitly enabled custom top message',()=>{
+ const settings=normalizePublicCatalog({site_config:[{key:'promotions',value:historical},{key:'announcement',value:{enabled:true,text:'Studio hours updated'}}]}).siteSettings;
  assert.equal(settings.promotionsEnabled,false);
- assert.equal(settings.announcement.enabled,false);
+ assert.equal(settings.announcement.enabled,true);
+ assert.equal(settings.announcement.text,'Studio hours updated');
  assert.equal(settings.service_discounts.enabled,false);
 });
 test('paused promotions stay paused and deletion persists after confirmation',()=>{
@@ -45,9 +46,10 @@ test('paused promotions stay paused and deletion persists after confirmation',()
  assert.doesNotMatch(admin,/Activate the first promotion with these service rates/);
  assert.doesNotMatch(admin,/Create an initial active promotion/);
 });
-test('public announcement and order pricing require explicitly enabled promotions',()=>{
+test('top ticker visibility is independently controlled from discount campaign and pricing',()=>{
  const announcement=fs.readFileSync('src/components/public/AnnouncementBar.jsx','utf8');
  const core=fs.readFileSync('src/components/public/CoreServicesOrderSection.jsx','utf8');
- assert.match(announcement,/siteSettings\?\.promotionsEnabled !== true/);
+ assert.match(announcement,/rawAnnouncement\?\.enabled === true/);
+ assert.doesNotMatch(announcement,/siteSettings\?\.promotionsEnabled !== true/);
  assert.match(core,/getActivePromotion\(siteSettings\?\.promotions, siteSettings\)/);
 });

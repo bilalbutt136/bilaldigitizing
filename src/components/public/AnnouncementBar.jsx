@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, Flame, Tag, ArrowRight, Check as _Check, Clock, Sparkles as _Sparkles } from 'lucide-react';
 import { useAppState } from '../../context/StateContext';
+import { useLivePromotion } from '../../hooks/useLivePromotion';
 import { useNavigate } from '../../utils/navigation';
 
 const THEMES = {
@@ -14,45 +15,44 @@ const THEMES = {
 };
 
 export const AnnouncementBar = () => {
-  const { siteSettings, openOrderWizard, protectedNavigate, showToast } = useAppState();
+  const { openOrderWizard, showToast } = useAppState();
   const navigate = useNavigate();
   const [isDismissed, setIsDismissed] = useState(false);
   const [copied, setCopied] = useState(false);
+  const { settings: liveSettings } = useLivePromotion();
   const [timeLeft, setTimeLeft] = useState({ hours: 14, minutes: 35, seconds: 48 });
 
-  const rawAnnouncement = siteSettings?.announcement;
-  const activePromo = Array.isArray(siteSettings?.promotions)
-    ? siteSettings.promotions.find(p => p.status === 'active')
+  // Live, uncached announcement visibility: no other promotion switch can turn
+  // this line on. A missing/failed response fails closed rather than showing
+  // a stale ticker from the initial server catalog.
+  const rawAnnouncement = liveSettings?.announcement;
+  const activePromo = Array.isArray(liveSettings?.promotions)
+    ? liveSettings.promotions.find(p => p.status === 'active')
     : null;
+  const rates = activePromo?.serviceDiscounts || {};
+  const embRate = activePromo?.serviceStatus?.embroidery === false ? 0 : Number(rates.embroidery ?? activePromo?.discountPercent ?? 0);
+  const vecRate = activePromo?.serviceStatus?.vector === false ? 0 : Number(rates.vector ?? activePromo?.discountPercent ?? 0);
+  const pchRate = activePromo?.serviceStatus?.patch === false ? 0 : Number(rates.patch ?? activePromo?.discountPercent ?? 0);
 
-  const serviceRates = activePromo?.serviceDiscounts || siteSettings?.service_discounts || siteSettings?.serviceDiscounts;
-  const isGranular = Boolean(serviceRates && (serviceRates.embroidery !== undefined || serviceRates.vector !== undefined || serviceRates.patch !== undefined));
-  const embRate = serviceRates?.embroidery ?? activePromo?.discountPercent ?? 20;
-  const vecRate = serviceRates?.vector ?? activePromo?.discountPercent ?? 10;
-  const pchRate = serviceRates?.patch ?? activePromo?.discountPercent ?? 5;
-  const maxRate = Math.max(embRate, vecRate, pchRate);
-
-  const dynamicText = isGranular
-    ? `🧵 ${embRate}% OFF Digitizing • 🎨 ${vecRate}% OFF Vector • 🛡️ ${pchRate}% OFF Patches | Limited Time!`
-    : (activePromo ? `Get up to ${activePromo.discountPercent}% OFF on All Custom Digitizing & Vector Orders!` : rawAnnouncement?.text);
-
-  // Dynamically derive announcement details from active promotion if present or use manual config
-  const announcement = (activePromo || isGranular) ? {
-    enabled: rawAnnouncement?.enabled !== false,
-    text: dynamicText,
-    badge: activePromo?.name ? activePromo.name.toUpperCase() : (isGranular ? 'LIVE PROMO' : (rawAnnouncement?.badge || 'SALE')),
-    promoCode: activePromo?.promoCode || (rawAnnouncement?.promoCode || `SAVE${maxRate}`),
-    linkText: `Claim Discount (Up to ${maxRate}% Off)`,
-    linkUrl: rawAnnouncement?.linkUrl || '/order',
-    showCountdown: rawAnnouncement?.showCountdown !== false,
-    showCodeBadge: rawAnnouncement?.showCodeBadge !== false,
-    theme: (rawAnnouncement?.theme === 'emerald' ? 'orange' : rawAnnouncement?.theme) || 'orange',
-    textColor: rawAnnouncement?.textColor || '#ffffff',
-    discountValue: maxRate
-  } : (rawAnnouncement?.enabled && rawAnnouncement?.text ? {
-    ...rawAnnouncement,
-    theme: (rawAnnouncement.theme === 'emerald' ? 'orange' : rawAnnouncement.theme) || 'orange'
-  } : null);
+  // Automatic text always reflects the currently valid offer. Custom text is
+  // saved separately by the administrator and never overwritten by a campaign.
+  const autoText = activePromo
+    ? `🧵 ${embRate}% OFF Digitizing • 🎨 ${vecRate}% OFF Vector${pchRate > 0 ? ` • 🛡️ ${pchRate}% OFF Patches` : ''}`
+    : '';
+  const text = rawAnnouncement?.autoSync === true ? autoText : (rawAnnouncement?.text || '');
+  const announcement = rawAnnouncement?.enabled === true && text.trim()
+    ? {
+        ...rawAnnouncement,
+        text,
+        badge: rawAnnouncement.badge || 'STUDIO NEWS',
+        linkText: rawAnnouncement.linkText || 'Explore Services',
+        linkUrl: rawAnnouncement.linkUrl || '/order',
+        theme: rawAnnouncement.theme || 'orange',
+        showCodeBadge: rawAnnouncement.showCodeBadge === true && Boolean(rawAnnouncement.promoCode),
+        // The old countdown was a resetting timer, not a real offer deadline.
+        showCountdown: false
+      }
+    : null;
 
   // Real-time Countdown Timer calculation & Live promotions listener
   useEffect(() => {
@@ -96,7 +96,7 @@ export const AnnouncementBar = () => {
     };
   }, [announcement?.text, announcement?.enabled, activePromo?.discountPercent, activePromo?.id]);
 
-  if (siteSettings?.promotionsEnabled !== true || isDismissed || !announcement?.enabled || !announcement?.text) {
+  if (isDismissed || !announcement?.enabled || !announcement?.text) {
     return null;
   }
 
@@ -128,17 +128,13 @@ export const AnnouncementBar = () => {
   const handleActionClick = (e) => {
     if (e) e.stopPropagation();
     const target = announcement?.linkUrl || '/order';
-    const promoCode = announcement?.promoCode || (activePromo ? `SAVE${activePromo.discountPercent}` : 'SAVE15');
     if (target.startsWith('#')) {
       const el = document.getElementById(target.substring(1));
       if (el) el.scrollIntoView({ behavior: 'smooth' });
       else navigate(target);
     } else if (target === '/order' || target.includes('orderWizard')) {
-      if (openOrderWizard) {
-        openOrderWizard({ promoCode, type: 'all' });
-      } else {
-        protectedNavigate('customer', true, { promoCode, type: 'all' });
-      }
+      // Keep the same separate order page used by the VIP banner.
+      window.location.assign('/order?source=announcement');
     } else {
       navigate(target);
     }

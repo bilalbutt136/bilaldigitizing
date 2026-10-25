@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { useAppState } from '../../context/StateContext';
 import MobileOfferBannerEditor from './MobileOfferBannerEditor';
+import RunningTickerEditor from './RunningTickerEditor';
 import {
   normalizeServiceKey as _normalizeServiceKey,
   getServiceDisplayName as _getServiceDisplayName,
@@ -115,52 +116,6 @@ export const PromotionsManager = () => {
   // Derive active promo
   const activePromo = promotionsEnabled ? promotions.find(p => p.status === 'active') : null;
 
-  // Helper to build dynamic announcement banner matching active promotion rates
-  const buildDynamicAnnouncement = (promo) => {
-    if (!promo || promo.status !== 'active') {
-      return {
-        enabled: false,
-        autoSync: true,
-        text: '',
-        discountValue: 0
-      };
-    }
-
-    const hasGranular = promo.serviceDiscounts && (
-      promo.serviceDiscounts.embroidery !== promo.serviceDiscounts.vector ||
-      promo.serviceDiscounts.vector !== promo.serviceDiscounts.patch
-    );
-
-    const maxDiscount = promo.serviceDiscounts
-      ? Math.max(
-          promo.serviceDiscounts.embroidery || 0,
-          promo.serviceDiscounts.vector || 0,
-          promo.serviceDiscounts.patch || 0,
-          promo.discountPercent || 0
-        )
-      : (promo.discountPercent || 10);
-
-    const text = hasGranular
-      ? `Special Studio Promo: ${promo.serviceDiscounts.embroidery ?? 0}% OFF Digitizing, ${promo.serviceDiscounts.vector ?? 0}% OFF Vector, ${promo.serviceDiscounts.patch ?? 0}% OFF Patches!`
-      : `Get ${promo.discountPercent}% OFF on All Custom Embroidery Digitizing & Vector Art Orders!`;
-
-    return {
-      enabled: siteSettings?.announcement?.enabled !== false,
-      autoSync: true,
-      badge: (promo.name || 'SALE').toUpperCase(),
-      text,
-      linkText: `Claim ${maxDiscount}% Off`,
-      linkUrl: '/order',
-      promoCode: promo.promoCode || `SAVE${maxDiscount}`,
-      showCountdown: true,
-      showCodeBadge: true,
-      theme: 'orange',
-      textColor: '#ffffff',
-      discountValue: maxDiscount,
-      discountType: 'percent'
-    };
-  };
-
   // Explicitly re-enable the promotion controls without silently starting an old offer.
   const handleEnablePromotions = async () => {
     if (promoSaving) return;
@@ -187,13 +142,11 @@ export const PromotionsManager = () => {
         promotions: paused,
         service_discounts: disabled,
         serviceDiscounts: disabled,
-        announcement: { enabled: false, text: '', promoCode: '', showCountdown: false, showCodeBadge: false },
-        promotionalBanner: { enabled: false },
         promoCodes: (siteSettings?.promoCodes || []).map(c => ({ ...c, isActive: false }))
       });
       setPromotions(paused);
       setServiceDiscounts(disabled);
-      showToast?.('All promotions, coupons and sale banners are OFF.', 'success');
+      showToast?.('Discount campaigns are OFF. Ticker and banner visibility preferences are unchanged.', 'success');
     } catch (err) {
       console.error('Failed to switch off promotions:', err);
       showToast?.('Failed to save. Promotions OFF remains the safe public default; please retry.', 'error');
@@ -247,15 +200,11 @@ export const PromotionsManager = () => {
       });
 
       // Keep paused and deleted promotions inactive: saving discount rates must never auto-start a campaign.
-      const activeP = updatedPromotions.find(p => p.status === 'active');
-      const syncedAnnouncement = buildDynamicAnnouncement(activeP);
-
       if (updateSiteSettings) {
         await updateSiteSettings({
           promotions: updatedPromotions,
           service_discounts: cleanedDiscounts,
-          serviceDiscounts: cleanedDiscounts,
-          announcement: syncedAnnouncement
+          serviceDiscounts: cleanedDiscounts
         });
       }
 
@@ -347,17 +296,11 @@ export const PromotionsManager = () => {
       ...promotions.map(p => ({ ...p, status: 'paused' }))
     ];
 
-    // Automatically synchronize the live banner for this promotion
-    const syncedAnnouncement = buildDynamicAnnouncement(newPromo);
-    const syncedPromotionalBanner = { enabled: false };
-
     try {
       await updateSiteSettings({
         promotions: updatedPromotions,
         service_discounts: { embroidery: emb, vector: vec, patch: pch, enabled: true },
-        serviceDiscounts: { embroidery: emb, vector: vec, patch: pch, enabled: true },
-        announcement: syncedAnnouncement,
-        promotionalBanner: syncedPromotionalBanner
+        serviceDiscounts: { embroidery: emb, vector: vec, patch: pch, enabled: true }
       });
       setPromotions(updatedPromotions);
       setServiceDiscounts({ embroidery: emb, vector: vec, patch: pch, enabled: true });
@@ -398,8 +341,6 @@ export const PromotionsManager = () => {
     try {
       await updateSiteSettings({
         promotions: updated,
-        announcement: buildDynamicAnnouncement(active),
-        promotionalBanner: { enabled: false },
         service_discounts: rates,
         serviceDiscounts: rates
       });
@@ -424,8 +365,6 @@ export const PromotionsManager = () => {
     try {
       await updateSiteSettings({
         promotions: updated,
-        announcement: buildDynamicAnnouncement(active),
-        promotionalBanner: { enabled: false },
         ...(!active ? { service_discounts: disabled, serviceDiscounts: disabled } : {})
       });
       setPromotions(updated);
@@ -520,6 +459,7 @@ export const PromotionsManager = () => {
         </button>
       </section>
 
+      <RunningTickerEditor siteSettings={siteSettings} updateSiteSettings={updateSiteSettings} showToast={showToast} />
       <MobileOfferBannerEditor siteSettings={siteSettings} updateSiteSettings={updateSiteSettings} showToast={showToast} />
 
       {/* Clean Top Header Card */}

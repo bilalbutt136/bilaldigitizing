@@ -29,9 +29,10 @@ export function normalizePublicCatalog(data = {}) {
   const appIconUrl = brandingRow?.app_icon_url || rawSettings.appIconUrl || '/icon-512x512.png';
   const ogImageUrl = brandingRow?.og_image_url || rawSettings.ogImageUrl || appIconUrl;
   const brandingThemeColor = brandingRow?.theme_color || rawSettings.themeColor || '#ffffff';
-  const parsedAnnouncement = typeof rawSettings.announcement === 'object' && configMap.announcement
+  // Prefer the canonical admin settings even when no legacy flat row exists.
+  const parsedAnnouncement = rawSettings.announcement && typeof rawSettings.announcement === 'object'
     ? rawSettings.announcement
-    : (typeof configMap.announcement === 'object' ? configMap.announcement : null);
+    : (configMap.announcement && typeof configMap.announcement === 'object' ? configMap.announcement : null);
   const parsedPromoCodes = Array.isArray(rawSettings.promoCodes)
     ? rawSettings.promoCodes
     : (Array.isArray(configMap.promoCodes) ? configMap.promoCodes : []);
@@ -52,68 +53,16 @@ export function normalizePublicCatalog(data = {}) {
     currentActivePromo?.serviceDiscounts ||
     { embroidery: 20, vector: 10, patch: 5, enabled: true };
 
-  const serviceDiscounts = currentActivePromo?.serviceDiscounts || {};
-  const hasGranular = Boolean(
-    currentActivePromo?.serviceDiscounts &&
-    (
-      serviceDiscounts.embroidery !== serviceDiscounts.vector ||
-      serviceDiscounts.vector !== serviceDiscounts.patch
-    )
-  );
-
-  const maxPromoDiscount = currentActivePromo
-    ? (currentActivePromo.serviceDiscounts
-      ? Math.max(
-          Number(serviceDiscounts.embroidery) || 0,
-          Number(serviceDiscounts.vector) || 0,
-          Number(serviceDiscounts.patch) || 0,
-          Number(currentActivePromo.discountPercent) || 0
-        )
-      : Number(currentActivePromo.discountPercent) || 0)
-    : 0;
-
-  const promoTitleText = currentActivePromo
-    ? (hasGranular
-      ? `Special Studio Promo: ${serviceDiscounts.embroidery || 20}% OFF Digitizing, ${serviceDiscounts.vector || 10}% OFF Vector, ${serviceDiscounts.patch || 5}% OFF Patches!`
-      : `Get ${currentActivePromo.discountPercent}% OFF on All Custom Embroidery Digitizing & Vector Art Orders!`)
-    : '';
-
-  const dynamicAnnouncement = !promotionsEnabled
-    ? { enabled: false, text: '', promoCode: '', badge: '', linkText: '', linkUrl: '/order' }
-    : currentActivePromo
-    ? {
-        enabled: parsedAnnouncement?.enabled !== false,
-        badge: (currentActivePromo.name || 'SALE').toUpperCase(),
-        text: promoTitleText,
-        linkText: `Claim ${maxPromoDiscount}% Off`,
-        linkUrl: parsedAnnouncement?.linkUrl || '/order',
-        promoCode: currentActivePromo.promoCode || `SAVE${currentActivePromo.discountPercent || maxPromoDiscount}`,
-        theme: parsedAnnouncement?.theme === 'emerald' ? 'orange' : (parsedAnnouncement?.theme || 'orange'),
-        bgColor: parsedAnnouncement?.bgColor && !parsedAnnouncement.bgColor.includes('065f46')
-          ? parsedAnnouncement.bgColor
-          : 'linear-gradient(90deg, #ea580c 0%, #f97316 50%, #ea580c 100%)',
-        textColor: '#ffffff',
-        showCodeBadge: true,
-        showCountdown: true,
-        countdownHours: 24,
-        discountValue: maxPromoDiscount
-      }
-    : (parsedAnnouncement
-      ? {
-          ...parsedAnnouncement,
-          theme: parsedAnnouncement.theme === 'emerald' ? 'orange' : (parsedAnnouncement.theme || 'orange'),
-          bgColor: parsedAnnouncement.bgColor && !parsedAnnouncement.bgColor.includes('065f46')
-            ? parsedAnnouncement.bgColor
-            : 'linear-gradient(90deg, #ea580c 0%, #f97316 50%, #ea580c 100%)'
-        }
-      : {
-          enabled: false,
-          badge: '',
-          text: '',
-          promoCode: '',
-          linkText: '',
-          linkUrl: '/order'
-        });
+  // Canonical admin ticker settings take precedence over old flat rows.
+  // Discount campaigns control pricing only, not the top running message.
+  const dynamicAnnouncement = {
+    ...(parsedAnnouncement || {}),
+    enabled: parsedAnnouncement?.enabled === true,
+    autoSync: parsedAnnouncement?.autoSync === true,
+    theme: parsedAnnouncement?.theme || 'orange',
+    linkUrl: parsedAnnouncement?.linkUrl || '/order',
+    showCountdown: false
+  };
 
   return {
     // Keep only the canonical frontend shape. Raw snake_case collections and

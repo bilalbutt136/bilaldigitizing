@@ -31,6 +31,18 @@ async function GET_impl() {
         ? Math.max(0, Math.min(100, Number(rates?.[service] ?? live.promotion?.discountPercent ?? 0) || 0))
         : 0
     ]));
+    // The top marquee is independent of the active discount and VIP banner.
+    // Only expose intentionally public, admin-editable ticker fields.
+    const tickerConfig = settings?.announcement || {};
+    const tickerFields = ['enabled', 'autoSync', 'text', 'badge', 'theme', 'textColor',
+      'promoCode', 'linkText', 'linkUrl', 'showCodeBadge'];
+    const ticker = Object.fromEntries(tickerFields
+      .filter(key => ['enabled', 'autoSync', 'showCodeBadge'].includes(key)
+        ? typeof tickerConfig[key] === 'boolean'
+        : typeof tickerConfig[key] === 'string')
+      .map(key => [key, tickerConfig[key]]));
+    ticker.enabled = tickerConfig?.enabled === true;
+
     const rawBanner = settings?.mobileOfferBanner || {};
     const banner = Object.fromEntries(['enabled', 'eyebrow', 'headline', 'description', 'ctaText']
       .filter(key => typeof rawBanner[key] === 'string' || (key === 'enabled' && typeof rawBanner[key] === 'boolean'))
@@ -44,7 +56,8 @@ async function GET_impl() {
         serviceDiscounts: discounts,
         serviceStatus: Object.fromEntries(allowed.map(service => [service, discounts[service] > 0]))
       }] : [],
-      mobileOfferBanner: banner
+      mobileOfferBanner: banner,
+      announcement: ticker
     }, { headers: NO_CACHE });
   } catch (error) {
     console.error('[Active Public Promotion]', error?.message || error);
