@@ -655,7 +655,39 @@ export const HeaderNav = () => {
 
           {/* Mobile Right Action Area (Inbox, Notifications Bell & Clean Three-Lines Menu) */}
           <div className="mobile-only-flex site-header-mobile-actions" style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', flexShrink: 0 }}>
-            {/* Mobile Inbox Icon */}
+            {!safeIsAuthenticated && (
+              <div className="site-header-guest-auth" style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                <button type="button" className="site-header-login-cta"
+                  onClick={() => {
+                    setIsMobileMenuOpen(false);
+                    setAuthModalMode('login');
+                    setIsAuthModalOpen(true);
+                  }}
+                  style={{
+                    minHeight: '38px', padding: '0.4rem 0.55rem',
+                    borderRadius: '9px', border: '1px solid var(--border-color)',
+                    background: 'var(--bg-card)', color: 'var(--text-main)',
+                    fontSize: '0.76rem', fontWeight: 800, whiteSpace: 'nowrap', cursor: 'pointer'
+                  }}
+                >Log in</button>
+                <button type="button" className="site-header-signup-cta"
+                  onClick={() => {
+                    setIsMobileMenuOpen(false);
+                    setAuthModalMode('signup');
+                    setIsAuthModalOpen(true);
+                  }}
+                  style={{
+                    minHeight: '38px', padding: '0.4rem 0.6rem',
+                    borderRadius: '9px', border: '1px solid #047857',
+                    background: '#047857', color: '#ffffff',
+                    fontSize: '0.76rem', fontWeight: 900, whiteSpace: 'nowrap', cursor: 'pointer'
+                  }}
+                >Sign up</button>
+              </div>
+            )}
+            {safeIsAuthenticated && (
+              <>
+                {/* Mobile Inbox Icon (members only) */}
             <button
               type="button"
               onClick={handleInboxClick}
@@ -892,6 +924,9 @@ export const HeaderNav = () => {
                 </div>
               )}
             </div>
+
+              </>
+            )}
 
             {/* Mobile Three-Lines Menu Toggle Button */}
             <button

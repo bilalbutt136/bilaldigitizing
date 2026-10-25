@@ -9,10 +9,16 @@ import { WhyChooseUs } from './WhyChooseUs';
 import { TestimonialsFAQ } from './TestimonialsFAQ';
 import { FinalCTA } from './FinalCTA';
 import { BDigitizingMobileApp } from '../mobile/BDigitizingMobileApp';
+import MobileWelcomeOffer from '../mobile/MobileWelcomeOffer';
+import { getActiveMobileOffer } from '../../utils/mobileOffer';
 import { normalizeCategory } from '../../utils/categoryUtils';
 
 export default function HomePageClient({ initialAppMode = false, initialAppTab = 'home' }) {
-  const { currentView, setCurrentView, activeHomeServiceTab, mobileMode, isAuthInitialized, isAuthenticated, authUser } = useAppState();
+  const {
+    currentView, setCurrentView, activeHomeServiceTab, mobileMode,
+    isAuthInitialized, isAuthenticated, authUser, siteSettings, theme,
+    setAuthModalMode, setIsAuthModalOpen, openOrderWizard
+  } = useAppState();
   const activeTab = normalizeCategory(activeHomeServiceTab || 'all');
   // Render mobile app if explicitly launched via ?app=true, PWA standalone, or mobileMode === 'app'. Standard mobile web visitors see website first.
   const shouldRenderApp = Boolean(initialAppMode || mobileMode === 'app');
@@ -54,6 +60,27 @@ export default function HomePageClient({ initialAppMode = false, initialAppTab =
 
   return (
     <div className="website-page-wrapper">
+      {getActiveMobileOffer(siteSettings) && (
+        <div className="mobile-only" style={{
+          padding: '0.85rem 0.75rem 0',
+          maxWidth: '520px',
+          margin: '0 auto'
+        }}>
+          <MobileWelcomeOffer
+            siteSettings={siteSettings}
+            isDark={theme === 'dark'}
+            isAuthenticated={Boolean(isAuthenticated)}
+            onExplore={() => {
+              if (openOrderWizard) openOrderWizard({ type: 'all' });
+              else window.location.assign('/pricing');
+            }}
+            onSignup={() => {
+              setAuthModalMode('signup');
+              setIsAuthModalOpen(true);
+            }}
+          />
+        </div>
+      )}
       <HeroSection />
       <ServicesSection />
       {activeTab === 'all' && (
