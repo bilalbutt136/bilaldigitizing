@@ -278,12 +278,12 @@ export const HeroSection = () => {
   const handleTabClick = (tabId) => {
     // The embroidery homepage tab has a dedicated, shareable landing URL.
     if (typeof window !== 'undefined') {
-      const isEmbroideryRoute = window.location.pathname === '/embroidery-digitizing';
+      const isEmbroideryRoute = window.location.pathname === '/embroidery-digitizing-studio';
       const isLegacyEmbroideryLink = window.location.pathname === '/' &&
         new URLSearchParams(window.location.search).get('service') === 'embroidery';
 
       if (tabId === 'embroidery' && !isEmbroideryRoute) {
-        navigate('/embroidery-digitizing');
+        navigate('/embroidery-digitizing-studio');
       } else if (tabId !== 'embroidery' && (isEmbroideryRoute || isLegacyEmbroideryLink)) {
         navigate('/');
       }
