@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { withApiObservability } from '../../../../src/lib/observability/apiObservability.js';
-import { createAdminClient } from '../../../src/lib/supabase/admin.js';
-import { getActiveMobileOffer } from '../../../src/utils/mobileOffer.js';
+import { createAdminClient } from '../../../../src/lib/supabase/admin.js';
+import { getActiveMobileOffer } from '../../../../src/utils/mobileOffer.js';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;

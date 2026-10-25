@@ -19,6 +19,7 @@ test('public promotion snapshot is uncached, allowlisted and independent of SSR 
   const endpoint = read('app/api/promotions/active/route.js');
   const hook = read('src/hooks/useLivePromotion.js');
   assert.match(endpoint, /createAdminClient/);
+  assert.match(endpoint, /from '\.\.\/\.\.\/\.\.\/\.\.\/src\/lib\/supabase\/admin\.js'/);
   assert.match(endpoint, /Cache-Control.*no-store/);
   assert.match(endpoint, /withApiObservability/);
   assert.doesNotMatch(endpoint, /NextResponse\.json\(settings/);
