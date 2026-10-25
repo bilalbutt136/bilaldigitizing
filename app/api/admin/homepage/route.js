@@ -91,7 +91,51 @@ async function POST_impl(req) {
 
     const supabase = createAdminClient();
     const body = await req.json();
-    const { settings = [] } = body;
+    const { settings = [], siteSettingsPatch } = body;
+
+    // Patch the persisted settings, rather than saving a stale client snapshot.
+    // Unrelated branding/content edits must not pause an already active promotion.
+    if (siteSettingsPatch !== undefined) {
+      if (!siteSettingsPatch || typeof siteSettingsPatch !== 'object' ||
+          Array.isArray(siteSettingsPatch) || Object.keys(siteSettingsPatch).length === 0 ||
+          JSON.stringify(siteSettingsPatch).length > 40000) {
+        return NextResponse.json({ error: 'Invalid site settings patch.' }, { status: 400 });
+      }
+      const { data: current, error: readError } = await supabase.from('site_config')
+        .select('value').eq('key', 'site_settings').maybeSingle();
+      if (readError) throw readError;
+      let previous = current?.value || {};
+      if (typeof previous === 'string') previous = JSON.parse(previous);
+      if (!previous || typeof previous !== 'object' || Array.isArray(previous)) previous = {};
+      const allowedPatch = Object.fromEntries(Object.entries(siteSettingsPatch)
+        .filter(([key]) => !['__proto__', 'constructor', 'prototype'].includes(key)));
+      const merged = {
+        ...previous,
+        ...allowedPatch,
+        ...(allowedPatch.announcement ? {
+          announcement: { ...(previous.announcement || {}), ...allowedPatch.announcement }
+        } : {}),
+        ...(allowedPatch.promotionalBanner ? {
+          promotionalBanner: { ...(previous.promotionalBanner || {}), ...allowedPatch.promotionalBanner }
+        } : {}),
+        ...(allowedPatch.mobileOfferBanner ? {
+          mobileOfferBanner: { ...(previous.mobileOfferBanner || {}), ...allowedPatch.mobileOfferBanner }
+        } : {})
+      };
+      const record = { key: 'site_settings', value: JSON.stringify(merged), updated_at: new Date().toISOString() };
+      const [publicSave, editorSave] = await Promise.all([
+        supabase.from('site_config').upsert(record, { onConflict: 'key' }),
+        supabase.from('home_page_settings').upsert(record, { onConflict: 'key' })
+      ]);
+      if (publicSave.error || editorSave.error) {
+        console.error('[Settings patch]', publicSave.error?.message, editorSave.error?.message);
+        return NextResponse.json({ error: 'Could not save site settings.' }, { status: 503 });
+      }
+      revalidateAllSitePages();
+      return NextResponse.json({ success: true, siteSettings: merged }, {
+        headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate' }
+      });
+    }
 
     if (!Array.isArray(settings) || settings.length === 0) {
       return NextResponse.json({ error: 'Invalid settings payload' }, { status: 400 });

@@ -141,11 +141,11 @@ export const PromotionsManager = () => {
       : (promo.discountPercent || 10);
 
     const text = hasGranular
-      ? `Special Studio Promo: ${promo.serviceDiscounts.embroidery || 20}% OFF Digitizing, ${promo.serviceDiscounts.vector || 10}% OFF Vector, ${promo.serviceDiscounts.patch || 5}% OFF Patches!`
+      ? `Special Studio Promo: ${promo.serviceDiscounts.embroidery ?? 0}% OFF Digitizing, ${promo.serviceDiscounts.vector ?? 0}% OFF Vector, ${promo.serviceDiscounts.patch ?? 0}% OFF Patches!`
       : `Get ${promo.discountPercent}% OFF on All Custom Embroidery Digitizing & Vector Art Orders!`;
 
     return {
-      enabled: true,
+      enabled: siteSettings?.announcement?.enabled !== false,
       autoSync: true,
       badge: (promo.name || 'SALE').toUpperCase(),
       text,
@@ -386,16 +386,25 @@ export const PromotionsManager = () => {
       : activating ? { ...p, status: 'paused' } : p);
     const active = updated.find(p => p.status === 'active');
     const disabled = { embroidery: 0, vector: 0, patch: 0, enabled: false };
+    const rates = active
+      ? {
+          embroidery: active.serviceStatus?.embroidery === false ? 0 : Number(active.serviceDiscounts?.embroidery ?? active.discountPercent ?? 0),
+          vector: active.serviceStatus?.vector === false ? 0 : Number(active.serviceDiscounts?.vector ?? active.discountPercent ?? 0),
+          patch: active.serviceStatus?.patch === false ? 0 : Number(active.serviceDiscounts?.patch ?? active.discountPercent ?? 0),
+          enabled: true
+        }
+      : disabled;
     setPromoSaving(true);
     try {
       await updateSiteSettings({
         promotions: updated,
         announcement: buildDynamicAnnouncement(active),
         promotionalBanner: { enabled: false },
-        ...(!active ? { service_discounts: disabled, serviceDiscounts: disabled } : {})
+        service_discounts: rates,
+        serviceDiscounts: rates
       });
       setPromotions(updated);
-      if (!active) setServiceDiscounts(disabled);
+      setServiceDiscounts(rates);
       showToast?.('Promotion ' + (activating ? 'started.' : 'paused.'), 'success');
     } catch (err) {
       console.error('Failed to update promotion:', err);

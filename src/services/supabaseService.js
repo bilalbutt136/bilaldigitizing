@@ -734,6 +734,22 @@ export async function saveCmsConfigToSupabase(key, value) {
 }
 
 
+// Atomic-intent patch: never resend stale promotion fields when editing an unrelated setting.
+export async function patchSiteSettingsToSupabase(patch) {
+  const headers = await getAuthHeaders();
+  const response = await fetch('/api/admin/homepage', {
+    method: 'POST',
+    headers,
+    credentials: 'include',
+    body: JSON.stringify({ siteSettingsPatch: patch })
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok || !data?.success || !data?.siteSettings) {
+    throw new Error(data?.error || 'Could not update site settings.');
+  }
+  return data.siteSettings;
+}
+
 // Upsert array of catalog items to a dedicated table via /api/catalog
 export async function upsertCatalogDataToSupabase(tableName, dataArray) {
   if (!tableName || !Array.isArray(dataArray)) return false;

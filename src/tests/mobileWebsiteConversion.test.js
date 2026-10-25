@@ -29,8 +29,8 @@ test('inbox and notification icons are only available after sign in', () => {
 test('normal mobile website renders the admin-controlled offer without app mode', () => {
   const webPage = homepage.split('className="website-page-wrapper"')[1];
   assert.ok(webPage, 'Website home page must exist');
-  assert.match(webPage, /getActiveMobileOffer\(siteSettings\)/);
-  assert.match(webPage, /className="mobile-only"/);
+  assert.match(homepage, /<MobileWelcomeOffer/);
+  assert.match(webPage, /className="bdigi-vip-website-slot"/);
   assert.match(webPage, /<MobileWelcomeOffer/);
   assert.match(webPage, /href="\/order"/);
 });

@@ -4,6 +4,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useAppState } from '../../context/StateContext';
 import { getAvailableTiers, getServiceStartingPrice, calculatePackageQuote, formatUSD } from '../../utils/livePricing';
 import { getLiveStudioDiscountPercent } from '../../utils/mobileOffer.js';
+import { useLivePromotion } from '../../hooks/useLivePromotion';
 import { requiredEmbroideryRank, eligibleEmbroideryTiers, chooseEmbroideryTier } from '../../utils/embroiderySizeEligibility';
 import { MONTHLY_DESIGN_LIMITS, findPublishedMonthlyBundle } from '../../utils/monthlyBundles';
 import {
@@ -45,7 +46,6 @@ export const StreamlinedOrderFlow = ({
     setIsAuthModalOpen,
     setAuthModalMode,
     dynamicPricingTiers = [],
-    siteSettings = {},
     theme = 'light'
   } = useAppState();
 
@@ -244,7 +244,8 @@ export const StreamlinedOrderFlow = ({
   };
 
   // Only live, admin-enabled campaign rates are applied to regular orders.
-  const liveDiscountPercent = getLiveStudioDiscountPercent(siteSettings, selectedService);
+  const { settings: livePromoSettings, loading: livePromoLoading, error: livePromoError } = useLivePromotion();
+  const liveDiscountPercent = getLiveStudioDiscountPercent(livePromoSettings, selectedService);
   // Active administrator-configured Supabase prices only.
   const calculatePricing = () => {
     const safePatchQty = Math.max(50, parseInt(patchQuantity, 10) || 50);
@@ -261,7 +262,7 @@ export const StreamlinedOrderFlow = ({
     tierTitle: monthlyPlan.title, patchPieces: 0
   } : null;
   const pricing = (isMonthlyMode ? monthlyQuote : calculatePricing()) || { unitPrice: 0, subtotal: 0, rush: 0, total: 0, quantity: 0, patchPieces: 0, tierTitle: '' };
-  const hasValidLivePrice = isMonthlyMode ? Boolean(monthlyQuote) : Boolean(currentTier?.id && pricing.total > 0);
+  const hasValidLivePrice = (isMonthlyMode ? Boolean(monthlyQuote) : Boolean(currentTier?.id && pricing.total > 0)) && (isMonthlyMode || (!livePromoLoading && !livePromoError));
   // Helper Labels for Summary
   const getPatchDimensions = () => {
     const width = Number(patchSizeOption === 'custom' ? patchCustomWidth : patchSizeOption);

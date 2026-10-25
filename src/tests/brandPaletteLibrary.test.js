@@ -44,7 +44,7 @@ test('admin palettes remain local previews until explicit server save',()=>{
   assert.match(gallery,/await updateSiteSettings/);
   assert.match(admin,/<BrandPaletteGallery/);
   assert.match(state,/siteSettings\?\.themeFinish/);
-  assert.match(state,/Could not save settings in Supabase/);
+  assert.match(state,/patchSiteSettingsToSupabase\(newSettings\)/);
   assert.doesNotMatch(dropdown,/showThemePicker/);
 });
 test('server write verifies Supabase errors and forces fresh catalog on Realtime',()=>{

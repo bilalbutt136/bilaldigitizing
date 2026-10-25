@@ -16,6 +16,7 @@ import {
   sendPasswordResetEmail,
   updateUserPassword,
   saveCmsConfigToSupabase,
+  patchSiteSettingsToSupabase,
   fetchCatalogFromSupabase,
   fetchClientsFromSupabase,
   fetchOrdersFromSupabase,
@@ -2845,20 +2846,9 @@ export const StateProvider = ({ children, initialCatalog = null }) => {
   };
 
   const updateSiteSettings = async (newSettings) => {
-    // Persist the complete config; updating a partial object would erase other settings.
-    const previous = siteSettings || {};
-    const mergedSettings = {
-      ...previous, ...newSettings,
-      promotionsEnabled: newSettings?.promotionsEnabled === undefined ? previous?.promotionsEnabled === true : newSettings.promotionsEnabled === true,
-      promotions: newSettings?.promotions ?? previous?.promotions ?? [],
-      service_discounts: newSettings?.service_discounts || newSettings?.serviceDiscounts || previous?.service_discounts || { embroidery: 20, vector: 10, patch: 5, enabled: true },
-      serviceDiscounts: newSettings?.service_discounts || newSettings?.serviceDiscounts || previous?.serviceDiscounts || { embroidery: 20, vector: 10, patch: 5, enabled: true },
-      announcement: { ...(previous?.announcement || {}), ...(newSettings?.announcement || {}) },
-      promotionalBanner: { ...(previous?.promotionalBanner || {}), ...(newSettings?.promotionalBanner || {}) },
-      promoCodes: newSettings?.promoCodes || previous?.promoCodes || []
-    };
-    const persisted = await saveCmsConfigToSupabase('site_settings', mergedSettings);
-    if (!persisted) throw new Error('Could not save settings in Supabase. No changes applied.');
+    // Save only edited keys against the latest DB state.
+    // Stale browser tabs must not overwrite campaigns on unrelated edits.
+    const mergedSettings = await patchSiteSettingsToSupabase(newSettings);
     setSiteSettings(mergedSettings);
     if (typeof window !== 'undefined') {
       try {

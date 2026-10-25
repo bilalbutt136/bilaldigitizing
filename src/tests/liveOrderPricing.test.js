@@ -52,7 +52,7 @@ test('VIP studio offer reduces only eligible order subtotal, not rush fees', () 
 test('server verifies promotional quotes from live settings rather than browser input', () => {
   const flow = fs.readFileSync('src/components/customer/StreamlinedOrderFlow.jsx', 'utf8');
   const server = fs.readFileSync('src/server/orders/handlers/post/createOrder.js', 'utf8');
-  assert.match(flow, /getLiveStudioDiscountPercent\(siteSettings, selectedService\)/);
+  assert.match(flow, /getLiveStudioDiscountPercent\(livePromoSettings, selectedService\)/);
   assert.match(flow, /VIP studio saving/);
   assert.match(server, /getLiveStudioDiscountPercent\(liveSettings, primaryDbRow\.type\)/);
   assert.match(server, /discountPercent: promoPercent/);

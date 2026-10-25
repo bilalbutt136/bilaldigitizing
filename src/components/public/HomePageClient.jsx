@@ -10,7 +10,7 @@ import { TestimonialsFAQ } from './TestimonialsFAQ';
 import { FinalCTA } from './FinalCTA';
 import { BDigitizingMobileApp } from '../mobile/BDigitizingMobileApp';
 import MobileWelcomeOffer from '../mobile/MobileWelcomeOffer';
-import { getActiveMobileOffer } from '../../utils/mobileOffer';
+
 import { normalizeCategory } from '../../utils/categoryUtils';
 
 export default function HomePageClient({ initialAppMode = false, initialAppTab = 'home' }) {
@@ -59,10 +59,11 @@ export default function HomePageClient({ initialAppMode = false, initialAppTab =
 
   return (
     <div className="website-page-wrapper">
-      {getActiveMobileOffer(siteSettings) && (
-        <div className="mobile-only" style={{
-          padding: '0.85rem 0.75rem 0',
-          maxWidth: '520px',
+      {(
+        <div className="bdigi-vip-website-slot" style={{
+          padding: '0 0.75rem',
+          boxSizing: 'border-box',
+          maxWidth: '1040px',
           margin: '0 auto'
         }}>
           <MobileWelcomeOffer

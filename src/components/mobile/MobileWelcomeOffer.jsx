@@ -3,14 +3,17 @@
 import React from 'react';
 import { ArrowUpRight, Crown } from 'lucide-react';
 import { DEFAULT_MOBILE_OFFER_BANNER, getActiveMobileOffer } from '../../utils/mobileOffer';
+import { useLivePromotion } from '../../hooks/useLivePromotion';
 
 // The same compact VIP strip is used on mobile web and in the mobile app.
 // Never show a percentage unless there is a real, active admin promotion.
 export default function MobileWelcomeOffer({ siteSettings, isDark, onExplore, href }) {
-  const offer = getActiveMobileOffer(siteSettings);
+  const live = useLivePromotion();
+  const currentSettings = live.error ? siteSettings : live.settings;
+  const offer = getActiveMobileOffer(currentSettings);
   if (!offer) return null;
 
-  const config = { ...DEFAULT_MOBILE_OFFER_BANNER, ...(siteSettings?.mobileOfferBanner || {}) };
+  const config = { ...DEFAULT_MOBILE_OFFER_BANNER, ...(currentSettings?.mobileOfferBanner || {}) };
   const ClaimElement = href ? 'a' : 'button';
 
   return (
@@ -20,6 +23,7 @@ export default function MobileWelcomeOffer({ siteSettings, isDark, onExplore, hr
       style={{
         boxSizing: 'border-box',
         width: '100%',
+        marginTop: href ? '0.8rem' : 0,
         borderRadius: '13px',
         padding: '0.68rem 0.75rem',
         background: 'linear-gradient(112deg, #111b31 0%, #223054 62%, #0c5147 100%)',
