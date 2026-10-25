@@ -13,6 +13,7 @@ import {
   Search,
   ClipboardList,
   User,
+  UserPlus,
   Bell,
   MessageSquare,
   SlidersHorizontal as _SlidersHorizontal,
@@ -82,6 +83,8 @@ import {
 import { fetchChatUnreadCounts } from '../../services/chatUnreadService';
 import MobileSimpleOrderModal from '../customer/MobileSimpleOrderModal';
 import MobileStudioHub from './MobileStudioHub';
+import MobileWelcomeOffer from './MobileWelcomeOffer';
+import { getActiveMobileOffer } from '../../utils/mobileOffer';
 import { getMobileOrderTrackingState } from '../../utils/orderTracking';
 import {
   handleNotificationClick,
@@ -254,7 +257,7 @@ export const BDigitizingMobileApp = ({ initialTab = 'home' }) => {
   };
 
   // Dedicated Mobile Auth Form States
-  const [mobileAuthMode, setMobileAuthMode] = useState('login'); // 'login' | 'signup' | 'forgot'
+  const [mobileAuthMode, setMobileAuthMode] = useState(safeInitialTab === 'signup' ? 'signup' : 'login'); // 'login' | 'signup' | 'forgot'
   const [authLoginEmail, setAuthLoginEmail] = useState('');
   const [authLoginPassword, setAuthLoginPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -1670,10 +1673,40 @@ export const BDigitizingMobileApp = ({ initialTab = 'home' }) => {
                 bdigitizing
               </span>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', flexShrink: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.38rem', flexShrink: 0 }}>
+              {!isAuthenticated ? (
+                <>
+                  <button type="button" onClick={() => {
+                    setMobileAuthMode('login');
+                    setAuthErrorMessage('');
+                    setAuthSuccessMessage('');
+                    setMobileTab('login');
+                  }} style={{
+                    minHeight: '40px', borderRadius: '10px', padding: '0.45rem 0.55rem',
+                    border: isDark ? '1px solid #475569' : '1px solid #cbd5e1',
+                    background: isDark ? '#1e293b' : '#ffffff',
+                    color: isDark ? '#f8fafc' : '#0f172a',
+                    fontSize: '0.73rem', fontWeight: 850, cursor: 'pointer', whiteSpace: 'nowrap'
+                  }}>Log in</button>
+                  <button type="button" onClick={() => {
+                    setMobileAuthMode('signup');
+                    setAuthErrorMessage('');
+                    setAuthSuccessMessage('');
+                    setMobileTab('signup');
+                  }} style={{
+                    minHeight: '40px', borderRadius: '10px', padding: '0.45rem 0.6rem',
+                    border: 'none', background: '#047857', color: '#ffffff',
+                    fontSize: '0.73rem', fontWeight: 900, cursor: 'pointer',
+                    whiteSpace: 'nowrap', boxShadow: '0 3px 9px rgba(4,120,87,0.19)'
+                  }}>Sign up</button>
+                </>
+              ) : (
+                <>
+
               <button
                 type="button"
-                onClick={() => setIsNotifDrawerOpen(true)}
+                aria-label="View notifications"
+                 onClick={() => setIsNotifDrawerOpen(true)}
                 style={{
                   background: isDark ? 'var(--color-subtle, #1e293b)' : '#f8fafc',
                   border: isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid #cbd5e1',
@@ -1703,7 +1736,8 @@ export const BDigitizingMobileApp = ({ initialTab = 'home' }) => {
 
               <button
                 type="button"
-                onClick={() => setMobileTab('categories')}
+                aria-label="Browse services"
+                 onClick={() => setMobileTab('categories')}
                 style={{
                   background: isDark ? 'var(--color-subtle, #1e293b)' : '#f8fafc',
                   border: isDark ? '1.5px solid var(--color-border, #334155)' : '1.5px solid #cbd5e1',
@@ -1718,8 +1752,47 @@ export const BDigitizingMobileApp = ({ initialTab = 'home' }) => {
               >
                 <LayoutGrid size={19} />
               </button>
+                </>
+              )}
             </div>
           </div>
+
+          <MobileWelcomeOffer
+            siteSettings={siteSettings}
+            isDark={isDark}
+            isAuthenticated={isAuthenticated}
+            onExplore={() => setMobileTab('categories')}
+            onSignup={() => {
+              setMobileAuthMode('signup');
+              setAuthErrorMessage('');
+              setAuthSuccessMessage('');
+              setMobileTab('signup');
+            }}
+          />
+          {!isAuthenticated && !getActiveMobileOffer(siteSettings) && (
+            <section style={{
+              background: 'linear-gradient(135deg, #0b1932 0%, #164e63 100%)',
+              color: '#ffffff', borderRadius: '16px', padding: '1rem',
+              boxShadow: isDark ? 'none' : '0 8px 20px rgba(15,23,42,0.1)'
+            }}>
+              <span style={{ color: '#a7f3d0', fontSize: '0.68rem', fontWeight: 900, letterSpacing: '0.07em' }}>
+                WELCOME TO BDIGITIZING
+              </span>
+              <h2 style={{ fontSize: '1.17rem', lineHeight: 1.25, fontWeight: 900, margin: '0.4rem 0' }}>
+                Professional artwork, ready for production
+              </h2>
+              <p style={{ color: '#cbd5e1', fontSize: '0.79rem', lineHeight: 1.5, margin: '0 0 0.8rem' }}>
+                Browse embroidery digitizing, vector art and custom patches. See your options before placing an order.
+              </p>
+              <button type="button" onClick={() => setMobileTab('categories')} style={{
+                background: '#ffffff', border: 'none', borderRadius: '10px',
+                color: '#0f2740', padding: '0.72rem 1rem', width: '100%', minHeight: '44px',
+                fontSize: '0.84rem', fontWeight: 900, cursor: 'pointer'
+              }}>
+                Browse services <ArrowRight size={16} style={{ verticalAlign: 'middle', marginLeft: '0.3rem' }} />
+              </button>
+            </section>
+          )}
 
           {isAuthenticated && (
             <MobileStudioHub
@@ -3860,7 +3933,29 @@ export const BDigitizingMobileApp = ({ initialTab = 'home' }) => {
           <span style={{ fontSize: '0.68rem', fontWeight: mobileTab === 'orders' ? 900 : 600 }}>Orders</span>
         </button>
 
-        {/* Tab 3: Messages */}
+        {/* Tab 3: Messages for members / Sign up for guests */}
+        {!isAuthenticated ? (
+          <button type="button" onClick={() => {
+            setMobileAuthMode('signup');
+            setAuthErrorMessage('');
+            setAuthSuccessMessage('');
+            setMobileTab('signup');
+          }} style={{
+            display: 'flex', flexDirection: 'column', alignItems: 'center',
+            justifyContent: 'center', background: 'none', border: 'none',
+            cursor: 'pointer', padding: '0.25rem 0', gap: '0.18rem', color: '#047857'
+          }}>
+            <div style={{
+              padding: '0.25rem 0.65rem', borderRadius: '12px',
+              background: isDark ? 'rgba(16,185,129,0.15)' : '#ecfdf5',
+              display: 'flex', justifyContent: 'center', alignItems: 'center'
+            }}>
+              <UserPlus size={20} strokeWidth={2.5} />
+            </div>
+            <span style={{ fontSize: '0.68rem', fontWeight: 900 }}>Sign up</span>
+          </button>
+        ) : (
+
         <button
           type="button"
           onClick={() => {
@@ -3916,6 +4011,7 @@ export const BDigitizingMobileApp = ({ initialTab = 'home' }) => {
           </div>
           <span style={{ fontSize: '0.68rem', fontWeight: (mobileTab === 'inbox' || mobileTab === 'chat' || mobileTab === 'support') ? 900 : 600 }}>Messages</span>
         </button>
+        )}
 
         {/* Tab 4: Wallet */}
         <button

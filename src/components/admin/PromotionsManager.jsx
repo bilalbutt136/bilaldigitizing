@@ -7,6 +7,7 @@ import {
   Check as _Check, Sliders as _Sliders, RefreshCw, AlertCircle as _AlertCircle, Percent
 } from 'lucide-react';
 import { useAppState } from '../../context/StateContext';
+import MobileOfferBannerEditor from './MobileOfferBannerEditor';
 import {
   normalizeServiceKey as _normalizeServiceKey,
   getServiceDisplayName as _getServiceDisplayName,
@@ -158,6 +159,21 @@ export const PromotionsManager = () => {
       discountValue: maxDiscount,
       discountType: 'percent'
     };
+  };
+
+  // Explicitly re-enable the promotion controls without silently starting an old offer.
+  const handleEnablePromotions = async () => {
+    if (promoSaving) return;
+    setPromoSaving(true);
+    try {
+      await updateSiteSettings({ promotionsEnabled: true });
+      showToast?.('Promotions enabled. Create or start a campaign to display an offer.', 'success');
+    } catch (err) {
+      console.error('Failed to enable promotions:', err);
+      showToast?.('Could not enable promotions. Please retry.', 'error');
+    } finally {
+      setPromoSaving(false);
+    }
   };
 
   const handleStopAllPromotions = async () => {
@@ -476,12 +492,26 @@ export const PromotionsManager = () => {
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', width: '100%', maxWidth: '1200px', margin: '0 auto' }}>
       <section aria-label="Promotion master control" style={{ padding: '1rem', borderRadius: 14, border: '1px solid var(--color-border)', background: 'var(--color-surface)' }}>
         <strong style={{ color: 'var(--color-text-primary)' }}>Promotions: {promotionsEnabled ? 'ON' : 'OFF'}</strong>
-        <p style={{ margin: '0.35rem 0 0.75rem', color: 'var(--color-text-secondary)', fontSize: '.85rem' }}>Promotional discounts and banners are disabled sitewide. Old campaigns may be deleted individually below.</p>
-        <button type="button" onClick={handleStopAllPromotions} disabled={promoSaving}
-          style={{ padding: '.6rem 1rem', borderRadius: 9, border: '1px solid #fecaca', background: '#991b1b', color: '#fff', fontWeight: 800, cursor: 'pointer' }}>
-          {promoSaving ? 'Saving…' : 'Turn OFF All Promotions'}
+        <p style={{ margin: '0.35rem 0 0.75rem', color: 'var(--color-text-secondary)', fontSize: '.85rem' }}>
+          {promotionsEnabled
+            ? 'Promotion controls are enabled. Only active campaigns show on the website and mobile app.'
+            : 'All public discounts are off. Enable promotions first, then create or start a campaign to display an offer.'}
+        </p>
+        <button
+          type="button"
+          onClick={promotionsEnabled ? handleStopAllPromotions : handleEnablePromotions}
+          disabled={promoSaving}
+          style={{
+            padding: '.6rem 1rem', borderRadius: 9, border: '1px solid transparent',
+            background: promotionsEnabled ? '#991b1b' : '#047857',
+            color: '#fff', fontWeight: 800, cursor: promoSaving ? 'wait' : 'pointer'
+          }}
+        >
+          {promoSaving ? 'Saving…' : promotionsEnabled ? 'Turn OFF All Promotions' : 'Enable Promotions'}
         </button>
       </section>
+
+      <MobileOfferBannerEditor siteSettings={siteSettings} updateSiteSettings={updateSiteSettings} showToast={showToast} />
 
       {/* Clean Top Header Card */}
       <div style={{
