@@ -16,8 +16,7 @@ import { normalizeCategory } from '../../utils/categoryUtils';
 export default function HomePageClient({ initialAppMode = false, initialAppTab = 'home' }) {
   const {
     currentView, setCurrentView, activeHomeServiceTab, mobileMode,
-    isAuthInitialized, isAuthenticated, authUser, siteSettings, theme,
-    setAuthModalMode, setIsAuthModalOpen, openOrderWizard
+    isAuthInitialized, isAuthenticated, authUser, siteSettings, theme
   } = useAppState();
   const activeTab = normalizeCategory(activeHomeServiceTab || 'all');
   // Render mobile app if explicitly launched via ?app=true, PWA standalone, or mobileMode === 'app'. Standard mobile web visitors see website first.
@@ -70,14 +69,7 @@ export default function HomePageClient({ initialAppMode = false, initialAppTab =
             siteSettings={siteSettings}
             isDark={theme === 'dark'}
             isAuthenticated={Boolean(isAuthenticated)}
-            onExplore={() => {
-              if (openOrderWizard) openOrderWizard({ type: 'all' });
-              else window.location.assign('/pricing');
-            }}
-            onSignup={() => {
-              setAuthModalMode('signup');
-              setIsAuthModalOpen(true);
-            }}
+            onExplore={() => window.location.assign('/order')}
           />
         </div>
       )}
