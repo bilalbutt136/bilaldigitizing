@@ -117,7 +117,7 @@ const buildAdvancedMatchingData = (user) => {
 };
 
 export const MetaPixelTracker = () => {
-  const { siteSettings, authUser } = useAppState();
+  const { siteSettings, authUser, isAuthInitialized } = useAppState();
   const location = useLocation();
   const pathname = location?.pathname || '';
   const prevPathRef = useRef('');
@@ -149,12 +149,18 @@ export const MetaPixelTracker = () => {
   // 2. Track route changes with full visitor telemetry
   useEffect(() => {
     if (typeof window === 'undefined') return;
+    // Wait until Supabase has resolved the session before assigning visitor identity.
+    // Otherwise authenticated portal users can be persisted as "Guest Visitor" on first paint.
+    if (!isAuthInitialized) return;
     if (prevPathRef.current === pathname) return;
     if (!dedupeRouteTransition(`meta_pixel_nav:${pathname}`, 5000)) return;
     prevPathRef.current = pathname;
 
     // Do not log page views or conversion telemetry on 404 error routes
     if (pathname.includes('404') || (typeof document !== 'undefined' && document.title.includes('404'))) return;
+    // /dashboard/* is a retired route family. Ignore stale/bookmarked/cached hits so
+    // invalid legacy URLs do not look like real customer order/dashboard activity.
+    if (pathname === '/dashboard' || pathname.startsWith('/dashboard/')) return;
     if (pathname.startsWith('/legal/') || pathname === '/about' || pathname === '/locations' || pathname === '/glossary') return;
 
     const matchData = buildAdvancedMatchingData(authUser);
@@ -290,7 +296,7 @@ export const MetaPixelTracker = () => {
         }
       });
     }).catch(() => {});
-  }, [pathname, activePixelId, authUser]);
+  }, [pathname, activePixelId, authUser, isAuthInitialized]);
 
   return null;
 };

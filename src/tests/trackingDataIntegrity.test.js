@@ -44,6 +44,17 @@ test('tracking data quality guards', async (t) => {
     assert.match(modal, /Likely Automated Traffic/);
   });
 
+  await t.test('route tracking waits for resolved auth identity and ignores retired dashboard URLs', () => {
+    const tracker = read('src/components/common/MetaPixelTracker.jsx');
+    assert.match(tracker, /siteSettings, authUser, isAuthInitialized/);
+    assert.match(tracker, /if \(!isAuthInitialized\) return;/);
+    assert.match(tracker, /pathname === '\/dashboard'/);
+    assert.match(tracker, /pathname\.startsWith\('\/dashboard\/'\)/);
+    const authGuardIndex = tracker.indexOf('if (!isAuthInitialized) return;');
+    const prevPathIndex = tracker.indexOf('if (prevPathRef.current === pathname) return;');
+    assert.ok(authGuardIndex >= 0 && authGuardIndex < prevPathIndex, 'Auth must resolve before the route is marked as tracked');
+  });
+
   await t.test('payment success is classified before generic order checkout', () => {
     const tracker = read('src/components/common/MetaPixelTracker.jsx');
     const purchaseIndex = tracker.indexOf("window.location.search.includes('payment=success')");
