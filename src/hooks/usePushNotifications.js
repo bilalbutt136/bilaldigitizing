@@ -61,6 +61,7 @@ export function usePushNotifications(userContext = {}) {
 
       try {
         const publicKey = await getClientVapidPublicKey();
+        if (!publicKey) return;
         if (!subscriptionUsesVapidKey(sub, publicKey)) return;
 
         const response = await fetch('/api/push/subscribe', {
@@ -125,6 +126,10 @@ export function usePushNotifications(userContext = {}) {
       }
 
       const publicKey = await getClientVapidPublicKey();
+      if (!publicKey) {
+        setErrorMessage('Push notifications are temporarily unavailable.');
+        return { success: false, error: 'Push notifications are not configured' };
+      }
       const applicationServerKey = urlBase64ToUint8Array(publicKey);
 
       if (subscription && !subscriptionUsesVapidKey(subscription, publicKey)) {

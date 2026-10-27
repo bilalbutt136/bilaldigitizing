@@ -50,6 +50,7 @@ export const PWARegistrar = () => {
         }
 
         const publicKey = await getClientVapidPublicKey();
+        if (!publicKey) return;
         const applicationServerKey = urlBase64ToUint8Array(publicKey);
 
         if (sub && !subscriptionUsesVapidKey(sub, publicKey)) {

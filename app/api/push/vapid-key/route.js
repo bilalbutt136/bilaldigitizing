@@ -10,12 +10,27 @@ async function GET_impl() {
     const publicKey = await getPublicVapidKey();
     return NextResponse.json({
       success: true,
+      enabled: true,
       publicKey
     });
   } catch (err) {
+    const message = String(err?.message || '');
+    if (message.includes('VAPID credentials are not configured')) {
+      return NextResponse.json({
+        success: true,
+        enabled: false,
+        publicKey: null
+      }, {
+        status: 200,
+        headers: {
+          'Cache-Control': 'public, max-age=300, s-maxage=300, stale-while-revalidate=3600'
+        }
+      });
+    }
+
     return NextResponse.json({
       success: false,
-      error: err.message
+      error: 'Unable to load push notification configuration.'
     }, { status: 500 });
   }
 }

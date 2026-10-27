@@ -86,8 +86,11 @@ export async function getClientVapidPublicKey() {
     vapidKeyPromise = fetch('/api/push/vapid-key', { credentials: 'include' })
       .then(async response => {
         const data = await response.json().catch(() => ({}));
-        if (!response.ok || !data?.success || !data?.publicKey) {
+        if (!response.ok || !data?.success) {
           throw new Error(data?.error || 'Failed to retrieve VAPID key');
+        }
+        if (data?.enabled === false || !data?.publicKey) {
+          return null;
         }
         return data.publicKey;
       })

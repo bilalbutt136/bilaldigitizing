@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
 import { getVapidKeys, savePushSubscription } from '../lib/pushService.js';
 
 test('Push Service - VAPID credentials must come from secure server configuration', async () => {
@@ -25,6 +26,21 @@ test('Push Service - VAPID credentials must come from secure server configuratio
   if (previousPrivate !== undefined) process.env.VAPID_PRIVATE_KEY = previousPrivate;
   if (previousSupabaseUrl !== undefined) process.env.NEXT_PUBLIC_SUPABASE_URL = previousSupabaseUrl;
   if (previousServiceRole !== undefined) process.env.SUPABASE_SERVICE_ROLE_KEY = previousServiceRole;
+});
+
+test('Push VAPID configuration degrades gracefully when server keys are unavailable', () => {
+  const route = fs.readFileSync(new URL('../../app/api/push/vapid-key/route.js', import.meta.url), 'utf8');
+  const client = fs.readFileSync(new URL('../utils/pushSubscriptionClient.js', import.meta.url), 'utf8');
+  const registrar = fs.readFileSync(new URL('../components/common/PWARegistrar.jsx', import.meta.url), 'utf8');
+  const hook = fs.readFileSync(new URL('../hooks/usePushNotifications.js', import.meta.url), 'utf8');
+
+  assert.match(route, /enabled:\s*false/);
+  assert.match(route, /status:\s*200/);
+  assert.match(route, /enabled:\s*true/);
+  assert.match(client, /data\?\.enabled === false/);
+  assert.match(client, /return null;/);
+  assert.match(registrar, /if \(!publicKey\) return;/);
+  assert.match(hook, /Push notifications are temporarily unavailable/);
 });
 
 test('Push Service - Validation of Subscription Input', async () => {
